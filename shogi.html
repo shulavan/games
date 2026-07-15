@@ -2207,15 +2207,27 @@ var _uraMode=false,_uraUnlocked=false;
 function _enterFullscreen(){
     var el=document.documentElement;
     var fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
-    if(fn){
-        fn.call(el).then(function(){
-            var h=document.getElementById('fs-hint');if(h)h.style.display='none';
-        }).catch(function(){});
+    var h=document.getElementById('fs-hint');
+    if(!fn){
+        // iOS Safari等、フルスクリーンAPI非対応
+        if(h)h.innerHTML='<span style="font-size:11px;color:rgba(255,255,255,0.55);">ホーム画面に追加すると<br>全画面表示できます</span>';
+        return;
+    }
+    try{
+        var p=fn.call(el);
+        if(p&&typeof p.then==='function'){
+            p.then(function(){if(h)h.style.display='none';}).catch(function(){});
+        }else{
+            if(h)h.style.display='none';
+        }
+    }catch(e){
+        if(h)h.innerHTML='<span style="font-size:11px;color:rgba(255,255,255,0.55);">フルスクリーン非対応です</span>';
     }
 }
 function _exitFullscreen(){
     var fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
-    if(fn)fn.call(document).catch(function(){});
+    if(!fn)return;
+    try{var p=fn.call(document);if(p&&typeof p.catch==='function')p.catch(function(){});}catch(e){}
 }
 function _isFullscreen(){
     return!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
