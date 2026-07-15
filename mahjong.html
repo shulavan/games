@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>～じゃんじゃじゃじゃん～ギャンブラーとゆかいな仲間たち</title>
+    <title>じゃんじゃじゃじゃん</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -593,6 +593,66 @@
         .result-dora-tiles { display: flex; gap: 2px; justify-content: center; }
         .result-dora-tiles .tile { width: 24px; height: 32px; font-size: 13px; }
     </style>
+    <script>
+        // LIFF ID を登録後にここへ設定してください
+        var LIFF_ID = '2010714820-USGhlk0G';
+        var MINI_APP_URL = 'https://miniapp.line.me/2010517858-acT2iwri';
+
+        function shareGame(){
+            var msg=[
+                {
+                    type:'flex',
+                    altText:'じゃんじゃじゃじゃん',
+                    contents:{
+                        type:'bubble',
+                        hero:{
+                            type:'box',layout:'vertical',
+                            contents:[{type:'text',text:'🐬',size:'5xl',align:'center'}],
+                            paddingAll:'lg',backgroundColor:'#0d2a4a'
+                        },
+                        body:{
+                            type:'box',layout:'vertical',spacing:'sm',
+                            contents:[
+                                {type:'text',text:'じゃんじゃじゃじゃん',weight:'bold',size:'lg',color:'#4ade80'},
+                                {type:'text',text:'じゃんじゃじゃじゃんだよ',wrap:true,size:'sm',color:'#94a3b8'}
+                            ]
+                        },
+                        footer:{
+                            type:'box',layout:'vertical',
+                            contents:[{
+                                type:'button',
+                                action:{type:'uri',label:'今すぐ遊ぶ！',uri:MINI_APP_URL},
+                                style:'primary',color:'#4ade80'
+                            }]
+                        }
+                    }
+                }
+            ];
+            try{
+                if(typeof liff!=='undefined'&&liff.isApiAvailable&&liff.isApiAvailable('shareTargetPicker')){
+                    liff.shareTargetPicker(msg,{isMultiple:true}).then(function(res){
+                        if(!res)fallbackShare();
+                    }).catch(function(){fallbackShare();});
+                    return;
+                }
+            }catch(e){}
+            fallbackShare();
+        }
+
+        function fallbackShare(){
+            // LINE Share URL (LINE内外どちらでも動作)
+            var shareUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(MINI_APP_URL);
+            window.open(shareUrl,'_blank');
+        }
+        (function(){
+            if(typeof liff==='undefined'||LIFF_ID==='YOUR_LIFF_ID')return;
+            liff.init({liffId:LIFF_ID}).then(function(){
+                console.log('LIFF initialized');
+            }).catch(function(err){
+                console.warn('LIFF init error:',err);
+            });
+        })();
+    </script>
 </head>
 <body>
     
