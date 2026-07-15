@@ -9,7 +9,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 })(window,document,'script','dataLayer','GTM-WG7QXS9B');</script>
 <!-- End Google Tag Manager -->
     <meta charset="UTF-8">
-    <style>html,body{-webkit-text-size-adjust:none;text-size-adjust:none;}</style>
+    <style>html,body{-webkit-text-size-adjust:none;text-size-adjust:none;margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;}*{box-sizing:border-box;}</style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>イルカヒーロー テトリス</title>
 
@@ -129,7 +129,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         })();
     </script>
 </head>
-<body class="flex flex-col items-center justify-start min-h-screen p-1">
+<body class="flex flex-col items-center justify-center min-h-screen" style="margin:0;padding:0;overflow:hidden;background:#000;">
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WG7QXS9B"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -790,15 +790,17 @@ var $dolphC  =document.getElementById('dolphin-chara');
         var designW=360,designH=620;
         // 幅・高さ両方でスケールを計算
         // 左右各2px余白を確保してスケール計算
-        var scale=Math.min((vw-4)/designW,(vh-4)/designH,1.38);
-        scale=Math.max(scale,0.6);
-        // transform-origin:top left で中央配置
-        var ml=Math.max(2,(vw-designW*scale)/2);
+        var scale=Math.min(vw/designW,vh/designH);
+        scale=Math.max(scale,0.4);
+        var ml=(vw-designW*scale)/2;
+        var mt=Math.max(0,(vh-designH*scale)/2);
         el.style.marginLeft=ml+'px';
         el.style.marginRight='0px';
+        el.style.marginTop=mt+'px';
         el.style.transform='scale('+scale+')';
         el.style.transformOrigin='top left';
-        document.body.style.minHeight=(designH*scale+20)+'px';
+        document.body.style.minHeight=vh+'px';
+        document.body.style.overflow='hidden';
     }
     window.addEventListener('load',function(){scaleGame();setTimeout(scaleGame,300);});
     window.addEventListener('resize',scaleGame);
