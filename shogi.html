@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a0a00">
     <title>のんだくれしょーぎ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
@@ -194,6 +198,7 @@
         </div>
     </div>
     <div style="font-size:10px;color:rgba(255,100,100,.5);margin-top:4px;">Produced by M.Tsuda</div>
+    <div id="fs-hint" style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.45);text-align:center;letter-spacing:1px;">画面をタップするとフルスクリーンになります<br><button onclick="_enterFullscreen();this.parentElement.style.display='none'" style="margin-top:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);border-radius:5px;padding:4px 14px;font-size:11px;cursor:pointer;">⛶ フルスクリーン</button></div>
 </div>
 
 <!-- ゲーム本体（ビューポート幅に合わせてズーム） -->
@@ -2023,7 +2028,7 @@ function _isLineApp(){return/Line\//i.test(navigator.userAgent);}
 
 /* 共有URL（LINE Mini App固定URL） */
 function _getShareUrl(){
-    return'https://miniapp.line.me/2010565697-3nyjHwX3';
+    return'https://shulavan.github.io/games/shogi.html';
 }
 
 /* Canvas で結果画像を生成して data URL を返す */
@@ -2196,6 +2201,23 @@ var _uraMode=false,_uraUnlocked=false;
     // Google Sites iframe内ではwindow.location.searchが使えないのでreferrerも確認
     if(window.location.search.indexOf('mode=ura')>=0)_uraMode=true;
     if(document.referrer&&document.referrer.indexOf('mode=ura')>=0)_uraMode=true;
+})();
+
+/* ===== フルスクリーン ===== */
+function _enterFullscreen(){
+    var el=document.documentElement;
+    var fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
+    if(fn)fn.call(el).catch(function(){});
+}
+(function(){
+    var done=false;
+    function tryFS(){
+        if(done)return;done=true;
+        _enterFullscreen();
+        var h=document.getElementById('fs-hint');if(h)h.style.display='none';
+    }
+    document.addEventListener('touchstart',tryFS,{once:true,passive:true});
+    document.addEventListener('click',tryFS,{once:true});
 })();
 
 /* ===== LIFF 初期化 ===== */
