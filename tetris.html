@@ -129,7 +129,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         })();
     </script>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen" style="margin:0;padding:0;overflow:hidden;background:#000;">
+<body style="margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;position:relative;">
 <!-- Google Tag Manager (noscript) -->
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WG7QXS9B"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -794,16 +794,17 @@ var $dolphC  =document.getElementById('dolphin-chara');
         scale=Math.max(scale,0.4);
         var ml=(vw-designW*scale)/2;
         var mt=Math.max(0,(vh-designH*scale)/2);
-        el.style.marginLeft=ml+'px';
-        el.style.marginRight='0px';
-        el.style.marginTop=mt+'px';
+        el.style.position='absolute';
+        el.style.left=ml+'px';
+        el.style.top=mt+'px';
+        el.style.margin='0';
         el.style.transform='scale('+scale+')';
         el.style.transformOrigin='top left';
-        document.body.style.minHeight=vh+'px';
-        document.body.style.overflow='hidden';
     }
     window.addEventListener('load',function(){scaleGame();setTimeout(scaleGame,300);});
     window.addEventListener('resize',scaleGame);
+    document.addEventListener('fullscreenchange',function(){setTimeout(scaleGame,100);});
+    document.addEventListener('webkitfullscreenchange',function(){setTimeout(scaleGame,100);});
     window.addEventListener('orientationchange',function(){setTimeout(scaleGame,200);});
     if(document.readyState!=='loading'){scaleGame();setTimeout(scaleGame,100);setTimeout(scaleGame,500);}
     else{document.addEventListener('DOMContentLoaded',function(){scaleGame();setTimeout(scaleGame,300);});}
@@ -1278,11 +1279,17 @@ function closeSlot(){
     render();restartDrop();startDialogue();startBGM();
 }
 
-$btnSt.addEventListener('click',startGame);
+function _reqFS(){
+    var el=document.documentElement;
+    try{if(el.requestFullscreen)el.requestFullscreen();
+    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();}catch(e){}
+}
+$btnSt.addEventListener('click',function(){_reqFS();startGame();});
 (function(){
     var sp=document.getElementById('splash-ov');
     if(sp){
         sp.addEventListener('click',function(){
+            _reqFS();
             sp.style.transition='opacity 0.4s';
             sp.style.opacity='0';
             setTimeout(function(){sp.style.display='none';},400);
