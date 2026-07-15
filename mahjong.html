@@ -1658,11 +1658,14 @@
             if (hiragaWebCache[w]) return;
             hiragaWebCache[w] = 'pending';
             const titles = encodeURIComponent(w + '|' + hiragaToKatakana(w));
-            fetch('https://ja.wiktionary.org/w/api.php?action=query&format=json&origin=*&titles=' + titles)
+            fetch('https://ja.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&exchars=800&format=json&origin=*&titles=' + titles)
                 .then(r => r.json())
                 .then(j => {
                     const pages = (j && j.query && j.query.pages) ? Object.values(j.query.pages) : [];
-                    const found = pages.some(p => p.pageid);
+                    // ページ本文に「名詞」(固有名詞含む)の項目があるものだけ受理。
+                    // 動詞・形容詞・助詞・副詞などの単独項目(例:「すてる」)は除外。
+                    // 「代名詞」だけのページも除外。
+                    const found = pages.some(p => p.pageid && p.extract && /(^|[^代])名詞/.test(p.extract));
                     hiragaWebCache[w] = found ? 'yes' : 'no';
                     if (found) hiragaAcceptWebWord(w);
                 })
@@ -1900,6 +1903,10 @@
             grid.appendChild(lockedCard);
 
             document.body.addEventListener('click', () => { if(!GameState.playerChar) AudioEngine.startBGM('select'); }, { once: true });
+            if (document.addEventListener) {
+                document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) lockLandscape(); });
+                document.addEventListener('webkitfullscreenchange', () => { lockLandscape(); });
+            }
         };
 
         function toggleRuleModal(show) {
@@ -1916,25 +1923,28 @@
         }
 
         // ブラウザのアドレスバー等を隠すフルスクリーン化(ユーザー操作時のみ許可される)
+        function lockLandscape() {
+            try {
+                if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
+                    const r = screen.orientation.lock('landscape');
+                    if (r && typeof r.catch === 'function') r.catch(() => {});
+                }
+            } catch (e) {}
+        }
+
         function tryFullscreen() {
             try {
-                const lockLandscape = () => {
-                    try {
-                        if (typeof screen !== 'undefined' && screen.orientation && screen.orientation.lock) {
-                            screen.orientation.lock('landscape').catch(() => {});
-                        }
-                    } catch (e) {}
-                };
-                if (document.fullscreenElement || document.webkitFullscreenElement) { lockLandscape(); return; }
                 const el = document.documentElement;
-                if (el.requestFullscreen) {
-                    el.requestFullscreen().then(lockLandscape).catch(() => { lockLandscape(); });
-                } else if (el.webkitRequestFullscreen) {
-                    el.webkitRequestFullscreen();
-                    lockLandscape();
-                } else {
-                    lockLandscape();
+                if (document.fullscreenElement || document.webkitFullscreenElement) { lockLandscape(); return; }
+                let p = null;
+                if (el.requestFullscreen) p = el.requestFullscreen();
+                else if (el.webkitRequestFullscreen) p = el.webkitRequestFullscreen();
+                if (p && typeof p.then === 'function') {
+                    p.then(lockLandscape).catch(() => { lockLandscape(); });
                 }
+                // 戻り値がPromiseでないブラウザや遅延反映向けの再試行
+                setTimeout(lockLandscape, 300);
+                setTimeout(lockLandscape, 1200);
             } catch (e) {}
         }
 
