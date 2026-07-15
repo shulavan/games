@@ -1,0 +1,2268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>のんだくれしょーぎ</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+        body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:linear-gradient(170deg,#1a0a00 0%,#3a1a08 35%,#6b3010 65%,#8b4010 100%);background-attachment:fixed;min-height:100vh;margin:0;padding:6px 0;display:flex;flex-direction:column;align-items:center;user-select:none;-webkit-user-select:none;}
+
+        /* ===== キャラパネル ===== */
+        #char-panel{width:360px;display:flex;align-items:flex-start;gap:8px;margin-bottom:4px;background:#f0e8d0;border:2px solid #8b5a2b;border-radius:6px;padding:6px;box-sizing:border-box;min-height:90px;}
+        #char-svg-wrap{width:72px;flex-shrink:0;display:flex;align-items:flex-end;}
+        #char-svg-wrap svg{width:72px;height:104px;}
+        #char-right{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;}
+        #char-header{display:flex;align-items:center;gap:4px;}
+        #char-name-badge{font-size:11px;font-weight:bold;color:#fff;background:#8b5a2b;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+        #char-btns{display:flex;gap:3px;margin-left:auto;align-items:center;}
+        .cbarbtn{font-size:11px;padding:3px 7px;color:#fff;border:none;border-radius:3px;cursor:pointer;white-space:nowrap;line-height:1;}
+        #timer-display{font-size:10px;font-weight:bold;color:#c0392b;white-space:nowrap;}
+        #bgm-btn{width:28px;height:22px;padding:0;display:flex;align-items:center;justify-content:center;background:#27ae60;border:none;border-radius:3px;cursor:pointer;}
+        #msg-bubble{background:#fff;border:2px solid #8b5a2b;border-radius:8px;padding:6px 8px;position:relative;font-size:12px;color:#333;line-height:1.45;min-height:48px;}
+        #msg-bubble::before{content:'';position:absolute;left:-13px;top:10px;border:7px solid transparent;border-right-color:#8b5a2b;}
+        #msg-bubble::after{content:'';position:absolute;left:-10px;top:12px;border:5px solid transparent;border-right-color:#fff;}
+
+        /* ===== 持ち駒 ===== */
+        .mochigoma-zone{width:360px;min-height:38px;background:#e0d0b0;border:2px solid #8b5a2b;box-sizing:border-box;display:flex;align-items:center;padding:2px 4px;margin:3px 0;border-radius:3px;}
+        .mochigoma-title{font-size:11px;color:#555;width:44px;font-weight:bold;flex-shrink:0;}
+        .mochi-list{display:flex;gap:3px;flex-wrap:wrap;}
+        .mp{width:28px;height:30px;background:#faf0d0;border:1.5px solid #8b5a2b;border-radius:2px;display:flex;justify-content:center;align-items:center;font-size:15px;font-weight:bold;cursor:pointer;position:relative;box-sizing:border-box;color:#1a1a1a;}
+        .mp.enemy{color:#1a1a1a;}
+        .mp.sel{background:#2ecc71;border-color:#27ae60;}
+        .mp-cnt{position:absolute;bottom:0;right:1px;font-size:9px;color:#555;}
+        .mp.enemy .mp-cnt{color:#555;}
+
+        /* ===== 盤面 ===== */
+        #board-wrap{position:relative;}
+        #board{display:grid;grid-template-columns:repeat(9,39px);grid-template-rows:repeat(9,41px);background:#8b5a2b;padding:2px;gap:1px;border-radius:2px;}
+        .cell{background:#f0d9b5;display:flex;justify-content:center;align-items:center;cursor:pointer;}
+        .cell.sel{background:#2ecc71!important;}
+        .cell.mov{background:#f1c40f!important;}
+        .cell.lf{background:#c8e6ff!important;}
+        .cell.lt{background:#90c8ff!important;}
+        .pc{width:34px;height:37px;background:#faf0d0;border:1.5px solid #8b5a2b;border-radius:3px 3px 2px 2px;display:none;justify-content:center;align-items:center;font-size:19px;font-weight:900;color:#1a1a1a;box-sizing:border-box;line-height:1;pointer-events:none;}
+        .pc.show{display:flex;}
+        .pc.en{transform:rotate(180deg);color:#1a1a1a;}
+        .pc.pr{color:#c05000;}
+        .pc.en.pr{color:#c05000;}
+        #think{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.1);z-index:10;justify-content:center;align-items:center;}
+        #think span{background:rgba(0,0,0,.72);color:#fff;padding:6px 14px;border-radius:20px;font-size:14px;animation:blinkThink 0.8s ease-in-out infinite;}
+        @keyframes blinkThink{0%,100%{opacity:1}50%{opacity:.15}}
+
+        /* ===== ボトムバー ===== */
+        #bottom-bar{width:360px;display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:4px;padding:4px 8px;background:rgba(0,0,0,.35);border-radius:6px;box-sizing:border-box;}
+        #status{font-size:14px;font-weight:bold;color:#f5e0a0;}
+        #matta-btn{background:#e67e22;font-size:12px;padding:5px 8px;color:#fff;border:none;border-radius:3px;cursor:pointer;white-space:nowrap;}
+        #matta-btn:disabled{background:#bbb;opacity:.5;}
+
+        /* ===== モーダル共通 ===== */
+        .ov{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);display:flex;justify-content:center;align-items:center;z-index:100;}
+        .card{background:#fff;width:320px;padding:15px;border-radius:8px;border:3px solid #8b5a2b;box-shadow:0 8px 20px rgba(0,0,0,.4);display:flex;flex-direction:column;align-items:center;}
+        .card-title{font-size:18px;font-weight:bold;margin-bottom:10px;color:#333;}
+        .sg{width:100%;margin-bottom:10px;border-bottom:1px dashed #ccc;padding-bottom:8px;}
+        .sl{font-size:13px;font-weight:bold;color:#666;margin-bottom:4px;display:block;}
+        .rr{display:flex;gap:6px;}
+        .rb{flex:1;padding:8px 4px;background:#eee;border:1px solid #aaa;border-radius:4px;text-align:center;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;}
+        .rb input{transform:scale(1.3);}
+        .start-btn{width:80%;padding:12px;background:#e67e22;color:#fff;font-size:18px;font-weight:bold;border:none;border-radius:6px;margin-top:8px;cursor:pointer;box-shadow:0 4px 0 #d35400;}
+        .start-btn:active{transform:translateY(4px);box-shadow:none;}
+        .choice-row{display:flex;gap:12px;width:100%;margin-top:10px;}
+        .cbtn{flex:1;padding:10px;font-size:16px;font-weight:bold;border:none;border-radius:5px;cursor:pointer;color:#fff;}
+        .cy{background:#2ecc71;} .cn{background:#95a5a6;}
+        #cutin{position:fixed;top:50%;left:0;right:0;width:100%;transform:translateY(-50%);background:transparent;color:#f1c40f;font-size:32px;font-weight:bold;display:none;z-index:200;pointer-events:none;text-align:center;box-sizing:border-box;}
+        #cutin-inner{display:inline-block;background:rgba(0,0,0,.85);border:2px solid #fff;padding:20px 50px;border-radius:8px;}
+        #go-title{font-size:28px;font-weight:bold;margin-bottom:8px;}
+        #go-sub{font-size:14px;color:#666;margin-bottom:15px;}
+        .go-btn{padding:10px 25px;font-size:16px;font-weight:bold;border:none;border-radius:5px;cursor:pointer;background:#e67e22;color:#fff;}
+
+        /* ===== キャラ選択（設定画面） ===== */
+        .char-sel-row{display:flex;gap:5px;width:100%;}
+        .char-sel{flex:1;display:flex;flex-direction:column;align-items:center;background:#eee;border:2.5px solid #ccc;border-radius:6px;padding:5px 3px;cursor:pointer;transition:border-color .2s,background .2s;}
+        .char-sel.selected{border-color:#e67e22;background:#fff3e0;}
+        .char-sel input[type=radio]{display:none;}
+        .char-sel svg{width:60px;height:80px;}
+        .char-sel-name{font-size:13px;font-weight:bold;color:#333;margin-top:3px;}
+        .char-sel-title{font-size:9px;color:#888;text-align:center;line-height:1.3;margin-top:1px;}
+
+        /* ===== 効果音・アニメ ===== */
+        @keyframes slam{0%{transform:scale(1.3)}40%{transform:scale(0.88)}100%{transform:scale(1)}}
+        @keyframes noticePop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+        @keyframes noticeOut{to{opacity:0;transform:translate(-50%,-55%) scale(0.85)}}
+        .pc.floating{transform:scale(1.28)!important;box-shadow:0 8px 18px rgba(0,0,0,.55);z-index:6;transition:transform .08s ease;}
+        .pc.slam{animation:slam .18s ease-out forwards;}
+        .panel-cell{height:84px;border-radius:6px;border:2px solid #aaa;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;text-align:center;color:#333;cursor:default;line-height:1.3;padding:4px;box-sizing:border-box;}
+        .panel-cell.active{background:#f39c12;border-color:#e67e22;color:#fff;transform:scale(1.06);}
+        .panel-cell.selected{background:#27ae60;border-color:#1e8449;color:#fff;}
+        .pc.tsu-koma{background:#111!important;color:#fff!important;font-size:14px!important;}
+        #notice{display:none;position:fixed;top:50%;left:0;right:0;width:100%;transform:translateY(-55%);z-index:300;pointer-events:none;text-align:center;box-sizing:border-box;}
+        .nbox{display:inline-block;padding:12px 38px;font-size:32px;font-weight:bold;border-radius:10px;border:3px solid;text-shadow:0 2px 4px rgba(0,0,0,.5);white-space:normal;max-width:88vw;word-break:break-word;}
+
+        /* ===== スタート画面 ===== */
+        #start-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(170deg,#1a0a00 0%,#3a1a08 35%,#6b3010 65%,#8b4010 100%);z-index:250;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:20px;overflow-y:auto;box-sizing:border-box;}
+        #start-deco{font-size:32px;letter-spacing:4px;color:#c8902a;margin-bottom:6px;text-shadow:0 0 12px rgba(255,200,80,.5);}
+        #start-title{font-size:30px;font-weight:900;color:#f5d070;text-align:center;letter-spacing:2px;margin:0 0 6px;font-family:'Hiragino Mincho ProN','Yu Mincho',Georgia,serif;text-shadow:0 0 18px rgba(255,180,60,.7),2px 3px 0 rgba(0,0,0,.8);line-height:1.2;}
+        #start-sub{font-size:13px;color:#e0c080;letter-spacing:2px;margin:0 0 18px;text-shadow:1px 1px 0 rgba(0,0,0,.6);}
+        #start-chars{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:16px;width:100%;}
+        .sc{background:linear-gradient(160deg,#fffbe6,#f5e0b0);border:3px solid #c8a050;border-radius:12px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:row;align-items:center;gap:14px;width:300px;box-sizing:border-box;box-shadow:0 5px 16px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);transition:transform .12s,box-shadow .12s;}
+        .sc:hover,.sc:active{transform:translateY(-3px) scale(1.02);box-shadow:0 10px 24px rgba(0,0,0,.6);}
+        .sc-info{display:flex;flex-direction:column;gap:4px;flex:1;align-items:center;text-align:center;}
+        .sc-lv{font-size:19px;font-weight:bold;color:#8b4510;}
+        .sc-name{font-size:13px;color:#5a3810;margin-top:2px;line-height:1.4;}
+        #start-producer{color:#c8a060;font-size:12px;letter-spacing:1px;margin-top:4px;text-align:center;}
+
+        /* ===== 棋譜表記 ===== */
+        #kifu-disp{font-size:12px;color:#f0d890;white-space:nowrap;font-family:'Hiragino Mincho ProN','Yu Mincho',serif;letter-spacing:.5px;opacity:.9;min-width:5em;text-align:right;}
+        /* ===== シェアボタン ===== */
+        #start-share-btn{position:absolute;top:12px;right:12px;background:#06c755;color:#fff;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:4px;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+        .share-result-btn{background:#06c755;color:#fff;border:none;border-radius:6px;padding:9px 20px;font-size:13px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:6px;margin:10px auto 4px;width:100%;justify-content:center;box-shadow:0 2px 8px rgba(0,200,100,.3);}
+        /* ===== ルールモーダル ===== */
+        #rule-modal .card{width:330px;max-height:80vh;overflow-y:auto;align-items:flex-start;padding:15px 18px;}
+        #rule-modal h2{font-size:15px;color:#8b5a2b;background:#e0d0b0;padding:4px 8px;border-radius:4px;margin:12px 0 5px;width:100%;box-sizing:border-box;}
+        #rule-modal .pc-card{background:#fafafa;border:1px solid #ddd;border-radius:5px;padding:6px 10px;margin-bottom:6px;width:100%;box-sizing:border-box;}
+        #rule-modal .pc-name{font-weight:bold;font-size:15px;color:#d35400;}
+        #rule-modal .pc-move{font-size:13px;margin-top:3px;color:#333;}
+        #rule-modal ul{padding-left:18px;margin:0;font-size:13px;}
+        #rule-modal li{margin-bottom:5px;}
+        #rule-close{margin-top:10px;padding:8px 30px;background:#7f8c8d;color:#fff;border:none;border-radius:5px;font-size:14px;cursor:pointer;align-self:center;}
+    </style>
+</head>
+<body>
+
+<!-- ===== スタート画面 ===== -->
+<div id="start-screen">
+    <button id="start-share-btn" onclick="shareGame()">🔗 友達に共有</button>
+    <div id="start-deco">☖ ☗ ☖</div>
+    <div id="start-title">のんだくれ<br>しょーぎ</div>
+    <div id="start-sub">対戦相手を選択してください</div>
+    <div id="start-chars">
+        <div class="sc" onclick="selectCharStart(3)">
+            <div id="sc-svg-3"></div>
+            <div class="sc-info">
+                <div class="sc-lv">特待生（上級）</div>
+                <div class="sc-name">呑んだくれ不動産</div>
+            </div>
+        </div>
+        <div class="sc" onclick="selectCharStart(2)">
+            <div id="sc-svg-2"></div>
+            <div class="sc-info">
+                <div class="sc-lv">凡人（中級）</div>
+                <div class="sc-name">イルカヒーロー</div>
+            </div>
+        </div>
+        <div class="sc" onclick="selectCharStart(1)">
+            <div id="sc-svg-1"></div>
+            <div class="sc-info">
+                <div class="sc-lv">才能ナシ（初級）</div>
+                <div class="sc-name">さすらいのギャンブラー</div>
+            </div>
+        </div>
+    </div>
+    <button id="ura-mode-btn" onclick="_uraMode=true;showUraScreen();" style="display:none;background:linear-gradient(135deg,#6a0000,#a00000);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:bold;cursor:pointer;margin-top:4px;box-shadow:0 3px 10px rgba(0,0,0,.6);letter-spacing:1px;">👑 裏モード解放済み</button>
+    <div id="start-producer" onclick="_producerTap()" style="cursor:default;">Produced by M.Tsuda</div>
+</div>
+
+<!-- 裏モードスタート画面 -->
+<div id="ura-screen" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(170deg,#000 0%,#1a0000 35%,#3a0000 65%,#6a0000 100%);z-index:250;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:20px;overflow-y:auto;box-sizing:border-box;">
+    <button onclick="exitUraScreen()" style="position:absolute;top:12px;left:12px;background:rgba(255,255,255,.12);color:#ccc;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">← 通常モード</button>
+    <div style="font-size:10px;color:rgba(255,80,80,.8);letter-spacing:4px;margin-bottom:2px;margin-top:4px;">⚠ 裏モード ⚠</div>
+    <div style="font-size:28px;font-weight:bold;color:#fff;text-align:center;margin:6px 0 4px;text-shadow:0 0 20px #f00;">のんだくれ<br>しょーぎ</div>
+    <div style="font-size:12px;color:rgba(255,150,150,.9);margin-bottom:14px;">伝説の対戦相手が解放されました</div>
+    <div id="ura-chars" style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:16px;width:100%;">
+        <div class="sc" onclick="selectCharStart(4)" style="background:linear-gradient(160deg,#1a0000,#3a0000);border:3px solid #8b0000;width:300px;box-sizing:border-box;">
+            <div id="sc-svg-4" style="width:60px;height:78px;flex-shrink:0;display:flex;align-items:flex-end;"></div>
+            <div class="sc-info">
+                <div class="sc-lv" style="color:#ff4444;font-size:21px;">神の領域（特級）</div>
+                <div class="sc-name" style="color:#ffaaaa;">痛風キング</div>
+            </div>
+        </div>
+        <div class="sc" onclick="selectCharStart(3)" style="width:300px;box-sizing:border-box;">
+            <div id="sc-svg-3u" style="width:60px;height:78px;flex-shrink:0;display:flex;align-items:flex-end;"></div>
+            <div class="sc-info">
+                <div class="sc-lv">特待生（上級）</div>
+                <div class="sc-name">呑んだくれ不動産</div>
+            </div>
+        </div>
+        <div class="sc" onclick="selectCharStart(2)" style="width:300px;box-sizing:border-box;">
+            <div id="sc-svg-2u" style="width:60px;height:78px;flex-shrink:0;display:flex;align-items:flex-end;"></div>
+            <div class="sc-info">
+                <div class="sc-lv">凡人（中級）</div>
+                <div class="sc-name">イルカヒーロー</div>
+            </div>
+        </div>
+    </div>
+    <div style="font-size:10px;color:rgba(255,100,100,.5);margin-top:4px;">Produced by M.Tsuda</div>
+</div>
+
+<!-- キャラクターパネル（ボタン込み） -->
+<div id="char-panel">
+    <div id="char-svg-wrap"></div>
+    <div id="char-right">
+        <div id="char-header">
+            <div id="char-name-badge">対局設定を選んでください</div>
+            <div id="char-btns">
+                <div id="timer-display"></div>
+                <button class="cbarbtn" style="background:#7f8c8d" onclick="showSettingModal()">設定</button>
+                <button class="cbarbtn" style="background:#2980b9" onclick="document.getElementById('rule-modal').style.display='flex'">？</button>
+                <button id="bgm-btn" onclick="toggleBGM()" title="BGM">
+                    <svg id="bgm-svg" width="18" height="18" viewBox="0 0 18 18">
+                        <text x="1" y="14" font-size="13" fill="white">♪</text>
+                        <line id="bgm-slash" x1="16" y1="1" x2="1" y2="16" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round" display="none"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div id="msg-bubble"><div id="char-msg">設定ボタンから難易度を選んで対局を開始してください！</div></div>
+    </div>
+</div>
+
+<div class="mochigoma-zone"><div class="mochigoma-title" id="eh-label">CPU</div><div id="eh" class="mochi-list"></div><span id="move-count-disp" style="margin-left:auto;font-size:11px;color:#8b5a2b;font-weight:bold;white-space:nowrap;"></span></div>
+<div id="board-wrap"><div id="board"></div><div id="think"><span>CPU思考中...</span></div></div>
+<div class="mochigoma-zone"><div class="mochigoma-title">自分</div><div id="ph" class="mochi-list"></div><span id="player-timer-disp" style="font-size:12px;font-weight:bold;margin-left:auto;padding-right:6px;white-space:nowrap;"></span></div>
+
+<!-- ボトムバー（状況＋棋譜＋待った） -->
+<div id="bottom-bar">
+    <div id="status">設定してください</div>
+    <span id="kifu-disp"></span>
+    <button id="matta-btn" onclick="doMatta()" disabled>🤚待った(3)</button>
+</div>
+
+<!-- カットイン -->
+<div id="cutin"><div id="cutin-inner">対局開始</div></div>
+<!-- 中央通知 -->
+<div id="notice"></div>
+
+<!-- 成りモーダル -->
+<div id="promo-modal" class="ov" style="display:none;">
+    <div class="card">
+        <div class="card-title">駒を成りますか？</div>
+        <div class="choice-row">
+            <button class="cbtn cy" onclick="resolvePromote(true)">はい（成る）</button>
+            <button class="cbtn cn" onclick="resolvePromote(false)">いいえ</button>
+        </div>
+    </div>
+</div>
+
+<!-- 対局結果モーダル -->
+<div id="go-modal" class="ov" style="display:none;">
+    <div class="card" style="text-align:center;padding:14px 12px;">
+        <div id="go-title" style="display:none;"></div><div id="go-sub" style="display:none;"></div>
+        <div id="result-img-wrap" style="display:none;margin:0 0 8px;">
+            <img id="result-img" src="" style="width:100%;border-radius:8px;display:block;" />
+            <p id="result-img-hint" style="font-size:11px;color:#888;margin:4px 0 0;text-align:center;"></p>
+        </div>
+        <button class="share-result-btn" onclick="shareResult()">📤 LINEで共有</button>
+        <button class="go-btn" onclick="showStartScreen()">もう一度</button>
+    </div>
+</div>
+
+<!-- 設定モーダル -->
+<div id="setting-modal" class="ov" style="display:none;">
+    <div class="card">
+        <div id="setting-char-badge" style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#f0e8d0;border-radius:8px;padding:6px 12px;width:100%;box-sizing:border-box;">
+            <div id="setting-char-icon" style="width:44px;height:60px;flex-shrink:0;"></div>
+            <div>
+                <div style="font-size:11px;color:#888;">対戦相手</div>
+                <div id="setting-char-name" style="font-size:14px;font-weight:bold;color:#5a2a00;"></div>
+            </div>
+        </div>
+        <div class="sg" id="panel-game-sg" style="background:#fff5e6;border:2px solid #e67e22;border-radius:8px;border-bottom:2px solid #e67e22;padding:8px 10px;"><span class="sl" style="color:#c0392b;font-weight:bold;">🎰 パネルゲーム（10手ごと）</span><div class="rr">
+            <label class="rb"><input type="radio" name="panel" value="on" checked>あり</label>
+            <label class="rb"><input type="radio" name="panel" value="off">なし</label>
+        </div></div>
+        <div class="sg"><span class="sl">手番</span><div class="rr">
+            <label class="rb"><input type="radio" name="turn" value="sente" checked>先攻（先手）</label>
+            <label class="rb"><input type="radio" name="turn" value="gote">後攻（後手）</label>
+        </div></div>
+        <div class="sg"><span class="sl">時間制限（30分＋秒読み60秒）</span><div class="rr">
+            <label class="rb"><input type="radio" name="time" value="off" checked>制限なし</label>
+            <label class="rb"><input type="radio" name="time" value="on">制限あり</label>
+        </div></div>
+        <div class="sg" id="hiraku-sg"><span class="sl">飛車角配置</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;width:100%;">
+            <label class="rb"><input type="radio" name="nohiraku" value="none" checked>なし</label>
+            <label class="rb"><input type="radio" name="nohiraku" value="both">両者</label>
+            <label class="rb"><input type="radio" name="nohiraku" value="player">自分</label>
+            <label class="rb"><input type="radio" name="nohiraku" value="cpu">相手</label>
+        </div></div>
+        <div class="sg"><span class="sl">敵陣での成り</span><div class="rr">
+            <label class="rb"><input type="radio" name="promo" value="manual" checked>手動で成る</label>
+            <label class="rb"><input type="radio" name="promo" value="auto">自動で成る</label>
+        </div></div>
+        <div class="sg" style="border-bottom:none;padding-bottom:0;"><span class="sl">BGM</span><div class="rr">
+            <label class="rb"><input type="radio" name="bgm" value="on" onchange="if(this.checked&&!bgmPlaying)startBGM()">♪ ON</label>
+            <label class="rb"><input type="radio" name="bgm" value="off" checked onchange="if(this.checked&&bgmPlaying)stopBGM()">OFF</label>
+        </div></div>
+        <button class="start-btn" onclick="startGame()">対局開始</button>
+    </div>
+</div>
+
+<!-- ルールモーダル -->
+<div id="rule-modal" class="ov" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+    <div class="card">
+        <div class="card-title">将棋ルールブック</div>
+        <h2>基本ルール</h2>
+        <p style="font-size:13px;margin:0 0 6px;">交互に駒を動かし、相手の「玉」を詰ませれば勝ちです。</p>
+        <h2>駒の動き</h2>
+        <div class="pc-card"><span class="pc-name">歩（ふ）</span><div class="pc-move">前へ1マス。成ると「金」と同じ動きに。</div></div>
+        <div class="pc-card"><span class="pc-name">香（きょう）</span><div class="pc-move">前へ何マスでも進める。成ると「金」と同じ動きに。</div></div>
+        <div class="pc-card"><span class="pc-name">桂（けい）</span><div class="pc-move">前へ2・横1（飛び越える）。成ると「金」と同じ動きに。</div></div>
+        <div class="pc-card"><span class="pc-name">銀（ぎん）</span><div class="pc-move">前3方・斜め後ろ2方の計5方向。成ると「金」と同じ動きに。</div></div>
+        <div class="pc-card"><span class="pc-name">金（きん）</span><div class="pc-move">斜め後ろ以外の全方向へ1マス。成ることはできない。</div></div>
+        <div class="pc-card"><span class="pc-name">角（かく）</span><div class="pc-move">斜めに何マスでも。成ると「馬」（角＋前後左右1マス）になる。</div></div>
+        <div class="pc-card"><span class="pc-name">飛（ひ）</span><div class="pc-move">縦横に何マスでも。成ると「龍」（飛＋斜め1マス）になる。</div></div>
+        <div class="pc-card"><span class="pc-name">玉（ぎょく）</span><div class="pc-move">全方向へ1マス。取られると負け。</div></div>
+        <h2>重要ルール</h2>
+        <ul>
+            <li><strong>成り：</strong>敵陣（奥の3段）に入る・出るときに裏返してパワーアップできる。</li>
+            <li><strong>持ち駒：</strong>取った駒は自分の手番に好きな場所へ打てる。</li>
+            <li><strong>二歩：</strong>同じ筋に「歩」を2つ並べて打つことは禁止。</li>
+            <li><strong>行き所のない駒：</strong>動けなくなる場所に歩・香・桂を打つことは禁止。</li>
+            <li><strong>持ち時間：</strong>制限時間を過ぎると「切れ負け」。</li>
+        </ul>
+        <button id="rule-close" onclick="document.getElementById('rule-modal').style.display='none'">閉じる</button>
+    </div>
+</div>
+
+<!-- パネルゲームモーダル -->
+<div id="panel-modal" class="ov" style="display:none;z-index:400;">
+    <div class="card" style="width:92vw;max-width:400px;text-align:center;padding:14px;">
+        <div style="font-size:16px;font-weight:bold;color:#e67e22;margin-bottom:10px;">🎰 パネルゲーム！</div>
+        <div id="panel-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px;"></div>
+    </div>
+</div>
+
+<script>
+'use strict';
+/* ===== 定数 ===== */
+var FU=1,KYOU=2,KE=3,GIN=4,KIN=5,KAKU=6,HI=7,OU=8,TSU=9;
+var PLAYER=1,CPU=-1;
+var ORDER=[HI,KAKU,KIN,GIN,KE,KYOU,FU];
+
+function pieceChar(p,pr,s){
+    if(p===TSU)return'津';
+    if(pr) return{1:'と',2:'杏',3:'圭',4:'全',6:'馬',7:'龍'}[p]||'?';
+    if(p===OU) return s===PLAYER?'玉':'王';
+    return{1:'歩',2:'香',3:'桂',4:'銀',5:'金',6:'角',7:'飛'}[p]||'?';
+}
+var PV={1:100,2:400,3:400,4:500,5:600,6:900,7:1100,8:20000,9:2000};
+var PVP={1:500,2:500,3:500,4:550,6:1200,7:1300};
+function pv(p,pr){return(pr&&PVP[p])?PVP[p]:(PV[p]||0);}
+
+/* ===== 状態変数 ===== */
+var board,playerHand,enemyHand,currentSide,gameState,settings;
+var selPos,movableCells,legalMovesForSel,lastMove,promResolve;
+var mattaHist,mattaCount,moveCount;
+var timerInterval,pMain,pByo,cMain,cByo,pInByo,cInByo;
+
+/* ===== DOMキャッシュ ===== */
+var boardCells=[],pieceDivs=[],phItems=[],ehItems=[];
+
+/* ===== キャラクター SVG ===== */
+function svgGambler(w,h){
+    // さすらいのギャンブラー：顔横広げ版（rx=21）
+    return '<svg viewBox="0 0 90 130" width="'+w+'" height="'+h+'" xmlns="http://www.w3.org/2000/svg">'
+    // 尖り耳（帽子ブリム下・顔側面から尖って出る。帽子より上には出ない）
+    +'<polygon points="26,56 26,42 6,43" fill="#f0c080" stroke="#b8722a" stroke-width="1.5"/>'
+    +'<polygon points="64,56 64,42 84,43" fill="#f0c080" stroke="#b8722a" stroke-width="1.5"/>'
+    +'<polygon points="26,55 26,43 11,44" fill="#e87070" opacity=".75"/>'
+    +'<polygon points="64,55 64,43 79,44" fill="#e87070" opacity=".75"/>'
+    // 細い体（作業着グレー）
+    +'<rect x="31" y="68" width="28" height="52" rx="5" fill="#6a7a8a"/>'
+    +'<text x="34" y="84" font-size="5" fill="#eee" font-family="sans-serif">金欠</text>'
+    +'<text x="34" y="90" font-size="5" fill="#eee" font-family="sans-serif">御免</text>'
+    +'<text x="51" y="83" font-size="4" fill="#ddd" font-family="sans-serif">Gambler</text>'
+    +'<text x="51" y="89" font-size="4" fill="#ddd" font-family="sans-serif">Loving</text>'
+    // 腕
+    +'<rect x="16" y="70" width="16" height="36" rx="5" fill="#6a7a8a"/>'
+    +'<rect x="58" y="70" width="16" height="36" rx="5" fill="#6a7a8a"/>'
+    // 競艇新聞
+    +'<rect x="61" y="88" width="19" height="24" rx="2" fill="#f5f0e0"/>'
+    +'<text x="70" y="98" text-anchor="middle" font-size="5.5" font-weight="bold" fill="#333">競艇</text>'
+    +'<line x1="62" y1="102" x2="79" y2="102" stroke="#888" stroke-width=".8"/>'
+    +'<line x1="62" y1="106" x2="79" y2="106" stroke="#bbb" stroke-width=".7"/>'
+    +'<line x1="62" y1="109" x2="79" y2="109" stroke="#bbb" stroke-width=".7"/>'
+    +'<ellipse cx="24" cy="108" rx="7" ry="5" fill="#f0c080"/>'
+    // 脚
+    +'<rect x="34" y="118" width="9" height="12" rx="3" fill="#6a7a8a"/>'
+    +'<rect x="47" y="118" width="9" height="12" rx="3" fill="#6a7a8a"/>'
+    +'<ellipse cx="38" cy="130" rx="8" ry="4" fill="#333"/>'
+    +'<ellipse cx="51" cy="130" rx="8" ry="4" fill="#333"/>'
+    // 頭（横広め rx=21, ry=20）
+    +'<ellipse cx="45" cy="46" rx="21" ry="20" fill="#f0c080"/>'
+    // 黒帽子（横広め）
+    +'<rect x="22" y="29" width="46" height="12" rx="3" fill="#1a1a1a"/>'
+    +'<ellipse cx="45" cy="29" rx="24" ry="7" fill="#1a1a1a"/>'
+    +'<rect x="14" y="33" width="14" height="6" rx="2" fill="#1a1a1a"/>'
+    // 麻雀牌3枚
+    +'<rect x="33" y="30" width="7" height="8" rx="1" fill="#fffde0" stroke="#888" stroke-width=".5"/>'
+    +'<text x="36.5" y="37" text-anchor="middle" font-size="6" fill="#c00">中</text>'
+    +'<rect x="41.5" y="30" width="7" height="8" rx="1" fill="#fffde0" stroke="#888" stroke-width=".5"/>'
+    +'<text x="45" y="37" text-anchor="middle" font-size="6" fill="#c00">發</text>'
+    +'<rect x="50" y="30" width="7" height="8" rx="1" fill="#fffde0" stroke="#888" stroke-width=".5"/>'
+    +'<text x="53.5" y="37" text-anchor="middle" font-size="6" fill="#080">白</text>'
+    // 赤ペン（右耳寄り）
+    +'<rect x="65" y="24" width="2.5" height="16" rx="1" fill="#cc2200" transform="rotate(8 66 32)"/>'
+    // 顔パーツ（目を横広げ）
+    +'<ellipse cx="33" cy="51" rx="3.2" ry="2.6" fill="white"/>'
+    +'<ellipse cx="57" cy="51" rx="3.2" ry="2.6" fill="white"/>'
+    +'<ellipse cx="33.5" cy="51.5" rx="1.7" ry="1.9" fill="#333"/>'
+    +'<ellipse cx="57.5" cy="51.5" rx="1.7" ry="1.9" fill="#333"/>'
+    +'<line x1="27" y1="47" x2="37" y2="45" stroke="#777" stroke-width="1.5"/>'
+    +'<line x1="53" y1="45" x2="63" y2="47" stroke="#777" stroke-width="1.5"/>'
+    +'<ellipse cx="45" cy="56" rx="2" ry="1.5" fill="#d9967a"/>'
+    +'<path d="M36 62 Q45 66 54 62" stroke="#555" stroke-width="1.2" fill="none" stroke-linecap="round"/>'
+    +'</svg>';
+}
+
+function svgIruka(w,h){
+    // イルカヒーロー：太い体・808帽・眼鏡・縦縞シャツ・ブロッコリー前掛け
+    return '<svg viewBox="0 0 90 130" width="'+w+'" height="'+h+'" xmlns="http://www.w3.org/2000/svg">'
+    // 太い体（青縦縞シャツ）
+    +'<ellipse cx="45" cy="92" rx="27" ry="30" fill="#3366cc"/>'
+    +'<line x1="26" y1="65" x2="22" y2="122" stroke="#2244aa" stroke-width="2.5" opacity=".7"/>'
+    +'<line x1="32" y1="63" x2="29" y2="124" stroke="#2244aa" stroke-width="2.5" opacity=".7"/>'
+    +'<line x1="38.5" y1="62" x2="37" y2="125" stroke="#2244aa" stroke-width="2.5" opacity=".7"/>'
+    +'<line x1="45" y1="62" x2="45" y2="125" stroke="#2244aa" stroke-width="2.5" opacity=".7"/>'
+    +'<line x1="51.5" y1="62" x2="53" y2="125" stroke="#2244aa" stroke-width="2.5" opacity=".7"/>'
+    +'<line x1="58" y1="63" x2="61" y2="124" stroke="#2244aa" stroke-width="2.5" opacity=".7"/>'
+    +'<line x1="64" y1="65" x2="68" y2="122" stroke="#2244aa" stroke-width="2.5" opacity=".7"/>'
+    // ブロッコリー化粧まわし（緑）
+    +'<ellipse cx="45" cy="112" rx="23" ry="17" fill="#2d8a2d" opacity=".95"/>'
+    +'<ellipse cx="37" cy="109" rx="4" ry="4" fill="#1a6b1a"/>'
+    +'<rect x="36" y="111" width="2" height="5" fill="#5b3a1a"/>'
+    +'<ellipse cx="53" cy="113" rx="4" ry="4" fill="#1a6b1a"/>'
+    +'<rect x="52" y="115" width="2" height="5" fill="#5b3a1a"/>'
+    +'<ellipse cx="45" cy="106" rx="3.5" ry="3.5" fill="#1a6b1a"/>'
+    +'<rect x="44" y="108" width="2" height="4" fill="#5b3a1a"/>'
+    // イルカ刺繍（左上腕）
+    +'<ellipse cx="20" cy="86" rx="11" ry="17" fill="#3366cc"/>'
+    +'<path d="M13 82 Q20 77 25 82 Q22 87 15 87 Z" fill="#aabbdd"/>'
+    +'<circle cx="14.5" cy="81" r="1.5" fill="#333"/>'
+    // 太い右腕
+    +'<ellipse cx="70" cy="86" rx="11" ry="17" fill="#3366cc"/>'
+    // 裸足
+    +'<ellipse cx="34" cy="128" rx="11" ry="5" fill="#f0c080"/>'
+    +'<ellipse cx="56" cy="128" rx="11" ry="5" fill="#f0c080"/>'
+    +'<ellipse cx="26" cy="128" rx="2.5" ry="2.5" fill="#f0c080"/>'
+    +'<ellipse cx="64" cy="128" rx="2.5" ry="2.5" fill="#f0c080"/>'
+    // 丸い頭（太い）
+    +'<ellipse cx="45" cy="44" rx="22" ry="22" fill="#f0c080"/>'
+    // 808黒帽子
+    +'<rect x="23" y="24" width="44" height="13" rx="3" fill="#1a1a1a"/>'
+    +'<ellipse cx="45" cy="24" rx="22" ry="7" fill="#1a1a1a"/>'
+    +'<rect x="17" y="28" width="12" height="6" rx="2" fill="#1a1a1a"/>'
+    +'<text x="45" y="34" text-anchor="middle" font-size="10" fill="white" font-weight="bold" font-family="monospace">808</text>'
+    // 丸眼鏡
+    +'<circle cx="37" cy="48" r="6" fill="none" stroke="#333" stroke-width="1.5"/>'
+    +'<circle cx="53" cy="48" r="6" fill="none" stroke="#333" stroke-width="1.5"/>'
+    +'<line x1="43" y1="48" x2="47" y2="48" stroke="#333" stroke-width="1.5"/>'
+    +'<line x1="31" y1="47" x2="27" y2="45" stroke="#333" stroke-width="1"/>'
+    +'<line x1="59" y1="47" x2="63" y2="45" stroke="#333" stroke-width="1"/>'
+    +'<ellipse cx="37" cy="48" rx="2" ry="2" fill="#333"/>'
+    +'<ellipse cx="53" cy="48" rx="2" ry="2" fill="#333"/>'
+    // ぽっぺ
+    +'<ellipse cx="27" cy="54" rx="6" ry="5" fill="#f0b080" opacity=".4"/>'
+    +'<ellipse cx="63" cy="54" rx="6" ry="5" fill="#f0b080" opacity=".4"/>'
+    +'<ellipse cx="45" cy="56" rx="3" ry="2" fill="#d9967a"/>'
+    +'<path d="M35 62 Q45 68 55 62" stroke="#555" stroke-width="2" fill="none" stroke-linecap="round"/>'
+    +'</svg>';
+}
+
+function svgNondakure(w,h){
+    // 呑んだくれ不動産：顔横広め版（rect width=46）
+    return '<svg viewBox="0 0 90 130" width="'+w+'" height="'+h+'" xmlns="http://www.w3.org/2000/svg">'
+    // 青い羽
+    +'<ellipse cx="8" cy="72" rx="20" ry="36" fill="#4488ee" opacity=".8" transform="rotate(-20 8 72)"/>'
+    +'<ellipse cx="82" cy="72" rx="20" ry="36" fill="#4488ee" opacity=".8" transform="rotate(20 82 72)"/>'
+    +'<ellipse cx="10" cy="75" rx="11" ry="24" fill="#88bbff" opacity=".5" transform="rotate(-15 10 75)"/>'
+    +'<ellipse cx="80" cy="75" rx="11" ry="24" fill="#88bbff" opacity=".5" transform="rotate(15 80 75)"/>'
+    // 体（ジャケット上部）
+    +'<rect x="28" y="70" width="34" height="52" rx="6" fill="#1a2566"/>'
+    // 白シャツ（ウエスト止め）
+    +'<polygon points="42,70 48,70 47,102 43,102" fill="#eee"/>'
+    // ネクタイ（30%短縮: 38px→27px: y=74〜101）
+    +'<polygon points="43,74 47,74 49,101 41,101" fill="#c0392b"/>'
+    +'<text x="45" y="93" text-anchor="middle" font-size="6.5" fill="#fff" font-weight="bold">酒</text>'
+    // ベルト
+    +'<rect x="26" y="100" width="38" height="5" rx="2" fill="#1a0a00"/>'
+    +'<rect x="42" y="100" width="7" height="5" fill="#c8a000"/>'
+    +'<rect x="44" y="101" width="3" height="3" fill="#1a0a00"/>'
+    // ズボン中央折り目
+    +'<line x1="45" y1="105" x2="45" y2="120" stroke="#0f1540" stroke-width="1.2"/>'
+    +'<rect x="13" y="72" width="16" height="38" rx="6" fill="#1a2566"/>'
+    +'<rect x="61" y="72" width="16" height="38" rx="6" fill="#1a2566"/>'
+    +'<rect x="66" y="86" width="11" height="30" rx="3" fill="#7a5500"/>'
+    +'<rect x="68.5" y="81" width="6" height="7" rx="1.5" fill="#7a5500"/>'
+    +'<rect x="67" y="97" width="10" height="14" fill="white" opacity=".88"/>'
+    +'<text x="72" y="107" text-anchor="middle" font-size="4.5" fill="#333">地面師</text>'
+    +'<ellipse cx="21" cy="112" rx="8" ry="6" fill="#f0c080"/>'
+    +'<rect x="32" y="120" width="11" height="10" rx="3" fill="#1a2566"/>'
+    +'<rect x="47" y="120" width="11" height="10" rx="3" fill="#1a2566"/>'
+    +'<ellipse cx="37" cy="130" rx="9" ry="4" fill="#222"/>'
+    +'<ellipse cx="52" cy="130" rx="9" ry="4" fill="#222"/>'
+    // 頭（横広め: x=22, width=46）
+    +'<rect x="22" y="34" width="46" height="33" rx="10" fill="#f0c080"/>'
+    // 髪（白髪七三・横広め）右に分け目をずらす
+    +'<ellipse cx="45" cy="36" rx="24" ry="9" fill="#777"/>'
+    +'<rect x="47" y="28" width="5" height="12" fill="#f0c080"/>'
+    +'<rect x="47" y="28" width="2" height="12" fill="#aaa"/>'
+    // 眉（横広め）
+    +'<line x1="27" y1="51" x2="38" y2="49" stroke="#555" stroke-width="1.8"/>'
+    +'<line x1="52" y1="49" x2="63" y2="51" stroke="#555" stroke-width="1.8"/>'
+    // 額の傷（眉間・鼻の上）
+    +'<line x1="42" y1="46" x2="48" y2="53" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>'
+    +'<line x1="43" y1="53" x2="47" y2="46" stroke="#c0392b" stroke-width="1.2" stroke-linecap="round"/>'
+    // 目（横広め）
+    +'<ellipse cx="32" cy="56" rx="3.8" ry="3.2" fill="white"/>'
+    +'<ellipse cx="58" cy="56" rx="3.8" ry="3.2" fill="white"/>'
+    +'<ellipse cx="32.5" cy="56.5" rx="2" ry="2.2" fill="#333"/>'
+    +'<ellipse cx="58.5" cy="56.5" rx="2" ry="2.2" fill="#333"/>'
+    // 鼻・口
+    +'<ellipse cx="45" cy="62" rx="2.5" ry="1.8" fill="#d9967a"/>'
+    +'<path d="M33 67 Q45 73 57 67" stroke="#555" stroke-width="1.8" fill="none" stroke-linecap="round"/>'
+    +'</svg>';
+}
+
+/* ===== 痛風キング SVG（首なし大頭・カラービール） ===== */
+function svgTsufu(w,h,col){
+    var c=col||'#111';
+    var beer=col==='#fff'?'rgba(255,255,180,0.6)':'#f5c518';
+    var foam=col==='#fff'?'rgba(255,255,255,0.5)':'white';
+    return '<svg viewBox="0 0 90 130" width="'+w+'" height="'+h+'" xmlns="http://www.w3.org/2000/svg">'
+    // 王冠
+    +'<polygon points="22,24 26,10 36,21 45,7 54,21 64,10 68,24" fill="'+c+'"/>'
+    // 頭（大きく、首なし）
+    +'<ellipse cx="45" cy="44" rx="23" ry="22" fill="'+c+'"/>'
+    // 胴体（大きく丸い）
+    +'<ellipse cx="45" cy="94" rx="28" ry="29" fill="'+c+'"/>'
+    // 左腕
+    +'<ellipse cx="10" cy="88" rx="7" ry="17" fill="'+c+'" transform="rotate(15 10 88)"/>'
+    // 右腕（ジョッキ方向）
+    +'<ellipse cx="77" cy="77" rx="7" ry="15" fill="'+c+'" transform="rotate(-22 77 77)"/>'
+    // ビールジョッキ本体（黄色）
+    +'<rect x="68" y="54" width="15" height="22" rx="3" fill="'+beer+'" stroke="'+c+'" stroke-width="1.5"/>'
+    // ジョッキのハンドル
+    +'<path d="M83 58 Q91 58 91 65 Q91 72 83 72" fill="none" stroke="'+c+'" stroke-width="4.5" stroke-linecap="round"/>'
+    // 泡（白）
+    +'<ellipse cx="75.5" cy="55" rx="7" ry="4.5" fill="'+foam+'"/>'
+    +'<ellipse cx="71" cy="54" rx="3.5" ry="3" fill="'+foam+'"/>'
+    +'<ellipse cx="80" cy="54" rx="3.5" ry="3" fill="'+foam+'"/>'
+    // 左脚
+    +'<ellipse cx="33" cy="120" rx="12" ry="9" fill="'+c+'"/>'
+    // 右脚
+    +'<ellipse cx="57" cy="120" rx="12" ry="9" fill="'+c+'"/>'
+    +'</svg>';
+}
+
+/* ===== キャラクターデータ・メッセージ ===== */
+var CHAR_DATA={
+    1:{
+        name:'さすらいのギャンブラー',badge:'初級',
+        getSVG:function(w,h){return svgGambler(w,h);},
+        msgs:{
+            start:['金欠御免！負けてもご勘弁を...でも全力でいくで！','競艇で負けた分、将棋で取り返したるわ！','勘と運と度胸！さすらいのギャンブラーにかかれ！','マッチングアプリより難しいかもやけど頑張るで！','赤ペンの準備は完了や！出走表を見る目で盤を読む！'],
+            think:['（赤ペンでメモメモ）この手はどうや...','競艇の6号艇に賭ける感覚で行くで...','麻雀でいうとどの牌を切るかや...','うーん...女には騙されても将棋は騙されへん！','本命か穴馬か...さすらいの勘を発動するで！'],
+            moved:['どや！さすらいの勘がさえてるで！','これが賭けや！当たったら儲けもんやな！','麻雀でいうとリーチかけた気分や！','金欠でも手は動く！これがギャンブラー魂や！','競艇の3連単みたいな手を指したで！'],
+            check:['王手や！今日はツイてる！競艇も買えばよかった！','これは単勝万馬券の気分や！王手！','さすらいのギャンブラー、ここで爆発や！'],
+            check_me:['ちっ...外れたか。でもまだ終わらへんで！','競艇で言うたら転覆やな...立て直すで！','マッチングアプリと違って、ここは逃げられへん...'],
+            capture:['もろた！払い戻し！','ドンピシャ！3連単的中や！','金欠御免でも駒は取れる！'],
+            matta:['待った！ギャンブルと違って取り消しできるのがええな！','競艇やったら返還無しやけど助かった！','赤ペンで書き直し！勘が間違っとった！'],
+            win:['やった！今日の勝ちで競艇の負けを回収や！','さすらいの勝利！次は麻雀も勝てる気がしてきた！','負けっぱなしの人生やけど、ここは勝てた！'],
+            lose:['また負けた...競艇と同じや...金欠御免...','まあええか、次は麻雀で勝つ予定やし...','騙されてきた分、ここで取り返すつもりやったのに...']
+        }
+    },
+    2:{
+        name:'イルカヒーロー',badge:'中級',
+        getSVG:function(w,h){return svgIruka(w,h);},
+        msgs:{
+            start:['808番、ただ今参戦！ブロッコリー食べながら頑張るで！','さあ勝負や！...ちょっとだけ食べていいか？','マイクがあれば歌いたいけど今日は将棋や！','野菜の相場と同じ！先を読まなアカン！','イルカに誓って全力で行くで！よろしくな！'],
+            think:['うーんうーん...（バリバリ）食べながらやと考えにくいわ','野菜の競りと同じ感覚で読んでるで！','イルカはソナーで読むんや！俺も読む！','（ムシャムシャ）...ちょっと待ってや、考えてるとこや','808の名にかけて最高の手を探すで！'],
+            moved:['どや！これがイルカヒーローの必殺技や！','ブロッコリー一玉分の価値がある手やで！','セリで競り落としたみたいや！','808チャンネル全開！この手どうや！','いっつも思うけど俺、才能あるんちゃうかな...'],
+            check:['王手や！マイク持って歌いたいくらいテンション上がってる！','808チャンネル最高潮！王手やで！','ブロッコリーも喜んでる！王手！'],
+            check_me:['ちょっ、王手か...（ゴリゴリ）野菜食べながら考えるわ...','まいったな...でもイルカは追い詰められてから強くなる！','食べながらやってたから集中できてなかった...反省'],
+            capture:['その駒、特売品にしてやる！もろた！','落札！808番落札！（バリバリ）','セリに勝ったで！この駒もらうで！'],
+            matta:['待った！食べながらやってたら間違えてしもた！','あかんあかん！集中せなアカン！（食べ物をしまう）','次は本気でいくで！腹も満たしたし！'],
+            win:['やったで！今日はブロッコリー奢るで！','808番の勝利！マイクで一曲歌わせてくれ！','イルカヒーロー完全勝利！また来てや！'],
+            lose:['まいったわ...負けたから自棄食いするしかない...','食べながらやったのがよくなかったわ...また来てや！','負けたけど楽しかったで！また勝負しよ！']
+        }
+    },
+    3:{
+        name:'呑んだくれ不動産',badge:'上級',
+        getSVG:function(w,h){return svgNondakure(w,h);},
+        msgs:{
+            start:['この対局、一升瓶を賭けてやろうじゃないか！','酒を飲みながら指すのが私のスタイルだ！まあ座れ！','地面師として培った読みの深さ、見せてやろうじゃないか！','今日は二升飲んでも頭は冴えてるぞ！かかってこい！','不動産界の巨人と将棋で戦うとは、なかなか度胸があるな！'],
+            think:['（グビグビ）...ふむ、この手は...（グビグビ）','一升飲んでも将棋の強さは変わらん！むしろ強くなる！','不動産の契約書を読むより難しいな...（ゴクゴク）','地面師直伝の一手、今考案中だ！待っとれ！','酔えば酔うほど神の手が見える！（グイっ）'],
+            moved:['どうだ！この手は想定外だったろう？飲むか？','地面師直伝の奇手だ！（ゲップ）失礼！','この手を外すとは！まだまだだな！','我ながら名手だ！酒がうまい！','不動産同様、先手必勝が我がモットーだ！'],
+            check:['王手！酒が止まらんぞ！うっひょー！','これは決まったか！地面師の血が騒ぐ！','追い詰めたぞ！もう一杯！'],
+            check_me:['む、王手か...（ゴクゴク）まだまだ終わらんぞ！','なかなかやるな！この調子で飲め！','油断した...まあ酒のせいにしておこう（グビ）'],
+            capture:['その駒はもらった！契約成立！','弱い駒は買い叩く！これが地面師流だ！','取った取った！祝杯だ！'],
+            matta:['待ったか！飲みながら考えると間違えるからな！','OK,OK！飲み直しだ！お前も飲め！','大らかさも大切だ！やり直しOKだ！'],
+            win:['今日も私の完勝だ！地面師万歳！祝杯だ！','まあ飲め！負けたからって落ち込むな！','地面師流将棋の真髄、見せてやった！'],
+            lose:['ぐぬぬ...酒のせいだ、酒のせい！また飲んで出直す！','（バタッ）...寝てしまった...次は負けんぞ...','こ、こんなはずでは...もう一本開ける！']
+        }
+    },
+    4:{
+        name:'痛風キング',badge:'特級',
+        getSVG:function(w,h,col){return svgTsufu(w,h,col);},
+        msgs:{
+            start:['フハハハハ！貴様も私の犠牲者リストに加えてやる！','痛風の痛みよりも、敗北した貴様の方が痛いはずだ！','王者の前に跪け。これが最初で最後の慈悲だ。','今まで誰一人として私に勝てた者はいない。貴様も同じだ。','将棋界の頂点に君臨する痛風キング、その力を見せてやろう！'],
+            think:['（ゴクゴク）...完璧な一手が見えた。','全ての手は計算済みだ。貴様に逃げ場はない。','痛風の痛みも忘れるほど集中している...','貴様の玉はすでに詰んでいる。気づいていないだけだ。','百手先まで読み切った。もはや勝負は決まっている。'],
+            moved:['詰みへの布石だ。覚悟しろ。','この手を防げる者など存在しない。','芸術的な一手だ。感謝するがいい。','さあ、絶望の淵に立つがいい。','逃げ場はない。諦めることが最善だ。'],
+            check:['王手！終わりだ！ビールが美味い！','詰みへの一歩！もはや貴様に逃げ場はない！','王手！神の手が降りてきた！'],
+            check_me:['ほう...一矢報いるとは。しかし無駄だ。','面白い手だ。しかし次の手で終わらせる。','なかなかやるではないか。だが私は負けない。'],
+            capture:['いただいた！','駒など全て私のものだ！','完璧な奪取だ！'],
+            matta:['待った？人生に待ったなどないが...まあ許してやろう。','甘いな。だが結果は変わらんがな。','やり直しか。何度やっても同じだがな。'],
+            win:['当然の結果だ。私が負けることはない。','完全なる勝利！ビールで乾杯だ！','また挑みに来い。何度でも踏み潰してやる。'],
+            lose:['...なぜだ...なぜ負けた...','あり得ない...お前は...化け物か...','こんな...こんなはずでは...']
+        }
+    }
+};
+
+function showCharMsg(type){
+    if(!settings)return;
+    var d=CHAR_DATA[settings.difficulty];if(!d)return;
+    var arr=d.msgs[type];if(!arr||!arr.length)return;
+    document.getElementById('char-msg').textContent=arr[Math.floor(Math.random()*arr.length)];
+}
+function updateCharPanel(){
+    var diff=(settings&&settings.difficulty)||2;
+    var d=CHAR_DATA[diff];if(!d)return;
+    document.getElementById('char-svg-wrap').innerHTML=d.getSVG(72,104);
+    document.getElementById('char-name-badge').textContent=d.name;
+}
+
+/* ===== スタート画面 ===== */
+var _selectedDiff=2; // スタート画面で選んだ難易度
+
+function showStartScreen(){
+    document.getElementById('go-modal').style.display='none';
+    document.getElementById('setting-modal').style.display='none';
+    _stopEndBGM();
+    if(bgmPlaying)stopBGM();
+    _bgmType='normal'; // スタート画面では通常BGMに戻す
+    if(_uraMode){showUraScreen();return;}
+    document.getElementById('start-screen').style.display='flex';
+    document.getElementById('ura-screen').style.display='none';
+}
+function showUraScreen(){
+    document.getElementById('start-screen').style.display='none';
+    document.getElementById('go-modal').style.display='none';
+    document.getElementById('setting-modal').style.display='none';
+    var us=document.getElementById('ura-screen');
+    us.style.display='flex';
+    _stopEndBGM();if(bgmPlaying)stopBGM();
+    // SVG挿入
+    [4,3,2].forEach(function(v){
+        var sfx=['4','3u','2u'][4-v];
+        var el=document.getElementById('sc-svg-'+sfx);
+        if(el&&CHAR_DATA[v]){
+            var menuCol=v===4?'#fff':undefined;
+            el.innerHTML=CHAR_DATA[v].getSVG(60,78,menuCol);
+            var svg=el.querySelector('svg');
+            if(svg)svg.setAttribute('viewBox','0 12 90 118');
+        }
+    });
+}
+function exitUraScreen(){
+    _uraMode=false;
+    document.getElementById('ura-screen').style.display='none';
+    document.getElementById('start-screen').style.display='flex';
+}
+
+/* ===== 秘密の裏モード解放（"Produced by M.Tsuda" を5回タップ） ===== */
+var _producerTapCount=0,_producerTapTimer=null;
+function _producerTap(){
+    _producerTapCount++;
+    if(_producerTapTimer)clearTimeout(_producerTapTimer);
+    _producerTapTimer=setTimeout(function(){_producerTapCount=0;},1500);
+    if(_producerTapCount>=5){
+        _producerTapCount=0;
+        try{localStorage.setItem('nondakure_ura','1');}catch(e){}
+        _uraUnlocked=true;_uraMode=true;
+        var urmBtn=document.getElementById('ura-mode-btn');
+        if(urmBtn)urmBtn.style.display='';
+        showNotice('👑','#ff4444',900,null);
+        setTimeout(showUraScreen,600);
+    }
+}
+
+function selectCharStart(v){
+    _selectedDiff=v;
+    document.getElementById('start-screen').style.display='none';
+    document.getElementById('ura-screen').style.display='none';
+    // 設定モーダルにキャラ情報をセット
+    var d=CHAR_DATA[v];
+    var lvNames={1:'才能ナシ（初級）',2:'凡人（中級）',3:'特待生（上級）',4:'神の領域（特級）'};
+    document.getElementById('setting-char-name').textContent=(lvNames[v]||'')+' / '+d.name;
+    var icon=document.getElementById('setting-char-icon');
+    icon.innerHTML=d.getSVG(44,60);
+    var svg=icon.querySelector('svg');
+    if(svg)svg.setAttribute('viewBox','0 14 90 116');
+    // ゲームパネルも選択キャラに即時更新
+    document.getElementById('char-svg-wrap').innerHTML=d.getSVG(72,104);
+    document.getElementById('char-name-badge').textContent=d.name;
+    // 特級は時間制限「あり」固定（なし選択不可）
+    var timeOff=document.querySelector('input[name="time"][value="off"]');
+    var timeOn=document.querySelector('input[name="time"][value="on"]');
+    if(v===4){
+        timeOn.checked=true;timeOff.disabled=true;
+        var lbOff=timeOff.closest?timeOff.closest('label'):timeOff.parentElement;
+        if(lbOff)lbOff.style.opacity='0.35';
+    } else {
+        timeOff.disabled=false;
+        var lbOff=timeOff.closest?timeOff.closest('label'):timeOff.parentElement;
+        if(lbOff)lbOff.style.opacity='1';
+    }
+    // パネルゲーム・飛車角配置（痛風キング時は非表示）
+    var pgSg=document.getElementById('panel-game-sg');
+    if(pgSg)pgSg.style.display=v===4?'none':'';
+    var hiraSg=document.getElementById('hiraku-sg');
+    if(hiraSg)hiraSg.style.display=v===4?'none':'';
+    document.getElementById('setting-modal').style.display='flex';
+    // BGM開始（ON設定なら）- 痛風キングはドラクエ風バトルBGM
+    var newBgmType=v===4?'rock':'normal';
+    if(newBgmType!==_bgmType){stopBGM();_bgmType=newBgmType;}
+    var bgmRadio=document.querySelector('input[name="bgm"]:checked');
+    if(!bgmRadio||bgmRadio.value==='on'){if(!bgmPlaying)startBGM();}
+}
+
+/* ===== 効果音 (SFX) ===== */
+var _sfxCtx=null;
+function _sfx(){
+    if(!_sfxCtx)_sfxCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(_sfxCtx.state==='suspended')_sfxCtx.resume();
+    return _sfxCtx;
+}
+function sfxBishi(){
+    var ctx=_sfx(),t=ctx.currentTime;
+    // ノイズバースト
+    var sz=Math.floor(ctx.sampleRate*0.07);
+    var buf=ctx.createBuffer(1,sz,ctx.sampleRate);
+    var d=buf.getChannelData(0);
+    for(var i=0;i<sz;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/sz*20);
+    var src=ctx.createBufferSource();src.buffer=buf;
+    var f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=2800;f.Q.value=2;
+    var g=ctx.createGain();g.gain.setValueAtTime(0.7,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+    src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t);
+    // パーカッシブトランジェント
+    var o=ctx.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(80,t+0.06);
+    var g2=ctx.createGain();g2.gain.setValueAtTime(0.4,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+    o.connect(g2);g2.connect(ctx.destination);o.start(t);o.stop(t+0.08);
+}
+function sfxMatta(){
+    var ctx=_sfx(),t=ctx.currentTime;
+    // 下降警告音（機械音）
+    for(var rep=0;rep<2;rep++){
+        var o=ctx.createOscillator();o.type='sawtooth';
+        o.frequency.setValueAtTime(650,t+rep*0.28);
+        o.frequency.exponentialRampToValueAtTime(180,t+rep*0.28+0.22);
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(0,t+rep*0.28);
+        g.gain.linearRampToValueAtTime(0.3,t+rep*0.28+0.02);
+        g.gain.setValueAtTime(0.25,t+rep*0.28+0.2);
+        g.gain.exponentialRampToValueAtTime(0.001,t+rep*0.28+0.25);
+        o.connect(g);g.connect(ctx.destination);
+        o.start(t+rep*0.28);o.stop(t+rep*0.28+0.27);
+    }
+}
+function sfxOute(){
+    var ctx=_sfx(),t=ctx.currentTime;
+    // 上昇アラーム（王手！機械音）
+    var freqs=[420,550,700];
+    freqs.forEach(function(fr,i){
+        var o=ctx.createOscillator();o.type='square';
+        o.frequency.setValueAtTime(fr,t+i*0.17);
+        o.frequency.exponentialRampToValueAtTime(fr*1.7,t+i*0.17+0.12);
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(0.22,t+i*0.17);
+        g.gain.setValueAtTime(0.18,t+i*0.17+0.1);
+        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.17+0.15);
+        o.connect(g);g.connect(ctx.destination);
+        o.start(t+i*0.17);o.stop(t+i*0.17+0.17);
+    });
+}
+function sfxPingpong(){
+    var ctx=_sfx(),t=ctx.currentTime;
+    [1500,1900].forEach(function(fr,i){
+        var o=ctx.createOscillator();o.type='sine';
+        o.frequency.setValueAtTime(fr,t+i*0.15);
+        o.frequency.exponentialRampToValueAtTime(fr*0.82,t+i*0.15+0.15);
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(0.38,t+i*0.15);
+        g.gain.exponentialRampToValueAtTime(0.001,t+i*0.15+0.22);
+        o.connect(g);g.connect(ctx.destination);
+        o.start(t+i*0.15);o.stop(t+i*0.15+0.25);
+    });
+}
+function sfxCancel(){
+    // 「きゅるる」下降ビブラートキャンセル音
+    var ctx=_sfx(),t=ctx.currentTime;
+    var lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=22;
+    var lfoG=ctx.createGain();lfoG.gain.value=90;
+    lfo.connect(lfoG);
+    var o=ctx.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(680,t);
+    o.frequency.exponentialRampToValueAtTime(160,t+0.28);
+    lfoG.connect(o.frequency);
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0.001,t);
+    g.gain.linearRampToValueAtTime(0.22,t+0.03);
+    g.gain.setValueAtTime(0.18,t+0.22);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.32);
+    o.connect(g);g.connect(ctx.destination);
+    lfo.start(t);o.start(t);lfo.stop(t+0.35);o.stop(t+0.35);
+}
+
+/* ===== 棋譜表記 ===== */
+// 駒定数は数値: FU=1,KYOU=2,KE=3,GIN=4,KIN=5,KAKU=6,HI=7,OU=8
+var _KN_BASE={1:'歩',2:'香',3:'桂',4:'銀',5:'金',6:'角',7:'飛',8:'玉'};
+var _KN_PRO ={1:'と',2:'成香',3:'成桂',4:'成銀',6:'馬',7:'龍'};
+function buildKifu(mv,origPiece,side){
+    if(!mv)return'';
+    var pre=(side===PLAYER)?'▲':'△';
+    var col=9-mv.tc;
+    var row=['一','二','三','四','五','六','七','八','九'][mv.tr];
+    if(mv.drop)return pre+col+row+(_KN_BASE[mv.p]||'?')+'打';
+    if(!origPiece)return pre+col+row+'?';
+    var pn=origPiece.pr?(_KN_PRO[origPiece.p]||'?'):(_KN_BASE[origPiece.p]||'?');
+    return pre+col+row+pn+(mv.promote?'成':'');
+}
+function updateKifuDisp(text){
+    var el=document.getElementById('kifu-disp');
+    if(el)el.textContent=text||'';
+}
+
+function sfxNari(){
+    // 「成り！」きらりとした上昇音
+    var ctx=_sfx(),t=ctx.currentTime;
+    // 主音：すっと上がるグリッサンド
+    var o=ctx.createOscillator();o.type='triangle';
+    o.frequency.setValueAtTime(380,t);
+    o.frequency.exponentialRampToValueAtTime(880,t+0.18);
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0.35,t);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+    o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.42);
+    // アクセント：高音ピカリ
+    var o2=ctx.createOscillator();o2.type='sine';
+    o2.frequency.setValueAtTime(1400,t+0.15);
+    o2.frequency.exponentialRampToValueAtTime(1800,t+0.28);
+    var g2=ctx.createGain();
+    g2.gain.setValueAtTime(0,t+0.15);
+    g2.gain.linearRampToValueAtTime(0.28,t+0.18);
+    g2.gain.exponentialRampToValueAtTime(0.001,t+0.45);
+    o2.connect(g2);g2.connect(ctx.destination);o2.start(t+0.15);o2.stop(t+0.48);
+}
+
+/* ===== 勝敗BGM ===== */
+var _endBGMNodes=[];
+function _stopEndBGM(){_endBGMNodes.forEach(function(n){try{n.stop();}catch(e){}});_endBGMNodes=[];}
+function _endNote(ctx,freq,t,dur,type,vol){
+    var o=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain();
+    o.type=type||'triangle';o2.type=type||'triangle';
+    o.frequency.value=freq;o2.frequency.value=freq*1.004;
+    g.gain.setValueAtTime(0.001,t);
+    g.gain.linearRampToValueAtTime(vol||0.1,t+0.025);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.88);
+    o.connect(g);o2.connect(g);g.connect(bgmCtx.destination);
+    o.start(t);o2.start(t);o.stop(t+dur);o2.stop(t+dur);
+    _endBGMNodes.push(o,o2);
+}
+function startWinBGM(){
+    stopBGM();_stopEndBGM();
+    if(!bgmCtx)bgmCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(bgmCtx.state==='suspended')bgmCtx.resume();
+    var t=bgmCtx.currentTime+0.15;
+    // 明るい上昇ファンファーレ（D major）
+    var W=[
+        [293.66,0,.12],[370,.13,.12],[440,.26,.12],[587.33,.39,.3],
+        [523.25,.72,.12],[587.33,.84,.12],[659.25,.96,.12],[783.99,1.08,.45],
+        [659.25,1.56,.12],[783.99,1.68,.12],[880,1.8,.12],[1046.5,1.92,.55],
+        [880,2.5,.12],[1046.5,2.62,.12],[1174.66,2.74,.12],[1396.91,2.86,.7],
+        [880,3.6,.2],[1046.5,3.82,.2],[1174.66,4.04,.2],[1396.91,4.26,.9]
+    ];
+    W.forEach(function(n){_endNote(bgmCtx,n[0],t+n[1],n[2],'triangle',0.13);});
+    // ベース
+    [293.66,293.66,440,587.33].forEach(function(f,i){_endNote(bgmCtx,f/2,t+i*1.3,1.1,'sine',0.09);});
+}
+function startLoseBGM(){
+    stopBGM();_stopEndBGM();
+    if(!bgmCtx)bgmCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(bgmCtx.state==='suspended')bgmCtx.resume();
+    var t=bgmCtx.currentTime+0.15;
+    // 悲しい下降メロディー（A minor）
+    var L=[
+        [440,0,.45],[392,.5,.45],[349.23,1,.45],[329.63,1.5,.55],
+        [293.66,2.1,.45],[261.63,2.6,.45],[246.94,3.1,.45],[220,3.6,.9],
+        [261.63,4.7,.35],[246.94,5.1,.35],[220,5.5,.35],[196,5.9,.5],
+        [174.61,6.5,.35],[164.81,6.9,.35],[146.83,7.3,1.6]
+    ];
+    L.forEach(function(n){_endNote(bgmCtx,n[0],t+n[1],n[2],'triangle',0.1);});
+    // 低弦ベース
+    [110,98,87,82,73].forEach(function(f,i){_endNote(bgmCtx,f,t+i*1.8,1.6,'sine',0.07);});
+}
+
+/* ===== 中央通知 ===== */
+var _noticeTimer=null;
+function showNotice(text,color,dur,sfxFn){
+    var el=document.getElementById('notice');
+    el.innerHTML='<div class="nbox" style="background:rgba(0,0,0,.85);color:'+color+';border-color:'+color+';">'+text+'</div>';
+    el.style.display='block';
+    el.style.animation='none';el.style.opacity='1';
+    // pop animation
+    var nbox=el.querySelector('.nbox');
+    nbox.style.animation='none';
+    void el.offsetWidth;
+    nbox.style.animation='noticePop .22s ease-out forwards';
+    if(_noticeTimer)clearTimeout(_noticeTimer);
+    _noticeTimer=setTimeout(function(){el.style.display='none';},dur||1300);
+    if(sfxFn)sfxFn();
+}
+function clearNotice(){
+    if(_noticeTimer){clearTimeout(_noticeTimer);_noticeTimer=null;}
+    var el=document.getElementById('notice');
+    if(el)el.style.display='none';
+}
+
+/* ===== CPU思考中コメントローテーション ===== */
+var _thinkMsgTimer=null;
+function _startThinkMsgRotation(){
+    _stopThinkMsgRotation();
+    if(!settings)return;
+    var d=CHAR_DATA[settings.difficulty];if(!d)return;
+    var msgs=d.msgs.think;if(!msgs||!msgs.length)return;
+    var idx=0;
+    _thinkMsgTimer=setInterval(function(){
+        if(gameState!=='playing'||currentSide!==CPU){_stopThinkMsgRotation();return;}
+        idx=(idx+1)%msgs.length;
+        var el=document.getElementById('char-msg');
+        if(el)el.textContent=msgs[idx];
+    },5000);
+}
+function _stopThinkMsgRotation(){
+    if(_thinkMsgTimer){clearInterval(_thinkMsgTimer);_thinkMsgTimer=null;}
+}
+
+/* ===== 駒スラムアニメ ===== */
+function animateSlam(r,c){
+    var pd=pieceDivs[r*9+c];if(!pd)return;
+    pd.classList.remove('slam');
+    void pd.offsetWidth;
+    pd.classList.add('slam');
+    setTimeout(function(){pd.classList.remove('slam');},200);
+}
+
+/* ===== 戦法検出 ===== */
+var _hiMoved={};
+function detectTactic(mv, oldBoard){
+    if(mv.drop)return null;
+    var piece=oldBoard[mv.fr][mv.fc];
+    if(!piece||piece.s!==PLAYER)return null;
+    // 飛車の振り直し（同行または初回移動）
+    if(piece.p===HI&&!piece.pr){
+        var k=mv.fr+'-'+mv.fc;
+        if(!_hiMoved[k]){
+            _hiMoved[k]=true;
+            // 目的地の列で判定
+            switch(mv.tc){
+                case 0:return'端飛車！';
+                case 1:return'向かい飛車！';
+                case 2:return'三間飛車！';  // 実際は6だが座標系で調整
+                case 3:return'四間飛車！';
+                case 4:return'中飛車！';
+                case 6:return'三間飛車！';
+                case 5:return'四間飛車！';
+            }
+        }
+    }
+    // ふんどしの桂（桂馬が2つの高価値駒を同時に攻撃）
+    if(piece.p===KE&&!piece.pr&&mv.tr>=2){
+        var t1r=mv.tr-2;
+        var tgt1=(mv.tc-1>=0)?board[t1r][mv.tc-1]:null;
+        var tgt2=(mv.tc+1<=8)?board[t1r][mv.tc+1]:null;
+        if(tgt1&&tgt1.s===CPU&&pv(tgt1.p,tgt1.pr)>=500&&
+           tgt2&&tgt2.s===CPU&&pv(tgt2.p,tgt2.pr)>=500){
+            return'ふんどしの桂！';
+        }
+    }
+    // 玉の囲い動作
+    if(piece.p===OU){
+        if(mv.tc<=1)return'穴熊へ！';
+        if(mv.tc>=7)return'端玉へ！';
+    }
+    return null;
+}
+
+/* ===== パネルゲーム ===== */
+var _panelNames=['何もなし','対局変更','将棋盤🔃','持ち駒🔃','一回休み','金かくし','ふりだし','と金祭り','最強津駒'];
+var _panelWeights=[25,15,5,10,10,7,3,5,20]; // 各パネルの出現確率(%)
+var _panelCycleTimer=null,_panelSpeed=60,_panelIdx=-1,_panelStopping=false,_panelDone=null,_panelTarget=-1;
+
+function _weightedPanelIdx(){
+    var r=Math.random()*100,acc=0;
+    for(var i=0;i<_panelWeights.length;i++){acc+=_panelWeights[i];if(r<acc)return i;}
+    return 0;
+}
+var _goldHidden=0,_fuAllPro=false;
+var _tsuMoves=0,_tsuActive=false;
+
+function _tickTsu(){
+    if(!_tsuActive)return false;
+    _tsuMoves--;
+    if(_tsuMoves<=0){
+        _tsuActive=false;
+        for(var r=0;r<9;r++)for(var c=0;c<9;c++){if(board[r][c]&&board[r][c].p===TSU)board[r][c]=null;}
+        playerHand=playerHand.filter(function(p){return p!==TSU;});
+        enemyHand=enemyHand.filter(function(p){return p!==TSU;});
+        renderAll();
+        showNotice('最強津駒が消えた！','#888',1400,null);
+        return true;
+    }
+    return false;
+}
+
+function _getPanelList(){
+    var list=_panelNames.slice();
+    list[5]=_goldHidden>0?'金くれよ':'金かくし';
+    list[7]=_fuAllPro?'元の歩に':'と金祭り';
+    if(!playerHand.length&&!enemyHand.length)list[3]='何もなし';
+    if(isInCheck(board,PLAYER))list[4]='何もなし';
+    return list;
+}
+
+function checkPanelTrigger(done){
+    done=done||function(){};
+    if(!settings||!settings.panelGame||settings.difficulty===4){done();return;}
+    if(moveCount>0&&moveCount%10===0){showPanelGame(done);}
+    else{done();}
+}
+
+function showPanelGame(done){
+    _panelDone=done||function(){};
+    _panelStopping=false;_panelSpeed=60;_panelIdx=-1;
+    var list=_getPanelList();
+    var grid=document.getElementById('panel-grid');
+    grid.innerHTML='';
+    for(var i=0;i<9;i++){
+        var d=document.createElement('div');
+        d.className='panel-cell';d.textContent=list[i];d.id='panel-cell-'+i;
+        grid.appendChild(d);
+    }
+    document.getElementById('panel-modal').style.display='flex';
+    _panelCycle(list);
+    setTimeout(panelStop,1500); // 1.5秒後に自動ストップ
+}
+
+function _panelCycle(list){
+    if(_panelCycleTimer){clearInterval(_panelCycleTimer);_panelCycleTimer=null;}
+    _panelCycleTimer=setInterval(function(){
+        var prev=document.getElementById('panel-cell-'+_panelIdx);
+        if(prev)prev.classList.remove('active');
+        _panelIdx=(_panelIdx+1)%9;
+        var cur=document.getElementById('panel-cell-'+_panelIdx);
+        if(cur)cur.classList.add('active');
+        _sfxPanelTick();
+        if(_panelStopping){
+            _panelSpeed=Math.min(_panelSpeed*1.38,820);
+            clearInterval(_panelCycleTimer);_panelCycleTimer=null;
+            if(_panelSpeed>=820){
+                // target未達なら後戻りせず前進継続（最大820ms間隔）
+                if(_panelTarget>=0&&_panelIdx!==_panelTarget){
+                    _panelCycle(list);
+                } else {
+                    _selectPanel(list[_panelIdx],_panelIdx);
+                }
+            } else {
+                _panelCycle(list);
+            }
+        }
+    },_panelSpeed);
+}
+
+function panelStop(){
+    if(_panelStopping)return;
+    _panelStopping=true;
+    _panelTarget=_weightedPanelIdx(); // 重み付き確率で結果を事前決定
+}
+
+function _selectPanel(name,idx){
+    if(_panelCycleTimer){clearInterval(_panelCycleTimer);_panelCycleTimer=null;}
+    var cur=document.getElementById('panel-cell-'+idx);
+    if(cur){cur.classList.remove('active');cur.classList.add('selected');}
+    _sfxWhistle();
+    var doneFn=_panelDone;_panelDone=null;
+    var noticeDur=(name==='最強津駒')?3200:2200;
+    // 選択セルを見せてからモーダルを閉じ、通知を前面表示
+    setTimeout(function(){
+        document.getElementById('panel-modal').style.display='none';
+        var displayText=name;
+        if(name==='最強津駒')displayText='最強津駒！<br><span style="font-size:16px;font-weight:normal;line-height:1.5;">この駒は飛車角両方の動きができますが<br>途中消滅します</span>';
+        _sfxFanfare();
+        showNotice(displayText,'#e67e22',noticeDur,null);
+        setTimeout(function(){_applyPanel(name,doneFn);},noticeDur);
+    },400);
+}
+
+function _sfxWhistle(){
+    var ctx=_sfx(),t=ctx.currentTime;
+    var o=ctx.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(800,t);
+    o.frequency.exponentialRampToValueAtTime(1500,t+0.12);
+    o.frequency.exponentialRampToValueAtTime(1100,t+0.28);
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0.28,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.33);
+    o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+0.36);
+}
+function _sfxPanelTick(){
+    var ctx=_sfx(),t=ctx.currentTime;
+    // スネア風ショートノイズ
+    var sz=Math.floor(ctx.sampleRate*0.025);
+    var buf=ctx.createBuffer(1,sz,ctx.sampleRate);
+    var d=buf.getChannelData(0);
+    for(var i=0;i<sz;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/sz*40);
+    var src=ctx.createBufferSource();src.buffer=buf;
+    var f=ctx.createBiquadFilter();f.type='highpass';f.frequency.value=2200;
+    var g=ctx.createGain();g.gain.setValueAtTime(0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
+    src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(t);
+}
+function _sfxFanfare(){
+    var ctx=_sfx(),t=ctx.currentTime;
+    // じゃじゃーん！: 上昇フレーズ → コード
+    [[330,0.00,0.10],[415,0.07,0.10],[494,0.14,0.10],[659,0.21,0.13]].forEach(function(n){
+        var o=ctx.createOscillator();o.type='triangle';o.frequency.value=n[0];
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(0.25,t+n[1]);g.gain.exponentialRampToValueAtTime(0.001,t+n[1]+n[2]);
+        o.connect(g);g.connect(ctx.destination);o.start(t+n[1]);o.stop(t+n[1]+n[2]+0.02);
+    });
+    // コード（ジャーン）
+    [330,415,494,659].forEach(function(f){
+        var o=ctx.createOscillator();o.type='triangle';
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(0.001,t+0.34);g.gain.linearRampToValueAtTime(0.20,t+0.37);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.95);
+        o.connect(g);g.connect(ctx.destination);o.start(t+0.34);o.stop(t+0.98);
+    });
+}
+
+function _applyPanel(name,done){
+    done=done||function(){};
+    selPos=null;movableCells=[];legalMovesForSel=[];
+    switch(name){
+        case '何もなし':renderAll();done();break;
+        case '対局変更':_panelChangeOpponent();renderAll();done();break;
+        case '将棋盤🔃':_panelFlipBoard();renderAll();done();break;
+        case '持ち駒🔃':_panelSwapHands();renderAll();done();break;
+        case '一回休み':_panelSkipTurn();break; // done を呼ばずCPUターン開始
+        case '金かくし':_panelHideGold();renderAll();done();break;
+        case '金くれよ':_panelReturnGold();renderAll();done();break;
+        case 'ふりだし':_panelRestart();break; // done を呼ばず再初期化
+        case 'と金祭り':_panelTokinFestival();renderAll();done();break;
+        case '元の歩に':_panelRevertTokin();renderAll();done();break;
+        case '最強津駒':_panelTsuKoma();renderAll();done();break;
+        default:renderAll();done();break;
+    }
+}
+
+function _panelChangeOpponent(){
+    var options=[1,2,3].filter(function(v){return v!==settings.difficulty;});
+    var newDiff=options[Math.floor(Math.random()*options.length)];
+    settings.difficulty=newDiff;
+    var d=CHAR_DATA[newDiff];
+    if(d){
+        document.getElementById('char-svg-wrap').innerHTML=d.getSVG(72,104);
+        document.getElementById('char-name-badge').textContent=d.name;
+        var lvLabel={1:'初級',2:'中級',3:'上級',4:'特級'};
+        document.getElementById('eh-label').textContent=lvLabel[newDiff]||'CPU';
+        showCharMsg('start');
+    }
+    showNotice('対局変更！<br><span style="font-size:20px;">'+d.name+'が登場</span>','#9b59b6',1800,null);
+}
+
+function _panelFlipBoard(){
+    var nb=[];
+    for(var r=0;r<9;r++){nb[r]=[];for(var c=0;c<9;c++)nb[r][c]=null;}
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        var cell=board[r][c];
+        if(cell)nb[8-r][8-c]={p:cell.p,s:-cell.s,pr:cell.pr};
+    }
+    board=nb;lastMove=null;
+    showNotice('将棋盤🔃','#2980b9',1200,null);
+}
+
+function _panelSwapHands(){
+    var tmp=playerHand.slice();
+    playerHand=enemyHand.slice();
+    enemyHand=tmp;
+    showNotice('持ち駒🔃','#16a085',1200,null);
+}
+
+function _panelSkipTurn(){
+    currentSide=CPU;setStatus('CPUの番です');updateMattaBtn();
+    showNotice('一回休み...','#7f8c8d',1200,null);
+    setTimeout(function(){
+        if(gameState!=='playing')return;
+        showCharMsg('think');
+        document.getElementById('think').style.display='flex';
+        _startThinkMsgRotation();
+        setTimeout(function(){
+            if(gameState!=='playing'){_stopThinkMsgRotation();document.getElementById('think').style.display='none';return;}
+            _doCPUWork();
+        },50);
+    },1300);
+}
+
+function _panelHideGold(){
+    var cnt=0;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){if(board[r][c]&&board[r][c].p===KIN){board[r][c]=null;cnt++;}}
+    for(var i=playerHand.length-1;i>=0;i--){if(playerHand[i]===KIN){playerHand.splice(i,1);cnt++;}}
+    for(var i=enemyHand.length-1;i>=0;i--){if(enemyHand[i]===KIN){enemyHand.splice(i,1);cnt++;}}
+    _goldHidden+=cnt;
+    showNotice('金かくし！','#f39c12',1200,null);
+}
+
+function _panelReturnGold(){
+    var cnt=_goldHidden;_goldHidden=0;
+    for(var i=0;i<Math.floor(cnt/2);i++)playerHand.push(KIN);
+    for(var i=0;i<Math.ceil(cnt/2);i++)enemyHand.push(KIN);
+    showNotice('金くれよ！','#f1c40f',1400,null);
+}
+
+function _panelTokinFestival(){
+    var changed=false;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        var cell=board[r][c];
+        if(cell&&cell.p===FU&&!cell.pr){cell.pr=true;changed=true;}
+    }
+    if(changed){_fuAllPro=true;showNotice('と金祭り！','#e74c3c',1200,null);}
+    else{showNotice('歩がない...','#888',900,null);}
+}
+
+function _panelRevertTokin(){
+    _fuAllPro=false;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        var cell=board[r][c];
+        if(cell&&cell.p===FU&&cell.pr)cell.pr=false;
+    }
+    showNotice('元の歩に','#95a5a6',1200,null);
+}
+
+function _panelRestart(){
+    showNotice('ふりだし！','#e74c3c',900,null);
+    setTimeout(function(){
+        _goldHidden=0;_fuAllPro=false;_tsuActive=false;_tsuMoves=0;
+        moveCount=0;updateMoveCount();
+        initBoard();
+        playerHand=[];enemyHand=[];
+        selPos=null;movableCells=[];legalMovesForSel=[];lastMove=null;
+        mattaHist=[];mattaCount=3;
+        renderAll();
+        currentSide=PLAYER;setStatus('あなたの番です');updateMattaBtn();
+        showNotice('やり直し！','#e67e22',900,null);
+    },1000);
+}
+
+function _panelTsuKoma(){
+    _tsuActive=true;_tsuMoves=10;
+    playerHand.push(TSU);
+    enemyHand.push(TSU);
+}
+
+/* ===== BGM (Web Audio API) ===== */
+var bgmCtx=null,bgmNodes=[],bgmPlaying=false,bgmScheduleId=null,bgmNextStart=0;
+var _bgmType='normal'; // 'normal' or 'rock'
+var _lastResultInfo=null;
+// D短調ペンタトニック風和風メロディー
+var BGM_SEQ=[
+    [293.66,0,.4],[349.23,.4,.4],[392,.8,.4],[440,1.2,.55],
+    [392,1.8,.4],[349.23,2.2,.4],[392,2.6,.4],[440,3,.55],
+    [523.25,3.6,.55],[440,4.2,.4],[392,4.6,.4],[349.23,5,.4],
+    [293.66,5.4,.8],
+    [349.23,6.4,.4],[392,6.8,.4],[440,7.2,.4],[523.25,7.6,.55],
+    [440,8.2,.4],[392,8.6,.4],[440,9,.4],[523.25,9.4,.55],
+    [587.33,10,.55],[523.25,10.6,.4],[440,11,.4],[392,11.4,.4],
+    [349.23,11.8,.4],[392,12.2,.55],[293.66,12.8,.9]
+];
+var BGM_DUR=14.0;
+
+// 痛風キング用BGM：ドラクエ風バトルBGM（D長調、140BPM）
+var DQ_MELODY=[
+    // ファンファーレ的オープニング
+    [587.33,0,.14],[659.26,.16,.1],[739.99,.28,.1],[880,.40,.30],
+    [784,.74,.1],[880,.86,.1],[987.77,.98,.30],
+    // メインリフ A
+    [587.33,1.32,.12],[659.26,1.46,.10],[739.99,1.58,.10],[784,1.70,.30],
+    [659.26,2.02,.12],[587.33,2.16,.12],[659.26,2.30,.30],
+    [440,2.62,.12],[493.88,2.76,.10],[554.37,2.88,.10],[587.33,3.00,.30],
+    [493.88,3.32,.12],[440,3.46,.12],[392,3.60,.12],[440,3.74,.30],
+    // メインリフ B（サビ）
+    [587.33,4.08,.12],[659.26,4.22,.10],[739.99,4.34,.10],[784,4.48,.30],
+    [880,4.80,.12],[784,4.94,.12],[739.99,5.08,.12],[659.26,5.22,.12],
+    [587.33,5.36,.44],
+    // 締め
+    [440,5.90,.12],[587.33,6.04,.12],[784,6.18,.12],[880,6.30,.30],
+    [784,6.64,.10],[739.99,6.76,.10],[659.26,6.88,.10],[587.33,7.00,.44],
+];
+var DQ_BASS=[
+    [146.83,0,.38],[196,.44,.30],[146.83,.88,.36],[196,1.32,.30],
+    [130.81,1.32,.30],[110,1.74,.30],[130.81,2.16,.30],[110,2.58,.30],
+    [110,2.62,.30],[146.83,3.00,.30],[110,3.44,.28],[146.83,3.82,.28],
+    [146.83,4.08,.30],[110,4.52,.28],[146.83,4.96,.30],[196,5.38,.42],
+    [110,5.90,.30],[146.83,6.32,.30],[196,6.76,.42],
+];
+var DQ_BGM_DUR=7.6;
+
+function _playDQNote(freq,t,dur,vol,type){
+    var o=bgmCtx.createOscillator();
+    var g=bgmCtx.createGain();
+    o.type=type||'triangle';
+    o.frequency.value=freq;
+    g.gain.setValueAtTime(0.001,t);
+    g.gain.linearRampToValueAtTime(vol||0.07,t+0.015);
+    g.gain.setValueAtTime(vol||0.07,t+dur*0.72);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+    o.connect(g);g.connect(bgmCtx.destination);
+    o.start(t);o.stop(t+dur+0.05);
+    bgmNodes.push(o);
+}
+function _scheduleDQBGM(start){
+    DQ_MELODY.forEach(function(n){_playDQNote(n[0],start+n[1],n[2],0.07,'triangle');});
+    DQ_BASS.forEach(function(n){_playDQNote(n[0],start+n[1],n[2],0.10,'sine');});
+    // バスドラ（低周波）
+    [0,.44,.88,1.32,1.74,2.16,2.58,3.00,3.44,3.88,4.30,4.74,5.16,5.58,6.00,6.44].forEach(function(bt){
+        var t=start+bt;
+        var ob=bgmCtx.createOscillator();ob.type='sine';
+        ob.frequency.setValueAtTime(140,t);ob.frequency.exponentialRampToValueAtTime(50,t+0.07);
+        var g=bgmCtx.createGain();g.gain.setValueAtTime(0.14,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+        ob.connect(g);g.connect(bgmCtx.destination);bgmNodes.push(ob);ob.start(t);ob.stop(t+0.11);
+    });
+    // スネア代わり（正弦波ショート）
+    [.88,1.74,2.58,3.44,4.30,5.16,6.00,6.86].forEach(function(bt){
+        var t=start+bt;
+        var o=bgmCtx.createOscillator();o.type='square';o.frequency.value=240;
+        var g=bgmCtx.createGain();g.gain.setValueAtTime(0.04,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+        o.connect(g);g.connect(bgmCtx.destination);bgmNodes.push(o);o.start(t);o.stop(t+0.09);
+    });
+}
+function _playBGMNote(freq,t,dur){
+    var o=bgmCtx.createOscillator(),o2=bgmCtx.createOscillator(),g=bgmCtx.createGain(),f=bgmCtx.createBiquadFilter();
+    o.type='triangle';o2.type='triangle';
+    o.frequency.value=freq;o2.frequency.value=freq*1.004;
+    f.type='lowpass';f.frequency.value=freq*3.5;
+    g.gain.setValueAtTime(0.001,t);
+    g.gain.linearRampToValueAtTime(0.07,t+0.015);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur*0.85);
+    o.connect(f);o2.connect(f);f.connect(g);g.connect(bgmCtx.destination);
+    o.start(t);o2.start(t);o.stop(t+dur);o2.stop(t+dur);
+    bgmNodes.push(o,o2);
+}
+function _scheduleBGM(start){
+    BGM_SEQ.forEach(function(n){
+        _playBGMNote(n[0],start+n[1],n[2]);
+        if(n[1]%3.2<0.1)_playBGMNote(n[0]*0.5,start+n[1],n[2]*1.5);
+    });
+}
+function _updateBGMBtn(){
+    var slash=document.getElementById('bgm-slash');
+    if(slash)slash.setAttribute('display',bgmPlaying?'none':'inline');
+    var btn=document.getElementById('bgm-btn');
+    if(btn)btn.style.background=bgmPlaying?'#27ae60':'#7f8c8d';
+}
+function startBGM(){
+    if(!bgmCtx)bgmCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(bgmCtx.state==='suspended')bgmCtx.resume();
+    bgmPlaying=true;
+    bgmNextStart=bgmCtx.currentTime;
+    var isRock=_bgmType==='rock';
+    var schedFn=isRock?_scheduleDQBGM:_scheduleBGM;
+    var durVal=isRock?DQ_BGM_DUR:BGM_DUR;
+    schedFn(bgmNextStart);bgmNextStart+=durVal;
+    bgmScheduleId=setInterval(function(){
+        if(!bgmPlaying)return;
+        schedFn(bgmNextStart);bgmNextStart+=durVal;
+    },(durVal-1)*1000);
+    _updateBGMBtn();
+}
+function stopBGM(){
+    bgmPlaying=false;
+    if(bgmScheduleId)clearInterval(bgmScheduleId);
+    bgmNodes.forEach(function(n){try{n.stop();}catch(e){}});
+    bgmNodes=[];
+    if(bgmCtx)bgmCtx.suspend();
+    _updateBGMBtn();
+}
+function toggleBGM(){if(bgmPlaying)stopBGM();else startBGM();}
+function _prebufferBGM(seconds){
+    if(!bgmPlaying||!bgmCtx)return;
+    var isRock=_bgmType==='rock';
+    var schedFn=isRock?_scheduleDQBGM:_scheduleBGM;
+    var durVal=isRock?DQ_BGM_DUR:BGM_DUR;
+    var maxLoops=isRock?2:Math.ceil(seconds/durVal); // DQ BGMはノード過多防止のため2ループまで
+    var endTime=bgmCtx.currentTime+Math.min(seconds,durVal*maxLoops);
+    while(bgmNextStart<endTime){schedFn(bgmNextStart);bgmNextStart+=durVal;}
+}
+function _restartBGMInterval(){
+    if(!bgmPlaying)return;
+    if(bgmScheduleId)clearInterval(bgmScheduleId);
+    var isRock=_bgmType==='rock';
+    var schedFn=isRock?_scheduleDQBGM:_scheduleBGM;
+    var durVal=isRock?DQ_BGM_DUR:BGM_DUR;
+    bgmScheduleId=setInterval(function(){if(!bgmPlaying)return;schedFn(bgmNextStart);bgmNextStart+=durVal;},(durVal-1)*1000);
+    if(bgmCtx&&bgmCtx.state==='suspended')bgmCtx.resume();
+}
+
+/* ===== 盤面初期化 ===== */
+var FU=1,KYOU=2,KE=3,GIN=4,KIN=5,KAKU=6,HI=7,OU=8,TSU=9;
+var PLAYER=1,CPU=-1;
+var ORDER=[HI,KAKU,KIN,GIN,KE,KYOU,FU];
+function _applyNoHiraku(){
+    if(!settings)return;
+    var nh=settings.noHiraku||'none';
+    if(nh==='none')return;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        var cell=board[r][c];if(!cell)continue;
+        if(cell.p!==HI&&cell.p!==KAKU)continue;
+        if(nh==='both'||(nh==='cpu'&&cell.s===CPU)||(nh==='player'&&cell.s===PLAYER)){
+            board[r][c]=null;
+        }
+    }
+}
+function initBoard(){
+    board=[];
+    for(var r=0;r<9;r++){board[r]=[];for(var c=0;c<9;c++)board[r][c]=null;}
+    var bk=[KYOU,KE,GIN,KIN,OU,KIN,GIN,KE,KYOU];
+    for(var c=0;c<9;c++)board[0][c]={p:bk[c],s:CPU,pr:false};
+    board[1][1]={p:HI,s:CPU,pr:false};board[1][7]={p:KAKU,s:CPU,pr:false};
+    for(var c=0;c<9;c++)board[2][c]={p:FU,s:CPU,pr:false};
+    for(var c=0;c<9;c++)board[6][c]={p:FU,s:PLAYER,pr:false};
+    board[7][1]={p:KAKU,s:PLAYER,pr:false};board[7][7]={p:HI,s:PLAYER,pr:false};
+    for(var c=0;c<9;c++)board[8][c]={p:bk[c],s:PLAYER,pr:false};
+    _applyNoHiraku();
+}
+
+/* ===== 移動先生成 ===== */
+function getTargets(b,r,c){
+    var cell=b[r][c];if(!cell)return[];
+    var p=cell.p,s=cell.s,pr=cell.pr,dir=(s===PLAYER)?-1:1,res=[];
+    function add(tr,tc){if(tr<0||tr>8||tc<0||tc>8)return false;var t=b[tr][tc];if(t&&t.s===s)return false;res.push([tr,tc]);return!t;}
+    function gold(){add(r+dir,c-1);add(r+dir,c);add(r+dir,c+1);add(r,c-1);add(r,c+1);add(r-dir,c);}
+    if(pr){
+        if(p===KAKU){for(var i=1;i<9;i++)if(!add(r+i,c+i))break;for(var i=1;i<9;i++)if(!add(r+i,c-i))break;for(var i=1;i<9;i++)if(!add(r-i,c+i))break;for(var i=1;i<9;i++)if(!add(r-i,c-i))break;add(r+1,c);add(r-1,c);add(r,c+1);add(r,c-1);}
+        else if(p===HI){for(var i=1;i<9;i++)if(!add(r+i,c))break;for(var i=1;i<9;i++)if(!add(r-i,c))break;for(var i=1;i<9;i++)if(!add(r,c+i))break;for(var i=1;i<9;i++)if(!add(r,c-i))break;add(r+1,c+1);add(r+1,c-1);add(r-1,c+1);add(r-1,c-1);}
+        else gold();
+    } else {
+        switch(p){
+            case FU:add(r+dir,c);break;
+            case KYOU:for(var i=r+dir;i>=0&&i<=8;i+=dir)if(!add(i,c))break;break;
+            case KE:add(r+2*dir,c-1);add(r+2*dir,c+1);break;
+            case GIN:add(r+dir,c-1);add(r+dir,c);add(r+dir,c+1);add(r-dir,c-1);add(r-dir,c+1);break;
+            case KIN:gold();break;
+            case KAKU:for(var i=1;i<9;i++)if(!add(r+i,c+i))break;for(var i=1;i<9;i++)if(!add(r+i,c-i))break;for(var i=1;i<9;i++)if(!add(r-i,c+i))break;for(var i=1;i<9;i++)if(!add(r-i,c-i))break;break;
+            case HI:for(var i=1;i<9;i++)if(!add(r+i,c))break;for(var i=1;i<9;i++)if(!add(r-i,c))break;for(var i=1;i<9;i++)if(!add(r,c+i))break;for(var i=1;i<9;i++)if(!add(r,c-i))break;break;
+            case OU:for(var dr=-1;dr<=1;dr++)for(var dc=-1;dc<=1;dc++){if(dr===0&&dc===0)continue;add(r+dr,c+dc);}break;
+            case TSU:for(var i=1;i<9;i++)if(!add(r+i,c))break;for(var i=1;i<9;i++)if(!add(r-i,c))break;for(var i=1;i<9;i++)if(!add(r,c+i))break;for(var i=1;i<9;i++)if(!add(r,c-i))break;for(var i=1;i<9;i++)if(!add(r+i,c+i))break;for(var i=1;i<9;i++)if(!add(r+i,c-i))break;for(var i=1;i<9;i++)if(!add(r-i,c+i))break;for(var i=1;i<9;i++)if(!add(r-i,c-i))break;break;
+        }
+    }
+    return res;
+}
+function isInCheck(b,side){
+    var kr=-1,kc=-1;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){if(b[r][c]&&b[r][c].p===OU&&b[r][c].s===side){kr=r;kc=c;}}
+    if(kr<0)return true;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){if(b[r][c]&&b[r][c].s===-side){var tg=getTargets(b,r,c);for(var i=0;i<tg.length;i++)if(tg[i][0]===kr&&tg[i][1]===kc)return true;}}
+    return false;
+}
+function cloneBoard(b){var nb=[];for(var r=0;r<9;r++){nb[r]=[];for(var c=0;c<9;c++)nb[r][c]=b[r][c]?{p:b[r][c].p,s:b[r][c].s,pr:b[r][c].pr}:null;}return nb;}
+function inPZ(r,side){return side===PLAYER?r<=2:r>=6;}
+function mustPr(p,tr,side){if(side===PLAYER){if((p===FU||p===KYOU)&&tr===0)return true;if(p===KE&&tr<=1)return true;}else{if((p===FU||p===KYOU)&&tr===8)return true;if(p===KE&&tr>=7)return true;}return false;}
+function canPr(p){return[FU,KYOU,KE,GIN,KAKU,HI].indexOf(p)>=0;}
+function applyMove(b,ph,eh,mv){
+    var nb=cloneBoard(b),nph=ph.slice(),neh=eh.slice();
+    if(mv.drop){nb[mv.tr][mv.tc]={p:mv.p,s:mv.s,pr:false};var h=mv.s===PLAYER?nph:neh;h.splice(h.indexOf(mv.p),1);}
+    else{var piece=nb[mv.fr][mv.fc],cap=nb[mv.tr][mv.tc];if(cap){if(mv.s===PLAYER)nph.push(cap.p);else neh.push(cap.p);}nb[mv.tr][mv.tc]={p:piece.p,s:piece.s,pr:mv.promote?true:piece.pr};nb[mv.fr][mv.fc]=null;}
+    return{board:nb,ph:nph,eh:neh};
+}
+function genAll(b,ph,eh,side){
+    var moves=[],hand=(side===PLAYER)?ph:eh;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        if(!b[r][c]||b[r][c].s!==side)continue;
+        var piece=b[r][c],tg=getTargets(b,r,c);
+        for(var i=0;i<tg.length;i++){
+            var tr=tg[i][0],tc=tg[i][1];
+            var cp=!piece.pr&&(inPZ(r,side)||inPZ(tr,side))&&canPr(piece.p);
+            var mp=!piece.pr&&mustPr(piece.p,tr,side);
+            if(!mp)moves.push({drop:false,fr:r,fc:c,tr:tr,tc:tc,promote:false,s:side});
+            if(cp)moves.push({drop:false,fr:r,fc:c,tr:tr,tc:tc,promote:true,s:side});
+        }
+    }
+    var seen={};
+    for(var i=0;i<hand.length;i++){
+        var p=hand[i];if(seen[p])continue;seen[p]=true;
+        for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+            if(b[r][c])continue;
+            if(p===FU){var nf=false;for(var rr=0;rr<9;rr++){if(b[rr][c]&&b[rr][c].p===FU&&!b[rr][c].pr&&b[rr][c].s===side){nf=true;break;}}if(nf)continue;}
+            if((p===FU||p===KYOU)&&((side===PLAYER&&r===0)||(side===CPU&&r===8)))continue;
+            if(p===KE&&((side===PLAYER&&r<=1)||(side===CPU&&r>=7)))continue;
+            moves.push({drop:true,tr:r,tc:c,p:p,s:side,promote:false});
+        }
+    }
+    return moves;
+}
+function getLegal(b,ph,eh,side,noFu){
+    var cands=genAll(b,ph,eh,side),legal=[];
+    for(var i=0;i<cands.length;i++){
+        var mv=cands[i],res=applyMove(b,ph,eh,mv);
+        if(isInCheck(res.board,side))continue;
+        if(!noFu&&mv.drop&&mv.p===FU&&isInCheck(res.board,-side)){if(getLegal(res.board,res.ph,res.eh,-side,true).length===0)continue;}
+        legal.push(mv);
+    }
+    return legal;
+}
+function evaluate(b,ph,eh,side){
+    var s=0,pkr=-1,pkc=-1,ckr=-1,ckc=-1;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){var cell=b[r][c];if(cell&&cell.p===OU){if(cell.s===PLAYER){pkr=r;pkc=c;}else{ckr=r;ckc=c;}}}
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        var cell=b[r][c];if(!cell)continue;
+        var v=pv(cell.p,cell.pr);
+        if(cell.s===PLAYER){
+            s+=v;
+            if(!cell.pr){if(cell.p===FU)s+=(8-r)*3;if(cell.p===KAKU||cell.p===HI)s+=(8-r)*5;if(cell.p===KIN||cell.p===GIN)s+=(8-r)*2;}
+            if(ckr>=0){var d=Math.abs(r-ckr)+Math.abs(c-ckc);if(d<=3)s+=(4-d)*25;}
+        } else {
+            s-=v;
+            if(!cell.pr){if(cell.p===FU)s-=r*3;if(cell.p===KAKU||cell.p===HI)s-=r*5;if(cell.p===KIN||cell.p===GIN)s-=r*2;}
+            if(pkr>=0){var d=Math.abs(r-pkr)+Math.abs(c-pkc);if(d<=3)s-=(4-d)*25;}
+        }
+    }
+    for(var i=0;i<ph.length;i++)s+=pv(ph[i],false)*0.8;
+    for(var i=0;i<eh.length;i++)s-=pv(eh[i],false)*0.8;
+    if(pkr>=0)for(var r=Math.max(0,pkr-1);r<=Math.min(8,pkr+1);r++)for(var c=Math.max(0,pkc-1);c<=Math.min(8,pkc+1);c++){if(b[r][c]&&b[r][c].s===PLAYER&&b[r][c].p!==OU)s+=30;}
+    if(ckr>=0)for(var r=Math.max(0,ckr-1);r<=Math.min(8,ckr+1);r++)for(var c=Math.max(0,ckc-1);c<=Math.min(8,ckc+1);c++){if(b[r][c]&&b[r][c].s===CPU&&b[r][c].p!==OU)s-=30;}
+    return side===PLAYER?s:-s;
+}
+function orderMoves(moves,b){
+    return moves.sort(function(a,bm){
+        var ca=!a.drop&&b[a.tr][a.tc]?pv(b[a.tr][a.tc].p,b[a.tr][a.tc].pr):0;
+        var cb=!bm.drop&&b[bm.tr][bm.tc]?pv(b[bm.tr][bm.tc].p,b[bm.tr][bm.tc].pr):0;
+        if(cb!==ca)return cb-ca;
+        return(a.promote?0:1)-(bm.promote?0:1);
+    });
+}
+var _cpuDeadline=0;
+var _pendingNariTimer=null;
+function negamax(b,ph,eh,side,depth,alpha,beta){
+    if(Date.now()>_cpuDeadline)throw'timeout';
+    if(depth<=0)return evaluate(b,ph,eh,side);
+    var moves=getLegal(b,ph,eh,side);
+    if(!moves.length)return isInCheck(b,side)?-90000-depth*100:0;
+    moves=orderMoves(moves,b);
+    var best=-Infinity;
+    for(var i=0;i<moves.length;i++){
+        var res=applyMove(b,ph,eh,moves[i]);
+        var score=-negamax(res.board,res.ph,res.eh,-side,depth-1,-beta,-alpha);
+        if(score>best)best=score;
+        if(score>alpha)alpha=score;
+        if(alpha>=beta)break;
+    }
+    return best;
+}
+function chooseCPUMove(){
+    _cpuDeadline=Date.now()+60000; // 1分タイムアウト
+    var diff=settings.difficulty;
+    var depth=diff===1?2:diff===2?3:diff===3?4:5; // 特級=depth5
+    var moves=getLegal(board,playerHand,enemyHand,CPU);
+    if(!moves.length)return null;
+    if(diff===1){
+        moves=orderMoves(moves,board);
+        var caps=moves.filter(function(m){return!m.drop&&board[m.tr][m.tc];});
+        if(caps.length){var best=-Infinity,bestMv=caps[0];try{for(var i=0;i<caps.length;i++){var r2=applyMove(board,playerHand,enemyHand,caps[i]);var sc=-negamax(r2.board,r2.ph,r2.eh,PLAYER,1,-Infinity,Infinity);if(sc>best){best=sc;bestMv=caps[i];}}}catch(e){if(e!=='timeout')throw e;}return bestMv;}
+        return moves[Math.floor(Math.random()*Math.min(moves.length,5))];
+    }
+    moves=orderMoves(moves,board);
+    var best=-Infinity,bestMv=moves[0],alpha=-Infinity,beta=Infinity;
+    try{
+        for(var i=0;i<moves.length;i++){
+            var res=applyMove(board,playerHand,enemyHand,moves[i]);
+            var score=-negamax(res.board,res.ph,res.eh,PLAYER,depth-1,-beta,-alpha);
+            if(score>best){best=score;bestMv=moves[i];}
+            if(score>alpha)alpha=score;
+        }
+    }catch(e){if(e!=='timeout')throw e;} // タイムアウト：bestMvをそのまま返す
+    return bestMv;
+}
+
+/* ===== 手数表示 ===== */
+function updateMoveCount(){
+    var el=document.getElementById('move-count-disp');
+    if(el)el.textContent=moveCount>0?'第'+moveCount+'手':'';
+}
+
+/* ===== 待った ===== */
+function saveHist(){mattaHist.push({board:cloneBoard(board),ph:playerHand.slice(),eh:enemyHand.slice(),lm:lastMove?Object.assign({},lastMove):null,mc:moveCount});}
+function doMatta(){
+    if(mattaCount<=0||!mattaHist.length||gameState!=='playing'||currentSide!==PLAYER)return;
+    var st=mattaHist.pop();
+    board=st.board;playerHand=st.ph;enemyHand=st.eh;lastMove=st.lm;
+    moveCount=st.mc; // 手数を待った前に戻す
+    currentSide=PLAYER;mattaCount--;
+    selPos=null;movableCells=[];legalMovesForSel=[];
+    renderAll();updateMattaBtn();updateMoveCount();
+    setStatus('あなたの番です');
+    showNotice('待った！<br><span style="font-size:18px;">残り'+mattaCount+'回</span>','#e67e22',1500,sfxMatta);
+    showCharMsg('matta');
+}
+function updateMattaBtn(){
+    var btn=document.getElementById('matta-btn');
+    var ok=mattaCount>0&&mattaHist.length>0&&currentSide===PLAYER&&gameState==='playing';
+    btn.textContent='🤚待った('+mattaCount+')';btn.disabled=!ok;
+}
+
+/* ===== ゲーム開始 ===== */
+function startGame(){
+    var bgmVal=document.querySelector('input[name="bgm"]:checked');
+    var bgmOn=!bgmVal||bgmVal.value==='on';
+    var _panelRad=document.querySelector('input[name="panel"]:checked');
+    settings={
+        playerFirst:document.querySelector('input[name="turn"]:checked').value==='sente',
+        difficulty:_selectedDiff,
+        timeLimit:document.querySelector('input[name="time"]:checked').value==='on',
+        promoMode:document.querySelector('input[name="promo"]:checked').value,
+        noHiraku:document.querySelector('input[name="nohiraku"]:checked').value,
+        panelGame:_selectedDiff!==4&&(!_panelRad||_panelRad.value==='on')
+    };
+    // BGM制御（特級はロックBGM）
+    _stopEndBGM();
+    var newBgmType=settings.difficulty===4?'rock':'normal';
+    if(newBgmType!==_bgmType){stopBGM();_bgmType=newBgmType;}
+    if(bgmOn){if(!bgmPlaying)startBGM();}
+    else{if(bgmPlaying)stopBGM();}
+    var lvLabel={1:'初級',2:'中級',3:'上級',4:'特級'};
+    document.getElementById('eh-label').textContent=lvLabel[settings.difficulty]||'CPU';
+    document.getElementById('setting-modal').style.display='none';
+    document.getElementById('go-modal').style.display='none';
+    // 痛風キング時は待ったボタンを非表示
+    var _mattaBtn=document.getElementById('matta-btn');
+    if(_mattaBtn)_mattaBtn.style.display=settings.difficulty===4?'none':'';
+    // 結果画像エリアをリセット
+    var riw=document.getElementById('result-img-wrap');if(riw)riw.style.display='none';
+    var ri=document.getElementById('result-img');if(ri)ri.src='';
+    setStatus('開始中...');
+    updateCharPanel();
+
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+        initBoard();
+        playerHand=[];enemyHand=[];
+        selPos=null;movableCells=[];legalMovesForSel=[];lastMove=null;
+        mattaHist=[];mattaCount=3;moveCount=0;gameState='playing';
+        // パネルゲーム状態リセット
+        _goldHidden=0;_fuAllPro=false;_tsuActive=false;_tsuMoves=0;
+        if(_panelCycleTimer){clearInterval(_panelCycleTimer);_panelCycleTimer=null;}
+        _panelDone=null;_panelStopping=false;_panelSpeed=60;_panelIdx=-1;_panelTarget=-1;
+        var _pmEl=document.getElementById('panel-modal');if(_pmEl)_pmEl.style.display='none';
+        if(timerInterval)clearInterval(timerInterval);
+        pMain=1800;pByo=60;cMain=1800;cByo=60;pInByo=false;cInByo=false;
+        renderAll();
+        showCharMsg('start');
+        var cutin=document.getElementById('cutin');
+        cutin.style.display='block';
+        setTimeout(function(){cutin.style.display='none';},1200);
+        if(settings.timeLimit)startTimer();
+        if(settings.playerFirst){
+            currentSide=PLAYER;setStatus('あなたの番です');updateMattaBtn();
+        } else {
+            currentSide=CPU;setStatus('CPUの番です');
+            document.getElementById('think').style.display='flex';
+            showCharMsg('think');updateMattaBtn();
+            _startThinkMsgRotation();
+            setTimeout(function(){
+                if(gameState!=='playing'){_stopThinkMsgRotation();document.getElementById('think').style.display='none';return;}
+                _doCPUWork();
+            },50);
+        }
+    });});
+}
+
+/* ===== タイマー ===== */
+function startTimer(){
+    if(timerInterval)clearInterval(timerInterval);
+    timerInterval=setInterval(function(){
+        if(gameState!=='playing'){clearInterval(timerInterval);return;}
+        if(currentSide===PLAYER){if(!pInByo){pMain--;if(pMain<=0){pMain=0;pInByo=true;pByo=60;}}else{pByo--;if(pByo<=0){endGame(false,'時間切れ');return;}}}
+        else{if(!cInByo){cMain--;if(cMain<=0){cMain=0;cInByo=true;cByo=60;}}else{cByo--;if(cByo<=0){endGame(true,'CPU時間切れ');return;}}}
+        updateTimer();
+    },1000);
+}
+function fmt(s){return Math.floor(s/60)+'分'+('0'+s%60).slice(-2)+'秒';}
+function updateTimer(){
+    var el=document.getElementById('timer-display');
+    var pel=document.getElementById('player-timer-disp');
+    if(el)el.innerHTML=''; // 上部は使わない
+    if(!settings||!settings.timeLimit){if(pel)pel.textContent='';return;}
+    if(pel){
+        var pt=pInByo?'⏱秒読み '+pByo+'s':'⏱'+fmt(pMain);
+        pel.textContent=pt;
+        pel.style.color=pInByo?'#ff4444':'#e67e22';
+    }
+}
+
+/* ===== 描画 ===== */
+function renderAll(){renderBoard();renderHands();}
+function renderBoard(){
+    var movSet={},floatKey=selPos&&selPos.type==='board'?selPos.r*9+selPos.c:-1;
+    for(var i=0;i<movableCells.length;i++)movSet[movableCells[i][0]*9+movableCells[i][1]]=1;
+    for(var i=0;i<81;i++){
+        var r=Math.floor(i/9),c=i%9,cell=boardCells[i],pd=pieceDivs[i];
+        var cls='cell';
+        if(lastMove){if(!lastMove.drop&&r===lastMove.fr&&c===lastMove.fc)cls+=' lf';if(r===lastMove.tr&&c===lastMove.tc)cls+=' lt';}
+        if(selPos&&selPos.type==='board'&&selPos.r===r&&selPos.c===c)cls+=' sel';
+        if(movSet[i])cls+=' mov';
+        if(cell.className!==cls)cell.className=cls;
+        var piece=board[r][c];
+        var isFloat=(i===floatKey);
+        if(piece){
+            var isTsuKoma=piece.p===TSU;
+            var pcls='pc show'+(piece.s===CPU?' en':'')+(piece.pr?' pr':'')+(isFloat?' floating':'')+(isTsuKoma?' tsu-koma':'');
+            var ch=pieceChar(piece.p,piece.pr,piece.s);
+            if(pd.className!==pcls)pd.className=pcls;
+            if(pd.textContent!==ch)pd.textContent=ch;
+        } else {
+            var pcls='pc'+(isFloat?' floating':'');
+            if(pd.className!==pcls)pd.className=pcls;
+            if(pd.textContent!=='')pd.textContent='';
+        }
+    }
+}
+function renderHands(){
+    var counts;
+    counts={};
+    for(var i=0;i<playerHand.length;i++)counts[playerHand[i]]=(counts[playerHand[i]]||0)+1;
+    for(var oi=0;oi<ORDER.length;oi++){
+        var p=ORDER[oi],el=phItems[oi];
+        if(!counts[p]){el.style.display='none';continue;}
+        el.style.display='flex';
+        var isSel=selPos&&selPos.type==='hand'&&selPos.p===p&&selPos.s===PLAYER;
+        el.className='mp'+(isSel?' sel':'');
+        el.firstChild.textContent=pieceChar(p,false,PLAYER);
+        var cnt=el.lastChild;
+        if(counts[p]>1){cnt.textContent=counts[p];cnt.style.display='';}else{cnt.textContent='';cnt.style.display='none';}
+    }
+    counts={};
+    for(var i=0;i<enemyHand.length;i++)counts[enemyHand[i]]=(counts[enemyHand[i]]||0)+1;
+    for(var oi=0;oi<ORDER.length;oi++){
+        var p=ORDER[oi],el=ehItems[oi];
+        if(!counts[p]){el.style.display='none';continue;}
+        el.style.display='flex';
+        el.firstChild.textContent=pieceChar(p,false,CPU);
+        var cnt=el.lastChild;
+        if(counts[p]>1){cnt.textContent=counts[p];cnt.style.display='';}else{cnt.textContent='';cnt.style.display='none';}
+    }
+    // 津駒（プレイヤー持ち駒）
+    var phEl2=document.getElementById('ph'),ehEl2=document.getElementById('eh');
+    var ptsuCnt=playerHand.filter(function(p){return p===TSU;}).length;
+    var ptsuEl=document.getElementById('ph-tsu');
+    if(ptsuCnt>0){
+        if(!ptsuEl){
+            ptsuEl=document.createElement('div');ptsuEl.id='ph-tsu';
+            var tsp=document.createElement('span');tsp.textContent='津';
+            var tcp=document.createElement('span');tcp.className='mp-cnt';
+            ptsuEl.appendChild(tsp);ptsuEl.appendChild(tcp);
+            if(phEl2)phEl2.appendChild(ptsuEl);
+            ptsuEl.addEventListener('click',function(){handleHandClick(TSU);});
+        }
+        var isTsuSel=selPos&&selPos.type==='hand'&&selPos.p===TSU&&selPos.s===PLAYER;
+        ptsuEl.className='mp tsu-koma'+(isTsuSel?' sel':'');
+        ptsuEl.style.display='flex';
+        var tcnt=ptsuEl.lastChild;
+        if(ptsuCnt>1){tcnt.textContent=ptsuCnt;tcnt.style.display='';}else{tcnt.textContent='';tcnt.style.display='none';}
+    } else if(ptsuEl){ptsuEl.style.display='none';}
+    // 津駒（CPU持ち駒）
+    var etsuCnt=enemyHand.filter(function(p){return p===TSU;}).length;
+    var etsuEl=document.getElementById('eh-tsu');
+    if(etsuCnt>0){
+        if(!etsuEl){
+            etsuEl=document.createElement('div');etsuEl.id='eh-tsu';
+            var esp=document.createElement('span');esp.textContent='津';
+            var ecp=document.createElement('span');ecp.className='mp-cnt';
+            etsuEl.appendChild(esp);etsuEl.appendChild(ecp);
+            if(ehEl2)ehEl2.appendChild(etsuEl);
+        }
+        etsuEl.className='mp enemy tsu-koma';
+        etsuEl.style.display='flex';
+        var ecnt=etsuEl.lastChild;
+        if(etsuCnt>1){ecnt.textContent=etsuCnt;ecnt.style.display='';}else{ecnt.textContent='';ecnt.style.display='none';}
+    } else if(etsuEl){etsuEl.style.display='none';}
+}
+function setStatus(msg){document.getElementById('status').textContent=msg;}
+
+/* ===== クリックハンドラ ===== */
+function handleCellClick(r,c){
+    if(gameState!=='playing'||currentSide!==PLAYER)return;
+    // 同じ駒を再タップ → キャンセル
+    if(selPos&&selPos.type==='board'&&selPos.r===r&&selPos.c===c){
+        selPos=null;movableCells=[];legalMovesForSel=[];
+        renderAll();sfxCancel();return;
+    }
+    var movSet={};
+    for(var i=0;i<movableCells.length;i++)movSet[movableCells[i][0]*9+movableCells[i][1]]=1;
+    if(movSet[r*9+c]){executePlayerMove(legalMovesForSel.filter(function(m){return m.tr===r&&m.tc===c;}));return;}
+    var piece=board[r][c];
+    if(piece&&piece.s===PLAYER){
+        selPos={type:'board',r:r,c:c};
+        var lm=getLegal(board,playerHand,enemyHand,PLAYER);
+        legalMovesForSel=lm.filter(function(m){return!m.drop&&m.fr===r&&m.fc===c;});
+        var seen={};movableCells=[];
+        for(var i=0;i<legalMovesForSel.length;i++){var key=legalMovesForSel[i].tr*9+legalMovesForSel[i].tc;if(!seen[key]){seen[key]=1;movableCells.push([legalMovesForSel[i].tr,legalMovesForSel[i].tc]);}}
+        renderAll();return;
+    }
+    selPos=null;movableCells=[];legalMovesForSel=[];renderAll();
+}
+function handleHandClick(p){
+    if(gameState!=='playing'||currentSide!==PLAYER)return;
+    if(selPos&&selPos.type==='hand'&&selPos.p===p){selPos=null;movableCells=[];legalMovesForSel=[];renderAll();return;}
+    selPos={type:'hand',p:p,s:PLAYER};
+    var lm=getLegal(board,playerHand,enemyHand,PLAYER);
+    legalMovesForSel=lm.filter(function(m){return m.drop&&m.p===p;});
+    movableCells=legalMovesForSel.map(function(m){return[m.tr,m.tc];});
+    renderAll();
+}
+
+/* ===== 手を指す ===== */
+function executePlayerMove(matched){
+    if(!matched.length)return;
+    saveHist();
+    var hasPr=matched.some(function(m){return m.promote;});
+    var hasNo=matched.some(function(m){return!m.promote;});
+    function doMove(doP){
+        var mv=doP?(matched.find(function(m){return m.promote;})||matched[0]):(matched.find(function(m){return!m.promote;})||matched[0]);
+        var origPiece=!mv.drop?(board[mv.fr]&&board[mv.fr][mv.fc]):null; // 棋譜用
+        var oldBoard=cloneBoard(board); // 戦法検出用
+        lastMove=mv.drop?{drop:true,tr:mv.tr,tc:mv.tc}:{drop:false,fr:mv.fr,fc:mv.fc,tr:mv.tr,tc:mv.tc};
+        var res=applyMove(board,playerHand,enemyHand,mv);
+        board=res.board;playerHand=res.ph;enemyHand=res.eh;
+        moveCount++;updateMoveCount(); // 手数カウント
+        var _tsuGone=_tickTsu();
+        selPos=null;movableCells=[];legalMovesForSel=[];
+        renderAll();
+        updateKifuDisp(buildKifu(mv,origPiece,PLAYER)); // 棋譜表示
+        // ビシッ！音＋スラムアニメ
+        sfxBishi();
+        animateSlam(mv.tr,mv.tc);
+        // 成り表示
+        var naruDelay=0;
+        if(doP){
+            if(_pendingNariTimer)clearTimeout(_pendingNariTimer);
+            _pendingNariTimer=setTimeout(function(){_pendingNariTimer=null;showNotice('成り！','#27ae60',1200,sfxNari);},200);
+            naruDelay=1300;
+        }
+        // 戦法検出（成り表示後に表示）
+        var tactic=detectTactic(mv,oldBoard);
+        if(tactic){
+            setTimeout(function(){showNotice(tactic,'#f1c40f',1800,sfxPingpong);},naruDelay+400);
+        }
+        // TSU消滅時は通知が終わるまで待つ
+        var tsuDelay=_tsuGone?1500:0;
+        var panelDelay=Math.max(naruDelay,tsuDelay);
+        if(!findKing(CPU)){endGame(true,'詰み');return;}
+        // プレイヤーが相手を王手にしたか確認
+        if(isInCheck(board,CPU)){
+            setTimeout(function(){
+                showNotice('王手！','#e74c3c',1300,sfxOute);
+                showCharMsg('check_me');
+                currentSide=CPU;setStatus('CPUの番です');updateMattaBtn();
+                checkPanelTrigger(function(){
+                    setTimeout(function(){
+                        if(gameState!=='playing')return;
+                        document.getElementById('think').style.display='flex';
+                        _startThinkMsgRotation();
+                        setTimeout(function(){
+                            if(gameState!=='playing'){_stopThinkMsgRotation();document.getElementById('think').style.display='none';return;}
+                            _doCPUWork();
+                        },50);
+                    },1400);
+                });
+            },panelDelay);
+        } else {
+            setTimeout(function(){
+                if(gameState!=='playing')return;
+                currentSide=CPU;setStatus('CPUの番です');updateMattaBtn();
+                checkPanelTrigger(function(){
+                    showCharMsg('think');
+                    document.getElementById('think').style.display='flex';
+                    _startThinkMsgRotation();
+                    setTimeout(function(){
+                        if(gameState!=='playing'){_stopThinkMsgRotation();document.getElementById('think').style.display='none';return;}
+                        _doCPUWork();
+                    },50);
+                });
+            },panelDelay);
+        }
+    }
+    if(settings.promoMode==='auto'&&hasPr)doMove(true);
+    else if(hasPr&&!hasNo)doMove(true);
+    else if(hasPr&&settings.promoMode==='manual'){
+        // 飛・角・歩は手動モードでも自動成り
+        var _pfr=!matched[0].drop?board[matched[0].fr][matched[0].fc]:null;
+        var _pt=_pfr?_pfr.p:0;
+        if(_pt===HI||_pt===KAKU||_pt===FU)doMove(true);
+        else askPromote().then(function(y){doMove(y);});
+    }
+    else doMove(false);
+}
+
+function _doCPUWork(){
+    if(_pendingNariTimer){clearTimeout(_pendingNariTimer);_pendingNariTimer=null;} // 成り！遅延タイマーをキャンセル
+    clearNotice(); // 成り！等の通知を即時クリア
+    _stopThinkMsgRotation();
+    var capturedPiece=null;
+    if(bgmPlaying)_prebufferBGM(90); // ブロッキング中もBGMが途切れないよう先読み
+    var mv=chooseCPUMove();
+    // ブロッキングでsetIntervalが止まった場合は再起動（BGMはすでに先読み済み）
+    _restartBGMInterval();
+    document.getElementById('think').style.display='none';
+    if(!mv){endGame(true,'詰み');return;}
+    if(!mv.drop&&board[mv.tr]&&board[mv.tr][mv.tc])capturedPiece=board[mv.tr][mv.tc];
+    var cpuOrigPiece=!mv.drop?(board[mv.fr]&&board[mv.fr][mv.fc]):null;
+    lastMove=mv.drop?{drop:true,tr:mv.tr,tc:mv.tc}:{drop:false,fr:mv.fr,fc:mv.fc,tr:mv.tr,tc:mv.tc};
+    var res=applyMove(board,playerHand,enemyHand,mv);
+    board=res.board;playerHand=res.ph;enemyHand=res.eh;
+    moveCount++;updateMoveCount();
+    var _tsuGoneC=_tickTsu();
+    renderAll();
+    updateKifuDisp(buildKifu(mv,cpuOrigPiece,CPU));
+    sfxBishi();
+    animateSlam(mv.tr,mv.tc);
+    if(mv.promote){if(_pendingNariTimer)clearTimeout(_pendingNariTimer);_pendingNariTimer=setTimeout(function(){_pendingNariTimer=null;showNotice('成り！','#27ae60',1200,sfxNari);},200);}
+    if(!findKing(PLAYER)){endGame(false,'詰み');return;}
+    currentSide=PLAYER;
+    var pm=getLegal(board,playerHand,enemyHand,PLAYER);
+    if(!pm.length){endGame(false,'詰み');return;}
+    var inChk=isInCheck(board,PLAYER);
+    setStatus(inChk?'王手！ あなたの番です':'あなたの番です');
+    if(inChk){showNotice('王手！','#e74c3c',1400,sfxOute);showCharMsg('check');}
+    else if(capturedPiece&&pv(capturedPiece.p,capturedPiece.pr)>=400){showCharMsg('capture');}
+    else{showCharMsg('moved');}
+    updateTimer();updateMattaBtn();
+    if(_tsuGoneC){setTimeout(function(){checkPanelTrigger(function(){});},1500);}
+    else{checkPanelTrigger(function(){});}
+}
+
+function doCPUTurn(){
+    if(gameState!=='playing')return;
+    _startThinkMsgRotation();
+    setTimeout(function(){
+        if(gameState!=='playing'){_stopThinkMsgRotation();document.getElementById('think').style.display='none';return;}
+        _doCPUWork();
+    },50);
+}
+
+function findKing(side){for(var r=0;r<9;r++)for(var c=0;c<9;c++){if(board[r][c]&&board[r][c].p===OU&&board[r][c].s===side)return[r,c];}return null;}
+
+function endGame(pw,reason){
+    gameState='over';
+    if(timerInterval)clearInterval(timerInterval);
+    _stopThinkMsgRotation();
+    // go-title/go-subは非表示（情報は画像内に含める）
+    var t=document.getElementById('go-title'),s=document.getElementById('go-sub');
+    if(t){t.textContent=pw?'勝利！':'負け...';t.style.display='none';}
+    if(s){s.textContent=reason+'（'+moveCount+'手）';s.style.display='none';}
+    // ガイドメッセージを非表示にリセット
+    var prevGuide=document.getElementById('ura-unlock-guide');
+    if(prevGuide)prevGuide.style.display='none';
+    // go-modalのボタンをリセット
+    var goBtn=document.querySelector('#go-modal .go-btn');
+    if(goBtn){goBtn.textContent='もう一度';goBtn.style.background='';goBtn.onclick=function(){showStartScreen();};}
+    document.getElementById('go-modal').style.display='flex';
+    showCharMsg(pw?'win':'lose');
+    updateMattaBtn();
+    // 上級（呑んだくれ不動産）に勝利→裏モード解放
+    if(pw&&settings&&settings.difficulty===3&&!_uraMode){
+        try{localStorage.setItem('nondakure_ura','1');}catch(e){}
+        _uraUnlocked=true;
+        if(goBtn){
+            goBtn.textContent='👑 裏モードへ！';
+            goBtn.style.background='linear-gradient(135deg,#6a0000,#a00000)';
+            goBtn.onclick=function(){_uraMode=true;showUraScreen();};
+        }
+        // 通常スタート画面の裏モードボタンも表示
+        var urmBtn=document.getElementById('ura-mode-btn');
+        if(urmBtn)urmBtn.style.display='';
+        // 次回の裏モード解放案内
+        var guideEl=document.getElementById('ura-unlock-guide');
+        if(!guideEl){
+            guideEl=document.createElement('p');
+            guideEl.id='ura-unlock-guide';
+            guideEl.style.cssText='font-size:11px;color:#c0392b;margin:6px 0 0;text-align:center;line-height:1.6;';
+            var goCard=document.querySelector('#go-modal .card');
+            if(goCard){var shareBtn=goCard.querySelector('.share-result-btn');if(shareBtn)goCard.insertBefore(guideEl,shareBtn);}
+        }
+        guideEl.style.display='';
+        guideEl.innerHTML='💡 次回は「Produced by M.Tsuda」を<br>1.5秒以内に5回タップで裏モードへ！';
+    }
+    // 結果画像を自動生成して表示
+    var _info=_buildResultCanvas(pw,reason);
+    _lastResultInfo=_info;
+    var _imgEl=document.getElementById('result-img');
+    var _imgWrap=document.getElementById('result-img-wrap');
+    var _hint=document.getElementById('result-img-hint');
+    if(_imgEl)_imgEl.src=_info.canvas.toDataURL('image/png');
+    if(_hint)_hint.textContent=_isLineApp()?'↑ 画像を長押しして「写真に保存」してください':'';
+    if(_imgWrap)_imgWrap.style.display='block';
+    // 勝敗BGM
+    setTimeout(function(){if(pw)startWinBGM();else startLoseBGM();},400);
+}
+
+/* ===== 結果共有 ===== */
+/* LINEアプリ内ブラウザ判定 */
+function _isLineApp(){return/Line\//i.test(navigator.userAgent);}
+
+/* 共有URL（LINE Mini App固定URL） */
+function _getShareUrl(){
+    return'https://miniapp.line.me/2010565697-3nyjHwX3';
+}
+
+/* Canvas で結果画像を生成して data URL を返す */
+function _buildResultCanvas(pw,reason){
+    var win=!!pw;
+    var result=win?'勝利！':'負け...';
+    var diff=settings&&settings.difficulty;
+    var lvLabel={1:'才能ナシ（初級）',2:'凡人（中級）',3:'特待生（上級）'};
+    var charName=diff&&CHAR_DATA[diff]?CHAR_DATA[diff].name:'';
+    var lvText=diff?lvLabel[diff]:'';
+    var cv=document.createElement('canvas');
+    cv.width=600;cv.height=600;
+    var c=cv.getContext('2d');
+    // 背景グラデーション
+    var g=c.createLinearGradient(0,0,600,600);
+    g.addColorStop(0,'#1a0a00');g.addColorStop(.6,'#3a1a08');g.addColorStop(1,'#8b4010');
+    c.fillStyle=g;c.fillRect(0,0,600,600);
+    // 外枠
+    c.strokeStyle='#c8a050';c.lineWidth=6;c.strokeRect(10,10,580,580);
+    c.textAlign='center';
+    // タイトル
+    c.fillStyle='#f5d070';c.font='bold 26px sans-serif';
+    c.fillText('のんだくれしょーぎ',300,55);
+    // 勝利/負け
+    c.fillStyle=win?'#27ae60':'#e74c3c';
+    c.font='bold 90px sans-serif';
+    c.fillText(result,300,155);
+    // 難易度・相手
+    c.fillStyle='#c8d060';c.font='bold 21px sans-serif';
+    c.fillText(lvText,300,196);
+    c.fillStyle='#f0e0a0';c.font='bold 21px sans-serif';
+    c.fillText('「'+charName+'」との対局',300,224);
+    // 区切り線
+    c.strokeStyle='#c8a050';c.lineWidth=1;
+    c.beginPath();c.moveTo(30,244);c.lineTo(570,244);c.stroke();
+    // 詰みラベル
+    c.fillStyle='#aaaaaa';c.font='22px sans-serif';
+    c.fillText(reason||'詰み',300,284);
+    // 手数（超大フォント）
+    var numColor=moveCount<100?'#f5d070':'#ffffff';
+    c.fillStyle=numColor;c.font='bold 140px sans-serif';
+    c.fillText(String(moveCount),300,420);
+    // "手で決着"
+    c.fillStyle='#dddddd';c.font='bold 26px sans-serif';
+    c.fillText('手で決着',300,460);
+    // 100手以内強調
+    if(moveCount<100){
+        c.fillStyle='rgba(245,208,112,0.75)';c.font='italic 18px sans-serif';
+        c.fillText('✨ 100手以内クリア！',300,490);
+    }
+    // 区切り線
+    c.strokeStyle='#c8a050';c.lineWidth=1;
+    c.beginPath();c.moveTo(30,520);c.lineTo(570,520);c.stroke();
+    // フッターURL
+    var surl=_getShareUrl();
+    var sdomain=surl.replace(/https?:\/\//,'').split('/')[0];
+    c.fillStyle='rgba(255,220,120,.6)';c.font='16px sans-serif';
+    c.fillText(sdomain||'のんだくれしょーぎ',300,555);
+    return{canvas:cv,result:result,lvText:lvText,charName:charName,win:win};
+}
+
+function shareResult(){
+    var info=_lastResultInfo;
+    if(!info)return;
+    var cv=info.canvas,result=info.result,win=info.win;
+    var lvText=info.lvText,charName=info.charName;
+    var url=_getShareUrl();
+    var shareText='のんだくれしょーぎ\n'+lvText+'「'+charName+'」戦\n結果: '+result+'\n'+url;
+    var flexMsg={
+        type:'flex',altText:shareText,
+        contents:{
+            type:'bubble',
+            body:{type:'box',layout:'vertical',backgroundColor:'#1a0a00',paddingAll:'lg',
+                contents:[
+                    {type:'text',text:'のんだくれしょーぎ',color:'#f5d070',weight:'bold',size:'xl',align:'center'},
+                    {type:'text',text:result,color:win?'#2ecc71':'#e74c3c',weight:'bold',size:'xxl',align:'center',margin:'md'},
+                    {type:'separator',margin:'md',color:'#c8a050'},
+                    {type:'text',text:lvText,color:'#c8a060',size:'sm',align:'center',margin:'md'},
+                    {type:'text',text:'「'+charName+'」との対局',color:'#e0c080',size:'md',align:'center',margin:'xs'}
+                ]
+            },
+            footer:{type:'box',layout:'vertical',backgroundColor:'#3a1a08',
+                contents:[{type:'button',action:{type:'uri',label:'🎮 挑戦する！',uri:url},style:'primary',color:'#8b4010'}]
+            }
+        }
+    };
+    /* ── Web Share API（files）優先：iOS/Android Chrome両対応 ── */
+    cv.toBlob(function(blob){
+        if(blob){
+            var file=new File([blob],'shogi-result.png',{type:'image/png'});
+            if(navigator.canShare&&navigator.canShare({files:[file]})){
+                navigator.share({files:[file],title:'のんだくれしょーぎ',text:shareText})
+                    .catch(function(e){if(e.name!=='AbortError')_shareFallback(flexMsg,shareText,url);});
+                return;
+            }
+        }
+        _shareFallback(flexMsg,shareText,url);
+    },'image/png');
+}
+function _shareFallback(flexMsg,shareText,url){
+    if(_liffReady&&liff.isApiAvailable&&liff.isApiAvailable('shareTargetPicker')){
+        liff.shareTargetPicker([flexMsg]).catch(function(){_shareLineText(shareText);});
+    } else if(navigator.share){
+        navigator.share({title:'のんだくれしょーぎ',text:shareText,url:url})
+            .catch(function(e){if(e.name!=='AbortError')_shareLineText(shareText);});
+    } else {
+        _shareLineText(shareText);
+    }
+}
+
+function _shareLineText(text){
+    window.open('https://line.me/R/share?text='+encodeURIComponent(text),'_blank');
+}
+
+/* ===== ゲーム共有（スタート画面） ===== */
+function shareGame(){
+    var url=_getShareUrl();
+    var text='のんだくれしょーぎで対局しよう！\n'+url;
+    // LIFF環境（LINEアプリ内）でshareTargetPickerを使う
+    if(_liffReady&&liff.isInClient()&&liff.isApiAvailable('shareTargetPicker')){
+        liff.shareTargetPicker([{
+            type:'flex',
+            altText:'のんだくれしょーぎで対局しよう！',
+            contents:{
+                type:'bubble',
+                body:{
+                    type:'box',layout:'vertical',
+                    backgroundColor:'#1a0a00',
+                    paddingAll:'lg',
+                    contents:[
+                        {type:'text',text:'のんだくれしょーぎ',color:'#f5d070',weight:'bold',size:'xl',align:'center'},
+                        {type:'text',text:'☖ ☗ ☖',color:'#c8902a',size:'xxl',align:'center',margin:'md'},
+                        {type:'text',text:'将棋で対決しよう！',color:'#e0c080',size:'md',align:'center',margin:'sm'}
+                    ]
+                },
+                footer:{
+                    type:'box',layout:'vertical',
+                    backgroundColor:'#3a1a08',
+                    contents:[{
+                        type:'button',
+                        action:{type:'uri',label:'🎮 対局する！',uri:url},
+                        style:'primary',color:'#8b4010'
+                    }]
+                }
+            }
+        }]).catch(function(){_shareLineText(text);});
+    } else if(navigator.share){
+        navigator.share({title:'のんだくれしょーぎ',text:text,url:url})
+            .catch(function(){_shareLineText(text);});
+    } else {
+        _shareLineText(text);
+    }
+}
+
+function showSettingModal(){
+    if(timerInterval)clearInterval(timerInterval);
+    gameState='setting';
+    document.getElementById('setting-modal').style.display='flex';
+    document.getElementById('go-modal').style.display='none';
+    document.getElementById('think').style.display='none';
+    updateMattaBtn();
+}
+function askPromote(){return new Promise(function(res){promResolve=res;document.getElementById('promo-modal').style.display='flex';});}
+function resolvePromote(y){document.getElementById('promo-modal').style.display='none';if(promResolve){promResolve(y);promResolve=null;}}
+
+/* ===== 裏モード管理 ===== */
+var _uraMode=false,_uraUnlocked=false;
+(function(){
+    try{_uraUnlocked=localStorage.getItem('nondakure_ura')==='1';}catch(e){}
+    // Google Sites iframe内ではwindow.location.searchが使えないのでreferrerも確認
+    if(window.location.search.indexOf('mode=ura')>=0)_uraMode=true;
+    if(document.referrer&&document.referrer.indexOf('mode=ura')>=0)_uraMode=true;
+})();
+
+/* ===== LIFF 初期化 ===== */
+var _liffReady=false;
+(function(){
+    if(typeof liff==='undefined')return;
+    liff.init({liffId:'2009399184-2mALm0dX'})
+        .then(function(){_liffReady=true;})
+        .catch(function(e){console.warn('LIFF init:',e);});
+})();
+
+window.onload=function(){
+    gameState='setting';
+    movableCells=[];legalMovesForSel=[];
+
+    // スタート画面にキャラSVGを挿入（横並びカード用: 小サイズ）
+    [1,2,3].forEach(function(v){
+        var el=document.getElementById('sc-svg-'+v);
+        if(!el)return;
+        el.innerHTML=CHAR_DATA[v].getSVG(60,78);
+        var svg=el.querySelector('svg');
+        if(svg)svg.setAttribute('viewBox','0 12 90 118');
+    });
+    // ゲームパネルにデフォルトキャラ（中級）
+    document.getElementById('char-svg-wrap').innerHTML=CHAR_DATA[2].getSVG(72,104);
+    document.getElementById('char-name-badge').textContent=CHAR_DATA[2].name;
+
+    // 盤面セルを81個作成（以後再利用）
+    var bd=document.getElementById('board');
+    for(var i=0;i<81;i++){
+        var r=Math.floor(i/9),c=i%9;
+        var cell=document.createElement('div');cell.className='cell';cell.dataset.r=r;cell.dataset.c=c;
+        var pd=document.createElement('div');pd.className='pc';
+        cell.appendChild(pd);bd.appendChild(cell);
+        boardCells.push(cell);pieceDivs.push(pd);
+    }
+    bd.addEventListener('click',function(e){
+        var el=e.target;
+        while(el&&el!==bd){if(el.dataset&&el.dataset.r!==undefined)break;el=el.parentElement;}
+        if(el&&el!==bd)handleCellClick(parseInt(el.dataset.r),parseInt(el.dataset.c));
+    });
+
+    // 持ち駒スロット7×2作成
+    var phEl=document.getElementById('ph'),ehEl=document.getElementById('eh');
+    for(var oi=0;oi<ORDER.length;oi++){
+        var div=document.createElement('div');div.className='mp';div.dataset.p=ORDER[oi];div.style.display='none';
+        var span=document.createElement('span');var cnt=document.createElement('span');cnt.className='mp-cnt';
+        div.appendChild(span);div.appendChild(cnt);phEl.appendChild(div);phItems.push(div);
+        var div2=document.createElement('div');div2.className='mp enemy';div2.style.display='none';
+        var span2=document.createElement('span');var cnt2=document.createElement('span');cnt2.className='mp-cnt';
+        div2.appendChild(span2);div2.appendChild(cnt2);ehEl.appendChild(div2);ehItems.push(div2);
+    }
+    phEl.addEventListener('click',function(e){
+        var el=e.target;
+        while(el&&el!==phEl){if(el.dataset&&el.dataset.p!==undefined)break;el=el.parentElement;}
+        if(el&&el!==phEl)handleHandClick(parseInt(el.dataset.p));
+    });
+    updateMattaBtn();
+    // 裏モード状態に応じてスタート画面切り替え
+    if(_uraMode){
+        document.getElementById('start-screen').style.display='none';
+        showUraScreen();
+    } else {
+        document.getElementById('start-screen').style.display='flex';
+        document.getElementById('ura-screen').style.display='none';
+        if(_uraUnlocked){
+            var urmBtn=document.getElementById('ura-mode-btn');
+            if(urmBtn)urmBtn.style.display='';
+        }
+    }
+    document.getElementById('setting-modal').style.display='none';
+};
+</script>
+</body>
+</html>
