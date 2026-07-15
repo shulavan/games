@@ -1983,7 +1983,7 @@ function endGame(pw,reason){
     var goBtn=document.querySelector('#go-modal .go-btn');
     if(goBtn){goBtn.textContent='もう一度';goBtn.style.background='';goBtn.onclick=function(){showStartScreen();};}
     document.getElementById('go-modal').style.display='flex';
-    showCharMsg(pw?'win':'lose');
+    showCharMsg(pw?'lose':'win'); // CHAR_DATA.win=CPU勝ち(プレイヤー負け)、lose=CPU負け(プレイヤー勝ち)
     updateMattaBtn();
     // 上級（呑んだくれ不動産）に勝利→裏モード解放
     if(pw&&settings&&settings.difficulty===3&&!_uraMode){
