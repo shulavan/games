@@ -198,7 +198,7 @@
         </div>
     </div>
     <div style="font-size:10px;color:rgba(255,100,100,.5);margin-top:4px;">Produced by M.Tsuda</div>
-    <div id="fs-hint" style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.45);text-align:center;letter-spacing:1px;">画面をタップするとフルスクリーンになります<br><button onclick="_enterFullscreen();this.parentElement.style.display='none'" style="margin-top:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);border-radius:5px;padding:4px 14px;font-size:11px;cursor:pointer;">⛶ フルスクリーン</button></div>
+    <div id="fs-hint" style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.45);text-align:center;letter-spacing:1px;">画面をタップするとフルスクリーンになります<br><button onclick="_enterFullscreen()" style="margin-top:6px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.7);border-radius:5px;padding:4px 14px;font-size:11px;cursor:pointer;">⛶ フルスクリーン</button></div>
 </div>
 
 <!-- ゲーム本体（ビューポート幅に合わせてズーム） -->
@@ -2207,18 +2207,28 @@ var _uraMode=false,_uraUnlocked=false;
 function _enterFullscreen(){
     var el=document.documentElement;
     var fn=el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen;
-    if(fn)fn.call(el).catch(function(){});
-}
-(function(){
-    var done=false;
-    function tryFS(){
-        if(done)return;done=true;
-        _enterFullscreen();
-        var h=document.getElementById('fs-hint');if(h)h.style.display='none';
+    if(fn){
+        fn.call(el).then(function(){
+            var h=document.getElementById('fs-hint');if(h)h.style.display='none';
+        }).catch(function(){});
     }
-    document.addEventListener('touchstart',tryFS,{once:true,passive:true});
-    document.addEventListener('click',tryFS,{once:true});
-})();
+}
+function _exitFullscreen(){
+    var fn=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+    if(fn)fn.call(document).catch(function(){});
+}
+function _isFullscreen(){
+    return!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement||document.msFullscreenElement);
+}
+// fullscreenchange（webkit含む）でscaleGameを再計算
+['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(function(ev){
+    document.addEventListener(ev,function(){
+        // フルスクリーン切替後はブラウザが寸法を確定するまで1フレーム待つ
+        requestAnimationFrame(function(){
+            if(typeof scaleGame==='function')scaleGame();
+        });
+    });
+});
 
 /* ===== LIFF 初期化 ===== */
 var _liffReady=false;
@@ -2290,19 +2300,18 @@ window.onload=function(){
     }
     document.getElementById('setting-modal').style.display='none';
 
-    // ビューポート幅に合わせてゲームをスケール
-    function resizeGame(){
+    // ビューポート幅に合わせてゲームをスケール（グローバル化してfullscreenchangeからも呼べるように）
+    window.scaleGame=function(){
         var vw=window.innerWidth;
         var vh=window.innerHeight;
-        // 幅基準でスケール（高さにも余裕があるときのみ拡大、最大1.5倍）
         var scaleW=vw/360;
         var scaleH=vh/680; // ゲームの自然な高さ約680px
         var scale=Math.min(scaleW,scaleH,1.5);
         var gc=document.getElementById('game-container');
         if(gc)gc.style.zoom=scale;
-    }
-    resizeGame();
-    window.addEventListener('resize',resizeGame);
+    };
+    scaleGame();
+    window.addEventListener('resize',scaleGame);
 };
 </script>
 </body>
