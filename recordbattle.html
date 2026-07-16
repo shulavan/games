@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>(仮)レコードばとる</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #2a2a2a;
+            --text-color: #ffffff;
+            --accent-color: #ffd700;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+        }
+        /* 画面共通 */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
+        }
+        .hidden { display: none !important; }
+
+        /* 初期設定画面 */
+        #setup-screen { justify-content: center; align-items: center; background: linear-gradient(135deg, #1e1e2f, #0f0f15); }
+        h1 { font-size: 2rem; color: var(--accent-color); margin-bottom: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        .setup-group { width: 85%; margin-bottom: 15px; }
+        .setup-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #aaa; }
+        .setup-group select { width: 100%; padding: 10px; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; font-size: 1rem; }
+        .btn { background: var(--accent-color); color: #000; border: none; padding: 12px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
+
+        /* ゲーム画面 */
+        #game-header { display: flex; justify-content: space-between; font-size: 0.85rem; padding-bottom: 5px; border-bottom: 1px solid #333; }
+        #rivals-container { flex: 1; display: flex; flex-direction: column; justify-content: space-around; margin: 5px 0; }
+        .rival-row { display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 5px; }
+        .rival-info { width: 70px; font-size: 0.75rem; }
+        .rival-hand { display: flex; gap: 2px; margin-left: 10px; }
+        .card-back { width: 30px; height: 30px; background: radial-gradient(circle, #444, #222); border: 1px solid #555; border-radius: 50%; }
+
+        /* 中央エリア（山札と共通捨て場） */
+        #center-area { flex: 1.2; display: flex; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 5px; align-items: center; margin: 5px 0; }
+        #deck-info { width: 60px; text-align: center; font-size: 0.75rem; border-right: 1px solid #333; padding-right: 5px; }
+        #deck-visual { width: 40px; height: 40px; background: #444; border-radius: 5px; margin: 5px auto; position: relative; box-shadow: 2px 2px 0 #222, 4px 4px 0 #111; }
+        #discard-pool { flex: 1; display: flex; flex-wrap: wrap; content-content: flex-start; gap: 4px; padding-left: 8px; height: 100%; overflow-y: auto; }
+
+        /* プレイヤーエリア */
+        #player-area { flex: 1.5; display: flex; flex-direction: column; justify-content: flex-end; }
+        .player-status { font-size: 0.85rem; margin-bottom: 5px; display: flex; justify-content: space-between; color: var(--accent-color); }
+        #player-hand-wrapper { display: flex; align-items: center; gap: 8px; justify-content: center; }
+        #player-hand { display: flex; gap: 5px; }
+        #tsumo-card-zone { border-left: 2px dashed #555; padding-left: 8px; display: flex; align-items: center; min-width: 55px; }
+        
+        /* レコードカードのスタイル */
+        .card { width: 50px; height: 50px; background-size: cover; background-position: center; border: 2px solid #fff; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; transition: transform 0.2s; }
+        .card.selected { transform: translateY(-10px); border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-color); }
+        .card-mini { width: 25px; height: 25px; background-size: cover; border: 1px solid #ccc; border-radius: 2px; }
+
+        /* アクションコントロール */
+        #action-controls { display: flex; justify-content: space-between; margin-top: 10px; gap: 10px; }
+        .btn-action { flex: 1; padding: 10px; font-size: 0.9rem; font-weight: bold; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; }
+        .btn-action.active { background: #ff4500; border-color: #ff4500; }
+        .btn-discard { background: #1e90ff; border-color: #1e90ff; }
+
+        /* モーダル（詳細・結果） */
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: #222; width: 85%; max-height: 80%; border-radius: 10px; padding: 20px; overflow-y: auto; border: 1px solid #444; text-align: center; }
+        .modal-jacket { width: 150px; height: 150px; margin: 0 auto 15px; background-size: cover; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .modal-info-table { width: 100%; text-align: left; margin-bottom: 15px; font-size: 0.85rem; }
+        .modal-info-table td { padding: 4px; vertical-align: top; }
+        .modal-info-table td:first-child { color: #aaa; width: 80px; }
+        .modal-close { background: #555; color: #fff; padding: 8px 20px; border: none; border-radius: 5px; margin-top: 10px; }
+        
+        /* 結果画面専用 */
+        .result-cards { display: flex; justify-content: center; gap: 5px; margin: 15px 0; }
+        .yaku-title { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 5px; }
+        .fan-count { font-size: 1.2rem; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div id="setup-screen" class="screen">
+        <h1>(仮)レコードばとる</h1>
+        <div class="setup-group">
+            <label>アーティストタイプ</label>
+            <select id="setup-artist">
+                <option value="all">すべて</option>
+                <option value="男性ソロ">男性ソロ</option>
+                <option value="女性ソロ">女性ソロ</option>
+                <option value="グループ">グループ</option>
+            </select>
+        </div>
+        <div class="setup-group">
+            <label>ジャンル</label>
+            <select id="setup-genre">
+                <option value="all">すべて</option>
+                <option value="演歌">演歌</option>
+                <option value="民謡">民謡</option>
+                <option value="ムード歌謡">ムード歌謡</option>
+                <option value="ポップ">ポップ</option>
+                <option value="ロック">ロック</option>
+                <option value="ジャズ">ジャズ</option>
+            </select>
+        </div>
+        <div class="setup-group">
+            <label>BGM</label>
+            <select id="setup-bgm">
+                <option value="ON">ON</option>
+                <option value="OFF">OFF</option>
+            </select>
+        </div>
+        <button class="btn" onclick="startGame()">ゲーム開始</button>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+        <div id="game-header">
+            <span id="current-kyoku">東1局</span>
+            <span id="dealer-indicator">親: あなた</span>
+        </div>
+
+        <div id="rivals-container">
+            </div>
+
+        <div id="center-area">
+            <div id="deck-info">
+                <div>山札</div>
+                <div id="deck-visual"></div>
+                <div><span id="deck-count">100</span>枚</div>
+            </div>
+            <div id="discard-pool">
+                </div>
+        </div>
+
+        <div id="player-area">
+            <div class="player-status">
+                <span>あなた (あなた)</span>
+                <span id="player-score">持点: 25000</span>
+            </div>
+            <div id="player-hand-wrapper">
+                <div id="player-hand">
+                    </div>
+                <div id="tsumo-card-zone">
+                    </div>
+            </div>
+        </div>
+
+        <div id="action-controls">
+            <button id="btn-detail" class="btn-action" onclick="showSelectedDetail()">詳細を見る</button>
+            <button id="btn-discard" class="btn-action btn-discard" onclick="discardSelected()">1枚捨てる</button>
+            <button id="btn-tsumo" class="btn-action" onclick="playerTsumo()" disabled>引く</button>
+            <button id="btn-agari" class="btn-action active" onclick="playerAgari()" style="display:none;">アガリ！</button>
+        </div>
+    </div>
+
+    <div id="detail-modal" class="modal hidden">
+        <div class="modal-content">
+            <div id="modal-img" class="modal-jacket"></div>
+            <table class="modal-info-table">
+                <tr><td>レコード名</td><td id="m-name">-</td></tr>
+                <tr><td>歌手名</td><td id="m-artist">-</td></tr>
+                <tr><td>発売日</td><td id="m-date">-</td></tr>
+                <tr><td>販売枚数</td><td id="m-sales">-</td></tr>
+                <tr><td>事務所</td><td id="m-agency">-</td></tr>
+                <tr><td>レコ大受賞</td><td id="m-taisho">-</td></tr>
+            </table>
+            <div style="margin-bottom:15px; display:flex; justify-content:space-around;">
+                <button class="btn-action" id="btn-listen" style="background:#555;">試聴(30秒)</button>
+                <a id="btn-affiliate" href="#" target="_blank" class="btn-action" style="background:#ff8c00; text-decoration:none; text-align:center; line-height:20px;">購入ページ</a>
+            </div>
+            <button class="modal-close" onclick="closeModal('detail-modal')">閉じる</button>
+        </div>
+    </div>
+
+    <div id="result-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="result-header">流局 (流れ)</h2>
+            <div id="result-winner-info"></div>
+            <div class="result-cards" id="result-cards-pool"></div>
+            <div class="yaku-title" id="result-yaku-name"></div>
+            <div class="fan-count" id="result-fan-count"></div>
+            <button class="btn" id="btn-next-round" onclick="nextRound()">次の局へ</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. サンプルデータプール (LinkShareから取得した体にするモックデータ) ---
+        // 実際のLinkShareの画像URLやアフィリエイトリンク、試聴URLをここに当てはめます。
+        const MASTER_CARDS = [
+            { id: 1, name: "津軽の旅路", artist: "北島三郎太", type: "男性ソロ", genre: "演歌", date: "1978-03-05", year: 1978, sales: 1200000, agency: "北海芸能", taisho: true, img: "https://picsum.photos/id/101/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 2, name: "新宿ムード", artist: "青木ひろし", type: "男性ソロ", genre: "ムード歌謡", date: "1980-11-21", year: 1980, sales: 850000, agency: "東京サウンド", taisho: false, img: "https://picsum.photos/id/102/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 3, name: "東京ラプソディ2026", artist: "南アキ", type: "女性ソロ", genre: "ポップ", date: "2026-01-01", year: 2026, sales: 1050000, agency: "渡辺プロモーション", taisho: true, img: "https://picsum.photos/id/103/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 4, name: "花のソーラン節", artist: "民謡ガールズ", type: "グループ", genre: "民謡", date: "1995-06-15", year: 1995, sales: 300000, agency: "伝統企画", taisho: false, img: "https://picsum.photos/id/104/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 5, name: "JAZZ IN TOKYO", artist: "渡辺プロ楽団", type: "グループ", genre: "ジャズ", date: "1985-08-20", year: 1985, sales: 150000, agency: "渡辺プロモーション", taisho: false, img: "https://picsum.photos/id/105/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 6, name: "エレキ挽歌", artist: "ザ・ギタリーズ", type: "グループ", genre: "ロック", date: "1975-04-01", year: 1975, sales: 1300000, agency: "東京サウンド", taisho: true, img: "https://picsum.photos/id/106/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 7, name: "港の純情", artist: "南アキ", type: "女性ソロ", genre: "演歌", date: "1982-09-09", year: 1982, sales: 2000000, agency: "渡辺プロモーション", taisho: true, img: "https://picsum.photos/id/107/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 8, name: "夜霧のステップ", artist: "青木ひろし", type: "男性ソロ", genre: "ムード歌謡", date: "1982-12-01", year: 1982, sales: 500000, agency: "東京サウンド", taisho: false, img: "https://picsum.photos/id/108/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 9, name: "昭和最後のエレジー", artist: "北島三郎太", type: "男性ソロ", genre: "演歌", date: "1988-10-10", year: 1988, sales: 1100000, agency: "北海芸能", taisho: true, img: "https://picsum.photos/id/109/150/150", audio: "", link: "https://www.linksynergy.com/" },
+            { id: 10, name: "ネオ・ロカビリー", artist: "ザ・ギタリーズ", type: "グループ", genre: "ロック", date: "1982-02-28", year: 1982, sales: 900000, agency: "東京サウンド", taisho: false, img: "https://picsum.photos/id/110/150/150", audio: "", link: "https://www.linksynergy.com/" }
+        ];
+
+        // キャラクターデータ（8名）
+        const ALL_CHARACTERS = [
+            { id: 1, name: "ケンジ", type: "熱血ロック派" }, { id: 2, name: "ミサキ", type: "レコ大ハンター" },
+            { id: 3, name: "サブロー", type: "演歌の鬼" }, { id: 4, name: "ジョージ", type: "本格派ジャズ職人" },
+            { id: 5, name: "レイカ", type: "ミリオンコレクター" }, { id: 6, name: "タクヤ", type: "バランス型" },
+            { id: 7, name: "ユミ", type: "同事務所狙い" }, { id: 8, name: "ゴロウ", type: "同世代コレクター" }
+        ];
+
+        // --- 2. ゲーム状態管理オブジェクト ---
+        let gameCondition = { artist: 'all', genre: 'all', bgm: 'ON' };
+        let gameRound = 1; // 1〜8局（東1〜4, 南1〜4）
+        let deck = [];
+        let discardPool = [];
+        let player = { name: "あなた", score: 25000, hand: [], tsumo: null };
+        let rivals = []; // 自動選出された3人
+        let currentTurn = 0; // 0:プレイヤー, 1:右, 2:対面, 3:左
+        let selectedCardIndex = null;
+        let selectedIsTsumo = false;
+        let currentAudio = null;
+
+        // --- 3. ゲーム初期化＆開始 ---
+        function startGame() {
+            gameCondition.artist = document.getElementById('setup-artist').value;
+            gameCondition.genre = document.getElementById('setup-genre').value;
+            gameCondition.bgm = document.getElementById('setup-bgm').value;
+
+            // キャラクター8名からランダムに3名を選出
+            let shuffledChar = [...ALL_CHARACTERS].sort(() => 0.5 - Math.random());
+            rivals = shuffledChar.slice(0, 3).map((c, i) => ({
+                id: c.id, name: c.name, type: c.type, score: 25000, handCount: 5, hand: []
+            }));
+
+            gameRound = 1;
+            player.score = 25000;
+            rivals.forEach(r => r.score = 25000);
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            initRound();
+        }
+
+        // 局の初期化
+        function initRound() {
+            discardPool = [];
+            document.getElementById('discard-pool').innerHTML = '';
+            
+            // 局表示の更新
+            let kyokuText = (gameRound <= 4) ? `東${gameRound}局` : `南${gameRound - 4}局`;
+            document.getElementById('current-kyoku').innerText = kyokuText;
+            document.getElementById('dealer-indicator').innerText = (gameRound % 4 === 1) ? "親: あなた" : `親: ${rivals[(gameRound % 4) - 2].name}`;
+
+            // デッキの生成（条件フィルタリング＋100枚になるようシャッフル複製）
+            let filteredPool = MASTER_CARDS.filter(c => {
+                let matchArtist = (gameCondition.artist === 'all' || c.type === gameCondition.artist);
+                let matchGenre = (gameCondition.genre === 'all' || c.genre === gameCondition.genre);
+                return matchArtist && matchGenre;
+            });
+            if (filteredPool.length === 0) filteredPool = MASTER_CARDS; // 該当なしは全開放
+
+            deck = [];
+            while (deck.length < 100) {
+                deck = deck.concat([...filteredPool].sort(() => 0.5 - Math.random()));
+            }
+            deck = deck.slice(0, 100); // 100枚厳選
+
+            // 配牌 (5枚ずつ)
+            player.hand = deck.splice(0, 5);
+            player.tsumo = null;
+            rivals.forEach(r => {
+                r.hand = deck.splice(0, 5);
+                r.handCount = 5;
+            });
+
+            updateDeckCount();
+            renderRivals();
+            
+            // 最初はプレイヤー（あなた）が親としてスタート
+            currentTurn = 0; 
+            startTurn();
+        }
+
+        // --- 4. ターン進行ロジック ---
+        function startTurn() {
+            if (deck.length === 0) {
+                endRound(null, "流局 (流れ)");
+                return;
+            }
+
+            if (currentTurn === 0) {
+                // プレイヤーのツモ番
+                player.tsumo = deck.shift();
+                updateDeckCount();
+                renderPlayerHand();
+                
+                // アガリ判定
+                let check = checkWin([...player.hand, player.tsumo]);
+                if (check.isWin) {
+                    document.getElementById('btn-agari').style.display = 'block';
+                } else {
+                    document.getElementById('btn-agari').style.display = 'none';
+                }
+                
+                document.getElementById('btn-discard').disabled = false;
+                document.getElementById('btn-tsumo').disabled = true;
+            } else {
+                // AIのターン
+                document.getElementById('btn-discard').disabled = true;
+                document.getElementById('btn-tsumo').disabled = true;
+                document.getElementById('btn-agari').style.display = 'none';
+                setTimeout(aiRoutine, 1000);
+            }
+        }
+
+        function aiRoutine() {
+            let currentAi = rivals[currentTurn - 1];
+            // AIツモ
+            let tsumoCard = deck.shift();
+            updateDeckCount();
+            let totalHand = [...currentAi.hand, tsumoCard];
+
+            // AIアガリチェック
+            let check = checkWin(totalHand);
+            if (check.isWin) {
+                endRound(currentAi, "ツモアガリ", totalHand, check);
+                return;
+            }
+
+            // AIの簡易捨て石ロジック（ランダムに1枚捨てる）
+            let discardIdx = Math.floor(Math.random() * totalHand.length);
+            let discarded = totalHand.splice(discardIdx, 1)[0];
+            currentAi.hand = totalHand;
+
+            // 捨て場に追加
+            addDiscardPool(discarded);
+
+            // 次のターンへ
+            currentTurn = (currentTurn + 1) % 4;
+            startTurn();
+        }
+
+        function playerDiscard(index, isTsumo) {
+            let discardedCard;
+            if (isTsumo) {
+                discardedCard = player.tsumo;
+                player.tsumo = null;
+            } else {
+                discardedCard = player.hand.splice(index, 1)[0];
+                if (player.tsumo) {
+                    player.hand.push(player.tsumo);
+                    player.tsumo = null;
+                }
+            }
+            selectedCardIndex = null;
+            selectedIsTsumo = false;
+
+            addDiscardPool(discardedCard);
+            renderPlayerHand();
+            document.getElementById('btn-agari').style.display = 'none';
+
+            // 次のターン（AI1）へ
+            currentTurn = 1;
+            startTurn();
+        }
+
+        function discardSelected() {
+            if (selectedCardIndex === null && !selectedIsTsumo) {
+                alert("捨てるカードをタップして選択してください。");
+                return;
+            }
+            playerDiscard(selectedCardIndex, selectedIsTsumo);
+        }
+
+        function playerAgari() {
+            let totalHand = [...player.hand, player.tsumo];
+            let check = checkWin(totalHand);
+            endRound(player, "あなたの勝ち（ツモ）", totalHand, check);
+        }
+
+        // --- 5. 役判定システム ---
+        function checkWin(cards) {
+            let yakuList = [];
+            let totalFan = 0;
+
+            let allTaisho = cards.every(c => c.taisho);
+            let allMillion = cards.every(c => c.sales >= 1000000);
+            let sameArtist = cards.every(c => c.artist === cards[0].artist);
+            let sameYear = cards.every(c => c.year === cards[0].year);
+            let sameAgency = cards.every(c => c.agency === cards[0].agency);
+
+            if (allTaisho) { yakuList.push("すべてレコード大賞 (2翻)"); totalFan += 2; }
+            if (allMillion) { yakuList.push("すべてミリオンセラー (2翻)"); totalFan += 2; }
+            if (sameArtist) { yakuList.push("同じアーティスト名 (1翻)"); totalFan += 1; }
+            if (sameYear) { yakuList.push("同じ発売年 (1翻)"); totalFan += 1; }
+            if (sameAgency) { yakuList.push("同じ事務所 (1翻)"); totalFan += 1; }
+
+            let isWin = yakuList.length > 0;
+            let finalYakuName = "役なし";
+            
+            // 特殊倍率ルール
+            if (yakuList.length === 2) {
+                finalYakuName = "役満 (2役同時)";
+            } else if (yakuList.length >= 3) {
+                finalYakuName = "ダブル役満 (3役以上同時)";
+            } else if (yakuList.length === 1) {
+                finalYakuName = yakuList[0];
+            }
+
+            return { isWin, yakuList, totalFan, finalYakuName };
+        }
+
+        // --- 6. 局終了＆結果表示 ---
+        function endRound(winner, reason, finalHand = [], checkResult = null) {
+            document.getElementById('result-modal').classList.remove('hidden');
+            document.getElementById('result-header').innerText = reason;
+            
+            let winnerInfo = document.getElementById('result-winner-info');
+            let cardsPool = document.getElementById('result-cards-pool');
+            let yakuNameZone = document.getElementById('result-yaku-name');
+            let fanZone = document.getElementById('result-fan-count');
+
+            cardsPool.innerHTML = '';
+            winnerInfo.innerText = '';
+            yakuNameZone.innerText = '';
+            fanZone.innerText = '';
+
+            if (winner) {
+                winnerInfo.innerText = `${winner.name} のアガリ!`;
+                yakuNameZone.innerText = checkResult.finalYakuName;
+                
+                // 点数計算（簡易スコア計上システム）
+                let basePoints = 3000;
+                if (checkResult.finalYakuName.includes("ダブル役満")) basePoints = 24000;
+                else if (checkResult.finalYakuName.includes("役満")) basePoints = 12000;
+                else basePoints = checkResult.totalFan * 2000;
+
+                winnerInfo.innerText += ` (+${basePoints}点)`;
+
+                // スコアの移動
+                if (winner.name === "あなた") {
+                    player.score += basePoints;
+                    rivals.forEach(r => r.score -= Math.floor(basePoints/3));
+                } else {
+                    rivals.forEach(r => {
+                        if (r.id === winner.id) r.score += basePoints;
+                        else r.score -= Math.floor(basePoints/3);
+                    });
+                    player.score -= Math.floor(basePoints/3);
+                }
+
+                // 終了手札の可視化
+                finalHand.forEach(card => {
+                    let cDiv = document.createElement('div');
+                    cDiv.className = 'card';
+                    cDiv.style.backgroundImage = `url(${card.img})`;
+                    cDiv.onclick = () => showCardDetail(card);
+                    cardsPool.appendChild(cDiv);
+                });
+            } else {
+                winnerInfo.innerText = "誰もアガれませんでした。";
+            }
+
+            // 点数表示リフレッシュ
+            document.getElementById('player-score').innerText = `持点: ${player.score}`;
+            renderRivals();
+
+            // 最終局チェック
+            if (gameRound >= 8) {
+                document.getElementById('btn-next-round').innerText = "最終結果を確認";
+                document.getElementById('btn-next-round').onclick = showFinalResult;
+            }
+        }
+
+        function nextRound() {
+            closeModal('result-modal');
+            gameRound++;
+            initRound();
+        }
+
+        function showFinalResult() {
+            closeModal('result-modal');
+            let scores = [player, ...rivals];
+            scores.sort((a,b) => b.score - a.score);
+            
+            let rankText = scores.map((s, idx) => `${idx+1}位: ${s.name} (${s.score}点)`).join("\n");
+            alert(`【ゲーム終了 最終結果】\n\n${rankText}`);
+            location.reload(); // 最初に戻る
+        }
+
+        // --- 7. UI描画補助関数 ---
+        function updateDeckCount() {
+            document.getElementById('deck-count').innerText = deck.length;
+        }
+
+        function renderRivals() {
+            const container = document.getElementById('rivals-container');
+            container.innerHTML = '';
+            rivals.forEach(r => {
+                let div = document.createElement('div');
+                div.className = 'rival-row';
+                
+                let cardsBacks = '';
+                for(let i=0; i<5; i++) { cardsBacks += `<div class="card-back"></div>`; }
+
+                div.innerHTML = `
+                    <div class="rival-info">
+                        <strong>${r.name}</strong><br>
+                        <span style="font-size:10px;color:#aaa;">${r.type}</span><br>
+                        <span style="color:var(--accent-color);">${r.score}</span>
+                    </div>
+                    <div class="rival-hand">${cardsBacks}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderPlayerHand() {
+            const handZone = document.getElementById('player-hand');
+            const tsumoZone = document.getElementById('tsumo-card-zone');
+            handZone.innerHTML = '';
+            tsumoZone.innerHTML = '';
+
+            // 手札5枚の描画
+            player.hand.forEach((card, idx) => {
+                let cDiv = document.createElement('div');
+                cDiv.className = `card ${selectedCardIndex === idx && !selectedIsTsumo ? 'selected' : ''}`;
+                cDiv.style.backgroundImage = `url(${card.img})`;
+                cDiv.onclick = () => selectCard(idx, false);
+                handZone.appendChild(cDiv);
+            });
+
+            // ツモ札の描画
+            if (player.tsumo) {
+                let cDiv = document.createElement('div');
+                cDiv.className = `card ${selectedIsTsumo ? 'selected' : ''}`;
+                cDiv.style.backgroundImage = `url(${player.tsumo.img})`;
+                cDiv.onclick = () => selectCard(null, true);
+                tsumoZone.appendChild(cDiv);
+            }
+        }
+
+        function selectCard(index, isTsumo) {
+            selectedCardIndex = index;
+            selectedIsTsumo = isTsumo;
+            renderPlayerHand();
+        }
+
+        function addDiscardPool(card) {
+            const pool = document.getElementById('discard-pool');
+            let d = document.createElement('div');
+            d.className = 'card-mini';
+            d.style.backgroundImage = `url(${card.img})`;
+            d.onclick = () => showCardDetail(card);
+            pool.appendChild(d);
+            pool.scrollTop = pool.scrollHeight; // 最下部へスクロール
+        }
+
+        // --- 8. モーダル制御 ＆ オーディオ・アフィリエイト連携 ---
+        function showSelectedDetail() {
+            let card = null;
+            if (selectedIsTsumo) card = player.tsumo;
+            else if (selectedCardIndex !== null) card = player.hand[selectedCardIndex];
+
+            if (!card) {
+                alert("詳細を見るカードをタップしてください。");
+                return;
+            }
+            showCardDetail(card);
+        }
+
+        function showCardDetail(card) {
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.getElementById('modal-img').style.backgroundImage = `url(${card.img})`;
+            document.getElementById('m-name').innerText = card.name;
+            document.getElementById('m-artist').innerText = card.artist;
+            document.getElementById('m-date').innerText = card.date;
+            document.getElementById('m-sales').innerText = card.sales.toLocaleString() + " 枚";
+            document.getElementById('m-agency').innerText = card.agency;
+            document.getElementById('m-taisho').innerText = card.taisho ? "★受賞作" : "なし";
+
+            // アフィリエイトリンク設定
+            let affBtn = document.getElementById('btn-affiliate');
+            affBtn.href = card.link || "#";
+
+            // 30秒お試し視聴設定
+            let listenBtn = document.getElementById('btn-listen');
+            listenBtn.onclick = () => {
+                if (currentAudio) { currentAudio.pause(); }
+                if (card.audio) {
+                    currentAudio = new Audio(card.audio);
+                    currentAudio.play();
+                    alert("♪ 音声を再生します（モック処理・URLがある場合のみ）");
+                } else {
+                    alert("※お試し音声URLが未設定です。LinkShareデータからmp3URLをセットしてください。");
+                }
+            };
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+        }
+    </script>
+</body>
+</html>
