@@ -16,8 +16,8 @@
             --neon-cyan: #00f0ff;
             --neon-gold: #fbfb14;
             
-            /* 横幅を限界まで使うレスポンシブなカードサイズ（最小52px、最大76px、基本は画面幅の17.5%） */
-            --card-size: clamp(52px, 17.5vw, 76px);
+            /* 横幅からはみ出さないよう、少しだけコンパクトに調整（最小48px、最大70px、基本14.5vw） */
+            --card-size: clamp(48px, 14.5vw, 70px);
         }
         
         * { 
@@ -132,7 +132,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        /* 中央の卓（山札を廃止し、横幅いっぱいの広い河に拡張） */
+        /* 中央の卓 */
         #center-area { 
             flex: 1; display: flex; flex-direction: column;
             background: rgba(0, 0, 0, 0.2); border-radius: 16px; 
@@ -174,18 +174,28 @@
 
         /* 手札とツモのラッパー */
         #player-hand-wrapper { 
-            display: flex; align-items: flex-end; gap: 2%; justify-content: space-between;
-            position: relative; height: 135px; /* ダイナミック拡大を吸収するため高さを拡張 */
+            display: flex; 
+            align-items: flex-end; 
+            gap: 12px; /* 手札とツモカードの間の固定スキマ */
+            justify-content: center; /* 中央寄せにして画面端へのハミ出しを防止 */
+            position: relative; 
+            height: 145px; /* 高さを少し拡張してアガリポップアップやフッターとのクリアランスを確保 */
             width: 100%;
             max-width: 480px;
             margin: 0 auto;
-            padding: 0 4px;
+            padding: 0 8px;
         }
-        #player-hand { display: flex; gap: 1.5vw; flex: 4; justify-content: space-between; }
+        #player-hand { 
+            display: flex; 
+            gap: 6px; /* 持ちカード同士の隙間を小さくしてコンパクト化 */
+            justify-content: center; 
+        }
         #tsumo-card-zone { 
-            border-left: 2px dashed var(--panel-border); padding-left: 3%; 
-            display: flex; align-items: flex-end; justify-content: center;
-            flex: 1.2;
+            border-left: 2px dashed var(--panel-border); 
+            padding-left: 10px; 
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: center;
         }
         
         /* 拡張コンテキストメニュー */
@@ -196,13 +206,12 @@
             align-items: center;
             justify-content: flex-end;
             height: 100%;
-            flex: 1;
         }
 
-        /* タップ中以外のカードを薄く沈み込ませる */
+        /* タップ中以外のカードの薄暗化（黒フィルター）を完全に廃止し、オリジナル画像をそのまま表示 */
         .card-wrapper:not(.active-wrapper) .card {
-            opacity: 0.5;
-            transform: scale(0.92);
+            opacity: 1; /* 薄暗くせず100%の明るさに */
+            transform: scale(1); /* 縮小もせず標準サイズを維持 */
         }
 
         /* タップで選択されたラッパーを最前面へ（これで重なり崩れを防ぐ） */
@@ -402,20 +411,20 @@
             to { box-shadow: 0 0 20px var(--neon-pink), inset 0 0 12px var(--neon-pink); }
         }
 
-        /* 新設ゲームフッター（情報統合＆手札押し上げのクッション役） */
+        /* 新設ゲームフッター（縦幅をさらに広げて手札を上に押し上げ、ガイダンスとの衝突を完全に回避） */
         #game-footer {
             display: flex;
             justify-content: space-around;
             align-items: center;
-            background: rgba(5, 20, 12, 0.9); /* 高級雀卓に馴染む深い極暗緑 */
+            background: rgba(5, 20, 12, 0.96); /* よりソリッドで不透明な極暗緑 */
             border-top: 1px solid var(--panel-border);
-            /* 下部にセーフエリア余白を自動確保しつつ、最低限のパディングで手札を優しく上に押し上げます */
-            padding: 10px 8px calc(10px + env(safe-area-inset-bottom, 6px)) 8px;
-            font-size: 0.8rem;
+            /* 上下パディングを10pxから22pxに大幅拡張し、縦幅を物理的に広く確保 */
+            padding: 22px 10px calc(22px + env(safe-area-inset-bottom, 12px)) 10px;
+            font-size: 0.85rem;
             color: var(--text-sub);
             width: 100%;
             font-weight: bold;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 -6px 20px rgba(0,0,0,0.6);
             margin-top: 5px;
         }
         .footer-item {
