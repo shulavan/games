@@ -74,7 +74,7 @@
             text-align: center;
         }
 
-        /* 5枚の専用ネオンジャンルボタン */
+        /* 専用ネオンジャンルボタン */
         .genre-buttons-container {
             display: flex;
             flex-direction: column;
@@ -218,7 +218,7 @@
             height: 100%;
         }
 
-        /* ★ 美しいネオン吹き出し風コンテキストポップアップ（縦並び・下矢印つき） */
+        /* 美しいネオン吹き出し風コンテキストポップアップ（下矢印つき） */
         .card-popup {
             position: absolute;
             bottom: 74px; /* カード上部から少し浮かせた位置 */
@@ -338,7 +338,7 @@
             position: relative;
         }
         
-        /* タップで少し拡大。他のカードを後ろにずらす空気感 */
+        /* タップで少し拡大。 */
         .card.selected { 
             transform: translateY(-14px) scale(1.15); 
             border-color: var(--neon-cyan); 
@@ -352,10 +352,10 @@
             transform: scale(0.95);
         }
 
-        /* 持ちカード中心の上部に浮かぶ自動「アガリ！」ネオンボタン */
+        /* 持ちカード中心の上部に浮かぶ自動「ツモ（アガリ）」ネオンボタン */
         #agari-overlay {
             position: absolute;
-            bottom: 120px; /* ポップアップ拡大に伴い上部へ微調整 */
+            bottom: 120px; 
             left: 50%;
             transform: translateX(-50%);
             z-index: 99;
@@ -374,6 +374,7 @@
             letter-spacing: 2px;
             animation: neonPulse 1s infinite alternate;
             cursor: pointer;
+            white-space: nowrap; /* ★ 文字の自動折り返し・改行を完全に防ぐ */
         }
 
         @keyframes neonPulse {
@@ -381,13 +382,19 @@
             to { box-shadow: 0 0 20px var(--neon-pink), inset 0 0 12px var(--neon-pink); }
         }
 
-        /* モーダル */
+        /* モーダル共通設定 */
         .modal { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(3, 15, 8, 0.9); 
             display: flex; justify-content: center; align-items: center; z-index: 9999; 
             backdrop-filter: blur(8px);
         }
+
+        /* ★ 詳細モーダルは結果モーダル（9999）よりも手前に表示されるように z-index を上書き */
+        #detail-modal {
+            z-index: 10000;
+        }
+
         .modal-content { 
             background: rgba(10, 30, 20, 0.95); width: 88%; max-height: 85%; 
             border-radius: 20px; padding: 24px; overflow-y: auto; 
@@ -482,7 +489,7 @@
             </div>
 
             <div id="agari-overlay">
-                <button class="btn-agari-neon" onclick="playerAgari()">⚡ 完 成 (アガリ) ⚡</button>
+                <button class="btn-agari-neon" onclick="playerAgari()">ツモ（アガリ）</button>
             </div>
 
             <div id="player-hand-wrapper">
@@ -847,56 +854,28 @@
             startTurn();
         }
 
-        // --- 7. シングルタップ位置移動（並べ替え＆ツモ入替 ＋ 入れ替え後に拡大解除） ---
+        // --- 7. カードタップ時の選択状態の切り替え（移動・並べ替えはクローズ） ---
         function selectCard(index, isTsumo) {
-            if (selectedCardIndex !== null || selectedIsTsumo) {
-                if (isTsumo && selectedIsTsumo) {
-                    selectedCardIndex = null;
-                    selectedIsTsumo = false;
-                    renderPlayerHand();
-                    return;
-                }
-                if (!isTsumo && selectedCardIndex === index && !selectedIsTsumo) {
-                    selectedCardIndex = null;
-                    selectedIsTsumo = false;
-                    renderPlayerHand();
-                    return;
-                }
-
-                if (!isTsumo) {
-                    if (selectedIsTsumo) {
-                        const temp = player.hand[index];
-                        player.hand[index] = player.tsumo;
-                        player.tsumo = temp;
-                    } else {
-                        const cardToMove = player.hand.splice(selectedCardIndex, 1)[0];
-                        player.hand.splice(index, 0, cardToMove);
-                    }
-                    // ★ 移動・入れ替え完了後に拡大を自動解除（nullリセット）
-                    selectedCardIndex = null;
-                    selectedIsTsumo = false;
-                    renderPlayerHand();
-                    return;
-                }
-
-                if (isTsumo && selectedCardIndex !== null && !selectedIsTsumo) {
-                    const temp = player.hand[selectedCardIndex];
-                    player.hand[selectedCardIndex] = player.tsumo;
-                    player.tsumo = temp;
-                    // ★ スワップ完了後に拡大を自動解除（nullリセット）
-                    selectedCardIndex = null;
-                    selectedIsTsumo = false;
-                    renderPlayerHand();
-                    return;
-                }
-            }
-
             if (isTsumo) {
-                selectedCardIndex = null;
-                selectedIsTsumo = true;
+                if (selectedIsTsumo) {
+                    // すでにツモ牌が選択されていたら選択解除
+                    selectedIsTsumo = false;
+                    selectedCardIndex = null;
+                } else {
+                    // ツモ牌を選択（手札の選択は解除）
+                    selectedIsTsumo = true;
+                    selectedCardIndex = null;
+                }
             } else {
-                selectedCardIndex = index;
-                selectedIsTsumo = false;
+                if (selectedCardIndex === index && !selectedIsTsumo) {
+                    // すでに選択されている同じ手札をタップしたら解除
+                    selectedCardIndex = null;
+                    selectedIsTsumo = false;
+                } else {
+                    // 新たな手札カードを選択（ツモ牌の選択は解除）
+                    selectedCardIndex = index;
+                    selectedIsTsumo = false;
+                }
             }
             renderPlayerHand();
         }
@@ -1087,7 +1066,7 @@
                     popup.classList.add('popup-center'); 
                 }
                 
-                // ★ 【新規】情報表示用の吹き出しテキストセクションを追加
+                // 情報表示用の吹き出しテキストセクション
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'popup-text';
                 const salesMan = Math.floor(card.sales / 10000); // 〇〇万枚にフォーマット
