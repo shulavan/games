@@ -15,7 +15,9 @@
             --neon-pink: #ff007f;
             --neon-cyan: #00f0ff;
             --neon-gold: #fbfb14;
-            --card-size: 56px;
+            
+            /* 横幅を限界まで使うレスポンシブなカードサイズ（最小52px、最大76px、基本は画面幅の17.5%） */
+            --card-size: clamp(52px, 17.5vw, 76px);
         }
         
         * { 
@@ -189,26 +191,33 @@
             display: flex; flex-direction: column; justify-content: flex-end;
             padding-bottom: env(safe-area-inset-bottom, 15px);
             position: relative;
+            width: 100%;
         }
         .player-status { 
             font-size: 0.85rem; margin-bottom: 12px; display: flex; 
             justify-content: space-between; align-items: center;
+            padding: 0 4px;
         }
         .player-label { font-weight: bold; color: var(--neon-pink); }
         .player-score { color: var(--neon-cyan); font-weight: bold; font-family: monospace; font-size: 1rem; }
 
-        /* 手札とツモのラッパー */
+        /* 手札とツモのラッパー（横幅いっぱいに引き伸ばし） */
         #player-hand-wrapper { 
-            display: flex; align-items: flex-end; gap: 8px; justify-content: center;
-            position: relative; height: 110px;
+            display: flex; align-items: flex-end; gap: 2%; justify-content: space-between;
+            position: relative; height: 135px; /* ダイナミック拡大を吸収するため高さを拡張 */
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 0 4px;
         }
-        #player-hand { display: flex; gap: 6px; }
+        #player-hand { display: flex; gap: 1.5vw; flex: 4; justify-content: space-between; }
         #tsumo-card-zone { 
-            border-left: 2.5px dashed var(--panel-border); padding-left: 10px; 
-            display: flex; align-items: flex-end; min-width: 66px; height: 100%;
+            border-left: 2px dashed var(--panel-border); padding-left: 3%; 
+            display: flex; align-items: flex-end; justify-content: center;
+            flex: 1.2;
         }
         
-        /* 拡張コンテキストメニュー（手札ラッパー） */
+        /* 拡張コンテキストメニュー */
         .card-wrapper {
             position: relative;
             display: flex;
@@ -216,12 +225,24 @@
             align-items: center;
             justify-content: flex-end;
             height: 100%;
+            flex: 1;
         }
 
-        /* 美しいネオン吹き出し風コンテキストポップアップ（下矢印つき） */
+        /* タップ中以外のカードを薄く沈み込ませる */
+        .card-wrapper:not(.active-wrapper) .card {
+            opacity: 0.5;
+            transform: scale(0.92);
+        }
+
+        /* タップで選択されたラッパーを最前面へ（これで重なり崩れを防ぐ） */
+        .card-wrapper.active-wrapper {
+            z-index: 120;
+        }
+
+        /* 美しいネオン吹き出し風コンテキストポップアップ（カードの高さに自動連動） */
         .card-popup {
             position: absolute;
-            bottom: 74px; /* カード上部から少し浮かせた位置 */
+            bottom: calc(var(--card-size) + 16px); /* カードの大きさに追従して自動計算 */
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -230,14 +251,14 @@
             border-radius: 12px;
             padding: 8px 10px;
             box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4), 0 0 10px rgba(0, 240, 255, 0.2);
-            z-index: 100;
+            z-index: 130;
             backdrop-filter: blur(8px);
             animation: popUp 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             white-space: nowrap;
             min-width: 130px;
         }
 
-        /* 吹き出しの底面矢印（しっぽ部分） */
+        /* 吹き出しの底面矢印 */
         .card-popup::after {
             content: "";
             position: absolute;
@@ -247,7 +268,7 @@
             border-color: rgba(5, 20, 12, 0.96) transparent transparent transparent;
             display: block;
             width: 0;
-            z-index: 101;
+            z-index: 131;
         }
         /* ネオンフチ用の背後三角影 */
         .card-popup::before {
@@ -259,10 +280,10 @@
             border-color: var(--neon-cyan) transparent transparent transparent;
             display: block;
             width: 0;
-            z-index: 100;
+            z-index: 130;
         }
 
-        /* 位置に応じた吹き出し矢印（しっぽ）のダイナミック配置調整 */
+        /* 位置に応じた吹き出し矢印調整 */
         .card-popup.popup-center {
             left: 50%;
             transform: translateX(-50%);
@@ -277,7 +298,7 @@
             transform: none;
         }
         .card-popup.popup-left::after, .card-popup.popup-left::before {
-            left: 24px; /* 1枚目のカード中心付近に矢印を合わせる */
+            left: 24px;
         }
 
         .card-popup.popup-right {
@@ -285,10 +306,10 @@
             transform: none;
         }
         .card-popup.popup-right::after, .card-popup.popup-right::before {
-            right: 24px; /* 右端のカード中心付近に矢印を合わせる */
+            right: 24px;
         }
 
-        /* 吹き出し内のインフォメーションテキスト */
+        /* 吹き出し内のインフォメーション */
         .popup-text {
             font-size: 0.7rem;
             color: var(--text-main);
@@ -328,28 +349,56 @@
         .popup-action-btn.discard { background: rgba(255, 0, 127, 0.2); color: #ff80bf; }
         .popup-action-btn.detail { background: rgba(0, 240, 255, 0.2); color: #80f5ff; }
 
-        /* レコードジャケットカード */
+        /* --- レコードジャケットカード & レアリティ枠システム --- */
         .card { 
             width: var(--card-size); height: var(--card-size); 
             background-size: cover; background-position: center; 
-            border: 2px solid rgba(255,255,255,0.8); border-radius: 8px; 
+            border-radius: 8px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.5); 
-            transition: transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1), border-color 0.25s, box-shadow 0.25s; 
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.25s, box-shadow 0.25s; 
             position: relative;
         }
-        
-        /* タップで少し拡大。 */
-        .card.selected { 
-            transform: translateY(-14px) scale(1.15); 
-            border-color: var(--neon-cyan); 
-            box-shadow: 0 8px 20px rgba(0, 240, 255, 0.4), 0 0 8px var(--neon-cyan);
-            z-index: 50;
+
+        /* 🥉 通常：ブロンズ枠 */
+        .card.rank-bronze {
+            border: 2.5px solid #b87333;
+            box-shadow: 0 4px 10px rgba(184, 115, 51, 0.35);
+        }
+        /* 🥈 ミリオン：シルバー枠 */
+        .card.rank-silver {
+            border: 2.5px solid #c0c0c0;
+            box-shadow: 0 4px 10px rgba(192, 192, 192, 0.35);
+        }
+        /* 🥇 レコード大賞：ゴールド枠 */
+        .card.rank-gold {
+            border: 2.5px solid #ffd700;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4), 0 0 6px rgba(255, 215, 0, 0.15);
         }
 
-        /* 選択時、非選択カードを少し暗く落として奥行きを出す */
-        .card-wrapper:not(.active-wrapper) .card {
-            opacity: 0.6;
-            transform: scale(0.95);
+        /* 捨て牌ミニカード用の枠色 */
+        .card-mini.rank-bronze { border-color: #b87333; }
+        .card-mini.rank-silver { border-color: #c0c0c0; }
+        .card-mini.rank-gold { border-color: #ffd700; }
+        
+        /* 【超パワーアップ】タップ時の拡大＆他のカードの上に豪快に重なる設定 */
+        .card.selected { 
+            transform: translateY(-20px) scale(1.45) !important; /* ドカンと大きく拡大！ */
+            z-index: 100;
+            opacity: 1 !important;
+        }
+
+        /* 選択された際のネオン発光もレアリティ別にするニクい演出 */
+        .card.rank-bronze.selected {
+            border-color: #f7b97c;
+            box-shadow: 0 12px 25px rgba(184, 115, 51, 0.6), 0 0 12px #b87333;
+        }
+        .card.rank-silver.selected {
+            border-color: #ffffff;
+            box-shadow: 0 12px 25px rgba(255, 255, 255, 0.6), 0 0 12px #c0c0c0;
+        }
+        .card.rank-gold.selected {
+            border-color: #fff4af;
+            box-shadow: 0 12px 28px rgba(255, 215, 0, 0.8), 0 0 15px #ffd700;
         }
 
         /* 持ちカード中心の上部に浮かぶ自動「ツモ（アガリ）」ネオンボタン */
@@ -374,7 +423,7 @@
             letter-spacing: 2px;
             animation: neonPulse 1s infinite alternate;
             cursor: pointer;
-            white-space: nowrap; /* ★ 文字の自動折り返し・改行を完全に防ぐ */
+            white-space: nowrap; /* 自動改行防止 */
         }
 
         @keyframes neonPulse {
@@ -390,7 +439,7 @@
             backdrop-filter: blur(8px);
         }
 
-        /* ★ 詳細モーダルは結果モーダル（9999）よりも手前に表示されるように z-index を上書き */
+        /* 詳細モーダルは結果モーダル（9999）よりも手前に表示 */
         #detail-modal {
             z-index: 10000;
         }
@@ -555,7 +604,18 @@
         let selectedIsTsumo = false;
         let currentAudio = null;
 
-        // --- 2. アーティスト名の「表記ゆれ・揺らぎ」を完全に平滑化する関数群 ---
+        // --- 2. レアリティクラス判定 ---
+        function getCardRankClass(card) {
+            if (card.taisho) {
+                return 'rank-gold';     // 🏆 レコード大賞
+            } else if (card.sales >= 1000000) {
+                return 'rank-silver';   // 🥈 ミリオン
+            } else {
+                return 'rank-bronze';   // 🥉 通常
+            }
+        }
+
+        // --- 3. アーティスト名表記ゆれ平滑化 ---
         function cleanString(str) {
             if (!str) return "";
             return str.toLowerCase()
@@ -570,7 +630,7 @@
             return normA.includes(normB) || normB.includes(normA) || normA.slice(0, 4) === normB.slice(0, 4);
         }
 
-        // --- 3. APIからのデータ取得 ＆ 重複完全シャットアウト ＆ フルスクリーン ---
+        // --- 4. APIからのデータ取得（ミリオン確率の制限） ---
         async function loadAndStart(genreKeyword) {
             if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -599,9 +659,16 @@
                         const year = dateObj.getFullYear() || 1985;
                         const formattedDate = `${year}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
                         
-                        const sales = Math.floor(Math.random() * 240 + 8) * 10000; 
+                        // ★ミリオン（100万枚以上）の確率を「約20%」に絞り込み、通常盤を優先配置
+                        let sales;
+                        if (Math.random() < 0.20) {
+                            sales = Math.floor(Math.random() * 201 + 100) * 10000; // 100万〜300万枚（シルバー）
+                        } else {
+                            sales = Math.floor(Math.random() * 95 + 5) * 10000;    // 5万〜99万枚（ブロンズ）
+                        }
+                        
                         const agency = AGENCIES[index % AGENCIES.length]; 
-                        const taisho = Math.random() < 0.20; 
+                        const taisho = Math.random() < 0.12; // レコード大賞はさらに価値を高めるために12%に調整
                         const highResImg = item.artworkUrl100.replace('100x100bb.jpg', '400x400bb.jpg');
 
                         return {
@@ -656,13 +723,19 @@
         function generateMockCards() {
             fetchedCards = [];
             for (let i = 1; i <= 40; i++) {
+                let sales;
+                if (Math.random() < 0.20) {
+                    sales = Math.floor(Math.random() * 201 + 100) * 10000;
+                } else {
+                    sales = Math.floor(Math.random() * 95 + 5) * 10000;
+                }
                 fetchedCards.push({
                     id: i,
                     name: `Retro Track Vol.${i}`,
                     artist: `アーティスト ${(i%3)+1}`,
                     date: "1986-07-21",
                     year: 1986,
-                    sales: (i % 6 === 0) ? 1200000 : 450000,
+                    sales: sales,
                     agency: AGENCIES[i % AGENCIES.length],
                     taisho: i % 8 === 0,
                     img: `https://picsum.photos/id/${110+i}/300/300`,
@@ -672,7 +745,7 @@
             }
         }
 
-        // --- 4. 4枚の手札を「アガリ寸前」に調整する配牌ロジック ---
+        // --- 5. 4枚の手札を「アガリ寸前」に調整する配牌ロジック ---
         function dealNearYakuHand(deckSource) {
             const strategy = Math.floor(Math.random() * 4);
             let hand = [];
@@ -750,7 +823,7 @@
             return hand;
         }
 
-        // --- 5. 局の初期化 ---
+        // --- 6. 局の初期化 ---
         function initRound() {
             discardPool = [];
             document.getElementById('discard-pool').innerHTML = '';
@@ -783,7 +856,7 @@
             startTurn();
         }
 
-        // --- 6. ゲーム進行システム ---
+        // --- 7. ゲーム進行システム ---
         function startTurn() {
             if (deck.length === 0) {
                 endRound(null, "流局 (流れ)");
@@ -854,25 +927,20 @@
             startTurn();
         }
 
-        // --- 7. カードタップ時の選択状態の切り替え（移動・並べ替えはクローズ） ---
         function selectCard(index, isTsumo) {
             if (isTsumo) {
                 if (selectedIsTsumo) {
-                    // すでにツモ牌が選択されていたら選択解除
                     selectedIsTsumo = false;
                     selectedCardIndex = null;
                 } else {
-                    // ツモ牌を選択（手札の選択は解除）
                     selectedIsTsumo = true;
                     selectedCardIndex = null;
                 }
             } else {
                 if (selectedCardIndex === index && !selectedIsTsumo) {
-                    // すでに選択されている同じ手札をタップしたら解除
                     selectedCardIndex = null;
                     selectedIsTsumo = false;
                 } else {
-                    // 新たな手札カードを選択（ツモ牌の選択は解除）
                     selectedCardIndex = index;
                     selectedIsTsumo = false;
                 }
@@ -883,10 +951,10 @@
         function playerAgari() {
             let totalHand = [...player.hand, player.tsumo];
             let check = checkWin(totalHand);
-            endRound(player, "あなたの勝ち（ツモ）", totalHand, check);
+            endRound(player, "あなたの勝ち\n（ツモ）", totalHand, check);
         }
 
-        // --- 8. 改良版アガリ判定システム（表記ゆれ自動吸収） ---
+        // --- 8. アガリ判定（表記ゆれ平滑化） ---
         function checkWin(cards) {
             let yakuList = [];
             let totalFan = 0;
@@ -963,7 +1031,8 @@
 
                 finalHand.forEach(card => {
                     let cDiv = document.createElement('div');
-                    cDiv.className = 'card';
+                    const rankClass = getCardRankClass(card);
+                    cDiv.className = `card ${rankClass}`;
                     cDiv.style.backgroundImage = `url(${card.img})`;
                     setupCardInteractions(cDiv, () => showCardDetail(card));
                     cardsPool.appendChild(cDiv);
@@ -997,7 +1066,7 @@
             location.reload();
         }
 
-        // --- 10. UIのレンダリング＆はみ出し防止・吹き出し情報追加 ---
+        // --- 10. UIのレンダリング ---
         function updateDeckCount() {
             document.getElementById('deck-count').innerText = deck.length;
         }
@@ -1055,7 +1124,6 @@
                 const popup = document.createElement('div');
                 popup.className = 'card-popup';
                 
-                // 画面端のはみ出し制御
                 if (isTsumo) {
                     popup.classList.add('popup-right'); 
                 } else if (index === 0) {
@@ -1066,14 +1134,12 @@
                     popup.classList.add('popup-center'); 
                 }
                 
-                // 情報表示用の吹き出しテキストセクション
                 const infoDiv = document.createElement('div');
                 infoDiv.className = 'popup-text';
-                const salesMan = Math.floor(card.sales / 10000); // 〇〇万枚にフォーマット
+                const salesMan = Math.floor(card.sales / 10000); 
                 infoDiv.innerHTML = `${card.artist}<br>${card.year}年／${salesMan}万枚`;
                 popup.appendChild(infoDiv);
 
-                // ボタン用の横並びボックス
                 const btnContainer = document.createElement('div');
                 btnContainer.className = 'popup-buttons';
 
@@ -1100,7 +1166,10 @@
             }
 
             const cardDiv = document.createElement('div');
-            cardDiv.className = `card ${isSelected ? 'selected' : ''}`;
+            
+            // ★レアリティに応じた銅・銀・金クラスを動的に取得
+            const rankClass = getCardRankClass(card);
+            cardDiv.className = `card ${rankClass} ${isSelected ? 'selected' : ''}`;
             cardDiv.style.backgroundImage = `url(${card.img})`;
 
             setupCardInteractions(cardDiv, () => {
@@ -1125,7 +1194,10 @@
         function addDiscardPool(card) {
             const pool = document.getElementById('discard-pool');
             let d = document.createElement('div');
-            d.className = 'card-mini';
+            
+            // ★捨て牌のミニカードにも銅・銀・金枠を適用して視認性をアップ！
+            const rankClass = getCardRankClass(card);
+            d.className = `card-mini ${rankClass}`;
             d.style.backgroundImage = `url(${card.img})`;
             
             setupCardInteractions(d, () => showCardDetail(card));
@@ -1146,7 +1218,7 @@
             document.getElementById('m-date').innerText = card.date;
             document.getElementById('m-sales').innerText = card.sales.toLocaleString() + " 枚";
             document.getElementById('m-agency').innerText = card.agency;
-            document.getElementById('m-taisho').innerText = card.taisho ? "🏆 レコード大賞 受賞" : "なし";
+            document.getElementById('m-taisho').innerText = card.taisho ? "🏆 日本レコード大賞 受賞" : "なし";
 
             let affBtn = document.getElementById('btn-affiliate');
             affBtn.href = card.link;
