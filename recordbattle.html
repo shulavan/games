@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>(仮)レコードばとる</title>
+    <title>(仮)レコードばとる - リアルデータ版</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -29,11 +29,12 @@
 
         /* 初期設定画面 */
         #setup-screen { justify-content: center; align-items: center; background: linear-gradient(135deg, #1e1e2f, #0f0f15); }
-        h1 { font-size: 2rem; color: var(--accent-color); margin-bottom: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+        h1 { font-size: 2rem; color: var(--accent-color); margin-bottom: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.5); text-align: center; }
         .setup-group { width: 85%; margin-bottom: 15px; }
         .setup-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #aaa; }
         .setup-group select { width: 100%; padding: 10px; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; font-size: 1rem; }
         .btn { background: var(--accent-color); color: #000; border: none; padding: 12px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
+        .btn:disabled { background: #555; color: #aaa; box-shadow: none; cursor: not-allowed; }
 
         /* ゲーム画面 */
         #game-header { display: flex; justify-content: space-between; font-size: 0.85rem; padding-bottom: 5px; border-bottom: 1px solid #333; }
@@ -80,41 +81,33 @@
         .result-cards { display: flex; justify-content: center; gap: 5px; margin: 15px 0; }
         .yaku-title { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 5px; }
         .fan-count { font-size: 1.2rem; margin-bottom: 15px; }
+        #loading-text { color: var(--accent-color); margin-top: 10px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="screen">
         <h1>(仮)レコードばとる</h1>
+        
         <div class="setup-group">
-            <label>アーティストタイプ</label>
-            <select id="setup-artist">
-                <option value="all">すべて</option>
-                <option value="男性ソロ">男性ソロ</option>
-                <option value="女性ソロ">女性ソロ</option>
-                <option value="グループ">グループ</option>
-            </select>
-        </div>
-        <div class="setup-group">
-            <label>ジャンル</label>
+            <label>ジャンル（自動レコード取得キーワード）</label>
             <select id="setup-genre">
-                <option value="all">すべて</option>
-                <option value="演歌">演歌</option>
-                <option value="民謡">民謡</option>
-                <option value="ムード歌謡">ムード歌謡</option>
-                <option value="ポップ">ポップ</option>
-                <option value="ロック">ロック</option>
-                <option value="ジャズ">ジャズ</option>
+                <option value="演歌">演歌・昭和歌謡</option>
+                <option value="J-Pop">J-POP</option>
+                <option value="Rock">日本のロック</option>
+                <option value="Jazz">JAZZ名盤</option>
+                <option value="Anime">アニメソング</option>
             </select>
         </div>
         <div class="setup-group">
-            <label>BGM</label>
+            <label>BGM（ONにするとゲーム中に環境音が鳴る想定）</label>
             <select id="setup-bgm">
                 <option value="ON">ON</option>
                 <option value="OFF">OFF</option>
             </select>
         </div>
-        <button class="btn" onclick="startGame()">ゲーム開始</button>
+        <button class="btn" id="btn-start" onclick="loadAndStart()">レコード仕入れ＆ゲーム開始</button>
+        <div id="loading-text" class="hidden">レコードを仕入れています（API通信中）...</div>
     </div>
 
     <div id="game-screen" class="screen hidden">
@@ -170,7 +163,7 @@
             </table>
             <div style="margin-bottom:15px; display:flex; justify-content:space-around;">
                 <button class="btn-action" id="btn-listen" style="background:#555;">試聴(30秒)</button>
-                <a id="btn-affiliate" href="#" target="_blank" class="btn-action" style="background:#ff8c00; text-decoration:none; text-align:center; line-height:20px;">購入ページ</a>
+                <a id="btn-affiliate" href="#" target="_blank" class="btn-action" style="background:#ff8c00; text-decoration:none; text-align:center; line-height:20px;">詳細（Apple）</a>
             </div>
             <button class="modal-close" onclick="closeModal('detail-modal')">閉じる</button>
         </div>
@@ -188,20 +181,11 @@
     </div>
 
     <script>
-        // --- 1. サンプルデータプール (LinkShareから取得した体にするモックデータ) ---
-        // 実際のLinkShareの画像URLやアフィリエイトリンク、試聴URLをここに当てはめます。
-        const MASTER_CARDS = [
-            { id: 1, name: "津軽の旅路", artist: "北島三郎太", type: "男性ソロ", genre: "演歌", date: "1978-03-05", year: 1978, sales: 1200000, agency: "北海芸能", taisho: true, img: "https://picsum.photos/id/101/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 2, name: "新宿ムード", artist: "青木ひろし", type: "男性ソロ", genre: "ムード歌謡", date: "1980-11-21", year: 1980, sales: 850000, agency: "東京サウンド", taisho: false, img: "https://picsum.photos/id/102/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 3, name: "東京ラプソディ2026", artist: "南アキ", type: "女性ソロ", genre: "ポップ", date: "2026-01-01", year: 2026, sales: 1050000, agency: "渡辺プロモーション", taisho: true, img: "https://picsum.photos/id/103/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 4, name: "花のソーラン節", artist: "民謡ガールズ", type: "グループ", genre: "民謡", date: "1995-06-15", year: 1995, sales: 300000, agency: "伝統企画", taisho: false, img: "https://picsum.photos/id/104/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 5, name: "JAZZ IN TOKYO", artist: "渡辺プロ楽団", type: "グループ", genre: "ジャズ", date: "1985-08-20", year: 1985, sales: 150000, agency: "渡辺プロモーション", taisho: false, img: "https://picsum.photos/id/105/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 6, name: "エレキ挽歌", artist: "ザ・ギタリーズ", type: "グループ", genre: "ロック", date: "1975-04-01", year: 1975, sales: 1300000, agency: "東京サウンド", taisho: true, img: "https://picsum.photos/id/106/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 7, name: "港の純情", artist: "南アキ", type: "女性ソロ", genre: "演歌", date: "1982-09-09", year: 1982, sales: 2000000, agency: "渡辺プロモーション", taisho: true, img: "https://picsum.photos/id/107/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 8, name: "夜霧のステップ", artist: "青木ひろし", type: "男性ソロ", genre: "ムード歌謡", date: "1982-12-01", year: 1982, sales: 500000, agency: "東京サウンド", taisho: false, img: "https://picsum.photos/id/108/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 9, name: "昭和最後のエレジー", artist: "北島三郎太", type: "男性ソロ", genre: "演歌", date: "1988-10-10", year: 1988, sales: 1100000, agency: "北海芸能", taisho: true, img: "https://picsum.photos/id/109/150/150", audio: "", link: "https://www.linksynergy.com/" },
-            { id: 10, name: "ネオ・ロカビリー", artist: "ザ・ギタリーズ", type: "グループ", genre: "ロック", date: "1982-02-28", year: 1982, sales: 900000, agency: "東京サウンド", taisho: false, img: "https://picsum.photos/id/110/150/150", audio: "", link: "https://www.linksynergy.com/" }
-        ];
+        // --- 1. グローバル設定＆モック用データ生成 ---
+        const AGENCIES = ["渡辺プロモーション", "東京サウンド", "北海芸能", "伝統企画"];
+        
+        // APIからデータをフェッチして作成される動的なカードリスト
+        let fetchedCards = [];
 
         // キャラクターデータ（8名）
         const ALL_CHARACTERS = [
@@ -211,27 +195,84 @@
             { id: 7, name: "ユミ", type: "同事務所狙い" }, { id: 8, name: "ゴロウ", type: "同世代コレクター" }
         ];
 
-        // --- 2. ゲーム状態管理オブジェクト ---
-        let gameCondition = { artist: 'all', genre: 'all', bgm: 'ON' };
-        let gameRound = 1; // 1〜8局（東1〜4, 南1〜4）
+        // --- 2. ゲーム状態管理 ---
+        let gameCondition = { genre: '演歌', bgm: 'ON' };
+        let gameRound = 1; 
         let deck = [];
         let discardPool = [];
         let player = { name: "あなた", score: 25000, hand: [], tsumo: null };
-        let rivals = []; // 自動選出された3人
-        let currentTurn = 0; // 0:プレイヤー, 1:右, 2:対面, 3:左
+        let rivals = []; 
+        let currentTurn = 0; // 0:プレイヤー, 1〜3:AI
         let selectedCardIndex = null;
         let selectedIsTsumo = false;
         let currentAudio = null;
 
-        // --- 3. ゲーム初期化＆開始 ---
-        function startGame() {
-            gameCondition.artist = document.getElementById('setup-artist').value;
+        // --- 3. iTunes Search API からデータ取得 ---
+        async function loadAndStart() {
+            const startBtn = document.getElementById('btn-start');
+            const loadingText = document.getElementById('loading-text');
+            startBtn.disabled = true;
+            loadingText.classList.remove('hidden');
+
             gameCondition.genre = document.getElementById('setup-genre').value;
             gameCondition.bgm = document.getElementById('setup-bgm').value;
 
+            // ジャンルに合わせた検索キーワード調整
+            let query = gameCondition.genre;
+            if (query === '演歌') query = '昭和 演歌';
+            if (query === 'J-Pop') query = 'J-Pop';
+            if (query === 'Rock') query = 'ロック';
+            if (query === 'Jazz') query = 'Jazz';
+            if (query === 'Anime') query = 'アニメ';
+
+            // iTunes APIから楽曲情報を最大100件取得 (country=jpで日本のiTunesから)
+            const apiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&country=jp&entity=song&limit=80`;
+
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                if (data.results && data.results.length > 5) {
+                    // 取得データをゲーム用フォーマットに変換しつつ、不足パラメーターをゲーム用に「味付け」
+                    fetchedCards = data.results.map((item, index) => {
+                        const dateObj = new Date(item.releaseDate);
+                        const year = dateObj.getFullYear() || 1980;
+                        const formattedDate = `${year}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
+                        
+                        // ゲーム性が成り立つよう「販売枚数」「事務所」「レコ大」を適度に散らしてランダム付与
+                        const sales = Math.floor(Math.random() * 240 + 10) * 10000; // 10万〜250万枚
+                        const agency = AGENCIES[index % AGENCIES.length]; // 均等に事務所を割り振る
+                        const taisho = Math.random() < 0.22; // 約22%の確率でレコード大賞受賞作にする
+
+                        // 高画質なジャケット画像を取得（デフォルトの100x100を300x300に置換する裏技）
+                        const highResImg = item.artworkUrl100.replace('100x100bb.jpg', '300x300bb.jpg');
+
+                        return {
+                            id: item.trackId,
+                            name: item.trackName,
+                            artist: item.artistName,
+                            date: formattedDate,
+                            year: year,
+                            sales: sales,
+                            agency: agency,
+                            taisho: taisho,
+                            img: highResImg,
+                            audio: item.previewUrl, // 30秒試聴用のmp3 URL
+                            link: item.trackViewUrl  // Appleの商品詳細リンク
+                        };
+                    });
+                } else {
+                    throw new Error("十分な楽曲が見つかりませんでした");
+                }
+            } catch (error) {
+                alert("APIからのデータ取得に失敗したため、デモ用のクラシックデータで開始します。");
+                // フォールバック用のダミーデータ生成
+                generateMockCards();
+            }
+
             // キャラクター8名からランダムに3名を選出
             let shuffledChar = [...ALL_CHARACTERS].sort(() => 0.5 - Math.random());
-            rivals = shuffledChar.slice(0, 3).map((c, i) => ({
+            rivals = shuffledChar.slice(0, 3).map((c) => ({
                 id: c.id, name: c.name, type: c.type, score: 25000, handCount: 5, hand: []
             }));
 
@@ -245,29 +286,42 @@
             initRound();
         }
 
-        // 局の初期化
+        // 万が一通信エラーが起きた場合のダミーデータ生成
+        function generateMockCards() {
+            fetchedCards = [];
+            for (let i = 1; i <= 30; i++) {
+                fetchedCards.push({
+                    id: i,
+                    name: `デモレコード第${i}集`,
+                    artist: `アーティスト${(i%3)+1}`,
+                    date: "1985-05-10",
+                    year: 1985,
+                    sales: (i % 5 === 0) ? 1200000 : 300000,
+                    agency: AGENCIES[i % AGENCIES.length],
+                    taisho: i % 7 === 0,
+                    img: `https://picsum.photos/id/${100+i}/150/150`,
+                    audio: "",
+                    link: "#"
+                });
+            }
+        }
+
+        // --- 4. 局の初期化＆開始 ---
         function initRound() {
             discardPool = [];
             document.getElementById('discard-pool').innerHTML = '';
             
-            // 局表示の更新
+            // 局表示
             let kyokuText = (gameRound <= 4) ? `東${gameRound}局` : `南${gameRound - 4}局`;
             document.getElementById('current-kyoku').innerText = kyokuText;
             document.getElementById('dealer-indicator').innerText = (gameRound % 4 === 1) ? "親: あなた" : `親: ${rivals[(gameRound % 4) - 2].name}`;
 
-            // デッキの生成（条件フィルタリング＋100枚になるようシャッフル複製）
-            let filteredPool = MASTER_CARDS.filter(c => {
-                let matchArtist = (gameCondition.artist === 'all' || c.type === gameCondition.artist);
-                let matchGenre = (gameCondition.genre === 'all' || c.genre === gameCondition.genre);
-                return matchArtist && matchGenre;
-            });
-            if (filteredPool.length === 0) filteredPool = MASTER_CARDS; // 該当なしは全開放
-
+            // デッキを100枚になるよう取得データから複製シャッフルして生成
             deck = [];
             while (deck.length < 100) {
-                deck = deck.concat([...filteredPool].sort(() => 0.5 - Math.random()));
+                deck = deck.concat([...fetchedCards].sort(() => 0.5 - Math.random()));
             }
-            deck = deck.slice(0, 100); // 100枚厳選
+            deck = deck.slice(0, 100);
 
             // 配牌 (5枚ずつ)
             player.hand = deck.splice(0, 5);
@@ -280,12 +334,11 @@
             updateDeckCount();
             renderRivals();
             
-            // 最初はプレイヤー（あなた）が親としてスタート
             currentTurn = 0; 
             startTurn();
         }
 
-        // --- 4. ターン進行ロジック ---
+        // --- 5. ターン進行ロジック ---
         function startTurn() {
             if (deck.length === 0) {
                 endRound(null, "流局 (流れ)");
@@ -298,7 +351,6 @@
                 updateDeckCount();
                 renderPlayerHand();
                 
-                // アガリ判定
                 let check = checkWin([...player.hand, player.tsumo]);
                 if (check.isWin) {
                     document.getElementById('btn-agari').style.display = 'block';
@@ -313,13 +365,12 @@
                 document.getElementById('btn-discard').disabled = true;
                 document.getElementById('btn-tsumo').disabled = true;
                 document.getElementById('btn-agari').style.display = 'none';
-                setTimeout(aiRoutine, 1000);
+                setTimeout(aiRoutine, 800);
             }
         }
 
         function aiRoutine() {
             let currentAi = rivals[currentTurn - 1];
-            // AIツモ
             let tsumoCard = deck.shift();
             updateDeckCount();
             let totalHand = [...currentAi.hand, tsumoCard];
@@ -327,19 +378,17 @@
             // AIアガリチェック
             let check = checkWin(totalHand);
             if (check.isWin) {
-                endRound(currentAi, "ツモアガリ", totalHand, check);
+                endRound(currentAi, `${currentAi.name} の勝ち!`, totalHand, check);
                 return;
             }
 
-            // AIの簡易捨て石ロジック（ランダムに1枚捨てる）
+            // AIはランダムに1枚捨てる
             let discardIdx = Math.floor(Math.random() * totalHand.length);
             let discarded = totalHand.splice(discardIdx, 1)[0];
             currentAi.hand = totalHand;
 
-            // 捨て場に追加
             addDiscardPool(discarded);
 
-            // 次のターンへ
             currentTurn = (currentTurn + 1) % 4;
             startTurn();
         }
@@ -363,7 +412,6 @@
             renderPlayerHand();
             document.getElementById('btn-agari').style.display = 'none';
 
-            // 次のターン（AI1）へ
             currentTurn = 1;
             startTurn();
         }
@@ -382,7 +430,7 @@
             endRound(player, "あなたの勝ち（ツモ）", totalHand, check);
         }
 
-        // --- 5. 役判定システム ---
+        // --- 6. 役判定システム ---
         function checkWin(cards) {
             let yakuList = [];
             let totalFan = 0;
@@ -402,7 +450,6 @@
             let isWin = yakuList.length > 0;
             let finalYakuName = "役なし";
             
-            // 特殊倍率ルール
             if (yakuList.length === 2) {
                 finalYakuName = "役満 (2役同時)";
             } else if (yakuList.length >= 3) {
@@ -414,7 +461,7 @@
             return { isWin, yakuList, totalFan, finalYakuName };
         }
 
-        // --- 6. 局終了＆結果表示 ---
+        // --- 7. 局終了＆スコア計算 ---
         function endRound(winner, reason, finalHand = [], checkResult = null) {
             document.getElementById('result-modal').classList.remove('hidden');
             document.getElementById('result-header').innerText = reason;
@@ -433,7 +480,6 @@
                 winnerInfo.innerText = `${winner.name} のアガリ!`;
                 yakuNameZone.innerText = checkResult.finalYakuName;
                 
-                // 点数計算（簡易スコア計上システム）
                 let basePoints = 3000;
                 if (checkResult.finalYakuName.includes("ダブル役満")) basePoints = 24000;
                 else if (checkResult.finalYakuName.includes("役満")) basePoints = 12000;
@@ -441,7 +487,6 @@
 
                 winnerInfo.innerText += ` (+${basePoints}点)`;
 
-                // スコアの移動
                 if (winner.name === "あなた") {
                     player.score += basePoints;
                     rivals.forEach(r => r.score -= Math.floor(basePoints/3));
@@ -453,7 +498,6 @@
                     player.score -= Math.floor(basePoints/3);
                 }
 
-                // 終了手札の可視化
                 finalHand.forEach(card => {
                     let cDiv = document.createElement('div');
                     cDiv.className = 'card';
@@ -465,11 +509,9 @@
                 winnerInfo.innerText = "誰もアガれませんでした。";
             }
 
-            // 点数表示リフレッシュ
             document.getElementById('player-score').innerText = `持点: ${player.score}`;
             renderRivals();
 
-            // 最終局チェック
             if (gameRound >= 8) {
                 document.getElementById('btn-next-round').innerText = "最終結果を確認";
                 document.getElementById('btn-next-round').onclick = showFinalResult;
@@ -489,10 +531,10 @@
             
             let rankText = scores.map((s, idx) => `${idx+1}位: ${s.name} (${s.score}点)`).join("\n");
             alert(`【ゲーム終了 最終結果】\n\n${rankText}`);
-            location.reload(); // 最初に戻る
+            location.reload();
         }
 
-        // --- 7. UI描画補助関数 ---
+        // --- 8. UI描画・補助 ---
         function updateDeckCount() {
             document.getElementById('deck-count').innerText = deck.length;
         }
@@ -503,7 +545,6 @@
             rivals.forEach(r => {
                 let div = document.createElement('div');
                 div.className = 'rival-row';
-                
                 let cardsBacks = '';
                 for(let i=0; i<5; i++) { cardsBacks += `<div class="card-back"></div>`; }
 
@@ -525,7 +566,6 @@
             handZone.innerHTML = '';
             tsumoZone.innerHTML = '';
 
-            // 手札5枚の描画
             player.hand.forEach((card, idx) => {
                 let cDiv = document.createElement('div');
                 cDiv.className = `card ${selectedCardIndex === idx && !selectedIsTsumo ? 'selected' : ''}`;
@@ -534,7 +574,6 @@
                 handZone.appendChild(cDiv);
             });
 
-            // ツモ札の描画
             if (player.tsumo) {
                 let cDiv = document.createElement('div');
                 cDiv.className = `card ${selectedIsTsumo ? 'selected' : ''}`;
@@ -557,10 +596,10 @@
             d.style.backgroundImage = `url(${card.img})`;
             d.onclick = () => showCardDetail(card);
             pool.appendChild(d);
-            pool.scrollTop = pool.scrollHeight; // 最下部へスクロール
+            pool.scrollTop = pool.scrollHeight; 
         }
 
-        // --- 8. モーダル制御 ＆ オーディオ・アフィリエイト連携 ---
+        // --- 9. モーダル ＆ リアル音楽再生 ＆ アフィリエイト ---
         function showSelectedDetail() {
             let card = null;
             if (selectedIsTsumo) card = player.tsumo;
@@ -583,20 +622,19 @@
             document.getElementById('m-agency').innerText = card.agency;
             document.getElementById('m-taisho').innerText = card.taisho ? "★受賞作" : "なし";
 
-            // アフィリエイトリンク設定
+            // アフィリエイト用リンク設定
             let affBtn = document.getElementById('btn-affiliate');
-            affBtn.href = card.link || "#";
+            affBtn.href = card.link;
 
-            // 30秒お試し視聴設定
+            // 30秒試聴
             let listenBtn = document.getElementById('btn-listen');
             listenBtn.onclick = () => {
                 if (currentAudio) { currentAudio.pause(); }
                 if (card.audio) {
                     currentAudio = new Audio(card.audio);
                     currentAudio.play();
-                    alert("♪ 音声を再生します（モック処理・URLがある場合のみ）");
                 } else {
-                    alert("※お試し音声URLが未設定です。LinkShareデータからmp3URLをセットしてください。");
+                    alert("お試し用の試聴データが存在しない曲です。");
                 }
             };
         }
