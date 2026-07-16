@@ -436,7 +436,7 @@
             <!-- 手札エリア -->
             <div id="player-hand-wrapper">
                 <div id="player-hand">
-                    <!-- 手札5枚 -->
+                    <!-- 手札4枚 -->
                 </div>
                 <div id="tsumo-card-zone">
                     <!-- ツモ牌1枚 -->
@@ -475,7 +475,7 @@
             <div class="result-cards" id="result-cards-pool"></div>
             <div class="yaku-title" id="result-yaku-name"></div>
             <div class="fan-count" id="result-fan-count"></div>
-            <button class="btn" style="background: linear-gradient(135deg, #104a2b, #228b4c);" id="btn-next-round" onclick="nextRound()">次の局へ 💿</button>
+            <button class="btn" style="background: linear-gradient(135deg, #104a2b, #228b4c); padding: 10px 24px; border: none; border-radius: 20px; color:#fff; font-weight:bold;" id="btn-next-round" onclick="nextRound()">次の局へ 💿</button>
         </div>
     </div>
 
@@ -501,9 +501,25 @@
         let selectedIsTsumo = false;
         let currentAudio = null;
 
-        // --- 2. APIからのデータ取得 ＆ 重複完全シャットアウト ＆ フルスクリーン ---
+        // --- 2. アーティスト名の「表記ゆれ・揺らぎ」を完全に平滑化する関数群 ---
+        function cleanString(str) {
+            if (!str) return "";
+            // 小文字化、全角半角スペースの除去、記号の除去
+            return str.toLowerCase()
+                .replace(/[\s \-・._,/()（）[\]]/g, "")
+                .replace(/feat\..*|with.*/g, ""); // フィーチャリング等のコラボ名義以降を無視
+        }
+
+        function isSimilarArtist(a, b) {
+            const normA = cleanString(a);
+            const normB = cleanString(b);
+            if (!normA || !normB) return false;
+            // 相互包含判定、あるいは最初の4文字部分一致
+            return normA.includes(normB) || normB.includes(normA) || normA.slice(0, 4) === normB.slice(0, 4);
+        }
+
+        // --- 3. APIからのデータ取得 ＆ 重複完全シャットアウト ＆ フルスクリーン ---
         async function loadAndStart(genreKeyword) {
-            // 【機能追加】ボタンタップの瞬間に全画面化
             if (document.documentElement.requestFullscreen) {
                 document.documentElement.requestFullscreen().catch(err => {
                     console.log("Fullscreen request bypassed:", err);
@@ -512,7 +528,6 @@
                 document.documentElement.webkitRequestFullscreen();
             }
 
-            // ローディングアニメーション開始
             document.getElementById('loading-text').classList.remove('hidden');
             const buttons = document.querySelectorAll('.genre-btn');
             buttons.forEach(btn => btn.disabled = true);
@@ -571,10 +586,9 @@
                 generateMockCards();
             }
 
-            // 対戦相手のランダム抽出
             let shuffledChar = [...ALL_CHARACTERS].sort(() => 0.5 - Math.random());
             rivals = shuffledChar.slice(0, 3).map((c) => ({
-                id: c.id, name: c.name, type: c.type, score: 25000, handCount: 5, hand: []
+                id: c.id, name: c.name, type: c.type, score: 25000, handCount: 4, hand: []
             }));
 
             gameRound = 1;
@@ -606,22 +620,24 @@
             }
         }
 
-        // --- 3. 【新機能】配牌時に「役（同じ属性）」にかなり近い手牌を自動生成するロジック ---
+        // --- 4. 【新規則準拠】4枚の手札を「アガリ寸前」に調整する配牌ロジック ---
         function dealNearYakuHand(deckSource) {
-            // 同アーティスト、同発売年、同レコード会社、またはミリオン・レコ大に偏らせる
             const strategy = Math.floor(Math.random() * 4);
             let hand = [];
             
             if (strategy === 0) {
-                // 同じアーティストを3枚仕込む
+                // 同じアーティスト（表記ゆれ考慮）を3枚仕込む
                 const counts = {};
-                deckSource.forEach(c => counts[c.artist] = (counts[c.artist] || 0) + 1);
+                deckSource.forEach(c => {
+                    const norm = cleanString(c.artist);
+                    counts[norm] = (counts[norm] || 0) + 1;
+                });
                 const candidates = Object.keys(counts).filter(art => counts[art] >= 3);
                 if (candidates.length > 0) {
-                    const targetArtist = candidates[Math.floor(Math.random() * candidates.length)];
+                    const targetNorm = candidates[Math.floor(Math.random() * candidates.length)];
                     let pulled = 0;
                     for (let i = 0; i < deckSource.length; i++) {
-                        if (deckSource[i].artist === targetArtist) {
+                        if (cleanString(deckSource[i].artist) === targetNorm) {
                             hand.push(deckSource.splice(i, 1)[0]);
                             pulled++;
                             i--;
@@ -647,15 +663,18 @@
                     }
                 }
             } else if (strategy === 2) {
-                // 同じレコード会社（事務所）を3枚仕込む
+                // 同じレコード会社を3枚仕込む
                 const counts = {};
-                deckSource.forEach(c => counts[c.agency] = (counts[c.agency] || 0) + 1);
+                deckSource.forEach(c => {
+                    const norm = cleanString(c.agency);
+                    counts[norm] = (counts[norm] || 0) + 1;
+                });
                 const candidates = Object.keys(counts).filter(a => counts[a] >= 3);
                 if (candidates.length > 0) {
                     const targetAgency = candidates[Math.floor(Math.random() * candidates.length)];
                     let pulled = 0;
                     for (let i = 0; i < deckSource.length; i++) {
-                        if (deckSource[i].agency === targetAgency) {
+                        if (cleanString(deckSource[i].agency) === targetAgency) {
                             hand.push(deckSource.splice(i, 1)[0]);
                             pulled++;
                             i--;
@@ -676,15 +695,15 @@
                 }
             }
             
-            // 5枚に満たない残りを通常の山札から補充
-            while (hand.length < 5 && deckSource.length > 0) {
+            // 4枚に満たない残りを通常の山札から補充
+            while (hand.length < 4 && deckSource.length > 0) {
                 hand.push(deckSource.shift());
             }
             
             return hand;
         }
 
-        // --- 4. 局の初期化 ---
+        // --- 5. 局の初期化（4枚＋ツモ1枚ルールを適用） ---
         function initRound() {
             discardPool = [];
             document.getElementById('discard-pool').innerHTML = '';
@@ -699,14 +718,14 @@
             }
             deck = deck.slice(0, 100);
 
-            // 【新機能反映】プレイヤーの手札を役が狙いやすい初期牌に調整！
+            // あなたの手札を 4枚 にセット
             player.hand = dealNearYakuHand(deck);
             player.tsumo = null;
 
-            // AIは標準配牌
+            // AIの手札も 4枚 にセット
             rivals.forEach(r => {
-                r.hand = deck.splice(0, 5);
-                r.handCount = 5;
+                r.hand = deck.splice(0, 4);
+                r.handCount = 4;
             });
 
             selectedCardIndex = null;
@@ -719,7 +738,7 @@
             startTurn();
         }
 
-        // --- 5. ゲーム進行システム ---
+        // --- 6. ゲーム進行システム ---
         function startTurn() {
             if (deck.length === 0) {
                 endRound(null, "流局 (流れ)");
@@ -727,12 +746,12 @@
             }
 
             if (currentTurn === 0) {
-                // あなたのツモ（全自動）
+                // あなたのツモ。4枚 ＋ 1枚の「計5枚」になる
                 player.tsumo = deck.shift();
                 updateDeckCount();
                 renderPlayerHand();
                 
-                // 自動アガリチェック
+                // 「5枚」でアガリチェック
                 let check = checkWin([...player.hand, player.tsumo]);
                 if (check.isWin) {
                     document.getElementById('agari-overlay').style.display = 'block';
@@ -749,7 +768,7 @@
             let currentAi = rivals[currentTurn - 1];
             let tsumoCard = deck.shift();
             updateDeckCount();
-            let totalHand = [...currentAi.hand, tsumoCard];
+            let totalHand = [...currentAi.hand, tsumoCard]; // 4枚 + 1枚 = 5枚
 
             let check = checkWin(totalHand);
             if (check.isWin) {
@@ -760,6 +779,7 @@
             let discardIdx = Math.floor(Math.random() * totalHand.length);
             let discarded = totalHand.splice(discardIdx, 1)[0];
             currentAi.hand = totalHand;
+            currentAi.handCount = 4; // 捨てるので4枚に戻る
 
             addDiscardPool(discarded);
 
@@ -791,12 +811,9 @@
             startTurn();
         }
 
-        // --- 6. 【超進化】シングルタップだけで位置移動（並べ替え＆ツモ入替）を実現 ---
+        // --- 7. シングルタップ位置移動（並べ替え＆ツモ入替） ---
         function selectCard(index, isTsumo) {
-            // すでに何かが選択されている（拡大中）かつ、別の手札カードがタップされた場合
             if (selectedCardIndex !== null || selectedIsTsumo) {
-                
-                // 1. 全く同じカードを再度タップした場合は、選択（拡大）を解除
                 if (isTsumo && selectedIsTsumo) {
                     selectedCardIndex = null;
                     selectedIsTsumo = false;
@@ -810,17 +827,14 @@
                     return;
                 }
 
-                // 2. 異なる手札をタップした場合（手札内での並び替え or ツモ牌を手札に挿入）
                 if (!isTsumo) {
                     if (selectedIsTsumo) {
-                        // ツモ牌をタップしたカードとスワップ（入れ替え）
                         const temp = player.hand[index];
                         player.hand[index] = player.tsumo;
                         player.tsumo = temp;
                         selectedCardIndex = index;
                         selectedIsTsumo = false;
                     } else {
-                        // 手札内でのソート：選択カードをタップしたインデックスの位置にずらす
                         const cardToMove = player.hand.splice(selectedCardIndex, 1)[0];
                         player.hand.splice(index, 0, cardToMove);
                         selectedCardIndex = index;
@@ -830,19 +844,17 @@
                     return;
                 }
 
-                // 3. 手札が選択された状態で、ツモ牌をタップした場合（手札とツモの入れ替え）
                 if (isTsumo && selectedCardIndex !== null && !selectedIsTsumo) {
                     const temp = player.hand[selectedCardIndex];
                     player.hand[selectedCardIndex] = player.tsumo;
                     player.tsumo = temp;
                     selectedCardIndex = null;
-                    selectedIsTsumo = true; // ツモ牌を選択状態にする
+                    selectedIsTsumo = true;
                     renderPlayerHand();
                     return;
                 }
             }
 
-            // 何も選ばれていないフラットな状態からタップされた場合、そのまま選択
             if (isTsumo) {
                 selectedCardIndex = null;
                 selectedIsTsumo = true;
@@ -859,22 +871,32 @@
             endRound(player, "あなたの勝ち（ツモ）", totalHand, check);
         }
 
-        // --- 7. 判定システム ---
+        // --- 8. 改良版アガリ判定システム（表記ゆれ自動吸収） ---
         function checkWin(cards) {
             let yakuList = [];
             let totalFan = 0;
 
+            if (cards.length < 5) return { isWin: false, yakuList: [], totalFan: 0, finalYakuName: "枚数不足" };
+
             let allTaisho = cards.every(c => c.taisho);
             let allMillion = cards.every(c => c.sales >= 1000000);
-            let sameArtist = cards.every(c => c.artist === cards[0].artist);
+            
+            // 表記ゆれ自動吸収を施したアーティスト同一判定
+            let firstArtist = cards[0].artist;
+            let sameArtist = cards.every(c => isSimilarArtist(c.artist, firstArtist));
+
+            // 発売年同一判定
             let sameYear = cards.every(c => c.year === cards[0].year);
-            let sameAgency = cards.every(c => c.agency === cards[0].agency);
+
+            // 事務所（レコード会社）同一判定
+            let firstAgency = cleanString(cards[0].agency);
+            let sameAgency = cards.every(c => cleanString(c.agency) === firstAgency);
 
             if (allTaisho) { yakuList.push("すべてレコード大賞 (2翻)"); totalFan += 2; }
             if (allMillion) { yakuList.push("すべてミリオンセラー (2翻)"); totalFan += 2; }
             if (sameArtist) { yakuList.push("同じアーティスト名 (1翻)"); totalFan += 1; }
             if (sameYear) { yakuList.push("同じ発売年 (1翻)"); totalFan += 1; }
-            if (sameAgency) { yakuList.push("同じ事務所 (1翻)"); totalFan += 1; }
+            if (sameAgency) { yakuList.push("同じレコード会社 (1翻)"); totalFan += 1; }
 
             let isWin = yakuList.length > 0;
             let finalYakuName = "役なし";
@@ -890,7 +912,7 @@
             return { isWin, yakuList, totalFan, finalYakuName };
         }
 
-        // --- 8. 局リザルト ---
+        // --- 9. 局リザルト ---
         function endRound(winner, reason, finalHand = [], checkResult = null) {
             document.getElementById('result-modal').classList.remove('hidden');
             document.getElementById('result-header').innerText = reason;
@@ -963,7 +985,7 @@
             location.reload();
         }
 
-        // --- 9. UIのレンダリング＆はみ出し防止ポップアップ処理 ---
+        // --- 10. UIのレンダリング＆はみ出し防止ポップアップ処理 ---
         function updateDeckCount() {
             document.getElementById('deck-count').innerText = deck.length;
         }
@@ -975,7 +997,8 @@
                 let div = document.createElement('div');
                 div.className = 'rival-row';
                 let cardsBacks = '';
-                for(let i=0; i<5; i++) { cardsBacks += `<div class="card-back"></div>`; }
+                // ライバルの手札枚数（4枚）を裏面表示
+                for(let i=0; i<r.hand.length; i++) { cardsBacks += `<div class="card-back"></div>`; }
 
                 div.innerHTML = `
                     <div class="rival-info">
@@ -1017,20 +1040,19 @@
                 wrapper.classList.add('active-wrapper');
             }
 
-            // 【新機能】端っこに配置された吹き出しが絶対にはみ出さないアラインメント調整
             if (isSelected) {
                 const popup = document.createElement('div');
                 popup.className = 'card-popup';
                 
-                // インデックス位置に応じてアラインメントを動的に変化
+                // 手札が4枚になったことに伴い、ダイナミックなはみ出し調整を最適化
                 if (isTsumo) {
-                    popup.classList.add('popup-right'); // 右側を基準に広げて画面切れを回避
+                    popup.classList.add('popup-right'); 
                 } else if (index === 0) {
-                    popup.classList.add('popup-left');  // 左側を基準に広げて画面切れを回避
-                } else if (index === player.hand.length - 1) {
-                    popup.classList.add('popup-right'); // 手札の右端も右側基準
+                    popup.classList.add('popup-left');  
+                } else if (index === player.hand.length - 1) { // 4枚目の手札
+                    popup.classList.add('popup-right'); 
                 } else {
-                    popup.classList.add('popup-center'); // 中央付近はセンタリング
+                    popup.classList.add('popup-center'); 
                 }
                 
                 const discardBtn = document.createElement('button');
@@ -1058,7 +1080,6 @@
             cardDiv.className = `card ${isSelected ? 'selected' : ''}`;
             cardDiv.style.backgroundImage = `url(${card.img})`;
 
-            // ダブルタップ判定は完全排除。レスポンスの速いシングルタップ専用設定
             setupCardInteractions(cardDiv, () => {
                 selectCard(index, isTsumo);
             });
@@ -1067,14 +1088,13 @@
             return wrapper;
         }
 
-        // シングルタップのみに限定した高速インタラクションハンドラー
         function setupCardInteractions(element, onSingle) {
             element.addEventListener('click', (e) => {
                 e.stopPropagation();
                 onSingle();
             });
             element.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // スマホの300msの遅延＆ゴーストクリックを完全に封じる
+                e.preventDefault(); 
                 onSingle();
             }, { passive: false });
         }
@@ -1094,7 +1114,7 @@
             }, 100);
         }
 
-        // --- 10. モーダル ---
+        // --- 11. モーダル ---
         function showCardDetail(card) {
             document.getElementById('detail-modal').classList.remove('hidden');
             document.getElementById('modal-img').style.backgroundImage = `url(${card.img})`;
