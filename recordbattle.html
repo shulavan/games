@@ -3,85 +3,328 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>(仮)レコードばとる - リアルデータ版</title>
+    <title>(仮)レコードばとる - ネオ・シティポップ版</title>
     <style>
+        /* 深夜のレコードバー・ネオンシティポップをイメージしたカラーパレット */
         :root {
-            --bg-color: #121212;
-            --card-bg: #2a2a2a;
-            --text-color: #ffffff;
-            --accent-color: #ffd700;
+            --bg-gradient: linear-gradient(180deg, #07070c 0%, #0d0d1a 100%);
+            --panel-bg: rgba(255, 255, 255, 0.03);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-sub: #8e8e9f;
+            --neon-pink: #ff007f;
+            --neon-cyan: #00f0ff;
+            --neon-gold: #fbfb14;
+            --card-size: 56px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none; 
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
             overflow: hidden;
-            position: relative;
             height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
         }
+
         /* 画面共通 */
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; padding: 15px; box-sizing: border-box;
+            display: flex; flex-direction: column; padding: 16px; box-sizing: border-box;
+            justify-content: space-between;
         }
         .hidden { display: none !important; }
 
-        /* 初期設定画面 */
-        #setup-screen { justify-content: center; align-items: center; background: linear-gradient(135deg, #1e1e2f, #0f0f15); }
-        h1 { font-size: 2rem; color: var(--accent-color); margin-bottom: 20px; text-shadow: 0 0 10px rgba(255,215,0,0.5); text-align: center; }
-        .setup-group { width: 85%; margin-bottom: 15px; }
-        .setup-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #aaa; }
-        .setup-group select { width: 100%; padding: 10px; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; font-size: 1rem; }
-        .btn { background: var(--accent-color); color: #000; border: none; padding: 12px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 25px; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
-        .btn:disabled { background: #555; color: #aaa; box-shadow: none; cursor: not-allowed; }
+        /* 初期設定画面（エモいレコード風デザイン） */
+        #setup-screen { 
+            justify-content: center; 
+            align-items: center; 
+            background: radial-gradient(circle, #1a1525 0%, #080510 100%); 
+        }
+        
+        h1 { 
+            font-size: 2.2rem; 
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #fff; 
+            margin-bottom: 30px; 
+            text-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-cyan);
+            text-align: center; 
+        }
+        
+        .setup-group { width: 85%; max-width: 320px; margin-bottom: 20px; }
+        .setup-group label { display: block; margin-bottom: 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); }
+        .setup-group select { 
+            width: 100%; padding: 12px; background: rgba(255,255,255,0.05); color: #fff; 
+            border: 1px solid var(--panel-border); border-radius: 8px; font-size: 1rem; 
+            backdrop-filter: blur(10px); outline: none; transition: border-color 0.3s;
+        }
+        .setup-group select:focus {
+            border-color: var(--neon-pink);
+        }
 
-        /* ゲーム画面 */
-        #game-header { display: flex; justify-content: space-between; font-size: 0.85rem; padding-bottom: 5px; border-bottom: 1px solid #333; }
-        #rivals-container { flex: 1; display: flex; flex-direction: column; justify-content: space-around; margin: 5px 0; }
-        .rival-row { display: flex; align-items: center; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 5px; }
-        .rival-info { width: 70px; font-size: 0.75rem; }
-        .rival-hand { display: flex; gap: 2px; margin-left: 10px; }
-        .card-back { width: 30px; height: 30px; background: radial-gradient(circle, #444, #222); border: 1px solid #555; border-radius: 50%; }
+        .btn { 
+            background: linear-gradient(135deg, var(--neon-pink), #8a00ff); 
+            color: #fff; border: none; padding: 14px 40px; font-size: 1.1rem; font-weight: bold; 
+            border-radius: 30px; cursor: pointer; margin-top: 20px; 
+            box-shadow: 0 0 15px rgba(255,0,127,0.4); transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:active { transform: scale(0.95); box-shadow: 0 0 5px rgba(255,0,127,0.2); }
+        .btn:disabled { background: #333; color: #777; box-shadow: none; cursor: not-allowed; }
 
-        /* 中央エリア（山札と共通捨て場） */
-        #center-area { flex: 1.2; display: flex; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 5px; align-items: center; margin: 5px 0; }
-        #deck-info { width: 60px; text-align: center; font-size: 0.75rem; border-right: 1px solid #333; padding-right: 5px; }
-        #deck-visual { width: 40px; height: 40px; background: #444; border-radius: 5px; margin: 5px auto; position: relative; box-shadow: 2px 2px 0 #222, 4px 4px 0 #111; }
-        #discard-pool { flex: 1; display: flex; flex-wrap: wrap; content-content: flex-start; gap: 4px; padding-left: 8px; height: 100%; overflow-y: auto; }
+        /* ゲーム画面レイアウト（絶対にスマホ画面に収まるように分配） */
+        #game-header { 
+            display: flex; justify-content: space-between; font-size: 0.85rem; 
+            padding: 8px 4px; border-bottom: 1px solid var(--panel-border);
+            color: var(--text-sub);
+        }
+
+        /* ライバルたちのエリア */
+        #rivals-container { 
+            display: flex; flex-direction: column; gap: 8px; margin: 10px 0;
+        }
+        .rival-row { 
+            display: flex; align-items: center; 
+            background: var(--panel-bg); 
+            border: 1px solid var(--panel-border);
+            padding: 8px 12px; border-radius: 12px;
+            backdrop-filter: blur(5px);
+        }
+        .rival-info { width: 85px; font-size: 0.75rem; }
+        .rival-name { font-weight: bold; color: #fff; font-size: 0.85rem; }
+        .rival-type { color: var(--text-sub); font-size: 0.65rem; }
+        .rival-score { color: var(--neon-cyan); font-weight: bold; font-family: monospace; }
+        .rival-hand { display: flex; gap: 3px; margin-left: auto; }
+        .card-back { 
+            width: 24px; height: 24px; 
+            background: radial-gradient(circle, #222 30%, #050505 100%); 
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* 中央の卓（山札 ＆ 美しい河） */
+        #center-area { 
+            flex: 1; display: flex; flex-direction: column;
+            background: rgba(0, 0, 0, 0.25); border-radius: 16px; 
+            border: 1px solid var(--panel-border);
+            padding: 10px; margin: 10px 0; justify-content: center;
+        }
+        #center-top-row {
+            display: flex; align-items: center; width: 100%; height: 100%;
+        }
+        #deck-info { 
+            width: 70px; text-align: center; font-size: 0.7rem; 
+            border-right: 1px solid var(--panel-border); padding-right: 10px;
+            color: var(--text-sub);
+        }
+        #deck-visual { 
+            width: 42px; height: 42px; 
+            background: linear-gradient(135deg, #2a2a3a, #11111a); 
+            border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+            margin: 6px auto; position: relative; 
+            box-shadow: 2px 2px 0 #000, 4px 4px 0 rgba(0,0,0,0.5); 
+        }
+        
+        /* 1段・半分重なり・横スクロール可能な「河」 */
+        #discard-pool { 
+            flex: 1; display: flex; flex-wrap: nowrap; 
+            overflow-x: auto; overflow-y: hidden; 
+            padding: 8px 12px; height: 60px; align-items: center;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        #discard-pool::-webkit-scrollbar { display: none; } /* スクロールバー非表示 */
+
+        .card-mini { 
+            width: 38px; height: 38px; background-size: cover; background-position: center;
+            border: 1.5px solid rgba(255,255,255,0.4); border-radius: 4px; 
+            flex-shrink: 0; margin-right: -14px; /* ここで半分重ねる */
+            box-shadow: -3px 0 8px rgba(0,0,0,0.7); 
+            transition: transform 0.2s, margin 0.2s;
+            position: relative;
+        }
+        .card-mini:hover {
+            transform: translateY(-8px) scale(1.15);
+            z-index: 999;
+            margin-right: 2px; /* ホバー時に隙間を作って見やすく */
+        }
 
         /* プレイヤーエリア */
-        #player-area { flex: 1.5; display: flex; flex-direction: column; justify-content: flex-end; }
-        .player-status { font-size: 0.85rem; margin-bottom: 5px; display: flex; justify-content: space-between; color: var(--accent-color); }
-        #player-hand-wrapper { display: flex; align-items: center; gap: 8px; justify-content: center; }
-        #player-hand { display: flex; gap: 5px; }
-        #tsumo-card-zone { border-left: 2px dashed #555; padding-left: 8px; display: flex; align-items: center; min-width: 55px; }
-        
-        /* レコードカードのスタイル */
-        .card { width: 50px; height: 50px; background-size: cover; background-position: center; border: 2px solid #fff; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: relative; transition: transform 0.2s; }
-        .card.selected { transform: translateY(-10px); border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-color); }
-        .card-mini { width: 25px; height: 25px; background-size: cover; border: 1px solid #ccc; border-radius: 2px; }
+        #player-area { 
+            display: flex; flex-direction: column; justify-content: flex-end;
+            padding-bottom: env(safe-area-inset-bottom, 15px); /* スマホセーフエリア */
+            position: relative;
+        }
+        .player-status { 
+            font-size: 0.85rem; margin-bottom: 12px; display: flex; 
+            justify-content: space-between; align-items: center;
+        }
+        .player-label { font-weight: bold; color: var(--neon-pink); }
+        .player-score { color: var(--neon-cyan); font-weight: bold; font-family: monospace; font-size: 1rem; }
 
-        /* アクションコントロール */
-        #action-controls { display: flex; justify-content: space-between; margin-top: 10px; gap: 10px; }
-        .btn-action { flex: 1; padding: 10px; font-size: 0.9rem; font-weight: bold; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; }
-        .btn-action.active { background: #ff4500; border-color: #ff4500; }
-        .btn-discard { background: #1e90ff; border-color: #1e90ff; }
-
-        /* モーダル（詳細・結果） */
-        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 100; }
-        .modal-content { background: #222; width: 85%; max-height: 80%; border-radius: 10px; padding: 20px; overflow-y: auto; border: 1px solid #444; text-align: center; }
-        .modal-jacket { width: 150px; height: 150px; margin: 0 auto 15px; background-size: cover; border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        .modal-info-table { width: 100%; text-align: left; margin-bottom: 15px; font-size: 0.85rem; }
-        .modal-info-table td { padding: 4px; vertical-align: top; }
-        .modal-info-table td:first-child { color: #aaa; width: 80px; }
-        .modal-close { background: #555; color: #fff; padding: 8px 20px; border: none; border-radius: 5px; margin-top: 10px; }
+        /* 手札とツモのラッパー */
+        #player-hand-wrapper { 
+            display: flex; align-items: flex-end; gap: 8px; justify-content: center;
+            position: relative; height: 110px; /* ポップアップを考慮した高さ */
+        }
+        #player-hand { display: flex; gap: 6px; }
+        #tsumo-card-zone { 
+            border-left: 2.5px dashed var(--panel-border); padding-left: 10px; 
+            display: flex; align-items: flex-end; min-width: 66px; height: 100%;
+        }
         
-        /* 結果画面専用 */
-        .result-cards { display: flex; justify-content: center; gap: 5px; margin: 15px 0; }
-        .yaku-title { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 5px; }
-        .fan-count { font-size: 1.2rem; margin-bottom: 15px; }
-        #loading-text { color: var(--accent-color); margin-top: 10px; font-size: 0.9rem; }
+        /* 拡張コンテキストメニュー（手札ラッパー） */
+        .card-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+
+        /* カードの上に浮かぶ直感的な操作ボタン */
+        .card-popup {
+            position: absolute;
+            bottom: 68px; /* カードの上部 */
+            display: flex;
+            gap: 4px;
+            background: rgba(10, 10, 20, 0.9);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 20px;
+            padding: 4px 6px;
+            box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            animation: popUp 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popUp {
+            from { transform: translateY(10px) scale(0.8); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .popup-action-btn {
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .popup-action-btn.discard { background: rgba(255, 0, 127, 0.2); color: #ff80bf; }
+        .popup-action-btn.detail { background: rgba(0, 240, 255, 0.2); color: #80f5ff; }
+
+        /* レコードジャケットカード */
+        .card { 
+            width: var(--card-size); height: var(--card-size); 
+            background-size: cover; background-position: center; 
+            border: 2px solid rgba(255,255,255,0.8); border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); 
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s; 
+            position: relative;
+        }
+        
+        /* 選択されて飛び出す演出。他のカードを「後ろにずらす」空気感を演出 */
+        .card.selected { 
+            transform: translateY(-16px) scale(1.15); 
+            border-color: var(--neon-cyan); 
+            box-shadow: 0 8px 24px rgba(0, 240, 255, 0.5), 0 0 10px var(--neon-cyan);
+            z-index: 50;
+        }
+
+        /* 手札が選択された時、周りのカードを少し暗く落とすためのクラス */
+        .card-wrapper:not(.active-wrapper) .card {
+            opacity: 0.6;
+            transform: scale(0.95);
+        }
+
+        /* 持ちカード中心の上部に浮かぶ自動「アガリ！」ネオンボタン */
+        #agari-overlay {
+            position: absolute;
+            bottom: 95px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99;
+            display: none; /* JSで自動管理 */
+        }
+        .btn-agari-neon {
+            background: #000;
+            color: var(--neon-pink);
+            border: 3px solid var(--neon-pink);
+            font-size: 1.2rem;
+            font-weight: 900;
+            padding: 8px 24px;
+            border-radius: 30px;
+            box-shadow: 0 0 15px var(--neon-pink), inset 0 0 10px var(--neon-pink);
+            text-shadow: 0 0 5px var(--neon-pink);
+            letter-spacing: 2px;
+            animation: neonPulse 1s infinite alternate;
+            cursor: pointer;
+        }
+
+        @keyframes neonPulse {
+            from { box-shadow: 0 0 8px var(--neon-pink), inset 0 0 5px var(--neon-pink); }
+            to { box-shadow: 0 0 20px var(--neon-pink), inset 0 0 12px var(--neon-pink); }
+        }
+
+        /* モーダル */
+        .modal { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(5, 5, 10, 0.9); 
+            display: flex; justify-content: center; align-items: center; z-index: 9999; 
+            backdrop-filter: blur(8px);
+        }
+        .modal-content { 
+            background: rgba(20, 20, 35, 0.95); width: 88%; max-height: 85%; 
+            border-radius: 20px; padding: 24px; overflow-y: auto; 
+            border: 1px solid var(--neon-cyan); text-align: center;
+            box-shadow: 0 0 25px rgba(0,240,255,0.2);
+        }
+        .modal-jacket { 
+            width: 160px; height: 160px; margin: 0 auto 15px; 
+            background-size: cover; border: 3px solid #fff; border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.6); 
+        }
+        .modal-info-table { width: 100%; text-align: left; margin-bottom: 18px; font-size: 0.8rem; }
+        .modal-info-table td { padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .modal-info-table td:first-child { color: var(--text-sub); width: 90px; }
+        .modal-close { 
+            background: #333; color: #fff; padding: 10px 24px; border: none; 
+            border-radius: 20px; margin-top: 10px; font-weight: bold;
+        }
+        
+        /* 試聴＆アフィボタン */
+        .flex-buttons { display: flex; gap: 10px; margin-bottom: 10px; }
+        .modal-btn {
+            flex: 1; padding: 12px; border-radius: 25px; border: none; 
+            font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #fff;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+        .modal-btn.listen { background: linear-gradient(135deg, #00f0ff, #0072ff); box-shadow: 0 0 10px rgba(0,240,255,0.3); }
+        .modal-btn.affiliate { background: linear-gradient(135deg, #ff007f, #ff00ff); box-shadow: 0 0 10px rgba(255,0,127,0.3); text-decoration: none; }
+
+        /* 結果画面 */
+        .result-cards { display: flex; justify-content: center; gap: 4px; margin: 15px 0; }
+        .yaku-title { font-size: 1.4rem; color: var(--neon-gold); font-weight: bold; margin-bottom: 5px; }
+        .fan-count { font-size: 1.1rem; color: var(--neon-pink); margin-bottom: 15px; }
+        #loading-text { color: var(--neon-cyan); margin-top: 15px; font-size: 0.85rem; animation: blink 1s infinite alternate; }
+        
+        @keyframes blink { from { opacity: 0.4; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -90,24 +333,20 @@
         <h1>(仮)レコードばとる</h1>
         
         <div class="setup-group">
-            <label>ジャンル（自動レコード取得キーワード）</label>
+            <label>ジャンル（iTunesから自動検索）</label>
             <select id="setup-genre">
-                <option value="演歌">演歌・昭和歌謡</option>
-                <option value="J-Pop">J-POP</option>
-                <option value="Rock">日本のロック</option>
-                <option value="Jazz">JAZZ名盤</option>
-                <option value="Anime">アニメソング</option>
+                <option value="昭和 歌謡曲">昭和 歌謡曲・ポップス</option>
+                <option value="J-Pop">J-POP ヒット曲</option>
+                <option value="シティポップ">シティポップ (City Pop)</option>
+                <option value="演歌">懐メロ・演歌</option>
+                <option value="アニメソング">名作アニソン</option>
             </select>
         </div>
-        <div class="setup-group">
-            <label>BGM（ONにするとゲーム中に環境音が鳴る想定）</label>
-            <select id="setup-bgm">
-                <option value="ON">ON</option>
-                <option value="OFF">OFF</option>
-            </select>
+        <div class="setup-group" style="display:none;"> <select id="setup-bgm"><option value="ON">ON</option></select>
         </div>
-        <button class="btn" id="btn-start" onclick="loadAndStart()">レコード仕入れ＆ゲーム開始</button>
-        <div id="loading-text" class="hidden">レコードを仕入れています（API通信中）...</div>
+        
+        <button class="btn" id="btn-start" onclick="loadAndStart()">レコード仕入れ ＆ 開始</button>
+        <div id="loading-text" class="hidden">深夜のレコードショップから仕入れています...</div>
     </div>
 
     <div id="game-screen" class="screen hidden">
@@ -120,33 +359,33 @@
             </div>
 
         <div id="center-area">
-            <div id="deck-info">
-                <div>山札</div>
-                <div id="deck-visual"></div>
-                <div><span id="deck-count">100</span>枚</div>
-            </div>
-            <div id="discard-pool">
+            <div id="center-top-row">
+                <div id="deck-info">
+                    <div>山札</div>
+                    <div id="deck-visual"></div>
+                    <div><span id="deck-count">100</span>枚</div>
                 </div>
+                <div id="discard-pool">
+                    </div>
+            </div>
         </div>
 
         <div id="player-area">
             <div class="player-status">
-                <span>あなた (あなた)</span>
-                <span id="player-score">持点: 25000</span>
+                <span class="player-label">あなた (Player)</span>
+                <span id="player-score" class="player-score">25000 P</span>
             </div>
+
+            <div id="agari-overlay">
+                <button class="btn-agari-neon" onclick="playerAgari()">⚡ 完 成 (アガリ) ⚡</button>
+            </div>
+
             <div id="player-hand-wrapper">
                 <div id="player-hand">
                     </div>
                 <div id="tsumo-card-zone">
                     </div>
             </div>
-        </div>
-
-        <div id="action-controls">
-            <button id="btn-detail" class="btn-action" onclick="showSelectedDetail()">詳細を見る</button>
-            <button id="btn-discard" class="btn-action btn-discard" onclick="discardSelected()">1枚捨てる</button>
-            <button id="btn-tsumo" class="btn-action" onclick="playerTsumo()" disabled>引く</button>
-            <button id="btn-agari" class="btn-action active" onclick="playerAgari()" style="display:none;">アガリ！</button>
         </div>
     </div>
 
@@ -155,16 +394,18 @@
             <div id="modal-img" class="modal-jacket"></div>
             <table class="modal-info-table">
                 <tr><td>レコード名</td><td id="m-name">-</td></tr>
-                <tr><td>歌手名</td><td id="m-artist">-</td></tr>
+                <tr><td>アーティスト</td><td id="m-artist">-</td></tr>
                 <tr><td>発売日</td><td id="m-date">-</td></tr>
                 <tr><td>販売枚数</td><td id="m-sales">-</td></tr>
-                <tr><td>事務所</td><td id="m-agency">-</td></tr>
-                <tr><td>レコ大受賞</td><td id="m-taisho">-</td></tr>
+                <tr><td>レコード会社</td><td id="m-agency">-</td></tr>
+                <tr><td>日本レコード大賞</td><td id="m-taisho">-</td></tr>
             </table>
-            <div style="margin-bottom:15px; display:flex; justify-content:space-around;">
-                <button class="btn-action" id="btn-listen" style="background:#555;">試聴(30秒)</button>
-                <a id="btn-affiliate" href="#" target="_blank" class="btn-action" style="background:#ff8c00; text-decoration:none; text-align:center; line-height:20px;">詳細（Apple）</a>
+            
+            <div class="flex-buttons">
+                <button class="modal-btn listen" id="btn-listen">🎵 30秒試聴</button>
+                <a id="btn-affiliate" href="#" target="_blank" class="modal-btn affiliate">🛒 詳細/購入 (Apple)</a>
             </div>
+            
             <button class="modal-close" onclick="closeModal('detail-modal')">閉じる</button>
         </div>
     </div>
@@ -172,80 +413,66 @@
     <div id="result-modal" class="modal hidden">
         <div class="modal-content">
             <h2 id="result-header">流局 (流れ)</h2>
-            <div id="result-winner-info"></div>
+            <div id="result-winner-info" style="margin: 10px 0; font-weight: bold; color: var(--neon-cyan);"></div>
             <div class="result-cards" id="result-cards-pool"></div>
             <div class="yaku-title" id="result-yaku-name"></div>
             <div class="fan-count" id="result-fan-count"></div>
-            <button class="btn" id="btn-next-round" onclick="nextRound()">次の局へ</button>
+            <button class="btn" id="btn-next-round" onclick="nextRound()">次の局へ 💿</button>
         </div>
     </div>
 
     <script>
-        // --- 1. グローバル設定＆モック用データ生成 ---
-        const AGENCIES = ["渡辺プロモーション", "東京サウンド", "北海芸能", "伝統企画"];
-        
-        // APIからデータをフェッチして作成される動的なカードリスト
+        // --- 1. 定数とグローバルデータ ---
+        const AGENCIES = ["アルファレコード", "ソニーミュージック", "東芝EMI", "キングレコード", "キャニオンレコード"];
         let fetchedCards = [];
 
-        // キャラクターデータ（8名）
         const ALL_CHARACTERS = [
-            { id: 1, name: "ケンジ", type: "熱血ロック派" }, { id: 2, name: "ミサキ", type: "レコ大ハンター" },
-            { id: 3, name: "サブロー", type: "演歌の鬼" }, { id: 4, name: "ジョージ", type: "本格派ジャズ職人" },
-            { id: 5, name: "レイカ", type: "ミリオンコレクター" }, { id: 6, name: "タクヤ", type: "バランス型" },
-            { id: 7, name: "ユミ", type: "同事務所狙い" }, { id: 8, name: "ゴロウ", type: "同世代コレクター" }
+            { id: 1, name: "レイカ", type: "ミリオンコレクター" }, { id: 2, name: "ジョージ", type: "本格派ジャズ職人" },
+            { id: 3, name: "ユミ", type: "同事務所狙い" }, { id: 4, name: "ケンジ", type: "熱血ロック派" },
+            { id: 5, name: "ミサキ", type: "レコ大ハンター" }, { id: 6, name: "サブロー", type: "演歌の鬼" },
+            { id: 7, name: "タクヤ", type: "バランス型" }, { id: 8, name: "ゴロウ", type: "同世代コレクター" }
         ];
 
-        // --- 2. ゲーム状態管理 ---
-        let gameCondition = { genre: '演歌', bgm: 'ON' };
         let gameRound = 1; 
         let deck = [];
         let discardPool = [];
         let player = { name: "あなた", score: 25000, hand: [], tsumo: null };
         let rivals = []; 
-        let currentTurn = 0; // 0:プレイヤー, 1〜3:AI
+        let currentTurn = 0; 
         let selectedCardIndex = null;
         let selectedIsTsumo = false;
         let currentAudio = null;
 
-        // --- 3. iTunes Search API からデータ取得 ---
+        // --- 2. APIからのデータ取得 ＆ 重複の完全シャットアウト ---
         async function loadAndStart() {
             const startBtn = document.getElementById('btn-start');
             const loadingText = document.getElementById('loading-text');
             startBtn.disabled = true;
             loadingText.classList.remove('hidden');
 
-            gameCondition.genre = document.getElementById('setup-genre').value;
-            gameCondition.bgm = document.getElementById('setup-bgm').value;
-
-            // ジャンルに合わせた検索キーワード調整
-            let query = gameCondition.genre;
-            if (query === '演歌') query = '昭和 演歌';
-            if (query === 'J-Pop') query = 'J-Pop';
-            if (query === 'Rock') query = 'ロック';
-            if (query === 'Jazz') query = 'Jazz';
-            if (query === 'Anime') query = 'アニメ';
-
-            // iTunes APIから楽曲情報を最大100件取得 (country=jpで日本のiTunesから)
-            const apiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&country=jp&entity=song&limit=80`;
+            const genreKeyword = document.getElementById('setup-genre').value;
+            const apiUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(genreKeyword)}&country=jp&entity=song&limit=150`;
 
             try {
                 const response = await fetch(apiUrl);
                 const data = await response.json();
                 
-                if (data.results && data.results.length > 5) {
-                    // 取得データをゲーム用フォーマットに変換しつつ、不足パラメーターをゲーム用に「味付け」
-                    fetchedCards = data.results.map((item, index) => {
+                if (data.results && data.results.length > 10) {
+                    const seenImages = new Set();
+                    const seenTrackNames = new Set();
+                    
+                    const tempCards = data.results.map((item, index) => {
                         const dateObj = new Date(item.releaseDate);
-                        const year = dateObj.getFullYear() || 1980;
+                        const year = dateObj.getFullYear() || 1985;
                         const formattedDate = `${year}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${String(dateObj.getDate()).padStart(2,'0')}`;
                         
-                        // ゲーム性が成り立つよう「販売枚数」「事務所」「レコ大」を適度に散らしてランダム付与
-                        const sales = Math.floor(Math.random() * 240 + 10) * 10000; // 10万〜250万枚
-                        const agency = AGENCIES[index % AGENCIES.length]; // 均等に事務所を割り振る
-                        const taisho = Math.random() < 0.22; // 約22%の確率でレコード大賞受賞作にする
+                        // マニアックな役判定データのリアルなランダム付与
+                        const sales = Math.floor(Math.random() * 240 + 8) * 10000; 
+                        const agency = AGENCIES[index % AGENCIES.length]; 
+                        const taisho = Math.random() < 0.20; 
 
-                        // 高画質なジャケット画像を取得（デフォルトの100x100を300x300に置換する裏技）
-                        const highResImg = item.artworkUrl100.replace('100x100bb.jpg', '300x300bb.jpg');
+                        // 鮮明な高画質画像に強制コンバート
+                        const highResImg = item.artworkUrl100.replace('100x100bb.jpg', '400x400bb.jpg');
 
                         return {
                             id: item.trackId,
@@ -257,20 +484,34 @@
                             agency: agency,
                             taisho: taisho,
                             img: highResImg,
-                            audio: item.previewUrl, // 30秒試聴用のmp3 URL
-                            link: item.trackViewUrl  // Appleの商品詳細リンク
+                            audio: item.previewUrl, 
+                            link: item.trackViewUrl  
                         };
                     });
+
+                    // ★【重要】重複をここで完全に排除（画像URL or 曲名＋アーティストが同じなら弾く）
+                    fetchedCards = tempCards.filter(card => {
+                        const uniqueKey = `${card.name}_${card.artist}`;
+                        const hasImg = seenImages.has(card.img);
+                        const hasTitle = seenTrackNames.has(uniqueKey);
+
+                        if (hasImg || hasTitle) {
+                            return false; 
+                        }
+                        seenImages.add(card.img);
+                        seenTrackNames.add(uniqueKey);
+                        return true;
+                    });
+
                 } else {
-                    throw new Error("十分な楽曲が見つかりませんでした");
+                    throw new Error("十分な件数がありません");
                 }
             } catch (error) {
-                alert("APIからのデータ取得に失敗したため、デモ用のクラシックデータで開始します。");
-                // フォールバック用のダミーデータ生成
+                alert("API通信エラーのため、モックデータで開始します。");
                 generateMockCards();
             }
 
-            // キャラクター8名からランダムに3名を選出
+            // キャラ選出
             let shuffledChar = [...ALL_CHARACTERS].sort(() => 0.5 - Math.random());
             rivals = shuffledChar.slice(0, 3).map((c) => ({
                 id: c.id, name: c.name, type: c.type, score: 25000, handCount: 5, hand: []
@@ -286,50 +527,51 @@
             initRound();
         }
 
-        // 万が一通信エラーが起きた場合のダミーデータ生成
         function generateMockCards() {
             fetchedCards = [];
-            for (let i = 1; i <= 30; i++) {
+            for (let i = 1; i <= 40; i++) {
                 fetchedCards.push({
                     id: i,
-                    name: `デモレコード第${i}集`,
-                    artist: `アーティスト${(i%3)+1}`,
-                    date: "1985-05-10",
-                    year: 1985,
-                    sales: (i % 5 === 0) ? 1200000 : 300000,
+                    name: `Retro Track Vol.${i}`,
+                    artist: `シティ・ポップス ${(i%3)+1}`,
+                    date: "1986-07-21",
+                    year: 1986,
+                    sales: (i % 6 === 0) ? 1200000 : 450000,
                     agency: AGENCIES[i % AGENCIES.length],
-                    taisho: i % 7 === 0,
-                    img: `https://picsum.photos/id/${100+i}/150/150`,
+                    taisho: i % 8 === 0,
+                    img: `https://picsum.photos/id/${110+i}/300/300`,
                     audio: "",
                     link: "#"
                 });
             }
         }
 
-        // --- 4. 局の初期化＆開始 ---
+        // --- 3. 局の初期化 ＆ 自動配牌 ---
         function initRound() {
             discardPool = [];
             document.getElementById('discard-pool').innerHTML = '';
             
-            // 局表示
             let kyokuText = (gameRound <= 4) ? `東${gameRound}局` : `南${gameRound - 4}局`;
             document.getElementById('current-kyoku').innerText = kyokuText;
             document.getElementById('dealer-indicator').innerText = (gameRound % 4 === 1) ? "親: あなた" : `親: ${rivals[(gameRound % 4) - 2].name}`;
 
-            // デッキを100枚になるよう取得データから複製シャッフルして生成
+            // デッキ作成 (ユニーク化されたカードから複製して100枚山を作る)
             deck = [];
             while (deck.length < 100) {
                 deck = deck.concat([...fetchedCards].sort(() => 0.5 - Math.random()));
             }
             deck = deck.slice(0, 100);
 
-            // 配牌 (5枚ずつ)
+            // 5枚ずつ配牌
             player.hand = deck.splice(0, 5);
             player.tsumo = null;
             rivals.forEach(r => {
                 r.hand = deck.splice(0, 5);
                 r.handCount = 5;
             });
+
+            selectedCardIndex = null;
+            selectedIsTsumo = false;
 
             updateDeckCount();
             renderRivals();
@@ -338,7 +580,7 @@
             startTurn();
         }
 
-        // --- 5. ターン進行ロジック ---
+        // --- 4. 完全自動「引く（ツモ）」システム ---
         function startTurn() {
             if (deck.length === 0) {
                 endRound(null, "流局 (流れ)");
@@ -346,26 +588,22 @@
             }
 
             if (currentTurn === 0) {
-                // プレイヤーのツモ番
+                // プレイヤーのターン：自動で引く！
                 player.tsumo = deck.shift();
                 updateDeckCount();
                 renderPlayerHand();
                 
+                // アガリ確認 -> 浮かび上がらせる
                 let check = checkWin([...player.hand, player.tsumo]);
                 if (check.isWin) {
-                    document.getElementById('btn-agari').style.display = 'block';
+                    document.getElementById('agari-overlay').style.display = 'block';
                 } else {
-                    document.getElementById('btn-agari').style.display = 'none';
+                    document.getElementById('agari-overlay').style.display = 'none';
                 }
-                
-                document.getElementById('btn-discard').disabled = false;
-                document.getElementById('btn-tsumo').disabled = true;
             } else {
                 // AIのターン
-                document.getElementById('btn-discard').disabled = true;
-                document.getElementById('btn-tsumo').disabled = true;
-                document.getElementById('btn-agari').style.display = 'none';
-                setTimeout(aiRoutine, 800);
+                document.getElementById('agari-overlay').style.display = 'none';
+                setTimeout(aiRoutine, 1200); // テンポよく進むように調整
             }
         }
 
@@ -375,7 +613,6 @@
             updateDeckCount();
             let totalHand = [...currentAi.hand, tsumoCard];
 
-            // AIアガリチェック
             let check = checkWin(totalHand);
             if (check.isWin) {
                 endRound(currentAi, `${currentAi.name} の勝ち!`, totalHand, check);
@@ -405,23 +642,31 @@
                     player.tsumo = null;
                 }
             }
+            
             selectedCardIndex = null;
             selectedIsTsumo = false;
 
             addDiscardPool(discardedCard);
             renderPlayerHand();
-            document.getElementById('btn-agari').style.display = 'none';
+            document.getElementById('agari-overlay').style.display = 'none';
 
             currentTurn = 1;
             startTurn();
         }
 
-        function discardSelected() {
-            if (selectedCardIndex === null && !selectedIsTsumo) {
-                alert("捨てるカードをタップして選択してください。");
-                return;
+        function selectCard(index, isTsumo) {
+            // すでに選択されているものをもう一度押した場合は選択解除
+            if (isTsumo && selectedIsTsumo) {
+                selectedCardIndex = null;
+                selectedIsTsumo = false;
+            } else if (!isTsumo && selectedCardIndex === index) {
+                selectedCardIndex = null;
+                selectedIsTsumo = false;
+            } else {
+                selectedCardIndex = index;
+                selectedIsTsumo = isTsumo;
             }
-            playerDiscard(selectedCardIndex, selectedIsTsumo);
+            renderPlayerHand();
         }
 
         function playerAgari() {
@@ -430,7 +675,7 @@
             endRound(player, "あなたの勝ち（ツモ）", totalHand, check);
         }
 
-        // --- 6. 役判定システム ---
+        // --- 5. 役の判定ロジック ---
         function checkWin(cards) {
             let yakuList = [];
             let totalFan = 0;
@@ -461,7 +706,7 @@
             return { isWin, yakuList, totalFan, finalYakuName };
         }
 
-        // --- 7. 局終了＆スコア計算 ---
+        // --- 6. 局終了 ＆ 最終結果 ---
         function endRound(winner, reason, finalHand = [], checkResult = null) {
             document.getElementById('result-modal').classList.remove('hidden');
             document.getElementById('result-header').innerText = reason;
@@ -502,18 +747,19 @@
                     let cDiv = document.createElement('div');
                     cDiv.className = 'card';
                     cDiv.style.backgroundImage = `url(${card.img})`;
-                    cDiv.onclick = () => showCardDetail(card);
+                    // リザルト画面でダブルタップ/ロングタップに対応
+                    setupCardInteractions(cDiv, card, () => {}, () => showCardDetail(card));
                     cardsPool.appendChild(cDiv);
                 });
             } else {
                 winnerInfo.innerText = "誰もアガれませんでした。";
             }
 
-            document.getElementById('player-score').innerText = `持点: ${player.score}`;
+            document.getElementById('player-score').innerText = `${player.score} P`;
             renderRivals();
 
             if (gameRound >= 8) {
-                document.getElementById('btn-next-round').innerText = "最終結果を確認";
+                document.getElementById('btn-next-round').innerText = "最終結果を確認 🏆";
                 document.getElementById('btn-next-round').onclick = showFinalResult;
             }
         }
@@ -529,12 +775,12 @@
             let scores = [player, ...rivals];
             scores.sort((a,b) => b.score - a.score);
             
-            let rankText = scores.map((s, idx) => `${idx+1}位: ${s.name} (${s.score}点)`).join("\n");
+            let rankText = scores.map((s, idx) => `${idx+1}位: ${s.name} (${s.score} P)`).join("\n");
             alert(`【ゲーム終了 最終結果】\n\n${rankText}`);
             location.reload();
         }
 
-        // --- 8. UI描画・補助 ---
+        // --- 7. UIレンダリング ＆ 直感型カード操作 ---
         function updateDeckCount() {
             document.getElementById('deck-count').innerText = deck.length;
         }
@@ -550,9 +796,9 @@
 
                 div.innerHTML = `
                     <div class="rival-info">
-                        <strong>${r.name}</strong><br>
-                        <span style="font-size:10px;color:#aaa;">${r.type}</span><br>
-                        <span style="color:var(--accent-color);">${r.score}</span>
+                        <div class="rival-name">${r.name}</div>
+                        <div class="rival-type">${r.type}</div>
+                        <div class="rival-score">${r.score}</div>
                     </div>
                     <div class="rival-hand">${cardsBacks}</div>
                 `;
@@ -566,27 +812,115 @@
             handZone.innerHTML = '';
             tsumoZone.innerHTML = '';
 
+            const activeExists = (selectedCardIndex !== null || selectedIsTsumo);
+
+            // 手札5枚の描画
             player.hand.forEach((card, idx) => {
-                let cDiv = document.createElement('div');
-                cDiv.className = `card ${selectedCardIndex === idx && !selectedIsTsumo ? 'selected' : ''}`;
-                cDiv.style.backgroundImage = `url(${card.img})`;
-                cDiv.onclick = () => selectCard(idx, false);
-                handZone.appendChild(cDiv);
+                const isSelected = (selectedCardIndex === idx && !selectedIsTsumo);
+                const wrapper = createCardWrapper(card, idx, false, isSelected, activeExists);
+                handZone.appendChild(wrapper);
             });
 
+            // ツモ牌の描画
             if (player.tsumo) {
-                let cDiv = document.createElement('div');
-                cDiv.className = `card ${selectedIsTsumo ? 'selected' : ''}`;
-                cDiv.style.backgroundImage = `url(${player.tsumo.img})`;
-                cDiv.onclick = () => selectCard(null, true);
-                tsumoZone.appendChild(cDiv);
+                const isSelected = selectedIsTsumo;
+                const wrapper = createCardWrapper(player.tsumo, null, true, isSelected, activeExists);
+                tsumoZone.appendChild(wrapper);
             }
         }
 
-        function selectCard(index, isTsumo) {
-            selectedCardIndex = index;
-            selectedIsTsumo = isTsumo;
-            renderPlayerHand();
+        // カードとポップアップのパッケージ生成
+        function createCardWrapper(card, index, isTsumo, isSelected, activeExists) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card-wrapper';
+            if (isSelected) {
+                wrapper.classList.add('active-wrapper');
+            }
+
+            // 選択された時のカード上部メニュー
+            if (isSelected) {
+                const popup = document.createElement('div');
+                popup.className = 'card-popup';
+                
+                const discardBtn = document.createElement('button');
+                discardBtn.className = 'popup-action-btn discard';
+                discardBtn.innerText = '🗑️ 捨てる';
+                discardBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    playerDiscard(index, isTsumo);
+                };
+
+                const detailBtn = document.createElement('button');
+                detailBtn.className = 'popup-action-btn detail';
+                detailBtn.innerText = '🔍 詳細';
+                detailBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    showCardDetail(card);
+                };
+
+                popup.appendChild(discardBtn);
+                popup.appendChild(detailBtn);
+                wrapper.appendChild(popup);
+            }
+
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `card ${isSelected ? 'selected' : ''}`;
+            cardDiv.style.backgroundImage = `url(${card.img})`;
+
+            // タップ＆長押しインタラクション設定
+            setupCardInteractions(
+                cardDiv, 
+                card, 
+                () => selectCard(index, isTsumo), // シングルタップ
+                () => showCardDetail(card)       // ダブルタップ or ロングタップ
+            );
+
+            wrapper.appendChild(cardDiv);
+            return wrapper;
+        }
+
+        // シングル、ダブル、ロングタップ検出
+        function setupCardInteractions(element, card, onSingle, onDouble) {
+            let lastTap = 0;
+            let touchTimer = null;
+            let isMoved = false;
+
+            // タッチ操作（スマートフォン用）
+            element.addEventListener('touchstart', (e) => {
+                isMoved = false;
+                touchTimer = setTimeout(() => {
+                    if (!isMoved) {
+                        onDouble(); // 長押しで詳細オープン
+                    }
+                }, 500); // 0.5秒押し続けで長押し
+            });
+
+            element.addEventListener('touchmove', () => {
+                isMoved = true;
+                clearTimeout(touchTimer);
+            });
+
+            element.addEventListener('touchend', (e) => {
+                clearTimeout(touchTimer);
+                if (isMoved) return;
+
+                const now = Date.now();
+                if (now - lastTap < 300) {
+                    onDouble(); // ダブルタップで詳細オープン
+                } else {
+                    onSingle(); // シングルタップでスライドアップ/選択
+                }
+                lastTap = now;
+            });
+
+            // マウス操作（PC動作確認用）
+            element.addEventListener('click', (e) => {
+                onSingle();
+            });
+            element.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                onDouble();
+            });
         }
 
         function addDiscardPool(card) {
@@ -594,24 +928,19 @@
             let d = document.createElement('div');
             d.className = 'card-mini';
             d.style.backgroundImage = `url(${card.img})`;
-            d.onclick = () => showCardDetail(card);
+            
+            // 捨てられたカードもダブルタップなどで詳細確認可能に
+            setupCardInteractions(d, card, () => showCardDetail(card), () => showCardDetail(card));
+            
             pool.appendChild(d);
-            pool.scrollTop = pool.scrollHeight; 
+            
+            // 常に最新の捨て牌まで自動で横スクロール
+            setTimeout(() => {
+                pool.scrollLeft = pool.scrollWidth;
+            }, 100);
         }
 
-        // --- 9. モーダル ＆ リアル音楽再生 ＆ アフィリエイト ---
-        function showSelectedDetail() {
-            let card = null;
-            if (selectedIsTsumo) card = player.tsumo;
-            else if (selectedCardIndex !== null) card = player.hand[selectedCardIndex];
-
-            if (!card) {
-                alert("詳細を見るカードをタップしてください。");
-                return;
-            }
-            showCardDetail(card);
-        }
-
+        // --- 8. モーダル ＆ 試聴 ---
         function showCardDetail(card) {
             document.getElementById('detail-modal').classList.remove('hidden');
             document.getElementById('modal-img').style.backgroundImage = `url(${card.img})`;
@@ -620,13 +949,11 @@
             document.getElementById('m-date').innerText = card.date;
             document.getElementById('m-sales').innerText = card.sales.toLocaleString() + " 枚";
             document.getElementById('m-agency').innerText = card.agency;
-            document.getElementById('m-taisho').innerText = card.taisho ? "★受賞作" : "なし";
+            document.getElementById('m-taisho').innerText = card.taisho ? "🏆 レコード大賞 受賞" : "なし";
 
-            // アフィリエイト用リンク設定
             let affBtn = document.getElementById('btn-affiliate');
             affBtn.href = card.link;
 
-            // 30秒試聴
             let listenBtn = document.getElementById('btn-listen');
             listenBtn.onclick = () => {
                 if (currentAudio) { currentAudio.pause(); }
@@ -634,7 +961,7 @@
                     currentAudio = new Audio(card.audio);
                     currentAudio.play();
                 } else {
-                    alert("お試し用の試聴データが存在しない曲です。");
+                    alert("試聴用の音源データが存在しない曲です。");
                 }
             };
         }
