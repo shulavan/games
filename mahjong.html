@@ -600,8 +600,9 @@
     </style>
     <script>
         // LIFF ID を登録後にここへ設定してください
-        var LIFF_ID = '2010714820-USGhIk0G';
-        var MINI_APP_URL = 'https://miniapp.line.me/2010714820-USGhIk0G';
+        var LIFF_ID = '2010714820-USGhlk0G';
+        // MINI_APP_URLはLIFF_IDから自動生成（値のズレを防ぐため手打ちしない）
+        var MINI_APP_URL = 'https://miniapp.line.me/' + LIFF_ID;
 
         function shareGame(){
             var msg=[
@@ -649,12 +650,42 @@
             var shareUrl='https://social-plugins.line.me/lineit/share?url='+encodeURIComponent(MINI_APP_URL);
             window.open(shareUrl,'_blank');
         }
+        // 画面上にエラー内容を表示する（原因調査用の一時的なデバッグ表示）
+        function showLiffDebug(text, isError){
+            function render(){
+                var box=document.createElement('div');
+                box.id='liff-debug-box';
+                box.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;'
+                    +'background:'+(isError?'#b31d16':'#1b4d22')+';color:#fff;'
+                    +'padding:8px 10px;font-size:11px;line-height:1.4;word-break:break-all;'
+                    +'font-family:monospace;box-shadow:0 2px 6px rgba(0,0,0,0.4);';
+                box.textContent=text;
+                var closeBtn=document.createElement('div');
+                closeBtn.textContent='✕ 閉じる';
+                closeBtn.style.cssText='margin-top:4px;display:inline-block;border:1px solid #fff;padding:2px 8px;border-radius:4px;cursor:pointer;';
+                closeBtn.onclick=function(){box.remove();};
+                box.appendChild(document.createElement('br'));
+                box.appendChild(closeBtn);
+                document.body.appendChild(box);
+            }
+            if(document.body) render();
+            else document.addEventListener('DOMContentLoaded', render);
+        }
+
         (function(){
-            if(typeof liff==='undefined'||LIFF_ID==='YOUR_LIFF_ID')return;
+            if(typeof liff==='undefined'){
+                // LIFF SDKの読み込み自体に失敗している（ネットワーク/CDNブロック等の可能性）
+                showLiffDebug('LIFF SDK読み込み失敗: liffオブジェクトが未定義です。static.line-scdn.netへの接続をご確認ください。', true);
+                return;
+            }
+            if(LIFF_ID==='YOUR_LIFF_ID')return;
             liff.init({liffId:LIFF_ID}).then(function(){
-                console.log('LIFF initialized');
+                console.log('LIFF initialized. LIFF_ID=', LIFF_ID);
             }).catch(function(err){
                 console.warn('LIFF init error:',err);
+                var code = err && err.code ? err.code : '(no code)';
+                var message = err && err.message ? err.message : String(err);
+                showLiffDebug('LIFF init エラー\nLIFF_ID: '+LIFF_ID+'\ncode: '+code+'\nmessage: '+message, true);
             });
         })();
     </script>
