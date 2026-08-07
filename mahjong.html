@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -9,6 +10,10 @@
     <title>じゃんじゃじゃじゃん</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+<!-- LINE SDK (LIFF) -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
     <style>
         :root {
             --bg-color: #0c180e;
@@ -731,6 +736,7 @@
         <h1>じゃんじゃじゃじゃん</h1>
         <div class="subtitle">好きなキャラクターをタップして選択すると、対局相手のルーレットが始まります！</div>
         <div class="char-grid" id="char-grid"></div>
+	<button class="btn" onclick="shareGame()" style="margin-top:10px; background:linear-gradient(180deg, #06c755, #00b341); border-color:#fff;">LINEで友達にシェア 💬</button>
     </div>
 
     <!-- 2. ルーレット演出 -->
