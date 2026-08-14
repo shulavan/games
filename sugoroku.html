@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="ja" class="h-full w-full overflow-hidden">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>江戸川双六 - スマホ対応全画面マップ双六</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Shippori Mincho & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS & JS for 50ft Scale Map Rendering -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .font-mincho {
+      font-family: 'Shippori Mincho', serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    .leaflet-container {
+      background-color: #0f172a;
+      font-family: inherit;
+    }
+    .leaflet-control-zoom, .leaflet-control-attribution {
+      display: none !important;
+    }
+
+    .speech-bubble {
+      position: absolute;
+      bottom: 110%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-6px);
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(8px);
+      border: 2px solid #0f172a;
+      border-radius: 12px;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #0f172a;
+      white-space: nowrap;
+      box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+      z-index: 1000;
+      animation: bubblePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px;
+      border-style: solid;
+      border-color: #0f172a transparent transparent transparent;
+    }
+
+    @keyframes bubblePop {
+      0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.6); }
+      100% { opacity: 1; transform: translateX(-50%) translateY(-6px) scale(1); }
+    }
+
+    /* 3D Dice styling */
+    .dice-container {
+      perspective: 1000px;
+    }
+    .dice-cube {
+      width: 56px;
+      height: 56px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .dice-face {
+      position: absolute;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(145deg, #ffffff, #f1f5f9);
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.05), 0 4px 10px rgba(0,0,0,0.25);
+    }
+    .face-1 { transform: translateZ(28px); color: #ef4444; }
+    .face-2 { transform: rotateY(180deg) translateZ(28px); color: #1e293b; }
+    .face-3 { transform: rotateY(-90deg) translateZ(28px); color: #1e293b; }
+    .face-4 { transform: rotateY(90deg) translateZ(28px); color: #1e293b; }
+    .face-5 { transform: rotateX(90deg) translateZ(28px); color: #1e293b; }
+    .face-6 { transform: rotateX(-90deg) translateZ(28px); color: #1e293b; }
+
+    @keyframes diceBounce {
+      0% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+      30% { transform: translateY(-50px) rotateX(360deg) rotateY(180deg); }
+      60% { transform: translateY(-15px) rotateX(720deg) rotateY(360deg); }
+      80% { transform: translateY(-4px) rotateX(900deg) rotateY(540deg); }
+      100% { transform: translateY(0); }
+    }
+    .dice-rolling {
+      animation: diceBounce 1.2s ease-out;
+    }
+
+    .spot-marker {
+      transition: all 0.2s ease;
+    }
+
+    .player-token {
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .gold-glow {
+      text-shadow: 0 0 12px rgba(251, 191, 36, 0.6), 0 2px 4px rgba(0,0,0,0.8);
+    }
+  </style>
+</head>
+<body class="h-full w-full bg-slate-900 text-slate-100 flex flex-col relative overflow-hidden">
+
+  <!-- LOBBY OVERLAY -->
+  <div id="lobby-screen" class="absolute inset-0 z-50 bg-slate-950 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto">
+    <div class="text-center pt-2 sm:pt-4">
+      <div class="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-xs font-semibold tracking-wider mb-2">
+        江戸川区限定・全画面マップ双六
+      </div>
+      <h1 class="font-mincho text-4xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 gold-glow tracking-widest">
+        江戸川双六
+      </h1>
+      <p class="text-xs sm:text-sm text-slate-400 mt-1">実道路100%吸着！縮尺50ftのリアルマップで江戸川区を冒険しよう！</p>
+    </div>
+
+    <!-- Character Selection & Settings -->
+    <div class="max-w-md w-full mx-auto my-auto space-y-4 bg-slate-900/90 border border-slate-800 p-4 sm:p-5 rounded-2xl backdrop-blur-xl shadow-2xl">
+      <div>
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">① キャラクターを選択</label>
+        <div id="character-grid" class="grid grid-cols-5 gap-2"></div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">あなたのプレイヤー名</label>
+        <input type="text" id="player-name-input" value="プレイヤー1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-amber-300 focus:outline-none focus:border-amber-500 font-bold">
+      </div>
+
+      <!-- QR Code & Countdown for 4 Players -->
+      <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col items-center text-center">
+        <div class="flex items-center justify-between w-full mb-2">
+          <span class="text-xs font-bold text-slate-400">参加待ち (4人必須)</span>
+          <span id="countdown-badge" class="px-2 py-0.5 bg-amber-500 text-slate-950 font-black text-xs rounded-full">10秒</span>
+        </div>
+        
+        <div class="flex items-center gap-4 w-full">
+          <div id="qrcode-container" class="bg-white p-1.5 rounded-lg shrink-0 shadow-md"></div>
+          <div class="text-left flex-1">
+            <p class="text-xs text-slate-300 font-medium leading-relaxed">
+              スマホでQRを読み取るとゲームに参加できます！
+            </p>
+            <p class="text-[10px] text-slate-500 mt-1">※不足分はCPUが自動参加します</p>
+          </div>
+        </div>
+
+        <div id="joined-players-bar" class="grid grid-cols-4 gap-2 w-full mt-3"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2 pt-1">
+        <button id="start-game-btn" onclick="EdogawaSugoroku.startGame()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-base">
+          <span>🚀</span> <span>今すぐゲーム開始</span>
+        </button>
+        <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeGame()" class="hidden w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-4 rounded-xl border border-slate-700 text-xs transition flex items-center justify-center gap-2">
+          <span>💾</span> <span>前回の続きから遊ぶ</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="text-center text-[11px] text-slate-500 pb-2">
+      スタート地点：西葛西駅 ➔ 目標地点：カラオケ酔処「ゆう」
+    </div>
+  </div>
+
+  <!-- MAIN HEADER -->
+  <header class="h-14 bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
+    <div class="flex items-center gap-2">
+      <h2 class="font-mincho font-extrabold text-amber-400 text-lg tracking-wider">江戸川双六</h2>
+      <span id="game-turn-badge" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold rounded-md">
+        第1ターン
+      </span>
+    </div>
+
+    <!-- Active Target Badge -->
+    <div class="hidden sm:flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-xs">
+      <span class="text-amber-400 font-bold">目的地:</span>
+      <span id="current-destination-name" class="text-slate-200 font-bold truncate max-w-[150px]">カラオケ酔処「ゆう」</span>
+    </div>
+
+    <!-- Quick Tools -->
+    <div class="flex items-center gap-2">
+      <button id="bgm-toggle-btn" onclick="EdogawaSugoroku.toggleBGM()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-amber-400 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="BGM ON/OFF">
+        <span id="bgm-icon">🎵</span> <span class="hidden sm:inline" id="bgm-label">BGM ON</span>
+      </button>
+      <button onclick="EdogawaSugoroku.openApiKeyModal()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-amber-400 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="Google Maps APIキー設定">
+        <span>🔑</span> <span class="hidden sm:inline">Google API</span>
+      </button>
+      <button onclick="EdogawaSugoroku.toggleFullscreen()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition" title="全画面モード">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+      </button>
+      <button onclick="EdogawaSugoroku.openLogModal()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="ログ閲覧">
+        <span>📜</span> <span class="hidden sm:inline">履歴</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- FULLSCREEN GOOGLE MAPS / LEAFLET CANVAS -->
+  <main class="flex-1 relative w-full overflow-hidden bg-slate-900">
+    <div id="map" class="w-full h-full z-10"></div>
+
+    <div class="absolute top-3 left-3 z-20 bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-md flex items-center gap-2 text-[11px] text-slate-300 shadow-lg pointer-events-none">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span id="map-mode-tag" class="font-bold">縮尺: 50ft (実道路吸着モード)</span>
+    </div>
+
+    <div class="sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[180px] truncate">
+      <span class="text-amber-400 font-bold">Goal:</span>
+      <span id="mobile-destination-name" class="text-slate-200 font-medium">カラオケ酔処「ゆう」</span>
+    </div>
+  </main>
+
+  <!-- MAIN GAME UI FOOTER -->
+  <footer class="bg-slate-950/95 border-t border-slate-800/90 p-3 sm:p-4 z-20 shrink-0 backdrop-blur-md flex flex-col gap-3">
+    <div id="players-card-container" class="grid grid-cols-4 gap-2 w-full"></div>
+
+    <div class="flex items-center justify-between gap-3 pt-1 border-t border-slate-800/60">
+      <div class="flex items-center gap-2.5 overflow-hidden">
+        <div id="active-player-avatar" class="w-10 h-10 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-xl shrink-0 shadow-md">
+          🧑‍🦱
+        </div>
+        <div class="truncate">
+          <div class="flex items-center gap-1.5">
+            <span id="active-player-name" class="font-extrabold text-sm text-slate-100 truncate">プレイヤー1</span>
+            <span id="active-player-status-badge" class="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] rounded font-bold">
+              あなたの番
+            </span>
+          </div>
+          <div class="text-xs text-amber-400 font-extrabold flex items-center gap-2">
+            <span id="active-player-money">所持金: ¥100,000</span>
+            <span id="active-player-vehicle" class="text-xs"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 shrink-0">
+        <div class="dice-container cursor-pointer" onclick="EdogawaSugoroku.rollDice()">
+          <div id="dice-cube" class="dice-cube">
+            <div class="dice-face face-1">⚀</div>
+            <div class="dice-face face-2">⚁</div>
+            <div class="dice-face face-3">⚂</div>
+            <div class="dice-face face-4">⚃</div>
+            <div class="dice-face face-5">⚄</div>
+            <div class="dice-face face-6">⚅</div>
+          </div>
+        </div>
+
+        <button id="roll-dice-btn" onclick="EdogawaSugoroku.rollDice()" class="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black px-4 py-3 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition flex items-center gap-1.5 text-sm">
+          <span>🎲</span>
+          <span>サイコロを振る</span>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL: EVENT POPUP -->
+  <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div id="event-modal-icon" class="text-5xl">🎉</div>
+      <div>
+        <h3 id="event-modal-title" class="font-mincho text-xl font-bold text-amber-400 mb-1">イベント発生！</h3>
+        <p id="event-modal-desc" class="text-sm text-slate-200 font-medium leading-relaxed whitespace-pre-line">イベント説明文</p>
+      </div>
+      <div id="event-modal-extra" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-amber-300 font-bold hidden"></div>
+      <button onclick="EdogawaSugoroku.closeEventModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-md transition">
+        了解！
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: GOAL & CATEGORY ROULETTE -->
+  <div id="goal-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl space-y-5">
+      <div>
+        <span class="text-4xl">👑</span>
+        <h2 class="font-mincho text-2xl font-extrabold text-amber-400 mt-1">GOAL! 先着ゴール達成！</h2>
+        <p id="goal-winner-text" class="text-sm text-slate-300 mt-1">賞金10万円を獲得しました！</p>
+      </div>
+
+      <div id="category-select-section" class="space-y-3">
+        <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">次の目的地ジャンルを選択してください</p>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button onclick="EdogawaSugoroku.selectCategory('飲食店')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">🍜</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">飲食店</div>
+              <div class="text-[10px] text-slate-400">グルメ・カフェ</div>
+            </div>
+          </button>
+          <button onclick="EdogawaSugoroku.selectCategory('スーパー（薬屋含む）')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">🛒</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">スーパー・薬局</div>
+              <div class="text-[10px] text-slate-400">買物・ドラッグ</div>
+            </div>
+          </button>
+          <button onclick="EdogawaSugoroku.selectCategory('公園')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">🌳</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">公園</div>
+              <div class="text-[10px] text-slate-400">自然・広場</div>
+            </div>
+          </button>
+          <button onclick="EdogawaSugoroku.selectCategory('駅（バス停含む）')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">🚉</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">駅・バス停</div>
+              <div class="text-[10px] text-slate-400">交通スポット</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div id="roulette-section" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center space-y-3">
+        <div class="text-xs font-bold text-amber-400 animate-pulse">江戸川区内ルーレット抽選中...</div>
+        <div id="roulette-box" class="text-lg font-bold text-slate-100 py-3 bg-slate-900 border border-slate-700 rounded-xl shadow-inner font-mincho">
+          ---
+        </div>
+      </div>
+
+      <button id="roulette-confirm-btn" onclick="EdogawaSugoroku.confirmNextSugoroku()" class="hidden w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition">
+        次の双六を開始する！
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: GOOGLE MAPS API KEY CONFIG -->
+  <div id="api-key-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 text-left shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-mincho font-bold text-amber-400 text-base">🔑 Google Maps API設定</h3>
+        <button onclick="EdogawaSugoroku.closeApiKeyModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Google Maps API Key（<code class="text-amber-300">Directions API</code> / <code class="text-amber-300">Maps JS API</code> 有効化済み）を入力すると、Google標準地図タイルおよび公式道路ルーティングを直接読み込むことができます。
+      </p>
+      <p class="text-[11px] text-emerald-400 bg-emerald-950/50 p-2 rounded border border-emerald-800/50">
+        ※キーが未入力でも、標準でOSRM超高精度道路ルーティング（建物回避・道路吸着100%）が全自動動作します。
+      </p>
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1">Google Maps API Key</label>
+        <input type="text" id="gmaps-api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-amber-300 focus:outline-none focus:border-amber-500 font-mono">
+      </div>
+      <div class="flex gap-2">
+        <button onclick="EdogawaSugoroku.saveApiKey()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-xs shadow-md transition">
+          保存して適用
+        </button>
+        <button onclick="EdogawaSugoroku.closeApiKeyModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: LOG HISTORY -->
+  <div id="log-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full h-[70vh] p-5 flex flex-col justify-between shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-mincho font-bold text-amber-400 text-base">ゲーム進行ログ</h3>
+        <button onclick="EdogawaSugoroku.closeLogModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+      <div id="log-history-list" class="flex-1 overflow-y-auto space-y-2 py-3 text-xs text-slate-300 font-mono"></div>
+      <button onclick="EdogawaSugoroku.closeLogModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-xl text-xs transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
+    const EDOGAWA_START = {
+      name: "西葛西駅",
+      lat: 35.66457568885514,
+      lng: 139.8592053650475
+    };
+
+    const FIRST_GOAL = {
+      name: "カラオケ酔処「ゆう」",
+      lat: 35.65702449234845,
+      lng: 139.86178672585876
+    };
+
+    const BOAT_RACE_LOC = {
+      name: "江戸川競艇場",
+      lat: 35.69263325293789,
+      lng: 139.8614550908756,
+      type: "🚤"
+    };
+
+    const POLICE_STATIONS = [
+      { name: "葛西警察署", lat: 35.65651, lng: 139.86602, type: "🚓" },
+      { name: "西葛西駅前交番", lat: 35.66512, lng: 139.85980, type: "🚓" },
+      { name: "葛西駅前交番", lat: 35.66380, lng: 139.87300, type: "🚓" },
+      { name: "船堀交番", lat: 35.68350, lng: 139.86400, type: "🚓" },
+      { name: "小松川警察署", lat: 35.69345, lng: 139.84521, type: "🚓" }
+    ];
+
+    const HOSPITALS = [
+      { name: "葛西昌医会病院", lat: 35.66120, lng: 139.87050, type: "🏥" },
+      { name: "東京臨海病院", lat: 35.65020, lng: 139.85500, type: "🏥" },
+      { name: "森山記念病院", lat: 35.67250, lng: 139.86320, type: "🏥" },
+      { name: "西葛西駅前クリニック", lat: 35.66490, lng: 139.85850, type: "🏥" },
+      { name: "江戸川病院", lat: 35.73350, lng: 139.88900, type: "🏥" }
+    ];
+
+    /* High-precision street centerline waypoints around Nishi-Kasai station plaza, underpasses, rotaries & major avenues */
+    const EDOGAWA_MAJOR_ROADS_HIGH_PRECISION = [
+      // 1. 西葛西駅北口〜南口〜虹の広場通り〜葛西臨海公園 (実道路完全追従)
+      [
+        { lat: 35.66600, lng: 139.85980 }, // 葛西橋通り交差点
+        { lat: 35.66530, lng: 139.85970 },
+        { lat: 35.66485, lng: 139.85960 }, // 西葛西駅北口ロータリー
+        { lat: 35.66458, lng: 139.85955 }, // ガード下通路 (実道路)
+        { lat: 35.66420, lng: 139.85950 }, // 西葛西駅南口ロータリー
+        { lat: 35.66250, lng: 139.85970 }, // 虹の広場通り
+        { lat: 35.65900, lng: 139.86010 },
+        { lat: 35.65702, lng: 139.86035 }, // 酔処「ゆう」アクセス交差点
+        { lat: 35.65200, lng: 139.86080 },
+        { lat: 35.64250, lng: 139.86010 }  // 葛西臨海公園
+      ],
+      // 2. カラオケ酔処「ゆう」専用アクセス公道
+      [
+        { lat: 35.65702, lng: 139.86035 },
+        { lat: 35.65702, lng: 139.86110 },
+        { lat: 35.65702449234845, lng: 139.86178672585876 } // 目的店舗直前
+      ],
+      // 3. 環七通り (Kannana Dori Centerline)
+      [
+        { lat: 35.6425, lng: 139.8601 },
+        { lat: 35.6510, lng: 139.8650 },
+        { lat: 35.6570, lng: 139.8685 },
+        { lat: 35.6636, lng: 139.8733 }, // 葛西駅前
+        { lat: 35.6730, lng: 139.8780 },
+        { lat: 35.6859, lng: 139.8828 }, // 一之江駅
+        { lat: 35.7000, lng: 139.8770 },
+        { lat: 35.7180, lng: 139.8700 },
+        { lat: 35.7330, lng: 139.8810 }  // 小岩駅
+      ],
+      // 4. 葛西橋通り (Kasai Bridge Dori)
+      [
+        { lat: 35.6662, lng: 139.8510 },
+        { lat: 35.6660, lng: 139.8598 }, // 西葛西北口交差点
+        { lat: 35.6636, lng: 139.8733 }, // 葛西駅前
+        { lat: 35.6620, lng: 139.8880 }
+      ],
+      // 5. 清洲橋通り (Kiyosubashi Dori)
+      [
+        { lat: 35.6690, lng: 139.8515 },
+        { lat: 35.6680, lng: 139.8590 },
+        { lat: 35.6672, lng: 139.8665 },
+        { lat: 35.6660, lng: 139.8740 }
+      ],
+      // 6. 船堀街道 (Funabori-kaido)
+      [
+        { lat: 35.6642, lng: 139.8595 },
+        { lat: 35.6750, lng: 139.8620 },
+        { lat: 35.6838, lng: 139.8643 }, // 船堀駅
+        { lat: 35.6950, lng: 139.8620 },
+        { lat: 35.7170, lng: 139.8580 }
+      ],
+      // 7. 新大橋通り (Shin-Ohashi Dori)
+      [
+        { lat: 35.6840, lng: 139.8520 },
+        { lat: 35.6838, lng: 139.8643 },
+        { lat: 35.6859, lng: 139.8828 },
+        { lat: 35.6920, lng: 139.8970 }
+      ],
+      // 8. 京葉道路 (Keiyo Road)
+      [
+        { lat: 35.6940, lng: 139.8420 },
+        { lat: 35.6950, lng: 139.8580 },
+        { lat: 35.6980, lng: 139.8760 },
+        { lat: 35.7050, lng: 139.9000 }
+      ],
+      // 9. 柴又街道 (Shibamata-kaido)
+      [
+        { lat: 35.6859, lng: 139.8828 },
+        { lat: 35.6920, lng: 139.8970 },
+        { lat: 35.7088, lng: 139.8980 },
+        { lat: 35.7330, lng: 139.8880 }
+      ]
+    ];
+
+    const DESTINATION_PRESETS = {
+      "飲食店": [
+        { name: "独一処餃子 (葛西)", lat: 35.6631, lng: 139.8732 },
+        { name: "スパイスレーン (西葛西)", lat: 35.6648, lng: 139.8580 },
+        { name: "ラーメン珍来 (小岩)", lat: 35.7328, lng: 139.8810 },
+        { name: "インド料理 タンドール (船堀)", lat: 35.6835, lng: 139.8638 }
+      ],
+      "スーパー（薬屋含む）": [
+        { name: "イオン葛西店", lat: 35.6672, lng: 139.8665 },
+        { name: "マツモトキヨシ 西葛西駅前店", lat: 35.6642, lng: 139.8590 },
+        { name: "サミットストア 葛西店", lat: 35.6580, lng: 139.8690 },
+        { name: "オリンピック 葛西店", lat: 35.6510, lng: 139.8720 }
+      ],
+      "公園": [
+        { name: "葛西臨海公園", lat: 35.6425, lng: 139.8601 },
+        { name: "行船公園 (江戸川区自然動物園)", lat: 35.6685, lng: 139.8588 },
+        { name: "篠崎公園", lat: 35.7088, lng: 139.8980 },
+        { name: "宇喜田公園", lat: 35.6680, lng: 139.8630 }
+      ],
+      "駅（バス停含む）": [
+        { name: "葛西駅", lat: 35.6636, lng: 139.8733 },
+        { name: "船堀駅", lat: 35.6838, lng: 139.8643 },
+        { name: "一之江駅", lat: 35.6859, lng: 139.8828 },
+        { name: "平井駅", lat: 35.7064, lng: 139.8423 }
+      ]
+    };
+
+    const AVATAR_LIST = ["🧑‍🦱", "👩", "👨‍🦰", "👩‍🦰", "🧑‍🦳", "👩‍🦳", "🧔", "👳‍♂️", "👧", "🧔‍♀️"];
+    const PLAYER_COLORS = [
+      { bg: "bg-emerald-500", border: "border-emerald-400", stroke: "#10b981", name: "エメラルド" },
+      { bg: "bg-purple-500", border: "border-purple-400", stroke: "#a855f7", name: "パープル" },
+      { bg: "bg-orange-500", border: "border-orange-400", stroke: "#f97316", name: "オレンジ" },
+      { bg: "bg-cyan-500", border: "border-cyan-400", stroke: "#06b6d4", name: "シアン" }
+    ];
+
+    const RED_REASONS = [
+      "西葛西駅前で限定スイーツをつい衝動買い (-¥2,500)",
+      "葛西臨海公園の自販機でお金を飲まれた (-¥500)",
+      "船堀タワーの展望台でお土産を爆買い (-¥4,200)",
+      "江戸川沿いをサイクリング中にタイヤパンク (-¥3,000)",
+      "新小岩近くでタクシー代を奮発してしまった (-¥1,800)",
+      "ドラッグストアでサプリメントを大量購入 (-¥5,500)",
+      "ファミリーレストランでおごらされた (-¥6,000)",
+      "一之江のカフェで高級コーヒーとケーキを堪能 (-¥1,500)"
+    ];
+
+    const BLUE_REASONS = [
+      "西葛西の路上で500円玉拾った！ (+¥500)",
+      "小岩のフリマに出店したら出品アイテム即完売！ (+¥8,000)",
+      "葛西臨海公園のイベントクイズ大会で優勝！ (+¥15,000)",
+      "江戸川区の地域ポイント還元でキャッシュバック！ (+¥3,000)",
+      "親戚から遅めの「お年玉」をもらった！ (+¥10,000)",
+      "スクラッチくじを買ったら見事に当たり！ (+¥5,000)",
+      "地元商店街の福引で特賞をゲット！ (+¥12,000)",
+      "不要品をリサイクルショップに売ったら高値！ (+¥6,500)"
+    ];
+
+    const ROLL_BUBBLES = [
+      "頼む！大きい目を出してくれ！",
+      "サイコロの神様、よろしく！",
+      "江戸川区の風になるぜ！",
+      "一発逆転を狙う！",
+      "焦らず着実に進むぞ！",
+      "ゴールはもうすぐそこだ！"
+    ];
+
+    const LAND_BUBBLES = [
+      "ここに着いたぞ！何かあるかな？",
+      "ふぅ〜、ちょっと一休み。",
+      "江戸川区の街並みは最高だな！",
+      "よっしゃ、いいマスに止まった！",
+      "うわっ！ここはヤバい場所かも…？",
+      "次もこの調子で行こう！"
+    ];
+
+    const VEHICLES = [
+      { emoji: "🚲", name: "自転車", mult: 2 },
+      { emoji: "🚗", name: "自動車", mult: 3 },
+      { emoji: "🚃", name: "電車", mult: 4 },
+      { emoji: "🚅", name: "新幹線", mult: 5 },
+      { emoji: "🚁", name: "ヘリコプター", mult: 6 },
+      { emoji: "✈️", name: "飛行機", mult: 7 }
+    ];
+
+    // --- SOUND ENGINE (EFFECTS & 2 BGM SYNTHESIZERS) ---
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.bgmTimer = null;
+        this.currentBgmType = null; // 'lobby' | 'map'
+        this.isMuted = false;
+        this.step = 0;
+      }
+
+      init() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        if (this.isMuted) {
+          this.stopBGM();
+        } else if (this.currentBgmType) {
+          this.playBGM(this.currentBgmType);
+        }
+        return this.isMuted;
+      }
+
+      playBGM(type) {
+        this.stopBGM();
+        this.currentBgmType = type;
+        if (this.isMuted) return;
+        this.init();
+        this.step = 0;
+
+        // Note Frequencies for Japanese Traditional & Board Game Pop Scales
+        const notes = {
+          'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'G4': 392.00, 'A4': 440.00,
+          'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'G5': 783.99, 'A5': 880.00
+        };
+
+        // 1. Lobby BGM Sequence: Relaxing Japanese Pentatonic Motif (和風ロビー曲)
+        const lobbySeq = [
+          'C4', 'E4', 'G4', 'A4', 'G4', 'E4', 'C4', 'D4',
+          'E4', 'G4', 'A4', 'C5', 'A4', 'G4', 'E4', 'D4'
+        ];
+
+        // 2. Map BGM Sequence: Bouncy Sugoroku Adventure Motif (双六マップ曲)
+        const mapSeq = [
+          'C5', 'E5', 'G5', 'E5', 'A5', 'G5', 'E5', 'C5',
+          'D5', 'E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5',
+          'E5', 'G5', 'C5', 'E5', 'G5', 'A5', 'G5', 'E5',
+          'D5', 'E5', 'D5', 'C5', 'G4', 'A4', 'C5', 'C5'
+        ];
+
+        const seq = (type === 'lobby') ? lobbySeq : mapSeq;
+        const speed = (type === 'lobby') ? 300 : 180; // BPM timing
+
+        this.bgmTimer = setInterval(() => {
+          if (this.isMuted) return;
+          const noteName = seq[this.step % seq.length];
+          const freq = notes[noteName] || 440;
+          const waveType = (type === 'lobby') ? 'sine' : 'triangle';
+          const vol = (type === 'lobby') ? 0.04 : 0.05;
+
+          this.playTone(freq, waveType, speed / 1000 * 0.85, vol);
+
+          // Bass drone accent every 4 steps
+          if (this.step % 4 === 0) {
+            this.playTone(130.81, 'sine', 0.25, 0.03); // C3 bass
+          }
+
+          this.step++;
+        }, speed);
+      }
+
+      stopBGM() {
+        if (this.bgmTimer) {
+          clearInterval(this.bgmTimer);
+          this.bgmTimer = null;
+        }
+      }
+
+      playTone(freq, type = 'sine', duration = 0.1, gainVal = 0.1) {
+        if (this.isMuted) return;
+        this.init();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch(e){}
+      }
+
+      playDiceRoll() {
+        this.init();
+        for (let i = 0; i < 6; i++) {
+          setTimeout(() => this.playTone(200 + Math.random() * 300, 'square', 0.05, 0.08), i * 150);
+        }
+      }
+      playLandBlue() {
+        this.init();
+        this.playTone(523.25, 'triangle', 0.1, 0.15);
+        setTimeout(() => this.playTone(659.25, 'triangle', 0.15, 0.15), 100);
+        setTimeout(() => this.playTone(783.99, 'triangle', 0.25, 0.15), 200);
+      }
+      playLandRed() {
+        this.init();
+        this.playTone(300, 'sawtooth', 0.15, 0.15);
+        setTimeout(() => this.playTone(220, 'sawtooth', 0.25, 0.15), 150);
+      }
+      playEventYellow() {
+        this.init();
+        this.playTone(440, 'sine', 0.08, 0.1);
+        setTimeout(() => this.playTone(880, 'sine', 0.08, 0.1), 80);
+        setTimeout(() => this.playTone(660, 'sine', 0.12, 0.1), 160);
+      }
+      playGoalFanfare() {
+        this.init();
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((n, i) => setTimeout(() => this.playTone(n, 'triangle', 0.3, 0.2), i * 150));
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // --- MAIN GAME APPLICATION ENGINE ---
+    window.EdogawaSugoroku = {
+      map: null,
+      gmapsApiKey: localStorage.getItem("gmaps_api_key") || "",
+      selectedAvatar: "🧑‍🦱",
+      players: [],
+      currentPlayerIdx: 0,
+      turnCount: 1,
+      currentDestination: FIRST_GOAL,
+      waypoints: [],
+      roadNetworkNodes: [],
+      roadPolylines: [],
+      spotMarkers: [],
+      playerMarkers: [],
+      destinationMarker: null,
+      facilityMarker: null,
+      isRolling: false,
+      countdownTimer: null,
+      countdownVal: 10,
+      selectedCategoryWinnerIdx: 0,
+      selectedCategoryName: "",
+      playerRoutePolylines: [],
+      goalNodeIdx: null,
+
+      init() {
+        this.renderAvatarGrid();
+        this.renderJoinedSlots();
+        this.generateQRCode();
+        this.startCountdown();
+        this.checkSaveData();
+        if (this.gmapsApiKey) {
+          const input = document.getElementById("gmaps-api-key-input");
+          if (input) input.value = this.gmapsApiKey;
+        }
+
+        // Play Lobby BGM on initial interaction or launch
+        sound.playBGM('lobby');
+        document.addEventListener('click', () => sound.init(), { once: true });
+      },
+
+      toggleBGM() {
+        const isMuted = sound.toggleMute();
+        const icon = document.getElementById("bgm-icon");
+        const label = document.getElementById("bgm-label");
+        if (icon) icon.innerText = isMuted ? "🔇" : "🎵";
+        if (label) label.innerText = isMuted ? "BGM OFF" : "BGM ON";
+      },
+
+      renderAvatarGrid() {
+        const grid = document.getElementById("character-grid");
+        if (!grid) return;
+        grid.innerHTML = AVATAR_LIST.map((emoji) => `
+          <button onclick="EdogawaSugoroku.selectAvatar('${emoji}')" class="avatar-btn p-2 rounded-xl text-2xl border ${emoji === this.selectedAvatar ? 'border-amber-400 bg-amber-500/20 shadow-md scale-105' : 'border-slate-800 bg-slate-950/60 hover:bg-slate-800'} transition">
+            ${emoji}
+          </button>
+        `).join("");
+      },
+
+      selectAvatar(emoji) {
+        this.selectedAvatar = emoji;
+        this.renderAvatarGrid();
+        this.updateJoinedPlayersUI();
+      },
+
+      renderJoinedSlots() {
+        const container = document.getElementById("joined-players-bar");
+        if (!container) return;
+        container.innerHTML = [0, 1, 2, 3].map(i => `
+          <div id="slot-${i}" class="bg-slate-900 border border-slate-800 p-1.5 rounded-lg text-center flex flex-col items-center">
+            <span id="slot-avatar-${i}" class="text-xl">👤</span>
+            <span id="slot-name-${i}" class="text-[9px] text-slate-400 font-bold truncate w-full mt-0.5">待機中</span>
+          </div>
+        `).join("");
+      },
+
+      updateJoinedPlayersUI() {
+        const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
+        const s0A = document.getElementById("slot-avatar-0");
+        const s0N = document.getElementById("slot-name-0");
+        if (s0A) s0A.innerText = this.selectedAvatar;
+        if (s0N) s0N.innerText = pName;
+
+        const availableAvatars = AVATAR_LIST.filter(a => a !== this.selectedAvatar);
+        for (let i = 1; i <= 3; i++) {
+          const sa = document.getElementById(`slot-avatar-${i}`);
+          const sn = document.getElementById(`slot-name-${i}`);
+          if (sa) sa.innerText = availableAvatars[i - 1] || "🤖";
+          if (sn) sn.innerText = `CPU ${i}`;
+        }
+      },
+
+      generateQRCode() {
+        const qrContainer = document.getElementById("qrcode-container");
+        if (!qrContainer) return;
+        qrContainer.innerHTML = "";
+        try {
+          new QRCode(qrContainer, {
+            text: window.location.href,
+            width: 64,
+            height: 64,
+            colorDark: "#0f172a",
+            colorLight: "#ffffff"
+          });
+        } catch(e) {
+          qrContainer.innerHTML = "<div class='text-[10px] text-slate-500 p-2'>[QR CODE]</div>";
+        }
+      },
+
+      startCountdown() {
+        const badge = document.getElementById("countdown-badge");
+        this.updateJoinedPlayersUI();
+        this.countdownTimer = setInterval(() => {
+          this.countdownVal--;
+          if (badge) badge.innerText = `${this.countdownVal}秒`;
+          if (this.countdownVal <= 0) {
+            clearInterval(this.countdownTimer);
+            this.startGame();
+          }
+        }, 1000);
+      },
+
+      checkSaveData() {
+        const saved = localStorage.getItem("edogawa_sugoroku_state");
+        if (saved) {
+          const btn = document.getElementById("resume-save-btn");
+          if (btn) btn.classList.remove("hidden");
+        }
+      },
+
+      startGame() {
+        if (this.countdownTimer) clearInterval(this.countdownTimer);
+
+        const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
+        const availableAvatars = AVATAR_LIST.filter(a => a !== this.selectedAvatar);
+
+        this.players = [
+          { id: 0, name: pName, avatar: this.selectedAvatar, color: PLAYER_COLORS[0], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: false },
+          { id: 1, name: "CPU 1", avatar: availableAvatars[0], color: PLAYER_COLORS[1], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: true },
+          { id: 2, name: "CPU 2", avatar: availableAvatars[2], color: PLAYER_COLORS[2], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: true },
+          { id: 3, name: "CPU 3", avatar: availableAvatars[3], color: PLAYER_COLORS[3], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: true }
+        ];
+
+        document.getElementById("lobby-screen").classList.add("hidden");
+        
+        // Switch sound from Lobby BGM to Sugoroku Map BGM
+        sound.playBGM('map');
+
+        this.initMap();
+        this.setupBoard(EDOGAWA_START, FIRST_GOAL);
+        this.updateHUD();
+        this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
+      },
+
+      resumeGame() {
+        const saved = localStorage.getItem("edogawa_sugoroku_state");
+        if (!saved) return;
+
+        try {
+          const state = JSON.parse(saved);
+          this.players = state.players;
+          this.turnCount = state.turnCount;
+          this.currentPlayerIdx = state.currentPlayerIdx;
+          this.currentDestination = state.currentDestination;
+
+          document.getElementById("lobby-screen").classList.add("hidden");
+          sound.playBGM('map');
+
+          this.initMap();
+          this.setupBoard(EDOGAWA_START, this.currentDestination);
+          this.updateHUD();
+          this.addLog("💾 保存データからゲームを復元しました。");
+        } catch(e) {
+          this.startGame();
+        }
+      },
+
+      initMap() {
+        if (this.map) return;
+
+        // Scale locked strictly to 50ft (Zoom Level 19)
+        this.map = L.map('map', {
+          zoomControl: false,
+          minZoom: 19,
+          maxZoom: 19,
+          scrollWheelZoom: false,
+          doubleClickZoom: false,
+          touchZoom: false
+        }).setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
+
+        // CartoDB Voyager Google-Maps style vector tile base
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          subdomains: 'abcd'
+        }).addTo(this.map);
+      },
+
+      // Fetch dynamic OSRM route centerline if available, snapping strictly to actual streets
+      async fetchStreetRouteOSRM(start, goal) {
+        try {
+          const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${goal.lng},${goal.lat}?overview=full&geometries=geojson`;
+          const resp = await fetch(url);
+          const data = await resp.json();
+          if (data && data.routes && data.routes[0] && data.routes[0].geometry) {
+            return data.routes[0].geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+          }
+        } catch(e) {}
+        return null;
+      },
+
+      async setupBoard(startLoc, goalLoc) {
+        this.currentDestination = goalLoc;
+        document.getElementById("current-destination-name").innerText = goalLoc.name;
+        document.getElementById("mobile-destination-name").innerText = goalLoc.name;
+
+        // Clear previous map layers
+        if (this.roadPolylines.length) {
+          this.roadPolylines.forEach(p => this.map.removeLayer(p));
+          this.roadPolylines = [];
+        }
+        if (this.playerRoutePolylines.length) {
+          this.playerRoutePolylines.forEach(p => this.map.removeLayer(p));
+          this.playerRoutePolylines = [];
+        }
+        if (this.destinationMarker) this.map.removeLayer(this.destinationMarker);
+        if (this.facilityMarker) {
+          this.map.removeLayer(this.facilityMarker);
+          this.facilityMarker = null;
+        }
+        this.spotMarkers.forEach(m => this.map.removeLayer(m));
+        this.playerMarkers.forEach(m => this.map.removeLayer(m));
+        this.spotMarkers = [];
+        this.playerMarkers = [];
+
+        // Try OSRM street snapping first
+        let osrmPath = await this.fetchStreetRouteOSRM(startLoc, goalLoc);
+
+        let roadGraph;
+        if (osrmPath && osrmPath.length > 5) {
+          roadGraph = this.buildRoadNetwork([osrmPath], 10);
+        } else {
+          roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 10);
+        }
+
+        this.roadNetworkNodes = roadGraph.nodes;
+
+        // Draw major base road lines
+        const sourceRoads = (osrmPath && osrmPath.length > 5) ? [osrmPath] : EDOGAWA_MAJOR_ROADS_HIGH_PRECISION;
+        sourceRoads.forEach(roadPoints => {
+          const latLngs = roadPoints.map(p => [p.lat, p.lng]);
+          const line = L.polyline(latLngs, {
+            color: '#334155',
+            weight: 8,
+            opacity: 0.5,
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(this.map);
+          this.roadPolylines.push(line);
+        });
+
+        const startNodeIdx = this.findNearestNodeIdx(startLoc);
+        this.goalNodeIdx = this.findNearestNodeIdx(goalLoc);
+
+        // Sample 10m spot markers (●, ■, ▲) across all road network nodes
+        this.roadNetworkNodes.forEach((node, idx) => {
+          if (idx === startNodeIdx || idx === this.goalNodeIdx) return;
+
+          let iconHtml = '';
+          if (node.type === 'red') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
+          } else if (node.type === 'blue') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+          } else {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
+          }
+
+          const customIcon = L.divIcon({
+            className: 'custom-spot-icon',
+            html: iconHtml,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+
+          const marker = L.marker([node.lat, node.lng], { icon: customIcon }).addTo(this.map);
+          this.spotMarkers.push(marker);
+        });
+
+        // Goal Marker
+        const goalIcon = L.divIcon({
+          className: 'custom-goal-icon',
+          html: `<div class="bg-amber-400 text-slate-950 border-2 border-slate-950 font-extrabold px-2.5 py-1 rounded-full shadow-2xl flex items-center gap-1 text-xs animate-bounce shrink-0 whitespace-nowrap"><span>🚩</span><span>${goalLoc.name}</span></div>`,
+          iconAnchor: [40, 20]
+        });
+        this.destinationMarker = L.marker([goalLoc.lat, goalLoc.lng], { icon: goalIcon }).addTo(this.map);
+
+        // Setup individual path & map markers for each player
+        this.players.forEach((p) => {
+          if (p.currentNodeIdx === undefined || p.currentNodeIdx === null) {
+            p.currentNodeIdx = startNodeIdx;
+          }
+          p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
+          p.pathIndex = 0;
+
+          const startPt = this.roadNetworkNodes[p.currentNodeIdx] || startLoc;
+          const marker = L.marker([startPt.lat, startPt.lng], {
+            icon: this.createPlayerIcon(p, "")
+          }).addTo(this.map);
+          this.playerMarkers.push(marker);
+        });
+
+        this.updatePlayerRoutes();
+        this.map.setView([startLoc.lat, startLoc.lng], 19);
+      },
+
+      updatePlayerRoutes() {
+        // Remove existing player route polylines
+        this.playerRoutePolylines.forEach(line => this.map.removeLayer(line));
+        this.playerRoutePolylines = [];
+
+        // Draw individual route line from each player's current position to the destination
+        this.players.forEach((p) => {
+          if (!p.path || p.path.length === 0) return;
+          const remainingIndices = p.path.slice(p.pathIndex);
+          const latLngs = remainingIndices.map(idx => {
+            const node = this.roadNetworkNodes[idx];
+            return [node.lat, node.lng];
+          }).filter(pt => pt[0] !== undefined);
+
+          if (latLngs.length > 1) {
+            const polyline = L.polyline(latLngs, {
+              color: p.color.stroke,
+              weight: 5,
+              opacity: 0.85,
+              dashArray: '6, 8',
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(this.map);
+            this.playerRoutePolylines.push(polyline);
+          }
+        });
+      },
+
+      buildRoadNetwork(roads, spacingMeters) {
+        const nodes = [];
+
+        roads.forEach(road => {
+          for (let i = 0; i < road.length - 1; i++) {
+            const p1 = road[i];
+            const p2 = road[i+1];
+
+            const R = 6371000;
+            const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+            const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+            const steps = Math.max(1, Math.floor(dist / spacingMeters));
+
+            let prevIdx = null;
+            for (let s = 0; s <= steps; s++) {
+              const t = s / steps;
+              const lat = p1.lat + (p2.lat - p1.lat) * t;
+              const lng = p1.lng + (p2.lng - p1.lng) * t;
+
+              let matchedIdx = nodes.findIndex(n => {
+                const latDiff = Math.abs(n.lat - lat);
+                const lngDiff = Math.abs(n.lng - lng);
+                return (latDiff < 0.00008 && lngDiff < 0.00008);
+              });
+
+              if (matchedIdx === -1) {
+                let type = 'blue';
+                const r = Math.random();
+                if (r < 0.4) type = 'red';
+                else if (r < 0.75) type = 'blue';
+                else type = 'yellow';
+
+                nodes.push({
+                  id: nodes.length,
+                  lat: lat,
+                  lng: lng,
+                  type: type,
+                  neighbors: []
+                });
+                matchedIdx = nodes.length - 1;
+              }
+
+              if (prevIdx !== null && prevIdx !== matchedIdx) {
+                if (!nodes[prevIdx].neighbors.includes(matchedIdx)) {
+                  nodes[prevIdx].neighbors.push(matchedIdx);
+                }
+                if (!nodes[matchedIdx].neighbors.includes(prevIdx)) {
+                  nodes[matchedIdx].neighbors.push(prevIdx);
+                }
+              }
+              prevIdx = matchedIdx;
+            }
+          }
+        });
+
+        return { nodes };
+      },
+
+      findNearestNodeIdx(loc) {
+        let minDist = Infinity;
+        let nearestIdx = 0;
+        this.roadNetworkNodes.forEach((node, idx) => {
+          const dist = Math.hypot(node.lat - loc.lat, node.lng - loc.lng);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestIdx = idx;
+          }
+        });
+        return nearestIdx;
+      },
+
+      findShortestPath(graph, startIdx, goalIdx) {
+        const queue = [[startIdx]];
+        const visited = new Set([startIdx]);
+
+        while (queue.length > 0) {
+          const path = queue.shift();
+          const nodeIdx = path[path.length - 1];
+
+          if (nodeIdx === goalIdx) {
+            return path;
+          }
+
+          const node = graph.nodes[nodeIdx];
+          if (node && node.neighbors) {
+            for (const nbrIdx of node.neighbors) {
+              if (!visited.has(nbrIdx)) {
+                visited.add(nbrIdx);
+                queue.push([...path, nbrIdx]);
+              }
+            }
+          }
+        }
+
+        return [startIdx, goalIdx];
+      },
+
+      createPlayerIcon(player, bubbleText = "") {
+        const bubbleHtml = bubbleText ? `<div class="speech-bubble">${bubbleText}</div>` : '';
+        
+        // Vehicle avatar logic: Show vehicle emoji if vehicle active/moving, wheelchair if injured, or default avatar
+        let displayAvatar = player.avatar;
+        if (player.wheelchairTurns > 0) {
+          displayAvatar = '🦽';
+        } else if (player.vehicle) {
+          displayAvatar = player.vehicle.emoji;
+        }
+
+        const html = `
+          <div class="relative player-token flex items-center justify-center">
+            ${bubbleHtml}
+            <div class="w-8 h-8 rounded-full ${player.color.bg} border-2 border-white shadow-2xl flex items-center justify-center text-lg ring-2 ring-slate-950">
+              ${displayAvatar}
+            </div>
+          </div>
+        `;
+        return L.divIcon({
+          className: 'custom-player-marker',
+          html: html,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+      },
+
+      updateHUD() {
+        const cp = this.players[this.currentPlayerIdx];
+
+        document.getElementById("game-turn-badge").innerText = `第 ${this.turnCount} ターン`;
+
+        const displayAvatar = cp.wheelchairTurns > 0 ? '🦽' : (cp.vehicle ? cp.vehicle.emoji : cp.avatar);
+        document.getElementById("active-player-avatar").innerText = displayAvatar;
+        document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md`;
+        document.getElementById("active-player-name").innerText = cp.name;
+        document.getElementById("active-player-money").innerText = `所持金: ¥${cp.money.toLocaleString()}`;
+        document.getElementById("active-player-vehicle").innerText = cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '';
+
+        const badge = document.getElementById("active-player-status-badge");
+        if (cp.skipTurn) {
+          badge.className = "px-1.5 py-0.2 bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] rounded font-bold";
+          badge.innerText = "1回休み";
+        } else if (cp.wheelchairTurns > 0) {
+          badge.className = "px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] rounded font-bold";
+          badge.innerText = `ケガ (あと${cp.wheelchairTurns}回)`;
+        } else {
+          badge.className = "px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] rounded font-bold";
+          badge.innerText = cp.isCpu ? "CPUの番" : "あなたの番";
+        }
+
+        const cardsContainer = document.getElementById("players-card-container");
+        cardsContainer.innerHTML = this.players.map((p, idx) => {
+          const isActive = idx === this.currentPlayerIdx;
+          const cardAvatar = p.wheelchairTurns > 0 ? '🦽' : (p.vehicle ? p.vehicle.emoji : p.avatar);
+          return `
+            <div class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} border p-2 rounded-xl flex flex-col justify-between transition">
+              <div class="flex items-center justify-between">
+                <span class="text-sm">${cardAvatar}</span>
+                <span class="text-[9px] font-bold px-1 rounded ${p.color.bg} text-slate-950">${idx+1}P</span>
+              </div>
+              <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
+              <div class="text-[10px] font-bold text-amber-400">¥${(p.money/10000).toFixed(1)}万</div>
+            </div>
+          `;
+        }).join("");
+
+        const rollBtn = document.getElementById("roll-dice-btn");
+        if (cp.isCpu || this.isRolling) {
+          rollBtn.disabled = true;
+          rollBtn.classList.add("opacity-50", "pointer-events-none");
+        } else {
+          rollBtn.disabled = false;
+          rollBtn.classList.remove("opacity-50", "pointer-events-none");
+        }
+
+        if (cp.isCpu && !this.isRolling) {
+          setTimeout(() => this.rollDice(), 1200);
+        }
+      },
+
+      rollDice() {
+        if (this.isRolling) return;
+        const cp = this.players[this.currentPlayerIdx];
+
+        if (cp.skipTurn) {
+          cp.skipTurn = false;
+          this.showEventModal("1回休み", `${cp.name} はお休み中のためパスします。`);
+          this.addLog(`🛑 ${cp.name} は1回休みの状態のためパスしました。`);
+          return;
+        }
+
+        this.isRolling = true;
+        sound.playDiceRoll();
+
+        const rollBubble = ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)];
+        this.updatePlayerBubble(cp, rollBubble);
+
+        const cube = document.getElementById("dice-cube");
+        cube.classList.add("dice-rolling");
+
+        setTimeout(() => {
+          cube.classList.remove("dice-rolling");
+
+          let rawRoll = Math.floor(Math.random() * 6) + 1;
+
+          if (cp.wheelchairTurns > 0) {
+            rawRoll = 1;
+            cp.wheelchairTurns--;
+          }
+
+          let steps = rawRoll;
+          const usedVehicle = cp.vehicle;
+
+          // Consume vehicle multiplier for 1 turn only
+          if (usedVehicle && cp.wheelchairTurns === 0) {
+            steps = rawRoll * usedVehicle.mult;
+          }
+
+          const rotations = {
+            1: "rotateX(0deg) rotateY(0deg)",
+            2: "rotateY(180deg)",
+            3: "rotateY(90deg)",
+            4: "rotateY(-90deg)",
+            5: "rotateX(-90deg)",
+            6: "rotateX(90deg)"
+          };
+          cube.style.transform = rotations[rawRoll];
+
+          let logMsg = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】`;
+          if (usedVehicle && cp.wheelchairTurns === 0) {
+            logMsg += ` ➔ ${usedVehicle.name} (${usedVehicle.mult}倍) で ${steps} マス爆走！`;
+          }
+          this.addLog(logMsg);
+
+          this.movePlayerSteps(cp, steps, usedVehicle);
+
+        }, 1200);
+      },
+
+      movePlayerSteps(player, totalSteps, usedVehicle = null) {
+        let currentStep = 0;
+
+        const interval = setInterval(() => {
+          currentStep++;
+          if (player.pathIndex < player.path.length - 1) {
+            player.pathIndex++;
+            player.currentNodeIdx = player.path[player.pathIndex];
+          }
+
+          const node = this.roadNetworkNodes[player.currentNodeIdx];
+          const marker = this.playerMarkers[player.id];
+          if (marker && node) {
+            marker.setLatLng([node.lat, node.lng]);
+          }
+
+          this.updatePlayerRoutes();
+          sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
+          if (node) {
+            this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
+          }
+
+          if (player.currentNodeIdx === this.goalNodeIdx) {
+            clearInterval(interval);
+            this.clearUsedVehicle(player);
+            setTimeout(() => this.handleGoalReach(player), 300);
+            return;
+          }
+
+          if (currentStep >= totalSteps || player.pathIndex >= player.path.length - 1) {
+            clearInterval(interval);
+            // Revert vehicle to original avatar after 1-time movement completion
+            this.clearUsedVehicle(player);
+            setTimeout(() => this.landOnSpot(player), 300);
+          }
+        }, 350);
+      },
+
+      clearUsedVehicle(player) {
+        if (player.vehicle) {
+          player.vehicle = null; // Single-use consumption
+          const marker = this.playerMarkers[player.id];
+          if (marker) {
+            marker.setIcon(this.createPlayerIcon(player, ""));
+          }
+        }
+      },
+
+      rollDice() {
+        if (this.isRolling) return;
+        const cp = this.players[this.currentPlayerIdx];
+
+        if (cp.skipTurn) {
+          cp.skipTurn = false;
+          this.showEventModal("1回休み", `${cp.name} はお休み中のためパスします。`);
+          this.addLog(`🛑 ${cp.name} は1回休みの状態のためパスしました。`);
+          return;
+        }
+
+        this.isRolling = true;
+        sound.playDiceRoll();
+
+        const rollBubble = ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)];
+        this.updatePlayerBubble(cp, rollBubble);
+
+        const cube = document.getElementById("dice-cube");
+        cube.classList.add("dice-rolling");
+
+        setTimeout(() => {
+          cube.classList.remove("dice-rolling");
+
+          let rawRoll = Math.floor(Math.random() * 6) + 1;
+
+          if (cp.wheelchairTurns > 0) {
+            rawRoll = 1;
+            cp.wheelchairTurns--;
+          }
+
+          let steps = rawRoll;
+          if (cp.vehicle && cp.wheelchairTurns === 0) {
+            steps = rawRoll * cp.vehicle.mult;
+          }
+
+          const rotations = {
+            1: "rotateX(0deg) rotateY(0deg)",
+            2: "rotateY(180deg)",
+            3: "rotateY(90deg)",
+            4: "rotateY(-90deg)",
+            5: "rotateX(-90deg)",
+            6: "rotateX(90deg)"
+          };
+          cube.style.transform = rotations[rawRoll];
+
+          let logMsg = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】`;
+          if (cp.vehicle && cp.wheelchairTurns === 0) {
+            logMsg += ` ➔ ${cp.vehicle.name} (${cp.vehicle.mult}倍) で ${steps} マス進む！`;
+          }
+          this.addLog(logMsg);
+
+          this.movePlayerSteps(cp, steps);
+
+        }, 1200);
+      },
+
+      updatePlayerBubble(player, text) {
+        const marker = this.playerMarkers[player.id];
+        if (marker) {
+          marker.setIcon(this.createPlayerIcon(player, text));
+        }
+      },
+
+      movePlayerSteps(player, totalSteps) {
+        let currentStep = 0;
+
+        const interval = setInterval(() => {
+          currentStep++;
+          if (player.pathIndex < player.path.length - 1) {
+            player.pathIndex++;
+            player.currentNodeIdx = player.path[player.pathIndex];
+          }
+
+          const node = this.roadNetworkNodes[player.currentNodeIdx];
+          const marker = this.playerMarkers[player.id];
+          if (marker && node) {
+            marker.setLatLng([node.lat, node.lng]);
+          }
+
+          this.updatePlayerRoutes();
+          sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
+          if (node) {
+            this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
+          }
+
+          if (player.currentNodeIdx === this.goalNodeIdx) {
+            clearInterval(interval);
+            setTimeout(() => this.handleGoalReach(player), 300);
+            return;
+          }
+
+          if (currentStep >= totalSteps || player.pathIndex >= player.path.length - 1) {
+            clearInterval(interval);
+            setTimeout(() => this.landOnSpot(player), 300);
+          }
+        }, 350);
+      },
+
+      landOnSpot(player) {
+        const node = this.roadNetworkNodes[player.currentNodeIdx];
+
+        const landBubble = LAND_BUBBLES[Math.floor(Math.random() * LAND_BUBBLES.length)];
+        this.updatePlayerBubble(player, landBubble);
+
+        if (node && node.type === 'red') {
+          sound.playLandRed();
+          const amount = (Math.floor(Math.random() * 8) + 1) * 500;
+          const reason = RED_REASONS[Math.floor(Math.random() * RED_REASONS.length)];
+          player.money = Math.max(0, player.money - amount);
+
+          this.showEventModal("お金が減ってしまった！", reason, `-¥${amount.toLocaleString()}`);
+          this.addLog(`🔴 [赤マス] ${player.name}: ${reason}`);
+
+        } else if (node && node.type === 'blue') {
+          sound.playLandBlue();
+          const amount = (Math.floor(Math.random() * 10) + 1) * 1000;
+          const reason = BLUE_REASONS[Math.floor(Math.random() * BLUE_REASONS.length)];
+          player.money += amount;
+
+          this.showEventModal("お金が増えた！", reason, `+¥${amount.toLocaleString()}`);
+          this.addLog(`🔵 [青マス] ${player.name}: ${reason}`);
+
+        } else if (node && node.type === 'yellow') {
+          sound.playEventYellow();
+          this.resolveYellowEvent(player);
+        } else {
+          this.finishTurn();
+        }
+      },
+
+      resolveYellowEvent(player) {
+        const roll = Math.random();
+
+        if (roll < 0.2) {
+          this.showEventModal(
+            `🚤 ${BOAT_RACE_LOC.name} へ強制移動！`,
+            `「今日は江戸川競艇の本場開催だ！」\n【 ${BOAT_RACE_LOC.name} 】へ強制移動！【1回休み】になります。`,
+            `移動先: ${BOAT_RACE_LOC.name}`
+          );
+          this.addLog(`🚤 [黄マス] ${player.name} は ${BOAT_RACE_LOC.name} へ強制移動され1回休み！`);
+          player.skipTurn = true;
+          this.teleportPlayer(player, BOAT_RACE_LOC);
+
+        } else if (roll < 0.4) {
+          let nearest = POLICE_STATIONS[0];
+          let minDist = Infinity;
+          const currPt = this.roadNetworkNodes[player.currentNodeIdx] || EDOGAWA_START;
+          POLICE_STATIONS.forEach(p => {
+            const d = Math.hypot(p.lat - currPt.lat, p.lng - currPt.lng);
+            if (d < minDist) { minDist = d; nearest = p; }
+          });
+
+          this.showEventModal(
+            `🚓 ${nearest.name} へ緊急連行！`,
+            `スピード違反で検挙！最寄りの警察・交番【 ${nearest.name} 】へ強制移動連行！【1回休み】になります。`,
+            `連行先: ${nearest.name}`
+          );
+          this.addLog(`🚓 [黄マス] ${player.name} は ${nearest.name} へ強制移動され1回休み！`);
+          player.skipTurn = true;
+          this.teleportPlayer(player, nearest);
+
+        } else if (roll < 0.6) {
+          let nearest = HOSPITALS[0];
+          let minDist = Infinity;
+          const currPt = this.roadNetworkNodes[player.currentNodeIdx] || EDOGAWA_START;
+          HOSPITALS.forEach(h => {
+            const d = Math.hypot(h.lat - currPt.lat, h.lng - currPt.lng);
+            if (d < minDist) { minDist = d; nearest = h; }
+          });
+
+          const turns = Math.floor(Math.random() * 3) + 3;
+          player.wheelchairTurns = turns;
+          this.showEventModal(
+            `🏥 ${nearest.name} へ緊急搬送！`,
+            `路上で転倒して怪我！最寄りの病院・クリニック【 ${nearest.name} 】へ強制移動搬送！\n【${turns}ターン車椅子🦽】(出目1固定)になります。`,
+            `搬送先: ${nearest.name}`
+          );
+          this.addLog(`🚑 [黄マス] ${player.name} は ${nearest.name} へ緊急搬送！ ${turns}ターン車椅子🦽状態。`);
+          this.teleportPlayer(player, nearest);
+
+        } else {
+          const vehicle = VEHICLES[Math.floor(Math.random() * VEHICLES.length)];
+          player.vehicle = vehicle;
+          
+          // Update player marker immediately to show vehicle icon
+          const marker = this.playerMarkers[player.id];
+          if (marker) {
+            marker.setIcon(this.createPlayerIcon(player, `${vehicle.emoji} ゲット！`));
+          }
+
+          this.showEventModal("乗り物を獲得！", `「${vehicle.name} (${vehicle.emoji})」をゲットしました！\n次回のサイコロ【1回限り】出目が【${vehicle.mult}倍】になります！`);
+          this.addLog(`🎁 [黄マス] ${player.name} は ${vehicle.emoji} ${vehicle.name} (${vehicle.mult}倍・次回1回限り) を獲得！`);
+        }
+      },
+
+      async teleportPlayer(player, targetLoc) {
+        // 1. Fetch street route directly from targetLoc to current destination
+        let osrmPath = await this.fetchStreetRouteOSRM(targetLoc, this.currentDestination);
+
+        let pathPoints = [];
+        if (osrmPath && osrmPath.length > 1) {
+          pathPoints = osrmPath;
+        } else {
+          // Fallback line segment if routing API is unavailable
+          pathPoints = [
+            { lat: targetLoc.lat, lng: targetLoc.lng },
+            { lat: this.currentDestination.lat, lng: this.currentDestination.lng }
+          ];
+        }
+
+        // 2. Build 10m step nodes along this new path
+        const newRoadGraph = this.buildRoadNetwork([pathPoints], 10);
+        const startNodeOffset = this.roadNetworkNodes.length;
+
+        const newPathIndices = [];
+        newRoadGraph.nodes.forEach((n, idx) => {
+          const globalIdx = startNodeOffset + idx;
+          const nodeObj = {
+            id: globalIdx,
+            lat: n.lat,
+            lng: n.lng,
+            type: n.type,
+            neighbors: []
+          };
+          this.roadNetworkNodes.push(nodeObj);
+          newPathIndices.push(globalIdx);
+
+          // Add spot markers for intermediate steps
+          if (idx > 0 && idx < newRoadGraph.nodes.length - 1) {
+            let iconHtml = '';
+            if (n.type === 'red') {
+              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
+            } else if (n.type === 'blue') {
+              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+            } else {
+              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
+            }
+
+            const customIcon = L.divIcon({
+              className: 'custom-spot-icon',
+              html: iconHtml,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            });
+
+            const marker = L.marker([n.lat, n.lng], { icon: customIcon }).addTo(this.map);
+            this.spotMarkers.push(marker);
+          }
+        });
+
+        // Link final node of the new route to the target destination goalNodeIdx
+        if (newPathIndices.length > 0) {
+          newPathIndices[newPathIndices.length - 1] = this.goalNodeIdx;
+        }
+
+        // 3. Highlight facility badge
+        const facilitySymbol = targetLoc.type || (targetLoc.name.includes("病院") || targetLoc.name.includes("クリニック") ? "🏥" : targetLoc.name.includes("交番") || targetLoc.name.includes("警察") ? "🚓" : "🚤");
+
+        if (this.facilityMarker) {
+          this.map.removeLayer(this.facilityMarker);
+        }
+        const facilityIcon = L.divIcon({
+          className: 'custom-facility-icon',
+          html: `<div class="bg-rose-600 text-white font-extrabold px-2.5 py-1 rounded-full shadow-2xl flex items-center gap-1 text-xs ring-2 ring-amber-300 animate-pulse whitespace-nowrap"><span>${facilitySymbol}</span><span>${targetLoc.name}</span></div>`,
+          iconAnchor: [40, 20]
+        });
+        this.facilityMarker = L.marker([targetLoc.lat, targetLoc.lng], { icon: facilityIcon }).addTo(this.map);
+
+        // 4. Assign new route & starting node to player
+        player.currentNodeIdx = newPathIndices[0];
+        player.path = newPathIndices;
+        player.pathIndex = 0;
+
+        const targetNode = this.roadNetworkNodes[player.currentNodeIdx];
+        const marker = this.playerMarkers[player.id];
+        if (marker && targetNode) {
+          marker.setLatLng([targetNode.lat, targetNode.lng]);
+        }
+
+        this.updatePlayerBubble(player, `${facilitySymbol} ${targetLoc.name}へ移動！`);
+        this.updatePlayerRoutes();
+
+        // 5. Smoothly fly camera to forced location
+        if (targetNode) {
+          this.map.flyTo([targetNode.lat, targetNode.lng], 19, { duration: 1.5 });
+        }
+      },
+
+      handleGoalReach(player) {
+        sound.playGoalFanfare();
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        }
+        player.money += 100000;
+
+        document.getElementById("goal-winner-text").innerText = `${player.name} が ${this.currentDestination.name} に先着ゴール！\n賞金10万円を獲得しました！`;
+        document.getElementById("category-select-section").classList.remove("hidden");
+        document.getElementById("roulette-section").classList.add("hidden");
+        document.getElementById("roulette-confirm-btn").classList.add("hidden");
+        document.getElementById("goal-modal").classList.remove("hidden");
+
+        this.selectedCategoryWinnerIdx = player.id;
+        this.addLog(`🏆 【GOAL!】 ${player.name} が ${this.currentDestination.name} に到達！賞金¥100,000獲得！`);
+
+        if (player.isCpu) {
+          const categories = ["飲食店", "スーパー（薬屋含む）", "公園", "駅（バス停含む）"];
+          const randomCat = categories[Math.floor(Math.random() * categories.length)];
+          setTimeout(() => this.selectCategory(randomCat), 1500);
+        }
+      },
+
+      selectCategory(catName) {
+        this.selectedCategoryName = catName;
+        document.getElementById("category-select-section").classList.add("hidden");
+        const rouletteSec = document.getElementById("roulette-section");
+        rouletteSec.classList.remove("hidden");
+
+        const options = DESTINATION_PRESETS[catName] || DESTINATION_PRESETS["飲食店"];
+        let counter = 0;
+        const box = document.getElementById("roulette-box");
+
+        const timer = setInterval(() => {
+          const item = options[counter % options.length];
+          box.innerText = `${item.name}`;
+          sound.playTone(600 + (counter % 5) * 50, 'sine', 0.05, 0.05);
+          counter++;
+          if (counter > 15) {
+            clearInterval(timer);
+            const nextGoal = options[Math.floor(Math.random() * options.length)];
+            box.innerText = `🎯 決定: ${nextGoal.name}`;
+            this.nextDestinationCandidate = nextGoal;
+            document.getElementById("roulette-confirm-btn").classList.remove("hidden");
+            sound.playLandBlue();
+
+            if (this.players[this.selectedCategoryWinnerIdx].isCpu) {
+              setTimeout(() => this.confirmNextSugoroku(), 1500);
+            }
+          }
+        }, 120);
+      },
+
+      confirmNextSugoroku() {
+        document.getElementById("goal-modal").classList.add("hidden");
+        if (!this.nextDestinationCandidate) return;
+
+        const currentStartLoc = {
+          name: this.currentDestination.name,
+          lat: this.currentDestination.lat,
+          lng: this.currentDestination.lng
+        };
+
+        this.setupBoard(currentStartLoc, this.nextDestinationCandidate);
+        this.addLog(`🚩 次の目的地が 【${this.nextDestinationCandidate.name}】 に設定されました！`);
+        this.finishTurn();
+      },
+
+      finishTurn() {
+        this.isRolling = false;
+
+        const cp = this.players[this.currentPlayerIdx];
+        this.updatePlayerBubble(cp, "");
+
+        this.currentPlayerIdx = (this.currentPlayerIdx + 1) % 4;
+        if (this.currentPlayerIdx === 0) {
+          this.turnCount++;
+        }
+
+        this.updateHUD();
+        this.saveGameState();
+      },
+
+      saveGameState() {
+        const state = {
+          players: this.players,
+          turnCount: this.turnCount,
+          currentPlayerIdx: this.currentPlayerIdx,
+          currentDestination: this.currentDestination
+        };
+        localStorage.setItem("edogawa_sugoroku_state", JSON.stringify(state));
+      },
+
+      showEventModal(title, desc, extra = null) {
+        document.getElementById("event-modal-title").innerText = title;
+        document.getElementById("event-modal-desc").innerText = desc;
+        const extraBox = document.getElementById("event-modal-extra");
+        if (extra) {
+          extraBox.innerText = extra;
+          extraBox.classList.remove("hidden");
+        } else {
+          extraBox.classList.add("hidden");
+        }
+        document.getElementById("event-modal").classList.remove("hidden");
+      },
+
+      closeEventModal() {
+        document.getElementById("event-modal").classList.add("hidden");
+        this.finishTurn();
+      },
+
+      openApiKeyModal() {
+        document.getElementById("api-key-modal").classList.remove("hidden");
+      },
+
+      closeApiKeyModal() {
+        document.getElementById("api-key-modal").classList.add("hidden");
+      },
+
+      saveApiKey() {
+        const val = document.getElementById("gmaps-api-key-input")?.value?.trim() || "";
+        this.gmapsApiKey = val;
+        localStorage.setItem("gmaps_api_key", val);
+        this.closeApiKeyModal();
+        alert("Google Maps API Keyを保存しました！再読み込み後にGoogleサービスが有効化されます。");
+        window.location.reload();
+      },
+
+      openLogModal() {
+        document.getElementById("log-modal").classList.remove("hidden");
+      },
+
+      closeLogModal() {
+        document.getElementById("log-modal").classList.add("hidden");
+      },
+
+      addLog(msg) {
+        const list = document.getElementById("log-history-list");
+        if (!list) return;
+        const item = document.createElement("div");
+        item.className = "bg-slate-950 p-2 rounded border border-slate-800/80";
+        item.innerText = msg;
+        list.prepend(item);
+      },
+
+      toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen();
+        }
+      }
+    };
+
+    window.addEventListener("DOMContentLoaded", () => {
+      EdogawaSugoroku.init();
+    });
+  </script>
+</body>
+</html>
