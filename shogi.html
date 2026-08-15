@@ -961,8 +961,8 @@ function _cpuThinkContext(){
         if(!m.drop&&board[m.tr][m.tc])captures++;
         if(m.promote)promotions++;
     }
-    var tactical=cpuInCheck||playerInCpuCamp>=1||cpuInPlayerCamp>=2||kingDanger>=2||captures>=5||promotions>=3;
-    var critical=cpuInCheck||playerInCpuCamp>=2||cpuInPlayerCamp>=3||kingDanger>=3;
+    var tactical=cpuInCheck||playerInCpuCamp>=2||cpuInPlayerCamp>=3||kingDanger>=2||captures>=6||promotions>=3;
+    var critical=cpuInCheck||playerInCpuCamp>=3||cpuInPlayerCamp>=5||kingDanger>=4;
     var budget;
     if(critical) budget=diff===4?28000:diff===3?22000:12000;
     else if(tactical) budget=diff===4?14000:diff===3?9000:5000;
@@ -976,7 +976,7 @@ function _cpuThinkContext(){
 function _thinkComments(phase){
     var d=settings?settings.difficulty:2;
     var common={
-      opening:['まずは形を整える。急いで動く必要はない。','序盤は駒の働きを見ながら進めよう。','この局面なら、無理に勝負を急がない。','相手の狙いを確認してから指す。'],
+      opening:['序盤はまず駒組み。候補手を手早く比較中。','この形なら急ぐ必要はない。自然な一手を探している。','飛車と角の働きを確認中。ここはテンポよく指す。','相手の狙いを見ながら、形の良い手を選んでいる。'],
       middle:['局面が動いてきた。ここから慎重に読む。','候補手を絞っている。どの交換が得か。','相手の次の一手まで考えてみよう。','駒の働きと玉の安全、両方を確認中。'],
       battle:['ここは少し深く読む場面だ。','駒がぶつかり始めた。交換後まで確認する。','攻めるか受けるか、慎重に比較している。','この一手で形が変わる。読みを深くする。'],
       critical:['ここは勝負どころ。慎重に読む。','一手のミスが致命傷になる。候補手を再確認。','王の安全を最優先に、変化を読み直す。','急いではいけない。詰み筋と受けを確認する。'],
@@ -1606,6 +1606,7 @@ var _history={};
 var _rootBest=null;
 var _rootPV=[];
 var _searchGeneration=0;
+var _useQuiescence=true;
 var INF=100000000;
 var MATE=10000000;
 
@@ -1770,7 +1771,7 @@ function _quiescence(b,ph,eh,side,alpha,beta,ply){
 function negamax(b,ph,eh,side,depth,alpha,beta,ply){
     if(_timeUp())throw'timeout';
     _cpuNodes++;
-    if(depth<=0)return _quiescence(b,ph,eh,side,alpha,beta,ply);
+    if(depth<=0)return (_useQuiescence?_quiescence(b,ph,eh,side,alpha,beta,ply):evaluate(b,ph,eh,side));
     var key=_stateKey(b,ph,eh,side),entry=_tt.get(key);
     if(entry&&entry.depth>=depth&&entry.gen===_searchGeneration){
         if(entry.flag===0)return entry.score;
@@ -1803,20 +1804,40 @@ function negamax(b,ph,eh,side,depth,alpha,beta,ply){
 function chooseCPUMoveAsync(done){
     var diff=settings.difficulty;
     var ctx=_cpuThinkContext();
-    _cpuDeadline=Date.now()+Math.min(28000,ctx.budget);
+    /* 序盤は「強さ」よりテンポを優先。勝負どころだけ長考する。 */
+    var phase=ctx.phase;
+    var budget=ctx.budget;
+    _cpuDeadline=Date.now()+Math.min(28000,budget);
     _cpuNodes=0;_searchGeneration++;_tt.clear();_history={};
     _killer=[[],[],[],[],[],[],[],[],[],[]];
+    _useQuiescence=(phase!=='opening');
     var moves=getLegal(board,playerHand,enemyHand,CPU);
     if(!moves.length){done(null);return;}
     if(moves.length===1){setTimeout(function(){done(moves[0]);},120);return;}
-    var target=diff===1?3:diff===2?6:diff===3?9:11;
+
+    /* 初手～序盤は深追いしない。これが「最初から30秒」の防止策。 */
+    var target;
+    if(phase==='opening') target=diff===2?2:diff===3?3:4;
+    else if(phase==='middle') target=diff===2?4:diff===3?6:8;
+    else if(phase==='battle') target=diff===2?5:diff===3?7:9;
+    else target=diff===2?6:diff===3?8:10;
+
+    /* 何も起きていない序盤では、長考を強制しない。 */
+    if(phase==='opening'){
+        budget=Math.min(budget,diff===2?1200:diff===3?1800:2400);
+        _cpuDeadline=Date.now()+budget;
+    }
+
     var bestMv=moves[0],bestScore=-INF,depth=1;
     _ordered(moves,board,null,0);
+
+    function finish(){done(bestMv||moves[0]);}
     function nextDepth(){
         if(gameState!=='playing'){done(null);return;}
-        if(_timeUp()||depth>target){done(bestMv||moves[0]);return;}
+        if(_timeUp()||depth>target){finish();return;}
         _thinkDepthComment(depth);
         setTimeout(function(){
+            if(_timeUp()){finish();return;}
             var rootBest=-INF,rootMove=bestMv,alpha=-INF,beta=INF,finished=true;
             try{
                 for(var i=0;i<moves.length;i++){
@@ -1826,15 +1847,17 @@ function chooseCPUMoveAsync(done){
                     mv._score=sc;
                     if(sc>rootBest){rootBest=sc;rootMove=mv;}
                     if(sc>alpha)alpha=sc;
+                    /* 1手ごとにブラウザへ処理を返せるよう、一定数で中断して次の塊へ */
+                    if((i&3)===3 && _timeUp()){finished=false;break;}
                 }
             }catch(e){if(e!=='timeout')throw e;finished=false;}
             if(finished){
                 bestMv=rootMove;bestScore=rootBest;
                 moves.sort(function(a,b){return (b._score||-INF)-(a._score||-INF);});
-                if(Math.abs(bestScore)>=MATE-1000){done(bestMv);return;}
+                if(Math.abs(bestScore)>=MATE-1000){finish();return;}
                 depth++;
                 setTimeout(nextDepth,0);
-            }else done(bestMv||moves[0]);
+            }else finish();
         },0);
     }
     nextDepth();
