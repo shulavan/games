@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   
-  <!-- Leaflet CSS & JS for 50ft Scale Map Rendering -->
+  <!-- Leaflet CSS & JS for Map Rendering -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
@@ -444,81 +444,35 @@
       { name: "江戸川病院", lat: 35.73350, lng: 139.88900, type: "🏥" }
     ];
 
-    /* High-precision street centerline waypoints around Nishi-Kasai station plaza, underpasses, rotaries & major avenues */
+    /* High-precision street centerline waypoints around Nishi-Kasai station plaza & major avenues */
     const EDOGAWA_MAJOR_ROADS_HIGH_PRECISION = [
-      // 1. 西葛西駅北口〜南口〜虹の広場通り〜葛西臨海公園 (実道路完全追従)
       [
-        { lat: 35.66600, lng: 139.85980 }, // 葛西橋通り交差点
+        { lat: 35.66600, lng: 139.85980 },
         { lat: 35.66530, lng: 139.85970 },
-        { lat: 35.66485, lng: 139.85960 }, // 西葛西駅北口ロータリー
-        { lat: 35.66458, lng: 139.85955 }, // ガード下通路 (実道路)
-        { lat: 35.66420, lng: 139.85950 }, // 西葛西駅南口ロータリー
-        { lat: 35.66250, lng: 139.85970 }, // 虹の広場通り
+        { lat: 35.66485, lng: 139.85960 },
+        { lat: 35.66458, lng: 139.85955 },
+        { lat: 35.66420, lng: 139.85950 },
+        { lat: 35.66250, lng: 139.85970 },
         { lat: 35.65900, lng: 139.86010 },
-        { lat: 35.65702, lng: 139.86035 }, // 酔処「ゆう」アクセス交差点
+        { lat: 35.65702, lng: 139.86035 },
         { lat: 35.65200, lng: 139.86080 },
-        { lat: 35.64250, lng: 139.86010 }  // 葛西臨海公園
+        { lat: 35.64250, lng: 139.86010 }
       ],
-      // 2. カラオケ酔処「ゆう」専用アクセス公道
       [
         { lat: 35.65702, lng: 139.86035 },
         { lat: 35.65702, lng: 139.86110 },
-        { lat: 35.65702449234845, lng: 139.86178672585876 } // 目的店舗直前
+        { lat: 35.65702449234845, lng: 139.86178672585876 }
       ],
-      // 3. 環七通り (Kannana Dori Centerline)
       [
         { lat: 35.6425, lng: 139.8601 },
         { lat: 35.6510, lng: 139.8650 },
         { lat: 35.6570, lng: 139.8685 },
-        { lat: 35.6636, lng: 139.8733 }, // 葛西駅前
+        { lat: 35.6636, lng: 139.8733 },
         { lat: 35.6730, lng: 139.8780 },
-        { lat: 35.6859, lng: 139.8828 }, // 一之江駅
+        { lat: 35.6859, lng: 139.8828 },
         { lat: 35.7000, lng: 139.8770 },
         { lat: 35.7180, lng: 139.8700 },
-        { lat: 35.7330, lng: 139.8810 }  // 小岩駅
-      ],
-      // 4. 葛西橋通り (Kasai Bridge Dori)
-      [
-        { lat: 35.6662, lng: 139.8510 },
-        { lat: 35.6660, lng: 139.8598 }, // 西葛西北口交差点
-        { lat: 35.6636, lng: 139.8733 }, // 葛西駅前
-        { lat: 35.6620, lng: 139.8880 }
-      ],
-      // 5. 清洲橋通り (Kiyosubashi Dori)
-      [
-        { lat: 35.6690, lng: 139.8515 },
-        { lat: 35.6680, lng: 139.8590 },
-        { lat: 35.6672, lng: 139.8665 },
-        { lat: 35.6660, lng: 139.8740 }
-      ],
-      // 6. 船堀街道 (Funabori-kaido)
-      [
-        { lat: 35.6642, lng: 139.8595 },
-        { lat: 35.6750, lng: 139.8620 },
-        { lat: 35.6838, lng: 139.8643 }, // 船堀駅
-        { lat: 35.6950, lng: 139.8620 },
-        { lat: 35.7170, lng: 139.8580 }
-      ],
-      // 7. 新大橋通り (Shin-Ohashi Dori)
-      [
-        { lat: 35.6840, lng: 139.8520 },
-        { lat: 35.6838, lng: 139.8643 },
-        { lat: 35.6859, lng: 139.8828 },
-        { lat: 35.6920, lng: 139.8970 }
-      ],
-      // 8. 京葉道路 (Keiyo Road)
-      [
-        { lat: 35.6940, lng: 139.8420 },
-        { lat: 35.6950, lng: 139.8580 },
-        { lat: 35.6980, lng: 139.8760 },
-        { lat: 35.7050, lng: 139.9000 }
-      ],
-      // 9. 柴又街道 (Shibamata-kaido)
-      [
-        { lat: 35.6859, lng: 139.8828 },
-        { lat: 35.6920, lng: 139.8970 },
-        { lat: 35.7088, lng: 139.8980 },
-        { lat: 35.7330, lng: 139.8880 }
+        { lat: 35.7330, lng: 139.8810 }
       ]
     ];
 
@@ -606,12 +560,12 @@
       { emoji: "✈️", name: "飛行機", mult: 7 }
     ];
 
-    // --- SOUND ENGINE (EFFECTS & 2 BGM SYNTHESIZERS) ---
+    // --- SOUND ENGINE ---
     class SoundEngine {
       constructor() {
         this.ctx = null;
         this.bgmTimer = null;
-        this.currentBgmType = null; // 'lobby' | 'map'
+        this.currentBgmType = null;
         this.isMuted = false;
         this.step = 0;
       }
@@ -642,28 +596,16 @@
         this.init();
         this.step = 0;
 
-        // Note Frequencies for Japanese Traditional & Board Game Pop Scales
         const notes = {
           'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'G4': 392.00, 'A4': 440.00,
           'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'G5': 783.99, 'A5': 880.00
         };
 
-        // 1. Lobby BGM Sequence: Relaxing Japanese Pentatonic Motif (和風ロビー曲)
-        const lobbySeq = [
-          'C4', 'E4', 'G4', 'A4', 'G4', 'E4', 'C4', 'D4',
-          'E4', 'G4', 'A4', 'C5', 'A4', 'G4', 'E4', 'D4'
-        ];
-
-        // 2. Map BGM Sequence: Bouncy Sugoroku Adventure Motif (双六マップ曲)
-        const mapSeq = [
-          'C5', 'E5', 'G5', 'E5', 'A5', 'G5', 'E5', 'C5',
-          'D5', 'E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5',
-          'E5', 'G5', 'C5', 'E5', 'G5', 'A5', 'G5', 'E5',
-          'D5', 'E5', 'D5', 'C5', 'G4', 'A4', 'C5', 'C5'
-        ];
+        const lobbySeq = ['C4', 'E4', 'G4', 'A4', 'G4', 'E4', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'A4', 'G4', 'E4', 'D4'];
+        const mapSeq = ['C5', 'E5', 'G5', 'E5', 'A5', 'G5', 'E5', 'C5', 'D5', 'E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5'];
 
         const seq = (type === 'lobby') ? lobbySeq : mapSeq;
-        const speed = (type === 'lobby') ? 300 : 180; // BPM timing
+        const speed = (type === 'lobby') ? 300 : 180;
 
         this.bgmTimer = setInterval(() => {
           if (this.isMuted) return;
@@ -673,12 +615,9 @@
           const vol = (type === 'lobby') ? 0.04 : 0.05;
 
           this.playTone(freq, waveType, speed / 1000 * 0.85, vol);
-
-          // Bass drone accent every 4 steps
           if (this.step % 4 === 0) {
-            this.playTone(130.81, 'sine', 0.25, 0.03); // C3 bass
+            this.playTone(130.81, 'sine', 0.25, 0.03);
           }
-
           this.step++;
         }, speed);
       }
@@ -748,7 +687,6 @@
       currentPlayerIdx: 0,
       turnCount: 1,
       currentDestination: FIRST_GOAL,
-      waypoints: [],
       roadNetworkNodes: [],
       roadPolylines: [],
       spotMarkers: [],
@@ -762,6 +700,7 @@
       selectedCategoryName: "",
       playerRoutePolylines: [],
       goalNodeIdx: null,
+      nextDestinationCandidate: null,
 
       init() {
         this.renderAvatarGrid();
@@ -774,9 +713,18 @@
           if (input) input.value = this.gmapsApiKey;
         }
 
-        // Play Lobby BGM on initial interaction or launch
         sound.playBGM('lobby');
-        document.addEventListener('click', () => sound.init(), { once: true });
+        document.addEventListener('click', () => {
+          sound.init();
+        }, { once: true });
+      },
+
+      tryFullscreen() {
+        try {
+          if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+        } catch (e) {}
       },
 
       toggleBGM() {
@@ -868,8 +816,9 @@
         }
       },
 
-      startGame() {
+      async startGame() {
         if (this.countdownTimer) clearInterval(this.countdownTimer);
+        this.tryFullscreen();
 
         const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
         const availableAvatars = AVATAR_LIST.filter(a => a !== this.selectedAvatar);
@@ -882,19 +831,18 @@
         ];
 
         document.getElementById("lobby-screen").classList.add("hidden");
-        
-        // Switch sound from Lobby BGM to Sugoroku Map BGM
         sound.playBGM('map');
 
         this.initMap();
-        this.setupBoard(EDOGAWA_START, FIRST_GOAL);
+        await this.setupBoard(EDOGAWA_START, FIRST_GOAL);
         this.updateHUD();
         this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
       },
 
-      resumeGame() {
+      async resumeGame() {
         const saved = localStorage.getItem("edogawa_sugoroku_state");
         if (!saved) return;
+        this.tryFullscreen();
 
         try {
           const state = JSON.parse(saved);
@@ -907,7 +855,7 @@
           sound.playBGM('map');
 
           this.initMap();
-          this.setupBoard(EDOGAWA_START, this.currentDestination);
+          await this.setupBoard(EDOGAWA_START, this.currentDestination);
           this.updateHUD();
           this.addLog("💾 保存データからゲームを復元しました。");
         } catch(e) {
@@ -918,7 +866,6 @@
       initMap() {
         if (this.map) return;
 
-        // Scale locked strictly to 50ft (Zoom Level 19)
         this.map = L.map('map', {
           zoomControl: false,
           minZoom: 19,
@@ -928,14 +875,12 @@
           touchZoom: false
         }).setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
 
-        // CartoDB Voyager Google-Maps style vector tile base
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
           subdomains: 'abcd'
         }).addTo(this.map);
       },
 
-      // Fetch dynamic OSRM route centerline if available, snapping strictly to actual streets
       async fetchStreetRouteOSRM(start, goal) {
         try {
           const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${goal.lng},${goal.lat}?overview=full&geometries=geojson`;
@@ -972,7 +917,7 @@
         this.spotMarkers = [];
         this.playerMarkers = [];
 
-        // Try OSRM street snapping first
+        // Fetch OSRM street snapping
         let osrmPath = await this.fetchStreetRouteOSRM(startLoc, goalLoc);
 
         let roadGraph;
@@ -984,7 +929,7 @@
 
         this.roadNetworkNodes = roadGraph.nodes;
 
-        // Draw major base road lines
+        // Draw base road lines
         const sourceRoads = (osrmPath && osrmPath.length > 5) ? [osrmPath] : EDOGAWA_MAJOR_ROADS_HIGH_PRECISION;
         sourceRoads.forEach(roadPoints => {
           const latLngs = roadPoints.map(p => [p.lat, p.lng]);
@@ -1001,7 +946,7 @@
         const startNodeIdx = this.findNearestNodeIdx(startLoc);
         this.goalNodeIdx = this.findNearestNodeIdx(goalLoc);
 
-        // Sample 10m spot markers (●, ■, ▲) across all road network nodes
+        // Sample spot markers
         this.roadNetworkNodes.forEach((node, idx) => {
           if (idx === startNodeIdx || idx === this.goalNodeIdx) return;
 
@@ -1033,11 +978,9 @@
         });
         this.destinationMarker = L.marker([goalLoc.lat, goalLoc.lng], { icon: goalIcon }).addTo(this.map);
 
-        // Setup individual path & map markers for each player
+        // Reset all players to startNodeIdx on the newly generated network
         this.players.forEach((p) => {
-          if (p.currentNodeIdx === undefined || p.currentNodeIdx === null) {
-            p.currentNodeIdx = startNodeIdx;
-          }
+          p.currentNodeIdx = startNodeIdx;
           p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
           p.pathIndex = 0;
 
@@ -1045,7 +988,7 @@
           const marker = L.marker([startPt.lat, startPt.lng], {
             icon: this.createPlayerIcon(p, "")
           }).addTo(this.map);
-          this.playerMarkers.push(marker);
+          this.playerMarkers[p.id] = marker;
         });
 
         this.updatePlayerRoutes();
@@ -1053,18 +996,16 @@
       },
 
       updatePlayerRoutes() {
-        // Remove existing player route polylines
         this.playerRoutePolylines.forEach(line => this.map.removeLayer(line));
         this.playerRoutePolylines = [];
 
-        // Draw individual route line from each player's current position to the destination
         this.players.forEach((p) => {
           if (!p.path || p.path.length === 0) return;
           const remainingIndices = p.path.slice(p.pathIndex);
           const latLngs = remainingIndices.map(idx => {
             const node = this.roadNetworkNodes[idx];
-            return [node.lat, node.lng];
-          }).filter(pt => pt[0] !== undefined);
+            return node ? [node.lat, node.lng] : null;
+          }).filter(pt => pt !== null && typeof pt[0] === 'number');
 
           if (latLngs.length > 1) {
             const polyline = L.polyline(latLngs, {
@@ -1185,7 +1126,6 @@
       createPlayerIcon(player, bubbleText = "") {
         const bubbleHtml = bubbleText ? `<div class="speech-bubble">${bubbleText}</div>` : '';
         
-        // Vehicle avatar logic: Show vehicle emoji if vehicle active/moving, wheelchair if injured, or default avatar
         let displayAvatar = player.avatar;
         if (player.wheelchairTurns > 0) {
           displayAvatar = '🦽';
@@ -1296,7 +1236,6 @@
           let steps = rawRoll;
           const usedVehicle = cp.vehicle;
 
-          // Consume vehicle multiplier for 1 turn only
           if (usedVehicle && cp.wheelchairTurns === 0) {
             steps = rawRoll * usedVehicle.mult;
           }
@@ -1317,113 +1256,19 @@
           }
           this.addLog(logMsg);
 
-          this.movePlayerSteps(cp, steps, usedVehicle);
+          this.movePlayerSteps(cp, steps);
 
         }, 1200);
       },
 
-      movePlayerSteps(player, totalSteps, usedVehicle = null) {
-        let currentStep = 0;
-
-        const interval = setInterval(() => {
-          currentStep++;
-          if (player.pathIndex < player.path.length - 1) {
-            player.pathIndex++;
-            player.currentNodeIdx = player.path[player.pathIndex];
-          }
-
-          const node = this.roadNetworkNodes[player.currentNodeIdx];
-          const marker = this.playerMarkers[player.id];
-          if (marker && node) {
-            marker.setLatLng([node.lat, node.lng]);
-          }
-
-          this.updatePlayerRoutes();
-          sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
-          if (node) {
-            this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
-          }
-
-          if (player.currentNodeIdx === this.goalNodeIdx) {
-            clearInterval(interval);
-            this.clearUsedVehicle(player);
-            setTimeout(() => this.handleGoalReach(player), 300);
-            return;
-          }
-
-          if (currentStep >= totalSteps || player.pathIndex >= player.path.length - 1) {
-            clearInterval(interval);
-            // Revert vehicle to original avatar after 1-time movement completion
-            this.clearUsedVehicle(player);
-            setTimeout(() => this.landOnSpot(player), 300);
-          }
-        }, 350);
-      },
-
       clearUsedVehicle(player) {
         if (player.vehicle) {
-          player.vehicle = null; // Single-use consumption
+          player.vehicle = null;
           const marker = this.playerMarkers[player.id];
           if (marker) {
             marker.setIcon(this.createPlayerIcon(player, ""));
           }
         }
-      },
-
-      rollDice() {
-        if (this.isRolling) return;
-        const cp = this.players[this.currentPlayerIdx];
-
-        if (cp.skipTurn) {
-          cp.skipTurn = false;
-          this.showEventModal("1回休み", `${cp.name} はお休み中のためパスします。`);
-          this.addLog(`🛑 ${cp.name} は1回休みの状態のためパスしました。`);
-          return;
-        }
-
-        this.isRolling = true;
-        sound.playDiceRoll();
-
-        const rollBubble = ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)];
-        this.updatePlayerBubble(cp, rollBubble);
-
-        const cube = document.getElementById("dice-cube");
-        cube.classList.add("dice-rolling");
-
-        setTimeout(() => {
-          cube.classList.remove("dice-rolling");
-
-          let rawRoll = Math.floor(Math.random() * 6) + 1;
-
-          if (cp.wheelchairTurns > 0) {
-            rawRoll = 1;
-            cp.wheelchairTurns--;
-          }
-
-          let steps = rawRoll;
-          if (cp.vehicle && cp.wheelchairTurns === 0) {
-            steps = rawRoll * cp.vehicle.mult;
-          }
-
-          const rotations = {
-            1: "rotateX(0deg) rotateY(0deg)",
-            2: "rotateY(180deg)",
-            3: "rotateY(90deg)",
-            4: "rotateY(-90deg)",
-            5: "rotateX(-90deg)",
-            6: "rotateX(90deg)"
-          };
-          cube.style.transform = rotations[rawRoll];
-
-          let logMsg = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】`;
-          if (cp.vehicle && cp.wheelchairTurns === 0) {
-            logMsg += ` ➔ ${cp.vehicle.name} (${cp.vehicle.mult}倍) で ${steps} マス進む！`;
-          }
-          this.addLog(logMsg);
-
-          this.movePlayerSteps(cp, steps);
-
-        }, 1200);
       },
 
       updatePlayerBubble(player, text) {
@@ -1445,24 +1290,24 @@
 
           const node = this.roadNetworkNodes[player.currentNodeIdx];
           const marker = this.playerMarkers[player.id];
-          if (marker && node) {
+          if (marker && node && typeof node.lat === 'number' && typeof node.lng === 'number') {
             marker.setLatLng([node.lat, node.lng]);
+            this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
           }
 
           this.updatePlayerRoutes();
           sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
-          if (node) {
-            this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
-          }
 
           if (player.currentNodeIdx === this.goalNodeIdx) {
             clearInterval(interval);
+            this.clearUsedVehicle(player);
             setTimeout(() => this.handleGoalReach(player), 300);
             return;
           }
 
           if (currentStep >= totalSteps || player.pathIndex >= player.path.length - 1) {
             clearInterval(interval);
+            this.clearUsedVehicle(player);
             setTimeout(() => this.landOnSpot(player), 300);
           }
         }, 350);
@@ -1554,7 +1399,6 @@
           const vehicle = VEHICLES[Math.floor(Math.random() * VEHICLES.length)];
           player.vehicle = vehicle;
           
-          // Update player marker immediately to show vehicle icon
           const marker = this.playerMarkers[player.id];
           if (marker) {
             marker.setIcon(this.createPlayerIcon(player, `${vehicle.emoji} ゲット！`));
@@ -1566,21 +1410,18 @@
       },
 
       async teleportPlayer(player, targetLoc) {
-        // 1. Fetch street route directly from targetLoc to current destination
         let osrmPath = await this.fetchStreetRouteOSRM(targetLoc, this.currentDestination);
 
         let pathPoints = [];
         if (osrmPath && osrmPath.length > 1) {
           pathPoints = osrmPath;
         } else {
-          // Fallback line segment if routing API is unavailable
           pathPoints = [
             { lat: targetLoc.lat, lng: targetLoc.lng },
             { lat: this.currentDestination.lat, lng: this.currentDestination.lng }
           ];
         }
 
-        // 2. Build 10m step nodes along this new path
         const newRoadGraph = this.buildRoadNetwork([pathPoints], 10);
         const startNodeOffset = this.roadNetworkNodes.length;
 
@@ -1597,7 +1438,6 @@
           this.roadNetworkNodes.push(nodeObj);
           newPathIndices.push(globalIdx);
 
-          // Add spot markers for intermediate steps
           if (idx > 0 && idx < newRoadGraph.nodes.length - 1) {
             let iconHtml = '';
             if (n.type === 'red') {
@@ -1620,12 +1460,10 @@
           }
         });
 
-        // Link final node of the new route to the target destination goalNodeIdx
         if (newPathIndices.length > 0) {
           newPathIndices[newPathIndices.length - 1] = this.goalNodeIdx;
         }
 
-        // 3. Highlight facility badge
         const facilitySymbol = targetLoc.type || (targetLoc.name.includes("病院") || targetLoc.name.includes("クリニック") ? "🏥" : targetLoc.name.includes("交番") || targetLoc.name.includes("警察") ? "🚓" : "🚤");
 
         if (this.facilityMarker) {
@@ -1638,7 +1476,6 @@
         });
         this.facilityMarker = L.marker([targetLoc.lat, targetLoc.lng], { icon: facilityIcon }).addTo(this.map);
 
-        // 4. Assign new route & starting node to player
         player.currentNodeIdx = newPathIndices[0];
         player.path = newPathIndices;
         player.pathIndex = 0;
@@ -1652,7 +1489,6 @@
         this.updatePlayerBubble(player, `${facilitySymbol} ${targetLoc.name}へ移動！`);
         this.updatePlayerRoutes();
 
-        // 5. Smoothly fly camera to forced location
         if (targetNode) {
           this.map.flyTo([targetNode.lat, targetNode.lng], 19, { duration: 1.5 });
         }
@@ -1711,7 +1547,7 @@
         }, 120);
       },
 
-      confirmNextSugoroku() {
+      async confirmNextSugoroku() {
         document.getElementById("goal-modal").classList.add("hidden");
         if (!this.nextDestinationCandidate) return;
 
@@ -1721,7 +1557,7 @@
           lng: this.currentDestination.lng
         };
 
-        this.setupBoard(currentStartLoc, this.nextDestinationCandidate);
+        await this.setupBoard(currentStartLoc, this.nextDestinationCandidate);
         this.addLog(`🚩 次の目的地が 【${this.nextDestinationCandidate.name}】 に設定されました！`);
         this.finishTurn();
       },
