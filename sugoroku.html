@@ -1162,6 +1162,14 @@
       // the lobby ("waiting") phase and throughout the actual game ("playing" phase), so the
       // multiplayer game state stays continuously synced instead of only being read once at start.
       handleRoomSnapshot(data) {
+        if (data.status === 'waiting') {
+          if (this.isHost) {
+            this.recruitmentPlayers = data.players || this.recruitmentPlayers;
+            this.updateRecruitmentUI(this.recruitmentPlayers, data.countdown);
+          }
+          return;
+        }
+
         if (data.status === 'playing') {
           if (!this.isMultiplayer) {
             // First time we see 'playing' on this device — boot the shared session.
@@ -1283,6 +1291,16 @@
           await window.FirebaseLib.updateDoc(roomRef, {
             'gameState.pendingRoll': { uid: this.myUid, ts: Date.now() }
           });
+          // Safety net: if the host never responds (dropped message, backgrounded tab, etc.)
+          // release the lock after a while so the player can just tap the dice again,
+          // instead of being stuck forever.
+          if (this.rollRequestTimeout) clearTimeout(this.rollRequestTimeout);
+          this.rollRequestTimeout = setTimeout(() => {
+            if (this.isRolling) {
+              this.isRolling = false;
+              this.updateHUD();
+            }
+          }, 10000);
         } catch(e) {
           console.error("サイコロのリクエスト送信に失敗しました:", e);
           this.isRolling = false;
@@ -1369,6 +1387,10 @@
 
         if (!this.isHost && this.isRolling && (!gs.pendingRoll || gs.pendingRoll.uid !== this.myUid)) {
           this.isRolling = false;
+          if (this.rollRequestTimeout) {
+            clearTimeout(this.rollRequestTimeout);
+            this.rollRequestTimeout = null;
+          }
           const cube = document.getElementById("dice-cube");
           if (cube) cube.classList.remove("dice-rolling");
         }
@@ -1839,8 +1861,8 @@
 
       rollDice() {
         if (this.isRolling) return;
-        if (!this.canActNow()) return;
         const cp = this.players[this.currentPlayerIdx];
+        if (!cp) return;
 
         if (this.isMultiplayer && !this.isHost) {
           // Guests never resolve dice locally (that would let every device run its own
