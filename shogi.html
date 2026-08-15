@@ -145,14 +145,14 @@
         <div class="sc" onclick="selectCharStart(3)">
             <div id="sc-svg-3"></div>
             <div class="sc-info">
-                <div class="sc-lv">特待生（上級）</div>
+                <div class="sc-lv">プロ級（上級）</div>
                 <div class="sc-name">呑んだくれ不動産</div>
             </div>
         </div>
         <div class="sc" onclick="selectCharStart(2)">
             <div id="sc-svg-2"></div>
             <div class="sc-info">
-                <div class="sc-lv">凡人（中級）</div>
+                <div class="sc-lv">一般棋士（中級）</div>
                 <div class="sc-name">イルカヒーロー</div>
             </div>
         </div>
@@ -178,21 +178,21 @@
         <div class="sc" onclick="selectCharStart(4)" style="background:linear-gradient(160deg,#1a0000,#3a0000);border:3px solid #8b0000;width:300px;box-sizing:border-box;">
             <div id="sc-svg-4" style="width:60px;height:78px;flex-shrink:0;display:flex;align-items:flex-end;"></div>
             <div class="sc-info">
-                <div class="sc-lv" style="color:#ff4444;font-size:21px;">神の領域（特級）</div>
+                <div class="sc-lv" style="color:#ff4444;font-size:21px;">名人級（特級）</div>
                 <div class="sc-name" style="color:#ffaaaa;">痛風キング</div>
             </div>
         </div>
         <div class="sc" onclick="selectCharStart(3)" style="width:300px;box-sizing:border-box;">
             <div id="sc-svg-3u" style="width:60px;height:78px;flex-shrink:0;display:flex;align-items:flex-end;"></div>
             <div class="sc-info">
-                <div class="sc-lv">特待生（上級）</div>
+                <div class="sc-lv">プロ級（上級）</div>
                 <div class="sc-name">呑んだくれ不動産</div>
             </div>
         </div>
         <div class="sc" onclick="selectCharStart(2)" style="width:300px;box-sizing:border-box;">
             <div id="sc-svg-2u" style="width:60px;height:78px;flex-shrink:0;display:flex;align-items:flex-end;"></div>
             <div class="sc-info">
-                <div class="sc-lv">凡人（中級）</div>
+                <div class="sc-lv">一般棋士（中級）</div>
                 <div class="sc-name">イルカヒーロー</div>
             </div>
         </div>
@@ -221,7 +221,7 @@
                 </button>
             </div>
         </div>
-        <div id="msg-bubble"><div id="char-msg">設定ボタンから難易度を選んで対局を開始してください！</div></div>
+        <div id="msg-bubble"><div id="char-msg">設定ボタンから難易度を選んで対局を開始してください！</div><div id="cpu-engine-note" style="font-size:9px;color:#777;margin-top:3px;">中級・上級・特級は強化AI搭載／最大28秒</div></div>
     </div>
 </div>
 
@@ -703,7 +703,7 @@ function selectCharStart(v){
     document.getElementById('ura-screen').style.display='none';
     // 設定モーダルにキャラ情報をセット
     var d=CHAR_DATA[v];
-    var lvNames={1:'才能ナシ（初級）',2:'凡人（中級）',3:'特待生（上級）',4:'神の領域（特級）'};
+    var lvNames={1:'才能ナシ（初級）',2:'一般棋士（中級）',3:'プロ級（上級）',4:'名人級（特級）'};
     document.getElementById('setting-char-name').textContent=(lvNames[v]||'')+' / '+d.name;
     var icon=document.getElementById('setting-char-icon');
     icon.innerHTML=d.getSVG(44,60);
@@ -938,21 +938,83 @@ function clearNotice(){
 
 /* ===== CPU思考中コメントローテーション ===== */
 var _thinkMsgTimer=null;
+var _thinkPhase='normal';
+var _thinkStartedAt=0;
+var _thinkBudgetMs=0;
+var _thinkDepth=0;
+
+function _cpuThinkContext(){
+    if(!board)return {phase:'normal',budget:1800,reason:'序盤'};
+    var diff=settings?settings.difficulty:2;
+    var moves=getLegal(board,playerHand,enemyHand,CPU);
+    var playerKing=findKing(PLAYER),cpuKing=findKing(CPU);
+    var cpuInCheck=isInCheck(board,CPU);
+    var playerInCpuCamp=0,cpuInPlayerCamp=0,kingDanger=0,captures=0,promotions=0;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        var x=board[r][c];if(!x)continue;
+        if(x.s===PLAYER&&r<=2)playerInCpuCamp++;
+        if(x.s===CPU&&r>=6)cpuInPlayerCamp++;
+        if(x.s===PLAYER&&x.p!==OU&&cpuKing&&Math.abs(r-cpuKing[0])+Math.abs(c-cpuKing[1])<=2)kingDanger++;
+    }
+    for(var i=0;i<moves.length&&i<90;i++){
+        var m=moves[i];
+        if(!m.drop&&board[m.tr][m.tc])captures++;
+        if(m.promote)promotions++;
+    }
+    var tactical=cpuInCheck||playerInCpuCamp>=1||cpuInPlayerCamp>=2||kingDanger>=2||captures>=5||promotions>=3;
+    var critical=cpuInCheck||playerInCpuCamp>=2||cpuInPlayerCamp>=3||kingDanger>=3;
+    var budget;
+    if(critical) budget=diff===4?28000:diff===3?22000:12000;
+    else if(tactical) budget=diff===4?14000:diff===3?9000:5000;
+    else if(moveCount<12) budget=diff===4?2600:diff===3?2200:1400;
+    else budget=diff===4?7000:diff===3?5000:2800;
+    if(diff===1)budget=Math.min(budget,1200);
+    var phase=cpuInCheck?'check':critical?'critical':tactical?'battle':moveCount<12?'opening':'middle';
+    return {phase:phase,budget:budget,reason:cpuInCheck?'王手への対応':critical?'玉の安全を最優先':tactical?'戦場が動いた':'序盤の形を整える'};
+}
+
+function _thinkComments(phase){
+    var d=settings?settings.difficulty:2;
+    var common={
+      opening:['まずは形を整える。急いで動く必要はない。','序盤は駒の働きを見ながら進めよう。','この局面なら、無理に勝負を急がない。','相手の狙いを確認してから指す。'],
+      middle:['局面が動いてきた。ここから慎重に読む。','候補手を絞っている。どの交換が得か。','相手の次の一手まで考えてみよう。','駒の働きと玉の安全、両方を確認中。'],
+      battle:['ここは少し深く読む場面だ。','駒がぶつかり始めた。交換後まで確認する。','攻めるか受けるか、慎重に比較している。','この一手で形が変わる。読みを深くする。'],
+      critical:['ここは勝負どころ。慎重に読む。','一手のミスが致命傷になる。候補手を再確認。','王の安全を最優先に、変化を読み直す。','急いではいけない。詰み筋と受けを確認する。'],
+      check:['王手への対応を最優先。逃げ道を確認する。','ここは妥協できない。全ての受けを比較する。','王手を外した後の反撃まで読んでいる。','この局面は深く読む必要がある。'],
+    };
+    if(d===4)common.critical.push('名人戦のような局面だ。候補手を一つずつ潰している。');
+    if(d>=3)common.battle.push('浅い読みでは危険だ。数手先の応酬まで確認する。');
+    return common[phase]||common.middle;
+}
+function _setThinkComment(text){
+    var el=document.getElementById('char-msg');if(el)el.textContent=text;
+}
 function _startThinkMsgRotation(){
     _stopThinkMsgRotation();
     if(!settings)return;
-    var d=CHAR_DATA[settings.difficulty];if(!d)return;
-    var msgs=d.msgs.think;if(!msgs||!msgs.length)return;
-    var idx=0;
+    var ctx=_cpuThinkContext();_thinkPhase=ctx.phase;_thinkBudgetMs=ctx.budget;_thinkStartedAt=Date.now();_thinkDepth=0;
+    var msgs=_thinkComments(ctx.phase),idx=0;
+    _setThinkComment(msgs[0]);
     _thinkMsgTimer=setInterval(function(){
         if(gameState!=='playing'||currentSide!==CPU){_stopThinkMsgRotation();return;}
         idx=(idx+1)%msgs.length;
-        var el=document.getElementById('char-msg');
-        if(el)el.textContent=msgs[idx];
-    },5000);
+        _setThinkComment(msgs[idx]);
+    },2600);
 }
 function _stopThinkMsgRotation(){
     if(_thinkMsgTimer){clearInterval(_thinkMsgTimer);_thinkMsgTimer=null;}
+}
+function _thinkDepthComment(depth){
+    _thinkDepth=depth;
+    var phase=_thinkPhase;
+    var msgs={
+      opening:['序盤の候補手を比較中…','駒組みのバランスを確認中…','相手の狙いを探している…'],
+      middle:['中盤の変化を読み直している…','交換後の局面まで確認中…','候補手をさらに絞っている…'],
+      battle:['この変化は深く読む…','攻めと受けの両方を再計算中…','ここで手を決める前にもう一度読む…'],
+      critical:['重要局面。読みを深くしている…','一手違いを避けるため再確認中…','勝負手の先まで確認している…'],
+      check:['王手を外した後まで読んでいる…','受けの候補を一つずつ確認中…','反撃まで含めて読み直している…']
+    }[phase]||['考え直している…'];
+    _setThinkComment(msgs[(depth-1)%msgs.length]);
 }
 
 /* ===== 駒スラムアニメ ===== */
@@ -1529,77 +1591,253 @@ function getLegal(b,ph,eh,side,noFu){
     }
     return legal;
 }
-function evaluate(b,ph,eh,side){
-    var s=0,pkr=-1,pkc=-1,ckr=-1,ckc=-1;
-    for(var r=0;r<9;r++)for(var c=0;c<9;c++){var cell=b[r][c];if(cell&&cell.p===OU){if(cell.s===PLAYER){pkr=r;pkc=c;}else{ckr=r;ckc=c;}}}
+/* ===== 強化CPUエンジン =====
+ * 中級: 実戦的な読み（一般的な将棋対局レベル）
+ * 上級: 深い反復深化＋静的探索＋手筋評価（プロ棋士級を狙う設定）
+ * 特級: 上級以上の探索量＋強化評価（名人級を狙う設定）
+ * ブラウザを固めすぎないよう、1手の探索上限は28秒。
+ */
+var _cpuDeadline=0;
+var _cpuNodes=0;
+var _tt=new Map();
+var _ttMax=180000;
+var _killer=[[],[],[],[],[],[],[],[],[],[]];
+var _history={};
+var _rootBest=null;
+var _rootPV=[];
+var _searchGeneration=0;
+var INF=100000000;
+var MATE=10000000;
+
+function _pieceKey(p){return p.p+':'+p.s+':'+(p.pr?1:0);}
+function _stateKey(b,ph,eh,side){
+    var z='';
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){var x=b[r][c];z+=x?_pieceKey(x):'0';z+=',';}
+    z+='|'+side+'|P'+ph.slice().sort(function(a,b){return a-b;}).join('')+'|C'+eh.slice().sort(function(a,b){return a-b;}).join('');
+    return z;
+}
+function _now(){return Date.now();}
+function _timeUp(){return _now()>=_cpuDeadline;}
+
+/* 将棋盤上の駒の価値。終盤ほど玉周辺を重視する。 */
+var _pst={
+ FU:[0,2,4,6,8,10,12,14,16],
+ KYOU:[0,1,2,3,4,5,6,7,8],
+ KE:[-4,-1,2,5,8,10,7,3,0],
+ GIN:[-2,0,3,6,9,11,9,5,1],
+ KIN:[0,1,3,5,7,8,8,6,3],
+ KAKU:[2,3,4,6,7,8,7,5,3],
+ HI:[0,2,3,4,5,5,4,3,2]
+};
+function _pstBonus(p,pr,r,s){
+    if(pr)return 4;
+    var rr=s===CPU?8-r:r;
+    var a=_pst[p];return a?((a[Math.max(0,Math.min(8,rr))]||0)*3):0;
+}
+function _pieceAttacksKing(b,r,c,side){
+    var tg=getTargets(b,r,c);var out=0;
+    for(var i=0;i<tg.length;i++){
+        var t=b[tg[i][0]][tg[i][1]];
+        if(t&&t.s===-side&&t.p===OU)out++;
+    }
+    return out;
+}
+function _mobility(b,side){
+    var n=0;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(b[r][c]&&b[r][c].s===side)n+=getTargets(b,r,c).length;
+    return n;
+}
+function _kingZone(b,side){
+    var k=findKing(side),v=0;if(!k)return -50000;
+    for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++){
+        var r=k[0]+dr,c=k[1]+dc;if(r<0||r>8||c<0||c>8)continue;
+        var x=b[r][c];
+        if(x&&x.s===side)v+=x.p===OU?0:(x.p===KIN?20:x.p===GIN?15:8);
+        if(x&&x.s===-side)v-=x.p===OU?0:(x.p===HI||x.p===KAKU?18:10);
+    }
+    return v;
+}
+function _pawnStructure(b,side){
+    var files=[],v=0;for(var c=0;c<9;c++)files[c]=0;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++)if(b[r][c]&&b[r][c].s===side&&b[r][c].p===FU&&!b[r][c].pr)files[c]++;
+    for(var c=0;c<9;c++){
+        if(files[c]>=2)v-=70*(files[c]-1);
+        if(files[c]===1)v+=8;
+        if(files[c]===0)v-=3;
+    }
+    return v;
+}
+function _attackPotential(b,side){
+    var v=0;
     for(var r=0;r<9;r++)for(var c=0;c<9;c++){
-        var cell=b[r][c];if(!cell)continue;
-        var v=pv(cell.p,cell.pr);
-        if(cell.s===PLAYER){
-            s+=v;
-            if(!cell.pr){if(cell.p===FU)s+=(8-r)*3;if(cell.p===KAKU||cell.p===HI)s+=(8-r)*5;if(cell.p===KIN||cell.p===GIN)s+=(8-r)*2;}
-            if(ckr>=0){var d=Math.abs(r-ckr)+Math.abs(c-ckc);if(d<=3)s+=(4-d)*25;}
-        } else {
-            s-=v;
-            if(!cell.pr){if(cell.p===FU)s-=r*3;if(cell.p===KAKU||cell.p===HI)s-=r*5;if(cell.p===KIN||cell.p===GIN)s-=r*2;}
-            if(pkr>=0){var d=Math.abs(r-pkr)+Math.abs(c-pkc);if(d<=3)s-=(4-d)*25;}
+        var x=b[r][c];if(!x||x.s!==side)continue;
+        var tg=getTargets(b,r,c);
+        for(var i=0;i<tg.length;i++){
+            var t=b[tg[i][0]][tg[i][1]];
+            if(t&&t.s!==side){
+                v+=Math.min(120,pv(t.p,t.pr)*0.08);
+                if(t.p===OU)v+=220;
+            }
         }
     }
-    for(var i=0;i<ph.length;i++)s+=pv(ph[i],false)*0.8;
-    for(var i=0;i<eh.length;i++)s-=pv(eh[i],false)*0.8;
-    if(pkr>=0)for(var r=Math.max(0,pkr-1);r<=Math.min(8,pkr+1);r++)for(var c=Math.max(0,pkc-1);c<=Math.min(8,pkc+1);c++){if(b[r][c]&&b[r][c].s===PLAYER&&b[r][c].p!==OU)s+=30;}
-    if(ckr>=0)for(var r=Math.max(0,ckr-1);r<=Math.min(8,ckr+1);r++)for(var c=Math.max(0,ckc-1);c<=Math.min(8,ckc+1);c++){if(b[r][c]&&b[r][c].s===CPU&&b[r][c].p!==OU)s-=30;}
-    return side===PLAYER?s:-s;
+    return v;
 }
-function orderMoves(moves,b){
-    return moves.sort(function(a,bm){
-        var ca=!a.drop&&b[a.tr][a.tc]?pv(b[a.tr][a.tc].p,b[a.tr][a.tc].pr):0;
-        var cb=!bm.drop&&b[bm.tr][bm.tc]?pv(b[bm.tr][bm.tc].p,b[bm.tr][bm.tc].pr):0;
-        if(cb!==ca)return cb-ca;
-        return(a.promote?0:1)-(bm.promote?0:1);
-    });
-}
-var _cpuDeadline=0;
-var _pendingNariTimer=null;
-function negamax(b,ph,eh,side,depth,alpha,beta){
-    if(Date.now()>_cpuDeadline)throw'timeout';
-    if(depth<=0)return evaluate(b,ph,eh,side);
-    var moves=getLegal(b,ph,eh,side);
-    if(!moves.length)return isInCheck(b,side)?-90000-depth*100:0;
-    moves=orderMoves(moves,b);
-    var best=-Infinity;
-    for(var i=0;i<moves.length;i++){
-        var res=applyMove(b,ph,eh,moves[i]);
-        var score=-negamax(res.board,res.ph,res.eh,-side,depth-1,-beta,-alpha);
-        if(score>best)best=score;
-        if(score>alpha)alpha=score;
-        if(alpha>=beta)break;
+function evaluate(b,ph,eh,side){
+    var score=0,pc=0,cc=0;
+    for(var r=0;r<9;r++)for(var c=0;c<9;c++){
+        var x=b[r][c];if(!x)continue;
+        var v=pv(x.p,x.pr)*10+_pstBonus(x.p,x.pr,r,x.s);
+        if(x.s===PLAYER){score+=v;pc++;}else{score-=v;cc++;}
     }
+    for(var i=0;i<ph.length;i++)score+=pv(ph[i],false)*9;
+    for(var i=0;i<eh.length;i++)score-=pv(eh[i],false)*9;
+
+    /* 玉の安全、駒の働き、攻撃力、歩の形 */
+    score+=_kingZone(b,PLAYER)*8;
+    score-=_kingZone(b,CPU)*8;
+    score+=(_mobility(b,PLAYER)-_mobility(b,CPU))*2.2;
+    score+=_attackPotential(b,PLAYER)-_attackPotential(b,CPU);
+    score+=_pawnStructure(b,PLAYER)*3;
+    score-=_pawnStructure(b,CPU)*3;
+
+    /* 終盤は駒得より詰みへの近さを強く評価 */
+    var pk=findKing(PLAYER),ck=findKing(CPU);
+    var phase=1-Math.min(1,(pc+cc)/36);
+    if(pk&&ck){
+        var pd=Math.abs(pk[0]-ck[0])+Math.abs(pk[1]-ck[1]);
+        score+=(phase*18)*(14-pd);
+    }
+    if(isInCheck(b,PLAYER))score-=260;
+    if(isInCheck(b,CPU))score+=260;
+    return side===CPU?-score:score;
+}
+function _moveScore(m,b,ttMove){
+    var s=0;
+    if(ttMove&&_sameMove(m,ttMove))s+=10000000;
+    if(!m.drop){
+        var cap=b[m.tr][m.tc];
+        if(cap)s+=900000+pv(cap.p,cap.pr)*100-pv((b[m.fr][m.fc]||{}).p,(b[m.fr][m.fc]||{}).pr)*3;
+        if(m.promote)s+=18000;
+    }else s+=3000;
+    var key=m.s+':'+(m.drop?'d':m.fr+','+m.fc)+':'+m.tr+','+m.tc+':'+(m.promote?1:0);
+    if(_history[key])s+=Math.min(9000,_history[key]);
+    return s;
+}
+function _sameMove(a,b){
+    if(!a||!b)return false;
+    return !!a.drop===!!b.drop && a.tr===b.tr&&a.tc===b.tc&&a.fr===b.fr&&a.fc===b.fc&&!!a.promote===!!b.promote&&a.p===b.p;
+}
+function _ordered(moves,b,ttMove,ply){
+    moves.sort(function(a,bm){return _moveScore(bm,b,ttMove)-_moveScore(a,b,ttMove);});
+    if(ply<_killer.length){
+        var ks=_killer[ply]||[];
+        moves.sort(function(a,bm){
+            var ak=ks.some(function(k){return _sameMove(a,k);})?1:0;
+            var bk=ks.some(function(k){return _sameMove(bm,k);})?1:0;
+            return bk-ak;
+        });
+    }
+    return moves;
+}
+function _rememberKiller(mv,ply){
+    if(!mv||mv.drop)return;
+    if(!_killer[ply])_killer[ply]=[];
+    if(!_killer[ply].some(function(x){return _sameMove(x,mv);})){
+        _killer[ply].unshift(mv);if(_killer[ply].length>2)_killer[ply].pop();
+    }
+}
+function _quiescence(b,ph,eh,side,alpha,beta,ply){
+    if(_timeUp())throw'timeout';
+    _cpuNodes++;
+    var stand=evaluate(b,ph,eh,side);
+    if(stand>=beta)return stand;
+    if(stand>alpha)alpha=stand;
+    var moves=getLegal(b,ph,eh,side).filter(function(m){
+        return !m.drop && !!b[m.tr][m.tc] || m.promote;
+    });
+    moves=orderMoves(moves,b);
+    var lim=side===CPU?28:22;
+    if(moves.length>lim)moves.length=lim;
+    for(var i=0;i<moves.length;i++){
+        if(_timeUp())throw'timeout';
+        var res=applyMove(b,ph,eh,moves[i]);
+        var sc=-_quiescence(res.board,res.ph,res.eh,-side,-beta,-alpha,ply+1);
+        if(sc>=beta)return sc;
+        if(sc>alpha)alpha=sc;
+    }
+    return alpha;
+}
+function negamax(b,ph,eh,side,depth,alpha,beta,ply){
+    if(_timeUp())throw'timeout';
+    _cpuNodes++;
+    if(depth<=0)return _quiescence(b,ph,eh,side,alpha,beta,ply);
+    var key=_stateKey(b,ph,eh,side),entry=_tt.get(key);
+    if(entry&&entry.depth>=depth&&entry.gen===_searchGeneration){
+        if(entry.flag===0)return entry.score;
+        if(entry.flag===1&&entry.score>alpha)alpha=entry.score;
+        else if(entry.flag===2&&entry.score<beta)beta=entry.score;
+        if(alpha>=beta)return entry.score;
+    }
+    var moves=getLegal(b,ph,eh,side);
+    if(!moves.length)return isInCheck(b,side)?-MATE+ply:0;
+    var ttMove=entry&&entry.move?entry.move:null;
+    _ordered(moves,b,ttMove,ply);
+    var origAlpha=alpha,best=-INF,bestMove=null;
+    for(var i=0;i<moves.length;i++){
+        var mv=moves[i],res=applyMove(b,ph,eh,mv);
+        var sc=-negamax(res.board,res.ph,res.eh,-side,depth-1,-beta,-alpha,ply+1);
+        if(sc>best){best=sc;bestMove=mv;}
+        if(sc>alpha)alpha=sc;
+        if(alpha>=beta){
+            _rememberKiller(mv,ply);
+            var hk=mv.s+':'+(mv.drop?'d':mv.fr+','+mv.fc)+':'+mv.tr+','+mv.tc+':'+(mv.promote?1:0);
+            _history[hk]=Math.min(20000,(_history[hk]||0)+depth*depth*8);
+            break;
+        }
+    }
+    var flag=best<=origAlpha?2:(best>=beta?1:0);
+    if(_tt.size>_ttMax){var n=0;_tt.forEach(function(v,k){if(n++%4===0)_tt.delete(k);});}
+    _tt.set(key,{depth:depth,score:best,flag:flag,move:bestMove,gen:_searchGeneration});
     return best;
 }
-function chooseCPUMove(){
-    _cpuDeadline=Date.now()+60000; // 1分タイムアウト
+function chooseCPUMoveAsync(done){
     var diff=settings.difficulty;
-    var depth=diff===1?2:diff===2?3:diff===3?4:5; // 特級=depth5
+    var ctx=_cpuThinkContext();
+    _cpuDeadline=Date.now()+Math.min(28000,ctx.budget);
+    _cpuNodes=0;_searchGeneration++;_tt.clear();_history={};
+    _killer=[[],[],[],[],[],[],[],[],[],[]];
     var moves=getLegal(board,playerHand,enemyHand,CPU);
-    if(!moves.length)return null;
-    if(diff===1){
-        moves=orderMoves(moves,board);
-        var caps=moves.filter(function(m){return!m.drop&&board[m.tr][m.tc];});
-        if(caps.length){var best=-Infinity,bestMv=caps[0];try{for(var i=0;i<caps.length;i++){var r2=applyMove(board,playerHand,enemyHand,caps[i]);var sc=-negamax(r2.board,r2.ph,r2.eh,PLAYER,1,-Infinity,Infinity);if(sc>best){best=sc;bestMv=caps[i];}}}catch(e){if(e!=='timeout')throw e;}return bestMv;}
-        return moves[Math.floor(Math.random()*Math.min(moves.length,5))];
+    if(!moves.length){done(null);return;}
+    if(moves.length===1){setTimeout(function(){done(moves[0]);},120);return;}
+    var target=diff===1?3:diff===2?6:diff===3?9:11;
+    var bestMv=moves[0],bestScore=-INF,depth=1;
+    _ordered(moves,board,null,0);
+    function nextDepth(){
+        if(gameState!=='playing'){done(null);return;}
+        if(_timeUp()||depth>target){done(bestMv||moves[0]);return;}
+        _thinkDepthComment(depth);
+        setTimeout(function(){
+            var rootBest=-INF,rootMove=bestMv,alpha=-INF,beta=INF,finished=true;
+            try{
+                for(var i=0;i<moves.length;i++){
+                    if(_timeUp()){finished=false;break;}
+                    var mv=moves[i],res=applyMove(board,playerHand,enemyHand,mv);
+                    var sc=-negamax(res.board,res.ph,res.eh,PLAYER,depth-1,-beta,-alpha,1);
+                    mv._score=sc;
+                    if(sc>rootBest){rootBest=sc;rootMove=mv;}
+                    if(sc>alpha)alpha=sc;
+                }
+            }catch(e){if(e!=='timeout')throw e;finished=false;}
+            if(finished){
+                bestMv=rootMove;bestScore=rootBest;
+                moves.sort(function(a,b){return (b._score||-INF)-(a._score||-INF);});
+                if(Math.abs(bestScore)>=MATE-1000){done(bestMv);return;}
+                depth++;
+                setTimeout(nextDepth,0);
+            }else done(bestMv||moves[0]);
+        },0);
     }
-    moves=orderMoves(moves,board);
-    var best=-Infinity,bestMv=moves[0],alpha=-Infinity,beta=Infinity;
-    try{
-        for(var i=0;i<moves.length;i++){
-            var res=applyMove(board,playerHand,enemyHand,moves[i]);
-            var score=-negamax(res.board,res.ph,res.eh,PLAYER,depth-1,-beta,-alpha);
-            if(score>best){best=score;bestMv=moves[i];}
-            if(score>alpha)alpha=score;
-        }
-    }catch(e){if(e!=='timeout')throw e;} // タイムアウト：bestMvをそのまま返す
-    return bestMv;
+    nextDepth();
 }
 
 /* ===== 手数表示 ===== */
@@ -1926,8 +2164,9 @@ function _doCPUWork(){
     _stopThinkMsgRotation();
     var capturedPiece=null;
     if(bgmPlaying)_prebufferBGM(90); // ブロッキング中もBGMが途切れないよう先読み
-    var mv=chooseCPUMove();
-    // ブロッキングでsetIntervalが止まった場合は再起動（BGMはすでに先読み済み）
+    chooseCPUMoveAsync(function(mv){
+    // ブラウザを固めず、局面に応じた時間だけ考える
+    _stopThinkMsgRotation();
     _restartBGMInterval();
     document.getElementById('think').style.display='none';
     if(!mv){endGame(true,'詰み');return;}
@@ -1955,6 +2194,7 @@ function _doCPUWork(){
     updateTimer();updateMattaBtn();
     if(_tsuGoneC){setTimeout(function(){checkPanelTrigger(function(){});},1500);}
     else{checkPanelTrigger(function(){});}
+    });
 }
 
 function doCPUTurn(){
@@ -2036,7 +2276,7 @@ function _buildResultCanvas(pw,reason){
     var win=!!pw;
     var result=win?'勝利！':'負け...';
     var diff=settings&&settings.difficulty;
-    var lvLabel={1:'才能ナシ（初級）',2:'凡人（中級）',3:'特待生（上級）'};
+    var lvLabel={1:'才能ナシ（初級）',2:'一般棋士（中級）',3:'プロ級（上級）'};
     var charName=diff&&CHAR_DATA[diff]?CHAR_DATA[diff].name:'';
     var lvText=diff?lvLabel[diff]:'';
     var cv=document.createElement('canvas');
