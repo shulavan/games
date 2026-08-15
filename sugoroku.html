@@ -609,6 +609,15 @@
       "不要品をリサイクルショップに売ったら高値！ (+¥6,500)"
     ];
 
+    const DICE_ROTATIONS = {
+      1: "rotateX(0deg) rotateY(0deg)",
+      2: "rotateY(180deg)",
+      3: "rotateY(90deg)",
+      4: "rotateY(-90deg)",
+      5: "rotateX(-90deg)",
+      6: "rotateX(90deg)"
+    };
+
     const ROLL_BUBBLES = [
       "頼む！大きい目を出してくれ！",
       "サイコロの神様、よろしく！",
@@ -1266,7 +1275,8 @@
           pendingRoll: null,
           awaitingGoalSelection: this.awaitingGoalSelection || null,
           lastEvent: this.lastEventForSync || null,
-          eventSeq: this.eventSeq || 0
+          eventSeq: this.eventSeq || 0,
+          lastDiceValue: this.lastDiceValueForSync || null
         };
 
         try {
@@ -1325,40 +1335,70 @@
           this.renderBoardVisuals(this.roadNetworkNodes, startNodeForDisplay, this.goalNodeIdx, this.currentDestination);
         }
 
-        if (gs.players) {
-          if (!this.isHost) {
-            // Recreate markers if this is our first time seeing these players on this board
-            const needsMarkers = boardChanged || this.playerMarkers.length !== this.players.length;
+        // Shows the event-result modal (if any). Deferred until after a movement animation
+        // finishes, so guests see the same "walk, then result" order the host sees.
+        const showPendingEvent = () => {
+          if (!this.isHost && gs.lastEvent && gs.eventSeq && gs.eventSeq !== this.lastAppliedEventSeq) {
+            this.lastAppliedEventSeq = gs.eventSeq;
+            this.showEventModalReadOnly(gs.lastEvent.title, gs.lastEvent.desc, gs.lastEvent.extra);
+          }
+        };
+
+        let animatingMovement = false;
+
+        if (gs.players && !this.isHost) {
+          const needsMarkers = boardChanged || this.playerMarkers.length !== this.players.length;
+
+          // Detect which single player advanced along their path this turn (before we
+          // overwrite anything), so we can animate their walk instead of teleporting them.
+          let mover = null, moverFromIdx = null, moverToIdx = null;
+          if (!needsMarkers) {
             gs.players.forEach(rp => {
               const local = this.players.find(p => p.uid === rp.uid);
               if (!local) return;
-              local.money = rp.money;
-              local.currentNodeIdx = rp.currentNodeIdx;
-              local.path = rp.path;
-              local.pathIndex = rp.pathIndex;
-              local.vehicle = rp.vehicle;
-              local.skipTurn = rp.skipTurn;
-              local.wheelchairTurns = rp.wheelchairTurns;
-              local.forcedMoveCount = rp.forcedMoveCount;
+              if (typeof local.pathIndex === 'number' && typeof rp.pathIndex === 'number' && rp.pathIndex > local.pathIndex) {
+                mover = local;
+                moverFromIdx = local.pathIndex;
+                moverToIdx = rp.pathIndex;
+              }
             });
+          }
 
-            if (needsMarkers) {
-              this.playerMarkers.forEach(m => m && this.map.removeLayer(m));
-              this.playerMarkers = [];
-              this.players.forEach((p) => {
-                const node = this.roadNetworkNodes[p.currentNodeIdx];
-                if (!node) return;
-                const marker = L.marker([node.lat, node.lng], { icon: this.createPlayerIcon(p, "") }).addTo(this.map);
-                this.playerMarkers[p.id] = marker;
-              });
-              this.map.setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
-            } else {
-              this.players.forEach((p) => {
-                const node = this.roadNetworkNodes[p.currentNodeIdx];
-                const marker = this.playerMarkers[p.id];
-                if (marker && node) marker.setLatLng([node.lat, node.lng]);
-              });
-            }
+          gs.players.forEach(rp => {
+            const local = this.players.find(p => p.uid === rp.uid);
+            if (!local) return;
+            local.money = rp.money;
+            local.path = rp.path;
+            local.vehicle = rp.vehicle;
+            local.skipTurn = rp.skipTurn;
+            local.wheelchairTurns = rp.wheelchairTurns;
+            local.forcedMoveCount = rp.forcedMoveCount;
+            if (local === mover) return; // leave position alone — the walk animation below advances it
+            local.currentNodeIdx = rp.currentNodeIdx;
+            local.pathIndex = rp.pathIndex;
+          });
+
+          if (needsMarkers) {
+            this.playerMarkers.forEach(m => m && this.map.removeLayer(m));
+            this.playerMarkers = [];
+            this.players.forEach((p) => {
+              const node = this.roadNetworkNodes[p.currentNodeIdx];
+              if (!node) return;
+              const marker = L.marker([node.lat, node.lng], { icon: this.createPlayerIcon(p, "") }).addTo(this.map);
+              this.playerMarkers[p.id] = marker;
+            });
+            this.map.setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
+            this.updatePlayerRoutes();
+          } else if (mover) {
+            animatingMovement = true;
+            this.updatePlayerRoutes();
+            this.animateGuestPlayerMovement(mover, moverFromIdx, moverToIdx, gs.lastDiceValue, showPendingEvent);
+          } else {
+            this.players.forEach((p) => {
+              const node = this.roadNetworkNodes[p.currentNodeIdx];
+              const marker = this.playerMarkers[p.id];
+              if (marker && node) marker.setLatLng([node.lat, node.lng]);
+            });
             this.updatePlayerRoutes();
           }
         }
@@ -1378,9 +1418,8 @@
           }
         }
 
-        if (!this.isHost && gs.lastEvent && gs.eventSeq && gs.eventSeq !== this.lastAppliedEventSeq) {
-          this.lastAppliedEventSeq = gs.eventSeq;
-          this.showEventModalReadOnly(gs.lastEvent.title, gs.lastEvent.desc, gs.lastEvent.extra);
+        if (!animatingMovement) {
+          showPendingEvent();
         }
 
         this.updateHUD();
@@ -1391,9 +1430,58 @@
             clearTimeout(this.rollRequestTimeout);
             this.rollRequestTimeout = null;
           }
-          const cube = document.getElementById("dice-cube");
-          if (cube) cube.classList.remove("dice-rolling");
+          if (!animatingMovement) {
+            const cube = document.getElementById("dice-cube");
+            if (cube) cube.classList.remove("dice-rolling");
+          }
         }
+      },
+
+      // Mirrors the host's own dice-spin + step-by-step walk on a guest's screen, instead of
+      // instantly snapping the token to its final position. `onComplete` fires once the token
+      // has finished walking (used to delay the event-result modal until the walk is done).
+      animateGuestPlayerMovement(player, fromIdx, toIdx, diceValue, onComplete) {
+        sound.playDiceRoll();
+        const cube = document.getElementById("dice-cube");
+        if (cube) cube.classList.add("dice-rolling");
+        this.updatePlayerBubble(player, ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)]);
+
+        setTimeout(() => {
+          if (cube) {
+            cube.classList.remove("dice-rolling");
+            if (diceValue && DICE_ROTATIONS[diceValue]) {
+              cube.style.transform = DICE_ROTATIONS[diceValue];
+            }
+          }
+
+          if (!player.path || toIdx <= fromIdx) {
+            if (typeof onComplete === 'function') onComplete();
+            return;
+          }
+
+          let step = fromIdx;
+          const interval = setInterval(() => {
+            step++;
+            const clamped = Math.min(step, toIdx);
+            player.pathIndex = clamped;
+            if (player.path[clamped] !== undefined) player.currentNodeIdx = player.path[clamped];
+
+            const node = this.roadNetworkNodes[player.currentNodeIdx];
+            const marker = this.playerMarkers[player.id];
+            if (marker && node) {
+              marker.setLatLng([node.lat, node.lng]);
+              this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
+            }
+            this.updatePlayerRoutes();
+            sound.playTone(400 + (clamped - fromIdx) * 30, 'sine', 0.05, 0.05);
+
+            if (clamped >= toIdx) {
+              clearInterval(interval);
+              this.updatePlayerBubble(player, "");
+              if (typeof onComplete === 'function') onComplete();
+            }
+          }, 350);
+        }, 1200);
       },
 
       showEventModalReadOnly(title, desc, extra) {
@@ -1906,15 +1994,8 @@
             steps = rawRoll * usedVehicle.mult;
           }
 
-          const rotations = {
-            1: "rotateX(0deg) rotateY(0deg)",
-            2: "rotateY(180deg)",
-            3: "rotateY(90deg)",
-            4: "rotateY(-90deg)",
-            5: "rotateX(-90deg)",
-            6: "rotateX(90deg)"
-          };
-          cube.style.transform = rotations[rawRoll];
+          cube.style.transform = DICE_ROTATIONS[rawRoll];
+          this.lastDiceValueForSync = rawRoll;
 
           let logMsg = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】`;
           if (usedVehicle && cp.wheelchairTurns === 0) {
