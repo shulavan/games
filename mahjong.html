@@ -936,6 +936,81 @@
             { id: 6, name: "ちびっ子ヒデェ子", desc: "全然ルール知らん", style: "chaos", emoji: "🎒" }
         ];
 
+        // ===================================================================
+        // 相手キャラクターごとの麻雀AI能力設定
+        // skill        : 打牌選択の精度(0〜1)。高いほどテンパイに直結する牌を見極める
+        // randomness   : 打牌評価に乗せるブレ幅(0〜1)。高いほど非効率な牌を切りやすい
+        // reachRate    : テンパイ時にリーチを宣言する確率
+        // ponRate/chiiRate/daiminkanRate : 各鳴きを実行する確率(対象牌がある場合)
+        // ankanRate    : 暗槓できる場合にそれを選ぶ確率
+        // tsumoPreference : ロンを見送りツモを待つ確率(0=必ずロン可, 1=ロンしない)
+        // yakumanOnly  : true の場合、役満以外の和了は基本的に見送る
+        // ankouFocus   : 対子を暗刻に育てる打牌をやや優先する
+        // tenhouRate   : 局開始時に天和・地和が自動発生する確率
+        // hiraga〜     : 「ひらがじゃん」モード用の対応パラメータ
+        // ===================================================================
+        const AI_PROFILES = {
+            // さすらいギャンブラー(勝率40%): 役満・高得点狙い。役満以外の和了は基本的に見送る
+            yakuman: {
+                skill: 0.6, randomness: 0.25, reachRate: 0.2,
+                ponRate: 0.18, chiiRate: 0.03, daiminkanRate: 0.5, ankanRate: 0.5,
+                tsumoPreference: 0, yakumanOnly: true,
+                hiragaSkill: 0.6, hiragaCallRate: 0.12, hiragaAnkanRate: 0.4,
+                hiragaThreshold: 6, hiragaTakeRate: 1.0, hiragaYakumanOnly: true, hiragaTsumoPreference: 0
+            },
+            // 歌わんタクミン(勝率50%): 安く最速でアガる。チー鳴きを多用
+            cheap: {
+                skill: 0.65, randomness: 0.2, reachRate: 0.2,
+                ponRate: 0.35, chiiRate: 0.55, daiminkanRate: 0.3, ankanRate: 0.15,
+                tsumoPreference: 0,
+                hiragaSkill: 0.65, hiragaCallRate: 0.6, hiragaAnkanRate: 0.15,
+                hiragaThreshold: 2, hiragaTakeRate: 1.0, hiragaTsumoPreference: 0
+            },
+            // イルカヒーロー(勝率60%): 鳴き(ポン)お祭り男。チーはたまに、暗槓は10%
+            naki: {
+                skill: 0.45, randomness: 0.3, reachRate: 0.15,
+                ponRate: 0.8, chiiRate: 0.2, daiminkanRate: 0.6, ankanRate: 0.10,
+                tsumoPreference: 0,
+                hiragaSkill: 0.45, hiragaCallRate: 0.7, hiragaAnkanRate: 0.10,
+                hiragaThreshold: 3, hiragaTakeRate: 1.0, hiragaTsumoPreference: 0
+            },
+            // 呑んだくれ不動産(勝率30%): 標準的なバランス型。最も賢く何でもこなす
+            normal: {
+                skill: 0.92, randomness: 0.05, reachRate: 0.72,
+                ponRate: 0.4, chiiRate: 0.35, daiminkanRate: 0.55, ankanRate: 0.55,
+                tsumoPreference: 0,
+                hiragaSkill: 0.9, hiragaCallRate: 0.45, hiragaAnkanRate: 0.5,
+                hiragaThreshold: 2, hiragaTakeRate: 1.0, hiragaTsumoPreference: 0
+            },
+            // 親方船大工(勝率80%): 頑固な門前派。鳴かず・リーチせず、ツモ狙い
+            menzen: {
+                skill: 0.4, randomness: 0.35, reachRate: 0,
+                ponRate: 0, chiiRate: 0, daiminkanRate: 0, ankanRate: 0.3,
+                tsumoPreference: 0.8,
+                hiragaSkill: 0.4, hiragaCallRate: 0, hiragaAnkanRate: 0.3,
+                hiragaThreshold: 4, hiragaTakeRate: 1.0, hiragaTsumoPreference: 0.8
+            },
+            // トラックモンキー(勝率70%): ツモ上がり専門。ツモ確率70%、ポンもするが暗刻狙い
+            tsumo_only: {
+                skill: 0.5, randomness: 0.25, reachRate: 0.35,
+                ponRate: 0.4, chiiRate: 0.1, daiminkanRate: 0.3, ankanRate: 0.25,
+                tsumoPreference: 0.7, ankouFocus: true,
+                hiragaSkill: 0.5, hiragaCallRate: 0.35, hiragaAnkanRate: 0.25,
+                hiragaThreshold: 3, hiragaTakeRate: 1.0, hiragaTsumoPreference: 0.7
+            },
+            // ちびっ子ヒデェ子(勝率90%): 全然ルール知らん。10%で天和・地和の大逆転あり
+            chaos: {
+                skill: 0.15, randomness: 0.85, reachRate: 0.5,
+                ponRate: 0.3, chiiRate: 0.3, daiminkanRate: 0.3, ankanRate: 0.2,
+                tsumoPreference: 0, tenhouRate: 0.10,
+                hiragaSkill: 0.15, hiragaCallRate: 0.3, hiragaAnkanRate: 0.2,
+                hiragaThreshold: 1, hiragaTakeRate: 1.0, hiragaTsumoPreference: 0, hiragaTenhouRate: 0.10
+            }
+        };
+        function getAiProfile() {
+            return (GameState.oppChar && AI_PROFILES[GameState.oppChar.style]) || AI_PROFILES.normal;
+        }
+
         // Web Audio API による効果音・カンフーBGM管理クラス
         const AudioEngine = {
             ctx: null, bgmInterval: null, currentBgmType: null, tempo: 120, beatCount: 0,
@@ -1121,10 +1196,13 @@
             mode: 'riichi', // 'riichi'=二人打ち麻雀 / 'hiraga'=ひらがじゃん
             hiragaSelected: -1, // ひらがじゃん: 浮き上がり選択中の牌index
             hiragaMeldWords: [], // ひらがじゃん: ポンで確定したことば
+            hiragaMeldWordsOpp: [], // ひらがじゃん: 相手がポン/カンで確定したことば
             hiragaJustPonned: false,
             hiragaReach: false, // ひらがじゃん: リーチ宣言済み
             hiragaReachJustNow: false, // 宣言直後(捨て牌選択中)
-            hiragaIppatsu: false // リーチ後1巡以内(一発)
+            hiragaIppatsu: false, // リーチ後1巡以内(一発)
+            riggedNextOppDraw: null, // ちびっ子ヒデェ子: 天和・地和用に仕込んだ次のツモ牌(二人打ち麻雀)
+            riggedNextOppDrawHiraga: null // ちびっ子ヒデェ子: 天和・地和用に仕込んだ次のツモ牌(ひらがじゃん)
         };
 
         function createFullYama() {
@@ -1492,8 +1570,9 @@
             return null;
         }
 
-        function checkCanAnkanAfterReach(handWithTsumo, ankanKey) {
-            let currentMachi = getMachiList(GameState.handPlayer);
+        function checkCanAnkanAfterReach(handWithTsumo, ankanKey, currentHand13) {
+            currentHand13 = currentHand13 || GameState.handPlayer;
+            let currentMachi = getMachiList(currentHand13);
             if (currentMachi.length === 0) return false;
 
             let type = ankanKey[0];
@@ -1533,8 +1612,9 @@
             return count >= 2;
         }
 
-        function checkCanKakan(hand) {
-            for (let meld of GameState.meldsPlayer) {
+        function checkCanKakan(hand, melds) {
+            melds = melds || GameState.meldsPlayer;
+            for (let meld of melds) {
                 if (meld.type === 'pon') {
                     let ponTile = meld.tiles[0];
                     let match = hand.find(t => t.type === ponTile.type && parseInt(t.val) === parseInt(ponTile.val));
@@ -2157,10 +2237,13 @@
             GameState.oppReachJustNow = false;
             GameState.hiragaSelected = -1;
             GameState.hiragaMeldWords = [];
+            GameState.hiragaMeldWordsOpp = [];
             GameState.hiragaJustPonned = false;
             GameState.hiragaReach = false;
             GameState.hiragaReachJustNow = false;
             GameState.hiragaIppatsu = false;
+            GameState.riggedNextOppDraw = null;
+            GameState.riggedNextOppDrawHiraga = null;
 
             document.getElementById('header-stick-opp').classList.remove('active');
             document.getElementById('header-stick-player').classList.remove('active');
@@ -2184,7 +2267,12 @@
             for (let i = 0; i < 13; i++) { GameState.handPlayer.push(GameState.yama.pop()); GameState.handOpp.push(GameState.yama.pop()); }
             sortTiles(GameState.handPlayer); sortTiles(GameState.handOpp);
 
-            if (GameState.mode === 'hiraga') hiragaAutoArrange();
+            if (GameState.mode === 'hiraga') {
+                hiragaAutoArrange();
+                maybeRigHiragaInstantWin(); // ちびっ子ヒデェ子: 10%で天和・地和相当の配牌に仕込み直す
+            } else {
+                maybeRigTenhouChihou(); // ちびっ子ヒデェ子: 10%で天和・地和に仕込み直す
+            }
 
             showMessage(`${GameState.wind}${GameState.round}局 スタート！`);
             renderTable();
@@ -2814,64 +2902,321 @@
             setTimeout(() => { aiActionCheckOnPlayerDiscard(tile); }, 400);
         }
 
+        // ===== 相手AI: 能力値に応じた判断ロジック =====
+
+        // 和了(ロン/ツモ)を実際に確定させるかどうかの判定
+        function aiShouldTakeWin(evalResult, isTsumo, profile) {
+            if (!evalResult || !evalResult.isAgari) return false;
+            if (!isTsumo && profile.tsumoPreference > 0 && Math.random() < profile.tsumoPreference) return false; // ツモ狙いでロンを見送る
+            if (profile.yakumanOnly) {
+                let isYakuman = (evalResult.yakuman || 0) > 0;
+                if (!isYakuman && GameState.yama.length > 4) return false; // 役満以外は基本見送る(山が尽きる直前は妥協)
+            }
+            return true;
+        }
+
+        // 鳴きの対象牌として狙うかどうか(役満キャラは幺九牌絡み以外は基本スルー)
+        function aiWantsToCallTile(tile, profile) {
+            if (!profile.yakumanOnly) return true;
+            let isHonor = (tile.type === 'z');
+            let isTerminal = !isHonor && (parseInt(tile.val) === 1 || parseInt(tile.val) === 9);
+            return isHonor || isTerminal;
+        }
+
+        // 手牌の中の1枚を残す価値(高いほど残したい牌)を評価
+        function aiTileKeepValue(hand, tile, counts, profile, doraKey) {
+            let key = tile.type + tile.val;
+            let cnt = counts[key] || 0;
+            let val = parseInt(tile.val);
+            let isHonor = (tile.type === 'z');
+            let isTerminal = !isHonor && (val === 1 || val === 9);
+            let score = 0;
+
+            if (cnt >= 3) score += 90; // 刻子は基本的に崩さない
+            else if (cnt === 2) score += 50; // 対子は価値が高い
+            else if (!isHonor) {
+                let near1 = (counts[tile.type + (val - 1)] || 0) > 0 || (counts[tile.type + (val + 1)] || 0) > 0;
+                let near2 = (counts[tile.type + (val - 2)] || 0) > 0 || (counts[tile.type + (val + 2)] || 0) > 0;
+                if (near1) score += 38; // リャンメン/ペンチャン材料
+                else if (near2) score += 26; // カンチャン材料
+                else score += 12; // 孤立の中張牌
+            } else {
+                score += 6; // 孤立字牌
+                if (val >= 5) score += 6; // 三元牌はやや優先
+            }
+
+            if (isTerminal) score -= 4;
+            if (isHonor && cnt < 2) score -= 6;
+            if (doraKey && key === doraKey) score += 25; // ドラは重視
+
+            if (profile.yakumanOnly) {
+                // 幺九牌・対子・刻子を重視し、孤立した中張牌は軽視(様々な役満の芽を残す)
+                if (isHonor || isTerminal) score += 32;
+                if (cnt >= 2) score += 18;
+                if (!isHonor && !isTerminal && cnt === 1) score -= 22;
+                const greenKeys = ['s2', 's3', 's4', 's6', 's8', 'z6'];
+                if (greenKeys.includes(key)) score += 8; // 緑一色の芽
+            }
+            if (profile.ankouFocus && cnt === 2) score += 14; // 対子を暗刻へ育てたい
+
+            return score;
+        }
+
+        // 手牌の中からどの牌を切るかを決定
+        function aiPickDiscardIndex(hand, profile) {
+            let counts = {};
+            hand.forEach(t => { let k = t.type + t.val; counts[k] = (counts[k] || 0) + 1; });
+
+            let doraKey = null;
+            if (GameState.doraTiles && GameState.doraTiles[0]) {
+                let d = getDoraTile(GameState.doraTiles[0]);
+                doraKey = d.type + d.val;
+            }
+
+            // スキルが高いほど、その一打でテンパイに届く牌を的確に見極める(役満狙いは除く)
+            if (!profile.yakumanOnly && Math.random() < (profile.skill || 0.5)) {
+                let tenpaiOptions = getTenpaiDiscardsAndMachi(hand);
+                if (tenpaiOptions.length > 0) {
+                    tenpaiOptions.sort((a, b) => b.machi.length - a.machi.length);
+                    let top = tenpaiOptions[0];
+                    return (top.index === -1) ? hand.length - 1 : top.index;
+                }
+            }
+
+            let worstIdx = 0, worstScore = Infinity;
+            for (let i = 0; i < hand.length; i++) {
+                let score = aiTileKeepValue(hand, hand[i], counts, profile, doraKey);
+                score += (Math.random() - 0.5) * 60 * (profile.randomness || 0);
+                if (score < worstScore) { worstScore = score; worstIdx = i; }
+            }
+            return worstIdx;
+        }
+
+        function executeAiPon(tile) {
+            AudioEngine.playVoice('ポン');
+            triggerCallAnnouncement('ポン！');
+            GameState.ippatsuPlayer = false; GameState.ippatsuOpp = false;
+            if (GameState.kawaPlayer.length > 0) {
+                GameState.kawaPlayer[GameState.kawaPlayer.length - 1].isCalled = true;
+            }
+            GameState.meldsOpp.push({
+                type: 'pon',
+                tiles: [
+                    { type: tile.type, val: tile.val, symbol: tile.symbol },
+                    { type: tile.type, val: tile.val, symbol: tile.symbol },
+                    { type: tile.type, val: tile.val, symbol: tile.symbol }
+                ]
+            });
+            let removed = 0;
+            GameState.handOpp = GameState.handOpp.filter(t => {
+                if (t.type === tile.type && parseInt(t.val) === parseInt(tile.val) && removed < 2) {
+                    removed++; return false;
+                }
+                return true;
+            });
+            sortTiles(GameState.handOpp);
+            GameState.turn = 'opp';
+            renderTable();
+            setTimeout(() => { aiDiscard(); }, 1000);
+        }
+
+        function executeAiDaiminkan(tile) {
+            AudioEngine.playVoice('カン');
+            triggerCallAnnouncement('カン！');
+            GameState.ippatsuPlayer = false; GameState.ippatsuOpp = false;
+            GameState.rinshan = true; // 直後のツモは嶺上牌
+            if (GameState.kawaPlayer.length > 0) {
+                GameState.kawaPlayer[GameState.kawaPlayer.length - 1].isCalled = true;
+            }
+            GameState.meldsOpp.push({
+                type: 'kan',
+                tiles: [
+                    { type: tile.type, val: tile.val, symbol: tile.symbol },
+                    { type: tile.type, val: tile.val, symbol: tile.symbol },
+                    { type: tile.type, val: tile.val, symbol: tile.symbol },
+                    { type: tile.type, val: tile.val, symbol: tile.symbol }
+                ]
+            });
+            GameState.handOpp = GameState.handOpp.filter(t => !(t.type === tile.type && parseInt(t.val) === parseInt(tile.val)));
+            if (GameState.yama.length >= 2) {
+                GameState.doraTiles.push(GameState.yama.pop());
+                GameState.uraDoraTiles.push(GameState.yama.pop());
+                document.getElementById('info-dora-tile').innerText = GameState.doraTiles.map(t=>t.symbol).join('');
+            }
+            sortTiles(GameState.handOpp);
+            GameState.turn = 'opp';
+            renderTable();
+            setTimeout(() => { aiTsumo(); }, 600);
+        }
+
+        function executeAiChii(tile, opt) {
+            AudioEngine.playVoice('チー');
+            triggerCallAnnouncement('チー！');
+            GameState.ippatsuPlayer = false; GameState.ippatsuOpp = false;
+            if (GameState.kawaPlayer.length > 0) {
+                GameState.kawaPlayer[GameState.kawaPlayer.length - 1].isCalled = true;
+            }
+            let sortedMeldTiles = [
+                { type: tile.type, val: opt.remove[0], symbol: 麻雀牌絵文字[tile.type][opt.remove[0]] },
+                { type: tile.type, val: opt.remove[1], symbol: 麻雀牌絵文字[tile.type][opt.remove[1]] },
+                { type: tile.type, val: tile.val, symbol: tile.symbol }
+            ].sort((a,b) => a.val - b.val);
+            GameState.meldsOpp.push({ type: 'chii', tiles: sortedMeldTiles });
+            let rem1 = false, rem2 = false;
+            GameState.handOpp = GameState.handOpp.filter(t => {
+                if (t.type === tile.type && parseInt(t.val) === parseInt(opt.remove[0]) && !rem1) { rem1 = true; return false; }
+                if (t.type === tile.type && parseInt(t.val) === parseInt(opt.remove[1]) && !rem2) { rem2 = true; return false; }
+                return true;
+            });
+            sortTiles(GameState.handOpp);
+            GameState.turn = 'opp';
+            renderTable();
+            setTimeout(() => { aiDiscard(); }, 1000);
+        }
+
+        function executeAiAnkan(ankanKey, fullHand) {
+            AudioEngine.playVoice('カン');
+            triggerCallAnnouncement('カン！');
+            GameState.ippatsuPlayer = false; GameState.ippatsuOpp = false;
+            GameState.rinshan = true; // 直後のツモは嶺上牌
+            let targetType = ankanKey[0];
+            let targetVal = parseInt(ankanKey.substring(1));
+
+            GameState.meldsOpp.push({
+                type: 'ankan',
+                tiles: [
+                    { type: targetType, val: targetVal, symbol: 麻雀牌絵文字[targetType][targetVal] },
+                    { type: targetType, val: targetVal, symbol: 麻雀牌絵文字[targetType][targetVal] },
+                    { type: targetType, val: targetVal, symbol: 麻雀牌絵文字[targetType][targetVal] },
+                    { type: targetType, val: targetVal, symbol: 麻雀牌絵文字[targetType][targetVal] }
+                ]
+            });
+
+            let removed = 0;
+            GameState.handOpp = fullHand.filter(t => {
+                if (t.type === targetType && parseInt(t.val) === targetVal && removed < 4) { removed++; return false; }
+                return true;
+            });
+            GameState.tsumoOpp = null;
+
+            if (GameState.yama.length >= 2) {
+                GameState.doraTiles.push(GameState.yama.pop());
+                GameState.uraDoraTiles.push(GameState.yama.pop());
+                document.getElementById('info-dora-tile').innerText = GameState.doraTiles.map(t=>t.symbol).join('');
+            }
+
+            sortTiles(GameState.handOpp);
+            GameState.turn = 'opp';
+            renderTable();
+            setTimeout(() => { aiTsumo(); }, 600);
+        }
+
+        function executeAiKakan(kakanInfo) {
+            AudioEngine.playVoice('カン');
+            triggerCallAnnouncement('カン！');
+            GameState.ippatsuPlayer = false; GameState.ippatsuOpp = false;
+            GameState.rinshan = true; // 直後のツモは嶺上牌
+
+            kakanInfo.meld.type = 'kan';
+            kakanInfo.meld.tiles.push({
+                type: kakanInfo.tile.type,
+                val: kakanInfo.tile.val,
+                symbol: kakanInfo.tile.symbol
+            });
+
+            let removed = false;
+            if (GameState.tsumoOpp && GameState.tsumoOpp.type === kakanInfo.tile.type && parseInt(GameState.tsumoOpp.val) === parseInt(kakanInfo.tile.val)) {
+                GameState.tsumoOpp = null;
+                removed = true;
+            }
+            if (!removed) {
+                let idx = GameState.handOpp.findIndex(t => t.type === kakanInfo.tile.type && parseInt(t.val) === parseInt(kakanInfo.tile.val));
+                if (idx !== -1) GameState.handOpp.splice(idx, 1);
+                if (GameState.tsumoOpp) {
+                    GameState.handOpp.push(GameState.tsumoOpp);
+                    GameState.tsumoOpp = null;
+                }
+            }
+
+            if (GameState.yama.length >= 2) {
+                GameState.doraTiles.push(GameState.yama.pop());
+                GameState.uraDoraTiles.push(GameState.yama.pop());
+                document.getElementById('info-dora-tile').innerText = GameState.doraTiles.map(t=>t.symbol).join('');
+            }
+
+            sortTiles(GameState.handOpp);
+            GameState.turn = 'opp';
+            renderTable();
+            setTimeout(() => { aiTsumo(); }, 600);
+        }
+
+        // ちびっ子ヒデェ子: 局開始時に一定確率で手牌を天和・地和相当に仕込み直す
+        function maybeRigTenhouChihou() {
+            GameState.riggedNextOppDraw = null;
+            if (!GameState.oppChar || GameState.oppChar.style !== 'chaos') return;
+            let profile = getAiProfile();
+            if (Math.random() >= (profile.tenhouRate || 0)) return;
+
+            const wantHand = [
+                ['m',1],['m',2],['m',3],['m',4],['m',5],['m',6],['m',7],['m',8],['m',9],
+                ['p',1],['p',2],['p',3],['s',9]
+            ];
+            const wantWin = ['s',9];
+
+            let pool = [...GameState.yama, ...GameState.handOpp];
+            const takeOne = (type, val) => {
+                let idx = pool.findIndex(t => t.type === type && parseInt(t.val) === val);
+                if (idx === -1) return null;
+                return pool.splice(idx, 1)[0];
+            };
+
+            let newHand = [];
+            let ok = true;
+            for (let [type, val] of wantHand) {
+                let t = takeOne(type, val);
+                if (!t) { ok = false; break; }
+                newHand.push(t);
+            }
+            let winTile = ok ? takeOne(wantWin[0], wantWin[1]) : null;
+            if (!ok || !winTile) return; // 牌を確保できなければ今回は発動しない
+
+            GameState.handOpp = sortTiles(newHand);
+            GameState.yama = pool;
+            GameState.riggedNextOppDraw = winTile;
+        }
+
         function aiActionCheckOnPlayerDiscard(tile) {
             GameState.turn = 'opp';
-            
+            let profile = getAiProfile();
+
             let aiRonCheck = checkAgari([...GameState.handOpp, tile], false, GameState.isOppReach, GameState.meldsOpp.length === 0);
-            if (aiRonCheck.isAgari && GameState.oppChar.style !== 'tsumo_only') {
+            if (aiShouldTakeWin(aiRonCheck, false, profile)) {
                 AudioEngine.playVoice('ロン');
                 triggerCallAnnouncement('ロン！');
                 setTimeout(() => { triggerAgari('opp', aiRonCheck.yaku, aiRonCheck.han, false, aiRonCheck.yakuman || 0); }, 1000);
                 return;
             }
-            
-            if (!GameState.isOppReach) {
+
+            if (!GameState.isOppReach && !GameState.riggedNextOppDraw) {
+                // riggedNextOppDraw が残っている間は、天和・地和の成立前に鳴きで手牌を崩さないようにする
                 let sameCount = GameState.handOpp.filter(t => t.type === tile.type && parseInt(t.val) === parseInt(tile.val)).length;
-                if (sameCount === 3 && Math.random() < 0.6) {
-                    AudioEngine.playVoice('カン');
-                    triggerCallAnnouncement('カン！');
-                    GameState.ippatsuPlayer = false; GameState.ippatsuOpp = false;
-                    GameState.rinshan = true; // 直後のツモは嶺上牌
-                    
-                    if (GameState.kawaPlayer.length > 0) {
-                        GameState.kawaPlayer[GameState.kawaPlayer.length - 1].isCalled = true;
-                    }
+                let wantsTile = aiWantsToCallTile(tile, profile);
 
-                    GameState.meldsOpp.push({
-                        type: 'kan',
-                        tiles: [
-                            { type: tile.type, val: tile.val, symbol: tile.symbol },
-                            { type: tile.type, val: tile.val, symbol: tile.symbol },
-                            { type: tile.type, val: tile.val, symbol: tile.symbol },
-                            { type: tile.type, val: tile.val, symbol: tile.symbol }
-                        ]
-                    });
-
-                    GameState.handOpp = GameState.handOpp.filter(t => !(t.type === tile.type && parseInt(t.val) === parseInt(tile.val)));
-                    aiTsumo();
+                if (wantsTile && sameCount === 3 && Math.random() < profile.daiminkanRate) {
+                    executeAiDaiminkan(tile);
                     return;
                 }
-                if (sameCount === 2 && Math.random() < 0.5) {
-                    AudioEngine.playVoice('ポン');
-                    triggerCallAnnouncement('ポン！');
-                    GameState.ippatsuPlayer = false; GameState.ippatsuOpp = false;
-
-                    if (GameState.kawaPlayer.length > 0) {
-                        GameState.kawaPlayer[GameState.kawaPlayer.length - 1].isCalled = true;
-                    }
-
-                    GameState.meldsOpp.push({
-                        type: 'pon',
-                        tiles: [
-                            { type: tile.type, val: tile.val, symbol: tile.symbol },
-                            { type: tile.type, val: tile.val, symbol: tile.symbol },
-                            { type: tile.type, val: tile.val, symbol: tile.symbol }
-                        ]
-                    });
-
-                    GameState.handOpp = GameState.handOpp.filter(t => !(t.type === tile.type && parseInt(t.val) === parseInt(tile.val)));
-                    setTimeout(() => { aiDiscard(); }, 1000);
+                if (wantsTile && sameCount >= 2 && Math.random() < profile.ponRate) {
+                    executeAiPon(tile);
                     return;
+                }
+                if (wantsTile) {
+                    let chiiOptions = getPlayerChiiOptions(GameState.handOpp, tile);
+                    if (chiiOptions.length > 0 && Math.random() < profile.chiiRate) {
+                        let opt = chiiOptions[Math.floor(Math.random() * chiiOptions.length)];
+                        executeAiChii(tile, opt);
+                        return;
+                    }
                 }
             }
             aiTsumo();
@@ -2879,21 +3224,47 @@
 
         function aiTsumo() {
             if (GameState.yama.length <= 0) return checkRyuukyoku();
-            GameState.turn = 'opp'; 
-            GameState.tsumoOpp = GameState.yama.pop(); 
+            GameState.turn = 'opp';
+            let profile = getAiProfile();
+
+            if (GameState.riggedNextOppDraw) {
+                GameState.tsumoOpp = GameState.riggedNextOppDraw;
+                GameState.riggedNextOppDraw = null;
+            } else {
+                GameState.tsumoOpp = GameState.yama.pop();
+            }
             renderTable();
-            
+
             let fullHand = [...GameState.handOpp, GameState.tsumoOpp];
-            
+
             let aiTsumoCheck = checkAgari(fullHand, true, GameState.isOppReach, GameState.meldsOpp.length === 0);
-            if (aiTsumoCheck.isAgari) {
+            if (aiShouldTakeWin(aiTsumoCheck, true, profile)) {
                 AudioEngine.playVoice('ツモ');
                 triggerCallAnnouncement('ツモ！');
                 setTimeout(() => { triggerAgari('opp', aiTsumoCheck.yaku, aiTsumoCheck.han, true, aiTsumoCheck.yakuman || 0); }, 1000);
                 return;
             }
-            
-            if (!GameState.isOppReach && GameState.meldsOpp.length === 0 && checkReadyToReach(fullHand) && Math.random() < 0.7) {
+
+            let ankanKey = checkCanAnkan(fullHand);
+            if (ankanKey) {
+                let ankanOk = GameState.isOppReach
+                    ? checkCanAnkanAfterReach(fullHand, ankanKey, GameState.handOpp)
+                    : true;
+                if (ankanOk && Math.random() < (profile.ankanRate || 0)) {
+                    executeAiAnkan(ankanKey, fullHand);
+                    return;
+                }
+            }
+
+            if (!GameState.isOppReach) {
+                let kakanInfo = checkCanKakan(fullHand, GameState.meldsOpp);
+                if (kakanInfo && Math.random() < (profile.ankanRate || 0)) {
+                    executeAiKakan(kakanInfo);
+                    return;
+                }
+            }
+
+            if (!GameState.isOppReach && GameState.meldsOpp.length === 0 && checkReadyToReach(fullHand) && Math.random() < profile.reachRate) {
                 GameState.isOppReach = true;
                 GameState.ippatsuOpp = true;
                 GameState.oppReachJustNow = true;
@@ -2918,26 +3289,10 @@
             } else {
                 let hand = [...GameState.handOpp];
                 if (GameState.tsumoOpp) hand.push(GameState.tsumoOpp);
-                
-                let discardIdx = 0;
-                let minScore = 999;
-                
-                for (let i = 0; i < hand.length; i++) {
-                    let score = 0;
-                    let t = hand[i];
-                    if (t.type === 'z') score += 10;
-                    let val = parseInt(t.val);
-                    if (val === 1 || val === 9) score += 5;
-                    
-                    let count = hand.filter(x => x.type === t.type && parseInt(x.val) === val).length;
-                    if (count >= 2) score -= 20;
 
-                    if (score < minScore) {
-                        minScore = score;
-                        discardIdx = i;
-                    }
-                }
-                
+                let profile = getAiProfile();
+                let discardIdx = aiPickDiscardIndex(hand, profile);
+
                 tile = hand[discardIdx];
                 if (GameState.tsumoOpp && discardIdx === hand.length - 1) {
                     GameState.tsumoOpp = null;
@@ -3178,6 +3533,12 @@
         }
 
         function triggerAgari(winner, yakuList, baseHan, isTsumo, yakuman = 0) {
+            // ちびっ子ヒデェ子の天和・地和用に仕込んだ牌が、その前に別の和了(ロン等)で
+            // 消費されずに残っていた場合は山へ戻しておく(牌数のつじつまを合わせる)
+            if (GameState.riggedNextOppDraw) {
+                GameState.yama.push(GameState.riggedNextOppDraw);
+                GameState.riggedNextOppDraw = null;
+            }
             AudioEngine.stopBGM(); // 和了時はBGMを一旦完全停止してジングルに集中
             AudioEngine.playSE('agari');
             
@@ -3285,6 +3646,15 @@
         }
 
         function checkRyuukyoku() {
+            // 天和・地和用に仕込んだ牌が未消費のまま残っていれば山へ戻す
+            if (GameState.riggedNextOppDraw) {
+                GameState.yama.push(GameState.riggedNextOppDraw);
+                GameState.riggedNextOppDraw = null;
+            }
+            if (GameState.riggedNextOppDrawHiraga) {
+                GameState.yama.push(GameState.riggedNextOppDrawHiraga);
+                GameState.riggedNextOppDrawHiraga = null;
+            }
             AudioEngine.stopBGM();
             document.getElementById('res-title').innerText = "流局"; 
             document.getElementById('res-winner').innerText = "流局平分";
@@ -3498,30 +3868,137 @@
             setTimeout(() => { hiragaAiCheck(tile); }, 400);
         }
 
+        // 役満相当(しりとり/ジャンル統一/対々和相当/四暗刻相当)が絡んでいるかの簡易判定
+        function hiragaWordsFormYakuman(words) {
+            if (hiragaShiritori(words)) return true;
+            if (hiragaGenre(words).length > 0) return true;
+            let common = new Set([...words[0]]);
+            words.slice(1).forEach(w => { common = new Set([...w].filter(c => common.has(c))); });
+            if (common.size > 0) return true;
+            let dbl = words.filter(w => new Set([...w]).size < w.length).length;
+            if (dbl >= 4) return true;
+            return false;
+        }
+
+        // 役満狙いキャラ用: ジャンルタグ(食物・動物など)を持つことばに使われる文字の集合
+        let HIRAGA_GENRE_CHARS = null;
+        function hiragaGenreCharSet() {
+            if (!HIRAGA_GENRE_CHARS) {
+                HIRAGA_GENRE_CHARS = new Set();
+                const add = (dict) => { for (const w in dict) { if (dict[w]) { for (const c of w) HIRAGA_GENRE_CHARS.add(c); } } };
+                add(HIRAGA_DICT2); add(HIRAGA_DICT3); add(HIRAGA_DICT4);
+            }
+            return HIRAGA_GENRE_CHARS;
+        }
+
+        // ひらがじゃんでロン/ツモを確定させるかどうかの判定(能力値に応じて見送りもある)
+        function hiragaShouldTakeWin(fullWords, isTsumo, profile) {
+            if (!fullWords) return false;
+            if (GameState.kawaOpp.length < (profile.hiragaThreshold || 0)) return false;
+            if (!isTsumo && profile.hiragaTsumoPreference > 0 && Math.random() < profile.hiragaTsumoPreference) return false;
+            if (profile.hiragaYakumanOnly) {
+                if (!hiragaWordsFormYakuman(fullWords) && GameState.yama.length > 6) return false;
+            }
+            return Math.random() < (profile.hiragaTakeRate != null ? profile.hiragaTakeRate : 1);
+        }
+
+        // ちびっ子ヒデェ子: ひらがじゃんでも局開始時に一定確率で配牌を即あがり相当に仕込み直す
+        function maybeRigHiragaInstantWin() {
+            GameState.riggedNextOppDrawHiraga = null;
+            if (!GameState.oppChar || GameState.oppChar.style !== 'chaos') return;
+            let profile = getAiProfile();
+            if (Math.random() >= (profile.hiragaTenhouRate || 0)) return;
+
+            // 「こめ」+「すいか」「れもん」「くるみ」「なつめ」(すべて食物)で食物一色も同時に狙える配牌
+            const wantChars = ['こ','め','す','い','か','れ','も','ん','く','る','み','な','つ'];
+            const wantWin = 'め';
+
+            let pool = [...GameState.yama, ...GameState.handOpp];
+            const takeOne = (ch) => {
+                let idx = pool.findIndex(t => t.symbol === ch);
+                if (idx === -1) return null;
+                return pool.splice(idx, 1)[0];
+            };
+
+            let newHand = [];
+            let ok = true;
+            for (const ch of wantChars) {
+                let t = takeOne(ch);
+                if (!t) { ok = false; break; }
+                newHand.push(t);
+            }
+            let winTile = ok ? takeOne(wantWin) : null;
+            if (!ok || !winTile) return; // 牌を確保できなければ今回は発動しない
+
+            GameState.handOpp = newHand;
+            GameState.yama = pool;
+            GameState.riggedNextOppDrawHiraga = winTile;
+        }
+
         function hiragaAiCheck(tile) {
             GameState.turn = 'opp';
+            let profile = getAiProfile();
             const win = hiragaFindWin([...GameState.handOpp, tile]);
-            if (win && GameState.kawaOpp.length >= 5 && Math.random() < 0.5) {
-                AudioEngine.playVoice('ロン');
-                triggerCallAnnouncement('ロン！');
-                setTimeout(() => { hiragaWin('opp', win, false); }, 1000);
-                return;
+            if (win) {
+                let fullWords = [...GameState.hiragaMeldWordsOpp, ...win];
+                if (hiragaShouldTakeWin(fullWords, false, profile)) {
+                    AudioEngine.playVoice('ロン');
+                    triggerCallAnnouncement('ロン！');
+                    setTimeout(() => { hiragaWin('opp', win, false); }, 1000);
+                    return;
+                }
             }
+
+            // 鳴き判定(カン→ポンの順に検討)。天和・地和相当を仕込み中は崩さないよう鳴きを見送る
+            if (!GameState.riggedNextOppDrawHiraga) {
+                const kanOpts = hiragaOppKanOptions(tile);
+                if (kanOpts.length > 0 && Math.random() < (profile.hiragaCallRate || 0)) {
+                    let opt = kanOpts[Math.floor(Math.random() * kanOpts.length)];
+                    executeHiragaOppKan(tile, opt.word);
+                    return;
+                }
+                const ponOpts = hiragaOppPonOptions(tile);
+                if (ponOpts.length > 0 && Math.random() < (profile.hiragaCallRate || 0)) {
+                    let opt = ponOpts[Math.floor(Math.random() * ponOpts.length)];
+                    executeHiragaOppPon(tile, opt.word);
+                    return;
+                }
+            }
+
             hiragaAiTurn();
         }
 
         function hiragaAiTurn() {
             if (GameState.yama.length <= 0) return checkRyuukyoku();
             GameState.turn = 'opp';
-            GameState.handOpp.push(GameState.yama.pop());
+            let profile = getAiProfile();
+
+            if (GameState.riggedNextOppDrawHiraga) {
+                GameState.handOpp.push(GameState.riggedNextOppDrawHiraga);
+                GameState.riggedNextOppDrawHiraga = null;
+            } else {
+                GameState.handOpp.push(GameState.yama.pop());
+            }
             renderTable();
+
             const win = hiragaFindWin(GameState.handOpp);
-            if (win && GameState.kawaOpp.length >= 5 && Math.random() < 0.5) {
-                AudioEngine.playVoice('ツモ');
-                triggerCallAnnouncement('ツモ！');
-                setTimeout(() => { hiragaWin('opp', win, true); }, 1000);
+            if (win) {
+                let fullWords = [...GameState.hiragaMeldWordsOpp, ...win];
+                if (hiragaShouldTakeWin(fullWords, true, profile)) {
+                    AudioEngine.playVoice('ツモ');
+                    triggerCallAnnouncement('ツモ！');
+                    setTimeout(() => { hiragaWin('opp', win, true); }, 1000);
+                    return;
+                }
+            }
+
+            const ankanOpts = hiragaOppAnkanOptions();
+            if (ankanOpts.length > 0 && Math.random() < (profile.hiragaAnkanRate || 0)) {
+                let opt = ankanOpts[Math.floor(Math.random() * ankanOpts.length)];
+                executeHiragaOppAnkan(opt.word);
                 return;
             }
+
             setTimeout(() => { hiragaAiDiscard(); }, 800);
         }
 
@@ -3539,11 +4016,15 @@
         }
         function hiragaAiDiscard() {
             const hand = GameState.handOpp;
+            let profile = getAiProfile();
+            const skill = profile.hiragaSkill != null ? profile.hiragaSkill : 0.5;
             let worst = 0, worstScore = Infinity;
             for (let i = 0; i < hand.length; i++) {
                 const ch = hand[i].symbol;
                 const dup = hand.filter(t => t.symbol === ch).length;
-                const score = hiragaKanaFreq(ch) / dup + Math.random();
+                let score = hiragaKanaFreq(ch) / Math.max(dup, 1);
+                if (profile.hiragaYakumanOnly && hiragaGenreCharSet().has(ch)) score *= 1.6; // 役満(ジャンル統一等)の芽を残す
+                score += (Math.random() - 0.5) * 14 * (1 - skill);
                 if (score < worstScore) { worstScore = score; worst = i; }
             }
             const tile = hand.splice(worst, 1)[0];
@@ -3693,6 +4174,157 @@
             showMessage(`「${word}」が確定！ 1枚捨ててください`);
         }
 
+        // ===== ひらがじゃん: 相手AIの鳴き(ポン・カン・暗カン) =====
+        // 捨て牌+手牌2枚で完成する3文字ことばを列挙(相手のポン候補)
+        function hiragaOppPonOptions(tile) {
+            const ch = tile.symbol;
+            const options = [];
+            const handSyms = GameState.handOpp.map(t => t.symbol);
+            for (const w of Object.keys(HIRAGA_DICT3)) {
+                if (w.indexOf(ch) === -1) continue;
+                let rest = w.replace(ch, '');
+                if (rest.length !== 2) continue;
+                const i1 = handSyms.indexOf(rest[0]);
+                if (i1 === -1) continue;
+                const i2 = handSyms.findIndex((s, j) => j !== i1 && s === rest[1]);
+                if (i2 === -1) continue;
+                options.push({ label: `ポン「${w}」`, word: w, indices: [i1, i2] });
+            }
+            return options;
+        }
+
+        // 捨て牌+手牌3枚で完成する4文字ことばを列挙(相手のカン候補)
+        function hiragaOppKanOptions(tile) {
+            const ch = tile.symbol;
+            const options = [];
+            for (const w of Object.keys(HIRAGA_DICT4)) {
+                if (w.indexOf(ch) === -1) continue;
+                const rest = w.replace(ch, '');
+                if (rest.length !== 3) continue;
+                const used = [];
+                let ok = true;
+                for (const rc of rest) {
+                    const i = GameState.handOpp.findIndex((t, j) => !used.includes(j) && t.symbol === rc);
+                    if (i === -1) { ok = false; break; }
+                    used.push(i);
+                }
+                if (ok) options.push({ label: `カン「${w}」`, word: w, indices: used });
+            }
+            return options;
+        }
+
+        // 相手の手牌の中だけで完成している4文字ことば(相手の暗カン候補)
+        function hiragaOppAnkanOptions() {
+            const options = [];
+            for (const w of Object.keys(HIRAGA_DICT4)) {
+                const used = [];
+                let ok = true;
+                for (const ch of w) {
+                    const i = GameState.handOpp.findIndex((t, j) => !used.includes(j) && t.symbol === ch);
+                    if (i === -1) { ok = false; break; }
+                    used.push(i);
+                }
+                if (ok) options.push({ label: `暗カン「${w}」`, word: w, indices: used });
+            }
+            return options;
+        }
+
+        function executeHiragaOppPon(tile, word) {
+            AudioEngine.playVoice('ポン');
+            triggerCallAnnouncement('ポン！');
+            if (GameState.kawaPlayer.length > 0) {
+                GameState.kawaPlayer[GameState.kawaPlayer.length - 1].isCalled = true;
+            }
+            let handCopy = [...GameState.handOpp];
+            const meldTiles = [];
+            let discardUsed = false;
+            for (const ch of word) {
+                if (!discardUsed && ch === tile.symbol) { meldTiles.push({ type: 'k', val: tile.val, symbol: ch }); discardUsed = true; continue; }
+                const i = handCopy.findIndex(t => t.symbol === ch);
+                meldTiles.push({ type: 'k', val: handCopy[i].val, symbol: ch });
+                handCopy.splice(i, 1);
+            }
+            GameState.handOpp = handCopy;
+            GameState.meldsOpp.push({ type: 'pon', tiles: meldTiles });
+            GameState.hiragaMeldWordsOpp.push(word);
+            GameState.turn = 'opp';
+            renderTable();
+            showMessage(`相手が「${word}」を確定！`);
+            setTimeout(() => { hiragaAiDiscard(); }, 900);
+        }
+
+        function executeHiragaOppKan(tile, word) {
+            AudioEngine.playVoice('カン');
+            triggerCallAnnouncement('カン！');
+            if (GameState.kawaPlayer.length > 0) {
+                GameState.kawaPlayer[GameState.kawaPlayer.length - 1].isCalled = true;
+            }
+            let handCopy = [...GameState.handOpp];
+            const meldTiles = [];
+            let discardUsed = false;
+            for (const ch of word) {
+                if (!discardUsed && ch === tile.symbol) { meldTiles.push({ type: 'k', val: tile.val, symbol: ch }); discardUsed = true; continue; }
+                const i = handCopy.findIndex(t => t.symbol === ch);
+                meldTiles.push({ type: 'k', val: handCopy[i].val, symbol: ch });
+                handCopy.splice(i, 1);
+            }
+            GameState.handOpp = handCopy;
+            GameState.meldsOpp.push({ type: 'kan', tiles: meldTiles });
+            GameState.hiragaMeldWordsOpp.push(word);
+            let gotTile = false;
+            if (GameState.yama.length > 0) { GameState.handOpp.push(GameState.yama.pop()); gotTile = true; }
+            GameState.turn = 'opp';
+            renderTable();
+            showMessage(`相手が「${word}」を確定！`);
+            if (gotTile) {
+                const win = hiragaFindWin(GameState.handOpp);
+                if (win) {
+                    let profile = getAiProfile();
+                    let fullWords = [...GameState.hiragaMeldWordsOpp, ...win];
+                    if (hiragaShouldTakeWin(fullWords, true, profile)) {
+                        AudioEngine.playVoice('ツモ');
+                        triggerCallAnnouncement('ツモ！');
+                        setTimeout(() => { hiragaWin('opp', win, true); }, 1000);
+                        return;
+                    }
+                }
+            }
+            setTimeout(() => { hiragaAiDiscard(); }, 900);
+        }
+
+        function executeHiragaOppAnkan(word) {
+            AudioEngine.playVoice('カン');
+            triggerCallAnnouncement('カン！');
+            let handCopy = [...GameState.handOpp];
+            const meldTiles = [];
+            for (const ch of word) {
+                const i = handCopy.findIndex(t => t.symbol === ch);
+                meldTiles.push({ type: 'k', val: handCopy[i].val, symbol: ch });
+                handCopy.splice(i, 1);
+            }
+            GameState.handOpp = handCopy;
+            GameState.meldsOpp.push({ type: 'kan', tiles: meldTiles });
+            GameState.hiragaMeldWordsOpp.push(word);
+            let gotTile = false;
+            if (GameState.yama.length > 0) { GameState.handOpp.push(GameState.yama.pop()); gotTile = true; }
+            renderTable();
+            showMessage(`相手が「${word}」を確定！`);
+            if (gotTile) {
+                const win = hiragaFindWin(GameState.handOpp);
+                if (win) {
+                    let profile = getAiProfile();
+                    let fullWords = [...GameState.hiragaMeldWordsOpp, ...win];
+                    if (hiragaShouldTakeWin(fullWords, true, profile)) {
+                        AudioEngine.playVoice('ツモ');
+                        triggerCallAnnouncement('ツモ！');
+                        setTimeout(() => { hiragaWin('opp', win, true); }, 1000);
+                        return;
+                    }
+                }
+            }
+            setTimeout(() => { hiragaAiDiscard(); }, 900);
+        }
+
         function hiragaPlayerRonCheck(tile) {
             GameState.turn = 'player';
             const win = hiragaFindWin([...GameState.handPlayer, tile]);
@@ -3734,12 +4366,20 @@
 
         // ===== ひらがじゃん: 和了・採点・結果表示 =====
         function hiragaWin(winner, words, isTsumo) {
+            // ちびっ子ヒデェ子の即あがり用に仕込んだ牌が、その前に別の和了(ロン等)で
+            // 消費されずに残っていた場合は山へ戻しておく(牌数のつじつまを合わせる)
+            if (GameState.riggedNextOppDrawHiraga) {
+                GameState.yama.push(GameState.riggedNextOppDrawHiraga);
+                GameState.riggedNextOppDrawHiraga = null;
+            }
             AudioEngine.stopBGM();
             AudioEngine.playSE('agari');
 
-            // ポンで確定済みのことばを合算(常に5語で判定)
+            // ポン・カンで確定済みのことばを合算(常に5語で判定)
             if (winner === 'player' && GameState.hiragaMeldWords.length > 0) {
                 words = [...GameState.hiragaMeldWords, ...words];
+            } else if (winner === 'opp' && GameState.hiragaMeldWordsOpp.length > 0) {
+                words = [...GameState.hiragaMeldWordsOpp, ...words];
             }
 
             // 役判定
