@@ -701,6 +701,7 @@
       playerRoutePolylines: [],
       goalNodeIdx: null,
       nextDestinationCandidate: null,
+      cpuAutoCloseTimer: null,
 
       init() {
         this.renderAvatarGrid();
@@ -1598,9 +1599,41 @@
           extraBox.classList.add("hidden");
         }
         document.getElementById("event-modal").classList.remove("hidden");
+
+        const cp = this.players[this.currentPlayerIdx];
+        const modalBtn = document.querySelector("#event-modal button");
+
+        if (this.cpuAutoCloseTimer) {
+          clearInterval(this.cpuAutoCloseTimer);
+          this.cpuAutoCloseTimer = null;
+        }
+
+        if (cp && cp.isCpu) {
+          let count = 3;
+          if (modalBtn) modalBtn.innerText = `了解！ (自動進行: ${count}秒)`;
+          
+          this.cpuAutoCloseTimer = setInterval(() => {
+            count--;
+            if (count > 0) {
+              if (modalBtn) modalBtn.innerText = `了解！ (自動進行: ${count}秒)`;
+            } else {
+              if (this.cpuAutoCloseTimer) {
+                clearInterval(this.cpuAutoCloseTimer);
+                this.cpuAutoCloseTimer = null;
+              }
+              this.closeEventModal();
+            }
+          }, 1000);
+        } else {
+          if (modalBtn) modalBtn.innerText = "了解！";
+        }
       },
 
       closeEventModal() {
+        if (this.cpuAutoCloseTimer) {
+          clearInterval(this.cpuAutoCloseTimer);
+          this.cpuAutoCloseTimer = null;
+        }
         document.getElementById("event-modal").classList.add("hidden");
         this.finishTurn();
       },
