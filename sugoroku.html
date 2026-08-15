@@ -168,30 +168,24 @@
         <input type="text" id="player-name-input" value="プレイヤー1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-amber-300 focus:outline-none focus:border-amber-500 font-bold">
       </div>
 
-      <!-- QR Code & Countdown for 4 Players -->
-      <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col items-center text-center">
-        <div class="flex items-center justify-between w-full mb-2">
-          <span class="text-xs font-bold text-slate-400">参加待ち (4人必須)</span>
-          <span id="countdown-badge" class="px-2 py-0.5 bg-amber-500 text-slate-950 font-black text-xs rounded-full">10秒</span>
+      <!-- Multiplayer Recruitment Trigger Area -->
+      <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col items-center text-center space-y-2">
+        <div class="flex items-center justify-between w-full">
+          <span class="text-xs font-bold text-slate-400">マルチプレイ (4人対戦)</span>
+          <span id="room-status-badge" class="px-2 py-0.5 bg-slate-800 text-slate-300 font-bold text-[10px] rounded-full">オフライン / ホスト待機</span>
         </div>
-        
-        <div class="flex items-center gap-4 w-full">
-          <div id="qrcode-container" class="bg-white p-1.5 rounded-lg shrink-0 shadow-md"></div>
-          <div class="text-left flex-1">
-            <p class="text-xs text-slate-300 font-medium leading-relaxed">
-              スマホでQRを読み取るとゲームに参加できます！
-            </p>
-            <p class="text-[10px] text-slate-500 mt-1">※不足分はCPUが自動参加します</p>
-          </div>
-        </div>
-
-        <div id="joined-players-bar" class="grid grid-cols-4 gap-2 w-full mt-3"></div>
+        <p class="text-[11px] text-slate-400 text-left w-full">
+          他のスマホから参加者を募集して一緒にプレイできます！
+        </p>
+        <button id="recruit-btn" onclick="EdogawaSugoroku.openRecruitmentModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+          <span>👥</span> <span>参加者を募集（QRコード発行）</span>
+        </button>
       </div>
 
       <!-- Action Buttons -->
       <div class="space-y-2 pt-1">
         <button id="start-game-btn" onclick="EdogawaSugoroku.startGame()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-base">
-          <span>🚀</span> <span>今すぐゲーム開始</span>
+          <span>🚀</span> <span>ソロで今すぐ開始 (CPU対戦)</span>
         </button>
         <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeGame()" class="hidden w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-4 rounded-xl border border-slate-700 text-xs transition flex items-center justify-center gap-2">
           <span>💾</span> <span>前回の続きから遊ぶ</span>
@@ -293,6 +287,74 @@
       </div>
     </div>
   </footer>
+
+  <!-- MODAL: HOST RECRUITMENT QR MODAL (USER A) -->
+  <div id="host-recruitment-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="font-mincho font-bold text-amber-400 text-base flex items-center gap-1.5">
+          <span>👥</span> <span>参加者募集中</span>
+        </h3>
+        <button onclick="EdogawaSugoroku.closeRecruitmentModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
+      </div>
+
+      <div class="flex flex-col items-center justify-center space-y-2">
+        <div id="modal-qrcode-container" class="bg-white p-2.5 rounded-xl shadow-lg"></div>
+        <p class="text-xs text-slate-300 font-medium">
+          スマホのカメラで上のQRコードを撮影して参加してください
+        </p>
+      </div>
+
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="text-slate-400 font-bold">現在の参加人数:</span>
+          <span id="modal-participant-count" class="text-amber-400 font-extrabold text-sm">1名</span>
+        </div>
+        <div id="modal-participant-list" class="flex items-center justify-center gap-2 pt-1">
+          <!-- Dynamically filled with player avatars -->
+        </div>
+        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800">
+          <span class="text-slate-400">自動開始まで:</span>
+          <span id="modal-countdown-badge" class="px-2.5 py-0.5 bg-amber-500 text-slate-950 font-black rounded-full text-xs animate-pulse">30秒</span>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <button id="modal-force-start-btn" onclick="EdogawaSugoroku.forceStartMultiplayer()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg active:scale-95 transition text-sm">
+          🚀 今すぐ強制開始
+        </button>
+        <button onclick="EdogawaSugoroku.closeRecruitmentModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-semibold py-2 rounded-xl text-xs transition">
+          募集を取り消す
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GUEST WAITING MODAL (USER B, C - NON-INTERACTIVE) -->
+  <div id="guest-waiting-modal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
+    <div class="max-w-xs w-full space-y-5">
+      <div class="relative flex justify-center items-center">
+        <div class="w-20 h-20 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
+        <div class="absolute text-3xl animate-bounce">⏳</div>
+      </div>
+      
+      <div class="space-y-2">
+        <h3 class="font-mincho text-xl font-bold text-amber-400">招待者が準備してます</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          ホストがゲームを開始するまでこのままお待ちください。
+        </p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <div class="text-[11px] text-slate-400">現在の参加状況</div>
+        <div id="guest-participant-count" class="text-lg font-extrabold text-amber-300">参加人数 2名</div>
+        <div id="guest-participant-list" class="flex justify-center gap-2 pt-1"></div>
+        <div class="text-[10px] text-slate-500 pt-2 border-t border-slate-800/80">
+          カウントダウン終了またはホストの操作で自動開始します (<span id="guest-countdown-seconds" class="text-amber-400 font-bold">30</span>s)
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: EVENT POPUP -->
   <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -406,6 +468,16 @@
       </button>
     </div>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    window.FirebaseLib = {
+      initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot
+    };
+  </script>
 
   <script>
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
@@ -695,7 +767,7 @@
       facilityMarker: null,
       isRolling: false,
       countdownTimer: null,
-      countdownVal: 10,
+      countdownVal: 30,
       selectedCategoryWinnerIdx: 0,
       selectedCategoryName: "",
       playerRoutePolylines: [],
@@ -703,11 +775,17 @@
       nextDestinationCandidate: null,
       cpuAutoCloseTimer: null,
 
-      init() {
+      // Firebase & Room Multiplayer Props
+      db: null,
+      auth: null,
+      appId: typeof __app_id !== 'undefined' ? __app_id : 'edogawa-sugoroku-default',
+      roomId: null,
+      isHost: false,
+      myUid: null,
+      roomUnsubscribe: null,
+
+      async init() {
         this.renderAvatarGrid();
-        this.renderJoinedSlots();
-        this.generateQRCode();
-        this.startCountdown();
         this.checkSaveData();
         if (this.gmapsApiKey) {
           const input = document.getElementById("gmaps-api-key-input");
@@ -718,6 +796,40 @@
         document.addEventListener('click', () => {
           sound.init();
         }, { once: true });
+
+        // Check URL parameters for Room Joining (Guest Mode)
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinRoomId = urlParams.get('room');
+
+        if (joinRoomId) {
+          await this.initFirebase();
+          this.joinRoomAsGuest(joinRoomId);
+        }
+      },
+
+      async initFirebase() {
+        if (this.db) return;
+        try {
+          const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDummyKeyForFallback",
+            authDomain: "dummy.firebaseapp.com",
+            projectId: "dummy-project"
+          };
+          const app = window.FirebaseLib.initializeApp(config);
+          this.db = window.FirebaseLib.getFirestore(app);
+          this.auth = window.FirebaseLib.getAuth(app);
+
+          let cred;
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            cred = await window.FirebaseLib.signInWithCustomToken(this.auth, __initial_auth_token);
+          } else {
+            cred = await window.FirebaseLib.signInAnonymously(this.auth);
+          }
+          this.myUid = cred.user.uid;
+        } catch(e) {
+          console.warn("Firebase Init Fallback Mode:", e);
+          this.myUid = 'user_' + Math.random().toString(36).substring(2, 8);
+        }
       },
 
       tryFullscreen() {
@@ -749,64 +861,242 @@
       selectAvatar(emoji) {
         this.selectedAvatar = emoji;
         this.renderAvatarGrid();
-        this.updateJoinedPlayersUI();
       },
 
-      renderJoinedSlots() {
-        const container = document.getElementById("joined-players-bar");
-        if (!container) return;
-        container.innerHTML = [0, 1, 2, 3].map(i => `
-          <div id="slot-${i}" class="bg-slate-900 border border-slate-800 p-1.5 rounded-lg text-center flex flex-col items-center">
-            <span id="slot-avatar-${i}" class="text-xl">👤</span>
-            <span id="slot-name-${i}" class="text-[9px] text-slate-400 font-bold truncate w-full mt-0.5">待機中</span>
-          </div>
-        `).join("");
-      },
+      // --- MULTIPLAYER ROOM RECRUITMENT LOGIC ---
+      async openRecruitmentModal() {
+        await this.initFirebase();
+        this.isHost = true;
+        this.roomId = 'room_' + Math.floor(100000 + Math.random() * 900000);
+        this.countdownVal = 30;
 
-      updateJoinedPlayersUI() {
         const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
-        const s0A = document.getElementById("slot-avatar-0");
-        const s0N = document.getElementById("slot-name-0");
-        if (s0A) s0A.innerText = this.selectedAvatar;
-        if (s0N) s0N.innerText = pName;
+        const initialPlayers = [
+          { uid: this.myUid, name: pName, avatar: this.selectedAvatar, isHost: true }
+        ];
 
-        const availableAvatars = AVATAR_LIST.filter(a => a !== this.selectedAvatar);
-        for (let i = 1; i <= 3; i++) {
-          const sa = document.getElementById(`slot-avatar-${i}`);
-          const sn = document.getElementById(`slot-name-${i}`);
-          if (sa) sa.innerText = availableAvatars[i - 1] || "🤖";
-          if (sn) sn.innerText = `CPU ${i}`;
+        // Generate QR Code URL
+        const joinUrl = `${window.location.origin}${window.location.pathname}?room=${this.roomId}`;
+        const qrContainer = document.getElementById("modal-qrcode-container");
+        if (qrContainer) {
+          qrContainer.innerHTML = "";
+          try {
+            new QRCode(qrContainer, {
+              text: joinUrl,
+              width: 140,
+              height: 140,
+              colorDark: "#0f172a",
+              colorLight: "#ffffff"
+            });
+          } catch(e) {
+            qrContainer.innerHTML = "<div class='text-xs text-slate-500 p-4'>[QR Code Error]</div>";
+          }
         }
-      },
 
-      generateQRCode() {
-        const qrContainer = document.getElementById("qrcode-container");
-        if (!qrContainer) return;
-        qrContainer.innerHTML = "";
-        try {
-          new QRCode(qrContainer, {
-            text: window.location.href,
-            width: 64,
-            height: 64,
-            colorDark: "#0f172a",
-            colorLight: "#ffffff"
+        // Save Room Document in Firestore
+        if (this.db) {
+          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          await window.FirebaseLib.setDoc(roomRef, {
+            roomId: this.roomId,
+            hostUid: this.myUid,
+            status: 'waiting',
+            countdown: 30,
+            players: initialPlayers,
+            createdAt: Date.now()
           });
-        } catch(e) {
-          qrContainer.innerHTML = "<div class='text-[10px] text-slate-500 p-2'>[QR CODE]</div>";
+
+          // Listen for Guest Connections in real-time
+          this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const data = snapshot.data();
+            this.updateRecruitmentUI(data.players || [], data.countdown);
+
+            if (data.status === 'playing' && data.finalPlayers) {
+              this.startMultiplayerGameSession(data.finalPlayers);
+            }
+          }, (err) => console.error("Room Snapshot Error:", err));
+        }
+
+        document.getElementById("host-recruitment-modal").classList.remove("hidden");
+        this.startHostCountdown();
+      },
+
+      updateRecruitmentUI(playersList, countdown) {
+        const countBadge = document.getElementById("modal-participant-count");
+        if (countBadge) countBadge.innerText = `参加人数 ${playersList.length}名`;
+
+        const listContainer = document.getElementById("modal-participant-list");
+        if (listContainer) {
+          listContainer.innerHTML = playersList.map(p => `
+            <div class="w-8 h-8 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-sm shadow">
+              ${p.avatar}
+            </div>
+          `).join("");
+        }
+
+        const countdownBadge = document.getElementById("modal-countdown-badge");
+        if (countdownBadge && typeof countdown === 'number') {
+          countdownBadge.innerText = `${countdown}秒`;
         }
       },
 
-      startCountdown() {
-        const badge = document.getElementById("countdown-badge");
-        this.updateJoinedPlayersUI();
-        this.countdownTimer = setInterval(() => {
+      startHostCountdown() {
+        if (this.countdownTimer) clearInterval(this.countdownTimer);
+        this.countdownTimer = setInterval(async () => {
           this.countdownVal--;
-          if (badge) badge.innerText = `${this.countdownVal}秒`;
+          const countdownBadge = document.getElementById("modal-countdown-badge");
+          if (countdownBadge) countdownBadge.innerText = `${this.countdownVal}秒`;
+
+          // Sync countdown to Firestore
+          if (this.db && this.roomId) {
+            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            window.FirebaseLib.updateDoc(roomRef, { countdown: this.countdownVal }).catch(() => {});
+          }
+
           if (this.countdownVal <= 0) {
             clearInterval(this.countdownTimer);
-            this.startGame();
+            await this.forceStartMultiplayer();
           }
         }, 1000);
+      },
+
+      closeRecruitmentModal() {
+        if (this.countdownTimer) clearInterval(this.countdownTimer);
+        if (this.roomUnsubscribe) this.roomUnsubscribe();
+        document.getElementById("host-recruitment-modal").classList.add("hidden");
+      },
+
+      async forceStartMultiplayer() {
+        if (this.countdownTimer) clearInterval(this.countdownTimer);
+
+        let currentPlayers = [];
+        if (this.db && this.roomId) {
+          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          const snap = await window.FirebaseLib.getDoc(roomRef);
+          if (snap.exists()) {
+            currentPlayers = snap.data().players || [];
+          }
+        }
+
+        // Fill remaining slots with CPU up to 4 players
+        const availableAvatars = AVATAR_LIST.filter(a => !currentPlayers.some(p => p.avatar === a));
+        const finalPlayers = [...currentPlayers];
+
+        let cpuIdx = 1;
+        while (finalPlayers.length < 4) {
+          finalPlayers.push({
+            uid: `cpu_${cpuIdx}`,
+            name: `CPU ${cpuIdx}`,
+            avatar: availableAvatars[cpuIdx - 1] || "🤖",
+            isCpu: true
+          });
+          cpuIdx++;
+        }
+
+        // Update room status in Firestore so all connected guests start simultaneously
+        if (this.db && this.roomId) {
+          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          await window.FirebaseLib.updateDoc(roomRef, {
+            status: 'playing',
+            finalPlayers: finalPlayers
+          });
+        } else {
+          this.startMultiplayerGameSession(finalPlayers);
+        }
+      },
+
+      // --- GUEST JOIN LOGIC (USER B, C) ---
+      async joinRoomAsGuest(roomId) {
+        this.roomId = roomId;
+        this.isHost = false;
+
+        const guestModal = document.getElementById("guest-waiting-modal");
+        if (guestModal) guestModal.classList.remove("hidden");
+
+        if (this.db) {
+          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          const snap = await window.FirebaseLib.getDoc(roomRef);
+
+          if (snap.exists()) {
+            const data = snap.data();
+            let players = data.players || [];
+
+            // Add self if not already in list
+            if (!players.some(p => p.uid === this.myUid)) {
+              const myGuestName = `ゲスト ${players.length + 1}`;
+              const availableAvatars = AVATAR_LIST.filter(a => !players.some(p => p.avatar === a));
+              const myAvatar = availableAvatars[0] || "🧑";
+
+              players.push({
+                uid: this.myUid,
+                name: myGuestName,
+                avatar: myAvatar,
+                isCpu: false
+              });
+
+              await window.FirebaseLib.updateDoc(roomRef, { players: players });
+            }
+
+            // Real-time listener for countdown & start signal
+            this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
+              if (!snapshot.exists()) return;
+              const currentData = snapshot.data();
+              this.updateGuestWaitingUI(currentData.players || [], currentData.countdown);
+
+              if (currentData.status === 'playing' && currentData.finalPlayers) {
+                if (guestModal) guestModal.classList.add("hidden");
+                this.startMultiplayerGameSession(currentData.finalPlayers);
+              }
+            });
+          }
+        }
+      },
+
+      updateGuestWaitingUI(playersList, countdown) {
+        const countText = document.getElementById("guest-participant-count");
+        if (countText) countText.innerText = `参加人数 ${playersList.length}名`;
+
+        const listContainer = document.getElementById("guest-participant-list");
+        if (listContainer) {
+          listContainer.innerHTML = playersList.map(p => `
+            <div class="w-8 h-8 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-sm shadow">
+              ${p.avatar}
+            </div>
+          `).join("");
+        }
+
+        const secElem = document.getElementById("guest-countdown-seconds");
+        if (secElem && typeof countdown === 'number') {
+          secElem.innerText = countdown;
+        }
+      },
+
+      startMultiplayerGameSession(finalPlayersData) {
+        if (this.roomUnsubscribe) this.roomUnsubscribe();
+        document.getElementById("host-recruitment-modal").classList.add("hidden");
+        document.getElementById("guest-waiting-modal").classList.add("hidden");
+
+        this.players = finalPlayersData.map((p, idx) => ({
+          id: idx,
+          uid: p.uid,
+          name: p.name,
+          avatar: p.avatar,
+          color: PLAYER_COLORS[idx % PLAYER_COLORS.length],
+          money: 100000,
+          pos: 0,
+          vehicle: null,
+          skipTurn: false,
+          wheelchairTurns: 0,
+          isCpu: p.isCpu || false
+        }));
+
+        document.getElementById("lobby-screen").classList.add("hidden");
+        sound.playBGM('map');
+
+        this.initMap();
+        this.setupBoard(EDOGAWA_START, FIRST_GOAL);
+        this.updateHUD();
+        this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
       },
 
       checkSaveData() {
