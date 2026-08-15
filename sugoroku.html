@@ -360,6 +360,17 @@
     </div>
   </div>
 
+  <!-- OVERLAY: WAITING WHILE HOST RESOLVES GOAL / NEXT DESTINATION -->
+  <div id="mp-goal-wait-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
+    <div class="max-w-xs space-y-3">
+      <div class="text-4xl">🏆</div>
+      <div id="mp-goal-wait-text" class="text-sm font-bold text-amber-300 leading-relaxed">
+        ゴールしました！次の目的地をホストが選択中です…
+      </div>
+      <div class="text-[11px] text-slate-400">まもなく次のターンが始まります</div>
+    </div>
+  </div>
+
   <!-- MODAL: EVENT POPUP -->
   <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
@@ -463,16 +474,14 @@
     // 4. プロジェクト設定 → マイアプリ → ウェブアプリを追加し、表示された設定値を下に貼り付け
     // ※ここが空欄のままだと、QRコードの表示自体は行われますが、別端末との人数同期はできません（同一端末内のプレビューのみ）。
     const FIREBASE_CONFIG = {
-
-  apiKey: "AIzaSyD7OYQuzzjapkb-Kt2nHVbyi3u2ng0zo8E",
-  authDomain: "edogawa-sugoroku.firebaseapp.com",
-  projectId: "edogawa-sugoroku",
-  storageBucket: "edogawa-sugoroku.firebasestorage.app",
-  messagingSenderId: "674581954082",
-  appId: "1:674581954082:web:834c0711fcbad872c4947b",
-  measurementId: "G-LFEX859EVC"
-
-};
+      apiKey: "AIzaSyD7OYQuzzjapkb-Kt2nHVbyi3u2ng0zo8E",
+      authDomain: "edogawa-sugoroku.firebaseapp.com",
+      projectId: "edogawa-sugoroku",
+      storageBucket: "edogawa-sugoroku.firebasestorage.app",
+      messagingSenderId: "674581954082",
+      appId: "1:674581954082:web:834c0711fcbad872c4947b",
+      measurementId: "G-LFEX859EVC"
+    };
     // ▲▲▲ ここまで ▲▲▲
 
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
@@ -780,6 +789,12 @@
       firebaseInitAttempted: false,
       firebaseReady: false,
       recruitmentPlayers: [],
+      isMultiplayer: false,
+      gameStateVersion: 0,
+      lastAppliedEventSeq: 0,
+      eventSeq: 0,
+      lastEventForSync: null,
+      awaitingGoalSelection: null,
 
       async init() {
         this.renderAvatarGrid();
@@ -874,6 +889,11 @@
         // (missing/invalid Firebase project) prevent the button from doing anything.
         await this.initFirebase();
         this.isHost = true;
+        this.isMultiplayer = false;
+        this.gameStateVersion = 0;
+        this.lastAppliedEventSeq = 0;
+        this.eventSeq = 0;
+        this.awaitingGoalSelection = null;
         this.roomId = 'room_' + Math.floor(100000 + Math.random() * 900000);
         this.countdownVal = 30;
 
@@ -924,13 +944,7 @@
 
             this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
               if (!snapshot.exists()) return;
-              const data = snapshot.data();
-              this.recruitmentPlayers = data.players || this.recruitmentPlayers;
-              this.updateRecruitmentUI(this.recruitmentPlayers, data.countdown);
-
-              if (data.status === 'playing' && data.finalPlayers) {
-                this.startMultiplayerGameSession(data.finalPlayers);
-              }
+              this.handleRoomSnapshot(snapshot.data());
             }, (err) => console.error("Room Snapshot Error:", err));
           } catch(e) {
             console.error("ルーム作成に失敗しました。この端末内プレビューのみで続行します:", e);
@@ -1044,6 +1058,10 @@
       async joinRoomAsGuest(roomId) {
         this.roomId = roomId;
         this.isHost = false;
+        this.isMultiplayer = false;
+        this.gameStateVersion = 0;
+        this.lastAppliedEventSeq = 0;
+        this.awaitingGoalSelection = null;
 
         const guestModal = document.getElementById("guest-waiting-modal");
         if (guestModal) guestModal.classList.remove("hidden");
@@ -1098,16 +1116,21 @@
             await window.FirebaseLib.updateDoc(roomRef, { players: players });
           }
 
-          // Real-time listener for countdown & start signal
+          // Real-time listener for countdown, start signal, and (once playing) live game state
           this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
             if (!snapshot.exists()) return;
             const currentData = snapshot.data();
-            this.updateGuestWaitingUI(currentData.players || [], currentData.countdown);
 
-            if (currentData.status === 'playing' && currentData.finalPlayers) {
-              if (guestModal) guestModal.classList.add("hidden");
-              this.startMultiplayerGameSession(currentData.finalPlayers);
+            if (currentData.status === 'waiting') {
+              this.updateGuestWaitingUI(currentData.players || [], currentData.countdown);
+              return;
             }
+
+            if (currentData.status === 'playing' && guestModal && !guestModal.classList.contains("hidden")) {
+              guestModal.classList.add("hidden");
+            }
+
+            this.handleRoomSnapshot(currentData);
           }, (err) => console.error("Guest Snapshot Error:", err));
         } catch(e) {
           console.error("Failed to join room:", e);
@@ -1134,10 +1157,32 @@
         }
       },
 
+      // --- SHARED REALTIME ROOM HANDLER (host & guest) ---
+      // This single handler processes every Firestore snapshot for the room, both during
+      // the lobby ("waiting") phase and throughout the actual game ("playing" phase), so the
+      // multiplayer game state stays continuously synced instead of only being read once at start.
+      handleRoomSnapshot(data) {
+        if (data.status === 'playing') {
+          if (!this.isMultiplayer) {
+            // First time we see 'playing' on this device — boot the shared session.
+            this.startMultiplayerGameSession(data.finalPlayers || (data.gameState && data.gameState.players));
+          }
+          if (data.gameState) {
+            this.applyRemoteGameState(data.gameState);
+          }
+          if (this.isHost && data.gameState && data.gameState.pendingRoll) {
+            this.handlePendingRollRequest(data.gameState.pendingRoll);
+          }
+        }
+      },
+
       startMultiplayerGameSession(finalPlayersData) {
-        if (this.roomUnsubscribe) this.roomUnsubscribe();
         document.getElementById("host-recruitment-modal").classList.add("hidden");
         document.getElementById("guest-waiting-modal").classList.add("hidden");
+        // NOTE: intentionally do NOT unsubscribe from the room listener here — multiplayer
+        // needs to keep receiving live game-state updates for the rest of the session.
+
+        this.isMultiplayer = true;
 
         this.players = finalPlayersData.map((p, idx) => ({
           id: idx,
@@ -1156,11 +1201,197 @@
 
         document.getElementById("lobby-screen").classList.add("hidden");
         sound.playBGM('map');
-
         this.initMap();
-        this.setupBoard(EDOGAWA_START, FIRST_GOAL);
+
+        if (this.isHost) {
+          // The host is the single source of truth: it generates the board & random
+          // square layout once, then broadcasts it so every device sees the identical board.
+          this.setupBoard(EDOGAWA_START, FIRST_GOAL).then(() => {
+            this.updateHUD();
+            this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
+          });
+        } else {
+          // Guests never generate their own board (that would produce a different layout
+          // per device) — they wait here for the host's board to arrive via Firestore.
+          this.addLog("🎮 ゲーム開始！ホストが盤面を準備しています…");
+          this.updateHUD();
+        }
+      },
+
+      // --- MULTIPLAYER STATE SYNC (host → Firestore → all guests) ---
+      canActNow() {
+        if (!this.isMultiplayer) return true;
+        if (this.awaitingGoalSelection) return false;
+        const cp = this.players[this.currentPlayerIdx];
+        if (!cp) return false;
+        if (cp.isCpu) return this.isHost;
+        return cp.uid === this.myUid;
+      },
+
+      async syncGameStateToRoom() {
+        if (!this.isMultiplayer || !this.isHost || !this.db || !this.roomId) return;
+
+        this.gameStateVersion = (this.gameStateVersion || 0) + 1;
+
+        const payload = {
+          version: this.gameStateVersion,
+          turnCount: this.turnCount,
+          currentPlayerIdx: this.currentPlayerIdx,
+          destination: this.currentDestination ? {
+            name: this.currentDestination.name,
+            lat: this.currentDestination.lat,
+            lng: this.currentDestination.lng
+          } : null,
+          goalNodeIdx: this.goalNodeIdx,
+          boardNodes: this.roadNetworkNodes || [],
+          players: this.players.map(p => ({
+            uid: p.uid,
+            money: p.money,
+            currentNodeIdx: p.currentNodeIdx,
+            path: p.path || [],
+            pathIndex: p.pathIndex || 0,
+            vehicle: p.vehicle || null,
+            skipTurn: !!p.skipTurn,
+            wheelchairTurns: p.wheelchairTurns || 0,
+            forcedMoveCount: p.forcedMoveCount || 0
+          })),
+          pendingRoll: null,
+          awaitingGoalSelection: this.awaitingGoalSelection || null,
+          lastEvent: this.lastEventForSync || null,
+          eventSeq: this.eventSeq || 0
+        };
+
+        try {
+          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          await window.FirebaseLib.updateDoc(roomRef, { gameState: payload });
+        } catch(e) {
+          console.error("ゲーム状態の同期に失敗しました:", e);
+        }
+      },
+
+      async handlePendingRollRequest(pendingRoll) {
+        if (this.isRolling) return;
+        const cp = this.players[this.currentPlayerIdx];
+        if (!cp || cp.uid !== pendingRoll.uid) return;
+        this.rollDice();
+      },
+
+      async requestRollFromHost() {
+        if (!this.db || !this.roomId) { this.isRolling = false; return; }
+        try {
+          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          await window.FirebaseLib.updateDoc(roomRef, {
+            'gameState.pendingRoll': { uid: this.myUid, ts: Date.now() }
+          });
+        } catch(e) {
+          console.error("サイコロのリクエスト送信に失敗しました:", e);
+          this.isRolling = false;
+        }
+      },
+
+      applyRemoteGameState(gs) {
+        if (!gs) return;
+        if (typeof gs.version === 'number' && gs.version <= this.gameStateVersion) return;
+        this.gameStateVersion = gs.version || this.gameStateVersion;
+
+        const boardChanged = !this.roadNetworkNodes ||
+          this.roadNetworkNodes.length !== (gs.boardNodes || []).length ||
+          this.goalNodeIdx !== gs.goalNodeIdx;
+
+        this.roadNetworkNodes = gs.boardNodes || [];
+        this.goalNodeIdx = gs.goalNodeIdx;
+        if (gs.destination) this.currentDestination = gs.destination;
+
+        if (!this.isHost && boardChanged) {
+          const startNodeForDisplay = this.findNearestNodeIdx(EDOGAWA_START);
+          this.renderBoardVisuals(this.roadNetworkNodes, startNodeForDisplay, this.goalNodeIdx, this.currentDestination);
+        }
+
+        if (gs.players) {
+          if (!this.isHost) {
+            // Recreate markers if this is our first time seeing these players on this board
+            const needsMarkers = boardChanged || this.playerMarkers.length !== this.players.length;
+            gs.players.forEach(rp => {
+              const local = this.players.find(p => p.uid === rp.uid);
+              if (!local) return;
+              local.money = rp.money;
+              local.currentNodeIdx = rp.currentNodeIdx;
+              local.path = rp.path;
+              local.pathIndex = rp.pathIndex;
+              local.vehicle = rp.vehicle;
+              local.skipTurn = rp.skipTurn;
+              local.wheelchairTurns = rp.wheelchairTurns;
+              local.forcedMoveCount = rp.forcedMoveCount;
+            });
+
+            if (needsMarkers) {
+              this.playerMarkers.forEach(m => m && this.map.removeLayer(m));
+              this.playerMarkers = [];
+              this.players.forEach((p) => {
+                const node = this.roadNetworkNodes[p.currentNodeIdx];
+                if (!node) return;
+                const marker = L.marker([node.lat, node.lng], { icon: this.createPlayerIcon(p, "") }).addTo(this.map);
+                this.playerMarkers[p.id] = marker;
+              });
+              this.map.setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
+            } else {
+              this.players.forEach((p) => {
+                const node = this.roadNetworkNodes[p.currentNodeIdx];
+                const marker = this.playerMarkers[p.id];
+                if (marker && node) marker.setLatLng([node.lat, node.lng]);
+              });
+            }
+            this.updatePlayerRoutes();
+          }
+        }
+
+        if (typeof gs.currentPlayerIdx === 'number') this.currentPlayerIdx = gs.currentPlayerIdx;
+        if (typeof gs.turnCount === 'number') this.turnCount = gs.turnCount;
+
+        this.awaitingGoalSelection = gs.awaitingGoalSelection || null;
+        const waitOverlay = document.getElementById("mp-goal-wait-overlay");
+        if (waitOverlay) {
+          if (!this.isHost && this.awaitingGoalSelection) {
+            document.getElementById("mp-goal-wait-text").innerText =
+              `🏆 ${this.awaitingGoalSelection.winnerName} さんがゴールしました！\nホストが次の目的地を選んでいます…`;
+            waitOverlay.classList.remove("hidden");
+          } else {
+            waitOverlay.classList.add("hidden");
+          }
+        }
+
+        if (!this.isHost && gs.lastEvent && gs.eventSeq && gs.eventSeq !== this.lastAppliedEventSeq) {
+          this.lastAppliedEventSeq = gs.eventSeq;
+          this.showEventModalReadOnly(gs.lastEvent.title, gs.lastEvent.desc, gs.lastEvent.extra);
+        }
+
         this.updateHUD();
-        this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
+
+        if (!this.isHost && this.isRolling && (!gs.pendingRoll || gs.pendingRoll.uid !== this.myUid)) {
+          this.isRolling = false;
+          const cube = document.getElementById("dice-cube");
+          if (cube) cube.classList.remove("dice-rolling");
+        }
+      },
+
+      showEventModalReadOnly(title, desc, extra) {
+        document.getElementById("event-modal-title").innerText = title;
+        document.getElementById("event-modal-desc").innerText = desc;
+        const extraBox = document.getElementById("event-modal-extra");
+        if (extra) {
+          extraBox.innerText = extra;
+          extraBox.classList.remove("hidden");
+        } else {
+          extraBox.classList.add("hidden");
+        }
+        document.getElementById("event-modal").classList.remove("hidden");
+        const modalBtn = document.querySelector("#event-modal button");
+        if (modalBtn) modalBtn.innerText = "了解！";
+
+        if (this.guestEventAutoCloseTimer) clearTimeout(this.guestEventAutoCloseTimer);
+        this.guestEventAutoCloseTimer = setTimeout(() => {
+          document.getElementById("event-modal").classList.add("hidden");
+        }, 3000);
       },
 
       checkSaveData() {
@@ -1174,6 +1405,7 @@
       async startGame() {
         if (this.countdownTimer) clearInterval(this.countdownTimer);
         this.tryFullscreen();
+        this.isMultiplayer = false;
 
         const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
         const availableAvatars = AVATAR_LIST.filter(a => a !== this.selectedAvatar);
@@ -1198,6 +1430,7 @@
         const saved = localStorage.getItem("edogawa_sugoroku_state");
         if (!saved) return;
         this.tryFullscreen();
+        this.isMultiplayer = false;
 
         try {
           const state = JSON.parse(saved);
@@ -1251,26 +1484,13 @@
 
       async setupBoard(startLoc, goalLoc) {
         this.currentDestination = goalLoc;
-        document.getElementById("current-destination-name").innerText = goalLoc.name;
-        document.getElementById("mobile-destination-name").innerText = goalLoc.name;
 
-        // Clear previous map layers
-        if (this.roadPolylines.length) {
-          this.roadPolylines.forEach(p => this.map.removeLayer(p));
-          this.roadPolylines = [];
-        }
+        // Clear player markers/routes (road/spot/goal markers are cleared inside renderBoardVisuals)
         if (this.playerRoutePolylines.length) {
           this.playerRoutePolylines.forEach(p => this.map.removeLayer(p));
           this.playerRoutePolylines = [];
         }
-        if (this.destinationMarker) this.map.removeLayer(this.destinationMarker);
-        if (this.facilityMarker) {
-          this.map.removeLayer(this.facilityMarker);
-          this.facilityMarker = null;
-        }
-        this.spotMarkers.forEach(m => this.map.removeLayer(m));
         this.playerMarkers.forEach(m => this.map.removeLayer(m));
-        this.spotMarkers = [];
         this.playerMarkers = [];
 
         // Fetch OSRM street snapping
@@ -1283,28 +1503,79 @@
           roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 10);
         }
 
-        this.roadNetworkNodes = roadGraph.nodes;
+        const startNodeIdx = this.findNearestNodeIdx2(roadGraph.nodes, startLoc);
+        const goalNodeIdx = this.findNearestNodeIdx2(roadGraph.nodes, goalLoc);
 
-        // Draw base road lines
-        const sourceRoads = (osrmPath && osrmPath.length > 5) ? [osrmPath] : EDOGAWA_MAJOR_ROADS_HIGH_PRECISION;
-        sourceRoads.forEach(roadPoints => {
-          const latLngs = roadPoints.map(p => [p.lat, p.lng]);
-          const line = L.polyline(latLngs, {
-            color: '#334155',
-            weight: 8,
-            opacity: 0.5,
-            lineCap: 'round',
-            lineJoin: 'round'
+        this.renderBoardVisuals(roadGraph.nodes, startNodeIdx, goalNodeIdx, goalLoc);
+
+        // Reset all players to startNodeIdx on the newly generated network
+        this.players.forEach((p) => {
+          p.forcedMoveCount = 0;
+          p.currentNodeIdx = startNodeIdx;
+          p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
+          p.pathIndex = 0;
+
+          const startPt = this.roadNetworkNodes[p.currentNodeIdx] || startLoc;
+          const marker = L.marker([startPt.lat, startPt.lng], {
+            icon: this.createPlayerIcon(p, "")
           }).addTo(this.map);
-          this.roadPolylines.push(line);
+          this.playerMarkers[p.id] = marker;
         });
 
-        const startNodeIdx = this.findNearestNodeIdx(startLoc);
-        this.goalNodeIdx = this.findNearestNodeIdx(goalLoc);
+        this.updatePlayerRoutes();
+        this.map.setView([startLoc.lat, startLoc.lng], 19);
+
+        if (this.isMultiplayer && this.isHost) {
+          this.awaitingGoalSelection = null;
+          await this.syncGameStateToRoom();
+        }
+      },
+
+      // Draws the road background (as graph edges), spot markers, and goal marker for a given
+      // node graph. Used by the host right after generating the board, AND by guests to render
+      // the exact same board received from the host — so every device shows an identical layout.
+      renderBoardVisuals(nodes, startNodeIdx, goalNodeIdx, goalLoc) {
+        if (this.roadPolylines.length) {
+          this.roadPolylines.forEach(p => this.map.removeLayer(p));
+          this.roadPolylines = [];
+        }
+        if (this.destinationMarker) this.map.removeLayer(this.destinationMarker);
+        if (this.facilityMarker) {
+          this.map.removeLayer(this.facilityMarker);
+          this.facilityMarker = null;
+        }
+        this.spotMarkers.forEach(m => this.map.removeLayer(m));
+        this.spotMarkers = [];
+
+        this.roadNetworkNodes = nodes;
+        this.goalNodeIdx = goalNodeIdx;
+
+        document.getElementById("current-destination-name").innerText = goalLoc.name;
+        document.getElementById("mobile-destination-name").innerText = goalLoc.name;
+
+        // Draw road background as graph edges (each connection drawn once)
+        const drawnEdges = new Set();
+        nodes.forEach((node, idx) => {
+          (node.neighbors || []).forEach(nbrIdx => {
+            const key = idx < nbrIdx ? `${idx}_${nbrIdx}` : `${nbrIdx}_${idx}`;
+            if (drawnEdges.has(key)) return;
+            drawnEdges.add(key);
+            const nbr = nodes[nbrIdx];
+            if (!nbr) return;
+            const line = L.polyline([[node.lat, node.lng], [nbr.lat, nbr.lng]], {
+              color: '#334155',
+              weight: 8,
+              opacity: 0.5,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(this.map);
+            this.roadPolylines.push(line);
+          });
+        });
 
         // Sample spot markers
-        this.roadNetworkNodes.forEach((node, idx) => {
-          if (idx === startNodeIdx || idx === this.goalNodeIdx) return;
+        nodes.forEach((node, idx) => {
+          if (idx === startNodeIdx || idx === goalNodeIdx) return;
 
           let iconHtml = '';
           if (node.type === 'red') {
@@ -1333,23 +1604,19 @@
           iconAnchor: [40, 20]
         });
         this.destinationMarker = L.marker([goalLoc.lat, goalLoc.lng], { icon: goalIcon }).addTo(this.map);
+      },
 
-        // Reset all players to startNodeIdx on the newly generated network
-        this.players.forEach((p) => {
-          p.forcedMoveCount = 0;
-          p.currentNodeIdx = startNodeIdx;
-          p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
-          p.pathIndex = 0;
-
-          const startPt = this.roadNetworkNodes[p.currentNodeIdx] || startLoc;
-          const marker = L.marker([startPt.lat, startPt.lng], {
-            icon: this.createPlayerIcon(p, "")
-          }).addTo(this.map);
-          this.playerMarkers[p.id] = marker;
+      findNearestNodeIdx2(nodes, loc) {
+        let minDist = Infinity;
+        let nearestIdx = 0;
+        nodes.forEach((node, idx) => {
+          const dist = Math.hypot(node.lat - loc.lat, node.lng - loc.lng);
+          if (dist < minDist) {
+            minDist = dist;
+            nearestIdx = idx;
+          }
         });
-
-        this.updatePlayerRoutes();
-        this.map.setView([startLoc.lat, startLoc.lng], 19);
+        return nearestIdx;
       },
 
       updatePlayerRoutes() {
@@ -1558,22 +1825,31 @@
         }).join("");
 
         const rollBtn = document.getElementById("roll-dice-btn");
-        if (cp.isCpu || this.isRolling) {
-          rollBtn.disabled = true;
-          rollBtn.classList.add("opacity-50", "pointer-events-none");
-        } else {
-          rollBtn.disabled = false;
-          rollBtn.classList.remove("opacity-50", "pointer-events-none");
-        }
+        const canRollNow = this.canActNow() && !this.isRolling;
+        rollBtn.disabled = !canRollNow;
+        rollBtn.classList.toggle("opacity-50", !canRollNow);
+        rollBtn.classList.toggle("pointer-events-none", !canRollNow);
 
-        if (cp.isCpu && !this.isRolling) {
+        // Only the host auto-drives CPU turns in multiplayer (otherwise every device would
+        // try to roll for the CPU at once). In solo mode this device is always authoritative.
+        if ((!this.isMultiplayer || this.isHost) && cp.isCpu && !this.isRolling) {
           setTimeout(() => this.rollDice(), 1200);
         }
       },
 
       rollDice() {
         if (this.isRolling) return;
+        if (!this.canActNow()) return;
         const cp = this.players[this.currentPlayerIdx];
+
+        if (this.isMultiplayer && !this.isHost) {
+          // Guests never resolve dice locally (that would let every device run its own
+          // independent random outcome). Instead, ask the host — the single source of
+          // truth — to roll on our behalf; the result arrives via the next synced state.
+          this.isRolling = true;
+          this.requestRollFromHost();
+          return;
+        }
 
         if (cp.skipTurn) {
           cp.skipTurn = false;
@@ -1889,6 +2165,11 @@
         this.selectedCategoryWinnerIdx = player.id;
         this.addLog(`🏆 【GOAL!】 ${player.name} が ${this.currentDestination.name} に到達！賞金¥100,000獲得！`);
 
+        if (this.isMultiplayer && this.isHost) {
+          this.awaitingGoalSelection = { winnerUid: player.uid, winnerName: player.name };
+          this.syncGameStateToRoom();
+        }
+
         if (player.isCpu) {
           const categories = ["飲食店", "スーパー（薬屋含む）", "公園", "駅（バス停含む）"];
           const randomCat = categories[Math.floor(Math.random() * categories.length)];
@@ -1954,9 +2235,14 @@
 
         this.updateHUD();
         this.saveGameState();
+
+        if (this.isMultiplayer && this.isHost) {
+          this.syncGameStateToRoom();
+        }
       },
 
       saveGameState() {
+        if (this.isMultiplayer) return; // multiplayer sessions live in Firestore, not local save
         const state = {
           players: this.players,
           turnCount: this.turnCount,
@@ -1981,12 +2267,22 @@
         const cp = this.players[this.currentPlayerIdx];
         const modalBtn = document.querySelector("#event-modal button");
 
+        // In multiplayer, only the device controlling the current player's own turn shows a
+        // manual "了解" button — every other case (CPU turns, and any other human's turn
+        // being resolved here by the host) auto-continues after a few seconds.
+        const isSelfManualTurn = this.isMultiplayer ? (cp && cp.uid === this.myUid) : (cp && !cp.isCpu);
+
+        if (this.isMultiplayer && this.isHost) {
+          this.lastEventForSync = { title, desc, extra };
+          this.eventSeq = (this.eventSeq || 0) + 1;
+        }
+
         if (this.cpuAutoCloseTimer) {
           clearInterval(this.cpuAutoCloseTimer);
           this.cpuAutoCloseTimer = null;
         }
 
-        if (cp && cp.isCpu) {
+        if (cp && !isSelfManualTurn) {
           let count = 3;
           if (modalBtn) modalBtn.innerText = `了解！ (自動進行: ${count}秒)`;
           
@@ -2012,8 +2308,16 @@
           clearInterval(this.cpuAutoCloseTimer);
           this.cpuAutoCloseTimer = null;
         }
+        if (this.guestEventAutoCloseTimer) {
+          clearTimeout(this.guestEventAutoCloseTimer);
+          this.guestEventAutoCloseTimer = null;
+        }
         document.getElementById("event-modal").classList.add("hidden");
-        this.finishTurn();
+        // Guests never advance the shared turn themselves — only the host (or a solo game)
+        // is authoritative and moves the game forward.
+        if (!this.isMultiplayer || this.isHost) {
+          this.finishTurn();
+        }
       },
 
       openLogModal() {
@@ -2046,14 +2350,5 @@
       EdogawaSugoroku.init();
     });
   </script>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-LFEX859EVC"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-LFEX859EVC');
-</script>
 </body>
 </html>
