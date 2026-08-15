@@ -218,9 +218,6 @@
       <button id="bgm-toggle-btn" onclick="EdogawaSugoroku.toggleBGM()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-amber-400 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="BGM ON/OFF">
         <span id="bgm-icon">🎵</span> <span class="hidden sm:inline" id="bgm-label">BGM ON</span>
       </button>
-      <button onclick="EdogawaSugoroku.openApiKeyModal()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-amber-400 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="Google Maps APIキー設定">
-        <span>🔑</span> <span class="hidden sm:inline">Google API</span>
-      </button>
       <button onclick="EdogawaSugoroku.toggleFullscreen()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition" title="全画面モード">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
       </button>
@@ -260,6 +257,7 @@
             <span id="active-player-status-badge" class="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] rounded font-bold">
               あなたの番
             </span>
+            <span id="active-player-remaining" class="px-1.5 py-0.2 bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] rounded font-bold whitespace-nowrap">あと-マス</span>
           </div>
           <div class="text-xs text-amber-400 font-extrabold flex items-center gap-2">
             <span id="active-player-money">所持金: ¥100,000</span>
@@ -305,6 +303,10 @@
         </p>
       </div>
 
+      <div id="modal-firebase-warning" class="hidden text-[11px] text-amber-300 bg-amber-950/40 border border-amber-800/50 rounded-lg p-2 text-left leading-relaxed">
+        ⚠️ 現在サーバー未設定のため、この端末内でのプレビュー表示のみです。他の端末の参加人数は自動反映されません（コード内のFIREBASE_CONFIGを設定すると有効になります）。
+      </div>
+
       <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
         <div class="flex items-center justify-between text-xs">
           <span class="text-slate-400 font-bold">現在の参加人数:</span>
@@ -345,14 +347,16 @@
         </p>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+      <div id="guest-waiting-normal" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
         <div class="text-[11px] text-slate-400">現在の参加状況</div>
-        <div id="guest-participant-count" class="text-lg font-extrabold text-amber-300">参加人数 2名</div>
+        <div id="guest-participant-count" class="text-lg font-extrabold text-amber-300">参加人数 1名</div>
         <div id="guest-participant-list" class="flex justify-center gap-2 pt-1"></div>
         <div class="text-[10px] text-slate-500 pt-2 border-t border-slate-800/80">
           カウントダウン終了またはホストの操作で自動開始します (<span id="guest-countdown-seconds" class="text-amber-400 font-bold">30</span>s)
         </div>
       </div>
+
+      <div id="guest-waiting-error" class="hidden bg-rose-950/40 border border-rose-800/50 rounded-2xl p-4 text-xs text-rose-200 leading-relaxed"></div>
     </div>
   </div>
 
@@ -427,34 +431,6 @@
     </div>
   </div>
 
-  <!-- MODAL: GOOGLE MAPS API KEY CONFIG -->
-  <div id="api-key-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 text-left shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="font-mincho font-bold text-amber-400 text-base">🔑 Google Maps API設定</h3>
-        <button onclick="EdogawaSugoroku.closeApiKeyModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
-      </div>
-      <p class="text-xs text-slate-300 leading-relaxed">
-        Google Maps API Key（<code class="text-amber-300">Directions API</code> / <code class="text-amber-300">Maps JS API</code> 有効化済み）を入力すると、Google標準地図タイルおよび公式道路ルーティングを直接読み込むことができます。
-      </p>
-      <p class="text-[11px] text-emerald-400 bg-emerald-950/50 p-2 rounded border border-emerald-800/50">
-        ※キーが未入力でも、標準でOSRM超高精度道路ルーティング（建物回避・道路吸着100%）が全自動動作します。
-      </p>
-      <div>
-        <label class="block text-xs font-bold text-slate-300 mb-1">Google Maps API Key</label>
-        <input type="text" id="gmaps-api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-amber-300 focus:outline-none focus:border-amber-500 font-mono">
-      </div>
-      <div class="flex gap-2">
-        <button onclick="EdogawaSugoroku.saveApiKey()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-xs shadow-md transition">
-          保存して適用
-        </button>
-        <button onclick="EdogawaSugoroku.closeApiKeyModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-xl text-xs transition">
-          閉じる
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- MODAL: LOG HISTORY -->
   <div id="log-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full h-[70vh] p-5 flex flex-col justify-between shadow-2xl">
@@ -480,6 +456,22 @@
   </script>
 
   <script>
+    // ▼▼▼ マルチプレイ（複数端末でのQR参加受付）を有効にするには、ここに実際のFirebaseプロジェクトの設定を貼り付けてください ▼▼▼
+    // 1. https://console.firebase.google.com/ で新規プロジェクトを作成
+    // 2. 「Firestore Database」を作成（テストモードで可）
+    // 3. 「Authentication」→「Sign-in method」で「匿名」を有効化
+    // 4. プロジェクト設定 → マイアプリ → ウェブアプリを追加し、表示された設定値を下に貼り付け
+    // ※ここが空欄のままだと、QRコードの表示自体は行われますが、別端末との人数同期はできません（同一端末内のプレビューのみ）。
+    const FIREBASE_CONFIG = {
+      apiKey: "",
+      authDomain: "",
+      projectId: "",
+      storageBucket: "",
+      messagingSenderId: "",
+      appId: ""
+    };
+    // ▲▲▲ ここまで ▲▲▲
+
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
     const EDOGAWA_START = {
       name: "西葛西駅",
@@ -753,7 +745,6 @@
     // --- MAIN GAME APPLICATION ENGINE ---
     window.EdogawaSugoroku = {
       map: null,
-      gmapsApiKey: localStorage.getItem("gmaps_api_key") || "",
       selectedAvatar: "🧑‍🦱",
       players: [],
       currentPlayerIdx: 0,
@@ -783,14 +774,13 @@
       isHost: false,
       myUid: null,
       roomUnsubscribe: null,
+      firebaseInitAttempted: false,
+      firebaseReady: false,
+      recruitmentPlayers: [],
 
       async init() {
         this.renderAvatarGrid();
         this.checkSaveData();
-        if (this.gmapsApiKey) {
-          const input = document.getElementById("gmaps-api-key-input");
-          if (input) input.value = this.gmapsApiKey;
-        }
 
         sound.playBGM('lobby');
         document.addEventListener('click', () => {
@@ -808,15 +798,23 @@
       },
 
       async initFirebase() {
-        if (this.db) return;
+        if (this.firebaseInitAttempted) return;
+        this.firebaseInitAttempted = true;
+
+        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
+        const hasRealConfig = !!(config && config.apiKey && config.projectId);
+
+        if (!hasRealConfig) {
+          console.warn("Firebase未設定のため、複数端末でのリアルタイム参加同期は無効です（QR表示自体はローカルで動作します）。");
+          this.myUid = this.myUid || ('user_' + Math.random().toString(36).substring(2, 8));
+          this.db = null;
+          this.firebaseReady = false;
+          return;
+        }
+
         try {
-          const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyDummyKeyForFallback",
-            authDomain: "dummy.firebaseapp.com",
-            projectId: "dummy-project"
-          };
           const app = window.FirebaseLib.initializeApp(config);
-          this.db = window.FirebaseLib.getFirestore(app);
+          const db = window.FirebaseLib.getFirestore(app);
           this.auth = window.FirebaseLib.getAuth(app);
 
           let cred;
@@ -826,9 +824,13 @@
             cred = await window.FirebaseLib.signInAnonymously(this.auth);
           }
           this.myUid = cred.user.uid;
+          this.db = db;
+          this.firebaseReady = true;
         } catch(e) {
           console.warn("Firebase Init Fallback Mode:", e);
-          this.myUid = 'user_' + Math.random().toString(36).substring(2, 8);
+          this.myUid = this.myUid || ('user_' + Math.random().toString(36).substring(2, 8));
+          this.db = null;
+          this.firebaseReady = false;
         }
       },
 
@@ -865,15 +867,18 @@
 
       // --- MULTIPLAYER ROOM RECRUITMENT LOGIC ---
       async openRecruitmentModal() {
+        // Show the modal & QR code immediately — never let a backend problem
+        // (missing/invalid Firebase project) prevent the button from doing anything.
         await this.initFirebase();
         this.isHost = true;
         this.roomId = 'room_' + Math.floor(100000 + Math.random() * 900000);
         this.countdownVal = 30;
 
-        const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
+        const pName = document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
         const initialPlayers = [
           { uid: this.myUid, name: pName, avatar: this.selectedAvatar, isHost: true }
         ];
+        this.recruitmentPlayers = initialPlayers;
 
         // Generate QR Code URL
         const joinUrl = `${window.location.origin}${window.location.pathname}?room=${this.roomId}`;
@@ -893,32 +898,43 @@
           }
         }
 
-        // Save Room Document in Firestore
-        if (this.db) {
-          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          await window.FirebaseLib.setDoc(roomRef, {
-            roomId: this.roomId,
-            hostUid: this.myUid,
-            status: 'waiting',
-            countdown: 30,
-            players: initialPlayers,
-            createdAt: Date.now()
-          });
-
-          // Listen for Guest Connections in real-time
-          this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
-            if (!snapshot.exists()) return;
-            const data = snapshot.data();
-            this.updateRecruitmentUI(data.players || [], data.countdown);
-
-            if (data.status === 'playing' && data.finalPlayers) {
-              this.startMultiplayerGameSession(data.finalPlayers);
-            }
-          }, (err) => console.error("Room Snapshot Error:", err));
-        }
+        this.updateRecruitmentUI(initialPlayers, this.countdownVal);
+        const warningBox = document.getElementById("modal-firebase-warning");
+        if (warningBox) warningBox.classList.toggle("hidden", !!this.firebaseReady);
 
         document.getElementById("host-recruitment-modal").classList.remove("hidden");
         this.startHostCountdown();
+
+        // Best-effort: sync the room via Firestore so other devices can join.
+        // Any failure here must never break the UI that's already showing.
+        if (this.db) {
+          try {
+            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            await window.FirebaseLib.setDoc(roomRef, {
+              roomId: this.roomId,
+              hostUid: this.myUid,
+              status: 'waiting',
+              countdown: this.countdownVal,
+              players: initialPlayers,
+              createdAt: Date.now()
+            });
+
+            this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
+              if (!snapshot.exists()) return;
+              const data = snapshot.data();
+              this.recruitmentPlayers = data.players || this.recruitmentPlayers;
+              this.updateRecruitmentUI(this.recruitmentPlayers, data.countdown);
+
+              if (data.status === 'playing' && data.finalPlayers) {
+                this.startMultiplayerGameSession(data.finalPlayers);
+              }
+            }, (err) => console.error("Room Snapshot Error:", err));
+          } catch(e) {
+            console.error("ルーム作成に失敗しました。この端末内プレビューのみで続行します:", e);
+            this.db = null;
+            if (warningBox) warningBox.classList.remove("hidden");
+          }
+        }
       },
 
       updateRecruitmentUI(playersList, countdown) {
@@ -947,10 +963,12 @@
           const countdownBadge = document.getElementById("modal-countdown-badge");
           if (countdownBadge) countdownBadge.innerText = `${this.countdownVal}秒`;
 
-          // Sync countdown to Firestore
+          // Sync countdown to Firestore (best-effort, never blocks the local timer)
           if (this.db && this.roomId) {
-            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            window.FirebaseLib.updateDoc(roomRef, { countdown: this.countdownVal }).catch(() => {});
+            try {
+              const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+              await window.FirebaseLib.updateDoc(roomRef, { countdown: this.countdownVal });
+            } catch(e) { /* ignore — local countdown still drives forceStart below */ }
           }
 
           if (this.countdownVal <= 0) {
@@ -969,12 +987,20 @@
       async forceStartMultiplayer() {
         if (this.countdownTimer) clearInterval(this.countdownTimer);
 
-        let currentPlayers = [];
+        const pName = document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
+        let currentPlayers = this.recruitmentPlayers && this.recruitmentPlayers.length
+          ? this.recruitmentPlayers
+          : [{ uid: this.myUid, name: pName, avatar: this.selectedAvatar, isHost: true }];
+
         if (this.db && this.roomId) {
-          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          const snap = await window.FirebaseLib.getDoc(roomRef);
-          if (snap.exists()) {
-            currentPlayers = snap.data().players || [];
+          try {
+            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            const snap = await window.FirebaseLib.getDoc(roomRef);
+            if (snap.exists() && snap.data().players && snap.data().players.length) {
+              currentPlayers = snap.data().players;
+            }
+          } catch(e) {
+            console.error("最新の参加者一覧の取得に失敗。手元の情報で開始します:", e);
           }
         }
 
@@ -995,11 +1021,17 @@
 
         // Update room status in Firestore so all connected guests start simultaneously
         if (this.db && this.roomId) {
-          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          await window.FirebaseLib.updateDoc(roomRef, {
-            status: 'playing',
-            finalPlayers: finalPlayers
-          });
+          try {
+            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            await window.FirebaseLib.updateDoc(roomRef, {
+              status: 'playing',
+              finalPlayers: finalPlayers
+            });
+            // The host's own onSnapshot listener above will pick this up and start the game.
+          } catch(e) {
+            console.error("開始通知の送信に失敗。この端末のみでゲームを開始します:", e);
+            this.startMultiplayerGameSession(finalPlayers);
+          }
         } else {
           this.startMultiplayerGameSession(finalPlayers);
         }
@@ -1013,42 +1045,70 @@
         const guestModal = document.getElementById("guest-waiting-modal");
         if (guestModal) guestModal.classList.remove("hidden");
 
-        if (this.db) {
+        await this.initFirebase();
+
+        const showGuestError = (msg) => {
+          const normalBox = document.getElementById("guest-waiting-normal");
+          const errorBox = document.getElementById("guest-waiting-error");
+          if (normalBox) normalBox.classList.add("hidden");
+          if (errorBox) {
+            errorBox.textContent = msg;
+            errorBox.classList.remove("hidden");
+          }
+        };
+
+        if (!this.db) {
+          showGuestError("⚠️ サーバー未設定のため、ホストの端末とリアルタイム同期できません。ホスト側でFIREBASE_CONFIGの設定が必要です。");
+          return;
+        }
+
+        try {
           const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
           const snap = await window.FirebaseLib.getDoc(roomRef);
 
-          if (snap.exists()) {
-            const data = snap.data();
-            let players = data.players || [];
-
-            // Add self if not already in list
-            if (!players.some(p => p.uid === this.myUid)) {
-              const myGuestName = `ゲスト ${players.length + 1}`;
-              const availableAvatars = AVATAR_LIST.filter(a => !players.some(p => p.avatar === a));
-              const myAvatar = availableAvatars[0] || "🧑";
-
-              players.push({
-                uid: this.myUid,
-                name: myGuestName,
-                avatar: myAvatar,
-                isCpu: false
-              });
-
-              await window.FirebaseLib.updateDoc(roomRef, { players: players });
-            }
-
-            // Real-time listener for countdown & start signal
-            this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
-              if (!snapshot.exists()) return;
-              const currentData = snapshot.data();
-              this.updateGuestWaitingUI(currentData.players || [], currentData.countdown);
-
-              if (currentData.status === 'playing' && currentData.finalPlayers) {
-                if (guestModal) guestModal.classList.add("hidden");
-                this.startMultiplayerGameSession(currentData.finalPlayers);
-              }
-            });
+          if (!snap.exists()) {
+            showGuestError("招待ルームが見つかりませんでした。QRコードを再度読み込んでください。");
+            return;
           }
+
+          const data = snap.data();
+          let players = data.players || [];
+
+          if (players.length >= 4 && !players.some(p => p.uid === this.myUid)) {
+            showGuestError("この部屋はすでに満員です（最大4名）。");
+            return;
+          }
+
+          // Add self if not already in list
+          if (!players.some(p => p.uid === this.myUid)) {
+            const myGuestName = `ゲスト ${players.length + 1}`;
+            const availableAvatars = AVATAR_LIST.filter(a => !players.some(p => p.avatar === a));
+            const myAvatar = availableAvatars[0] || "🧑";
+
+            players.push({
+              uid: this.myUid,
+              name: myGuestName,
+              avatar: myAvatar,
+              isCpu: false
+            });
+
+            await window.FirebaseLib.updateDoc(roomRef, { players: players });
+          }
+
+          // Real-time listener for countdown & start signal
+          this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+            const currentData = snapshot.data();
+            this.updateGuestWaitingUI(currentData.players || [], currentData.countdown);
+
+            if (currentData.status === 'playing' && currentData.finalPlayers) {
+              if (guestModal) guestModal.classList.add("hidden");
+              this.startMultiplayerGameSession(currentData.finalPlayers);
+            }
+          }, (err) => console.error("Guest Snapshot Error:", err));
+        } catch(e) {
+          console.error("Failed to join room:", e);
+          showGuestError("参加処理に失敗しました。ネットワーク環境をご確認のうえ、もう一度QRコードを読み込んでください。");
         }
       },
 
@@ -1087,6 +1147,7 @@
           vehicle: null,
           skipTurn: false,
           wheelchairTurns: 0,
+          forcedMoveCount: 0,
           isCpu: p.isCpu || false
         }));
 
@@ -1115,10 +1176,10 @@
         const availableAvatars = AVATAR_LIST.filter(a => a !== this.selectedAvatar);
 
         this.players = [
-          { id: 0, name: pName, avatar: this.selectedAvatar, color: PLAYER_COLORS[0], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: false },
-          { id: 1, name: "CPU 1", avatar: availableAvatars[0], color: PLAYER_COLORS[1], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: true },
-          { id: 2, name: "CPU 2", avatar: availableAvatars[2], color: PLAYER_COLORS[2], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: true },
-          { id: 3, name: "CPU 3", avatar: availableAvatars[3], color: PLAYER_COLORS[3], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, isCpu: true }
+          { id: 0, name: pName, avatar: this.selectedAvatar, color: PLAYER_COLORS[0], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: false },
+          { id: 1, name: "CPU 1", avatar: availableAvatars[0], color: PLAYER_COLORS[1], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
+          { id: 2, name: "CPU 2", avatar: availableAvatars[1], color: PLAYER_COLORS[2], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
+          { id: 3, name: "CPU 3", avatar: availableAvatars[2], color: PLAYER_COLORS[3], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true }
         ];
 
         document.getElementById("lobby-screen").classList.add("hidden");
@@ -1138,6 +1199,7 @@
         try {
           const state = JSON.parse(saved);
           this.players = state.players;
+          this.players.forEach(p => { if (typeof p.forcedMoveCount !== 'number') p.forcedMoveCount = 0; });
           this.turnCount = state.turnCount;
           this.currentPlayerIdx = state.currentPlayerIdx;
           this.currentDestination = state.currentDestination;
@@ -1271,6 +1333,7 @@
 
         // Reset all players to startNodeIdx on the newly generated network
         this.players.forEach((p) => {
+          p.forcedMoveCount = 0;
           p.currentNodeIdx = startNodeIdx;
           p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
           p.pathIndex = 0;
@@ -1440,6 +1503,11 @@
         });
       },
 
+      remainingSquares(p) {
+        if (!p.path || !p.path.length) return null;
+        return Math.max(0, (p.path.length - 1) - (p.pathIndex || 0));
+      },
+
       updateHUD() {
         const cp = this.players[this.currentPlayerIdx];
 
@@ -1451,6 +1519,10 @@
         document.getElementById("active-player-name").innerText = cp.name;
         document.getElementById("active-player-money").innerText = `所持金: ¥${cp.money.toLocaleString()}`;
         document.getElementById("active-player-vehicle").innerText = cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '';
+
+        const cpRemaining = this.remainingSquares(cp);
+        const remainingBadge = document.getElementById("active-player-remaining");
+        if (remainingBadge) remainingBadge.innerText = cpRemaining === null ? "あと-マス" : `あと${cpRemaining}マス`;
 
         const badge = document.getElementById("active-player-status-badge");
         if (cp.skipTurn) {
@@ -1468,6 +1540,7 @@
         cardsContainer.innerHTML = this.players.map((p, idx) => {
           const isActive = idx === this.currentPlayerIdx;
           const cardAvatar = p.wheelchairTurns > 0 ? '🦽' : (p.vehicle ? p.vehicle.emoji : p.avatar);
+          const pRemaining = this.remainingSquares(p);
           return `
             <div class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} border p-2 rounded-xl flex flex-col justify-between transition">
               <div class="flex items-center justify-between">
@@ -1476,6 +1549,7 @@
               </div>
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold text-amber-400">¥${(p.money/10000).toFixed(1)}万</div>
+              <div class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : `あと${pRemaining}マス`}</div>
             </div>
           `;
         }).join("");
@@ -1637,9 +1711,18 @@
       },
 
       resolveYellowEvent(player) {
-        const roll = Math.random();
+        if (typeof player.forcedMoveCount !== 'number') player.forcedMoveCount = 0;
+
+        // Cap forced teleports (boat race / police / hospital) at 2 per player per goal-leg,
+        // otherwise a run of bad luck can bounce a player back and forth forever and the
+        // game never progresses. Once the cap is hit, this player only draws the vehicle-boost
+        // outcome from yellow squares for the rest of this leg.
+        const FORCED_MOVE_LIMIT = 2;
+        const forcedMoveLimitReached = player.forcedMoveCount >= FORCED_MOVE_LIMIT;
+        const roll = forcedMoveLimitReached ? (0.6 + Math.random() * 0.4) : Math.random();
 
         if (roll < 0.2) {
+          player.forcedMoveCount++;
           this.showEventModal(
             `🚤 ${BOAT_RACE_LOC.name} へ強制移動！`,
             `「今日は江戸川競艇の本場開催だ！」\n【 ${BOAT_RACE_LOC.name} 】へ強制移動！【1回休み】になります。`,
@@ -1650,6 +1733,7 @@
           this.teleportPlayer(player, BOAT_RACE_LOC);
 
         } else if (roll < 0.4) {
+          player.forcedMoveCount++;
           let nearest = POLICE_STATIONS[0];
           let minDist = Infinity;
           const currPt = this.roadNetworkNodes[player.currentNodeIdx] || EDOGAWA_START;
@@ -1668,6 +1752,7 @@
           this.teleportPlayer(player, nearest);
 
         } else if (roll < 0.6) {
+          player.forcedMoveCount++;
           let nearest = HOSPITALS[0];
           let minDist = Infinity;
           const currPt = this.roadNetworkNodes[player.currentNodeIdx] || EDOGAWA_START;
@@ -1926,23 +2011,6 @@
         }
         document.getElementById("event-modal").classList.add("hidden");
         this.finishTurn();
-      },
-
-      openApiKeyModal() {
-        document.getElementById("api-key-modal").classList.remove("hidden");
-      },
-
-      closeApiKeyModal() {
-        document.getElementById("api-key-modal").classList.add("hidden");
-      },
-
-      saveApiKey() {
-        const val = document.getElementById("gmaps-api-key-input")?.value?.trim() || "";
-        this.gmapsApiKey = val;
-        localStorage.setItem("gmaps_api_key", val);
-        this.closeApiKeyModal();
-        alert("Google Maps API Keyを保存しました！再読み込み後にGoogleサービスが有効化されます。");
-        window.location.reload();
       },
 
       openLogModal() {
