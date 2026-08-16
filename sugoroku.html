@@ -92,31 +92,32 @@
       perspective: 1000px;
     }
     .dice-cube {
-      width: 56px;
-      height: 56px;
+      width: 72px;
+      height: 72px;
       position: relative;
       transform-style: preserve-3d;
       transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     .dice-face {
       position: absolute;
-      width: 56px;
-      height: 56px;
+      width: 72px;
+      height: 72px;
       background: linear-gradient(145deg, #ffffff, #f1f5f9);
       border: 2px solid #cbd5e1;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: 62px;
+      line-height: 1;
       box-shadow: inset 0 0 10px rgba(0,0,0,0.05), 0 4px 10px rgba(0,0,0,0.25);
     }
-    .face-1 { transform: translateZ(28px); color: #ef4444; }
-    .face-2 { transform: rotateY(180deg) translateZ(28px); color: #1e293b; }
-    .face-3 { transform: rotateY(-90deg) translateZ(28px); color: #1e293b; }
-    .face-4 { transform: rotateY(90deg) translateZ(28px); color: #1e293b; }
-    .face-5 { transform: rotateX(90deg) translateZ(28px); color: #1e293b; }
-    .face-6 { transform: rotateX(-90deg) translateZ(28px); color: #1e293b; }
+    .face-1 { transform: translateZ(36px); color: #ef4444; }
+    .face-2 { transform: rotateY(180deg) translateZ(36px); color: #1e293b; }
+    .face-3 { transform: rotateY(-90deg) translateZ(36px); color: #1e293b; }
+    .face-4 { transform: rotateY(90deg) translateZ(36px); color: #1e293b; }
+    .face-5 { transform: rotateX(90deg) translateZ(36px); color: #1e293b; }
+    .face-6 { transform: rotateX(-90deg) translateZ(36px); color: #1e293b; }
 
     @keyframes diceBounce {
       0% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
@@ -140,6 +141,30 @@
     .gold-glow {
       text-shadow: 0 0 12px rgba(251, 191, 36, 0.6), 0 2px 4px rgba(0,0,0,0.8);
     }
+
+    @keyframes moneyLoseFloat {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-16px) rotate(-8deg); }
+      100% { transform: translateY(-2px) rotate(6deg); }
+    }
+    .modal-icon-lose { animation: moneyLoseFloat 1.3s ease-in-out infinite alternate; }
+
+    @keyframes moneyGainPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.4); }
+    }
+    .modal-icon-gain { animation: moneyGainPulse 0.85s ease-in-out infinite; }
+
+    @keyframes slideInFromRight {
+      0% { transform: translateX(180px); opacity: 0; }
+      70% { transform: translateX(-10px); opacity: 1; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    .modal-icon-slide { animation: slideInFromRight 0.55s cubic-bezier(0.2,0.8,0.2,1); }
+
+    .event-card-red { background: linear-gradient(160deg, #7f1d1d, #450a0a) !important; border-color: #ef4444 !important; }
+    .event-card-blue { background: linear-gradient(160deg, #1e3a8a, #172554) !important; border-color: #3b82f6 !important; }
+    .event-card-yellow { background: linear-gradient(160deg, #78350f, #451a03) !important; border-color: #f59e0b !important; }
   </style>
 </head>
 <body class="h-full w-full bg-slate-900 text-slate-100 flex flex-col relative overflow-hidden">
@@ -201,14 +226,13 @@
   <!-- MAIN HEADER -->
   <header class="h-14 bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
     <div class="flex items-center gap-2">
-      <h2 class="font-mincho font-extrabold text-amber-400 text-lg tracking-wider">江戸川双六</h2>
       <span id="game-turn-badge" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold rounded-md">
         第1ターン
       </span>
     </div>
 
     <!-- Active Target Badge -->
-    <div class="hidden sm:flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-xs">
+    <div onclick="EdogawaSugoroku.panToDestination()" class="hidden sm:flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-xs cursor-pointer hover:border-amber-500 transition active:scale-95">
       <span class="text-amber-400 font-bold">目的地:</span>
       <span id="current-destination-name" class="text-slate-200 font-bold truncate max-w-[150px]">カラオケ酔処「ゆう」</span>
     </div>
@@ -231,13 +255,13 @@
   <main class="flex-1 relative w-full overflow-hidden bg-slate-900">
     <div id="map" class="w-full h-full z-10"></div>
 
-    <div class="absolute top-3 left-3 z-20 bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-md flex items-center gap-2 text-[11px] text-slate-300 shadow-lg pointer-events-none">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      <span id="map-mode-tag" class="font-bold">縮尺: 50ft (実道路吸着モード)</span>
+    <div id="move-countdown-badge" class="hidden absolute top-3 left-3 z-20 bg-slate-950/85 border border-sky-500 px-3 py-1.5 rounded-lg backdrop-blur-md flex items-center gap-2 text-sm text-sky-300 shadow-lg pointer-events-none font-black">
+      <span>🎲</span>
+      <span>あと <span id="move-countdown-num">0</span> マス</span>
     </div>
 
-    <div class="sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[180px] truncate">
-      <span class="text-amber-400 font-bold">Goal:</span>
+    <div onclick="EdogawaSugoroku.panToDestination()" class="sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[180px] truncate cursor-pointer active:scale-95 transition">
+      <span class="text-amber-400 font-bold">目的地:</span>
       <span id="mobile-destination-name" class="text-slate-200 font-medium">カラオケ酔処「ゆう」</span>
     </div>
   </main>
@@ -371,15 +395,28 @@
     </div>
   </div>
 
+  <!-- MODAL: NICKNAME ENTRY -->
+  <div id="nickname-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="text-4xl">👋</div>
+      <h3 class="font-mincho text-lg font-bold text-amber-400">ニックネームを入力してください</h3>
+      <p class="text-xs text-slate-400 leading-relaxed">次回からこの端末で自動的に使用されます（あとでいつでも変更できます）</p>
+      <input type="text" id="nickname-modal-input" maxlength="12" placeholder="プレイヤー1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-amber-300 text-center focus:outline-none focus:border-amber-500 font-bold">
+      <button onclick="EdogawaSugoroku.confirmNickname()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl shadow-md transition">
+        決定
+      </button>
+    </div>
+  </div>
+
   <!-- MODAL: EVENT POPUP -->
   <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
-      <div id="event-modal-icon" class="text-5xl">🎉</div>
+    <div id="event-modal-card" class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 transition-colors">
+      <div id="event-modal-icon" class="text-6xl">🎉</div>
       <div>
-        <h3 id="event-modal-title" class="font-mincho text-xl font-bold text-amber-400 mb-1">イベント発生！</h3>
-        <p id="event-modal-desc" class="text-sm text-slate-200 font-medium leading-relaxed whitespace-pre-line">イベント説明文</p>
+        <h3 id="event-modal-title" class="font-mincho text-xl font-bold text-amber-400 mb-2">イベント発生！</h3>
+        <p id="event-modal-desc" class="text-sm text-slate-100 font-medium leading-relaxed whitespace-pre-line text-left">イベント説明文</p>
       </div>
-      <div id="event-modal-extra" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-amber-300 font-bold hidden"></div>
+      <div id="event-modal-extra" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-sm text-amber-300 font-extrabold text-center hidden"></div>
       <button onclick="EdogawaSugoroku.closeEventModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-md transition">
         了解！
       </button>
@@ -393,10 +430,13 @@
         <span class="text-4xl">👑</span>
         <h2 class="font-mincho text-2xl font-extrabold text-amber-400 mt-1">GOAL! 先着ゴール達成！</h2>
         <p id="goal-winner-text" class="text-sm text-slate-300 mt-1">賞金10万円を獲得しました！</p>
+        <p class="text-lg font-black text-amber-300 mt-2">💰 賞金 ¥100,000 獲得！</p>
+        <p id="goal-cpu-countdown" class="hidden text-xs font-bold text-sky-300 mt-2">CPU自動進行まで… <span id="goal-cpu-countdown-num">3</span></p>
       </div>
 
       <div id="category-select-section" class="space-y-3">
         <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">次の目的地ジャンルを選択してください</p>
+        <p id="category-cpu-countdown" class="hidden text-xs font-bold text-sky-300">CPUが選択中… <span id="category-cpu-countdown-num">3</span></p>
         <div class="grid grid-cols-2 gap-2.5">
           <button onclick="EdogawaSugoroku.selectCategory('飲食店')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
             <span class="text-2xl">🍜</span>
@@ -434,6 +474,7 @@
         <div id="roulette-box" class="text-lg font-bold text-slate-100 py-3 bg-slate-900 border border-slate-700 rounded-xl shadow-inner font-mincho">
           ---
         </div>
+        <p id="roulette-cpu-countdown" class="hidden text-xs font-bold text-sky-300">CPU自動決定まで… <span id="roulette-cpu-countdown-num">3</span></p>
       </div>
 
       <button id="roulette-confirm-btn" onclick="EdogawaSugoroku.confirmNextSugoroku()" class="hidden w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition">
@@ -588,25 +629,209 @@
     ];
 
     const RED_REASONS = [
-      "西葛西駅前で限定スイーツをつい衝動買い (-¥2,500)",
-      "葛西臨海公園の自販機でお金を飲まれた (-¥500)",
-      "船堀タワーの展望台でお土産を爆買い (-¥4,200)",
-      "江戸川沿いをサイクリング中にタイヤパンク (-¥3,000)",
-      "新小岩近くでタクシー代を奮発してしまった (-¥1,800)",
-      "ドラッグストアでサプリメントを大量購入 (-¥5,500)",
-      "ファミリーレストランでおごらされた (-¥6,000)",
-      "一之江のカフェで高級コーヒーとケーキを堪能 (-¥1,500)"
+      { emoji: "🚗", text: "新小岩の駐車場で長時間料金を払うはめに" },
+      { emoji: "🍴", text: "船堀タワーのファミレスでつい豪華なコースを注文してしまった" },
+      { emoji: "🚕", text: "篠崎近くでタクシー代を奮発してしまった" },
+      { emoji: "🎣", text: "一之江で釣り道具を新調してしまった" },
+      { emoji: "💐", text: "新小岩の花屋でお祝いの花束を購入" },
+      { emoji: "🎂", text: "船堀タワーのケーキ屋で誕生日ケーキを予約してしまった" },
+      { emoji: "🎳", text: "北葛西のボウリング場で盛り上がりすぎて延長した" },
+      { emoji: "🍰", text: "南葛西のケーキ屋で新作スイーツを大人買い" },
+      { emoji: "🎫", text: "葛西臨海公園で映画のプレミアムシートを予約" },
+      { emoji: "🍴", text: "船堀のファミレスでつい豪華なコースを注文してしまった" },
+      { emoji: "🎮", text: "篠崎のゲームセンターでクレーンゲームに夢中になった" },
+      { emoji: "🎪", text: "江戸川スポーツランドのお祭りで屋台をはしごして使いすぎた" },
+      { emoji: "🍴", text: "北葛西のファミレスでつい豪華なコースを注文してしまった" },
+      { emoji: "🎮", text: "江戸川区民センターのゲームセンターでクレーンゲームに夢中になった" },
+      { emoji: "🚗", text: "江戸川区民センターの駐車場で長時間料金を払うはめに" },
+      { emoji: "📚", text: "江戸川区役所前の書店で本を大人買いしてしまった" },
+      { emoji: "🎣", text: "春江町で釣り道具を新調してしまった" },
+      { emoji: "🧸", text: "東大島のおもちゃ屋で甥っ子へのプレゼントを奮発" },
+      { emoji: "🎧", text: "なぎさ公園の家電量販店でイヤホンを衝動買い" },
+      { emoji: "🍴", text: "市川橋のたもとのファミレスでつい豪華なコースを注文してしまった" },
+      { emoji: "🎧", text: "小岩の家電量販店でイヤホンを衝動買い" },
+      { emoji: "🍺", text: "江戸川区役所前の居酒屋でついつい飲みすぎて会計が高くついた" },
+      { emoji: "💊", text: "東大島のドラッグストアでサプリメントを大量購入" },
+      { emoji: "👟", text: "瑞江の靴屋でつい新しいスニーカーを購入" },
+      { emoji: "🧻", text: "亀戸のスーパーで日用品をまとめ買いしすぎた" },
+      { emoji: "☕", text: "船堀のカフェで高級コーヒー豆を衝動買い" },
+      { emoji: "🏧", text: "新小岩のATMで手数料を取られてしまった" },
+      { emoji: "🎁", text: "なぎさ公園で友人へのお土産を買いすぎた" },
+      { emoji: "🎁", text: "江戸川スポーツランドで友人へのお土産を買いすぎた" },
+      { emoji: "🚕", text: "篠崎公園近くでタクシー代を奮発してしまった" },
+      { emoji: "🍜", text: "船堀タワーのラーメン屋で限定の特盛りを頼んで散財" },
+      { emoji: "🧴", text: "北葛西のドラッグストアで化粧品セットを買ってしまった" },
+      { emoji: "☕", text: "つり堀のカフェで高級コーヒー豆を衝動買い" },
+      { emoji: "🏧", text: "船堀のATMで手数料を取られてしまった" },
+      { emoji: "📚", text: "平井の書店で本を大人買いしてしまった" },
+      { emoji: "🛴", text: "なぎさニュータウンでキックボードのレンタル代がかさんだ" },
+      { emoji: "🌂", text: "新川さくら館で急な雨に降られてビニール傘を購入" },
+      { emoji: "🍣", text: "南砂町の回転寿司で高級ネタばかり頼んでしまった" },
+      { emoji: "🧸", text: "瑞江のおもちゃ屋で甥っ子へのプレゼントを奮発" },
+      { emoji: "🍺", text: "船堀の居酒屋でついつい飲みすぎて会計が高くついた" },
+      { emoji: "🍜", text: "タワーホール船堀のラーメン屋で限定の特盛りを頼んで散財" },
+      { emoji: "🎣", text: "市川橋のたもとで釣り道具を新調してしまった" },
+      { emoji: "🚲", text: "船堀で自転車のタイヤがパンクして修理代がかかった" },
+      { emoji: "🍣", text: "篠崎の回転寿司で高級ネタばかり頼んでしまった" },
+      { emoji: "🍣", text: "新小岩の回転寿司で高級ネタばかり頼んでしまった" },
+      { emoji: "🏧", text: "東大島のATMで手数料を取られてしまった" },
+      { emoji: "🧴", text: "なぎさニュータウンのドラッグストアで化粧品セットを買ってしまった" },
+      { emoji: "🛴", text: "南砂町でキックボードのレンタル代がかさんだ" },
+      { emoji: "👕", text: "南砂町の洋服屋でセール品を買いすぎた" },
+      { emoji: "🎁", text: "瑞江で友人へのお土産を買いすぎた" },
+      { emoji: "🎂", text: "東大島のケーキ屋で誕生日ケーキを予約してしまった" },
+      { emoji: "🍺", text: "つり堀の居酒屋でついつい飲みすぎて会計が高くついた" },
+      { emoji: "🎂", text: "なぎさニュータウンのケーキ屋で誕生日ケーキを予約してしまった" },
+      { emoji: "🍰", text: "江戸川スポーツランドのケーキ屋で新作スイーツを大人買い" },
+      { emoji: "🚗", text: "小岩の駐車場で長時間料金を払うはめに" },
+      { emoji: "📚", text: "船堀タワーの書店で本を大人買いしてしまった" },
+      { emoji: "🎣", text: "小岩で釣り道具を新調してしまった" },
+      { emoji: "🧴", text: "東西線沿いの商店街のドラッグストアで化粧品セットを買ってしまった" },
+      { emoji: "🚕", text: "つり堀近くでタクシー代を奮発してしまった" },
+      { emoji: "📚", text: "篠崎の書店で本を大人買いしてしまった" },
+      { emoji: "🎂", text: "亀戸のケーキ屋で誕生日ケーキを予約してしまった" },
+      { emoji: "🛴", text: "市川橋のたもとでキックボードのレンタル代がかさんだ" },
+      { emoji: "🧻", text: "葛西臨海公園のスーパーで日用品をまとめ買いしすぎた" },
+      { emoji: "🎣", text: "小松川千本桜で釣り道具を新調してしまった" },
+      { emoji: "🍜", text: "篠崎公園のラーメン屋で限定の特盛りを頼んで散財" },
+      { emoji: "💊", text: "東西線沿いの商店街のドラッグストアでサプリメントを大量購入" },
+      { emoji: "🚕", text: "船堀近くでタクシー代を奮発してしまった" },
+      { emoji: "🎮", text: "つり堀のゲームセンターでクレーンゲームに夢中になった" },
+      { emoji: "🧸", text: "新川さくら館のおもちゃ屋で甥っ子へのプレゼントを奮発" },
+      { emoji: "🍺", text: "亀戸の居酒屋でついつい飲みすぎて会計が高くついた" },
+      { emoji: "🎮", text: "なぎさニュータウンのゲームセンターでクレーンゲームに夢中になった" },
+      { emoji: "🍦", text: "東西線沿いの商店街のアイスクリーム屋でファミリーパックを購入" },
+      { emoji: "🎳", text: "つり堀のボウリング場で盛り上がりすぎて延長した" },
+      { emoji: "🚗", text: "春江町の駐車場で長時間料金を払うはめに" },
+      { emoji: "👟", text: "東大島の靴屋でつい新しいスニーカーを購入" },
+      { emoji: "👟", text: "篠崎の靴屋でつい新しいスニーカーを購入" },
+      { emoji: "💐", text: "北葛西の花屋でお祝いの花束を購入" },
+      { emoji: "📚", text: "東大島の書店で本を大人買いしてしまった" },
+      { emoji: "💐", text: "南葛西の花屋でお祝いの花束を購入" },
+      { emoji: "🎫", text: "新川さくら館で映画のプレミアムシートを予約" },
+      { emoji: "🧸", text: "東西線沿いの商店街のおもちゃ屋で甥っ子へのプレゼントを奮発" },
+      { emoji: "🎁", text: "篠崎で友人へのお土産を買いすぎた" },
+      { emoji: "👟", text: "中葛西の靴屋でつい新しいスニーカーを購入" },
+      { emoji: "🍦", text: "船堀のアイスクリーム屋でファミリーパックを購入" },
+      { emoji: "👟", text: "なぎさニュータウンの靴屋でつい新しいスニーカーを購入" },
+      { emoji: "👕", text: "篠崎公園の洋服屋でセール品を買いすぎた" },
+      { emoji: "🎂", text: "江戸川区役所前のケーキ屋で誕生日ケーキを予約してしまった" },
+      { emoji: "🌂", text: "船堀で急な雨に降られてビニール傘を購入" },
+      { emoji: "🏧", text: "東西線沿いの商店街のATMで手数料を取られてしまった" },
+      { emoji: "🌂", text: "春江町で急な雨に降られてビニール傘を購入" },
+      { emoji: "🎪", text: "東大島のお祭りで屋台をはしごして使いすぎた" },
+      { emoji: "📚", text: "なぎさ公園の書店で本を大人買いしてしまった" },
+      { emoji: "🍴", text: "タワーホール船堀のファミレスでつい豪華なコースを注文してしまった" },
+      { emoji: "🎂", text: "新川さくら館のケーキ屋で誕生日ケーキを予約してしまった" },
+      { emoji: "📚", text: "市川橋のたもとの書店で本を大人買いしてしまった" },
+      { emoji: "🚕", text: "市川橋のたもと近くでタクシー代を奮発してしまった" },
+      { emoji: "🚗", text: "亀戸の駐車場で長時間料金を払うはめに" },
+      { emoji: "☕", text: "平井のカフェで高級コーヒー豆を衝動買い" },
+      { emoji: "🎫", text: "小岩で映画のプレミアムシートを予約" },
+      { emoji: "🧴", text: "西葛西のドラッグストアで化粧品セットを買ってしまった" }
     ];
 
     const BLUE_REASONS = [
-      "西葛西の路上で500円玉拾った！ (+¥500)",
-      "小岩のフリマに出店したら出品アイテム即完売！ (+¥8,000)",
-      "葛西臨海公園のイベントクイズ大会で優勝！ (+¥15,000)",
-      "江戸川区の地域ポイント還元でキャッシュバック！ (+¥3,000)",
-      "親戚から遅めの「お年玉」をもらった！ (+¥10,000)",
-      "スクラッチくじを買ったら見事に当たり！ (+¥5,000)",
-      "地元商店街の福引で特賞をゲット！ (+¥12,000)",
-      "不要品をリサイクルショップに売ったら高値！ (+¥6,500)"
+      { emoji: "🚲", text: "新川さくら館で自転車の空気入れを手伝ってお礼をもらった" },
+      { emoji: "🚲", text: "東大島で自転車の空気入れを手伝ってお礼をもらった" },
+      { emoji: "🧧", text: "市川橋のたもとの商店会からお祝い金をもらった" },
+      { emoji: "🎰", text: "中葛西でスクラッチくじを買ったら見事に当たった" },
+      { emoji: "🏦", text: "新小岩の銀行キャンペーンでポイントがついた" },
+      { emoji: "🐟", text: "なぎさニュータウンの魚屋さんで大安売りに遭遇して得した" },
+      { emoji: "🎣", text: "小松川千本桜で大物を釣り上げて釣具屋に高く買い取られた" },
+      { emoji: "🎗️", text: "中葛西のボランティア活動で謝礼をもらった" },
+      { emoji: "📦", text: "瑞江でフリマアプリの荷物がすぐ売れて臨時収入に" },
+      { emoji: "🧧", text: "親戚から南砂町で「お年玉」をもらった" },
+      { emoji: "🧁", text: "小岩のお菓子屋さんの新作モニターで謝礼をもらった" },
+      { emoji: "🎯", text: "市川橋のたもとの縁日で射的の景品を高く買い取ってもらえた" },
+      { emoji: "🏦", text: "中葛西の銀行キャンペーンでポイントがついた" },
+      { emoji: "🏦", text: "西葛西の銀行キャンペーンでポイントがついた" },
+      { emoji: "📦", text: "亀戸でフリマアプリの荷物がすぐ売れて臨時収入に" },
+      { emoji: "🏅", text: "西葛西のマラソン大会で完走賞金をもらった" },
+      { emoji: "💳", text: "つり堀の地域ポイント還元でキャッシュバックがあった" },
+      { emoji: "🧺", text: "新川さくら館のバザーで掘り出し物を安く仕入れて転売できた" },
+      { emoji: "🎪", text: "篠崎公園のお祭りの福引で一等が当たった" },
+      { emoji: "🎣", text: "篠崎で大物を釣り上げて釣具屋に高く買い取られた" },
+      { emoji: "🎟️", text: "篠崎のフリマに出店したら即完売した" },
+      { emoji: "🧃", text: "南葛西の自販機で当たりが出てもう一本もらえた" },
+      { emoji: "🏆", text: "船堀のイベントクイズ大会で優勝した" },
+      { emoji: "🚲", text: "東葛西で自転車の空気入れを手伝ってお礼をもらった" },
+      { emoji: "🎪", text: "船堀のお祭りの福引で一等が当たった" },
+      { emoji: "🧁", text: "北葛西のお菓子屋さんの新作モニターで謝礼をもらった" },
+      { emoji: "🧁", text: "一之江のお菓子屋さんの新作モニターで謝礼をもらった" },
+      { emoji: "🧧", text: "親戚からタワーホール船堀で「お年玉」をもらった" },
+      { emoji: "🏅", text: "北葛西のマラソン大会で完走賞金をもらった" },
+      { emoji: "🎰", text: "東大島でスクラッチくじを買ったら見事に当たった" },
+      { emoji: "🧧", text: "なぎさ公園の商店会からお祝い金をもらった" },
+      { emoji: "📦", text: "江戸川区役所前でフリマアプリの荷物がすぐ売れて臨時収入に" },
+      { emoji: "🎁", text: "つり堀の商店街の福引で特賞をゲットした" },
+      { emoji: "🚲", text: "江戸川区民センターで自転車の空気入れを手伝ってお礼をもらった" },
+      { emoji: "🎁", text: "江戸川区民センターの商店街の福引で特賞をゲットした" },
+      { emoji: "🎣", text: "東西線沿いの商店街で大物を釣り上げて釣具屋に高く買い取られた" },
+      { emoji: "🍺", text: "なぎさニュータウンの居酒屋で常連割引がきいて予想より安く済んだ" },
+      { emoji: "🧺", text: "春江町のバザーで掘り出し物を安く仕入れて転売できた" },
+      { emoji: "🧃", text: "中葛西の自販機で当たりが出てもう一本もらえた" },
+      { emoji: "🎵", text: "新小岩でストリートライブの投げ銭をもらった" },
+      { emoji: "♻️", text: "篠崎のリサイクルショップで不要品が高値で売れた" },
+      { emoji: "🏆", text: "亀戸のイベントクイズ大会で優勝した" },
+      { emoji: "💰", text: "南葛西の路上で小銭を拾った" },
+      { emoji: "🎯", text: "篠崎の縁日で射的の景品を高く買い取ってもらえた" },
+      { emoji: "💵", text: "篠崎で落とし物を届けたらお礼をもらった" },
+      { emoji: "💰", text: "船堀の路上で小銭を拾った" },
+      { emoji: "🎫", text: "なぎさニュータウンで当選したイベントチケットを譲って感謝された" },
+      { emoji: "🏆", text: "新川さくら館のイベントクイズ大会で優勝した" },
+      { emoji: "🎟️", text: "なぎさ公園のフリマに出店したら即完売した" },
+      { emoji: "📮", text: "船堀で懸賞に当選した通知が届いた" },
+      { emoji: "🧧", text: "篠崎の商店会からお祝い金をもらった" },
+      { emoji: "🍀", text: "タワーホール船堀で四つ葉のクローバーを見つけて縁起が良かった" },
+      { emoji: "🏅", text: "瑞江のマラソン大会で完走賞金をもらった" },
+      { emoji: "🎯", text: "一之江の縁日で射的の景品を高く買い取ってもらえた" },
+      { emoji: "🚲", text: "つり堀で自転車の空気入れを手伝ってお礼をもらった" },
+      { emoji: "💵", text: "東葛西で落とし物を届けたらお礼をもらった" },
+      { emoji: "♻️", text: "篠崎公園のリサイクルショップで不要品が高値で売れた" },
+      { emoji: "🏅", text: "篠崎公園のマラソン大会で完走賞金をもらった" },
+      { emoji: "🍎", text: "瑞江の八百屋さんがおまけしてくれた上に割引もあった" },
+      { emoji: "💳", text: "新小岩の地域ポイント還元でキャッシュバックがあった" },
+      { emoji: "🍺", text: "江戸川区役所前の居酒屋で常連割引がきいて予想より安く済んだ" },
+      { emoji: "🧺", text: "江戸川区役所前のバザーで掘り出し物を安く仕入れて転売できた" },
+      { emoji: "🍎", text: "春江町の八百屋さんがおまけしてくれた上に割引もあった" },
+      { emoji: "🐟", text: "船堀タワーの魚屋さんで大安売りに遭遇して得した" },
+      { emoji: "🎟️", text: "タワーホール船堀のフリマに出店したら即完売した" },
+      { emoji: "🎗️", text: "なぎさニュータウンのボランティア活動で謝礼をもらった" },
+      { emoji: "💳", text: "葛西臨海公園の地域ポイント還元でキャッシュバックがあった" },
+      { emoji: "🎨", text: "船堀タワーのフリーマーケットでハンドメイド作品が売れた" },
+      { emoji: "📮", text: "篠崎公園で懸賞に当選した通知が届いた" },
+      { emoji: "🐟", text: "新小岩の魚屋さんで大安売りに遭遇して得した" },
+      { emoji: "♻️", text: "瑞江のリサイクルショップで不要品が高値で売れた" },
+      { emoji: "🎁", text: "北葛西の商店街の福引で特賞をゲットした" },
+      { emoji: "🎵", text: "一之江でストリートライブの投げ銭をもらった" },
+      { emoji: "🍎", text: "小岩の八百屋さんがおまけしてくれた上に割引もあった" },
+      { emoji: "🍀", text: "春江町で四つ葉のクローバーを見つけて縁起が良かった" },
+      { emoji: "♻️", text: "なぎさ公園のリサイクルショップで不要品が高値で売れた" },
+      { emoji: "🏦", text: "船堀の銀行キャンペーンでポイントがついた" },
+      { emoji: "🎵", text: "篠崎公園でストリートライブの投げ銭をもらった" },
+      { emoji: "🐟", text: "なぎさ公園の魚屋さんで大安売りに遭遇して得した" },
+      { emoji: "🎯", text: "新小岩の縁日で射的の景品を高く買い取ってもらえた" },
+      { emoji: "🎟️", text: "なぎさニュータウンのフリマに出店したら即完売した" },
+      { emoji: "🎯", text: "小松川千本桜の縁日で射的の景品を高く買い取ってもらえた" },
+      { emoji: "🏦", text: "市川橋のたもとの銀行キャンペーンでポイントがついた" },
+      { emoji: "🐟", text: "篠崎の魚屋さんで大安売りに遭遇して得した" },
+      { emoji: "🎰", text: "江戸川区役所前でスクラッチくじを買ったら見事に当たった" },
+      { emoji: "🏅", text: "東葛西のマラソン大会で完走賞金をもらった" },
+      { emoji: "🎁", text: "なぎさ公園の商店街の福引で特賞をゲットした" },
+      { emoji: "🎨", text: "新川さくら館のフリーマーケットでハンドメイド作品が売れた" },
+      { emoji: "🎟️", text: "小岩のフリマに出店したら即完売した" },
+      { emoji: "🎨", text: "西葛西のフリーマーケットでハンドメイド作品が売れた" },
+      { emoji: "🎨", text: "東大島のフリーマーケットでハンドメイド作品が売れた" },
+      { emoji: "🏦", text: "篠崎公園の銀行キャンペーンでポイントがついた" },
+      { emoji: "📱", text: "春江町でフリマアプリの取引がスムーズにいき臨時収入" },
+      { emoji: "🎣", text: "江戸川区役所前で大物を釣り上げて釣具屋に高く買い取られた" },
+      { emoji: "🎫", text: "船堀タワーで当選したイベントチケットを譲って感謝された" },
+      { emoji: "📱", text: "北葛西でフリマアプリの取引がスムーズにいき臨時収入" },
+      { emoji: "🍺", text: "江戸川区民センターの居酒屋で常連割引がきいて予想より安く済んだ" },
+      { emoji: "🏅", text: "一之江のマラソン大会で完走賞金をもらった" },
+      { emoji: "🎁", text: "平井の商店街の福引で特賞をゲットした" },
+      { emoji: "🎁", text: "葛西臨海公園の商店街の福引で特賞をゲットした" }
     ];
 
     const DICE_ROTATIONS = {
@@ -624,7 +849,99 @@
       "江戸川区の風になるぜ！",
       "一発逆転を狙う！",
       "焦らず着実に進むぞ！",
-      "ゴールはもうすぐそこだ！"
+      "ゴールはもうすぐそこだ！",
+      "今日はツイてる気がする！",
+      "さあ勝負だ！",
+      "次で決めるぞ！",
+      "気合を入れていくぞ！",
+      "運を天に任せる！",
+      "絶対に大きい目！",
+      "みんな見ててくれ！",
+      "この一投にかける！",
+      "そろそろいい目が出てもいいはず！",
+      "負けてられない！",
+      "行くぞー！",
+      "ドキドキするなあ！",
+      "今度こそ！",
+      "風よ、味方してくれ！",
+      "勝負の分かれ目だ！",
+      "ここが正念場！",
+      "願いを込めて…！",
+      "チャンス到来！",
+      "粘り強くいくぞ！",
+      "集中、集中！",
+      "よし、いい流れだ！",
+      "負けじと頑張るぞ！",
+      "一歩でも前へ！",
+      "今こそ運を試す時！",
+      "この調子でいこう！",
+      "まだまだこれから！",
+      "さあ来い、幸運！",
+      "気持ちを切り替えて！",
+      "次のマスが気になるな…",
+      "どんな目が出るかな？",
+      "楽しくなってきた！",
+      "ここは慎重に…",
+      "勢いに乗るぞ！",
+      "負けん気を出すぞ！",
+      "目指せ大逆転！",
+      "江戸川の街を駆け抜けろ！",
+      "今日は絶好調！",
+      "さすがに疲れたけど頑張る！",
+      "仲間に負けてられない！",
+      "冷静に、冷静に…",
+      "運試しといこう！",
+      "気持ちいい結果を願う！",
+      "次のマスは何かな〜",
+      "ワクワクが止まらない！",
+      "サイコロよ、応えてくれ！",
+      "勝利をつかむぞ！",
+      "こつこつ進むのみ！",
+      "一気に差をつけたい！",
+      "追い風が吹いてきた！",
+      "このチャンスを逃さない！",
+      "集中力を高めていく！",
+      "負けても楽しむぞ！",
+      "さあ運命の一投！",
+      "ここまで来たら最後まで！",
+      "いい流れを引き寄せろ！",
+      "勝負師の顔になってきた！",
+      "落ち着いて、落ち着いて…",
+      "次で流れを変える！",
+      "今日という日を楽しもう！",
+      "本気を出す時が来た！",
+      "皆に追いつくぞ！",
+      "トップを目指すぞ！",
+      "そろそろ運が向いてくるはず！",
+      "江戸川の空に願いを！",
+      "気合十分だ！",
+      "この一投で流れが変わる！",
+      "楽しみながらいくぞ！",
+      "運も実力のうち！",
+      "焦らず騒がず！",
+      "ここからが本番！",
+      "小さな一歩を大切に！",
+      "次こそビッグチャンス！",
+      "みんなで楽しもう！",
+      "負けたくない一心！",
+      "今日は特に気合が入る！",
+      "さあ、どうなるか！",
+      "自分を信じて振る！",
+      "このターンに賭ける！",
+      "次で流れを掴みたい！",
+      "気持ちよく振るぞ！",
+      "ゆっくり確実に！",
+      "びっくりする目が出るかも！",
+      "今度は連続でいい目を！",
+      "江戸川を制覇するぞ！",
+      "一投入魂！",
+      "負けは気にしない、楽しむだけ！",
+      "次のマスで何が起きるかな！",
+      "いい予感がする！",
+      "さあ勝負のとき！",
+      "仲間と競い合うのが楽しい！",
+      "運命のサイコロよ回れ！",
+      "最後まで諦めない！"
     ];
 
     const LAND_BUBBLES = [
@@ -644,6 +961,29 @@
       { emoji: "🚁", name: "ヘリコプター", mult: 6 },
       { emoji: "✈️", name: "飛行機", mult: 7 }
     ];
+
+    const CPU_NAME_POOL = [
+      "たけしおばちゃん", "ゆうたマスター", "はると隊長", "そうた名人", "りくチャンピオン", "ゆい博士",
+      "さくら先生", "めい師匠", "ひまり案内人", "あおい冒険家", "かなえ旅人", "みなとカラオケ王",
+      "だいち双六マニア", "しょう江戸川通", "けんた地元民", "なおき散歩好き", "たかし健脚",
+      "まさるスピードスター", "じろう慎重派", "いちろうラッキーボーイ", "はなこラッキーガール",
+      "よしこムードメーカー", "たろう策士", "次郎熱血漢", "三郎のんびり屋", "花子負けず嫌い",
+      "幸子チャレンジャー", "恵子ベテラン", "洋子新人", "文子おばちゃん", "健太おじちゃん",
+      "翔太マスター", "陽菜隊長", "結衣名人", "江戸川マスター", "江戸川隊長", "江戸川名人",
+      "江戸川チャンピオン", "江戸川博士", "江戸川先生", "江戸川師匠", "江戸川案内人", "江戸川冒険家",
+      "江戸川旅人", "江戸川カラオケ王", "江戸川双六マニア", "江戸川通", "江戸川地元民", "江戸川散歩好き",
+      "江戸川健脚", "江戸川スピードスター", "江戸川慎重派", "江戸川ラッキーボーイ", "江戸川ラッキーガール",
+      "江戸川ムードメーカー", "江戸川策士", "江戸川熱血漢", "江戸川のんびり屋", "江戸川負けず嫌い",
+      "江戸川チャレンジャー", "江戸川ベテラン", "江戸川新人", "たけしさん", "ゆうたさん", "はるとさん",
+      "そうたさん", "りくさん", "ゆいさん", "さくらさん", "めいさん", "ひまりさん", "あおいさん",
+      "かなえさん", "みなとさん", "だいちさん", "しょうさん", "けんたさん", "なおきさん", "たかしさん",
+      "まさるさん", "じろうさん", "いちろうさん", "はなこさん", "よしこさん", "たろうさん", "次郎さん",
+      "三郎さん", "花子さん", "幸子さん", "恵子さん", "洋子さん", "文子さん", "健太さん", "翔太さん",
+      "陽菜さん", "結衣さん", "みなとおじちゃん", "だいちおばちゃん", "しょう先生", "けんた師匠",
+      "なおき博士", "たかし案内人"
+    ];
+
+    const CPU_AVATAR_POOL = ["🐶", "🐱", "🐻", "🐼", "🦊", "🐰", "🐯", "🦁", "🐨", "🐵", "🐔", "🐧", "🐤", "🦉", "🦄", "🐷", "🐸", "🐙", "🐢", "🦜", "🦝", "🐺", "🦌", "🐘"];
 
     // --- SOUND ENGINE ---
     class SoundEngine {
@@ -759,6 +1099,30 @@
         const notes = [523.25, 659.25, 783.99, 1046.50];
         notes.forEach((n, i) => setTimeout(() => this.playTone(n, 'triangle', 0.3, 0.2), i * 150));
       }
+      playChime() {
+        // ピロリーン♪ - bright ascending bell chime for getting a vehicle
+        this.init();
+        this.playTone(1046.50, 'sine', 0.15, 0.12);
+        setTimeout(() => this.playTone(1318.51, 'sine', 0.2, 0.12), 100);
+        setTimeout(() => this.playTone(1567.98, 'sine', 0.35, 0.12), 220);
+      }
+      playSiren() {
+        // Alternating high/low siren wail for police/ambulance forced moves
+        this.init();
+        let i = 0;
+        const wail = setInterval(() => {
+          this.playTone(i % 2 === 0 ? 880 : 660, 'sine', 0.25, 0.1);
+          i++;
+          if (i >= 6) clearInterval(wail);
+        }, 220);
+      }
+      playEngineRev() {
+        // ブルルン - low rumbling engine rev for the boat race forced move
+        this.init();
+        this.playTone(90, 'sawtooth', 0.3, 0.15);
+        setTimeout(() => this.playTone(70, 'sawtooth', 0.4, 0.18), 150);
+        setTimeout(() => this.playTone(110, 'sawtooth', 0.25, 0.12), 350);
+      }
     }
 
     const sound = new SoundEngine();
@@ -819,9 +1183,41 @@
         const joinRoomId = urlParams.get('room');
 
         if (joinRoomId) {
+          this.applyCachedNickname();
           await this.initFirebase();
           this.joinRoomAsGuest(joinRoomId);
+        } else {
+          this.checkNickname();
         }
+      },
+
+      applyCachedNickname() {
+        const cached = localStorage.getItem("edogawa_sugoroku_nickname");
+        if (cached) {
+          const input = document.getElementById("player-name-input");
+          if (input) input.value = cached;
+        }
+      },
+
+      checkNickname() {
+        const cached = localStorage.getItem("edogawa_sugoroku_nickname");
+        if (cached) {
+          const input = document.getElementById("player-name-input");
+          if (input) input.value = cached;
+        } else {
+          const modal = document.getElementById("nickname-modal");
+          if (modal) modal.classList.remove("hidden");
+        }
+      },
+
+      confirmNickname() {
+        const input = document.getElementById("nickname-modal-input");
+        const name = (input && input.value.trim()) || "プレイヤー1";
+        localStorage.setItem("edogawa_sugoroku_nickname", name);
+        const mainInput = document.getElementById("player-name-input");
+        if (mainInput) mainInput.value = name;
+        const modal = document.getElementById("nickname-modal");
+        if (modal) modal.classList.add("hidden");
       },
 
       async initFirebase() {
@@ -877,6 +1273,11 @@
         if (label) label.innerText = isMuted ? "BGM OFF" : "BGM ON";
       },
 
+      panToDestination() {
+        if (!this.map || !this.currentDestination) return;
+        this.map.flyTo([this.currentDestination.lat, this.currentDestination.lng], 19, { duration: 0.8 });
+      },
+
       renderAvatarGrid() {
         const grid = document.getElementById("character-grid");
         if (!grid) return;
@@ -907,6 +1308,7 @@
         this.countdownVal = 30;
 
         const pName = document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
+        localStorage.setItem("edogawa_sugoroku_nickname", pName);
         const initialPlayers = [
           { uid: this.myUid, name: pName, avatar: this.selectedAvatar, isHost: true }
         ];
@@ -1014,6 +1416,7 @@
         if (this.countdownTimer) clearInterval(this.countdownTimer);
 
         const pName = document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
+        localStorage.setItem("edogawa_sugoroku_nickname", pName);
         let currentPlayers = this.recruitmentPlayers && this.recruitmentPlayers.length
           ? this.recruitmentPlayers
           : [{ uid: this.myUid, name: pName, avatar: this.selectedAvatar, isHost: true }];
@@ -1031,15 +1434,24 @@
         }
 
         // Fill remaining slots with CPU up to 4 players
-        const availableAvatars = AVATAR_LIST.filter(a => !currentPlayers.some(p => p.avatar === a));
+        const usedCpuNames = new Set();
+        const usedCpuAvatars = new Set();
         const finalPlayers = [...currentPlayers];
 
         let cpuIdx = 1;
         while (finalPlayers.length < 4) {
+          let name;
+          do { name = CPU_NAME_POOL[Math.floor(Math.random() * CPU_NAME_POOL.length)]; } while (usedCpuNames.has(name) && usedCpuNames.size < CPU_NAME_POOL.length);
+          usedCpuNames.add(name);
+
+          let avatar;
+          do { avatar = CPU_AVATAR_POOL[Math.floor(Math.random() * CPU_AVATAR_POOL.length)]; } while (usedCpuAvatars.has(avatar) && usedCpuAvatars.size < CPU_AVATAR_POOL.length);
+          usedCpuAvatars.add(avatar);
+
           finalPlayers.push({
             uid: `cpu_${cpuIdx}`,
-            name: `CPU ${cpuIdx}`,
-            avatar: availableAvatars[cpuIdx - 1] || "🤖",
+            name: name,
+            avatar: avatar,
             isCpu: true
           });
           cpuIdx++;
@@ -1340,8 +1752,9 @@
         const showPendingEvent = () => {
           if (!this.isHost && gs.lastEvent && gs.eventSeq && gs.eventSeq !== this.lastAppliedEventSeq) {
             this.lastAppliedEventSeq = gs.eventSeq;
-            this.showEventModalReadOnly(gs.lastEvent.title, gs.lastEvent.desc, gs.lastEvent.extra);
+            this.showEventModalReadOnly(gs.lastEvent.title, gs.lastEvent.desc, gs.lastEvent.extra, { icon: gs.lastEvent.icon, type: gs.lastEvent.type });
           }
+          this.panToCurrentPlayer();
         };
 
         let animatingMovement = false;
@@ -1384,7 +1797,7 @@
             this.players.forEach((p) => {
               const node = this.roadNetworkNodes[p.currentNodeIdx];
               if (!node) return;
-              const marker = L.marker([node.lat, node.lng], { icon: this.createPlayerIcon(p, "") }).addTo(this.map);
+              const marker = L.marker([node.lat, node.lng], { icon: this.createPlayerIcon(p, ""), zIndexOffset: 1000 }).addTo(this.map);
               this.playerMarkers[p.id] = marker;
             });
             this.map.setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
@@ -1446,6 +1859,8 @@
         if (cube) cube.classList.add("dice-rolling");
         this.updatePlayerBubble(player, ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)]);
 
+        const totalSteps = toIdx - fromIdx;
+
         setTimeout(() => {
           if (cube) {
             cube.classList.remove("dice-rolling");
@@ -1458,6 +1873,8 @@
             if (typeof onComplete === 'function') onComplete();
             return;
           }
+
+          this.updateMoveCountdown(totalSteps, totalSteps);
 
           let step = fromIdx;
           const interval = setInterval(() => {
@@ -1474,9 +1891,12 @@
             }
             this.updatePlayerRoutes();
             sound.playTone(400 + (clamped - fromIdx) * 30, 'sine', 0.05, 0.05);
+            this.updateMoveCountdown(Math.max(0, toIdx - clamped), totalSteps);
+            this.updateActivePlayerRemainingLive(player);
 
             if (clamped >= toIdx) {
               clearInterval(interval);
+              this.updateMoveCountdown(0, 0);
               this.updatePlayerBubble(player, "");
               if (typeof onComplete === 'function') onComplete();
             }
@@ -1484,7 +1904,7 @@
         }, 1200);
       },
 
-      showEventModalReadOnly(title, desc, extra) {
+      showEventModalReadOnly(title, desc, extra, options = {}) {
         document.getElementById("event-modal-title").innerText = title;
         document.getElementById("event-modal-desc").innerText = desc;
         const extraBox = document.getElementById("event-modal-extra");
@@ -1494,6 +1914,27 @@
         } else {
           extraBox.classList.add("hidden");
         }
+
+        const iconEl = document.getElementById("event-modal-icon");
+        const cardEl = document.getElementById("event-modal-card");
+        iconEl.classList.remove("modal-icon-lose", "modal-icon-gain", "modal-icon-slide");
+        cardEl.classList.remove("event-card-red", "event-card-blue", "event-card-yellow");
+        if (options.icon) iconEl.textContent = options.icon;
+
+        if (options.type === 'red') {
+          cardEl.classList.add("event-card-red");
+          void iconEl.offsetWidth;
+          iconEl.classList.add("modal-icon-lose");
+        } else if (options.type === 'blue') {
+          cardEl.classList.add("event-card-blue");
+          void iconEl.offsetWidth;
+          iconEl.classList.add("modal-icon-gain");
+        } else if (options.type === 'yellow') {
+          cardEl.classList.add("event-card-yellow");
+          void iconEl.offsetWidth;
+          iconEl.classList.add("modal-icon-slide");
+        }
+
         document.getElementById("event-modal").classList.remove("hidden");
         const modalBtn = document.querySelector("#event-modal button");
         if (modalBtn) modalBtn.innerText = "了解！";
@@ -1518,13 +1959,15 @@
         this.isMultiplayer = false;
 
         const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
-        const availableAvatars = AVATAR_LIST.filter(a => a !== this.selectedAvatar);
+        localStorage.setItem("edogawa_sugoroku_nickname", pName);
+        const shuffledCpuNames = [...CPU_NAME_POOL].sort(() => Math.random() - 0.5);
+        const shuffledCpuAvatars = [...CPU_AVATAR_POOL].sort(() => Math.random() - 0.5);
 
         this.players = [
           { id: 0, name: pName, avatar: this.selectedAvatar, color: PLAYER_COLORS[0], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: false },
-          { id: 1, name: "CPU 1", avatar: availableAvatars[0], color: PLAYER_COLORS[1], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
-          { id: 2, name: "CPU 2", avatar: availableAvatars[1], color: PLAYER_COLORS[2], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
-          { id: 3, name: "CPU 3", avatar: availableAvatars[2], color: PLAYER_COLORS[3], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true }
+          { id: 1, name: shuffledCpuNames[0], avatar: shuffledCpuAvatars[0], color: PLAYER_COLORS[1], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
+          { id: 2, name: shuffledCpuNames[1], avatar: shuffledCpuAvatars[1], color: PLAYER_COLORS[2], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
+          { id: 3, name: shuffledCpuNames[2], avatar: shuffledCpuAvatars[2], color: PLAYER_COLORS[3], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true }
         ];
 
         document.getElementById("lobby-screen").classList.add("hidden");
@@ -1595,6 +2038,17 @@
       async setupBoard(startLoc, goalLoc) {
         this.currentDestination = goalLoc;
 
+        // Capture each player's actual current position BEFORE the old road graph is
+        // discarded, so after a leg change players resume from wherever their token
+        // really is — not from the old goal / new leg's nominal start point.
+        const priorPositions = {};
+        if (this.roadNetworkNodes && this.roadNetworkNodes.length && this.players && this.players.length) {
+          this.players.forEach(p => {
+            const node = (typeof p.currentNodeIdx === 'number') ? this.roadNetworkNodes[p.currentNodeIdx] : null;
+            if (node) priorPositions[p.id] = { lat: node.lat, lng: node.lng };
+          });
+        }
+
         // Clear player markers/routes (road/spot/goal markers are cleared inside renderBoardVisuals)
         if (this.playerRoutePolylines.length) {
           this.playerRoutePolylines.forEach(p => this.map.removeLayer(p));
@@ -1608,9 +2062,9 @@
 
         let roadGraph;
         if (osrmPath && osrmPath.length > 5) {
-          roadGraph = this.buildRoadNetwork([osrmPath], 10);
+          roadGraph = this.buildRoadNetwork([osrmPath], 20);
         } else {
-          roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 10);
+          roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 20);
         }
 
         const startNodeIdx = this.findNearestNodeIdx2(roadGraph.nodes, startLoc);
@@ -1618,16 +2072,17 @@
 
         this.renderBoardVisuals(roadGraph.nodes, startNodeIdx, goalNodeIdx, goalLoc);
 
-        // Reset all players to startNodeIdx on the newly generated network
         this.players.forEach((p) => {
           p.forcedMoveCount = 0;
-          p.currentNodeIdx = startNodeIdx;
+          const priorPos = priorPositions[p.id];
+          p.currentNodeIdx = priorPos ? this.findNearestNodeIdx2(roadGraph.nodes, priorPos) : startNodeIdx;
           p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
           p.pathIndex = 0;
 
           const startPt = this.roadNetworkNodes[p.currentNodeIdx] || startLoc;
           const marker = L.marker([startPt.lat, startPt.lng], {
-            icon: this.createPlayerIcon(p, "")
+            icon: this.createPlayerIcon(p, ""),
+            zIndexOffset: 1000
           }).addTo(this.map);
           this.playerMarkers[p.id] = marker;
         });
@@ -1870,7 +2325,7 @@
         const html = `
           <div class="relative player-token flex items-center justify-center">
             ${bubbleHtml}
-            <div class="w-8 h-8 rounded-full ${player.color.bg} border-2 border-white shadow-2xl flex items-center justify-center text-lg ring-2 ring-slate-950">
+            <div class="w-16 h-16 rounded-full ${player.color.bg} border-4 border-white shadow-2xl flex items-center justify-center text-3xl ring-2 ring-slate-950">
               ${displayAvatar}
             </div>
           </div>
@@ -1878,14 +2333,27 @@
         return L.divIcon({
           className: 'custom-player-marker',
           html: html,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
+          iconSize: [64, 64],
+          iconAnchor: [32, 32]
         });
       },
 
       remainingSquares(p) {
         if (!p.path || !p.path.length) return null;
         return Math.max(0, (p.path.length - 1) - (p.pathIndex || 0));
+      },
+
+      updateActivePlayerRemainingLive(player) {
+        const remaining = this.remainingSquares(player);
+        const text = remaining === null ? "あと-マス" : `あと${remaining}マス`;
+
+        if (player.id === this.currentPlayerIdx) {
+          const badge = document.getElementById("active-player-remaining");
+          if (badge) badge.innerText = text;
+        }
+
+        const card = document.querySelector(`[data-player-remaining="${player.id}"]`);
+        if (card) card.innerText = text;
       },
 
       updateHUD() {
@@ -1929,7 +2397,7 @@
               </div>
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold text-amber-400">¥${(p.money/10000).toFixed(1)}万</div>
-              <div class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : `あと${pRemaining}マス`}</div>
+              <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : `あと${pRemaining}マス`}</div>
             </div>
           `;
         }).join("");
@@ -1937,8 +2405,24 @@
         const rollBtn = document.getElementById("roll-dice-btn");
         const canRollNow = this.canActNow() && !this.isRolling;
         rollBtn.disabled = !canRollNow;
-        rollBtn.classList.toggle("opacity-50", !canRollNow);
         rollBtn.classList.toggle("pointer-events-none", !canRollNow);
+        rollBtn.classList.toggle("cursor-not-allowed", !canRollNow);
+        rollBtn.classList.toggle("grayscale", !canRollNow);
+        rollBtn.classList.toggle("opacity-40", !canRollNow);
+        rollBtn.classList.toggle("shadow-none", !canRollNow);
+        rollBtn.classList.toggle("shadow-lg", canRollNow);
+        rollBtn.classList.toggle("shadow-amber-500/20", canRollNow);
+
+        const rollBtnLabel = rollBtn.querySelector("span:last-child");
+        if (rollBtnLabel) {
+          if (canRollNow) {
+            rollBtnLabel.innerText = "サイコロを振る";
+          } else if (this.isMultiplayer && !this.isRolling) {
+            rollBtnLabel.innerText = `${cp.name} の番です`;
+          } else {
+            rollBtnLabel.innerText = "サイコロを振る";
+          }
+        }
 
         // Only the host auto-drives CPU turns in multiplayer (otherwise every device would
         // try to roll for the CPU at once). In solo mode this device is always authoritative.
@@ -1957,6 +2441,7 @@
           // independent random outcome). Instead, ask the host — the single source of
           // truth — to roll on our behalf; the result arrives via the next synced state.
           this.isRolling = true;
+          this.startLocalWaitingSpin();
           this.requestRollFromHost();
           return;
         }
@@ -1969,16 +2454,26 @@
         }
 
         this.isRolling = true;
-        sound.playDiceRoll();
 
-        const rollBubble = ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)];
-        this.updatePlayerBubble(cp, rollBubble);
+        // When the host is resolving a guest's turn on their behalf, that guest's own
+        // screen plays the "real" spin + walk (see animateGuestPlayerMovement) — so the
+        // host doesn't need to replay the same spectacle locally; it resolves quietly and
+        // quickly in the background instead.
+        const isRemoteTurn = this.isMultiplayer && !cp.isCpu && cp.uid !== this.myUid;
+        const initialDelay = isRemoteTurn ? 200 : 1200;
+        const stepDelay = isRemoteTurn ? 80 : 350;
 
         const cube = document.getElementById("dice-cube");
-        cube.classList.add("dice-rolling");
+
+        if (!isRemoteTurn) {
+          sound.playDiceRoll();
+          const rollBubble = ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)];
+          this.updatePlayerBubble(cp, rollBubble);
+          if (cube) cube.classList.add("dice-rolling");
+        }
 
         setTimeout(() => {
-          cube.classList.remove("dice-rolling");
+          if (!isRemoteTurn && cube) cube.classList.remove("dice-rolling");
 
           let rawRoll = Math.floor(Math.random() * 6) + 1;
 
@@ -1994,7 +2489,7 @@
             steps = rawRoll * usedVehicle.mult;
           }
 
-          cube.style.transform = DICE_ROTATIONS[rawRoll];
+          if (!isRemoteTurn && cube) cube.style.transform = DICE_ROTATIONS[rawRoll];
           this.lastDiceValueForSync = rawRoll;
 
           let logMsg = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】`;
@@ -2003,9 +2498,19 @@
           }
           this.addLog(logMsg);
 
-          this.movePlayerSteps(cp, steps);
+          this.movePlayerSteps(cp, steps, stepDelay, isRemoteTurn);
 
-        }, 1200);
+        }, initialDelay);
+      },
+
+      // Gives the acting guest immediate feedback the moment they tap the dice, instead of a
+      // blank wait while the request round-trips to the host. Keeps spinning gently until the
+      // real result arrives, at which point animateGuestPlayerMovement takes over with the
+      // actual rolled face and the walk.
+      startLocalWaitingSpin() {
+        sound.playDiceRoll();
+        const cube = document.getElementById("dice-cube");
+        if (cube) cube.classList.add("dice-rolling");
       },
 
       clearUsedVehicle(player) {
@@ -2025,8 +2530,22 @@
         }
       },
 
-      movePlayerSteps(player, totalSteps) {
+      updateMoveCountdown(remainingSteps, totalSteps) {
+        const badge = document.getElementById("move-countdown-badge");
+        const numEl = document.getElementById("move-countdown-num");
+        if (!badge || !numEl) return;
+        if (totalSteps >= 10 && remainingSteps > 0) {
+          badge.classList.remove("hidden");
+          numEl.innerText = remainingSteps;
+        } else {
+          badge.classList.add("hidden");
+        }
+      },
+
+      movePlayerSteps(player, totalSteps, stepDelay = 350, silent = false) {
         let currentStep = 0;
+
+        if (!silent) this.updateMoveCountdown(totalSteps, totalSteps);
 
         const interval = setInterval(() => {
           currentStep++;
@@ -2039,25 +2558,34 @@
           const marker = this.playerMarkers[player.id];
           if (marker && node && typeof node.lat === 'number' && typeof node.lng === 'number') {
             marker.setLatLng([node.lat, node.lng]);
-            this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
+            if (!silent) {
+              this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
+            }
           }
 
           this.updatePlayerRoutes();
-          sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
+
+          if (!silent) {
+            sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
+            this.updateMoveCountdown(Math.max(0, totalSteps - currentStep), totalSteps);
+            this.updateActivePlayerRemainingLive(player);
+          }
 
           if (player.currentNodeIdx === this.goalNodeIdx) {
             clearInterval(interval);
             this.clearUsedVehicle(player);
-            setTimeout(() => this.handleGoalReach(player), 300);
+            if (!silent) this.updateMoveCountdown(0, 0);
+            setTimeout(() => this.handleGoalReach(player), silent ? 0 : 300);
             return;
           }
 
           if (currentStep >= totalSteps || player.pathIndex >= player.path.length - 1) {
             clearInterval(interval);
             this.clearUsedVehicle(player);
-            setTimeout(() => this.landOnSpot(player), 300);
+            if (!silent) this.updateMoveCountdown(0, 0);
+            setTimeout(() => this.landOnSpot(player), silent ? 0 : 300);
           }
-        }, 350);
+        }, stepDelay);
       },
 
       landOnSpot(player) {
@@ -2072,8 +2600,9 @@
           const reason = RED_REASONS[Math.floor(Math.random() * RED_REASONS.length)];
           player.money = Math.max(0, player.money - amount);
 
-          this.showEventModal("お金が減ってしまった！", reason, `-¥${amount.toLocaleString()}`);
-          this.addLog(`🔴 [赤マス] ${player.name}: ${reason}`);
+          const desc = `${reason.emoji}\n\n${reason.text}`;
+          this.showEventModal("お金が減ってしまった！", desc, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "💸", type: "red" });
+          this.addLog(`🔴 [赤マス] ${player.name}: ${reason.text} (-¥${amount.toLocaleString()})`);
 
         } else if (node && node.type === 'blue') {
           sound.playLandBlue();
@@ -2081,19 +2610,49 @@
           const reason = BLUE_REASONS[Math.floor(Math.random() * BLUE_REASONS.length)];
           player.money += amount;
 
-          this.showEventModal("お金が増えた！", reason, `+¥${amount.toLocaleString()}`);
-          this.addLog(`🔵 [青マス] ${player.name}: ${reason}`);
+          const desc = `${reason.emoji}\n\n${reason.text}`;
+          this.showEventModal("お金が増えた！", desc, `▲¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "🎉", type: "blue" });
+          this.addLog(`🔵 [青マス] ${player.name}: ${reason.text} (+¥${amount.toLocaleString()})`);
 
         } else if (node && node.type === 'yellow') {
-          sound.playEventYellow();
           this.resolveYellowEvent(player);
         } else {
           this.finishTurn();
+          this.panToCurrentPlayer();
         }
       },
 
       resolveYellowEvent(player) {
         if (typeof player.forcedMoveCount !== 'number') player.forcedMoveCount = 0;
+
+        // Catch-up mechanic: if this player is 50+ squares behind the current leader,
+        // guarantee a helicopter or plane instead of rolling the normal outcome table,
+        // so a big gap doesn't snowball into an unwinnable game.
+        const myRemaining = this.remainingSquares(player);
+        let leaderRemaining = myRemaining;
+        this.players.forEach(p => {
+          const r = this.remainingSquares(p);
+          if (r !== null && (leaderRemaining === null || r < leaderRemaining)) leaderRemaining = r;
+        });
+        const gapBehindLeader = (myRemaining !== null && leaderRemaining !== null) ? (myRemaining - leaderRemaining) : 0;
+
+        if (gapBehindLeader >= 50) {
+          const catchUpVehicle = VEHICLES[Math.random() < 0.5 ? 4 : 5]; // 🚁 or ✈️
+          player.vehicle = catchUpVehicle;
+
+          const marker = this.playerMarkers[player.id];
+          if (marker) marker.setIcon(this.createPlayerIcon(player, `${catchUpVehicle.emoji} ゲット！`));
+
+          sound.playChime();
+          this.showEventModal(
+            "追い上げチャンス！",
+            `先頭から${gapBehindLeader}マスも離されていたので「${catchUpVehicle.name} (${catchUpVehicle.emoji})」を特別にゲット！\n次回のサイコロ【1回限り】出目が【${catchUpVehicle.mult}倍】になります！`,
+            null,
+            { icon: catchUpVehicle.emoji, type: "yellow" }
+          );
+          this.addLog(`🚀 [黄マス] ${player.name} は先頭から${gapBehindLeader}マス差だったため ${catchUpVehicle.emoji} ${catchUpVehicle.name} を特別に獲得！`);
+          return;
+        }
 
         // Cap forced teleports (boat race / police / hospital) at 2 per player per goal-leg,
         // otherwise a run of bad luck can bounce a player back and forth forever and the
@@ -2105,10 +2664,12 @@
 
         if (roll < 0.2) {
           player.forcedMoveCount++;
+          sound.playEngineRev();
           this.showEventModal(
-            `🚤 ${BOAT_RACE_LOC.name} へ強制移動！`,
+            `${BOAT_RACE_LOC.name} へ強制移動！`,
             `「今日は江戸川競艇の本場開催だ！」\n【 ${BOAT_RACE_LOC.name} 】へ強制移動！【1回休み】になります。`,
-            `移動先: ${BOAT_RACE_LOC.name}`
+            `移動先: ${BOAT_RACE_LOC.name}`,
+            { icon: "🚤", type: "yellow" }
           );
           this.addLog(`🚤 [黄マス] ${player.name} は ${BOAT_RACE_LOC.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
@@ -2124,10 +2685,12 @@
             if (d < minDist) { minDist = d; nearest = p; }
           });
 
+          sound.playSiren();
           this.showEventModal(
-            `🚓 ${nearest.name} へ緊急連行！`,
+            `${nearest.name} へ緊急連行！`,
             `スピード違反で検挙！最寄りの警察・交番【 ${nearest.name} 】へ強制移動連行！【1回休み】になります。`,
-            `連行先: ${nearest.name}`
+            `連行先: ${nearest.name}`,
+            { icon: "🚓", type: "yellow" }
           );
           this.addLog(`🚓 [黄マス] ${player.name} は ${nearest.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
@@ -2145,10 +2708,12 @@
 
           const turns = Math.floor(Math.random() * 3) + 3;
           player.wheelchairTurns = turns;
+          sound.playSiren();
           this.showEventModal(
-            `🏥 ${nearest.name} へ緊急搬送！`,
+            `${nearest.name} へ緊急搬送！`,
             `路上で転倒して怪我！最寄りの病院・クリニック【 ${nearest.name} 】へ強制移動搬送！\n【${turns}ターン車椅子🦽】(出目1固定)になります。`,
-            `搬送先: ${nearest.name}`
+            `搬送先: ${nearest.name}`,
+            { icon: "🚑", type: "yellow" }
           );
           this.addLog(`🚑 [黄マス] ${player.name} は ${nearest.name} へ緊急搬送！ ${turns}ターン車椅子🦽状態。`);
           this.teleportPlayer(player, nearest);
@@ -2156,13 +2721,19 @@
         } else {
           const vehicle = VEHICLES[Math.floor(Math.random() * VEHICLES.length)];
           player.vehicle = vehicle;
-          
+
           const marker = this.playerMarkers[player.id];
           if (marker) {
             marker.setIcon(this.createPlayerIcon(player, `${vehicle.emoji} ゲット！`));
           }
 
-          this.showEventModal("乗り物を獲得！", `「${vehicle.name} (${vehicle.emoji})」をゲットしました！\n次回のサイコロ【1回限り】出目が【${vehicle.mult}倍】になります！`);
+          sound.playChime();
+          this.showEventModal(
+            "乗り物を獲得！",
+            `「${vehicle.name} (${vehicle.emoji})」をゲットしました！\n次回のサイコロ【1回限り】出目が【${vehicle.mult}倍】になります！`,
+            null,
+            { icon: vehicle.emoji, type: "yellow" }
+          );
           this.addLog(`🎁 [黄マス] ${player.name} は ${vehicle.emoji} ${vehicle.name} (${vehicle.mult}倍・次回1回限り) を獲得！`);
         }
       },
@@ -2180,7 +2751,7 @@
           ];
         }
 
-        const newRoadGraph = this.buildRoadNetwork([pathPoints], 10);
+        const newRoadGraph = this.buildRoadNetwork([pathPoints], 20);
         const startNodeOffset = this.roadNetworkNodes.length;
 
         const newPathIndices = [];
@@ -2252,6 +2823,25 @@
         }
       },
 
+      // Reusable visible "CPU is about to auto-continue" countdown, so CPU turns don't just
+      // instantly flash by — shows a ticking number the humans watching can actually follow.
+      runCpuCountdown(indicatorId, numId, seconds, onDone) {
+        const indicator = document.getElementById(indicatorId);
+        const numEl = document.getElementById(numId);
+        if (indicator) indicator.classList.remove("hidden");
+        let n = seconds;
+        if (numEl) numEl.innerText = n;
+        const timer = setInterval(() => {
+          n--;
+          if (numEl) numEl.innerText = Math.max(n, 0);
+          if (n <= 0) {
+            clearInterval(timer);
+            if (indicator) indicator.classList.add("hidden");
+            onDone();
+          }
+        }, 1000);
+      },
+
       handleGoalReach(player) {
         sound.playGoalFanfare();
         if (typeof confetti === 'function') {
@@ -2259,10 +2849,13 @@
         }
         player.money += 100000;
 
-        document.getElementById("goal-winner-text").innerText = `${player.name} が ${this.currentDestination.name} に先着ゴール！\n賞金10万円を獲得しました！`;
+        document.getElementById("goal-winner-text").innerText = `${player.name} が ${this.currentDestination.name} に先着ゴール！`;
         document.getElementById("category-select-section").classList.remove("hidden");
+        document.getElementById("category-cpu-countdown").classList.add("hidden");
         document.getElementById("roulette-section").classList.add("hidden");
+        document.getElementById("roulette-cpu-countdown").classList.add("hidden");
         document.getElementById("roulette-confirm-btn").classList.add("hidden");
+        document.getElementById("goal-cpu-countdown").classList.add("hidden");
         document.getElementById("goal-modal").classList.remove("hidden");
 
         this.selectedCategoryWinnerIdx = player.id;
@@ -2274,9 +2867,11 @@
         }
 
         if (player.isCpu) {
-          const categories = ["飲食店", "スーパー（薬屋含む）", "公園", "駅（バス停含む）"];
-          const randomCat = categories[Math.floor(Math.random() * categories.length)];
-          setTimeout(() => this.selectCategory(randomCat), 1500);
+          this.runCpuCountdown("goal-cpu-countdown", "goal-cpu-countdown-num", 3, () => {
+            const categories = ["飲食店", "スーパー（薬屋含む）", "公園", "駅（バス停含む）"];
+            const randomCat = categories[Math.floor(Math.random() * categories.length)];
+            this.selectCategory(randomCat);
+          });
         }
       },
 
@@ -2304,7 +2899,9 @@
             sound.playLandBlue();
 
             if (this.players[this.selectedCategoryWinnerIdx].isCpu) {
-              setTimeout(() => this.confirmNextSugoroku(), 1500);
+              this.runCpuCountdown("roulette-cpu-countdown", "roulette-cpu-countdown-num", 3, () => {
+                this.confirmNextSugoroku();
+              });
             }
           }
         }, 120);
@@ -2323,6 +2920,7 @@
         await this.setupBoard(currentStartLoc, this.nextDestinationCandidate);
         this.addLog(`🚩 次の目的地が 【${this.nextDestinationCandidate.name}】 に設定されました！`);
         this.finishTurn();
+        this.panToCurrentPlayer();
       },
 
       finishTurn() {
@@ -2355,7 +2953,7 @@
         localStorage.setItem("edogawa_sugoroku_state", JSON.stringify(state));
       },
 
-      showEventModal(title, desc, extra = null) {
+      showEventModal(title, desc, extra = null, options = {}) {
         document.getElementById("event-modal-title").innerText = title;
         document.getElementById("event-modal-desc").innerText = desc;
         const extraBox = document.getElementById("event-modal-extra");
@@ -2365,6 +2963,27 @@
         } else {
           extraBox.classList.add("hidden");
         }
+
+        const iconEl = document.getElementById("event-modal-icon");
+        const cardEl = document.getElementById("event-modal-card");
+        iconEl.classList.remove("modal-icon-lose", "modal-icon-gain", "modal-icon-slide");
+        cardEl.classList.remove("event-card-red", "event-card-blue", "event-card-yellow");
+        if (options.icon) iconEl.textContent = options.icon;
+
+        if (options.type === 'red') {
+          cardEl.classList.add("event-card-red");
+          void iconEl.offsetWidth;
+          iconEl.classList.add("modal-icon-lose");
+        } else if (options.type === 'blue') {
+          cardEl.classList.add("event-card-blue");
+          void iconEl.offsetWidth;
+          iconEl.classList.add("modal-icon-gain");
+        } else if (options.type === 'yellow') {
+          cardEl.classList.add("event-card-yellow");
+          void iconEl.offsetWidth;
+          iconEl.classList.add("modal-icon-slide");
+        }
+
         document.getElementById("event-modal").classList.remove("hidden");
 
         const cp = this.players[this.currentPlayerIdx];
@@ -2376,7 +2995,7 @@
         const isSelfManualTurn = this.isMultiplayer ? (cp && cp.uid === this.myUid) : (cp && !cp.isCpu);
 
         if (this.isMultiplayer && this.isHost) {
-          this.lastEventForSync = { title, desc, extra };
+          this.lastEventForSync = { title, desc, extra, icon: options.icon || null, type: options.type || null };
           this.eventSeq = (this.eventSeq || 0) + 1;
         }
 
@@ -2420,6 +3039,16 @@
         // is authoritative and moves the game forward.
         if (!this.isMultiplayer || this.isHost) {
           this.finishTurn();
+          this.panToCurrentPlayer();
+        }
+      },
+
+      panToCurrentPlayer() {
+        const cp = this.players[this.currentPlayerIdx];
+        if (!cp || !this.roadNetworkNodes || !this.map) return;
+        const node = this.roadNetworkNodes[cp.currentNodeIdx];
+        if (node) {
+          this.map.flyTo([node.lat, node.lng], 19, { duration: 0.6 });
         }
       },
 
