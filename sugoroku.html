@@ -162,6 +162,20 @@
     }
     .modal-icon-slide { animation: slideInFromRight 0.55s cubic-bezier(0.2,0.8,0.2,1); }
 
+    @keyframes angelFly {
+      0% { transform: translate(var(--fx-start-x), var(--fx-start-y)) scale(0.6) rotate(-10deg); opacity: 0; }
+      15% { opacity: 1; }
+      50% { transform: translate(var(--fx-mid-x), var(--fx-mid-y)) scale(1.1) rotate(8deg); }
+      85% { opacity: 1; }
+      100% { transform: translate(var(--fx-end-x), var(--fx-end-y)) scale(0.7) rotate(-6deg); opacity: 0; }
+    }
+    .angel-emoji {
+      position: absolute;
+      font-size: 42px;
+      animation: angelFly 2.4s ease-in-out forwards;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+    }
+
     .event-card-red { background: linear-gradient(160deg, #7f1d1d, #450a0a) !important; border-color: #ef4444 !important; }
     .event-card-blue { background: linear-gradient(160deg, #1e3a8a, #172554) !important; border-color: #3b82f6 !important; }
     .event-card-yellow { background: linear-gradient(160deg, #78350f, #451a03) !important; border-color: #f59e0b !important; }
@@ -227,8 +241,11 @@
   <header class="h-14 bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
     <div class="flex items-center gap-2">
       <span id="game-turn-badge" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold rounded-md">
-        第1ターン
+        1ターン
       </span>
+      <button id="auto-mode-btn" onclick="EdogawaSugoroku.toggleAutoMode()" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold rounded-md active:scale-95 transition">
+        オートモード: OFF
+      </button>
     </div>
 
     <!-- Active Target Badge -->
@@ -400,6 +417,16 @@
       <button onclick="EdogawaSugoroku.confirmNickname()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl shadow-md transition">
         決定
       </button>
+    </div>
+  </div>
+
+  <!-- OVERLAY: ANGELS FLYING + ROCKET GIFT ANNOUNCEMENT -->
+  <div id="angel-rocket-overlay" class="hidden fixed inset-0 z-[60] pointer-events-none overflow-hidden"></div>
+  <div id="rocket-gift-modal" class="hidden fixed inset-0 z-[61] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-gradient-to-br from-indigo-900 to-slate-900 border border-amber-400/50 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-3">
+      <div class="text-6xl">🚀</div>
+      <h3 class="font-mincho text-xl font-bold text-amber-400">天使からの贈り物！</h3>
+      <p class="text-sm text-slate-100 leading-relaxed">全プレーヤーが目的地からまだ遠いようです。<br>天使が全員に🚀ロケットをプレゼント！<br>次のサイコロが【10倍】進みます！<br>（乗り物を持っている場合は合算されます）</p>
     </div>
   </div>
 
@@ -613,7 +640,13 @@
         { name: "葛西駅", lat: 35.6636, lng: 139.8733 },
         { name: "船堀駅", lat: 35.6838, lng: 139.8643 },
         { name: "一之江駅", lat: 35.6859, lng: 139.8828 },
-        { name: "平井駅", lat: 35.7064, lng: 139.8423 }
+        { name: "平井駅", lat: 35.7064, lng: 139.8423 },
+        { name: "新小岩駅入口 バス停", lat: 35.7267, lng: 139.8595 },
+        { name: "西葛西駅前 バス停", lat: 35.6648, lng: 139.8577 },
+        { name: "瑞江駅入口 バス停", lat: 35.6942, lng: 139.8912 },
+        { name: "篠崎駅前 バス停", lat: 35.7089, lng: 139.8930 },
+        { name: "小岩駅北口 バス停", lat: 35.7332, lng: 139.8790 },
+        { name: "東葛西五丁目 バス停", lat: 35.6570, lng: 139.8720 }
       ]
     };
 
@@ -1267,6 +1300,7 @@
       firebaseInitAttempted: false,
       firebaseReady: false,
       recruitmentPlayers: [],
+      autoMode: false,
       isMultiplayer: false,
       gameStateVersion: 0,
       lastAppliedEventSeq: 0,
@@ -1378,12 +1412,31 @@
         if (label) label.innerText = isMuted ? "BGM OFF" : "BGM ON";
       },
 
+      toggleAutoMode() {
+        this.autoMode = !this.autoMode;
+        const btn = document.getElementById("auto-mode-btn");
+        if (btn) {
+          btn.innerText = `オートモード: ${this.autoMode ? "ON" : "OFF"}`;
+          btn.classList.toggle("bg-amber-500", this.autoMode);
+          btn.classList.toggle("text-slate-950", this.autoMode);
+          btn.classList.toggle("border-amber-400", this.autoMode);
+          btn.classList.toggle("bg-slate-800", !this.autoMode);
+          btn.classList.toggle("text-slate-300", !this.autoMode);
+          btn.classList.toggle("border-slate-700", !this.autoMode);
+        }
+        // If it's already my turn when I flip this on, kick off the auto-roll right away.
+        if (this.autoMode && this.canActNow() && !this.isRolling) {
+          setTimeout(() => this.rollDice(), 800);
+        }
+      },
+
       panToDestination() {
-        if (!this.map || !this.currentDestination) return;
+        if (!this.canActNow() || !this.map || !this.currentDestination) return;
         this.map.flyTo([this.currentDestination.lat, this.currentDestination.lng], 19, { duration: 0.8 });
       },
 
       panToPlayer(idx) {
+        if (!this.canActNow()) return;
         const player = this.players[idx];
         if (!player || !this.map || !this.roadNetworkNodes) return;
         const node = this.roadNetworkNodes[player.currentNodeIdx];
@@ -1796,13 +1849,15 @@
             vehicle: p.vehicle || null,
             skipTurn: !!p.skipTurn,
             wheelchairTurns: p.wheelchairTurns || 0,
-            forcedMoveCount: p.forcedMoveCount || 0
+            forcedMoveCount: p.forcedMoveCount || 0,
+            rocketBoost: !!p.rocketBoost
           })),
           pendingRoll: null,
           awaitingGoalSelection: this.awaitingGoalSelection || null,
           lastEvent: this.lastEventForSync || null,
           eventSeq: this.eventSeq || 0,
-          lastDiceValue: this.lastDiceValueForSync || null
+          lastDiceValue: this.lastDiceValueForSync || null,
+          rocketGiftEventSeq: this.rocketGiftEventSeq || 0
         };
 
         try {
@@ -1861,6 +1916,11 @@
           this.renderBoardVisuals(this.roadNetworkNodes, startNodeForDisplay, this.goalNodeIdx, this.currentDestination);
         }
 
+        if (!this.isHost && gs.rocketGiftEventSeq && gs.rocketGiftEventSeq !== this.lastAppliedRocketGiftSeq) {
+          this.lastAppliedRocketGiftSeq = gs.rocketGiftEventSeq;
+          this.showAngelRocketGift();
+        }
+
         // Shows the event-result modal (if any). Deferred until after a movement animation
         // finishes, so guests see the same "walk, then result" order the host sees.
         const showPendingEvent = () => {
@@ -1900,6 +1960,7 @@
             local.skipTurn = rp.skipTurn;
             local.wheelchairTurns = rp.wheelchairTurns;
             local.forcedMoveCount = rp.forcedMoveCount;
+            local.rocketBoost = !!rp.rocketBoost;
             if (local === mover) return; // leave position alone — the walk animation below advances it
             local.currentNodeIdx = rp.currentNodeIdx;
             local.pathIndex = rp.pathIndex;
@@ -2167,6 +2228,7 @@
 
       async setupBoard(startLoc, goalLoc) {
         this.currentDestination = goalLoc;
+        this.rocketGiftUsedThisLeg = false;
 
         // Capture each player's actual current position BEFORE the old road graph is
         // discarded, so after a leg change players resume from wherever their token
@@ -2192,9 +2254,9 @@
 
         let roadGraph;
         if (osrmPath && osrmPath.length > 5) {
-          roadGraph = this.buildRoadNetwork([osrmPath], 20);
+          roadGraph = this.buildRoadNetwork([osrmPath], 20, false);
         } else {
-          roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 20);
+          roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 20, true);
         }
 
         const startNodeIdx = this.findNearestNodeIdx2(roadGraph.nodes, startLoc);
@@ -2202,28 +2264,181 @@
 
         this.renderBoardVisuals(roadGraph.nodes, startNodeIdx, goalNodeIdx, goalLoc);
 
-        this.players.forEach((p) => {
+        for (const p of this.players) {
           p.forcedMoveCount = 0;
           const priorPos = priorPositions[p.id];
-          p.currentNodeIdx = priorPos ? this.findNearestNodeIdx2(roadGraph.nodes, priorPos) : startNodeIdx;
-          p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
-          p.pathIndex = 0;
+          let usedOwnBranch = false;
 
-          const startPt = this.roadNetworkNodes[p.currentNodeIdx] || startLoc;
+          if (priorPos) {
+            const nearestIdx = this.findNearestNodeIdx2(roadGraph.nodes, priorPos);
+            const nearestNode = roadGraph.nodes[nearestIdx];
+            const distToMain = this.haversineMeters(priorPos, nearestNode);
+
+            if (distToMain <= 400) {
+              p.currentNodeIdx = nearestIdx;
+              p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
+              p.pathIndex = 0;
+            } else {
+              // Too far from the shared route to snap onto it sensibly (this is what was
+              // causing everyone to bunch up onto one spot, and stragglers to land right
+              // next to the goal for a fake "0 squares" win). Give this player their own
+              // dedicated route from where they actually are, straight to the new goal.
+              await this.buildPlayerOwnBranch(p, priorPos, goalLoc);
+              usedOwnBranch = true;
+            }
+          } else {
+            p.currentNodeIdx = startNodeIdx;
+            p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
+            p.pathIndex = 0;
+          }
+
+          const startPt = (usedOwnBranch ? this.roadNetworkNodes[p.currentNodeIdx] : roadGraph.nodes[p.currentNodeIdx]) || startLoc;
           const marker = L.marker([startPt.lat, startPt.lng], {
             icon: this.createPlayerIcon(p, ""),
             zIndexOffset: 1000
           }).addTo(this.map);
           this.playerMarkers[p.id] = marker;
-        });
+        }
 
         this.updatePlayerRoutes();
         this.map.setView([startLoc.lat, startLoc.lng], 19);
+
+        this.checkRocketGiftEligibility();
 
         if (this.isMultiplayer && this.isHost) {
           this.awaitingGoalSelection = null;
           await this.syncGameStateToRoom();
         }
+      },
+
+      checkRocketGiftEligibility() {
+        if (this.rocketGiftUsedThisLeg) return;
+        if (!this.players || !this.players.length) return;
+
+        const allFar = this.players.every(p => {
+          const r = this.remainingSquares(p);
+          return r !== null && r >= 100;
+        });
+
+        if (allFar) {
+          this.rocketGiftUsedThisLeg = true;
+          this.players.forEach(p => { p.rocketBoost = true; });
+          this.showAngelRocketGift();
+        }
+      },
+
+      showAngelRocketGift() {
+        sound.playChime();
+        const overlay = document.getElementById("angel-rocket-overlay");
+        if (overlay) {
+          overlay.innerHTML = '';
+          for (let i = 0; i < 10; i++) {
+            const angel = document.createElement('div');
+            angel.className = 'angel-emoji';
+            angel.textContent = '👼';
+            const startX = (Math.random() * 100 - 50) + 'vw';
+            const startY = (Math.random() * 40 + 60) + 'vh';
+            const midX = (Math.random() * 100 - 50) + 'vw';
+            const midY = (Math.random() * 60 - 10) + 'vh';
+            const endX = (Math.random() * 100 - 50) + 'vw';
+            const endY = (Math.random() * 40 - 40) + 'vh';
+            angel.style.setProperty('--fx-start-x', startX);
+            angel.style.setProperty('--fx-start-y', startY);
+            angel.style.setProperty('--fx-mid-x', midX);
+            angel.style.setProperty('--fx-mid-y', midY);
+            angel.style.setProperty('--fx-end-x', endX);
+            angel.style.setProperty('--fx-end-y', endY);
+            angel.style.left = '50%';
+            angel.style.top = '50%';
+            angel.style.animationDelay = `${Math.random() * 0.4}s`;
+            overlay.appendChild(angel);
+          }
+          overlay.classList.remove("hidden");
+          setTimeout(() => overlay.classList.add("hidden"), 3000);
+        }
+
+        const modal = document.getElementById("rocket-gift-modal");
+        if (modal) {
+          modal.classList.remove("hidden");
+          setTimeout(() => modal.classList.add("hidden"), 3500);
+        }
+
+        this.addLog("👼 天使が舞い降り、全プレーヤーに🚀ロケット（10倍）をプレゼントしました！");
+
+        if (this.isMultiplayer && this.isHost) {
+          this.rocketGiftEventSeq = (this.rocketGiftEventSeq || 0) + 1;
+        }
+      },
+
+      haversineMeters(a, b) {
+        const R = 6371000;
+        const dLat = (b.lat - a.lat) * Math.PI / 180;
+        const dLng = (b.lng - a.lng) * Math.PI / 180;
+        const x = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) *
+                  Math.sin(dLng/2) * Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+      },
+
+      // Builds a standalone route (own OSRM fetch, own nodes appended to the shared node
+      // array) from a player's real current position to the new goal. Used when that
+      // player is too far from the leg's main shared route to sensibly snap onto it.
+      async buildPlayerOwnBranch(player, fromLoc, goalLoc) {
+        let osrmPath = await this.fetchStreetRouteOSRM(fromLoc, goalLoc);
+        let pathPoints;
+        if (osrmPath && osrmPath.length > 1) {
+          pathPoints = osrmPath;
+        } else {
+          pathPoints = [
+            { lat: fromLoc.lat, lng: fromLoc.lng },
+            { lat: goalLoc.lat, lng: goalLoc.lng }
+          ];
+        }
+
+        const branchGraph = this.buildRoadNetwork([pathPoints], 20, false);
+        const offset = this.roadNetworkNodes.length;
+        const branchPath = [];
+
+        branchGraph.nodes.forEach((n, idx) => {
+          const globalIdx = offset + idx;
+          this.roadNetworkNodes.push({
+            id: globalIdx,
+            lat: n.lat,
+            lng: n.lng,
+            type: n.type,
+            neighbors: (n.neighbors || []).map(nb => nb + offset)
+          });
+          branchPath.push(globalIdx);
+
+          if (idx > 0 && idx < branchGraph.nodes.length - 1) {
+            let iconHtml = '';
+            if (n.type === 'red') {
+              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
+            } else if (n.type === 'blue') {
+              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+            } else {
+              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
+            }
+            const customIcon = L.divIcon({
+              className: 'custom-spot-icon',
+              html: iconHtml,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            });
+            const marker = L.marker([n.lat, n.lng], { icon: customIcon }).addTo(this.map);
+            this.spotMarkers.push(marker);
+          }
+        });
+
+        // The branch's own last node is superseded by the shared goal node, so this
+        // player's path correctly ends at the exact same goal as everyone else.
+        if (branchPath.length > 0) {
+          branchPath[branchPath.length - 1] = this.goalNodeIdx;
+        }
+
+        player.currentNodeIdx = branchPath[0];
+        player.path = branchPath;
+        player.pathIndex = 0;
       },
 
       // Draws the road background (as graph edges), spot markers, and goal marker for a given
@@ -2340,8 +2555,9 @@
         });
       },
 
-      buildRoadNetwork(roads, spacingMeters) {
+      buildRoadNetwork(roads, spacingMeters, allowCrossConnect = false) {
         const nodes = [];
+        const DEDUP_LOOKBACK = 6; // only merge against recently-added nodes, not the whole path
 
         roads.forEach(road => {
           for (let i = 0; i < road.length - 1; i++) {
@@ -2364,11 +2580,21 @@
               const lat = p1.lat + (p2.lat - p1.lat) * t;
               const lng = p1.lng + (p2.lng - p1.lng) * t;
 
-              let matchedIdx = nodes.findIndex(n => {
-                const latDiff = Math.abs(n.lat - lat);
-                const lngDiff = Math.abs(n.lng - lng);
-                return (latDiff < 0.00008 && lngDiff < 0.00008);
-              });
+              // Only check the most recently-added nodes for a spatial match. Checking the
+              // whole array here would let a route that loops or backtracks near itself
+              // (e.g. a dead-end destination requiring a U-turn) merge its outbound and
+              // return points into a single shared node — collapsing the two segments into
+              // one point and rendering as a bogus "V" shape cutting across the map.
+              const lookbackStart = Math.max(0, nodes.length - DEDUP_LOOKBACK);
+              let matchedIdx = -1;
+              for (let k = nodes.length - 1; k >= lookbackStart; k--) {
+                const latDiff = Math.abs(nodes[k].lat - lat);
+                const lngDiff = Math.abs(nodes[k].lng - lng);
+                if (latDiff < 0.00008 && lngDiff < 0.00008) {
+                  matchedIdx = k;
+                  break;
+                }
+              }
 
               if (matchedIdx === -1) {
                 let type = 'blue';
@@ -2400,21 +2626,22 @@
           }
         });
 
-        // Post-process: connect nearby nodes that came from *different* road segments
-        // (e.g. crossing or adjacent streets) so the whole network forms a single
-        // connected graph, even when two segments' sampled points don't land exactly
-        // on the same spot. Without this, the static fallback road set (several
-        // independent street segments) can end up as disconnected islands, which makes
-        // pathfinding fail and produces nonsense straight-line "teleport" routes.
-        const CONNECT_THRESHOLD_DEG = 0.00015; // ~15m
-        for (let i = 0; i < nodes.length; i++) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            if (nodes[i].neighbors.includes(j)) continue;
-            const latDiff = Math.abs(nodes[i].lat - nodes[j].lat);
-            const lngDiff = Math.abs(nodes[i].lng - nodes[j].lng);
-            if (latDiff < CONNECT_THRESHOLD_DEG && lngDiff < CONNECT_THRESHOLD_DEG) {
-              nodes[i].neighbors.push(j);
-              nodes[j].neighbors.push(i);
+        // Only needed to repair the *disconnected* static fallback road set (several
+        // independent street segments with no shared points). A successfully-fetched
+        // single OSRM route is already one connected, correctly-ordered chain and doesn't
+        // need this — applying it there was creating spurious shortcut edges wherever the
+        // route passed close to itself, which is exactly what produced the "V" artifact.
+        if (allowCrossConnect) {
+          const CONNECT_THRESHOLD_DEG = 0.00015; // ~15m
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              if (nodes[i].neighbors.includes(j)) continue;
+              const latDiff = Math.abs(nodes[i].lat - nodes[j].lat);
+              const lngDiff = Math.abs(nodes[i].lng - nodes[j].lng);
+              if (latDiff < CONNECT_THRESHOLD_DEG && lngDiff < CONNECT_THRESHOLD_DEG) {
+                nodes[i].neighbors.push(j);
+                nodes[j].neighbors.push(i);
+              }
             }
           }
         }
@@ -2540,7 +2767,7 @@
 
         this.updateMarkerStacking();
 
-        document.getElementById("game-turn-badge").innerText = `第 ${this.turnCount} ターン`;
+        document.getElementById("game-turn-badge").innerText = `${this.turnCount} ターン`;
 
         const displayAvatar = cp.wheelchairTurns > 0 ? '🦽' : (cp.vehicle ? cp.vehicle.emoji : cp.avatar);
         document.getElementById("active-player-avatar").innerText = displayAvatar;
@@ -2594,6 +2821,17 @@
         rollBtn.classList.toggle("shadow-lg", canRollNow);
         rollBtn.classList.toggle("shadow-amber-500/20", canRollNow);
 
+        const canNavigate = this.canActNow();
+        document.querySelectorAll('[onclick="EdogawaSugoroku.panToDestination()"]').forEach(el => {
+          el.classList.toggle("opacity-40", !canNavigate);
+          el.classList.toggle("grayscale", !canNavigate);
+          el.classList.toggle("pointer-events-none", !canNavigate);
+        });
+        document.querySelectorAll('#players-card-container [onclick^="EdogawaSugoroku.panToPlayer"]').forEach(el => {
+          el.classList.toggle("opacity-60", !canNavigate);
+          el.classList.toggle("pointer-events-none", !canNavigate);
+        });
+
         const rollBtnLabel = rollBtn.querySelector("span:last-child");
         if (rollBtnLabel) {
           if (canRollNow) {
@@ -2607,7 +2845,9 @@
 
         // Only the host auto-drives CPU turns in multiplayer (otherwise every device would
         // try to roll for the CPU at once). In solo mode this device is always authoritative.
-        if ((!this.isMultiplayer || this.isHost) && cp.isCpu && !this.isRolling) {
+        const shouldAutoRollCpu = (!this.isMultiplayer || this.isHost) && cp.isCpu;
+        const shouldAutoRollSelf = this.autoMode && !cp.isCpu && canRollNow;
+        if ((shouldAutoRollCpu || shouldAutoRollSelf) && !this.isRolling) {
           setTimeout(() => this.rollDice(), 1200);
         }
       },
@@ -2665,16 +2905,28 @@
 
           let steps = rawRoll;
           const usedVehicle = cp.vehicle;
+          const usedRocket = !!cp.rocketBoost;
 
-          if (usedVehicle && cp.wheelchairTurns === 0) {
-            steps = rawRoll * usedVehicle.mult;
+          if (cp.wheelchairTurns === 0) {
+            if (usedRocket && usedVehicle) {
+              steps = (rawRoll * 10) + (rawRoll * usedVehicle.mult);
+            } else if (usedRocket) {
+              steps = rawRoll * 10;
+            } else if (usedVehicle) {
+              steps = rawRoll * usedVehicle.mult;
+            }
           }
+          if (usedRocket) cp.rocketBoost = false;
 
           if (!isRemoteTurn && cube) cube.style.transform = DICE_ROTATIONS[rawRoll];
           this.lastDiceValueForSync = rawRoll;
 
           let logMsg = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】`;
-          if (usedVehicle && cp.wheelchairTurns === 0) {
+          if (usedRocket && usedVehicle) {
+            logMsg += ` ➔ 🚀ロケット(10倍) + ${usedVehicle.name}(${usedVehicle.mult}倍) で ${steps} マス大爆走！`;
+          } else if (usedRocket) {
+            logMsg += ` ➔ 🚀ロケット(10倍) で ${steps} マス大爆走！`;
+          } else if (usedVehicle && cp.wheelchairTurns === 0) {
             logMsg += ` ➔ ${usedVehicle.name} (${usedVehicle.mult}倍) で ${steps} マス爆走！`;
           }
           this.addLog(logMsg);
@@ -3172,7 +3424,8 @@
         // In multiplayer, only the device controlling the current player's own turn shows a
         // manual "了解" button — every other case (CPU turns, and any other human's turn
         // being resolved here by the host) auto-continues after a few seconds.
-        const isSelfManualTurn = this.isMultiplayer ? (cp && cp.uid === this.myUid) : (cp && !cp.isCpu);
+        const isOwnTurn = this.isMultiplayer ? (cp && cp.uid === this.myUid) : (cp && !cp.isCpu);
+        const isSelfManualTurn = isOwnTurn && !this.autoMode;
 
         if (this.isMultiplayer && this.isHost) {
           this.lastEventForSync = { title, desc, extra, icon: options.icon || null, type: options.type || null, reasonIcon: options.reasonIcon || null, avatar: activePlayer ? activePlayer.avatar : null };
