@@ -255,11 +255,6 @@
   <main class="flex-1 relative w-full overflow-hidden bg-slate-900">
     <div id="map" class="w-full h-full z-10"></div>
 
-    <div id="move-countdown-badge" class="hidden absolute top-3 left-3 z-20 bg-slate-950/85 border border-sky-500 px-3 py-1.5 rounded-lg backdrop-blur-md flex items-center gap-2 text-sm text-sky-300 shadow-lg pointer-events-none font-black">
-      <span>🎲</span>
-      <span>あと <span id="move-countdown-num">0</span> マス</span>
-    </div>
-
     <div onclick="EdogawaSugoroku.panToDestination()" class="sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[180px] truncate cursor-pointer active:scale-95 transition">
       <span class="text-amber-400 font-bold">目的地:</span>
       <span id="mobile-destination-name" class="text-slate-200 font-medium">カラオケ酔処「ゆう」</span>
@@ -284,7 +279,7 @@
             <span id="active-player-remaining" class="px-1.5 py-0.2 bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] rounded font-bold whitespace-nowrap">あと-マス</span>
           </div>
           <div class="text-xs text-amber-400 font-extrabold flex items-center gap-2">
-            <span id="active-player-money">所持金: ¥100,000</span>
+            <span class="leading-tight">所持金:<br><span id="active-player-money">¥100,000</span></span>
             <span id="active-player-vehicle" class="text-xs"></span>
           </div>
         </div>
@@ -410,8 +405,10 @@
 
   <!-- MODAL: EVENT POPUP -->
   <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div id="event-modal-card" class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4 transition-colors">
+    <div id="event-modal-card" class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-3 transition-colors">
+      <div id="event-modal-avatar" class="absolute top-3 left-3 w-10 h-10 rounded-full bg-slate-950/70 border border-slate-700 flex items-center justify-center text-xl shadow-md"></div>
       <div id="event-modal-icon" class="text-6xl">🎉</div>
+      <div id="event-modal-reason-icon" class="hidden text-9xl leading-none py-1">🎣</div>
       <div>
         <h3 id="event-modal-title" class="font-mincho text-xl font-bold text-amber-400 mb-2">イベント発生！</h3>
         <p id="event-modal-desc" class="text-sm text-slate-100 font-medium leading-relaxed whitespace-pre-line text-left">イベント説明文</p>
@@ -768,7 +765,7 @@
       { emoji: "🚲", text: "江戸川区民センターで自転車の空気入れを手伝ってお礼をもらった" },
       { emoji: "🎁", text: "江戸川区民センターの商店街の福引で特賞をゲットした" },
       { emoji: "🎣", text: "東西線沿いの商店街で大物を釣り上げて釣具屋に高く買い取られた" },
-      { emoji: "🍺", text: "なぎさニュータウンの居酒屋で常連割引がきいて予想より安く済んだ" },
+      { emoji: "🍻", text: "なぎさニュータウンの居酒屋の店長と意気投合してご馳走してもらった" },
       { emoji: "🧺", text: "春江町のバザーで掘り出し物を安く仕入れて転売できた" },
       { emoji: "🧃", text: "中葛西の自販機で当たりが出てもう一本もらえた" },
       { emoji: "🎵", text: "新小岩でストリートライブの投げ銭をもらった" },
@@ -790,11 +787,11 @@
       { emoji: "💵", text: "東葛西で落とし物を届けたらお礼をもらった" },
       { emoji: "♻️", text: "篠崎公園のリサイクルショップで不要品が高値で売れた" },
       { emoji: "🏅", text: "篠崎公園のマラソン大会で完走賞金をもらった" },
-      { emoji: "🍎", text: "瑞江の八百屋さんがおまけしてくれた上に割引もあった" },
+      { emoji: "🍎", text: "瑞江の八百屋さんに野菜の詰め合わせをタダでもらった" },
       { emoji: "💳", text: "新小岩の地域ポイント還元でキャッシュバックがあった" },
-      { emoji: "🍺", text: "江戸川区役所前の居酒屋で常連割引がきいて予想より安く済んだ" },
+      { emoji: "🍻", text: "江戸川区役所前の居酒屋でツケを払ってもらい浮いたお金が戻った" },
       { emoji: "🧺", text: "江戸川区役所前のバザーで掘り出し物を安く仕入れて転売できた" },
-      { emoji: "🍎", text: "春江町の八百屋さんがおまけしてくれた上に割引もあった" },
+      { emoji: "🍎", text: "春江町の八百屋さんの手伝いをしたら野菜と一緒に謝礼をもらった" },
       { emoji: "🐟", text: "船堀タワーの魚屋さんで大安売りに遭遇して得した" },
       { emoji: "🎟️", text: "タワーホール船堀のフリマに出店したら即完売した" },
       { emoji: "🎗️", text: "なぎさニュータウンのボランティア活動で謝礼をもらった" },
@@ -805,7 +802,7 @@
       { emoji: "♻️", text: "瑞江のリサイクルショップで不要品が高値で売れた" },
       { emoji: "🎁", text: "北葛西の商店街の福引で特賞をゲットした" },
       { emoji: "🎵", text: "一之江でストリートライブの投げ銭をもらった" },
-      { emoji: "🍎", text: "小岩の八百屋さんがおまけしてくれた上に割引もあった" },
+      { emoji: "🍊", text: "小岩の八百屋さんの配達を手伝ったらお駄賃をもらった" },
       { emoji: "🍀", text: "春江町で四つ葉のクローバーを見つけて縁起が良かった" },
       { emoji: "♻️", text: "なぎさ公園のリサイクルショップで不要品が高値で売れた" },
       { emoji: "🏦", text: "船堀の銀行キャンペーンでポイントがついた" },
@@ -828,7 +825,7 @@
       { emoji: "🎣", text: "江戸川区役所前で大物を釣り上げて釣具屋に高く買い取られた" },
       { emoji: "🎫", text: "船堀タワーで当選したイベントチケットを譲って感謝された" },
       { emoji: "📱", text: "北葛西でフリマアプリの取引がスムーズにいき臨時収入" },
-      { emoji: "🍺", text: "江戸川区民センターの居酒屋で常連割引がきいて予想より安く済んだ" },
+      { emoji: "🍻", text: "江戸川区民センターの居酒屋でビール早飲み大会に勝って賞金をもらった" },
       { emoji: "🏅", text: "一之江のマラソン大会で完走賞金をもらった" },
       { emoji: "🎁", text: "平井の商店街の福引で特賞をゲットした" },
       { emoji: "🎁", text: "葛西臨海公園の商店街の福引で特賞をゲットした" }
@@ -963,24 +960,106 @@
     ];
 
     const CPU_NAME_POOL = [
-      "たけしおばちゃん", "ゆうたマスター", "はると隊長", "そうた名人", "りくチャンピオン", "ゆい博士",
-      "さくら先生", "めい師匠", "ひまり案内人", "あおい冒険家", "かなえ旅人", "みなとカラオケ王",
-      "だいち双六マニア", "しょう江戸川通", "けんた地元民", "なおき散歩好き", "たかし健脚",
-      "まさるスピードスター", "じろう慎重派", "いちろうラッキーボーイ", "はなこラッキーガール",
-      "よしこムードメーカー", "たろう策士", "次郎熱血漢", "三郎のんびり屋", "花子負けず嫌い",
-      "幸子チャレンジャー", "恵子ベテラン", "洋子新人", "文子おばちゃん", "健太おじちゃん",
-      "翔太マスター", "陽菜隊長", "結衣名人", "江戸川マスター", "江戸川隊長", "江戸川名人",
-      "江戸川チャンピオン", "江戸川博士", "江戸川先生", "江戸川師匠", "江戸川案内人", "江戸川冒険家",
-      "江戸川旅人", "江戸川カラオケ王", "江戸川双六マニア", "江戸川通", "江戸川地元民", "江戸川散歩好き",
-      "江戸川健脚", "江戸川スピードスター", "江戸川慎重派", "江戸川ラッキーボーイ", "江戸川ラッキーガール",
-      "江戸川ムードメーカー", "江戸川策士", "江戸川熱血漢", "江戸川のんびり屋", "江戸川負けず嫌い",
-      "江戸川チャレンジャー", "江戸川ベテラン", "江戸川新人", "たけしさん", "ゆうたさん", "はるとさん",
-      "そうたさん", "りくさん", "ゆいさん", "さくらさん", "めいさん", "ひまりさん", "あおいさん",
-      "かなえさん", "みなとさん", "だいちさん", "しょうさん", "けんたさん", "なおきさん", "たかしさん",
-      "まさるさん", "じろうさん", "いちろうさん", "はなこさん", "よしこさん", "たろうさん", "次郎さん",
-      "三郎さん", "花子さん", "幸子さん", "恵子さん", "洋子さん", "文子さん", "健太さん", "翔太さん",
-      "陽菜さん", "結衣さん", "みなとおじちゃん", "だいちおばちゃん", "しょう先生", "けんた師匠",
-      "なおき博士", "たかし案内人"
+      "さおり",
+      "洋子",
+      "江戸師匠",
+      "ゆたか",
+      "江戸王",
+      "いちろう",
+      "江戸名人",
+      "あきら",
+      "江戸若旦那",
+      "結衣名人",
+      "ふみお地元民",
+      "洋子さん",
+      "江戸課長",
+      "江戸姉御",
+      "翔太さん",
+      "まゆみ名人",
+      "幸子さん",
+      "しんじ旅人",
+      "かずおさん",
+      "ゆうたさん",
+      "えみうさぎ",
+      "花子王",
+      "三郎さん",
+      "ゆうた兄貴",
+      "健太ベテラン",
+      "幸子",
+      "えみ姉御",
+      "江戸うさぎ",
+      "よしこさん",
+      "いちろう策士",
+      "幸子うさぎ",
+      "ひまり案内人",
+      "たけし隊長",
+      "翔太",
+      "江戸兄貴",
+      "江戸地元民",
+      "江戸きつね",
+      "江戸通",
+      "めい",
+      "江戸先生",
+      "まさみさん",
+      "のぼる",
+      "はると博士",
+      "たけしさん",
+      "じろうさん",
+      "りく",
+      "ゆいマスター",
+      "次郎さん",
+      "ひまり",
+      "えみ",
+      "江戸ベテラン",
+      "江戸健脚",
+      "健太",
+      "幸子隊長",
+      "さくら隊長",
+      "なおきさん",
+      "たかし",
+      "じろう",
+      "りく旅人",
+      "江戸隊長",
+      "みなと健脚",
+      "結衣さん",
+      "ひまりさん",
+      "よしこ",
+      "江戸大将",
+      "かおりさん",
+      "はるとさん",
+      "のぼる姉御",
+      "健太名人",
+      "はなこさん",
+      "洋子女将",
+      "みつるさん",
+      "みつるきつね",
+      "江戸策士",
+      "ゆいさん",
+      "ゆうた",
+      "つよし兄貴",
+      "三郎",
+      "のぼる名人",
+      "ゆい姉御",
+      "たかし通",
+      "ゆか",
+      "結衣うさぎ",
+      "健太先生",
+      "江戸たぬき",
+      "翔太うさぎ",
+      "次郎健脚",
+      "まゆみさん",
+      "まゆみ",
+      "だいちさん",
+      "かずお",
+      "江戸マスター",
+      "けんた",
+      "しょうさん",
+      "江戸博士",
+      "たろう",
+      "しんじ名人",
+      "かなえさん",
+      "洋子チャンプ",
+      "ちひろ"
     ];
 
     const CPU_AVATAR_POOL = ["🐶", "🐱", "🐻", "🐼", "🦊", "🐰", "🐯", "🦁", "🐨", "🐵", "🐔", "🐧", "🐤", "🦉", "🦄", "🐷", "🐸", "🐙", "🐢", "🦜", "🦝", "🐺", "🦌", "🐘"];
@@ -1022,26 +1101,52 @@
         this.step = 0;
 
         const notes = {
-          'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'G4': 392.00, 'A4': 440.00,
-          'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'G5': 783.99, 'A5': 880.00
+          'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88,
+          'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77,
+          'C6': 1046.50, 'D6': 1174.66, 'E6': 1318.51
+        };
+        const bassNotes = {
+          'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 'A3': 220.00
         };
 
-        const lobbySeq = ['C4', 'E4', 'G4', 'A4', 'G4', 'E4', 'C4', 'D4', 'E4', 'G4', 'A4', 'C5', 'A4', 'G4', 'E4', 'D4'];
-        const mapSeq = ['C5', 'E5', 'G5', 'E5', 'A5', 'G5', 'E5', 'C5', 'D5', 'E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5'];
+        // A longer, gently wandering 32-step melody so the loop feels less repetitive.
+        const lobbySeq = [
+          'C4','E4','G4','A4','G4','E4','C4','D4','E4','G4','A4','C5','A4','G4','E4','D4',
+          'C4','D4','F4','A4','G4','F4','D4','C4','E4','G4','B4','C5','B4','G4','E4','C4'
+        ];
+        const lobbyBass = ['C3','C3','A3','A3','F3','F3','G3','G3'];
 
-        const seq = (type === 'lobby') ? lobbySeq : mapSeq;
-        const speed = (type === 'lobby') ? 300 : 180;
+        const mapSeq = [
+          'C5','E5','G5','E5','A5','G5','E5','C5','D5','E5','G5','A5','G5','E5','D5','C5',
+          'E5','G5','C6','G5','A5','G5','F5','D5','C5','E5','F5','G5','E5','D5','C5','B4'
+        ];
+        const mapBass = ['C3','C3','G3','G3','A3','A3','F3','F3'];
+
+        // Bright, triumphant fanfare loop for the goal-reached celebration screen.
+        const goalSeq = [
+          'C5','E5','G5','C6','G5','E5','C5','E5','G5','C6','E6','C6','G5','E5','C5','G5',
+          'A5','C6','E6','C6','A5','G5','E5','C5','D5','F5','A5','D6','A5','F5','D5','C5'
+        ];
+        const goalBass = ['C3','G3','A3','F3'];
+
+        let seq, bassSeq, speed, waveType, vol;
+        if (type === 'lobby') {
+          seq = lobbySeq; bassSeq = lobbyBass; speed = 300; waveType = 'sine'; vol = 0.04;
+        } else if (type === 'goal') {
+          seq = goalSeq; bassSeq = goalBass; speed = 130; waveType = 'triangle'; vol = 0.055;
+        } else {
+          seq = mapSeq; bassSeq = mapBass; speed = 180; waveType = 'triangle'; vol = 0.05;
+        }
 
         this.bgmTimer = setInterval(() => {
           if (this.isMuted) return;
           const noteName = seq[this.step % seq.length];
           const freq = notes[noteName] || 440;
-          const waveType = (type === 'lobby') ? 'sine' : 'triangle';
-          const vol = (type === 'lobby') ? 0.04 : 0.05;
 
           this.playTone(freq, waveType, speed / 1000 * 0.85, vol);
           if (this.step % 4 === 0) {
-            this.playTone(130.81, 'sine', 0.25, 0.03);
+            const bassName = bassSeq[(Math.floor(this.step / 4)) % bassSeq.length];
+            this.playTone(bassNotes[bassName] || 130.81, 'sine', 0.25, 0.03);
           }
           this.step++;
         }, speed);
@@ -1276,6 +1381,15 @@
       panToDestination() {
         if (!this.map || !this.currentDestination) return;
         this.map.flyTo([this.currentDestination.lat, this.currentDestination.lng], 19, { duration: 0.8 });
+      },
+
+      panToPlayer(idx) {
+        const player = this.players[idx];
+        if (!player || !this.map || !this.roadNetworkNodes) return;
+        const node = this.roadNetworkNodes[player.currentNodeIdx];
+        if (node) {
+          this.map.flyTo([node.lat, node.lng], 19, { duration: 0.8 });
+        }
       },
 
       renderAvatarGrid() {
@@ -1649,10 +1763,10 @@
 
       // --- MULTIPLAYER STATE SYNC (host → Firestore → all guests) ---
       canActNow() {
-        if (!this.isMultiplayer) return true;
-        if (this.awaitingGoalSelection) return false;
         const cp = this.players[this.currentPlayerIdx];
         if (!cp) return false;
+        if (!this.isMultiplayer) return !cp.isCpu;
+        if (this.awaitingGoalSelection) return false;
         if (cp.isCpu) return this.isHost;
         return cp.uid === this.myUid;
       },
@@ -1752,7 +1866,7 @@
         const showPendingEvent = () => {
           if (!this.isHost && gs.lastEvent && gs.eventSeq && gs.eventSeq !== this.lastAppliedEventSeq) {
             this.lastAppliedEventSeq = gs.eventSeq;
-            this.showEventModalReadOnly(gs.lastEvent.title, gs.lastEvent.desc, gs.lastEvent.extra, { icon: gs.lastEvent.icon, type: gs.lastEvent.type });
+            this.showEventModalReadOnly(gs.lastEvent.title, gs.lastEvent.desc, gs.lastEvent.extra, { icon: gs.lastEvent.icon, type: gs.lastEvent.type, reasonIcon: gs.lastEvent.reasonIcon, avatar: gs.lastEvent.avatar });
           }
           this.panToCurrentPlayer();
         };
@@ -1874,7 +1988,7 @@
             return;
           }
 
-          this.updateMoveCountdown(totalSteps, totalSteps);
+          this.updateMoveCountdown(player, totalSteps, totalSteps);
 
           let step = fromIdx;
           const interval = setInterval(() => {
@@ -1891,12 +2005,12 @@
             }
             this.updatePlayerRoutes();
             sound.playTone(400 + (clamped - fromIdx) * 30, 'sine', 0.05, 0.05);
-            this.updateMoveCountdown(Math.max(0, toIdx - clamped), totalSteps);
+            this.updateMoveCountdown(player, Math.max(0, toIdx - clamped), totalSteps);
             this.updateActivePlayerRemainingLive(player);
 
             if (clamped >= toIdx) {
               clearInterval(interval);
-              this.updateMoveCountdown(0, 0);
+              this.updateMoveCountdown(player, 0, 0);
               this.updatePlayerBubble(player, "");
               if (typeof onComplete === 'function') onComplete();
             }
@@ -1920,6 +2034,22 @@
         iconEl.classList.remove("modal-icon-lose", "modal-icon-gain", "modal-icon-slide");
         cardEl.classList.remove("event-card-red", "event-card-blue", "event-card-yellow");
         if (options.icon) iconEl.textContent = options.icon;
+
+        const reasonIconEl = document.getElementById("event-modal-reason-icon");
+        if (options.reasonIcon) {
+          reasonIconEl.textContent = options.reasonIcon;
+          reasonIconEl.classList.remove("hidden");
+        } else {
+          reasonIconEl.classList.add("hidden");
+        }
+
+        const avatarEl = document.getElementById("event-modal-avatar");
+        if (options.avatar) {
+          avatarEl.textContent = options.avatar;
+          avatarEl.classList.remove("hidden");
+        } else {
+          avatarEl.classList.add("hidden");
+        }
 
         if (options.type === 'red') {
           cardEl.classList.add("event-card-red");
@@ -2270,6 +2400,25 @@
           }
         });
 
+        // Post-process: connect nearby nodes that came from *different* road segments
+        // (e.g. crossing or adjacent streets) so the whole network forms a single
+        // connected graph, even when two segments' sampled points don't land exactly
+        // on the same spot. Without this, the static fallback road set (several
+        // independent street segments) can end up as disconnected islands, which makes
+        // pathfinding fail and produces nonsense straight-line "teleport" routes.
+        const CONNECT_THRESHOLD_DEG = 0.00015; // ~15m
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            if (nodes[i].neighbors.includes(j)) continue;
+            const latDiff = Math.abs(nodes[i].lat - nodes[j].lat);
+            const lngDiff = Math.abs(nodes[i].lng - nodes[j].lng);
+            if (latDiff < CONNECT_THRESHOLD_DEG && lngDiff < CONNECT_THRESHOLD_DEG) {
+              nodes[i].neighbors.push(j);
+              nodes[j].neighbors.push(i);
+            }
+          }
+        }
+
         return { nodes };
       },
 
@@ -2309,12 +2458,17 @@
           }
         }
 
-        return [startIdx, goalIdx];
+        // No connected path was found between these two nodes (should be rare now that
+        // buildRoadNetwork links nearby segments together). Rather than faking a route
+        // with a straight line straight to the goal — which draws through buildings and
+        // can make a player "arrive" instantly with 0 squares left — keep them where
+        // they are; the next leg will regenerate a fresh, properly connected network.
+        return [startIdx];
       },
 
-      createPlayerIcon(player, bubbleText = "") {
+      createPlayerIcon(player, bubbleText = "", moveCountdown = null) {
         const bubbleHtml = bubbleText ? `<div class="speech-bubble">${bubbleText}</div>` : '';
-        
+
         let displayAvatar = player.avatar;
         if (player.wheelchairTurns > 0) {
           displayAvatar = '🦽';
@@ -2322,10 +2476,15 @@
           displayAvatar = player.vehicle.emoji;
         }
 
+        const countdownHtml = (moveCountdown !== null && moveCountdown !== undefined)
+          ? `<div class="absolute flex items-center gap-1 bg-slate-950/90 border border-sky-500 text-sky-300 font-black text-xs rounded-lg px-2 py-1 shadow-lg whitespace-nowrap" style="right: 76px; top: 50%; transform: translateY(-50%);">🎲 あと${moveCountdown}マス</div>`
+          : '';
+
         const html = `
-          <div class="relative player-token flex items-center justify-center">
+          <div class="relative player-token" style="width: 220px; height: 64px;">
             ${bubbleHtml}
-            <div class="w-16 h-16 rounded-full ${player.color.bg} border-4 border-white shadow-2xl flex items-center justify-center text-3xl ring-2 ring-slate-950">
+            ${countdownHtml}
+            <div class="absolute w-16 h-16 rounded-full ${player.color.bg} border-4 border-white shadow-2xl flex items-center justify-center text-3xl ring-2 ring-slate-950" style="right: 0; top: 0;">
               ${displayAvatar}
             </div>
           </div>
@@ -2333,9 +2492,21 @@
         return L.divIcon({
           className: 'custom-player-marker',
           html: html,
-          iconSize: [64, 64],
-          iconAnchor: [32, 32]
+          iconSize: [220, 64],
+          iconAnchor: [188, 32]
         });
+      },
+
+      // Keeps the speech-bubble text and the move-countdown badge from clobbering each
+      // other when either updates independently (both are rendered inside the same
+      // marker icon HTML, so any update must know about both current values).
+      setPlayerIconState(player, { bubbleText, moveCountdown } = {}) {
+        if (bubbleText !== undefined) player.currentBubbleText = bubbleText;
+        if (moveCountdown !== undefined) player.currentMoveCountdown = moveCountdown;
+        const marker = this.playerMarkers[player.id];
+        if (marker) {
+          marker.setIcon(this.createPlayerIcon(player, player.currentBubbleText || "", player.currentMoveCountdown != null ? player.currentMoveCountdown : null));
+        }
       },
 
       remainingSquares(p) {
@@ -2356,8 +2527,18 @@
         if (card) card.innerText = text;
       },
 
+      updateMarkerStacking() {
+        this.players.forEach((p) => {
+          const marker = this.playerMarkers[p.id];
+          if (!marker || !marker.setZIndexOffset) return;
+          marker.setZIndexOffset(p.id === this.currentPlayerIdx ? 2000 : 1000);
+        });
+      },
+
       updateHUD() {
         const cp = this.players[this.currentPlayerIdx];
+
+        this.updateMarkerStacking();
 
         document.getElementById("game-turn-badge").innerText = `第 ${this.turnCount} ターン`;
 
@@ -2365,7 +2546,7 @@
         document.getElementById("active-player-avatar").innerText = displayAvatar;
         document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md`;
         document.getElementById("active-player-name").innerText = cp.name;
-        document.getElementById("active-player-money").innerText = `所持金: ¥${cp.money.toLocaleString()}`;
+        document.getElementById("active-player-money").innerText = `¥${cp.money.toLocaleString()}`;
         document.getElementById("active-player-vehicle").innerText = cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '';
 
         const cpRemaining = this.remainingSquares(cp);
@@ -2390,7 +2571,7 @@
           const cardAvatar = p.wheelchairTurns > 0 ? '🦽' : (p.vehicle ? p.vehicle.emoji : p.avatar);
           const pRemaining = this.remainingSquares(p);
           return `
-            <div class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} border p-2 rounded-xl flex flex-col justify-between transition">
+            <div onclick="EdogawaSugoroku.panToPlayer(${idx})" class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} border p-2 rounded-xl flex flex-col justify-between transition cursor-pointer active:scale-95">
               <div class="flex items-center justify-between">
                 <span class="text-sm">${cardAvatar}</span>
                 <span class="text-[9px] font-bold px-1 rounded ${p.color.bg} text-slate-950">${idx+1}P</span>
@@ -2417,7 +2598,7 @@
         if (rollBtnLabel) {
           if (canRollNow) {
             rollBtnLabel.innerText = "サイコロを振る";
-          } else if (this.isMultiplayer && !this.isRolling) {
+          } else if (!this.isRolling) {
             rollBtnLabel.innerText = `${cp.name} の番です`;
           } else {
             rollBtnLabel.innerText = "サイコロを振る";
@@ -2516,36 +2697,22 @@
       clearUsedVehicle(player) {
         if (player.vehicle) {
           player.vehicle = null;
-          const marker = this.playerMarkers[player.id];
-          if (marker) {
-            marker.setIcon(this.createPlayerIcon(player, ""));
-          }
+          this.setPlayerIconState(player, {});
         }
       },
 
       updatePlayerBubble(player, text) {
-        const marker = this.playerMarkers[player.id];
-        if (marker) {
-          marker.setIcon(this.createPlayerIcon(player, text));
-        }
+        this.setPlayerIconState(player, { bubbleText: text });
       },
 
-      updateMoveCountdown(remainingSteps, totalSteps) {
-        const badge = document.getElementById("move-countdown-badge");
-        const numEl = document.getElementById("move-countdown-num");
-        if (!badge || !numEl) return;
-        if (totalSteps >= 10 && remainingSteps > 0) {
-          badge.classList.remove("hidden");
-          numEl.innerText = remainingSteps;
-        } else {
-          badge.classList.add("hidden");
-        }
+      updateMoveCountdown(player, remainingSteps, totalSteps) {
+        this.setPlayerIconState(player, { moveCountdown: (totalSteps >= 10 && remainingSteps > 0) ? remainingSteps : null });
       },
 
       movePlayerSteps(player, totalSteps, stepDelay = 350, silent = false) {
         let currentStep = 0;
 
-        if (!silent) this.updateMoveCountdown(totalSteps, totalSteps);
+        if (!silent) this.updateMoveCountdown(player, totalSteps, totalSteps);
 
         const interval = setInterval(() => {
           currentStep++;
@@ -2567,14 +2734,14 @@
 
           if (!silent) {
             sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
-            this.updateMoveCountdown(Math.max(0, totalSteps - currentStep), totalSteps);
+            this.updateMoveCountdown(player, Math.max(0, totalSteps - currentStep), totalSteps);
             this.updateActivePlayerRemainingLive(player);
           }
 
           if (player.currentNodeIdx === this.goalNodeIdx) {
             clearInterval(interval);
             this.clearUsedVehicle(player);
-            if (!silent) this.updateMoveCountdown(0, 0);
+            if (!silent) this.updateMoveCountdown(player, 0, 0);
             setTimeout(() => this.handleGoalReach(player), silent ? 0 : 300);
             return;
           }
@@ -2582,7 +2749,7 @@
           if (currentStep >= totalSteps || player.pathIndex >= player.path.length - 1) {
             clearInterval(interval);
             this.clearUsedVehicle(player);
-            if (!silent) this.updateMoveCountdown(0, 0);
+            if (!silent) this.updateMoveCountdown(player, 0, 0);
             setTimeout(() => this.landOnSpot(player), silent ? 0 : 300);
           }
         }, stepDelay);
@@ -2600,8 +2767,7 @@
           const reason = RED_REASONS[Math.floor(Math.random() * RED_REASONS.length)];
           player.money = Math.max(0, player.money - amount);
 
-          const desc = `${reason.emoji}\n\n${reason.text}`;
-          this.showEventModal("お金が減ってしまった！", desc, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "💸", type: "red" });
+          this.showEventModal("お金が減ってしまった！", reason.text, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "💸", type: "red", reasonIcon: reason.emoji });
           this.addLog(`🔴 [赤マス] ${player.name}: ${reason.text} (-¥${amount.toLocaleString()})`);
 
         } else if (node && node.type === 'blue') {
@@ -2610,8 +2776,7 @@
           const reason = BLUE_REASONS[Math.floor(Math.random() * BLUE_REASONS.length)];
           player.money += amount;
 
-          const desc = `${reason.emoji}\n\n${reason.text}`;
-          this.showEventModal("お金が増えた！", desc, `▲¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "🎉", type: "blue" });
+          this.showEventModal("お金が増えた！", reason.text, `＋¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "🎉", type: "blue", reasonIcon: reason.emoji });
           this.addLog(`🔵 [青マス] ${player.name}: ${reason.text} (+¥${amount.toLocaleString()})`);
 
         } else if (node && node.type === 'yellow') {
@@ -2640,8 +2805,7 @@
           const catchUpVehicle = VEHICLES[Math.random() < 0.5 ? 4 : 5]; // 🚁 or ✈️
           player.vehicle = catchUpVehicle;
 
-          const marker = this.playerMarkers[player.id];
-          if (marker) marker.setIcon(this.createPlayerIcon(player, `${catchUpVehicle.emoji} ゲット！`));
+          this.setPlayerIconState(player, { bubbleText: `${catchUpVehicle.emoji} ゲット！` });
 
           sound.playChime();
           this.showEventModal(
@@ -2722,10 +2886,7 @@
           const vehicle = VEHICLES[Math.floor(Math.random() * VEHICLES.length)];
           player.vehicle = vehicle;
 
-          const marker = this.playerMarkers[player.id];
-          if (marker) {
-            marker.setIcon(this.createPlayerIcon(player, `${vehicle.emoji} ゲット！`));
-          }
+          this.setPlayerIconState(player, { bubbleText: `${vehicle.emoji} ゲット！` });
 
           sound.playChime();
           this.showEventModal(
@@ -2762,7 +2923,7 @@
             lat: n.lat,
             lng: n.lng,
             type: n.type,
-            neighbors: []
+            neighbors: (n.neighbors || []).map(nbrIdx => nbrIdx + startNodeOffset)
           };
           this.roadNetworkNodes.push(nodeObj);
           newPathIndices.push(globalIdx);
@@ -2844,6 +3005,7 @@
 
       handleGoalReach(player) {
         sound.playGoalFanfare();
+        sound.playBGM('goal');
         if (typeof confetti === 'function') {
           confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
         }
@@ -2918,6 +3080,7 @@
         };
 
         await this.setupBoard(currentStartLoc, this.nextDestinationCandidate);
+        sound.playBGM('map');
         this.addLog(`🚩 次の目的地が 【${this.nextDestinationCandidate.name}】 に設定されました！`);
         this.finishTurn();
         this.panToCurrentPlayer();
@@ -2970,6 +3133,23 @@
         cardEl.classList.remove("event-card-red", "event-card-blue", "event-card-yellow");
         if (options.icon) iconEl.textContent = options.icon;
 
+        const reasonIconEl = document.getElementById("event-modal-reason-icon");
+        if (options.reasonIcon) {
+          reasonIconEl.textContent = options.reasonIcon;
+          reasonIconEl.classList.remove("hidden");
+        } else {
+          reasonIconEl.classList.add("hidden");
+        }
+
+        const activePlayer = this.players[this.currentPlayerIdx];
+        const avatarEl = document.getElementById("event-modal-avatar");
+        if (activePlayer) {
+          avatarEl.textContent = activePlayer.avatar;
+          avatarEl.classList.remove("hidden");
+        } else {
+          avatarEl.classList.add("hidden");
+        }
+
         if (options.type === 'red') {
           cardEl.classList.add("event-card-red");
           void iconEl.offsetWidth;
@@ -2995,7 +3175,7 @@
         const isSelfManualTurn = this.isMultiplayer ? (cp && cp.uid === this.myUid) : (cp && !cp.isCpu);
 
         if (this.isMultiplayer && this.isHost) {
-          this.lastEventForSync = { title, desc, extra, icon: options.icon || null, type: options.type || null };
+          this.lastEventForSync = { title, desc, extra, icon: options.icon || null, type: options.type || null, reasonIcon: options.reasonIcon || null, avatar: activePlayer ? activePlayer.avatar : null };
           this.eventSeq = (this.eventSeq || 0) + 1;
         }
 
