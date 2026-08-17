@@ -2557,7 +2557,6 @@
 
       buildRoadNetwork(roads, spacingMeters, allowCrossConnect = false) {
         const nodes = [];
-        const DEDUP_LOOKBACK = 6; // only merge against recently-added nodes, not the whole path
 
         roads.forEach(road => {
           for (let i = 0; i < road.length - 1; i++) {
@@ -2580,14 +2579,16 @@
               const lat = p1.lat + (p2.lat - p1.lat) * t;
               const lng = p1.lng + (p2.lng - p1.lng) * t;
 
-              // Only check the most recently-added nodes for a spatial match. Checking the
-              // whole array here would let a route that loops or backtracks near itself
-              // (e.g. a dead-end destination requiring a U-turn) merge its outbound and
-              // return points into a single shared node — collapsing the two segments into
-              // one point and rendering as a bogus "V" shape cutting across the map.
-              const lookbackStart = Math.max(0, nodes.length - DEDUP_LOOKBACK);
+              // Check the WHOLE node list for a same-spot match (tight ~8m threshold), not
+              // just recently-added ones. This is what a route that loops or backtracks near
+              // itself (e.g. a dead-end requiring a U-turn) needs: the outbound and return
+              // pass really do cross the same physical point, so they should share the same
+              // node. Skipping this for distant-in-sequence matches was leaving two separate
+              // nodes stacked at nearly the same map position, each with its own independently
+              // random square type — whichever one rendered on top visually didn't necessarily
+              // match the type actually used when a player's path went through the other one.
               let matchedIdx = -1;
-              for (let k = nodes.length - 1; k >= lookbackStart; k--) {
+              for (let k = nodes.length - 1; k >= 0; k--) {
                 const latDiff = Math.abs(nodes[k].lat - lat);
                 const lngDiff = Math.abs(nodes[k].lng - lng);
                 if (latDiff < 0.00008 && lngDiff < 0.00008) {
