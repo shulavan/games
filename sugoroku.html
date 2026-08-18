@@ -176,6 +176,19 @@
       filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
     }
 
+    .facility-poi {
+      width: 26px;
+      height: 26px;
+      background: rgba(15, 23, 42, 0.78);
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+
     .event-card-red { background: linear-gradient(160deg, #7f1d1d, #450a0a) !important; border-color: #ef4444 !important; }
     .event-card-blue { background: linear-gradient(160deg, #1e3a8a, #172554) !important; border-color: #3b82f6 !important; }
     .event-card-yellow { background: linear-gradient(160deg, #78350f, #451a03) !important; border-color: #f59e0b !important; }
@@ -421,14 +434,14 @@
   </div>
 
   <!-- OVERLAY: ANGELS FLYING + ROCKET GIFT ANNOUNCEMENT -->
-  <div id="angel-rocket-overlay" class="hidden fixed inset-0 z-[60] pointer-events-none overflow-hidden"></div>
-  <div id="rocket-gift-modal" class="hidden fixed inset-0 z-[61] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div id="rocket-gift-modal" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-gradient-to-br from-indigo-900 to-slate-900 border border-amber-400/50 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-3">
       <div class="text-6xl">🚀</div>
       <h3 class="font-mincho text-xl font-bold text-amber-400">天使からの贈り物！</h3>
       <p class="text-sm text-slate-100 leading-relaxed">全プレーヤーが目的地からまだ遠いようです。<br>天使が全員に🚀ロケットをプレゼント！<br>次のサイコロが【10倍】進みます！<br>（乗り物を持っている場合は合算されます）</p>
     </div>
   </div>
+  <div id="angel-rocket-overlay" class="hidden fixed inset-0 z-[61] pointer-events-none overflow-hidden"></div>
 
   <!-- MODAL: EVENT POPUP -->
   <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -549,6 +562,18 @@
     };
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ 飲食店を実際のホットペッパーAPIから取得するには、GASプロキシをデプロイしてURLを貼ってください ▼▼▼
+    // ホットペッパーAPIはサーバーサイド専用（ブラウザから直接呼ぶとCORSで弾かれ、APIキーも露出してしまいます）。
+    // そのため、Google Apps Scriptで簡易プロキシを用意し、そこ経由で呼び出す構成にしています。
+    // 1. https://script.google.com/ で新規プロジェクトを作成
+    // 2. コードを全て削除し、このファイルと同じ場所にある hotpepper_proxy.gs.txt の中身を貼り付け
+    // 3. 「デプロイ」→「新しいデプロイ」→ 種類「ウェブアプリ」
+    //    実行ユーザー: 自分 / アクセスできるユーザー: 全員
+    // 4. 発行された /exec で終わるURLを、下の空欄に貼り付け
+    // ※ここが空欄のままだと、既存の固定リストから飲食店の目的地が選ばれます（動作に支障はありません）。
+    const HOTPEPPER_PROXY_URL = "https://script.google.com/macros/s/AKfycbya4Rz4HM2RXWbQjLH3nMEMiLkWxekRPQ_-iYKc4JN-vdDPkKhB4SuM1Yueo3OwK97PyA/exec";
+    // ▲▲▲ ここまで ▲▲▲
+
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
     const EDOGAWA_START = {
       name: "西葛西駅",
@@ -574,15 +599,139 @@
       { name: "西葛西駅前交番", lat: 35.66512, lng: 139.85980, type: "🚓" },
       { name: "葛西駅前交番", lat: 35.66380, lng: 139.87300, type: "🚓" },
       { name: "船堀交番", lat: 35.68350, lng: 139.86400, type: "🚓" },
-      { name: "小松川警察署", lat: 35.69345, lng: 139.84521, type: "🚓" }
+      { name: "小松川警察署", lat: 35.69345, lng: 139.84521, type: "🚓" },
+      { name: "小岩警察署", lat: 35.73250, lng: 139.87850, type: "🚓" },
+      { name: "西小岩交番", lat: 35.72800, lng: 139.87200, type: "🚓" },
+      { name: "南小岩交番", lat: 35.73000, lng: 139.88000, type: "🚓" },
+      { name: "一里塚交番", lat: 35.73500, lng: 139.88500, type: "🚓" }
+    ];
+
+    const PARKS = [
+      { name: "葛西臨海公園", lat: 35.6425, lng: 139.8601 },
+      { name: "行船公園 (江戸川区自然動物園)", lat: 35.6685, lng: 139.8588 },
+      { name: "篠崎公園", lat: 35.7088, lng: 139.8980 },
+      { name: "宇喜田公園", lat: 35.6680, lng: 139.8630 },
+      { name: "総合レクリエーション公園", lat: 35.6350, lng: 139.8650 },
+      { name: "新左近川親水公園", lat: 35.6430, lng: 139.8550 },
+      { name: "なぎさ公園", lat: 35.6380, lng: 139.8490 },
+      { name: "一之江境川親水公園", lat: 35.6850, lng: 139.8840 },
+      { name: "小松川境川親水公園", lat: 35.7000, lng: 139.8450 },
+      { name: "東小松川公園", lat: 35.7020, lng: 139.8470 },
+      { name: "春江公園", lat: 35.6650, lng: 139.8780 }
+    ];
+
+    const TEMPLES_SHRINES = [
+      { name: "香取神社", lat: 35.7055, lng: 139.8695 },
+      { name: "天祖神社 (北小岩)", lat: 35.7305, lng: 139.885 },
+      { name: "天祖神社 (南篠崎)", lat: 35.693, lng: 139.896 },
+      { name: "豊田神社", lat: 35.696, lng: 139.894 },
+      { name: "天祖神社 (一之江)", lat: 35.687, lng: 139.879 },
+      { name: "最勝寺 (目黄不動)", lat: 35.7175, lng: 139.839 },
+      { name: "上一色氷川神社", lat: 35.722, lng: 139.871 },
+      { name: "興之宮神社", lat: 35.724, lng: 139.876 }
+    ];
+
+    const POST_OFFICES = [
+      { name: "江戸川郵便局", lat: 35.703, lng: 139.858 },
+      { name: "江戸川区役所前郵便局", lat: 35.706, lng: 139.868 },
+      { name: "江戸川中央郵便局", lat: 35.7055, lng: 139.87 },
+      { name: "小岩郵便局", lat: 35.73, lng: 139.883 },
+      { name: "江戸川一之江郵便局", lat: 35.686, lng: 139.883 },
+      { name: "江戸川鹿骨郵便局", lat: 35.716, lng: 139.895 }
+    ];
+
+    const SCHOOLS = [
+      { name: "都立小岩高等学校", lat: 35.728, lng: 139.885 },
+      { name: "都立紅葉川高等学校", lat: 35.664, lng: 139.86 },
+      { name: "江戸川区立松江小学校", lat: 35.698, lng: 139.862 },
+      { name: "江戸川区立葛西小学校", lat: 35.661, lng: 139.871 },
+      { name: "江戸川区立第三中学校", lat: 35.69, lng: 139.87 },
+      { name: "江戸川区立篠崎中学校", lat: 35.706, lng: 139.894 }
+    ];
+
+    const STATIONS_FOR_MAP = [
+      { name: "葛西駅", lat: 35.6636, lng: 139.8733 },
+      { name: "船堀駅", lat: 35.6838, lng: 139.8643 },
+      { name: "一之江駅", lat: 35.6859, lng: 139.8828 },
+      { name: "平井駅", lat: 35.7064, lng: 139.8423 },
+      { name: "西葛西駅", lat: 35.6648, lng: 139.8577 },
+      { name: "瑞江駅", lat: 35.6942, lng: 139.8912 },
+      { name: "篠崎駅", lat: 35.7089, lng: 139.8930 },
+      { name: "小岩駅", lat: 35.7332, lng: 139.8790 },
+      { name: "新小岩駅", lat: 35.7267, lng: 139.8595 }
+    ];
+
+    const BUS_STOPS_FOR_MAP = [
+        { name: "銀杏並木通り バス停", lat: 35.692829, lng: 139.872325 },
+        { name: "農業試験場 バス停", lat: 35.711292, lng: 139.885806 },
+        { name: "大杉四 バス停", lat: 35.710672, lng: 139.879458 },
+        { name: "小松川健康サポートセンター バス停", lat: 35.695620, lng: 139.848933 },
+        { name: "清新町健康サポートセンター バス停", lat: 35.663042, lng: 139.856924 },
+        { name: "自由の広場 バス停", lat: 35.694597, lng: 139.850808 },
+        { name: "堀江団地入口 バス停", lat: 35.649861, lng: 139.869410 },
+        { name: "小松川二 バス停", lat: 35.693676, lng: 139.848433 },
+        { name: "七軒町 バス停", lat: 35.680018, lng: 139.859358 },
+        { name: "明和橋 バス停", lat: 35.689199, lng: 139.887795 },
+        { name: "小学校通り バス停", lat: 35.657989, lng: 139.875866 },
+        { name: "新小岩一 バス停", lat: 35.715334, lng: 139.861063 },
+        { name: "松本小 バス停", lat: 35.715202, lng: 139.884563 },
+        { name: "本一色 バス停", lat: 35.719598, lng: 139.866963 },
+        { name: "南葛西第二小 バス停", lat: 35.649924, lng: 139.880125 },
+        { name: "鹿本橋 バス停", lat: 35.713217, lng: 139.880116 },
+        { name: "東大島駅入口 バス停", lat: 35.690629, lng: 139.844181 },
+        { name: "臨海町四 バス停", lat: 35.646742, lng: 139.866591 },
+        { name: "下今井 バス停", lat: 35.678039, lng: 139.885372 },
+        { name: "葛西駅通り バス停", lat: 35.660648, lng: 139.870166 }
     ];
 
     const HOSPITALS = [
-      { name: "葛西昌医会病院", lat: 35.66120, lng: 139.87050, type: "🏥" },
-      { name: "東京臨海病院", lat: 35.65020, lng: 139.85500, type: "🏥" },
-      { name: "森山記念病院", lat: 35.67250, lng: 139.86320, type: "🏥" },
-      { name: "西葛西駅前クリニック", lat: 35.66490, lng: 139.85850, type: "🏥" },
-      { name: "江戸川病院", lat: 35.73350, lng: 139.88900, type: "🏥" }
+      { name: "（医）双仁会一盛病院", lat: 35.697626, lng: 139.850696, type: "🏥" },
+      { name: "（医）岩井医療財団岩井整形外科内科病院", lat: 35.733467, lng: 139.885006, type: "🏥" },
+      { name: "岩倉病院", lat: 35.732404, lng: 139.883246, type: "🏥" },
+      { name: "（医）総風会江戸川共済病院", lat: 35.693411, lng: 139.905576, type: "🏥" },
+      { name: "（福）仁生社江戸川病院", lat: 35.728510, lng: 139.893184, type: "🏥" },
+      { name: "（医）昌医会葛西昌医会病院", lat: 35.660536, lng: 139.877734, type: "🏥" },
+      { name: "（医）葛西中央病院", lat: 35.676734, lng: 139.868565, type: "🏥" },
+      { name: "片山病院", lat: 35.720361, lng: 139.881770, type: "🏥" },
+      { name: "（医）津端会京葉病院", lat: 35.702718, lng: 139.875760, type: "🏥" },
+      { name: "（医）福仁会小松川病院", lat: 35.703807, lng: 139.868269, type: "🏥" },
+      { name: "（医）同愛会病院", lat: 35.705754, lng: 139.867412, type: "🏥" },
+      { name: "東京さくら病院", lat: 35.701518, lng: 139.916119, type: "🏥" },
+      { name: "東京東病院", lat: 35.716677, lng: 139.891683, type: "🏥" },
+      { name: "日本私立学校振興・共済事業団東京臨海病院", lat: 35.652332, lng: 139.853779, type: "🏥" },
+      { name: "（医）済安堂西葛西・井上眼科病院", lat: 35.665549, lng: 139.860888, type: "🏥" },
+      { name: "（医）茜会西村記念病院", lat: 35.705532, lng: 139.843275, type: "🏥" },
+      { name: "二本松眼科病院", lat: 35.706043, lng: 139.844450, type: "🏥" },
+      { name: "（医）晃山会松江病院", lat: 35.697191, lng: 139.871079, type: "🏥" },
+      { name: "（医）向日葵会まつしま病院", lat: 35.706716, lng: 139.867030, type: "🏥" },
+      { name: "（医）松寿会松寿会病院", lat: 35.662898, lng: 139.871203, type: "🏥" },
+      { name: "（医）森山医会森山記念病院", lat: 35.661796, lng: 139.860609, type: "🏥" },
+      { name: "（医）森山医会森山リハビリテーション病院", lat: 35.664106, lng: 139.860098, type: "🏥" },
+      { name: "西葛西クリニック", lat: 35.666488, lng: 139.864935, type: "🏥" },
+      { name: "しん皮フ科クリニック", lat: 35.705489, lng: 139.903568, type: "🏥" },
+      { name: "渡内科・胃腸科", lat: 35.663928, lng: 139.857977, type: "🏥" },
+      { name: "すぎやま耳鼻咽喉科クリニック", lat: 35.733035, lng: 139.880732, type: "🏥" },
+      { name: "原眼科", lat: 35.711676, lng: 139.865725, type: "🏥" },
+      { name: "中村医院", lat: 35.689301, lng: 139.879639, type: "🏥" },
+      { name: "さとう医院", lat: 35.741601, lng: 139.882612, type: "🏥" },
+      { name: "江戸川区鹿骨健康サポートセンター", lat: 35.709754, lng: 139.890532, type: "🏥" },
+      { name: "赤上医院", lat: 35.730768, lng: 139.881996, type: "🏥" },
+      { name: "養護老人ホーム江東園診療室", lat: 35.688402, lng: 139.902833, type: "🏥" },
+      { name: "医療検査センター附属診療所", lat: 35.684296, lng: 139.864966, type: "🏥" },
+      { name: "宮下医院", lat: 35.732362, lng: 139.883572, type: "🏥" },
+      { name: "（特養）わとなーる診療所", lat: 35.707227, lng: 139.886472, type: "🏥" },
+      { name: "南葛西整形外科・リウマチ科", lat: 35.646606, lng: 139.877667, type: "🏥" },
+      { name: "扇内整形外科", lat: 35.665619, lng: 139.860523, type: "🏥" },
+      { name: "安藤内科医院", lat: 35.662025, lng: 139.876642, type: "🏥" },
+      { name: "メディカルプラザ江戸川", lat: 35.728171, lng: 139.891659, type: "🏥" },
+      { name: "田村医院", lat: 35.684926, lng: 139.891215, type: "🏥" },
+      { name: "北浦医院", lat: 35.700743, lng: 139.847696, type: "🏥" },
+      { name: "敷井耳鼻咽喉科クリニック", lat: 35.647339, lng: 139.879229, type: "🏥" },
+      { name: "まつえ整形外科", lat: 35.696641, lng: 139.870506, type: "🏥" },
+      { name: "平嶋胃腸科眼科", lat: 35.692177, lng: 139.897308, type: "🏥" },
+      { name: "北小岩胃腸科クリニック", lat: 35.742369, lng: 139.892046, type: "🏥" },
+      { name: "葛西産婦人科", lat: 35.661434, lng: 139.874326, type: "🏥" },
+      { name: "江戸川共済病院付属東瑞江医院", lat: 35.690404, lng: 139.899080, type: "🏥" }
     ];
 
     /* High-precision street centerline waypoints around Nishi-Kasai station plaza & major avenues */
@@ -630,23 +779,72 @@
         { name: "サミットストア 葛西店", lat: 35.6580, lng: 139.8690 },
         { name: "オリンピック 葛西店", lat: 35.6510, lng: 139.8720 }
       ],
-      "公園": [
-        { name: "葛西臨海公園", lat: 35.6425, lng: 139.8601 },
-        { name: "行船公園 (江戸川区自然動物園)", lat: 35.6685, lng: 139.8588 },
-        { name: "篠崎公園", lat: 35.7088, lng: 139.8980 },
-        { name: "宇喜田公園", lat: 35.6680, lng: 139.8630 }
-      ],
+      "公園": PARKS,
       "駅（バス停含む）": [
         { name: "葛西駅", lat: 35.6636, lng: 139.8733 },
         { name: "船堀駅", lat: 35.6838, lng: 139.8643 },
         { name: "一之江駅", lat: 35.6859, lng: 139.8828 },
         { name: "平井駅", lat: 35.7064, lng: 139.8423 },
-        { name: "新小岩駅入口 バス停", lat: 35.7267, lng: 139.8595 },
-        { name: "西葛西駅前 バス停", lat: 35.6648, lng: 139.8577 },
-        { name: "瑞江駅入口 バス停", lat: 35.6942, lng: 139.8912 },
-        { name: "篠崎駅前 バス停", lat: 35.7089, lng: 139.8930 },
-        { name: "小岩駅北口 バス停", lat: 35.7332, lng: 139.8790 },
-        { name: "東葛西五丁目 バス停", lat: 35.6570, lng: 139.8720 }
+        { name: "西葛西駅", lat: 35.6648, lng: 139.8577 },
+        { name: "瑞江駅", lat: 35.6942, lng: 139.8912 },
+        { name: "篠崎駅", lat: 35.7089, lng: 139.8930 },
+        { name: "小岩駅", lat: 35.7332, lng: 139.8790 },
+        { name: "新小岩駅", lat: 35.7267, lng: 139.8595 },
+        { name: "銀杏並木通り バス停", lat: 35.692829, lng: 139.872325 },
+        { name: "農業試験場 バス停", lat: 35.711292, lng: 139.885806 },
+        { name: "大杉四 バス停", lat: 35.710672, lng: 139.879458 },
+        { name: "小松川健康サポートセンター バス停", lat: 35.695620, lng: 139.848933 },
+        { name: "清新町健康サポートセンター バス停", lat: 35.663042, lng: 139.856924 },
+        { name: "自由の広場 バス停", lat: 35.694597, lng: 139.850808 },
+        { name: "堀江団地入口 バス停", lat: 35.649861, lng: 139.869410 },
+        { name: "小松川二 バス停", lat: 35.693676, lng: 139.848433 },
+        { name: "七軒町 バス停", lat: 35.680018, lng: 139.859358 },
+        { name: "明和橋 バス停", lat: 35.689199, lng: 139.887795 },
+        { name: "小学校通り バス停", lat: 35.657989, lng: 139.875866 },
+        { name: "新小岩一 バス停", lat: 35.715334, lng: 139.861063 },
+        { name: "松本小 バス停", lat: 35.715202, lng: 139.884563 },
+        { name: "本一色 バス停", lat: 35.719598, lng: 139.866963 },
+        { name: "南葛西第二小 バス停", lat: 35.649924, lng: 139.880125 },
+        { name: "鹿本橋 バス停", lat: 35.713217, lng: 139.880116 },
+        { name: "東大島駅入口 バス停", lat: 35.690629, lng: 139.844181 },
+        { name: "臨海町四 バス停", lat: 35.646742, lng: 139.866591 },
+        { name: "下今井 バス停", lat: 35.678039, lng: 139.885372 },
+        { name: "葛西駅通り バス停", lat: 35.660648, lng: 139.870166 },
+        { name: "小松川アパート バス停", lat: 35.691060, lng: 139.848478 },
+        { name: "名主屋敷 バス停", lat: 35.698370, lng: 139.890509 },
+        { name: "新田 バス停", lat: 35.656142, lng: 139.868703 },
+        { name: "松江コミュニティ会館 バス停", lat: 35.690500, lng: 139.871832 },
+        { name: "鹿骨五 バス停", lat: 35.714348, lng: 139.884786 },
+        { name: "鹿骨二 バス停", lat: 35.703892, lng: 139.897078 },
+        { name: "鹿本中 バス停", lat: 35.719217, lng: 139.877417 },
+        { name: "葛西駅 バス停", lat: 35.663423, lng: 139.873297 },
+        { name: "船堀スポーツ公園 バス停", lat: 35.681610, lng: 139.867444 },
+        { name: "中央三 バス停", lat: 35.713512, lng: 139.874164 },
+        { name: "大島駅 バス停", lat: 35.689645, lng: 139.833465 },
+        { name: "江戸川五 バス停", lat: 35.674683, lng: 139.884653 },
+        { name: "東葛西三 バス停", lat: 35.668547, lng: 139.883644 },
+        { name: "東大島駅 バス停", lat: 35.689660, lng: 139.848565 },
+        { name: "江戸川文化センター バス停", lat: 35.711037, lng: 139.869786 },
+        { name: "東砂五 バス停", lat: 35.675166, lng: 139.842899 },
+        { name: "船堀小 バス停", lat: 35.681798, lng: 139.862537 },
+        { name: "篠崎町七 バス停", lat: 35.702565, lng: 139.901456 },
+        { name: "第七葛西小 バス停", lat: 35.659959, lng: 139.858456 },
+        { name: "第六葛西小 バス停", lat: 35.667681, lng: 139.865678 },
+        { name: "なぎさニュータウン バス停", lat: 35.646698, lng: 139.879433 },
+        { name: "平井駅 バス停", lat: 35.706940, lng: 139.841735 },
+        { name: "堀江団地 バス停", lat: 35.647414, lng: 139.871547 },
+        { name: "春江町四 バス停", lat: 35.682398, lng: 139.874643 },
+        { name: "臨海町五 バス停", lat: 35.643837, lng: 139.867753 },
+        { name: "臨海町三 バス停", lat: 35.648841, lng: 139.861152 },
+        { name: "西葛西駅南 バス停", lat: 35.661982, lng: 139.858568 },
+        { name: "平井七北公園 バス停", lat: 35.716834, lng: 139.837127 },
+        { name: "葛西橋東詰 バス停", lat: 35.670625, lng: 139.853961 },
+        { name: "江戸川区役所 バス停", lat: 35.707425, lng: 139.867590 },
+        { name: "東葛西九 バス停", lat: 35.652441, lng: 139.880470 },
+        { name: "仲町会館入口 バス停", lat: 35.656421, lng: 139.872756 },
+        { name: "新木場東 バス停", lat: 35.645053, lng: 139.835993 },
+        { name: "一之江高速入口 バス停", lat: 35.697666, lng: 139.881986 },
+        { name: "中央通り バス停", lat: 35.700481, lng: 139.873320 }
       ]
     };
 
@@ -2179,7 +2377,10 @@
         try {
           const state = JSON.parse(saved);
           this.players = state.players;
-          this.players.forEach(p => { if (typeof p.forcedMoveCount !== 'number') p.forcedMoveCount = 0; });
+          this.players.forEach(p => {
+            if (typeof p.forcedMoveCount !== 'number') p.forcedMoveCount = 0;
+            if (typeof p.boatRaceCount !== 'number') p.boatRaceCount = 0;
+          });
           this.turnCount = state.turnCount;
           this.currentPlayerIdx = state.currentPlayerIdx;
           this.currentDestination = state.currentDestination;
@@ -2188,30 +2389,88 @@
           sound.playBGM('map');
 
           this.initMap();
-          await this.setupBoard(EDOGAWA_START, this.currentDestination);
+
+          if (state.roadNetworkNodes && state.roadNetworkNodes.length && typeof state.goalNodeIdx === 'number') {
+            // Restore the exact saved board and player positions, instead of regenerating
+            // a brand new random board and resetting everyone back to the starting point.
+            this.roadNetworkNodes = state.roadNetworkNodes;
+            this.goalNodeIdx = state.goalNodeIdx;
+            const startNodeForDisplay = this.findNearestNodeIdx(EDOGAWA_START);
+            this.renderBoardVisuals(this.roadNetworkNodes, startNodeForDisplay, this.goalNodeIdx, this.currentDestination);
+
+            this.playerMarkers = [];
+            this.players.forEach((p) => {
+              const node = this.roadNetworkNodes[p.currentNodeIdx];
+              if (!node) return;
+              const marker = L.marker([node.lat, node.lng], {
+                icon: this.createPlayerIcon(p, ""),
+                zIndexOffset: 1000
+              }).addTo(this.map);
+              this.playerMarkers[p.id] = marker;
+            });
+            this.updatePlayerRoutes();
+
+            const activePlayer = this.players[this.currentPlayerIdx];
+            const activeNode = activePlayer ? this.roadNetworkNodes[activePlayer.currentNodeIdx] : null;
+            this.map.setView([activeNode ? activeNode.lat : EDOGAWA_START.lat, activeNode ? activeNode.lng : EDOGAWA_START.lng], 19);
+          } else {
+            // Old save format without board data — fall back to regenerating (best effort).
+            await this.setupBoard(EDOGAWA_START, this.currentDestination);
+          }
+
           this.updateHUD();
           this.addLog("💾 保存データからゲームを復元しました。");
         } catch(e) {
+          console.error("Resume failed, starting a new game:", e);
           this.startGame();
         }
       },
 
       initMap() {
-        if (this.map) return;
+        if (!this.map) {
+          this.map = L.map('map', {
+            zoomControl: false,
+            minZoom: 19,
+            maxZoom: 19,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            touchZoom: false
+          }).setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
 
-        this.map = L.map('map', {
-          zoomControl: false,
-          minZoom: 19,
-          maxZoom: 19,
-          scrollWheelZoom: false,
-          doubleClickZoom: false,
-          touchZoom: false
-        }).setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
+          }).addTo(this.map);
+        }
+        this.renderFacilityMarkers();
+      },
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-          subdomains: 'abcd'
-        }).addTo(this.map);
+      renderFacilityMarkers() {
+        if (this.facilityLayerMarkers && this.facilityLayerMarkers.length) return; // only render once
+        this.facilityLayerMarkers = [];
+
+        const addGroup = (list, emoji) => {
+          (list || []).forEach(loc => {
+            const icon = L.divIcon({
+              className: 'facility-poi-icon',
+              html: `<div class="facility-poi">${emoji}</div>`,
+              iconSize: [26, 26],
+              iconAnchor: [13, 13]
+            });
+            const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100 }).addTo(this.map);
+            marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
+            this.facilityLayerMarkers.push(marker);
+          });
+        };
+
+        addGroup(STATIONS_FOR_MAP, '🚉');
+        addGroup(BUS_STOPS_FOR_MAP, '🚏');
+        addGroup(POLICE_STATIONS, '🚨');
+        addGroup(HOSPITALS, '🏥');
+        addGroup(PARKS, '⛲️');
+        addGroup(SCHOOLS, '🏫');
+        addGroup(POST_OFFICES, '🏣');
+        addGroup(TEMPLES_SHRINES, '⛩️');
       },
 
       async fetchStreetRouteOSRM(start, goal) {
@@ -2254,9 +2513,9 @@
 
         let roadGraph;
         if (osrmPath && osrmPath.length > 5) {
-          roadGraph = this.buildRoadNetwork([osrmPath], 20, false);
+          roadGraph = this.buildRoadNetwork([osrmPath], 40, false);
         } else {
-          roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 20, true);
+          roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 40, true);
         }
 
         const startNodeIdx = this.findNearestNodeIdx2(roadGraph.nodes, startLoc);
@@ -2266,6 +2525,7 @@
 
         for (const p of this.players) {
           p.forcedMoveCount = 0;
+          p.boatRaceCount = 0;
           const priorPos = priorPositions[p.id];
           let usedOwnBranch = false;
 
@@ -2290,6 +2550,15 @@
             p.currentNodeIdx = startNodeIdx;
             p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
             p.pathIndex = 0;
+          }
+
+          // Safety net: if pathfinding still failed to produce a real, non-degenerate
+          // route (e.g. this player's node ended up on a disconnected sub-graph), don't
+          // leave them permanently stuck showing "0 squares to go" but never actually at
+          // the goal — give them a dedicated point-to-point route instead.
+          if (!usedOwnBranch && (!p.path || p.path.length <= 1)) {
+            await this.buildPlayerOwnBranch(p, priorPos || startLoc, goalLoc);
+            usedOwnBranch = true;
           }
 
           const startPt = (usedOwnBranch ? this.roadNetworkNodes[p.currentNodeIdx] : roadGraph.nodes[p.currentNodeIdx]) || startLoc;
@@ -2395,39 +2664,33 @@
           ];
         }
 
-        const branchGraph = this.buildRoadNetwork([pathPoints], 20, false);
-        const offset = this.roadNetworkNodes.length;
-        const branchPath = [];
+        // Build directly into the shared node array: if this route crosses a point already
+        // used by the main route or another player's branch, it reuses that exact node
+        // (and its already-assigned type) instead of stacking an overlapping duplicate.
+        const result = this.buildRoadNetwork([pathPoints], 40, false, this.roadNetworkNodes);
+        const branchPath = result.orderedIndices.slice();
+        const newSet = new Set(result.newlyCreated);
 
-        branchGraph.nodes.forEach((n, idx) => {
-          const globalIdx = offset + idx;
-          this.roadNetworkNodes.push({
-            id: globalIdx,
-            lat: n.lat,
-            lng: n.lng,
-            type: n.type,
-            neighbors: (n.neighbors || []).map(nb => nb + offset)
-          });
-          branchPath.push(globalIdx);
-
-          if (idx > 0 && idx < branchGraph.nodes.length - 1) {
-            let iconHtml = '';
-            if (n.type === 'red') {
-              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
-            } else if (n.type === 'blue') {
-              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
-            } else {
-              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
-            }
-            const customIcon = L.divIcon({
-              className: 'custom-spot-icon',
-              html: iconHtml,
-              iconSize: [20, 20],
-              iconAnchor: [10, 10]
-            });
-            const marker = L.marker([n.lat, n.lng], { icon: customIcon }).addTo(this.map);
-            this.spotMarkers.push(marker);
+        branchPath.forEach((globalIdx, idx) => {
+          if (idx === 0 || idx === branchPath.length - 1) return;
+          if (!newSet.has(globalIdx)) return; // already has a marker from another route
+          const n = this.roadNetworkNodes[globalIdx];
+          let iconHtml = '';
+          if (n.type === 'red') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
+          } else if (n.type === 'blue') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+          } else {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
           }
+          const customIcon = L.divIcon({
+            className: 'custom-spot-icon',
+            html: iconHtml,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          const marker = L.marker([n.lat, n.lng], { icon: customIcon }).addTo(this.map);
+          this.spotMarkers.push(marker);
         });
 
         // The branch's own last node is superseded by the shared goal node, so this
@@ -2555,8 +2818,10 @@
         });
       },
 
-      buildRoadNetwork(roads, spacingMeters, allowCrossConnect = false) {
-        const nodes = [];
+      buildRoadNetwork(roads, spacingMeters, allowCrossConnect = false, targetNodes = null) {
+        const nodes = targetNodes || [];
+        const orderedIndices = [];
+        const newlyCreated = [];
 
         roads.forEach(road => {
           for (let i = 0; i < road.length - 1; i++) {
@@ -2579,14 +2844,13 @@
               const lat = p1.lat + (p2.lat - p1.lat) * t;
               const lng = p1.lng + (p2.lng - p1.lng) * t;
 
-              // Check the WHOLE node list for a same-spot match (tight ~8m threshold), not
-              // just recently-added ones. This is what a route that loops or backtracks near
-              // itself (e.g. a dead-end requiring a U-turn) needs: the outbound and return
-              // pass really do cross the same physical point, so they should share the same
-              // node. Skipping this for distant-in-sequence matches was leaving two separate
-              // nodes stacked at nearly the same map position, each with its own independently
-              // random square type — whichever one rendered on top visually didn't necessarily
-              // match the type actually used when a player's path went through the other one.
+              // Check the WHOLE node list (including any nodes from OTHER routes already
+              // built into this same shared array, e.g. the main route or another player's
+              // branch) for a same-spot match (tight ~8m threshold). Without this, two
+              // different routes that physically cross the same point each get their own
+              // independently-typed node stacked at nearly the same map position — the
+              // visible marker (whichever renders on top) doesn't necessarily match what a
+              // player standing there actually triggers.
               let matchedIdx = -1;
               for (let k = nodes.length - 1; k >= 0; k--) {
                 const latDiff = Math.abs(nodes[k].lat - lat);
@@ -2597,6 +2861,7 @@
                 }
               }
 
+              let wasNew = false;
               if (matchedIdx === -1) {
                 let type = 'blue';
                 const r = Math.random();
@@ -2612,6 +2877,7 @@
                   neighbors: []
                 });
                 matchedIdx = nodes.length - 1;
+                wasNew = true;
               }
 
               if (prevIdx !== null && prevIdx !== matchedIdx) {
@@ -2623,6 +2889,8 @@
                 }
               }
               prevIdx = matchedIdx;
+              orderedIndices.push(matchedIdx);
+              if (wasNew) newlyCreated.push(matchedIdx);
             }
           }
         });
@@ -2647,7 +2915,7 @@
           }
         }
 
-        return { nodes };
+        return { nodes, orderedIndices, newlyCreated };
       },
 
       findNearestNodeIdx(loc) {
@@ -2870,8 +3138,10 @@
 
         if (cp.skipTurn) {
           cp.skipTurn = false;
-          this.showEventModal("1回休み", `${cp.name} はお休み中のためパスします。`);
-          this.addLog(`🛑 ${cp.name} は1回休みの状態のためパスしました。`);
+          const reason = cp.skipTurnReason || "";
+          cp.skipTurnReason = null;
+          this.showEventModal("1回休み", reason ? `${reason}、${cp.name} はお休み中のためパスします。` : `${cp.name} はお休み中のためパスします。`);
+          this.addLog(`🛑 ${cp.name} は1回休みの状態のためパスしました。${reason ? `（理由: ${reason}）` : ''}`);
           return;
         }
 
@@ -3079,8 +3349,11 @@
         const forcedMoveLimitReached = player.forcedMoveCount >= FORCED_MOVE_LIMIT;
         const roll = forcedMoveLimitReached ? (0.6 + Math.random() * 0.4) : Math.random();
 
-        if (roll < 0.2) {
+        if (typeof player.boatRaceCount !== 'number') player.boatRaceCount = 0;
+
+        if (roll < 0.2 && player.boatRaceCount < 1) {
           player.forcedMoveCount++;
+          player.boatRaceCount++;
           sound.playEngineRev();
           this.showEventModal(
             `${BOAT_RACE_LOC.name} へ強制移動！`,
@@ -3090,6 +3363,7 @@
           );
           this.addLog(`🚤 [黄マス] ${player.name} は ${BOAT_RACE_LOC.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
+          player.skipTurnReason = "ギャンブルにハマって";
           this.teleportPlayer(player, BOAT_RACE_LOC);
 
         } else if (roll < 0.4) {
@@ -3111,6 +3385,7 @@
           );
           this.addLog(`🚓 [黄マス] ${player.name} は ${nearest.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
+          player.skipTurnReason = "事情聴取で";
           this.teleportPlayer(player, nearest);
 
         } else if (roll < 0.6) {
@@ -3165,42 +3440,35 @@
           ];
         }
 
-        const newRoadGraph = this.buildRoadNetwork([pathPoints], 20);
-        const startNodeOffset = this.roadNetworkNodes.length;
+        // Build directly into the shared node array: if this facility detour crosses a
+        // point already used by the main route or another player's branch, it reuses that
+        // exact node instead of stacking an overlapping duplicate with a different type.
+        const result = this.buildRoadNetwork([pathPoints], 40, false, this.roadNetworkNodes);
+        const newPathIndices = result.orderedIndices.slice();
+        const newSet = new Set(result.newlyCreated);
 
-        const newPathIndices = [];
-        newRoadGraph.nodes.forEach((n, idx) => {
-          const globalIdx = startNodeOffset + idx;
-          const nodeObj = {
-            id: globalIdx,
-            lat: n.lat,
-            lng: n.lng,
-            type: n.type,
-            neighbors: (n.neighbors || []).map(nbrIdx => nbrIdx + startNodeOffset)
-          };
-          this.roadNetworkNodes.push(nodeObj);
-          newPathIndices.push(globalIdx);
-
-          if (idx > 0 && idx < newRoadGraph.nodes.length - 1) {
-            let iconHtml = '';
-            if (n.type === 'red') {
-              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
-            } else if (n.type === 'blue') {
-              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
-            } else {
-              iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
-            }
-
-            const customIcon = L.divIcon({
-              className: 'custom-spot-icon',
-              html: iconHtml,
-              iconSize: [20, 20],
-              iconAnchor: [10, 10]
-            });
-
-            const marker = L.marker([n.lat, n.lng], { icon: customIcon }).addTo(this.map);
-            this.spotMarkers.push(marker);
+        newPathIndices.forEach((globalIdx, idx) => {
+          if (idx === 0 || idx === newPathIndices.length - 1) return;
+          if (!newSet.has(globalIdx)) return; // already has a marker from another route
+          const n = this.roadNetworkNodes[globalIdx];
+          let iconHtml = '';
+          if (n.type === 'red') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
+          } else if (n.type === 'blue') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+          } else {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
           }
+
+          const customIcon = L.divIcon({
+            className: 'custom-spot-icon',
+            html: iconHtml,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+
+          const marker = L.marker([n.lat, n.lng], { icon: customIcon }).addTo(this.map);
+          this.spotMarkers.push(marker);
         });
 
         if (newPathIndices.length > 0) {
@@ -3290,15 +3558,47 @@
         }
       },
 
-      selectCategory(catName) {
+      async fetchNearbyRestaurants(fromLoc) {
+        try {
+          const url = `${HOTPEPPER_PROXY_URL}?lat=${fromLoc.lat}&lng=${fromLoc.lng}&range=4&count=30`;
+          const resp = await fetch(url);
+          if (!resp.ok) return null;
+          const data = await resp.json();
+          if (data.error || !data.shops || !data.shops.length) return null;
+          return data.shops.map(s => ({ name: s.name, lat: s.lat, lng: s.lng }));
+        } catch(e) {
+          console.error("ホットペッパーAPI取得に失敗、固定リストにフォールバックします:", e);
+          return null;
+        }
+      },
+
+      async selectCategory(catName) {
         this.selectedCategoryName = catName;
         document.getElementById("category-select-section").classList.add("hidden");
         const rouletteSec = document.getElementById("roulette-section");
         rouletteSec.classList.remove("hidden");
 
-        const options = DESTINATION_PRESETS[catName] || DESTINATION_PRESETS["飲食店"];
-        let counter = 0;
         const box = document.getElementById("roulette-box");
+        const fromLoc = this.currentDestination || EDOGAWA_START;
+
+        let allOptions = DESTINATION_PRESETS[catName] || DESTINATION_PRESETS["飲食店"];
+
+        if (catName === "飲食店" && HOTPEPPER_PROXY_URL) {
+          box.innerText = "近くのお店を検索中...";
+          const liveShops = await this.fetchNearbyRestaurants(fromLoc);
+          if (liveShops && liveShops.length > 0) {
+            allOptions = liveShops;
+          }
+        }
+
+        // Keep the next destination reasonably close (roughly ~100 squares of road distance
+        // at 40m/square ≈ 4km — real streets zig-zag, so we filter on a shorter straight-line
+        // radius to stay comfortably under that once actual road routing is applied).
+        const MAX_DISTANCE_METERS = 2600;
+        let options = allOptions.filter(opt => this.haversineMeters(fromLoc, opt) <= MAX_DISTANCE_METERS);
+        if (options.length === 0) options = allOptions;
+
+        let counter = 0;
 
         const timer = setInterval(() => {
           const item = options[counter % options.length];
@@ -3364,7 +3664,9 @@
           players: this.players,
           turnCount: this.turnCount,
           currentPlayerIdx: this.currentPlayerIdx,
-          currentDestination: this.currentDestination
+          currentDestination: this.currentDestination,
+          roadNetworkNodes: this.roadNetworkNodes,
+          goalNodeIdx: this.goalNodeIdx
         };
         localStorage.setItem("edogawa_sugoroku_state", JSON.stringify(state));
       },
