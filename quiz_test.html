@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>江戸川区クイズ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #f0f2f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* スマホサイズ枠コンテナ */
+    .app-container {
+      width: 100%;
+      max-width: 430px;
+      height: 100vh;
+      max-height: 932px;
+      background-color: #ffffff;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+
+    /* トップページ スタートボタン */
+    .start-btn {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: bold;
+      border: none;
+      box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.1s;
+      outline: none;
+    }
+
+    .start-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    /* モーダル背景 */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.65);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* モーダルコンテンツカード */
+    .modal-content {
+      width: 90%;
+      height: 480px;
+      background-color: #ffffff;
+      border-radius: 20px;
+      padding: 24px 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+
+    /* ルーレット表示領域 */
+    .roulette-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+    }
+
+    .roulette-title {
+      font-size: 16px;
+      color: #718096;
+      margin-bottom: 24px;
+      font-weight: bold;
+    }
+
+    /* ジャンル四角枠のサイズ固定 */
+    .roulette-genre {
+      width: 280px;
+      height: 90px;
+      font-size: 22px;
+      font-weight: bold;
+      color: #2c3e50;
+      border: 3px solid #ff6b6b;
+      border-radius: 16px;
+      background-color: #fff5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0 12px;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.15);
+      word-break: break-all;
+    }
+
+    /* クイズ表示領域 */
+    .quiz-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    .quiz-header {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .difficulty-badge {
+      background-color: #4a5568;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: bold;
+      padding: 4px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .question-text {
+      font-size: 17px;
+      font-weight: bold;
+      color: #2d3748;
+      text-align: left;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      height: 250px;
+      overflow-y: auto;
+      word-wrap: break-word;
+    }
+
+    /* 3択ボタン横並び */
+    .options-container {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .option-btn {
+      flex: 1;
+      padding: 12px 6px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #2b6cb0;
+      background-color: #ebf8ff;
+      border: 2px solid #3182ce;
+      border-radius: 12px;
+      cursor: pointer;
+      word-break: break-all;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 85px;
+      transition: background-color 0.1s, transform 0.1s;
+      outline: none;
+    }
+
+    .option-btn:active {
+      background-color: #bee3f8;
+      transform: scale(0.97);
+    }
+
+    /* 正誤判定・回答表示用オーバーレイ */
+    .result-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      background-color: rgba(255, 255, 255, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .result-mark {
+      font-size: 140px;
+      font-weight: bold;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .result-mark.correct {
+      color: #e53e3e;
+    }
+
+    .result-mark.incorrect {
+      color: #1a365d;
+    }
+
+    .answer-text-display {
+      font-size: 18px;
+      font-weight: bold;
+      color: #2d3748;
+      background-color: #edf2f7;
+      padding: 12px 20px;
+      border-radius: 10px;
+      width: 100%;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- トップ画面 スタートボタン -->
+    <button class="start-btn" id="startBtn">スタート</button>
+
+    <!-- モーダル表示領域 -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-content">
+        
+        <!-- ルーレット画面 -->
+        <div class="roulette-container" id="rouletteContainer">
+          <div class="roulette-title">ジャンル抽選中...</div>
+          <div class="roulette-genre" id="rouletteGenreDisplay">---</div>
+        </div>
+
+        <!-- クイズ画面 -->
+        <div class="quiz-container hidden" id="quizContainer">
+          <div>
+            <div class="quiz-header">
+              <span class="difficulty-badge" id="difficultyBadge">カンタン</span>
+            </div>
+            <div class="question-text" id="questionText">問題文がここに入ります。</div>
+          </div>
+          
+          <div class="options-container" id="optionsContainer">
+            <button class="option-btn" onclick="selectOption(0)"></button>
+            <button class="option-btn" onclick="selectOption(1)"></button>
+            <button class="option-btn" onclick="selectOption(2)"></button>
+          </div>
+        </div>
+
+        <!-- 結果表示 -->
+        <div class="result-overlay hidden" id="resultOverlay">
+          <div class="result-mark" id="resultMark">〇</div>
+          <div class="answer-text-display" id="answerTextDisplay">答え：小松菜</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // GASのAPI URL (フォールバック用)
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzXZWEr_rD7Pgl6Tveh6Mbm0goUhJttahm-LSV9uBd5UUZdVsz5WA7QMk6bBuj3lH4f/exec";
+
+    // 内蔵フォールバックデータ (通信不可時用)
+    const DEFAULT_QUIZ_DATA = [
+      {
+        id: 501,
+        difficulty: "カンタン",
+        genre: "ランドマーク・名物",
+        question: "江戸川区が発祥とされる緑黄色野菜は何でしょう？",
+        options: ["小松菜", "ほうれん草", "チンゲンサイ"],
+        answer: "小松菜"
+      },
+      {
+        id: 504,
+        difficulty: "カンタン",
+        genre: "ランドマーク・名物",
+        question: "江戸川区が奈良県大和郡山市や愛知県弥富市と並び「三大産地」と呼ばれる観賞魚は何でしょう？",
+        options: ["金魚", "メダカ", "ニシキゴイ"],
+        answer: "金魚"
+      },
+      {
+        id: 510,
+        difficulty: "カンタン",
+        genre: "ランドマーク・名物",
+        question: "東京都内でスカイツリー・東京タワーに次ぐ高さを誇る無料展望台がある船堀の施設は何でしょう？",
+        options: ["タワーホール船堀", "葛西タワービル", "江戸川区役所本庁舎"],
+        answer: "タワーホール船堀"
+      }
+    ];
+
+    let allQuizData = [];
+    let currentQuiz = null;
+    let audioCtx = null;
+    let isDataLoading = false;
+
+    // Web Audio APIの初期化
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // 効果音：ルーレット回転音
+    function playRouletteSound() {
+      if (!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.04);
+    }
+
+    // 効果音：出題「ジャジャン♪」
+    function playQuestionSound() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      [523.25, 783.99].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+        gain.gain.setValueAtTime(0.25, now + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.1);
+        osc.stop(now + idx * 0.1 + 0.35);
+      });
+    }
+
+    // 効果音：正解「ピンポーン♪」
+    function playCorrectSound() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      [659.25, 830.61].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.25);
+        gain.gain.setValueAtTime(0.3, now + i * 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.25 + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + i * 0.25);
+        osc.stop(now + i * 0.25 + 0.5);
+      });
+    }
+
+    // 効果音：不正解「ブッブー♪」
+    function playIncorrectSound() {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      [0, 0.2].forEach(timeOffset => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now + timeOffset);
+        gain.gain.setValueAtTime(0.25, now + timeOffset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + timeOffset + 0.15);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + timeOffset);
+        osc.stop(now + timeOffset + 0.15);
+      });
+    }
+
+    // 音声読み上げ（SpeechSynthesis）
+    function speakQuestion(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const uttr = new SpeechSynthesisUtterance(text);
+        uttr.lang = 'ja-JP';
+        uttr.rate = 1.0;
+        window.speechSynthesis.speak(uttr);
+      }
+    }
+
+    // 高速データ読み込み (1. 静的JSON -> 2. GAS API -> 3. 内蔵データ)
+    async function loadQuizData() {
+      if (isDataLoading) return;
+      isDataLoading = true;
+      try {
+        // 第1優先: 静的JSONファイル (提案書案1: 爆速読み込み)
+        const response = await fetch('./data/quiz_data.json?v=' + new Date().getTime());
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            allQuizData = data;
+            console.log("静的JSONから読み込み完了:", data.length, "件");
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("静的JSON未見つかり。GASから読み込みを試みます。");
+      }
+
+      try {
+        // 第2優先: GAS APIからの読み込み
+        const response = await fetch(GAS_API_URL);
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          allQuizData = data;
+          console.log("GAS APIから読み込み完了:", data.length, "件");
+          return;
+        }
+      } catch (err) {
+        console.warn("GAS通信失敗。フォールバックデータを使用します。", err);
+      } finally {
+        isDataLoading = false;
+      }
+
+      // 最終フォールバック
+      if (allQuizData.length === 0) {
+        allQuizData = DEFAULT_QUIZ_DATA;
+      }
+    }
+
+    // 初期読み込み開始
+    window.addEventListener('DOMContentLoaded', loadQuizData);
+
+    // スタートボタンクリック時
+    document.getElementById('startBtn').addEventListener('click', async function() {
+      initAudio();
+      
+      if (!allQuizData || allQuizData.length === 0) {
+        document.getElementById('startBtn').innerText = "取得中...";
+        await loadQuizData();
+        document.getElementById('startBtn').innerText = "スタート";
+      }
+      startQuizFlow();
+    });
+
+    // クイズフロー開始（ルーレット処理）
+    function startQuizFlow() {
+      // 表示状態のリセット
+      document.getElementById('modalOverlay').classList.add('active');
+      document.getElementById('rouletteContainer').classList.remove('hidden');
+      document.getElementById('quizContainer').classList.add('hidden');
+      document.getElementById('resultOverlay').classList.add('hidden');
+
+      // 定義済み・取得データ内の全ジャンル一覧を取得
+      const genres = [...new Set(allQuizData.map(q => q.genre))].filter(g => g && g.trim() !== '');
+      if (genres.length === 0) {
+        genres.push('ランドマーク・名物', '暮らし・子育て・教育', '健康・医療・福祉', 'スポーツ・文化', '仕事・産業');
+      }
+
+      let speed = 50;
+      let counter = 0;
+      let genreIndex = 0;
+
+      // ルーレットアニメーション
+      function spin() {
+        genreIndex = (genreIndex + 1) % genres.length;
+        document.getElementById('rouletteGenreDisplay').textContent = genres[genreIndex];
+        playRouletteSound();
+        counter++;
+
+        if (counter < 20) {
+          setTimeout(spin, speed);
+        } else if (counter < 28) {
+          speed += 30;
+          setTimeout(spin, speed);
+        } else {
+          // 抽選決定ジャンル
+          const selectedGenre = genres[genreIndex];
+          setTimeout(() => showQuiz(selectedGenre), 600);
+        }
+      }
+      spin();
+    }
+
+    // クイズ問題画面の表示
+    function showQuiz(genre) {
+      // 重複管理（localStorage）
+      let usedIds = JSON.parse(localStorage.getItem('usedQuizIds') || '[]');
+      
+      // 対象ジャンルの全問題
+      let genreQuestions = allQuizData.filter(q => q.genre === genre);
+      if (genreQuestions.length === 0) {
+        genreQuestions = allQuizData; // フォールバック
+      }
+
+      // 未出題問題
+      let availableQuestions = genreQuestions.filter(q => !usedIds.includes(q.id));
+
+      // 該当ジャンルが一巡した場合は出題履歴をリセット
+      if (availableQuestions.length === 0) {
+        usedIds = usedIds.filter(id => !genreQuestions.some(q => q.id === id));
+        availableQuestions = genreQuestions;
+      }
+
+      // ランダム選出
+      currentQuiz = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+      
+      // 出題済みIDとして記録
+      usedIds.push(currentQuiz.id);
+      localStorage.setItem('usedQuizIds', JSON.stringify(usedIds));
+
+      // UI表示の切り替え
+      document.getElementById('rouletteContainer').classList.add('hidden');
+      document.getElementById('quizContainer').classList.remove('hidden');
+
+      document.getElementById('difficultyBadge').textContent = currentQuiz.difficulty;
+      document.getElementById('questionText').textContent = currentQuiz.question;
+
+      // 選択肢のシャッフル配置
+      const shuffledOptions = [...currentQuiz.options].sort(() => Math.random() - 0.5);
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach((btn, index) => {
+        btn.textContent = shuffledOptions[index];
+        btn.disabled = false;
+      });
+
+      // 効果音再生 & 読み上げ
+      playQuestionSound();
+      speakQuestion(currentQuiz.question);
+    }
+
+    // 解答選択時の処理
+    function selectOption(index) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(btn => btn.disabled = true);
+
+      const selectedText = buttons[index].textContent;
+      const isCorrect = (selectedText === currentQuiz.answer);
+
+      // 結果・正解オーバーレイ表示
+      const resultOverlay = document.getElementById('resultOverlay');
+      const resultMark = document.getElementById('resultMark');
+      const answerTextDisplay = document.getElementById('answerTextDisplay');
+
+      answerTextDisplay.textContent = `答え：${currentQuiz.answer}`;
+      resultOverlay.classList.remove('hidden');
+
+      if (isCorrect) {
+        resultMark.textContent = '〇';
+        resultMark.className = 'result-mark correct';
+        playCorrectSound();
+      } else {
+        resultMark.textContent = '✖';
+        resultMark.className = 'result-mark incorrect';
+        playIncorrectSound();
+      }
+
+      // 3秒後に自動でモーダルを閉じる
+      setTimeout(() => {
+        document.getElementById('modalOverlay').classList.remove('active');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
