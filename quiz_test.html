@@ -425,7 +425,7 @@
       isDataLoading = true;
       try {
         // 第1優先: 静的JSONファイル (提案書案1: 爆速読み込み)
-        const response = await fetch('../data/quiz_data.json?v=' + new Date().getTime());
+        const response = await fetch('./quiz_data.json?v=' + new Date().getTime());
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data) && data.length > 0) {
