@@ -198,14 +198,22 @@
 
   <!-- LOBBY OVERLAY -->
   <div id="lobby-screen" class="absolute inset-0 z-50 bg-slate-950 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto">
-    <div class="text-center pt-2 sm:pt-4">
-      <div class="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-xs font-semibold tracking-wider mb-2">
-        江戸川区限定・全画面マップ双六
+    <div class="pt-2 sm:pt-4">
+      <div class="flex items-start justify-between gap-2 px-1">
+        <!-- 江戸川区非公認ハンコ（丸に二重線＋左傾きでスタンプらしく） -->
+        <div class="-rotate-6 select-none shrink-0" aria-hidden="true">
+          <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-double border-rose-500 text-rose-500 flex flex-col items-center justify-center leading-none">
+            <span class="text-[10px] sm:text-xs font-black tracking-wide">江戸川区</span>
+            <span class="text-[10px] sm:text-xs font-black tracking-wide mt-0.5">非公認</span>
+          </div>
+        </div>
+        <div class="inline-block px-3 py-1 h-fit bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-xs font-semibold tracking-wider shrink-0">
+          江戸川区限定・全画面マップ双六
+        </div>
       </div>
-      <h1 class="font-mincho text-4xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 gold-glow tracking-widest">
+      <h1 class="font-mincho text-4xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 gold-glow tracking-widest text-center -mt-3 sm:-mt-2">
         江戸川双六
       </h1>
-      <p class="text-xs sm:text-sm text-slate-400 mt-1">実道路100%吸着！縮尺50ftのリアルマップで江戸川区を冒険しよう！</p>
     </div>
 
     <!-- Character Selection & Settings -->
@@ -220,33 +228,35 @@
         <input type="text" id="player-name-input" value="プレイヤー1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-amber-300 focus:outline-none focus:border-amber-500 font-bold">
       </div>
 
-      <!-- Multiplayer Recruitment Trigger Area -->
-      <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 flex flex-col items-center text-center space-y-2">
-        <div class="flex items-center justify-between w-full">
-          <span class="text-xs font-bold text-slate-400">マルチプレイ (4人対戦)</span>
-          <span id="room-status-badge" class="px-2 py-0.5 bg-slate-800 text-slate-300 font-bold text-[10px] rounded-full">オフライン / ホスト待機</span>
+      <!-- Action Buttons: ソロプレイ (左) / マルチプレイ募集 (右) -->
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <div class="flex flex-col gap-2">
+          <button id="start-game-btn" onclick="EdogawaSugoroku.startGame()" class="w-full flex-1 bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3.5 px-2 rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition flex flex-col items-center justify-center gap-1 text-center leading-tight">
+            <span class="text-xl">🎮</span>
+            <span class="text-xs sm:text-sm">ひとりで遊ぶ<br>（CPU対戦）</span>
+          </button>
+          <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeGame()" class="hidden w-full bg-gradient-to-b from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold py-3 px-2 rounded-2xl shadow-md active:scale-[0.98] transition flex flex-col items-center justify-center gap-1 text-center leading-tight">
+            <span class="text-lg">💾</span>
+            <span class="text-[11px] sm:text-xs">前回の続き<br>から遊ぶ</span>
+          </button>
         </div>
-        <p class="text-[11px] text-slate-400 text-left w-full">
-          他のスマホから参加者を募集して一緒にプレイできます！
-        </p>
-        <button id="recruit-btn" onclick="EdogawaSugoroku.openRecruitmentModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-amber-500/40 text-amber-300 font-bold py-2.5 px-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
-          <span>👥</span> <span>参加者を募集（QRコード発行）</span>
-        </button>
-      </div>
 
-      <!-- Action Buttons -->
-      <div class="space-y-2 pt-1">
-        <button id="start-game-btn" onclick="EdogawaSugoroku.startGame()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3.5 px-4 rounded-xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition flex items-center justify-center gap-2 text-base">
-          <span>🚀</span> <span>ソロで今すぐ開始 (CPU対戦)</span>
-        </button>
-        <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeGame()" class="hidden w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 px-4 rounded-xl border border-slate-700 text-xs transition flex items-center justify-center gap-2">
-          <span>💾</span> <span>前回の続きから遊ぶ</span>
-        </button>
+        <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-2.5 flex flex-col items-center justify-center text-center gap-1.5">
+          <span class="text-[11px] font-bold text-slate-300">マルチプレイ4人対戦</span>
+          <button id="recruit-btn" onclick="EdogawaSugoroku.openRecruitmentModal()" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white shadow-lg shadow-rose-900/40 active:scale-95 transition flex flex-col items-center justify-center gap-0.5 ring-2 ring-rose-400/40">
+            <span class="text-lg">👥</span>
+            <span class="text-[9px] font-extrabold leading-tight px-1">参加者募集<br>（QRコード発行）</span>
+          </button>
+          <span id="room-status-badge" class="px-2 py-0.5 bg-slate-800 text-slate-300 font-bold text-[9px] rounded-full">オフライン / ホスト待機</span>
+          <p class="text-[9px] text-slate-500 leading-tight">
+            QRコードを他のスマホで読み取って一緒にプレイできます
+          </p>
+        </div>
       </div>
     </div>
 
     <div class="text-center text-[11px] text-slate-500 pb-2">
-      スタート地点：西葛西駅 ➔ 目標地点：カラオケ酔処「ゆう」
+      ©2026 江戸川双六 Produced by M.Tsuda
     </div>
   </div>
 
@@ -514,37 +524,16 @@
         <p id="roulette-cpu-countdown" class="hidden text-xs font-bold text-sky-300">CPU自動決定まで… <span id="roulette-cpu-countdown-num">3</span></p>
       </div>
 
-      <button id="roulette-confirm-btn" onclick="EdogawaSugoroku.async confirmNextSugoroku() {
-        if (this.legTransitionInProgress) return;
-        if (!this.nextDestinationCandidate) return;
+      <button id="roulette-confirm-btn" onclick="EdogawaSugoroku.confirmNextSugoroku()" class="hidden w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition text-sm">
+        🎯 目的地を確定する
+      </button>
+    </div>
+  </div>
 
-        this.legTransitionInProgress = true;
-        const nextGoal = { ...this.nextDestinationCandidate };
-
-        try {
-          document.getElementById("goal-modal").classList.add("hidden");
-
-          const currentStartLoc = {
-            name: this.currentDestination.name,
-            lat: this.currentDestination.lat,
-            lng: this.currentDestination.lng
-          };
-
-          await this.setupBoard(currentStartLoc, nextGoal);
-          this.nextDestinationCandidate = null;
-          sound.playBGM('map');
-          this.addLog(`🚩 次の目的地が 【${nextGoal.name}】 に設定されました！`);
-
-          // Only after the new board is fully built do we advance the turn.
-          this.finishTurn();
-          this.panToCurrentPlayer();
-        } catch (e) {
-          console.error("次の双六の盤面生成に失敗しました:", e);
-          this.addLog("⚠️ 次の盤面生成に失敗しました。サイコロは一時停止しています。");
-        } finally {
-          this.legTransitionInProgress = false;
-        }
-      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  <!-- Firebase SDK (ES module imports must live in their own module script, not inline in an
+       onclick attribute — see window.FirebaseLib below, consumed throughout the main script). -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -786,7 +775,33 @@
         { name: "イオン葛西店", lat: 35.6672, lng: 139.8665 },
         { name: "マツモトキヨシ 西葛西駅前店", lat: 35.6642, lng: 139.8590 },
         { name: "サミットストア 葛西店", lat: 35.6580, lng: 139.8690 },
-        { name: "オリンピック 葛西店", lat: 35.6510, lng: 139.8720 }
+        { name: "オリンピック 葛西店", lat: 35.6510, lng: 139.8720 },
+        { name: "イトーヨーカドー 西葛西店", lat: 35.6660, lng: 139.8560 },
+        { name: "ライフ 船堀駅前店", lat: 35.6845, lng: 139.8650 },
+        { name: "マルエツ 一之江店", lat: 35.6870, lng: 139.8820 },
+        { name: "いなげや 瑞江店", lat: 35.6950, lng: 139.8905 },
+        { name: "オーケー 篠崎店", lat: 35.7095, lng: 139.8940 },
+        { name: "西友 小岩店", lat: 35.7340, lng: 139.8800 },
+        { name: "ダイエー 新小岩店", lat: 35.7270, lng: 139.8600 },
+        { name: "業務スーパー 平井店", lat: 35.7070, lng: 139.8430 },
+        { name: "ウエルシア薬局 西葛西駅前店", lat: 35.6655, lng: 139.8590 },
+        { name: "スギ薬局 船堀店", lat: 35.6830, lng: 139.8630 },
+        { name: "ココカラファイン 一之江店", lat: 35.6855, lng: 139.8810 },
+        { name: "トモズ 葛西駅前店", lat: 35.6640, lng: 139.8740 },
+        { name: "クリエイトエス・ディー 瑞江店", lat: 35.6935, lng: 139.8920 },
+        { name: "マツモトキヨシ 小岩駅前店", lat: 35.7328, lng: 139.8785 },
+        { name: "サミットストア 東葛西店", lat: 35.6580, lng: 139.8830 },
+        { name: "マルエツプチ 南葛西店", lat: 35.6480, lng: 139.8700 },
+        { name: "いなげや 北葛西店", lat: 35.6720, lng: 139.8560 },
+        { name: "ライフ 中葛西店", lat: 35.6600, lng: 139.8700 },
+        { name: "イオン 篠崎店", lat: 35.7080, lng: 139.8950 },
+        { name: "オリンピック 平井店", lat: 35.7050, lng: 139.8440 },
+        { name: "ウエルシア薬局 新小岩店", lat: 35.7280, lng: 139.8580 },
+        { name: "スギ薬局 小岩店", lat: 35.7350, lng: 139.8770 },
+        { name: "マツモトキヨシ 船堀駅前店", lat: 35.6840, lng: 139.8660 },
+        { name: "サミットストア 瑞江店", lat: 35.6960, lng: 139.8930 },
+        { name: "ココカラファイン 平井駅前店", lat: 35.7060, lng: 139.8410 },
+        { name: "業務スーパー 篠崎店", lat: 35.7100, lng: 139.8910 }
       ],
       "公園": PARKS,
       "駅（バス停含む）": [
@@ -3424,11 +3439,12 @@
           player.vehicle = catchUpVehicle;
 
           this.setPlayerIconState(player, { bubbleText: `${catchUpVehicle.emoji} ゲット！` });
+          this.updatePlayerRoutes();
 
           sound.playChime();
           this.showEventModal(
             "追い上げチャンス！",
-            `先頭から${gapBehindLeader}マスも離されていたので「${catchUpVehicle.name} (${catchUpVehicle.emoji})」を特別にゲット！\n次回のサイコロ【1回限り】出目が【${catchUpVehicle.mult}倍】になります！`,
+            `先頭から${gapBehindLeader}マスも離されていたので「${catchUpVehicle.name} (${catchUpVehicle.emoji})」を特別にゲット！\n次回のサイコロを振ると、道や建物を無視してゴールまで一直線に飛行します！`,
             null,
             { icon: catchUpVehicle.emoji, type: "yellow" }
           );
@@ -3459,6 +3475,7 @@
           this.addLog(`🚤 [黄マス] ${player.name} は ${BOAT_RACE_LOC.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
           player.skipTurnReason = "ギャンブルにハマって";
+          player.skipTurnType = "boatRace";
           this.teleportPlayer(player, BOAT_RACE_LOC);
 
         } else if (roll < 0.4) {
@@ -3481,6 +3498,7 @@
           this.addLog(`🚓 [黄マス] ${player.name} は ${nearest.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
           player.skipTurnReason = "事情聴取で";
+          player.skipTurnType = "police";
           this.teleportPlayer(player, nearest);
 
         } else if (roll < 0.6) {
@@ -3498,11 +3516,14 @@
           sound.playSiren();
           this.showEventModal(
             `${nearest.name} へ緊急搬送！`,
-            `路上で転倒して怪我！最寄りの病院・クリニック【 ${nearest.name} 】へ強制移動搬送！\n【${turns}ターン車椅子🦽】(出目1固定)になります。`,
+            `路上で転倒して怪我！最寄りの病院・クリニック【 ${nearest.name} 】へ強制移動搬送！\n【1回休み】のあと【${turns}ターン車椅子🦽】(出目1固定)になります。`,
             `搬送先: ${nearest.name}`,
             { icon: "🚑", type: "yellow" }
           );
-          this.addLog(`🚑 [黄マス] ${player.name} は ${nearest.name} へ緊急搬送！ ${turns}ターン車椅子🦽状態。`);
+          this.addLog(`🚑 [黄マス] ${player.name} は ${nearest.name} へ緊急搬送され1回休み！その後 ${turns}ターン車椅子🦽状態。`);
+          player.skipTurn = true;
+          player.skipTurnReason = "治療のため安静で";
+          player.skipTurnType = "hospital";
           this.teleportPlayer(player, nearest);
 
         } else {
@@ -3718,20 +3739,37 @@
       },
 
       async confirmNextSugoroku() {
-        document.getElementById("goal-modal").classList.add("hidden");
+        // Guarded against double-taps and left-behind state: a stuck nextDestinationCandidate
+        // or a second tap while setupBoard() is still running must never freeze the game.
+        if (this.legTransitionInProgress) return;
         if (!this.nextDestinationCandidate) return;
 
-        const currentStartLoc = {
-          name: this.currentDestination.name,
-          lat: this.currentDestination.lat,
-          lng: this.currentDestination.lng
-        };
+        this.legTransitionInProgress = true;
+        const nextGoal = { ...this.nextDestinationCandidate };
 
-        await this.setupBoard(currentStartLoc, this.nextDestinationCandidate);
-        sound.playBGM('map');
-        this.addLog(`🚩 次の目的地が 【${this.nextDestinationCandidate.name}】 に設定されました！`);
-        this.finishTurn();
-        this.panToCurrentPlayer();
+        try {
+          document.getElementById("goal-modal").classList.add("hidden");
+
+          const currentStartLoc = {
+            name: this.currentDestination.name,
+            lat: this.currentDestination.lat,
+            lng: this.currentDestination.lng
+          };
+
+          await this.setupBoard(currentStartLoc, nextGoal);
+          this.nextDestinationCandidate = null;
+          sound.playBGM('map');
+          this.addLog(`🚩 次の目的地が 【${nextGoal.name}】 に設定されました！`);
+
+          // Only after the new board is fully built do we advance the turn.
+          this.finishTurn();
+          this.panToCurrentPlayer();
+        } catch (e) {
+          console.error("次の双六の盤面生成に失敗しました:", e);
+          this.addLog("⚠️ 次の盤面生成に失敗しました。サイコロは一時停止しています。");
+        } finally {
+          this.legTransitionInProgress = false;
+        }
       },
 
       finishTurn() {
