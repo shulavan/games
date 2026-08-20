@@ -177,21 +177,73 @@
     }
 
     .facility-poi {
-      width: 26px;
-      height: 26px;
+      width: 78px;
+      height: 78px;
       background: rgba(15, 23, 42, 0.78);
-      border: 1.5px solid rgba(255, 255, 255, 0.55);
+      border: 2.5px solid rgba(255, 255, 255, 0.55);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+      font-size: 42px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
 
     .event-card-red { background: linear-gradient(160deg, #7f1d1d, #450a0a) !important; border-color: #ef4444 !important; }
     .event-card-blue { background: linear-gradient(160deg, #1e3a8a, #172554) !important; border-color: #3b82f6 !important; }
     .event-card-yellow { background: linear-gradient(160deg, #78350f, #451a03) !important; border-color: #f59e0b !important; }
+
+    /* 🚁/✈️ の「ゴールまで一直線」ルート表示。道路上ではなく地図の上に浮いて見えるよう、
+       発光フィルターと流れるダッシュアニメーションを付けている。 */
+    .flight-route-line {
+      filter: drop-shadow(0 3px 6px rgba(56, 189, 248, 0.85)) drop-shadow(0 0 10px rgba(125, 211, 252, 0.6));
+      animation: flight-dash-flow 0.9s linear infinite;
+    }
+    @keyframes flight-dash-flow {
+      to { stroke-dashoffset: -24; }
+    }
+
+    /* --- 江戸川競艇 --- */
+    .boat-lane { position: relative; height: 15%; }
+    .boat-lane-track { position: absolute; inset: 0; border-top: 1px dashed rgba(255,255,255,0.15); }
+    .boat-runner {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      font-size: 22px; transition: left 0.12s linear; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+    }
+    .boat-lane-num {
+      position: absolute; left: 2px; top: 50%; transform: translateY(-50%);
+      font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.6); z-index: 2;
+    }
+    .boat-finish-line { position: absolute; right: 12%; top: 0; bottom: 0; width: 2px; background: repeating-linear-gradient(0deg, #fff, #fff 4px, transparent 4px, transparent 8px); opacity: 0.6; }
+    .odds-cell {
+      background: rgba(2, 6, 23, 0.6); border: 1px solid rgba(51, 65, 85, 0.8);
+      border-radius: 8px; padding: 4px 2px; text-align: center; cursor: pointer; transition: all 0.15s;
+    }
+    .odds-cell:hover, .odds-cell:active { border-color: #f59e0b; background: rgba(245, 158, 11, 0.12); }
+    .odds-cell .pair { font-weight: 900; color: #e2e8f0; display: block; font-size: 11px; }
+    .odds-cell .mult { color: #f59e0b; font-weight: 700; font-size: 10px; }
+    .bet-item.hit { animation: bet-hit-blink 0.5s ease-in-out 3; }
+    @keyframes bet-hit-blink { 0%, 100% { background: rgba(2,6,23,0.6); } 50% { background: rgba(245, 158, 11, 0.4); } }
+
+    /* --- 江戸川金魚すくい --- */
+    .kingyo-fish {
+      position: absolute; font-size: 32px; cursor: pointer; user-select: none;
+      transition: transform 0.15s; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+    }
+    .kingyo-fish:active { transform: scale(0.85); }
+    .kingyo-fish.caught { animation: kingyo-caught 0.4s ease-out forwards; pointer-events: none; }
+    .kingyo-fish.spooked { animation: kingyo-spook 0.3s ease-out; }
+    @keyframes kingyo-caught { to { transform: translateY(-40px) scale(1.4); opacity: 0; } }
+    @keyframes kingyo-spook { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.8) rotate(15deg); } }
+
+    /* --- クイズ選択肢 --- */
+    .quiz-option-btn {
+      width: 100%; text-align: left; background: rgba(2,6,23,0.6); border: 1px solid rgba(51,65,85,0.9);
+      color: #e2e8f0; font-weight: 700; padding: 10px 14px; border-radius: 12px; transition: all 0.15s; font-size: 14px;
+    }
+    .quiz-option-btn:hover, .quiz-option-btn:active { border-color: #f59e0b; background: rgba(245,158,11,0.12); }
+    .quiz-option-btn.correct { border-color: #10b981 !important; background: rgba(16,185,129,0.25) !important; }
+    .quiz-option-btn.wrong { border-color: #ef4444 !important; background: rgba(239,68,68,0.25) !important; }
   </style>
 </head>
 <body class="h-full w-full bg-slate-900 text-slate-100 flex flex-col relative overflow-hidden">
@@ -542,6 +594,172 @@
     };
   </script>
 
+  <!-- MODAL: 江戸川競艇（黄マスの強制移動から発生するミニゲーム。sugoroku.htmlのUIに合わせて再構築） -->
+  <div id="boatrace-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[94vh] overflow-y-auto shadow-2xl">
+
+      <!-- ① 参加確認（強制移動した本人以外に表示） -->
+      <div id="boatrace-invite-screen" class="hidden p-6 text-center space-y-4">
+        <span class="text-5xl">🚤</span>
+        <h2 class="font-mincho text-xl font-bold text-amber-300">江戸川競艇ゲームに参加しますか？</h2>
+        <p id="boatrace-invite-desc" class="text-sm text-slate-300 leading-relaxed"></p>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button onclick="EdogawaSugoroku.respondBoatRaceInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">参加する</button>
+          <button onclick="EdogawaSugoroku.respondBoatRaceInvite(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition">見送る</button>
+        </div>
+      </div>
+
+      <!-- ② オッズ・天候・投票 -->
+      <div id="boatrace-betting-screen" class="hidden p-4 space-y-3">
+        <div class="text-center space-y-0.5">
+          <span class="text-3xl">🚤</span>
+          <h2 class="font-mincho text-lg font-bold text-amber-300">江戸川競艇場</h2>
+          <p id="boatrace-weather-line" class="text-[11px] text-slate-400"></p>
+        </div>
+
+        <div class="bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between">
+          <span class="text-xs text-slate-400">投票締切まで</span>
+          <span id="boatrace-timer" class="text-xl font-black text-amber-400 tabular-nums">30</span>
+        </div>
+
+        <div id="boatrace-my-bets-summary" class="text-[11px] text-slate-300 min-h-[1.2em]"></div>
+
+        <div>
+          <p class="text-[10px] text-slate-500 mb-1 tracking-wider">2連単（1着-2着）オッズ表 ・ タップして投票</p>
+          <div id="boatrace-odds-grid" class="grid grid-cols-4 gap-1.5"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="EdogawaSugoroku.openBoatRaceYosao()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 font-bold py-2.5 rounded-xl text-xs transition">🔮 予想屋に聞く（¥100）</button>
+          <button onclick="EdogawaSugoroku.boatRaceCloseBettingEarly()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">投票を締め切る</button>
+        </div>
+      </div>
+
+      <!-- 予想屋サブ画面 -->
+      <div id="boatrace-yosao-screen" class="hidden p-5 text-center space-y-3">
+        <span class="text-4xl">🔮</span>
+        <h3 class="font-bold text-amber-300">予想屋のおすすめ</h3>
+        <p id="boatrace-yosao-text" class="text-sm text-slate-200 bg-slate-950/60 rounded-xl p-3 leading-relaxed"></p>
+        <button onclick="EdogawaSugoroku.closeBoatRaceYosao()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl transition">投票画面に戻る</button>
+      </div>
+
+      <!-- 賭け金額入力サブ画面 -->
+      <div id="boatrace-buy-screen" class="hidden p-5 text-center space-y-3">
+        <p class="text-sm text-slate-300">選んだ組: <span id="boatrace-buy-pair" class="text-amber-300 font-bold"></span></p>
+        <div class="grid grid-cols-4 gap-2">
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(100)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥100</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(500)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥500</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(1000)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥1,000</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(5000)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥5,000</button>
+        </div>
+        <p id="boatrace-buy-amount-display" class="text-2xl font-black text-amber-400">¥0</p>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="EdogawaSugoroku.confirmBoatRaceBet()" class="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-2.5 rounded-xl">賭ける</button>
+          <button onclick="EdogawaSugoroku.closeBoatRaceBuy()" class="bg-slate-800 text-slate-300 font-bold py-2.5 rounded-xl border border-slate-700">キャンセル</button>
+        </div>
+      </div>
+
+      <!-- ③ レース中継 -->
+      <div id="boatrace-race-screen" class="hidden">
+        <div class="relative h-52 bg-gradient-to-b from-sky-800 via-blue-900 to-blue-950 overflow-hidden rounded-t-3xl">
+          <div class="absolute top-0 left-0 right-0 bg-black/70 overflow-hidden h-8 flex items-center z-10">
+            <div id="boatrace-marquee" class="whitespace-nowrap text-amber-300 text-xs font-bold px-2"></div>
+          </div>
+          <div id="boatrace-track" class="absolute inset-0 pt-9 pb-2 px-3 flex flex-col justify-around"></div>
+        </div>
+        <div id="boatrace-bets-summary" class="p-3 grid grid-cols-2 gap-2 text-[10px]"></div>
+      </div>
+
+      <!-- ④ 結果 -->
+      <div id="boatrace-result-screen" class="hidden p-5 text-center space-y-3">
+        <span class="text-4xl">🏁</span>
+        <h2 class="font-mincho text-xl font-bold text-amber-300">レース結果</h2>
+        <p id="boatrace-result-rank" class="text-sm text-slate-200"></p>
+        <div id="boatrace-result-breakdown" class="text-xs text-slate-300 space-y-1.5 bg-slate-950/60 rounded-xl p-3 text-left"></div>
+        <button onclick="EdogawaSugoroku.closeBoatRaceEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">了解！次のターンへ</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: 江戸川クイズ（3〜5ターン目、誰かのサイコロ後にランダム発生する特別イベントの1種） -->
+  <div id="quiz-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 text-center space-y-4">
+
+      <div id="quiz-invite-screen">
+        <span class="text-5xl">🧠</span>
+        <h2 class="font-mincho text-xl font-bold text-amber-300 mt-2">江戸川クイズに参加しますか？</h2>
+        <p id="quiz-invite-name" class="text-sm text-slate-300 mt-2"></p>
+        <p class="text-sm text-slate-200 mt-3">参加料：<span class="text-red-400 font-bold">￥10,000</span></p>
+        <p class="text-sm text-slate-200">正解すると賞金<span class="text-amber-400 font-bold">￥50,000</span>です</p>
+        <div class="grid grid-cols-2 gap-3 pt-3">
+          <button onclick="EdogawaSugoroku.respondQuizInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">はい</button>
+          <button onclick="EdogawaSugoroku.respondQuizInvite(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition">いいえ</button>
+        </div>
+      </div>
+
+      <div id="quiz-roulette-screen" class="hidden space-y-3">
+        <span class="text-4xl">🎡</span>
+        <p class="text-slate-300 text-sm">ジャンル抽選中...</p>
+        <div id="quiz-roulette-genre" class="text-2xl font-black text-amber-400 h-10">-</div>
+      </div>
+
+      <div id="quiz-question-screen" class="hidden space-y-3 text-left">
+        <div class="flex items-center justify-between text-xs">
+          <span id="quiz-genre-badge" class="px-2 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 font-bold"></span>
+          <span id="quiz-difficulty-badge" class="px-2 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300 font-bold"></span>
+        </div>
+        <p id="quiz-question-text" class="text-base font-bold text-white leading-relaxed text-center py-2"></p>
+        <div id="quiz-options" class="space-y-2"></div>
+      </div>
+
+      <div id="quiz-result-screen" class="hidden space-y-3">
+        <span id="quiz-result-icon" class="text-5xl">⭕</span>
+        <p id="quiz-result-text" class="text-lg font-black"></p>
+        <p id="quiz-result-answer" class="text-sm text-slate-300"></p>
+        <p id="quiz-result-money" class="text-base font-bold"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: 江戸川金魚すくい（クイズと同じ特別イベント枠のもう1種） -->
+  <div id="kingyo-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl">
+
+      <div id="kingyo-invite-screen" class="p-6 text-center space-y-4">
+        <span class="text-5xl">🐠</span>
+        <h2 class="font-mincho text-xl font-bold text-amber-300">江戸川金魚すくいに参加しますか？</h2>
+        <p id="kingyo-invite-name" class="text-sm text-slate-300"></p>
+        <p class="text-sm text-slate-200">参加料：<span class="text-red-400 font-bold">￥1,000</span></p>
+        <p class="text-xs text-slate-400">30秒間で金魚をすくって稼ごう！</p>
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button onclick="EdogawaSugoroku.respondKingyoInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">参加する</button>
+          <button onclick="EdogawaSugoroku.respondKingyoInvite(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition">見送る</button>
+        </div>
+      </div>
+
+      <div id="kingyo-game-screen" class="hidden">
+        <div class="flex items-center justify-between px-4 py-2 bg-slate-950/70 border-b border-slate-800">
+          <span class="text-xs text-slate-400">残り時間</span>
+          <span id="kingyo-timer" class="text-xl font-black text-amber-400 tabular-nums">30</span>
+          <span class="text-xs text-slate-400">獲得金額</span>
+          <span id="kingyo-earnings" class="text-lg font-black text-emerald-400">¥0</span>
+        </div>
+        <div id="kingyo-tank" class="relative h-80 bg-gradient-to-b from-sky-700 via-sky-800 to-blue-950 overflow-hidden"></div>
+      </div>
+
+      <div id="kingyo-result-screen" class="hidden p-6 text-center space-y-3">
+        <span class="text-4xl">🏆</span>
+        <h2 class="font-mincho text-xl font-bold text-amber-300">結果発表</h2>
+        <div id="kingyo-result-breakdown" class="text-xs text-slate-300 space-y-1 bg-slate-950/60 rounded-xl p-3 text-left"></div>
+        <p id="kingyo-result-total" class="text-lg font-black text-amber-400"></p>
+        <button onclick="EdogawaSugoroku.closeKingyoEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">了解！次のターンへ</button>
+      </div>
+
+    </div>
+  </div>
+
   <script>
     // ▼▼▼ マルチプレイ（複数端末でのQR参加受付）を有効にするには、ここに実際のFirebaseプロジェクトの設定を貼り付けてください ▼▼▼
     // 1. https://console.firebase.google.com/ で新規プロジェクトを作成
@@ -593,15 +811,15 @@
     };
 
     const POLICE_STATIONS = [
-      { name: "葛西警察署", lat: 35.65651, lng: 139.86602, type: "🚓" },
-      { name: "西葛西駅前交番", lat: 35.66512, lng: 139.85980, type: "🚓" },
-      { name: "葛西駅前交番", lat: 35.66380, lng: 139.87300, type: "🚓" },
-      { name: "船堀交番", lat: 35.68350, lng: 139.86400, type: "🚓" },
-      { name: "小松川警察署", lat: 35.69345, lng: 139.84521, type: "🚓" },
-      { name: "小岩警察署", lat: 35.73250, lng: 139.87850, type: "🚓" },
-      { name: "西小岩交番", lat: 35.72800, lng: 139.87200, type: "🚓" },
-      { name: "南小岩交番", lat: 35.73000, lng: 139.88000, type: "🚓" },
-      { name: "一里塚交番", lat: 35.73500, lng: 139.88500, type: "🚓" }
+      { name: "葛西警察署", lat: 35.661526, lng: 139.879538, type: "🚨" },
+      { name: "西葛西駅前交番", lat: 35.664077, lng: 139.859360, type: "🚨" },
+      { name: "葛西駅前交番", lat: 35.66380, lng: 139.87300, type: "🚨" },
+      { name: "船堀交番", lat: 35.68350, lng: 139.86400, type: "🚨" },
+      { name: "小松川警察署", lat: 35.69345, lng: 139.84521, type: "🚨" },
+      { name: "小岩警察署", lat: 35.73250, lng: 139.87850, type: "🚨" },
+      { name: "西小岩交番", lat: 35.72800, lng: 139.87200, type: "🚨" },
+      { name: "南小岩交番", lat: 35.73000, lng: 139.88000, type: "🚨" },
+      { name: "一里塚交番", lat: 35.73500, lng: 139.88500, type: "🚨" }
     ];
 
     const PARKS = [
@@ -728,9 +946,9 @@
       { name: "まつえ整形外科", lat: 35.696641, lng: 139.870506, type: "🏥" },
       { name: "平嶋胃腸科眼科", lat: 35.692177, lng: 139.897308, type: "🏥" },
       { name: "北小岩胃腸科クリニック", lat: 35.742369, lng: 139.892046, type: "🏥" },
-      { name: "葛西産婦人科", lat: 35.661434, lng: 139.874326, type: "🏥" },
       { name: "江戸川共済病院付属東瑞江医院", lat: 35.690404, lng: 139.899080, type: "🏥" }
     ];
+    // 産婦人科・歯科（歯医者）は「病院・クリニックへ強制搬送」イベントの対象から除外する方針のため未掲載。
 
     /* High-precision street centerline waypoints around Nishi-Kasai station plaza & major avenues */
     const EDOGAWA_MAJOR_ROADS_HIGH_PRECISION = [
@@ -1531,6 +1749,9 @@
       awaitingGoalSelection: null,
       goalHandledThisLeg: false,
       legTransitionInProgress: false,
+      specialEventUsed: false,
+      boatRaceActive: false,
+      miniGameActive: false,
 
       async init() {
         this.renderAvatarGrid();
@@ -2410,6 +2631,7 @@
           this.turnCount = state.turnCount;
           this.currentPlayerIdx = state.currentPlayerIdx;
           this.currentDestination = state.currentDestination;
+          this.specialEventUsed = typeof state.specialEventUsed === 'boolean' ? state.specialEventUsed : false;
 
           document.getElementById("lobby-screen").classList.add("hidden");
           sound.playBGM('map');
@@ -2480,8 +2702,8 @@
             const icon = L.divIcon({
               className: 'facility-poi-icon',
               html: `<div class="facility-poi">${emoji}</div>`,
-              iconSize: [26, 26],
-              iconAnchor: [13, 13]
+              iconSize: [78, 78],
+              iconAnchor: [39, 39]
             });
             const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100 }).addTo(this.map);
             marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
@@ -2879,6 +3101,27 @@
 
         this.players.forEach((p) => {
           if (!p.path || p.path.length === 0) return;
+
+          const isFlightVehicle = p.vehicle && (p.vehicle.emoji === "🚁" || p.vehicle.emoji === "✈️");
+          const currentNode = this.roadNetworkNodes[p.currentNodeIdx];
+
+          if (isFlightVehicle && currentNode && this.currentDestination) {
+            // 🚁/✈️保持中は道路経由の経路ではなく、ゴールまでの一直線ルートを浮かせて表示する。
+            const flightLine = L.polyline(
+              [[currentNode.lat, currentNode.lng], [this.currentDestination.lat, this.currentDestination.lng]],
+              {
+                color: p.color.stroke,
+                weight: 5,
+                opacity: 0.95,
+                dashArray: "2, 12",
+                lineCap: "round",
+                className: "flight-route-line"
+              }
+            ).addTo(this.map);
+            this.playerRoutePolylines.push(flightLine);
+            return;
+          }
+
           const remainingIndices = p.path.slice(p.pathIndex);
           const latLngs = remainingIndices.map(idx => {
             const node = this.roadNetworkNodes[idx];
@@ -3226,9 +3469,52 @@
 
         if (cp.skipTurn) {
           cp.skipTurn = false;
+          const skipType = cp.skipTurnType || null;
           const reason = cp.skipTurnReason || "";
           cp.skipTurnReason = null;
-          this.showEventModal("1回休み", reason ? `${reason}、${cp.name} はお休み中のためパスします。` : `${cp.name} はお休み中のためパスします。`);
+          cp.skipTurnType = null;
+
+          if (skipType === "boatRace") {
+            this.addLog(`🚤 ${cp.name} の1回休みで江戸川競艇が開催されます！`);
+            this.startBoatRaceEvent(cp);
+            return;
+          }
+
+          if (skipType === "police") {
+            const bail = 10000;
+            cp.money = Math.max(0, cp.money - bail);
+            this.showEventModal(
+              "1回休み",
+              `${reason}、${cp.name} はお休み中のためパスします。`,
+              `保釈金：▲¥${bail.toLocaleString()}（残 ¥${cp.money.toLocaleString()}）`,
+              { icon: "👮", type: "red" }
+            );
+            this.addLog(`👮 ${cp.name} は1回休み。保釈金 ¥${bail.toLocaleString()} を支払いました。`);
+            return;
+          }
+
+          if (skipType === "hospital") {
+            const fee = 5000;
+            cp.money = Math.max(0, cp.money - fee);
+            this.showEventModal(
+              "1回休み",
+              `${reason}、${cp.name} はお休み中のためパスします。`,
+              `治療費：▲¥${fee.toLocaleString()}（残 ¥${cp.money.toLocaleString()}）`,
+              { icon: "💉", type: "red" }
+            );
+            this.addLog(`💉 ${cp.name} は1回休み。治療費 ¥${fee.toLocaleString()} を支払いました。`);
+            return;
+          }
+
+          // Fallback: keeps behaviour safe even if skipTurnType is ever missing, and always
+          // shows an icon that matches "resting" rather than whatever emoji a previous modal
+          // happened to leave behind.
+          this.showEventModal(
+            "1回休み",
+            reason ? `${reason}、${cp.name} はお休み中のためパスします。` : `${cp.name} はお休み中のためパスします。`,
+            null,
+            { icon: "💤", type: "yellow" }
+          );
           this.addLog(`🛑 ${cp.name} は1回休みの状態のためパスしました。${reason ? `（理由: ${reason}）` : ''}`);
           return;
         }
@@ -3262,10 +3548,23 @@
             cp.wheelchairTurns--;
           }
 
-          let steps = rawRoll;
+          if (!isRemoteTurn && cube) cube.style.transform = DICE_ROTATIONS[rawRoll];
+          this.lastDiceValueForSync = rawRoll;
+
           const usedVehicle = cp.vehicle;
           const usedRocket = !!cp.rocketBoost;
+          // 🚁/✈️ no longer act as a dice multiplier: using either now flies the player in a
+          // straight line to the current goal, ignoring roads/buildings entirely.
+          const isFlightVehicle = cp.wheelchairTurns === 0 && usedVehicle && (usedVehicle.emoji === "🚁" || usedVehicle.emoji === "✈️");
 
+          if (isFlightVehicle) {
+            if (usedRocket) cp.rocketBoost = false;
+            this.addLog(`🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】 ➔ ${usedVehicle.emoji} ${usedVehicle.name} で ${this.currentDestination.name} まで一直線に飛行！`);
+            this.flyPlayerToGoal(cp, isRemoteTurn);
+            return;
+          }
+
+          let steps = rawRoll;
           if (cp.wheelchairTurns === 0) {
             if (usedRocket && usedVehicle) {
               steps = (rawRoll * 10) + (rawRoll * usedVehicle.mult);
@@ -3276,9 +3575,6 @@
             }
           }
           if (usedRocket) cp.rocketBoost = false;
-
-          if (!isRemoteTurn && cube) cube.style.transform = DICE_ROTATIONS[rawRoll];
-          this.lastDiceValueForSync = rawRoll;
 
           let logMsg = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】`;
           if (usedRocket && usedVehicle) {
@@ -3386,6 +3682,52 @@
             setTimeout(() => this.landOnSpot(player), silent ? 0 : 300);
           }
         }, stepDelay);
+      },
+
+      // 🚁/✈️ を使用した際の移動処理。サイコロの倍率で道路上を進むのではなく、現在地から
+      // 現在のゴールまで道や建物を無視して一直線に「飛行」し、そのままゴールに到達する。
+      flyPlayerToGoal(player, silent = false) {
+        const startNode = this.roadNetworkNodes[player.currentNodeIdx];
+        const goal = this.currentDestination;
+        const from = (startNode && Number.isFinite(startNode.lat) && Number.isFinite(startNode.lng)) ? startNode : goal;
+
+        this.updateMoveCountdown(player, 0, 0);
+        if (!silent) sound.playChime();
+
+        this.playerRoutePolylines.forEach(line => this.map.removeLayer(line));
+        this.playerRoutePolylines = [];
+        const flightLine = L.polyline(
+          [[from.lat, from.lng], [goal.lat, goal.lng]],
+          { color: player.color.stroke, weight: 5, opacity: 0.95, dashArray: "2, 12", lineCap: "round", className: "flight-route-line" }
+        ).addTo(this.map);
+        this.playerRoutePolylines.push(flightLine);
+
+        const marker = this.playerMarkers[player.id];
+        const durationMs = 1400;
+        const startTime = performance.now();
+
+        const step = (now) => {
+          const t = Math.min(1, (now - startTime) / durationMs);
+          const lat = from.lat + (goal.lat - from.lat) * t;
+          const lng = from.lng + (goal.lng - from.lng) * t;
+          if (marker && Number.isFinite(lat) && Number.isFinite(lng)) {
+            marker.setLatLng([lat, lng]);
+            if (!silent) this.map.panTo([lat, lng], { animate: true, duration: 0.15 });
+          }
+
+          if (t < 1) {
+            requestAnimationFrame(step);
+          } else {
+            this.clearUsedVehicle(player);
+            player.currentNodeIdx = this.goalNodeIdx;
+            player.path = [this.goalNodeIdx];
+            player.pathIndex = 0;
+            this.playerRoutePolylines.forEach(line => this.map.removeLayer(line));
+            this.playerRoutePolylines = [];
+            setTimeout(() => this.handleGoalReach(player), silent ? 0 : 250);
+          }
+        };
+        requestAnimationFrame(step);
       },
 
       landOnSpot(player) {
@@ -3773,6 +4115,35 @@
       },
 
       finishTurn() {
+        const cp = this.players[this.currentPlayerIdx];
+
+        if (this.maybeTriggerSpecialEvent(cp)) {
+          return; // the special-event flow calls finishTurnContinue() itself once resolved
+        }
+
+        this.finishTurnContinue();
+      },
+
+      // クイズ・金魚すくいの共有トリガー。3〜5ターン目に、誰かの手番が終わるたびに一定確率で
+      // 発火し、発火した場合はその手番プレーヤー1人だけに参加権が与えられる。
+      // ゲーム内で一度きりのイベント（quiz/kingyoどちらが出るかは1/2でランダム）。
+      maybeTriggerSpecialEvent(player) {
+        if (!player) return false;
+        if (this.specialEventUsed) return false;
+        if (this.isMultiplayer && !this.isHost) return false; // ホストのみが抽選・進行を行う
+        if (this.turnCount < 3 || this.turnCount > 5) return false;
+        if (Math.random() >= 0.35) return false;
+
+        this.specialEventUsed = true;
+        if (Math.random() < 0.5) {
+          this.startQuizInvite(player);
+        } else {
+          this.startKingyoInvite(player);
+        }
+        return true;
+      },
+
+      finishTurnContinue() {
         this.isRolling = false;
 
         const cp = this.players[this.currentPlayerIdx];
@@ -3799,7 +4170,8 @@
           currentPlayerIdx: this.currentPlayerIdx,
           currentDestination: this.currentDestination,
           roadNetworkNodes: this.roadNetworkNodes,
-          goalNodeIdx: this.goalNodeIdx
+          goalNodeIdx: this.goalNodeIdx,
+          specialEventUsed: this.specialEventUsed
         };
         localStorage.setItem("edogawa_sugoroku_state", JSON.stringify(state));
       },
