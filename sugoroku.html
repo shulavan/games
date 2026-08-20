@@ -192,6 +192,12 @@
     .event-card-red { background: linear-gradient(160deg, #7f1d1d, #450a0a) !important; border-color: #ef4444 !important; }
     .event-card-blue { background: linear-gradient(160deg, #1e3a8a, #172554) !important; border-color: #3b82f6 !important; }
     .event-card-yellow { background: linear-gradient(160deg, #78350f, #451a03) !important; border-color: #f59e0b !important; }
+    .event-card-green { background: linear-gradient(160deg, #14532d, #052e16) !important; border-color: #22c55e !important; }
+    .star-spot-pulse { animation: star-spot-pulse-anim 1.4s ease-in-out infinite; }
+    @keyframes star-spot-pulse-anim {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.7); }
+      50% { box-shadow: 0 0 0 6px rgba(250, 204, 21, 0); }
+    }
 
     /* 🚁/✈️ の「ゴールまで一直線」ルート表示。道路上ではなく地図の上に浮いて見えるよう、
        発光フィルターと流れるダッシュアニメーションを付けている。 */
@@ -1430,6 +1436,23 @@
       { emoji: "🚅", name: "新幹線", mult: 5 },
       { emoji: "🚁", name: "ヘリコプター", mult: 6 },
       { emoji: "✈️", name: "飛行機", mult: 7 }
+    ];
+    // 🚁/✈️は「ゴールから最も離れているプレーヤー優先・同時最大2名まで」の特別枠(grantFlight)
+    // 専用になったため、通常の乗り物獲得イベントの抽選プールからは除外している。
+    const NON_FLIGHT_VEHICLES = VEHICLES.filter(v => v.emoji !== "🚁" && v.emoji !== "✈️");
+
+    // 🚁/✈️で空の旅をしている最中に赤●・青■マスに着地した時専用のフレーバーテキスト。
+    const SKY_RED_REASONS = [
+      { emoji: "🌪️", text: "上空で乱気流に巻き込まれ、追加の燃料を消費してしまった。" },
+      { emoji: "⛽", text: "向かい風が強く、燃料代が予定よりかさんでしまった。" },
+      { emoji: "🧳", text: "機内販売でついお土産を買いすぎてしまった。" },
+      { emoji: "🌧️", text: "天候不良で旋回を強いられ、余分な料金がかかった。" }
+    ];
+    const SKY_BLUE_REASONS = [
+      { emoji: "💨", text: "上空で強い追い風に恵まれ、燃料が節約できた！" },
+      { emoji: "🎫", text: "機内の抽選会で臨時収入を獲得した！" },
+      { emoji: "🌤️", text: "絶好の飛行日和で、割引運賃が適用された！" },
+      { emoji: "🧭", text: "近道の航路が見つかり、経費が浮いた！" }
     ];
 
     const CPU_NAME_POOL = [
@@ -2975,8 +2998,10 @@
             iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
           } else if (n.type === 'blue') {
             iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+          } else if (n.type === 'star') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-yellow-400 border-2 border-white text-slate-950 font-black text-[11px] shadow-lg rounded-full star-spot-pulse">★</div>`;
           } else {
-            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-green-500 border-2 border-white text-white font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
           }
 
           const customIcon = L.divIcon({
@@ -3058,8 +3083,10 @@
             iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
           } else if (node.type === 'blue') {
             iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+          } else if (node.type === 'star') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-yellow-400 border-2 border-white text-slate-950 font-black text-[11px] shadow-lg rounded-full star-spot-pulse">★</div>`;
           } else {
-            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-green-500 border-2 border-white text-white font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
           }
 
           const customIcon = L.divIcon({
@@ -3102,43 +3129,28 @@
         this.players.forEach((p) => {
           if (!p.path || p.path.length === 0) return;
 
-          const isFlightVehicle = p.vehicle && (p.vehicle.emoji === "🚁" || p.vehicle.emoji === "✈️");
-          const currentNode = this.roadNetworkNodes[p.currentNodeIdx];
-
-          if (isFlightVehicle && currentNode && this.currentDestination) {
-            // 🚁/✈️保持中は道路経由の経路ではなく、ゴールまでの一直線ルートを浮かせて表示する。
-            const flightLine = L.polyline(
-              [[currentNode.lat, currentNode.lng], [this.currentDestination.lat, this.currentDestination.lng]],
-              {
-                color: p.color.stroke,
-                weight: 5,
-                opacity: 0.95,
-                dashArray: "2, 12",
-                lineCap: "round",
-                className: "flight-route-line"
-              }
-            ).addTo(this.map);
-            this.playerRoutePolylines.push(flightLine);
-            return;
-          }
-
           const remainingIndices = p.path.slice(p.pathIndex);
           const latLngs = remainingIndices.map(idx => {
             const node = this.roadNetworkNodes[idx];
             return node ? [node.lat, node.lng] : null;
           }).filter(pt => pt !== null && typeof pt[0] === 'number');
 
-          if (latLngs.length > 1) {
-            const polyline = L.polyline(latLngs, {
-              color: p.color.stroke,
-              weight: 5,
-              opacity: 0.85,
-              dashArray: '6, 8',
-              lineCap: 'round',
-              lineJoin: 'round'
-            }).addTo(this.map);
-            this.playerRoutePolylines.push(polyline);
-          }
+          if (latLngs.length < 2) return;
+
+          // 🚁/✈️で飛行中のプレーヤーは、道路のルートではなく地図の上に浮いた発光ルートとして表示する。
+          // ルート自体（40m間隔のマス）はbuildRoadNetworkで作った実際のpathをそのまま使うため、
+          // 直線ではあるが実在するマス目の並びになっている。
+          const isFlying = !!p.isFlying;
+          const polyline = L.polyline(latLngs, {
+            color: p.color.stroke,
+            weight: 5,
+            opacity: isFlying ? 0.95 : 0.85,
+            dashArray: isFlying ? "2, 12" : "6, 8",
+            lineCap: "round",
+            lineJoin: "round",
+            className: isFlying ? "flight-route-line" : undefined
+          }).addTo(this.map);
+          this.playerRoutePolylines.push(polyline);
         });
       },
 
@@ -3184,11 +3196,14 @@
 
               let wasNew = false;
               if (matchedIdx === -1) {
+                // 赤:青:緑(旧イベントマス):★(新・特別イベントマス) = 40:30:25:5。
+                // ★は他のマスの5分の1程度の低頻度になるよう設計している。
                 let type = 'blue';
                 const r = Math.random();
-                if (r < 0.4) type = 'red';
-                else if (r < 0.75) type = 'blue';
-                else type = 'yellow';
+                if (r < 0.40) type = 'red';
+                else if (r < 0.70) type = 'blue';
+                else if (r < 0.95) type = 'green';
+                else type = 'star';
 
                 nodes.push({
                   id: nodes.length,
@@ -3553,14 +3568,14 @@
 
           const usedVehicle = cp.vehicle;
           const usedRocket = !!cp.rocketBoost;
-          // 🚁/✈️ no longer act as a dice multiplier: using either now flies the player in a
-          // straight line to the current goal, ignoring roads/buildings entirely.
-          const isFlightVehicle = cp.wheelchairTurns === 0 && usedVehicle && (usedVehicle.emoji === "🚁" || usedVehicle.emoji === "✈️");
 
-          if (isFlightVehicle) {
-            if (usedRocket) cp.rocketBoost = false;
-            this.addLog(`🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】 ➔ ${usedVehicle.emoji} ${usedVehicle.name} で ${this.currentDestination.name} まで一直線に飛行！`);
-            this.flyPlayerToGoal(cp, isRemoteTurn);
+          // 🚁/✈️は「1回だけの倍率ボーナス」ではなく、ゴールに着くか誰かが先にゴールするまで
+          // 続く状態異常のようなもの。サイコロの出目そのままのマス数を、道路ではなく専用の
+          // 直線フライトルート（40m間隔のマス付き）上で進める。アイコンも✈️/🚁のまま。
+          if (cp.isFlying) {
+            if (usedRocket) cp.rocketBoost = false; // ロケットは飛行中には重複適用しない
+            this.addLog(`🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】 ➔ ${usedVehicle ? usedVehicle.emoji : "✈️"} 空の旅を続けます。`);
+            this.movePlayerSteps(cp, rawRoll, stepDelay, isRemoteTurn);
             return;
           }
 
@@ -3602,6 +3617,7 @@
       },
 
       clearUsedVehicle(player) {
+        if (player.isFlying) return; // 🚁/✈️は複数ターンにわたる状態なので、ここではクリアしない
         if (player.vehicle) {
           player.vehicle = null;
           this.setPlayerIconState(player, {});
@@ -3684,52 +3700,6 @@
         }, stepDelay);
       },
 
-      // 🚁/✈️ を使用した際の移動処理。サイコロの倍率で道路上を進むのではなく、現在地から
-      // 現在のゴールまで道や建物を無視して一直線に「飛行」し、そのままゴールに到達する。
-      flyPlayerToGoal(player, silent = false) {
-        const startNode = this.roadNetworkNodes[player.currentNodeIdx];
-        const goal = this.currentDestination;
-        const from = (startNode && Number.isFinite(startNode.lat) && Number.isFinite(startNode.lng)) ? startNode : goal;
-
-        this.updateMoveCountdown(player, 0, 0);
-        if (!silent) sound.playChime();
-
-        this.playerRoutePolylines.forEach(line => this.map.removeLayer(line));
-        this.playerRoutePolylines = [];
-        const flightLine = L.polyline(
-          [[from.lat, from.lng], [goal.lat, goal.lng]],
-          { color: player.color.stroke, weight: 5, opacity: 0.95, dashArray: "2, 12", lineCap: "round", className: "flight-route-line" }
-        ).addTo(this.map);
-        this.playerRoutePolylines.push(flightLine);
-
-        const marker = this.playerMarkers[player.id];
-        const durationMs = 1400;
-        const startTime = performance.now();
-
-        const step = (now) => {
-          const t = Math.min(1, (now - startTime) / durationMs);
-          const lat = from.lat + (goal.lat - from.lat) * t;
-          const lng = from.lng + (goal.lng - from.lng) * t;
-          if (marker && Number.isFinite(lat) && Number.isFinite(lng)) {
-            marker.setLatLng([lat, lng]);
-            if (!silent) this.map.panTo([lat, lng], { animate: true, duration: 0.15 });
-          }
-
-          if (t < 1) {
-            requestAnimationFrame(step);
-          } else {
-            this.clearUsedVehicle(player);
-            player.currentNodeIdx = this.goalNodeIdx;
-            player.path = [this.goalNodeIdx];
-            player.pathIndex = 0;
-            this.playerRoutePolylines.forEach(line => this.map.removeLayer(line));
-            this.playerRoutePolylines = [];
-            setTimeout(() => this.handleGoalReach(player), silent ? 0 : 250);
-          }
-        };
-        requestAnimationFrame(step);
-      },
-
       landOnSpot(player) {
         const node = this.roadNetworkNodes[player.currentNodeIdx];
 
@@ -3739,88 +3709,77 @@
         if (node && node.type === 'red') {
           sound.playLandRed();
           const amount = (Math.floor(Math.random() * 8) + 1) * 500;
-          const reason = RED_REASONS[Math.floor(Math.random() * RED_REASONS.length)];
           player.money = Math.max(0, player.money - amount);
 
-          this.showEventModal("お金が減ってしまった！", reason.text, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "💸", type: "red", reasonIcon: reason.emoji });
-          this.addLog(`🔴 [赤マス] ${player.name}: ${reason.text} (-¥${amount.toLocaleString()})`);
+          if (player.isFlying) {
+            const skyReason = SKY_RED_REASONS[Math.floor(Math.random() * SKY_RED_REASONS.length)];
+            this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅トラブル…`, skyReason.text, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "🌪️", type: "red", reasonIcon: skyReason.emoji });
+            this.addLog(`🔴 [空の旅] ${player.name}: ${skyReason.text} (-¥${amount.toLocaleString()})`);
+          } else {
+            const reason = RED_REASONS[Math.floor(Math.random() * RED_REASONS.length)];
+            this.showEventModal("お金が減ってしまった！", reason.text, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "💸", type: "red", reasonIcon: reason.emoji });
+            this.addLog(`🔴 [赤マス] ${player.name}: ${reason.text} (-¥${amount.toLocaleString()})`);
+          }
 
         } else if (node && node.type === 'blue') {
           sound.playLandBlue();
           const amount = (Math.floor(Math.random() * 10) + 1) * 1000;
-          const reason = BLUE_REASONS[Math.floor(Math.random() * BLUE_REASONS.length)];
           player.money += amount;
 
-          this.showEventModal("お金が増えた！", reason.text, `＋¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "🎉", type: "blue", reasonIcon: reason.emoji });
-          this.addLog(`🔵 [青マス] ${player.name}: ${reason.text} (+¥${amount.toLocaleString()})`);
+          if (player.isFlying) {
+            const skyReason = SKY_BLUE_REASONS[Math.floor(Math.random() * SKY_BLUE_REASONS.length)];
+            this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅で幸運！`, skyReason.text, `＋¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "💨", type: "blue", reasonIcon: skyReason.emoji });
+            this.addLog(`🔵 [空の旅] ${player.name}: ${skyReason.text} (+¥${amount.toLocaleString()})`);
+          } else {
+            const reason = BLUE_REASONS[Math.floor(Math.random() * BLUE_REASONS.length)];
+            this.showEventModal("お金が増えた！", reason.text, `＋¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "🎉", type: "blue", reasonIcon: reason.emoji });
+            this.addLog(`🔵 [青マス] ${player.name}: ${reason.text} (+¥${amount.toLocaleString()})`);
+          }
 
-        } else if (node && node.type === 'yellow') {
-          this.resolveYellowEvent(player);
+        } else if (node && node.type === 'green') {
+          this.resolveGreenEvent(player);
+        } else if (node && node.type === 'star') {
+          this.resolveStarEvent(player);
         } else {
           this.finishTurn();
           this.panToCurrentPlayer();
         }
       },
 
-      resolveYellowEvent(player) {
+      // 緑▲マス（旧・黄マス）: 強制移動系（競艇・警察・病院）と乗り物獲得系のイベント。
+      resolveGreenEvent(player) {
         if (typeof player.forcedMoveCount !== 'number') player.forcedMoveCount = 0;
-
-        // Catch-up mechanic: if this player is 50+ squares behind the current leader,
-        // guarantee a helicopter or plane instead of rolling the normal outcome table,
-        // so a big gap doesn't snowball into an unwinnable game.
-        const myRemaining = this.remainingSquares(player);
-        let leaderRemaining = myRemaining;
-        this.players.forEach(p => {
-          const r = this.remainingSquares(p);
-          if (r !== null && (leaderRemaining === null || r < leaderRemaining)) leaderRemaining = r;
-        });
-        const gapBehindLeader = (myRemaining !== null && leaderRemaining !== null) ? (myRemaining - leaderRemaining) : 0;
-
-        if (gapBehindLeader >= 50) {
-          const catchUpVehicle = VEHICLES[Math.random() < 0.5 ? 4 : 5]; // 🚁 or ✈️
-          player.vehicle = catchUpVehicle;
-
-          this.setPlayerIconState(player, { bubbleText: `${catchUpVehicle.emoji} ゲット！` });
-          this.updatePlayerRoutes();
-
-          sound.playChime();
-          this.showEventModal(
-            "追い上げチャンス！",
-            `先頭から${gapBehindLeader}マスも離されていたので「${catchUpVehicle.name} (${catchUpVehicle.emoji})」を特別にゲット！\n次回のサイコロを振ると、道や建物を無視してゴールまで一直線に飛行します！`,
-            null,
-            { icon: catchUpVehicle.emoji, type: "yellow" }
-          );
-          this.addLog(`🚀 [黄マス] ${player.name} は先頭から${gapBehindLeader}マス差だったため ${catchUpVehicle.emoji} ${catchUpVehicle.name} を特別に獲得！`);
-          return;
-        }
+        if (typeof player.boatRaceCount !== 'number') player.boatRaceCount = 0;
 
         // Cap forced teleports (boat race / police / hospital) at 2 per player per goal-leg,
         // otherwise a run of bad luck can bounce a player back and forth forever and the
         // game never progresses. Once the cap is hit, this player only draws the vehicle-boost
-        // outcome from yellow squares for the rest of this leg.
+        // outcome from green squares for the rest of this leg.
         const FORCED_MOVE_LIMIT = 2;
         const forcedMoveLimitReached = player.forcedMoveCount >= FORCED_MOVE_LIMIT;
-        const roll = forcedMoveLimitReached ? (0.6 + Math.random() * 0.4) : Math.random();
+        const roll = forcedMoveLimitReached ? (0.48 + Math.random() * 0.52) : Math.random();
 
-        if (typeof player.boatRaceCount !== 'number') player.boatRaceCount = 0;
-
-        if (roll < 0.2 && player.boatRaceCount < 1) {
+        // 江戸川競艇: 低確率にした上、1ゴール(1レグ)につき合計1〜2回まで（プレーヤー問わず）。
+        if (roll < 0.08 && this.boatRaceEventsThisLeg < this.boatRaceCapThisLeg && player.boatRaceCount < 1) {
           player.forcedMoveCount++;
           player.boatRaceCount++;
+          this.boatRaceEventsThisLeg++;
           sound.playEngineRev();
           this.showEventModal(
             `${BOAT_RACE_LOC.name} へ強制移動！`,
             `「今日は江戸川競艇の本場開催だ！」\n【 ${BOAT_RACE_LOC.name} 】へ強制移動！【1回休み】になります。`,
             `移動先: ${BOAT_RACE_LOC.name}`,
-            { icon: "🚤", type: "yellow" }
+            { icon: "🚤", type: "green" }
           );
-          this.addLog(`🚤 [黄マス] ${player.name} は ${BOAT_RACE_LOC.name} へ強制移動され1回休み！`);
+          this.addLog(`🚤 [緑マス] ${player.name} は ${BOAT_RACE_LOC.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
           player.skipTurnReason = "ギャンブルにハマって";
           player.skipTurnType = "boatRace";
           this.teleportPlayer(player, BOAT_RACE_LOC);
+          return;
+        }
 
-        } else if (roll < 0.4) {
+        if (roll < 0.28) {
           player.forcedMoveCount++;
           let nearest = POLICE_STATIONS[0];
           let minDist = Infinity;
@@ -3835,15 +3794,17 @@
             `${nearest.name} へ緊急連行！`,
             `スピード違反で検挙！最寄りの警察・交番【 ${nearest.name} 】へ強制移動連行！【1回休み】になります。`,
             `連行先: ${nearest.name}`,
-            { icon: "🚓", type: "yellow" }
+            { icon: "🚓", type: "green" }
           );
-          this.addLog(`🚓 [黄マス] ${player.name} は ${nearest.name} へ強制移動され1回休み！`);
+          this.addLog(`🚓 [緑マス] ${player.name} は ${nearest.name} へ強制移動され1回休み！`);
           player.skipTurn = true;
           player.skipTurnReason = "事情聴取で";
           player.skipTurnType = "police";
           this.teleportPlayer(player, nearest);
+          return;
+        }
 
-        } else if (roll < 0.6) {
+        if (roll < 0.48) {
           player.forcedMoveCount++;
           let nearest = HOSPITALS[0];
           let minDist = Infinity;
@@ -3860,28 +3821,128 @@
             `${nearest.name} へ緊急搬送！`,
             `路上で転倒して怪我！最寄りの病院・クリニック【 ${nearest.name} 】へ強制移動搬送！\n【1回休み】のあと【${turns}ターン車椅子🦽】(出目1固定)になります。`,
             `搬送先: ${nearest.name}`,
-            { icon: "🚑", type: "yellow" }
+            { icon: "🚑", type: "green" }
           );
-          this.addLog(`🚑 [黄マス] ${player.name} は ${nearest.name} へ緊急搬送され1回休み！その後 ${turns}ターン車椅子🦽状態。`);
+          this.addLog(`🚑 [緑マス] ${player.name} は ${nearest.name} へ緊急搬送され1回休み！その後 ${turns}ターン車椅子🦽状態。`);
           player.skipTurn = true;
           player.skipTurnReason = "治療のため安静で";
           player.skipTurnType = "hospital";
           this.teleportPlayer(player, nearest);
+          return;
+        }
 
+        // ここから乗り物イベント。🚁/✈️だけは特別枠：ゴールから最も離れているプレーヤーを
+        // 優先し、1ゴール(1レグ)につき同時最大2名まで、それでも低確率にしている。
+        const flyingCount = this.players.filter(p => p.isFlying).length;
+        let qualifiesForFlight = false;
+
+        if (flyingCount < 2 && !player.isFlying) {
+          const myRemaining = this.remainingSquares(player);
+          let maxRemaining = myRemaining;
+          this.players.forEach(p => {
+            if (p.isFlying) return; // 既に飛行中のプレーヤーは比較対象から除外
+            const r = this.remainingSquares(p);
+            if (r !== null && (maxRemaining === null || r > maxRemaining)) maxRemaining = r;
+          });
+          const isFurthestBehind = myRemaining !== null && maxRemaining !== null && myRemaining >= maxRemaining;
+          if (isFurthestBehind && myRemaining >= 30 && Math.random() < 0.3) {
+            qualifiesForFlight = true;
+          }
+        }
+
+        if (qualifiesForFlight) {
+          this.grantFlight(player);
+          return;
+        }
+
+        const vehicle = NON_FLIGHT_VEHICLES[Math.floor(Math.random() * NON_FLIGHT_VEHICLES.length)];
+        player.vehicle = vehicle;
+
+        this.setPlayerIconState(player, { bubbleText: `${vehicle.emoji} ゲット！` });
+
+        sound.playChime();
+        this.showEventModal(
+          "乗り物を獲得！",
+          `「${vehicle.name} (${vehicle.emoji})」をゲットしました！\n次回のサイコロ【1回限り】出目が【${vehicle.mult}倍】になります！`,
+          null,
+          { icon: vehicle.emoji, type: "green" }
+        );
+        this.addLog(`🎁 [緑マス] ${player.name} は ${vehicle.emoji} ${vehicle.name} (${vehicle.mult}倍・次回1回限り) を獲得！`);
+      },
+
+      // ゴールから最も離れているプレーヤーに🚁/✈️を付与する特別枠。一度きりの倍率ボーナス
+      // ではなく、道や建物を無視した専用の直線ルート(40m間隔・赤●青■のみ)を新設し、
+      // 誰かがゴールするまでプレーヤーは✈️/🚁のアイコンのまま、その直線ルート上を通常の
+      // サイコロで進み続ける（＝状態異常に近い、複数ターンにわたる効果）。
+      async grantFlight(player) {
+        const vehicle = VEHICLES[Math.random() < 0.5 ? 4 : 5]; // 🚁 or ✈️
+        const fromNode = this.roadNetworkNodes[player.currentNodeIdx];
+        const goal = this.currentDestination;
+        const fromPt = (fromNode && Number.isFinite(fromNode.lat) && Number.isFinite(fromNode.lng)) ? fromNode : goal;
+
+        const result = this.buildRoadNetwork([[fromPt, goal]], 40, false, this.roadNetworkNodes);
+        let flightPath = this.normalizePathIndices(result.orderedIndices);
+        const newSet = new Set(result.newlyCreated);
+
+        // フライトルートの40m間隔マスには緑▲・★イベントマスを含めない（赤●・青■のみ）。
+        // 新規作成分のみを対象にし、他ルートと共有している既存マスの意味は変えない。
+        flightPath.forEach((globalIdx) => {
+          if (!newSet.has(globalIdx)) return;
+          const n = this.roadNetworkNodes[globalIdx];
+          if (n && (n.type === 'green' || n.type === 'star')) {
+            n.type = Math.random() < 0.5 ? 'red' : 'blue';
+          }
+        });
+
+        flightPath.forEach((globalIdx, idx) => {
+          if (idx === 0 || idx === flightPath.length - 1) return;
+          if (!newSet.has(globalIdx)) return;
+          const n = this.roadNetworkNodes[globalIdx];
+          const iconHtml = n.type === 'red'
+            ? `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`
+            : `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+          const customIcon = L.divIcon({ className: 'custom-spot-icon', html: iconHtml, iconSize: [20, 20], iconAnchor: [10, 10] });
+          const marker = L.marker([n.lat, n.lng], { icon: customIcon }).addTo(this.map);
+          this.spotMarkers.push(marker);
+        });
+
+        // ゴールの実座標に正しく着地させる。
+        if (flightPath.length > 0) {
+          flightPath[flightPath.length - 1] = this.goalNodeIdx;
+          flightPath = this.normalizePathIndices(flightPath);
+        }
+
+        player.vehicle = vehicle;
+        player.isFlying = true;
+        player.path = flightPath;
+        player.pathIndex = 0;
+        player.currentNodeIdx = flightPath[0];
+
+        this.setPlayerIconState(player, { bubbleText: `${vehicle.emoji} 出発！` });
+        this.updatePlayerRoutes();
+
+        sound.playChime();
+        this.showEventModal(
+          "追い上げチャンス！",
+          `ゴールから大きく離されていたので「${vehicle.name} (${vehicle.emoji})」を特別にゲット！\n道や建物を無視して、ゴールまで一直線の空の旅がスタートします（誰かがゴールするまで継続）！`,
+          null,
+          { icon: vehicle.emoji, type: "green" }
+        );
+        this.addLog(`🚀 [緑マス] ${player.name} は ${vehicle.emoji} ${vehicle.name} で空の旅に出発！（同時最大2名まで）`);
+      },
+
+      // 黄★マス（新設）: プレーヤーを問わず、クイズ・金魚すくいなど複数のミニゲームを
+      // 順番に交互で発生させる「特別イベント」の入り口。将来ミニゲームが増えても
+      // SPECIAL_EVENT_ROTATIONに追加するだけで済むようにしている。
+      resolveStarEvent(player) {
+        if (typeof this.specialEventRotationIdx !== 'number') this.specialEventRotationIdx = 0;
+        const kind = SPECIAL_EVENT_ROTATION[this.specialEventRotationIdx % SPECIAL_EVENT_ROTATION.length];
+        this.specialEventRotationIdx++;
+
+        if (kind === 'quiz') {
+          this.startQuizInvite(player);
         } else {
-          const vehicle = VEHICLES[Math.floor(Math.random() * VEHICLES.length)];
-          player.vehicle = vehicle;
-
-          this.setPlayerIconState(player, { bubbleText: `${vehicle.emoji} ゲット！` });
-
-          sound.playChime();
-          this.showEventModal(
-            "乗り物を獲得！",
-            `「${vehicle.name} (${vehicle.emoji})」をゲットしました！\n次回のサイコロ【1回限り】出目が【${vehicle.mult}倍】になります！`,
-            null,
-            { icon: vehicle.emoji, type: "yellow" }
-          );
-          this.addLog(`🎁 [黄マス] ${player.name} は ${vehicle.emoji} ${vehicle.name} (${vehicle.mult}倍・次回1回限り) を獲得！`);
+          this.startKingyoInvite(player);
         }
       },
 
@@ -3914,8 +3975,10 @@
             iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 rounded-full bg-red-500 border-2 border-white text-white font-black text-[10px] shadow-lg">●</div>`;
           } else if (n.type === 'blue') {
             iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-blue-500 border-2 border-white text-white font-black text-[10px] shadow-lg rounded-sm">■</div>`;
+          } else if (n.type === 'star') {
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-yellow-400 border-2 border-white text-slate-950 font-black text-[11px] shadow-lg rounded-full star-spot-pulse">★</div>`;
           } else {
-            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
+            iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-green-500 border-2 border-white text-white font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
           }
 
           const customIcon = L.divIcon({
