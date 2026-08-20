@@ -514,28 +514,37 @@
         <p id="roulette-cpu-countdown" class="hidden text-xs font-bold text-sky-300">CPU自動決定まで… <span id="roulette-cpu-countdown-num">3</span></p>
       </div>
 
-      <button id="roulette-confirm-btn" onclick="EdogawaSugoroku.confirmNextSugoroku()" class="hidden w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-lg transition">
-        次の双六を開始する！
-      </button>
-    </div>
-  </div>
+      <button id="roulette-confirm-btn" onclick="EdogawaSugoroku.async confirmNextSugoroku() {
+        if (this.legTransitionInProgress) return;
+        if (!this.nextDestinationCandidate) return;
 
-  <!-- MODAL: LOG HISTORY -->
-  <div id="log-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full h-[70vh] p-5 flex flex-col justify-between shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="font-mincho font-bold text-amber-400 text-base">ゲーム進行ログ</h3>
-        <button onclick="EdogawaSugoroku.closeLogModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
-      </div>
-      <div id="log-history-list" class="flex-1 overflow-y-auto space-y-2 py-3 text-xs text-slate-300 font-mono"></div>
-      <button onclick="EdogawaSugoroku.closeLogModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-xl text-xs transition">
-        閉じる
-      </button>
-    </div>
-  </div>
+        this.legTransitionInProgress = true;
+        const nextGoal = { ...this.nextDestinationCandidate };
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        try {
+          document.getElementById("goal-modal").classList.add("hidden");
+
+          const currentStartLoc = {
+            name: this.currentDestination.name,
+            lat: this.currentDestination.lat,
+            lng: this.currentDestination.lng
+          };
+
+          await this.setupBoard(currentStartLoc, nextGoal);
+          this.nextDestinationCandidate = null;
+          sound.playBGM('map');
+          this.addLog(`🚩 次の目的地が 【${nextGoal.name}】 に設定されました！`);
+
+          // Only after the new board is fully built do we advance the turn.
+          this.finishTurn();
+          this.panToCurrentPlayer();
+        } catch (e) {
+          console.error("次の双六の盤面生成に失敗しました:", e);
+          this.addLog("⚠️ 次の盤面生成に失敗しました。サイコロは一時停止しています。");
+        } finally {
+          this.legTransitionInProgress = false;
+        }
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -1505,6 +1514,8 @@
       eventSeq: 0,
       lastEventForSync: null,
       awaitingGoalSelection: null,
+      goalHandledThisLeg: false,
+      legTransitionInProgress: false,
 
       async init() {
         this.renderAvatarGrid();
@@ -2474,33 +2485,53 @@
       },
 
       async fetchStreetRouteOSRM(start, goal) {
-        try {
-          const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${goal.lng},${goal.lat}?overview=full&geometries=geojson`;
-          const resp = await fetch(url);
-          const data = await resp.json();
-          if (data && data.routes && data.routes[0] && data.routes[0].geometry) {
-            return data.routes[0].geometry.coordinates.map(c => ({ lat: c[1], lng: c[0] }));
+        const url =
+          `https://router.project-osrm.org/route/v1/driving/` +
+          `${start.lng},${start.lat};${goal.lng},${goal.lat}` +
+          `?overview=full&geometries=geojson`;
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const resp = await fetch(url, { cache: 'no-store' });
+            if (!resp.ok) throw new Error(`OSRM HTTP ${resp.status}`);
+
+            const data = await resp.json();
+            const coords = data?.routes?.[0]?.geometry?.coordinates;
+            if (Array.isArray(coords) && coords.length >= 2) {
+              return coords
+                .filter(c => Array.isArray(c) && c.length >= 2)
+                .map(c => ({ lat: c[1], lng: c[0] }));
+            }
+          } catch (e) {
+            if (attempt === 1) {
+              console.warn("OSRM route取得失敗:", e);
+            }
+            await new Promise(resolve => setTimeout(resolve, 350));
           }
-        } catch(e) {}
+        }
         return null;
       },
 
       async setupBoard(startLoc, goalLoc) {
         this.currentDestination = goalLoc;
         this.rocketGiftUsedThisLeg = false;
+        this.goalHandledThisLeg = false;
 
-        // Capture each player's actual current position BEFORE the old road graph is
-        // discarded, so after a leg change players resume from wherever their token
-        // really is — not from the old goal / new leg's nominal start point.
+        // Preserve each player's REAL current position before replacing the old board.
+        // Do not snap a player to an arbitrary nearby node on the new route: after the
+        // first goal, different players can be on completely different roads.
         const priorPositions = {};
-        if (this.roadNetworkNodes && this.roadNetworkNodes.length && this.players && this.players.length) {
+        if (this.roadNetworkNodes?.length && this.players?.length) {
           this.players.forEach(p => {
-            const node = (typeof p.currentNodeIdx === 'number') ? this.roadNetworkNodes[p.currentNodeIdx] : null;
-            if (node) priorPositions[p.id] = { lat: node.lat, lng: node.lng };
+            const node = (typeof p.currentNodeIdx === 'number')
+              ? this.roadNetworkNodes[p.currentNodeIdx]
+              : null;
+            if (node && Number.isFinite(node.lat) && Number.isFinite(node.lng)) {
+              priorPositions[p.id] = { lat: node.lat, lng: node.lng };
+            }
           });
         }
 
-        // Clear player markers/routes (road/spot/goal markers are cleared inside renderBoardVisuals)
         if (this.playerRoutePolylines.length) {
           this.playerRoutePolylines.forEach(p => this.map.removeLayer(p));
           this.playerRoutePolylines = [];
@@ -2508,12 +2539,15 @@
         this.playerMarkers.forEach(m => this.map.removeLayer(m));
         this.playerMarkers = [];
 
-        // Fetch OSRM street snapping
+        // The host/main board is always one ordered OSRM route. A failed OSRM request must
+        // NOT be replaced by a straight line.
         let osrmPath = await this.fetchStreetRouteOSRM(startLoc, goalLoc);
-
         let roadGraph;
-        if (osrmPath && osrmPath.length > 5) {
+        let mainRouteIsOrdered = false;
+
+        if (osrmPath && osrmPath.length > 1) {
           roadGraph = this.buildRoadNetwork([osrmPath], 40, false);
+          mainRouteIsOrdered = true;
         } else {
           roadGraph = this.buildRoadNetwork(EDOGAWA_MAJOR_ROADS_HIGH_PRECISION, 40, true);
         }
@@ -2521,47 +2555,56 @@
         const startNodeIdx = this.findNearestNodeIdx2(roadGraph.nodes, startLoc);
         const goalNodeIdx = this.findNearestNodeIdx2(roadGraph.nodes, goalLoc);
 
+        // For a real OSRM route, use its ORIGINAL forward order instead of a generic
+        // graph search. Graph search treats the road as bidirectional and can legally
+        // walk backwards along a loop, producing the V-shaped detour seen in the bug.
+        const orderedMainPath = mainRouteIsOrdered
+          ? this.normalizePathIndices(roadGraph.orderedIndices)
+          : null;
+        const startOrder = orderedMainPath ? orderedMainPath.indexOf(startNodeIdx) : -1;
+        const goalOrder = orderedMainPath ? orderedMainPath.lastIndexOf(goalNodeIdx) : -1;
+        const forwardMainPath =
+          (startOrder >= 0 && goalOrder > startOrder)
+            ? orderedMainPath.slice(startOrder, goalOrder + 1)
+            : null;
+
         this.renderBoardVisuals(roadGraph.nodes, startNodeIdx, goalNodeIdx, goalLoc);
 
         for (const p of this.players) {
           p.forcedMoveCount = 0;
           p.boatRaceCount = 0;
+
           const priorPos = priorPositions[p.id];
-          let usedOwnBranch = false;
+          const isInitialPosition = !priorPos;
+          const isAtLegStart = priorPos && this.haversineMeters(priorPos, startLoc) <= 8;
 
-          if (priorPos) {
-            const nearestIdx = this.findNearestNodeIdx2(roadGraph.nodes, priorPos);
-            const nearestNode = roadGraph.nodes[nearestIdx];
-            const distToMain = this.haversineMeters(priorPos, nearestNode);
-
-            if (distToMain <= 400) {
-              p.currentNodeIdx = nearestIdx;
-              p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
-              p.pathIndex = 0;
-            } else {
-              // Too far from the shared route to snap onto it sensibly (this is what was
-              // causing everyone to bunch up onto one spot, and stragglers to land right
-              // next to the goal for a fake "0 squares" win). Give this player their own
-              // dedicated route from where they actually are, straight to the new goal.
-              await this.buildPlayerOwnBranch(p, priorPos, goalLoc);
-              usedOwnBranch = true;
-            }
-          } else {
+          if (isInitialPosition || isAtLegStart) {
+            // First game and the player who actually reached the previous goal can use the
+            // shared route. This keeps the board clean and avoids unnecessary duplicate paths.
             p.currentNodeIdx = startNodeIdx;
-            p.path = this.findShortestPath(roadGraph, p.currentNodeIdx, this.goalNodeIdx);
+            p.path = forwardMainPath
+              ? forwardMainPath.slice()
+              : this.normalizePathIndices(
+                  this.findShortestPath(roadGraph, startNodeIdx, goalNodeIdx)
+                );
+            p.pathIndex = 0;
+          } else {
+            // IMPORTANT: every other player gets a route from their ACTUAL current position
+            // to the new goal. The old implementation snapped within 400m to the new main
+            // route, which could choose a later node on a loop and create a V-shaped route,
+            // or make several players start on the same square.
+            await this.buildPlayerOwnBranch(p, priorPos, goalLoc);
+          }
+
+          // Never allow a zero-length route unless the player is genuinely already at the
+          // destination. A broken route must not become an instant "あと0マス" win.
+          p.path = this.normalizePathIndices(p.path || []);
+          if (p.path.length === 0) {
+            p.path = [p.currentNodeIdx];
             p.pathIndex = 0;
           }
 
-          // Safety net: if pathfinding still failed to produce a real, non-degenerate
-          // route (e.g. this player's node ended up on a disconnected sub-graph), don't
-          // leave them permanently stuck showing "0 squares to go" but never actually at
-          // the goal — give them a dedicated point-to-point route instead.
-          if (!usedOwnBranch && (!p.path || p.path.length <= 1)) {
-            await this.buildPlayerOwnBranch(p, priorPos || startLoc, goalLoc);
-            usedOwnBranch = true;
-          }
-
-          const startPt = (usedOwnBranch ? this.roadNetworkNodes[p.currentNodeIdx] : roadGraph.nodes[p.currentNodeIdx]) || startLoc;
+          const startPt = this.roadNetworkNodes[p.currentNodeIdx] || startLoc;
           const marker = L.marker([startPt.lat, startPt.lng], {
             icon: this.createPlayerIcon(p, ""),
             zIndexOffset: 1000
@@ -2571,7 +2614,6 @@
 
         this.updatePlayerRoutes();
         this.map.setView([startLoc.lat, startLoc.lng], 19);
-
         this.checkRocketGiftEligibility();
 
         if (this.isMultiplayer && this.isHost) {
@@ -2653,27 +2695,43 @@
       // array) from a player's real current position to the new goal. Used when that
       // player is too far from the leg's main shared route to sensibly snap onto it.
       async buildPlayerOwnBranch(player, fromLoc, goalLoc) {
-        let osrmPath = await this.fetchStreetRouteOSRM(fromLoc, goalLoc);
-        let pathPoints;
-        if (osrmPath && osrmPath.length > 1) {
-          pathPoints = osrmPath;
-        } else {
-          pathPoints = [
-            { lat: fromLoc.lat, lng: fromLoc.lng },
-            { lat: goalLoc.lat, lng: goalLoc.lng }
-          ];
+        // Always use an actual street route. Retrying is handled by fetchStreetRouteOSRM.
+        // Never fall back to [from, goal], because that draws a straight line through
+        // buildings and can create a fake one-square/zero-square finish.
+        const osrmPath = await this.fetchStreetRouteOSRM(fromLoc, goalLoc);
+
+        if (!osrmPath || osrmPath.length < 2) {
+          console.warn("OSRM route unavailable; keeping player on the current road node.", player.name);
+          const currentIdx = this.findNearestNodeIdx2(this.roadNetworkNodes, fromLoc);
+          player.currentNodeIdx = currentIdx;
+          player.path = [currentIdx];
+          player.pathIndex = 0;
+          return false;
         }
 
-        // Build directly into the shared node array: if this route crosses a point already
-        // used by the main route or another player's branch, it reuses that exact node
-        // (and its already-assigned type) instead of stacking an overlapping duplicate.
-        const result = this.buildRoadNetwork([pathPoints], 40, false, this.roadNetworkNodes);
-        const branchPath = result.orderedIndices.slice();
+        const result = this.buildRoadNetwork(
+          [osrmPath],
+          40,
+          false,
+          this.roadNetworkNodes
+        );
+
+        let branchPath = this.normalizePathIndices(result.orderedIndices);
+
+        if (branchPath.length < 2) {
+          const currentIdx = this.findNearestNodeIdx2(this.roadNetworkNodes, fromLoc);
+          player.currentNodeIdx = currentIdx;
+          player.path = [currentIdx];
+          player.pathIndex = 0;
+          return false;
+        }
+
         const newSet = new Set(result.newlyCreated);
 
         branchPath.forEach((globalIdx, idx) => {
           if (idx === 0 || idx === branchPath.length - 1) return;
-          if (!newSet.has(globalIdx)) return; // already has a marker from another route
+          if (!newSet.has(globalIdx)) return;
+
           const n = this.roadNetworkNodes[globalIdx];
           let iconHtml = '';
           if (n.type === 'red') {
@@ -2683,6 +2741,7 @@
           } else {
             iconHtml = `<div class="spot-marker flex items-center justify-center w-5 h-5 bg-amber-400 border-2 border-white text-slate-950 font-black text-[10px] shadow-lg transform rotate-45"><span class="transform -rotate-45">▲</span></div>`;
           }
+
           const customIcon = L.divIcon({
             className: 'custom-spot-icon',
             html: iconHtml,
@@ -2693,15 +2752,22 @@
           this.spotMarkers.push(marker);
         });
 
-        // The branch's own last node is superseded by the shared goal node, so this
-        // player's path correctly ends at the exact same goal as everyone else.
-        if (branchPath.length > 0) {
+        // OSRM ends at the actual destination. Reuse the shared exact goal node only when
+        // it is physically close; otherwise keep the OSRM endpoint rather than drawing a
+        // synthetic straight segment.
+        const lastIdx = branchPath[branchPath.length - 1];
+        const lastNode = this.roadNetworkNodes[lastIdx];
+        const goalNode = this.roadNetworkNodes[this.goalNodeIdx];
+
+        if (lastNode && goalNode && this.haversineMeters(lastNode, goalNode) <= 20) {
           branchPath[branchPath.length - 1] = this.goalNodeIdx;
+          branchPath = this.normalizePathIndices(branchPath);
         }
 
         player.currentNodeIdx = branchPath[0];
         player.path = branchPath;
         player.pathIndex = 0;
+        return true;
       },
 
       // Draws the road background (as graph edges), spot markers, and goal marker for a given
@@ -2824,54 +2890,35 @@
         const newlyCreated = [];
 
         roads.forEach(road => {
-          // Persist across segment boundaries within this same road (not reset per segment).
-          // A route's raw waypoints share endpoints between consecutive segments (segment i's
-          // p2 === segment i+1's p1) — without carrying prevIdx across, each shared waypoint
-          // got sampled and pushed into the path TWICE (once as segment i's last sample, once
-          // as segment i+1's first sample). Both resolved to the same node via dedup, so no
-          // duplicate marker appeared, but the duplicate consecutive path entry silently
-          // consumed one dice-roll "step" per waypoint without the token actually moving —
-          // the token advanced noticeably fewer squares than the roll should have covered.
           let prevIdx = null;
 
           for (let i = 0; i < road.length - 1; i++) {
             const p1 = road[i];
-            const p2 = road[i+1];
+            const p2 = road[i + 1];
 
             const R = 6371000;
             const dLat = (p2.lat - p1.lat) * Math.PI / 180;
             const dLng = (p2.lng - p1.lng) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
-                      Math.sin(dLng/2) * Math.sin(dLng/2);
-            const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-            // Round (not floor) the step count so each resulting step stays close to the
-            // target spacing across the whole segment, instead of always leaving one short
-            // leftover step at the end (uneven spacing between squares).
+            const a = Math.sin(dLat / 2) ** 2 +
+                      Math.cos(p1.lat * Math.PI / 180) *
+                      Math.cos(p2.lat * Math.PI / 180) *
+                      Math.sin(dLng / 2) ** 2;
+            const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             const steps = Math.max(1, Math.round(dist / spacingMeters));
 
-            // Skip resampling s=0 for every segment after the first — it's the exact same
-            // point as the previous segment's last sample (already added, tracked in prevIdx).
-            const sStart = (prevIdx === null) ? 0 : 1;
+            // Do not resample a segment's first point when it is the previous segment's
+            // endpoint. This prevents consecutive duplicate path entries.
+            const sStart = prevIdx === null ? 0 : 1;
 
             for (let s = sStart; s <= steps; s++) {
               const t = s / steps;
               const lat = p1.lat + (p2.lat - p1.lat) * t;
               const lng = p1.lng + (p2.lng - p1.lng) * t;
 
-              // Check the WHOLE node list (including any nodes from OTHER routes already
-              // built into this same shared array, e.g. the main route or another player's
-              // branch) for a same-spot match (tight ~8m threshold). Without this, two
-              // different routes that physically cross the same point each get their own
-              // independently-typed node stacked at nearly the same map position — the
-              // visible marker (whichever renders on top) doesn't necessarily match what a
-              // player standing there actually triggers.
               let matchedIdx = -1;
               for (let k = nodes.length - 1; k >= 0; k--) {
-                const latDiff = Math.abs(nodes[k].lat - lat);
-                const lngDiff = Math.abs(nodes[k].lng - lng);
-                if (latDiff < 0.00008 && lngDiff < 0.00008) {
+                const d = this.haversineMeters(nodes[k], { lat, lng });
+                if (d <= 6) {
                   matchedIdx = k;
                   break;
                 }
@@ -2887,15 +2934,16 @@
 
                 nodes.push({
                   id: nodes.length,
-                  lat: lat,
-                  lng: lng,
-                  type: type,
+                  lat,
+                  lng,
+                  type,
                   neighbors: []
                 });
                 matchedIdx = nodes.length - 1;
                 wasNew = true;
               }
 
+              // A route must never contain the same node twice in succession.
               if (prevIdx !== null && prevIdx !== matchedIdx) {
                 if (!nodes[prevIdx].neighbors.includes(matchedIdx)) {
                   nodes[prevIdx].neighbors.push(matchedIdx);
@@ -2904,26 +2952,25 @@
                   nodes[matchedIdx].neighbors.push(prevIdx);
                 }
               }
+
+              if (orderedIndices[orderedIndices.length - 1] !== matchedIdx) {
+                orderedIndices.push(matchedIdx);
+              }
               prevIdx = matchedIdx;
-              orderedIndices.push(matchedIdx);
               if (wasNew) newlyCreated.push(matchedIdx);
             }
           }
         });
 
-        // Only needed to repair the *disconnected* static fallback road set (several
-        // independent street segments with no shared points). A successfully-fetched
-        // single OSRM route is already one connected, correctly-ordered chain and doesn't
-        // need this — applying it there was creating spurious shortcut edges wherever the
-        // route passed close to itself, which is exactly what produced the "V" artifact.
+        // Only the static fallback network needs proximity-based cross connections.
+        // Never add proximity shortcuts to a single OSRM route: a nearby crossing/parallel
+        // road must not become a graph shortcut that lets BFS travel backwards and create V's.
         if (allowCrossConnect) {
-          const CONNECT_THRESHOLD_DEG = 0.00015; // ~15m
+          const CONNECT_THRESHOLD_METERS = 12;
           for (let i = 0; i < nodes.length; i++) {
             for (let j = i + 1; j < nodes.length; j++) {
               if (nodes[i].neighbors.includes(j)) continue;
-              const latDiff = Math.abs(nodes[i].lat - nodes[j].lat);
-              const lngDiff = Math.abs(nodes[i].lng - nodes[j].lng);
-              if (latDiff < CONNECT_THRESHOLD_DEG && lngDiff < CONNECT_THRESHOLD_DEG) {
+              if (this.haversineMeters(nodes[i], nodes[j]) <= CONNECT_THRESHOLD_METERS) {
                 nodes[i].neighbors.push(j);
                 nodes[j].neighbors.push(i);
               }
@@ -2945,6 +2992,16 @@
           }
         });
         return nearestIdx;
+      },
+
+      normalizePathIndices(path) {
+        if (!Array.isArray(path)) return [];
+        const out = [];
+        for (const idx of path) {
+          if (!Number.isInteger(idx)) continue;
+          if (out.length === 0 || out[out.length - 1] !== idx) out.push(idx);
+        }
+        return out;
       },
 
       findShortestPath(graph, startIdx, goalIdx) {
@@ -3249,20 +3306,42 @@
       },
 
       movePlayerSteps(player, totalSteps, stepDelay = 350, silent = false) {
-        let currentStep = 0;
+        const path = this.normalizePathIndices(player.path);
+        player.path = path;
 
-        if (!silent) this.updateMoveCountdown(player, totalSteps, totalSteps);
+        const startIndex = Math.max(0, Math.min(player.pathIndex || 0, path.length - 1));
+        player.pathIndex = startIndex;
+
+        // A dice result is an exact number of BOARD SQUARES. Never increment a step
+        // counter after the path has run out, and never advance to the same node twice.
+        const available = Math.max(0, path.length - 1 - startIndex);
+        const actualSteps = Math.min(Math.max(0, Math.floor(totalSteps)), available);
+
+        if (actualSteps === 0) {
+          this.updateMoveCountdown(player, 0, 0);
+          if (player.currentNodeIdx === this.goalNodeIdx) {
+            setTimeout(() => this.handleGoalReach(player), silent ? 0 : 50);
+          } else {
+            setTimeout(() => this.landOnSpot(player), silent ? 0 : 50);
+          }
+          return;
+        }
+
+        let currentStep = 0;
+        if (!silent) this.updateMoveCountdown(player, actualSteps, actualSteps);
 
         const interval = setInterval(() => {
           currentStep++;
-          if (player.pathIndex < player.path.length - 1) {
-            player.pathIndex++;
-            player.currentNodeIdx = player.path[player.pathIndex];
+
+          const nextIndex = startIndex + currentStep;
+          if (nextIndex < path.length) {
+            player.pathIndex = nextIndex;
+            player.currentNodeIdx = path[nextIndex];
           }
 
           const node = this.roadNetworkNodes[player.currentNodeIdx];
           const marker = this.playerMarkers[player.id];
-          if (marker && node && typeof node.lat === 'number' && typeof node.lng === 'number') {
+          if (marker && node && Number.isFinite(node.lat) && Number.isFinite(node.lng)) {
             marker.setLatLng([node.lat, node.lng]);
             if (!silent) {
               this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
@@ -3273,22 +3352,22 @@
 
           if (!silent) {
             sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
-            this.updateMoveCountdown(player, Math.max(0, totalSteps - currentStep), totalSteps);
+            this.updateMoveCountdown(player, actualSteps - currentStep, actualSteps);
             this.updateActivePlayerRemainingLive(player);
           }
 
           if (player.currentNodeIdx === this.goalNodeIdx) {
             clearInterval(interval);
             this.clearUsedVehicle(player);
-            if (!silent) this.updateMoveCountdown(player, 0, 0);
+            this.updateMoveCountdown(player, 0, 0);
             setTimeout(() => this.handleGoalReach(player), silent ? 0 : 300);
             return;
           }
 
-          if (currentStep >= totalSteps || player.pathIndex >= player.path.length - 1) {
+          if (currentStep >= actualSteps) {
             clearInterval(interval);
             this.clearUsedVehicle(player);
-            if (!silent) this.updateMoveCountdown(player, 0, 0);
+            this.updateMoveCountdown(player, 0, 0);
             setTimeout(() => this.landOnSpot(player), silent ? 0 : 300);
           }
         }, stepDelay);
