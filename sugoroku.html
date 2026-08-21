@@ -235,21 +235,35 @@
     .kingyo-fish {
       position: absolute; left: -12%; font-size: 32px; cursor: pointer; user-select: none;
       filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
-      animation: kingyo-swim var(--fish-duration, 8s) linear infinite;
-      will-change: transform, left; border: 0; background: transparent; padding: 0;
+      animation: kingyo-swim-right var(--fish-duration, 8s) linear infinite;
+      will-change: transform, left, opacity; border: 0; background: transparent; padding: 0;
     }
-    @keyframes kingyo-swim {
-      0% { left: -12%; transform: translateY(0) rotate(-4deg) scaleX(var(--fish-scale, 1)); }
-      25% { transform: translateY(-10px) rotate(4deg) scaleX(var(--fish-scale, 1)); }
-      50% { left: 48%; transform: translateY(8px) rotate(-4deg) scaleX(var(--fish-scale, 1)); }
-      75% { transform: translateY(-8px) rotate(4deg) scaleX(var(--fish-scale, 1)); }
-      100% { left: 108%; transform: translateY(0) rotate(-4deg) scaleX(var(--fish-scale, 1)); }
+    .kingyo-fish.reverse { animation-name: kingyo-swim-left; }
+    @keyframes kingyo-swim-right {
+      0% { left: -12%; transform: translateY(0) rotate(-4deg) scaleX(1); }
+      25% { transform: translateY(-11px) rotate(4deg) scaleX(1); }
+      50% { left: 48%; transform: translateY(9px) rotate(-4deg) scaleX(1); }
+      75% { transform: translateY(-9px) rotate(4deg) scaleX(1); }
+      100% { left: 108%; transform: translateY(0) rotate(-4deg) scaleX(1); }
+    }
+    @keyframes kingyo-swim-left {
+      0% { left: 108%; transform: translateY(0) rotate(4deg) scaleX(-1); }
+      25% { transform: translateY(10px) rotate(-4deg) scaleX(-1); }
+      50% { left: 48%; transform: translateY(-9px) rotate(4deg) scaleX(-1); }
+      75% { transform: translateY(9px) rotate(-4deg) scaleX(-1); }
+      100% { left: -12%; transform: translateY(0) rotate(4deg) scaleX(-1); }
     }
     .kingyo-fish:active { transform: scale(0.85); }
-    .kingyo-fish.caught { animation: kingyo-caught 0.4s ease-out forwards; pointer-events: none; }
-    .kingyo-fish.spooked { animation: kingyo-spook 0.3s ease-out; }
-    @keyframes kingyo-caught { to { transform: translateY(-40px) scale(1.4); opacity: 0; } }
-    @keyframes kingyo-spook { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.8) rotate(15deg); } }
+    .kingyo-fish.caught { pointer-events: none; animation: none !important; }
+    .kingyo-fish.spooked { pointer-events: none; animation: none !important; }
+    @keyframes kingyo-caught {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-95px) scale(1.12); opacity: 0; }
+    }
+    @keyframes kingyo-spook {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
 
     /* --- クイズ選択肢 --- */
     .quiz-option-btn {
@@ -1783,6 +1797,7 @@
       goalNodeIdx: null,
       nextDestinationCandidate: null,
       cpuAutoCloseTimer: null,
+      quizSpeechFallbackTimer: null,
 
       // Firebase & Room Multiplayer Props
       db: null,
@@ -1806,7 +1821,13 @@
       legTransitionInProgress: false,
       specialEventUsed: false,
       boatRaceActive: false,
+      boatRaceEventsThisLeg: 0,
+      boatRaceCapThisLeg: 1,
       miniGameActive: false,
+      kingyoSpawnTimer: null,
+      kingyoFishSpawned: 0,
+      kingyoFishMaxByType: { '🐟': 10, '🐠': 8, '🐡': 5, '🦈': 1, '🦪': 1 },
+      kingyoFishDefs: null,
       geocodeCache: {},
       geocodeLastAt: 0,
       geocodeRefreshStarted: false,
@@ -2867,6 +2888,8 @@
         this.currentDestination = goalLoc;
         this.rocketGiftUsedThisLeg = false;
         this.goalHandledThisLeg = false;
+        this.boatRaceEventsThisLeg = 0;
+        this.boatRaceCapThisLeg = 1;
 
         // Preserve each player's REAL current position before replacing the old board.
         // Do not snap a player to an arbitrary nearby node on the new route: after the
@@ -3968,7 +3991,7 @@
         const roll = forcedMoveLimitReached ? (0.48 + Math.random() * 0.52) : Math.random();
 
         // 江戸川競艇: 低確率にした上、1ゴール(1レグ)につき合計1〜2回まで（プレーヤー問わず）。
-        if (roll < 0.08 && this.boatRaceEventsThisLeg < this.boatRaceCapThisLeg && player.boatRaceCount < 1) {
+        if (roll < 0.25 && this.boatRaceEventsThisLeg < this.boatRaceCapThisLeg && player.boatRaceCount < 1) {
           player.forcedMoveCount++;
           player.boatRaceCount++;
           this.boatRaceEventsThisLeg++;
@@ -4053,7 +4076,7 @@
             if (r !== null && (maxRemaining === null || r > maxRemaining)) maxRemaining = r;
           });
           const isFurthestBehind = myRemaining !== null && maxRemaining !== null && myRemaining >= maxRemaining;
-          if (isFurthestBehind && myRemaining >= 30 && Math.random() < 0.3) {
+          if (isFurthestBehind && myRemaining >= 200) {
             qualifiesForFlight = true;
           }
         }
@@ -4220,26 +4243,41 @@
         setTimeout(() => this.showQuizQuestion(player), 420);
       },
 
-      showQuizQuestion(player) {
-        const questions = [
+      async showQuizQuestion(player) {
+        const fallbackQuestions = [
           { genre:'江戸川区の名所', difficulty:'カンタン', q:'江戸川区にあるタワーホール船堀の展望室がある建物はどれでしょう？', options:['船堀タワー','東京タワー','スカイツリー'], answer:0 },
           { genre:'江戸川区の地理', difficulty:'カンタン', q:'江戸川区の東側を流れる大きな川はどれでしょう？', options:['江戸川','多摩川','隅田川'], answer:0 },
           { genre:'江戸川区の豆知識', difficulty:'カンタン', q:'江戸川区の区名の由来となった川はどれでしょう？', options:['江戸川','荒川','神田川'], answer:0 },
           { genre:'江戸川区の名所', difficulty:'カンタン', q:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:0 }
         ];
-        const q = questions[Math.floor(Math.random() * questions.length)];
+        let questions = null;
+        try {
+          const resp = await fetch('https://shulavan.github.io/games/quiz_data.json', { cache: 'no-store' });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (Array.isArray(data)) questions = data;
+            else if (Array.isArray(data.questions)) questions = data.questions;
+            else if (Array.isArray(data.data)) questions = data.data;
+          }
+        } catch (e) { console.warn('quiz_data.json の読み込みに失敗:', e); }
+        questions = (questions || fallbackQuestions).filter(q => q && q.q && Array.isArray(q.options) && q.options.length >= 2);
+        const q = questions[Math.floor(Math.random() * questions.length)] || fallbackQuestions[0];
         this.activeQuizQuestion = q;
-        document.getElementById('quiz-genre-badge').textContent = q.genre;
+        document.getElementById('quiz-genre-badge').textContent = q.genre || '江戸川クイズ';
         document.getElementById('quiz-question-text').textContent = q.q;
         const optionsEl = document.getElementById('quiz-options');
         optionsEl.innerHTML = q.options.map((opt, idx) => `<button disabled class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition opacity-60" onclick="EdogawaSugoroku.answerQuiz(${idx})">${idx + 1}. ${opt}</button>`).join('');
-        this.speakQuizQuestion(q.q, () => {
+        let ended = false;
+        const enableAnswers = () => {
+          if (ended) return; ended = true;
           this.quizAnswerEnabled = true;
           document.querySelectorAll('#quiz-options button').forEach(b => { b.disabled = false; b.classList.remove('opacity-60'); });
-          if (player.isCpu) {
-            setTimeout(() => { if (!this.quizAnswered) this.answerQuiz(q.answer); }, 500);
-          }
-        });
+          if (player.isCpu || this.autoMode) setTimeout(() => { if (!this.quizAnswered) this.answerQuiz(Number.isInteger(q.answer) ? q.answer : 0); }, 500);
+        };
+        this.speakQuizQuestion(q.q, enableAnswers);
+        // speechSynthesis の onend がブラウザによって発火しない場合の安全弁。
+        clearTimeout(this.quizSpeechFallbackTimer);
+        this.quizSpeechFallbackTimer = setTimeout(enableAnswers, Math.max(4500, Math.min(12000, q.q.length * 180)));
       },
 
       answerQuiz(index) {
@@ -4269,6 +4307,8 @@
         if (this.quizAutoCloseTimer) clearTimeout(this.quizAutoCloseTimer);
         this.quizAutoCloseTimer = null;
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        clearTimeout(this.quizSpeechFallbackTimer);
+        this.quizSpeechFallbackTimer = null;
         const player = this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         document.getElementById('quiz-modal')?.classList.add('hidden');
         document.getElementById('quiz-result-screen')?.classList.add('hidden');
@@ -4285,7 +4325,9 @@
         document.getElementById('kingyo-invite-name').textContent = `${player.name} が★マスに止まりました！`;
         modal.classList.remove('hidden');
         this.activeKingyoPlayerId = player.id;
-        if (player.isCpu) setTimeout(() => this.respondKingyoInvite(true), 1200);
+        // CPUだけでなく、人間プレーヤーのオートモードでも自動参加。
+        // 確認モーダルを少し見せてから「はい」を自動選択。
+        if (player.isCpu || this.autoMode) setTimeout(() => this.respondKingyoInvite(true), 1200);
       },
 
       respondKingyoInvite(join) {
@@ -4306,7 +4348,17 @@
         const tank = document.getElementById('kingyo-tank');
         tank.querySelectorAll('.kingyo-fish').forEach(f => f.remove());
         document.querySelectorAll('[data-fish-count]').forEach(e => e.textContent = '0');
-        this.spawnAllKingyoFish(player);
+        this.kingyoFishSpawned = 0;
+        this.kingyoFishDefs = [
+          { emoji:'🐟', value:500, chance:.50, speed:5, behind:false },
+          { emoji:'🐠', value:600, chance:.40, speed:3, behind:false },
+          { emoji:'🐡', value:700, chance:.30, speed:4, behind:false },
+          { emoji:'🦈', value:2000, chance:.10, speed:9, behind:true },
+          { emoji:'🦪', value:5000, chance:.05, speed:1, behind:true }
+        ];
+        this.spawnAllKingyoFish(player, 10);
+        clearInterval(this.kingyoSpawnTimer);
+        this.kingyoSpawnTimer = setInterval(() => this.maintainKingyoFishPopulation(), 900);
         this.kingyoCountdownTimer = setInterval(() => {
           this.kingyoTimeLeft--;
           document.getElementById('kingyo-timer').textContent = Math.max(0, this.kingyoTimeLeft);
@@ -4318,54 +4370,109 @@
           }
           if (this.kingyoTimeLeft <= 0) this.finishKingyoGame();
         }, 1000);
-        if (player.isCpu) {
+        if (player.isCpu || this.autoMode) {
           this.kingyoCpuTimer = setInterval(() => {
-            const fish = [...tank.querySelectorAll('.kingyo-fish:not([data-caught])')].sort(() => Math.random() - 0.5)[0];
-            if (fish) fish.click();
-          }, 650);
+            const fish = [...tank.querySelectorAll('.kingyo-fish:not([data-caught])')].filter(f => f.dataset.used !== '1');
+            if (fish.length) fish[Math.floor(Math.random() * fish.length)].click();
+          }, 520);
         }
         this.updateHUD();
       },
 
-      spawnAllKingyoFish(player) {
+      spawnAllKingyoFish(player, initialCount = 10, forcedDef = null) {
         const tank = document.getElementById('kingyo-tank');
-        const defs = [
-          { emoji:'🐟', count:10, value:500, chance:.50, speed:5, behind:false },
-          { emoji:'🐠', count:8, value:600, chance:.40, speed:3, behind:false },
-          { emoji:'🐡', count:5, value:700, chance:.30, speed:4, behind:false },
-          { emoji:'🦈', count:1, value:2000, chance:.10, speed:9, behind:true },
-          { emoji:'🦪', count:1, value:5000, chance:.05, speed:1, behind:true }
+        if (!tank) return;
+        const defs = this.kingyoFishDefs || [
+          { emoji:'🐟', value:500, chance:.50, speed:5, behind:false },
+          { emoji:'🐠', value:600, chance:.40, speed:3, behind:false },
+          { emoji:'🐡', value:700, chance:.30, speed:4, behind:false },
+          { emoji:'🦈', value:2000, chance:.10, speed:9, behind:true },
+          { emoji:'🦪', value:5000, chance:.05, speed:1, behind:true }
         ];
+        const makeFish = (def) => {
+          const fish = document.createElement('button'); fish.type='button'; fish.className='kingyo-fish'; fish.textContent=def.emoji;
+          fish.dataset.emoji=def.emoji; fish.dataset.used='0'; fish.dataset.caught='';
+          const dir = Math.random() < .5 ? 1 : -1;
+          fish.dataset.dir = String(dir);
+          fish.style.top = `${8 + Math.random()*72}%`;
+          fish.style.setProperty('--fish-duration', `${Math.max(5, 16 - def.speed*1.2 + Math.random()*1.5)}s`);
+          if (dir < 0) fish.classList.add('reverse');
+          fish.style.zIndex = def.behind ? '3' : '4';
+          fish.style.animationDelay = `${-Math.random()*6}s`;
+          fish.onclick = () => {
+            if (fish.dataset.used === '1' || fish.dataset.caught) return;
+            fish.dataset.used='1';
+            const caught = Math.random() < def.chance;
+            const tankRect = tank.getBoundingClientRect();
+            const fishRect = fish.getBoundingClientRect();
+            const currentLeft = Math.max(-12, Math.min(108, ((fishRect.left - tankRect.left) / tankRect.width) * 100));
+            fish.style.animation = 'none';
+            fish.style.left = `${currentLeft}%`;
+            fish.style.transform = `translateY(0) scaleX(${fish.dataset.dir});`;
+            if (caught) {
+              fish.dataset.caught='1'; this.kingyoFishStats[def.emoji]++;
+              document.querySelectorAll(`[data-fish-count="${def.emoji}"]`).forEach(e=>e.textContent=this.kingyoFishStats[def.emoji]);
+              fish.classList.add('caught'); sound.playFishCatch();
+              fish.animate([{ transform:`translateY(0) scaleX(${fish.dataset.dir})`, opacity:1 }, { transform:`translateY(-95px) scaleX(${fish.dataset.dir})`, opacity:0 }], { duration:1200, easing:'ease-out', fill:'forwards' });
+              setTimeout(()=>fish.remove(),1250);
+            } else {
+              sound.playFishMiss();
+              const escapeDir = Number(fish.dataset.dir) > 0 ? 1 : -1;
+              fish.style.transform = `scaleX(${-escapeDir})`;
+              fish.animate([{ left:`${currentLeft}%`, transform:`scaleX(${-escapeDir})`, opacity:1 }, { left:`${escapeDir > 0 ? 112 : -16}%`, transform:`scaleX(${-escapeDir})`, opacity:0 }], { duration:420, easing:'cubic-bezier(.1,.8,.2,1)', fill:'forwards' });
+              setTimeout(()=>fish.remove(),470);
+            }
+          };
+          tank.appendChild(fish);
+          this.kingyoFishSpawned++;
+        };
+        if (forcedDef) {
+          const current = tank.querySelectorAll(`.kingyo-fish[data-emoji="${forcedDef.emoji}"]`).length;
+          const max = this.kingyoFishMaxByType[forcedDef.emoji] || 1;
+          if (current < max) makeFish(forcedDef);
+          return;
+        }
+        const choices = [];
         defs.forEach(def => {
-          for (let i=0;i<def.count;i++) {
-            const fish = document.createElement('button'); fish.type='button'; fish.className='kingyo-fish'; fish.textContent=def.emoji;
-            fish.dataset.emoji=def.emoji; fish.dataset.caught=''; fish.dataset.used='0';
-            const dir = Math.random() < .5 ? 1 : -1;
-            fish.style.top = `${8 + Math.random()*72}%`; fish.style.setProperty('--fish-duration', `${Math.max(5, 16 - def.speed*1.2 + Math.random()*1.5)}s`);
-            fish.style.setProperty('--fish-scale', dir > 0 ? '1' : '-1'); fish.style.zIndex = def.behind ? '3' : '4';
-            fish.style.animationDelay = `${-Math.random()*8}s`;
-            fish.onclick = () => {
-              if (fish.dataset.used === '1' || fish.dataset.caught) return;
-              fish.dataset.used='1';
-              const caught = Math.random() < def.chance;
-              if (caught) {
-                fish.dataset.caught='1'; this.kingyoFishStats[def.emoji]++;
-                document.querySelectorAll(`[data-fish-count="${def.emoji}"]`).forEach(e=>e.textContent=this.kingyoFishStats[def.emoji]);
-                fish.classList.add('caught'); sound.playFishCatch();
-                setTimeout(()=>fish.remove(),450);
-              } else {
-                fish.classList.add('spooked'); sound.playFishMiss();
-                setTimeout(()=>fish.remove(),250);
-              }
-            };
-            tank.appendChild(fish);
-          }
+          const current = tank.querySelectorAll(`.kingyo-fish[data-emoji="${def.emoji}"]`).length;
+          const max = this.kingyoFishMaxByType[def.emoji] || 1;
+          for (let i=current;i<max;i++) choices.push(def);
         });
+        for (let i=0; i<Math.min(initialCount, choices.length); i++) {
+          const idx = Math.floor(Math.random() * choices.length);
+          makeFish(choices.splice(idx,1)[0]);
+        }
+      },
+
+      maintainKingyoFishPopulation() {
+        if (!this.miniGameActive || !this.kingyoTimeLeft || !this.kingyoFishDefs) return;
+        const tank = document.getElementById('kingyo-tank');
+        if (!tank) return;
+        const elapsed = 30 - this.kingyoTimeLeft;
+        const target = Math.min(24, 10 + Math.floor(elapsed / 3));
+        const active = tank.querySelectorAll('.kingyo-fish:not([data-used="1"])').length;
+        const defs = this.kingyoFishDefs;
+        let guard = 0;
+        while (active + guard < target && guard < 4) {
+          const weighted = [];
+          defs.forEach(def => {
+            const current = tank.querySelectorAll(`.kingyo-fish[data-emoji="${def.emoji}"]`).length;
+            const max = this.kingyoFishMaxByType[def.emoji] || 1;
+            if (current < max) weighted.push(def);
+          });
+          if (!weighted.length) break;
+          const def = weighted[Math.floor(Math.random()*weighted.length)];
+          this.spawnAllKingyoFish(null, 1, def);
+          guard++;
+          // spawnAllKingyoFish chooses from all defs; immediately correct target is not needed because caps keep counts bounded.
+        }
       },
 
       finishKingyoGame() {
         if (this.kingyoCountdownTimer) clearInterval(this.kingyoCountdownTimer);
         if (this.kingyoCpuTimer) clearInterval(this.kingyoCpuTimer);
+        if (this.kingyoSpawnTimer) clearInterval(this.kingyoSpawnTimer);
+        this.kingyoSpawnTimer = null;
         this.kingyoCountdownTimer=null; this.kingyoCpuTimer=null;
         const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         if (!player) return this.closeKingyoEvent();
@@ -4387,8 +4494,10 @@
       closeKingyoEvent() {
         if (this.kingyoCountdownTimer) clearInterval(this.kingyoCountdownTimer);
         if (this.kingyoCpuTimer) clearInterval(this.kingyoCpuTimer);
+        if (this.kingyoSpawnTimer) clearInterval(this.kingyoSpawnTimer);
+        this.kingyoSpawnTimer = null;
         if (this.kingyoAutoCloseTimer) clearTimeout(this.kingyoAutoCloseTimer);
-        this.kingyoCountdownTimer=null; this.kingyoCpuTimer=null; this.kingyoAutoCloseTimer=null;
+        this.kingyoCountdownTimer=null; this.kingyoCpuTimer=null; this.kingyoSpawnTimer=null; this.kingyoAutoCloseTimer=null;
         const player=this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         document.getElementById('kingyo-modal')?.classList.add('hidden');
         document.getElementById('kingyo-tank')?.querySelectorAll('.kingyo-fish').forEach(f=>f.remove());
@@ -4538,7 +4647,9 @@
           this.syncGameStateToRoom();
         }
 
-        if (player.isCpu) {
+        // CPUだけでなく、人間プレーヤーのオートモードでもゴール後を完全自動化。
+        // カテゴリ選択 → 目的地ルーレット → 次の盤面生成まで人の操作を要求しない。
+        if (player.isCpu || (player.id === 0 && this.autoMode)) {
           this.runCpuCountdown("goal-cpu-countdown", "goal-cpu-countdown-num", 3, () => {
             const categories = ["飲食店", "スーパー（薬屋含む）", "公園", "駅（バス停含む）"];
             const randomCat = categories[Math.floor(Math.random() * categories.length)];
@@ -4607,7 +4718,10 @@
               document.getElementById("roulette-confirm-btn").classList.remove("hidden");
               sound.playLandBlue();
 
-              if (this.players[this.selectedCategoryWinnerIdx].isCpu) {
+              const winner = this.players[this.selectedCategoryWinnerIdx];
+              // CPU、または人間プレーヤー自身がオートモード中なら、
+              // ルーレット決定後も自動で次の双六へ進む。
+              if (winner && (winner.isCpu || (winner.id === 0 && this.autoMode))) {
                 this.runCpuCountdown("roulette-cpu-countdown", "roulette-cpu-countdown-num", 3, () => {
                   this.confirmNextSugoroku();
                 });
