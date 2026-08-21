@@ -3698,9 +3698,11 @@
 
         // Only the host auto-drives CPU turns in multiplayer (otherwise every device would
         // try to roll for the CPU at once). In solo mode this device is always authoritative.
+        // Also gated on the mini-game flags directly (belt-and-suspenders alongside isRolling):
+        // a stray HUD refresh while a mini-game modal is open must never queue up a real roll.
         const shouldAutoRollCpu = (!this.isMultiplayer || this.isHost) && cp.isCpu;
         const shouldAutoRollSelf = this.autoMode && !cp.isCpu && canRollNow;
-        if ((shouldAutoRollCpu || shouldAutoRollSelf) && !this.isRolling) {
+        if ((shouldAutoRollCpu || shouldAutoRollSelf) && !this.isRolling && !this.miniGameActive && !this.boatRaceActive) {
           setTimeout(() => this.rollDice(), 1200);
         }
       },
@@ -3719,6 +3721,17 @@
           this.requestRollFromHost();
           return;
         }
+
+        // CRITICAL: isRolling must be set BEFORE the skipTurn branch, not after it.
+        // updateHUD() re-schedules a CPU/auto-mode auto-roll (setTimeout(...rollDice(), 1200))
+        // every single time it runs, gated only on "!this.isRolling". The boat race / quiz /
+        // kingyo mini-games all call updateHUD() while they're on screen (e.g. after a money
+        // change) — if isRolling were still false at that point, that HUD refresh would queue
+        // up a SECOND, unwanted rollDice() call that fires mid-minigame and silently resolves
+        // a normal move underneath it, which is exactly what caused "nothing happens, it just
+        // proceeds" for the boat race and the quiz's black-screen freeze. Setting it true here,
+        // before ANY branch (including skipTurn), closes that whole window.
+        this.isRolling = true;
 
         if (cp.skipTurn) {
           cp.skipTurn = false;
@@ -3771,8 +3784,6 @@
           this.addLog(`🛑 ${cp.name} は1回休みの状態のためパスしました。${reason ? `（理由: ${reason}）` : ''}`);
           return;
         }
-
-        this.isRolling = true;
 
         // When the host is resolving a guest's turn on their behalf, that guest's own
         // screen plays the "real" spin + walk (see animateGuestPlayerMovement) — so the
@@ -4254,10 +4265,10 @@
 
       async showQuizQuestion(player) {
         const fallbackQuestions = [
-          { genre:'江戸川区の名所', difficulty:'カンタン', q:'江戸川区にあるタワーホール船堀の展望室がある建物はどれでしょう？', options:['船堀タワー','東京タワー','スカイツリー'], answer:0 },
-          { genre:'江戸川区の地理', difficulty:'カンタン', q:'江戸川区の東側を流れる大きな川はどれでしょう？', options:['江戸川','多摩川','隅田川'], answer:0 },
-          { genre:'江戸川区の豆知識', difficulty:'カンタン', q:'江戸川区の区名の由来となった川はどれでしょう？', options:['江戸川','荒川','神田川'], answer:0 },
-          { genre:'江戸川区の名所', difficulty:'カンタン', q:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:0 }
+          { genre:'江戸川区の名所', difficulty:'カンタン', question:'江戸川区にあるタワーホール船堀の展望室がある建物はどれでしょう？', options:['船堀タワー','東京タワー','スカイツリー'], answer:'船堀タワー' },
+          { genre:'江戸川区の地理', difficulty:'カンタン', question:'江戸川区の東側を流れる大きな川はどれでしょう？', options:['江戸川','多摩川','隅田川'], answer:'江戸川' },
+          { genre:'江戸川区の豆知識', difficulty:'カンタン', question:'江戸川区の区名の由来となった川はどれでしょう？', options:['江戸川','荒川','神田川'], answer:'江戸川' },
+          { genre:'江戸川区の名所', difficulty:'カンタン', question:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:'南部' }
         ];
         let questions = null;
         try {
@@ -4269,11 +4280,13 @@
             else if (Array.isArray(data.data)) questions = data.data;
           }
         } catch (e) { console.warn('quiz_data.json の読み込みに失敗:', e); }
-        questions = (questions || fallbackQuestions).filter(q => q && q.q && Array.isArray(q.options) && q.options.length >= 2);
+        // 実データのフィールド名は "question"（"q" ではない）で、answer は選択肢と一致する
+        // 文字列（インデックスではない）。フォールバック問題も同じ形に揃えてある。
+        questions = (questions || fallbackQuestions).filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
         const q = questions[Math.floor(Math.random() * questions.length)] || fallbackQuestions[0];
         this.activeQuizQuestion = q;
         document.getElementById('quiz-genre-badge').textContent = q.genre || '江戸川クイズ';
-        document.getElementById('quiz-question-text').textContent = q.q;
+        document.getElementById('quiz-question-text').textContent = q.question;
         const optionsEl = document.getElementById('quiz-options');
         optionsEl.innerHTML = q.options.map((opt, idx) => `<button disabled class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition opacity-60" onclick="EdogawaSugoroku.answerQuiz(${idx})">${idx + 1}. ${opt}</button>`).join('');
         let ended = false;
@@ -4281,12 +4294,18 @@
           if (ended) return; ended = true;
           this.quizAnswerEnabled = true;
           document.querySelectorAll('#quiz-options button').forEach(b => { b.disabled = false; b.classList.remove('opacity-60'); });
-          if (player.isCpu || this.autoMode) setTimeout(() => { if (!this.quizAnswered) this.answerQuiz(Number.isInteger(q.answer) ? q.answer : 0); }, 500);
+          if (player.isCpu || this.autoMode) {
+            setTimeout(() => {
+              if (this.quizAnswered) return;
+              const correctIdx = q.options.findIndex(o => o === q.answer);
+              this.answerQuiz(correctIdx >= 0 ? correctIdx : 0);
+            }, 500);
+          }
         };
-        this.speakQuizQuestion(q.q, enableAnswers);
+        this.speakQuizQuestion(q.question, enableAnswers);
         // speechSynthesis の onend がブラウザによって発火しない場合の安全弁。
         clearTimeout(this.quizSpeechFallbackTimer);
-        this.quizSpeechFallbackTimer = setTimeout(enableAnswers, Math.max(4500, Math.min(12000, q.q.length * 180)));
+        this.quizSpeechFallbackTimer = setTimeout(enableAnswers, Math.max(4500, Math.min(12000, q.question.length * 180)));
       },
 
       answerQuiz(index) {
@@ -4294,7 +4313,8 @@
         const q = this.activeQuizQuestion;
         if (!player || !q || this.quizAnswered || !this.quizAnswerEnabled) return;
         this.quizAnswered = true;
-        const correct = index === q.answer;
+        const chosenText = q.options[index];
+        const correct = chosenText === q.answer;
         document.querySelectorAll('#quiz-options button').forEach(b => b.disabled = true);
         if (correct) { player.money += 50000; sound.playQuizCorrect(); } else { sound.playQuizWrong(); }
         document.getElementById('quiz-question-screen')?.classList.add('hidden');
@@ -4303,7 +4323,7 @@
         const icon = document.getElementById('quiz-result-icon');
         icon.textContent = correct ? '〇' : '×';
         icon.className = `text-[120px] leading-none font-black ${correct ? 'text-red-500' : 'text-blue-500'}`;
-        document.getElementById('quiz-result-answer').textContent = q.options[q.answer];
+        document.getElementById('quiz-result-answer').textContent = q.answer;
         document.getElementById('quiz-result-text').textContent = correct ? '正解！' : '不正解！';
         document.getElementById('quiz-result-text').className = `text-base font-black ${correct ? 'text-red-400' : 'text-blue-400'}`;
         document.getElementById('quiz-result-money').textContent = correct ? '賞金 ＋¥50,000' : '賞金なし';
@@ -4775,32 +4795,7 @@
       },
 
       finishTurn() {
-        const cp = this.players[this.currentPlayerIdx];
-
-        if (this.maybeTriggerSpecialEvent(cp)) {
-          return; // the special-event flow calls finishTurnContinue() itself once resolved
-        }
-
         this.finishTurnContinue();
-      },
-
-      // クイズ・金魚すくいの共有トリガー。3〜5ターン目に、誰かの手番が終わるたびに一定確率で
-      // 発火し、発火した場合はその手番プレーヤー1人だけに参加権が与えられる。
-      // ゲーム内で一度きりのイベント（quiz/kingyoどちらが出るかは1/2でランダム）。
-      maybeTriggerSpecialEvent(player) {
-        if (!player) return false;
-        if (this.specialEventUsed) return false;
-        if (this.isMultiplayer && !this.isHost) return false; // ホストのみが抽選・進行を行う
-        if (this.turnCount < 3 || this.turnCount > 5) return false;
-        if (Math.random() >= 0.35) return false;
-
-        this.specialEventUsed = true;
-        if (Math.random() < 0.5) {
-          this.startQuizInvite(player);
-        } else {
-          this.startKingyoInvite(player);
-        }
-        return true;
       },
 
       finishTurnContinue() {
