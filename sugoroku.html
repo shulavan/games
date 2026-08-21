@@ -641,7 +641,7 @@
         <h2 class="font-mincho text-xl font-bold text-amber-300">江戸川競艇ゲームに参加しますか？</h2>
         <p id="boatrace-invite-desc" class="text-sm text-slate-300 leading-relaxed"></p>
         <div class="grid grid-cols-2 gap-3 pt-2">
-          <button onclick="EdogawaSugoroku.respondBoatRaceInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">参加する</button>
+          <button onclick="EdogawaSugoroku.respondBoatRaceInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">はい（参加費￥1,000）</button>
           <button onclick="EdogawaSugoroku.respondBoatRaceInvite(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition">見送る</button>
         </div>
       </div>
@@ -1823,6 +1823,10 @@
       boatRaceActive: false,
       boatRaceEventsThisLeg: 0,
       boatRaceCapThisLeg: 1,
+      boatRaceState: null,
+      boatRaceActionSeq: 0,
+      lastAppliedBoatRaceActionSeq: 0,
+      boatRaceTimer: null,
       miniGameActive: false,
       kingyoSpawnTimer: null,
       kingyoFishSpawned: 0,
@@ -2311,6 +2315,9 @@
           if (this.isHost && data.gameState && data.gameState.pendingRoll) {
             this.handlePendingRollRequest(data.gameState.pendingRoll);
           }
+          if (this.isHost && data.boatRaceAction) {
+            this.handleBoatRaceAction(data.boatRaceAction);
+          }
         }
       },
 
@@ -2399,7 +2406,8 @@
           lastEvent: this.lastEventForSync || null,
           eventSeq: this.eventSeq || 0,
           lastDiceValue: this.lastDiceValueForSync || null,
-          rocketGiftEventSeq: this.rocketGiftEventSeq || 0
+          rocketGiftEventSeq: this.rocketGiftEventSeq || 0,
+          boatRace: this.boatRaceState || null
         };
 
         try {
@@ -2442,6 +2450,7 @@
 
       applyRemoteGameState(gs) {
         if (!gs) return;
+        if (!this.isHost) this.applyRemoteBoatRaceState(gs.boatRace || null);
         if (typeof gs.version === 'number' && gs.version <= this.gameStateVersion) return;
         this.gameStateVersion = gs.version || this.gameStateVersion;
 
@@ -4960,6 +4969,392 @@
         item.className = "bg-slate-950 p-2 rounded border border-slate-800/80";
         item.innerText = msg;
         list.prepend(item);
+      },
+
+
+      // ============================================================
+      // 江戸川競艇ミニゲーム（boatrace.html組み込み版）
+      // 強制移動されたプレーヤーの「次のターン」に開催。
+      // ホストを状態管理者とし、他の人間プレーヤーは各端末から参加可能。
+      // ============================================================
+      _boatRaceRoomRef() {
+        if (!this.db || !this.roomId || !window.FirebaseLib) return null;
+        return window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+      },
+
+      _showBoatRaceScreen(screenId) {
+        const modal = document.getElementById('boatrace-modal');
+        if (!modal) return;
+        ['boatrace-invite-screen','boatrace-betting-screen','boatrace-yosao-screen','boatrace-buy-screen','boatrace-race-screen','boatrace-result-screen']
+          .forEach(id => document.getElementById(id)?.classList.add('hidden'));
+        document.getElementById(screenId)?.classList.remove('hidden');
+        modal.classList.remove('hidden');
+      },
+
+      _boatRaceParticipants() {
+        const st = this.boatRaceState;
+        return st?.participants || {};
+      },
+
+      _boatRaceIsParticipant(uid) {
+        return !!this._boatRaceParticipants()[uid];
+      },
+
+      _boatRaceLocalPlayer() {
+        return this.players.find(p => p.uid === this.myUid) || null;
+      },
+
+      async _submitBoatRaceAction(action) {
+        if (!this.isMultiplayer || this.isHost) {
+          return this.handleBoatRaceAction({ ...action, uid: this.myUid, seq: Date.now() });
+        }
+        const ref = this._boatRaceRoomRef();
+        if (!ref) return;
+        try {
+          const seq = Date.now() + Math.floor(Math.random() * 1000);
+          await window.FirebaseLib.updateDoc(ref, {
+            boatRaceAction: { ...action, uid: this.myUid, seq }
+          });
+        } catch (e) {
+          console.error('競艇操作の送信に失敗:', e);
+        }
+      },
+
+      async startBoatRaceEvent(forcedPlayer) {
+        if (this.boatRaceActive) return;
+        const forced = forcedPlayer || this.players[this.currentPlayerIdx];
+        if (!forced) return;
+
+        const winds = [2,4,8,12];
+        const waves = [5,15,35,50];
+        const wind = winds[Math.floor(Math.random()*winds.length)];
+        const wave = waves[Math.floor(Math.random()*waves.length)];
+        const weights = [0,50,15 + (wind >= 7 ? 25 : 0),15 + (wave >= 30 ? 25 : 0),15,5];
+
+        this.boatRaceActive = true;
+        this.boatRaceState = {
+          phase: 'betting',
+          forcedPlayerUid: forced.uid,
+          participants: {},
+          bets: {},
+          odds: {},
+          weather: { wind, wave, text: `天候: 晴れ | 風速: ${wind}m | 波高: ${wave}cm` },
+          startedAt: Date.now(),
+          deadline: Date.now() + 30000,
+          rankResult: null
+        };
+
+        const odds = {};
+        for (let i=1;i<=5;i++) {
+          for (let j=1;j<=5;j++) {
+            if (i===j) continue;
+            const p = weights[i]*0.7 + weights[j]*0.3;
+            const base = p > 0 ? (100/p)*(0.8+Math.random()*0.4) : 299.9;
+            odds[`${i}-${j}`] = Math.max(1.1, Math.min(299.9, base)).toFixed(1);
+          }
+        }
+        this.boatRaceState.odds = odds;
+
+        // 強制移動した本人は参加費なし。CPUは自動参加。
+        this.boatRaceState.participants[forced.uid] = true;
+        // CPUは確認画面を出さず自動参加。強制移動されたCPU以外も自動参加する。
+        this.players.filter(p => p.isCpu && !this.boatRaceState.participants[p.uid]).forEach(p => {
+          if (p.money >= 1000) {
+            p.money -= 1000;
+            this.boatRaceState.participants[p.uid] = true;
+          }
+        });
+
+        // 同一端末のソロ/ホストではそのまま画面を開く。
+        this._renderBoatRaceForCurrentDevice();
+        this._startBoatRaceTimerHost();
+
+        if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
+      },
+
+      _renderBoatRaceForCurrentDevice() {
+        const st = this.boatRaceState;
+        if (!st) return;
+        const me = this._boatRaceLocalPlayer();
+        const isForced = !!me && me.uid === st.forcedPlayerUid;
+        const isParticipant = !!me && !!st.participants?.[me.uid];
+
+        if (!me) return;
+
+        if (st.phase === 'betting') {
+          if (isForced || isParticipant) {
+            this._showBoatRaceScreen('boatrace-betting-screen');
+            this._renderBoatRaceBetting();
+          } else if (!me.isCpu) {
+            document.getElementById('boatrace-invite-desc').innerText =
+              `${this.players.find(p=>p.uid===st.forcedPlayerUid)?.name || 'プレーヤー'} が江戸川競艇場へ強制移動しました。\n参加費は￥1,000です。`;
+            this._showBoatRaceScreen('boatrace-invite-screen');
+          }
+        } else if (st.phase === 'race') {
+          this._showBoatRaceScreen('boatrace-race-screen');
+          this._renderBoatRaceTrack(st.rankResult || null);
+        } else if (st.phase === 'result') {
+          this._showBoatRaceScreen('boatrace-result-screen');
+          this._renderBoatRaceResult();
+        }
+      },
+
+      _renderBoatRaceBetting() {
+        const st = this.boatRaceState;
+        if (!st) return;
+        const weather = document.getElementById('boatrace-weather-line');
+        if (weather) weather.innerText = st.weather.text;
+        const grid = document.getElementById('boatrace-odds-grid');
+        if (grid) {
+          grid.innerHTML = Object.entries(st.odds || {}).map(([pair, odds]) =>
+            `<button class="bg-slate-950/70 border border-slate-700 hover:border-amber-400 text-slate-100 rounded-lg py-2 text-[10px] font-bold transition" onclick="EdogawaSugoroku.openBoatRaceBuy('${pair}')">${pair}<br><span class="text-amber-300">${odds}倍</span></button>`
+          ).join('');
+        }
+        const me = this._boatRaceLocalPlayer();
+        const myBets = me ? (st.bets?.[me.uid] || []) : [];
+        const summary = document.getElementById('boatrace-my-bets-summary');
+        if (summary) summary.innerText = myBets.length ? `購入: ${myBets.map(b=>`${b.pair} ¥${b.amount.toLocaleString()}`).join(' / ')}` : 'まだ舟券を購入していません';
+        const timer = document.getElementById('boatrace-timer');
+        if (timer) timer.innerText = Math.max(0, Math.ceil((st.deadline-Date.now())/1000));
+      },
+
+      _startBoatRaceTimerHost() {
+        if (!this.isHost && this.isMultiplayer) return;
+        clearInterval(this.boatRaceTimer);
+        const tick = async () => {
+          if (!this.boatRaceState || this.boatRaceState.phase !== 'betting') return;
+          this._renderBoatRaceBetting();
+          if (Date.now() >= this.boatRaceState.deadline) {
+            clearInterval(this.boatRaceTimer);
+            await this._startBoatRaceRace();
+          }
+        };
+        tick();
+        this.boatRaceTimer = setInterval(tick, 500);
+      },
+
+      async respondBoatRaceInvite(join) {
+        const me = this._boatRaceLocalPlayer();
+        if (!me || !this.boatRaceState) return;
+        if (!join) {
+          this._showBoatRaceScreen('boatrace-invite-screen');
+          document.getElementById('boatrace-invite-desc').innerText = '今回は見送ります。';
+          setTimeout(()=>this._renderBoatRaceForCurrentDevice(), 700);
+          return;
+        }
+        if (me.money < 1000) {
+          alert('参加費￥1,000が足りません。今回は見送ります。');
+          return;
+        }
+        await this._submitBoatRaceAction({ type:'join', amount:1000 });
+      },
+
+      openBoatRaceBuy(pair) {
+        const st = this.boatRaceState, me = this._boatRaceLocalPlayer();
+        if (!st || st.phase !== 'betting' || !me || !st.participants?.[me.uid]) return;
+        this.boatRaceSelectedPair = pair;
+        this.boatRaceSelectedAmount = 1000;
+        document.getElementById('boatrace-buy-pair').innerText = pair;
+        document.getElementById('boatrace-buy-amount-display').innerText = '¥1,000';
+        this._showBoatRaceScreen('boatrace-buy-screen');
+      },
+
+      boatRaceSetBetAmount(amount) {
+        this.boatRaceSelectedAmount = amount;
+        const el = document.getElementById('boatrace-buy-amount-display');
+        if (el) el.innerText = `¥${amount.toLocaleString()}`;
+      },
+
+      async confirmBoatRaceBet() {
+        const amount = this.boatRaceSelectedAmount || 1000;
+        const pair = this.boatRaceSelectedPair;
+        const me = this._boatRaceLocalPlayer();
+        if (!me || !pair || amount < 100) return;
+        await this._submitBoatRaceAction({ type:'bet', pair, amount });
+        this._showBoatRaceScreen('boatrace-betting-screen');
+      },
+
+      closeBoatRaceBuy() {
+        this._showBoatRaceScreen('boatrace-betting-screen');
+        this._renderBoatRaceBetting();
+      },
+
+      openBoatRaceYosao() {
+        const st = this.boatRaceState;
+        const pairs = Object.keys(st?.odds || {});
+        const pair = pairs[Math.floor(Math.random()*pairs.length)] || '1-2';
+        document.getElementById('boatrace-yosao-text').innerText = `今回のおすすめは ${pair} だ！`;
+        this._showBoatRaceScreen('boatrace-yosao-screen');
+      },
+
+      closeBoatRaceYosao() {
+        this._showBoatRaceScreen('boatrace-betting-screen');
+        this._renderBoatRaceBetting();
+      },
+
+      async boatRaceCloseBettingEarly() {
+        if (!this.boatRaceState || this.boatRaceState.phase !== 'betting') return;
+        if (!this.isHost && this.isMultiplayer) return;
+        await this._startBoatRaceRace();
+      },
+
+      async handleBoatRaceAction(action) {
+        if (!this.isHost && this.isMultiplayer) return;
+        if (!action || !this.boatRaceState || this.boatRaceState.phase !== 'betting') return;
+        if ((action.seq || 0) <= (this.lastAppliedBoatRaceActionSeq || 0)) return;
+        this.lastAppliedBoatRaceActionSeq = action.seq || Date.now();
+
+        const player = this.players.find(p => p.uid === action.uid);
+        if (!player) return;
+
+        if (action.type === 'join') {
+          if (player.money < 1000) return;
+          player.money -= 1000;
+          this.boatRaceState.participants[action.uid] = true;
+          this.addLog(`🚤 ${player.name} が江戸川競艇に参加（参加費 ¥1,000）`);
+        } else if (action.type === 'bet') {
+          if (!this.boatRaceState.participants[action.uid]) return;
+          const amount = Math.floor(Number(action.amount)/100)*100;
+          if (amount < 100 || player.money < amount || !this.boatRaceState.odds[action.pair]) return;
+          player.money -= amount;
+          if (!this.boatRaceState.bets[action.uid]) this.boatRaceState.bets[action.uid] = [];
+          this.boatRaceState.bets[action.uid].push({ pair: action.pair, amount });
+          this.addLog(`🎟️ ${player.name}: ${action.pair} に ¥${amount.toLocaleString()} 投票`);
+        }
+        this._renderBoatRaceForCurrentDevice();
+        this.updateHUD();
+        await this.syncGameStateToRoom();
+      },
+
+      async _startBoatRaceRace() {
+        const st = this.boatRaceState;
+        if (!st || st.phase !== 'betting') return;
+        st.phase = 'race';
+        this._renderBoatRaceForCurrentDevice();
+
+        // CPUは自動参加済み。最大3点をランダム購入。
+        this.players.filter(p => p.isCpu && st.participants[p.uid]).forEach(p => {
+          const pairs = Object.keys(st.odds);
+          const count = Math.min(3, 1 + Math.floor(Math.random()*3));
+          st.bets[p.uid] = [];
+          for (let i=0;i<count;i++) {
+            const pair = pairs[Math.floor(Math.random()*pairs.length)];
+            if (st.bets[p.uid].some(b=>b.pair===pair)) continue;
+            const amount = [100,500,1000][Math.floor(Math.random()*3)];
+            if (p.money >= amount) { p.money -= amount; st.bets[p.uid].push({pair,amount}); }
+          }
+        });
+
+        const weights=[0,50,15,15,15,5];
+        if (st.weather.wind>=7) weights[2]+=25;
+        if (st.weather.wave>=30) weights[3]+=25;
+        if (Math.random()<0.05) weights[5]+=200;
+        const boats=[1,2,3,4,5], result=[];
+        while(boats.length){
+          const total=boats.reduce((a,b)=>a+weights[b],0);
+          let r=Math.random()*total, acc=0;
+          for(let i=0;i<boats.length;i++){
+            acc+=weights[boats[i]];
+            if(r<=acc){ result.push(boats[i]); boats.splice(i,1); break; }
+          }
+        }
+        st.rankResult=result;
+        this._renderBoatRaceTrack(result);
+        if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
+        setTimeout(async()=>{ await this._finishBoatRaceRace(); }, 5000);
+      },
+
+      _renderBoatRaceTrack(result) {
+        const track=document.getElementById('boatrace-track');
+        if(!track) return;
+        track.innerHTML='';
+        const icons=['','🚤','⛵️','🛥️','🛳️','🚣'];
+        [1,2,3,4,5].forEach(n=>{
+          const row=document.createElement('div');
+          row.className='relative h-6 bg-sky-500/30 rounded border border-white/10 overflow-hidden';
+          row.innerHTML=`<span class="absolute left-1 top-0.5 text-[9px] text-white/80">${n}</span><span id="br-boat-${n}" class="absolute left-6 top-0 text-lg"> ${icons[n]}</span>`;
+          track.appendChild(row);
+        });
+        if (!result) return;
+        result.forEach((boat,rank)=>{
+          const el=document.getElementById(`br-boat-${boat}`);
+          if(el) setTimeout(()=>{ el.style.transition=`left ${1.8+rank*.25}s linear`; el.style.left='88%'; },100);
+        });
+      },
+
+      async _finishBoatRaceRace() {
+        const st=this.boatRaceState;
+        if(!st || st.phase!=='race') return;
+        st.phase='result';
+        const winningPair=`${st.rankResult[0]}-${st.rankResult[1]}`;
+        const payoutLines=[];
+        Object.entries(st.bets||{}).forEach(([uid,bets])=>{
+          const p=this.players.find(x=>x.uid===uid); if(!p) return;
+          let payout=0, spent=0;
+          (bets||[]).forEach(b=>{
+            spent+=b.amount;
+            if(b.pair===winningPair) payout+=Math.floor(b.amount*parseFloat(st.odds[b.pair]||1));
+          });
+          if(payout) p.money+=payout;
+          payoutLines.push(`${p.name}: 投票 ¥${spent.toLocaleString()} / 払戻 ¥${payout.toLocaleString()}`);
+        });
+        this._renderBoatRaceResult();
+        this.updateHUD();
+        this.addLog(`🏁 [江戸川競艇] ${winningPair} 的中。`);
+        if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
+        // 結果を少し見せてからホストが自動的に競艇を閉じ、次のターンへ進む。
+        clearTimeout(this.boatRaceResultCloseTimer);
+        this.boatRaceResultCloseTimer = setTimeout(() => this.closeBoatRaceEvent(), 5000);
+      },
+
+      _renderBoatRaceResult() {
+        const st=this.boatRaceState;
+        if(!st) return;
+        const pair=`${st.rankResult?.[0]}-${st.rankResult?.[1]}`;
+        const resultEl=document.getElementById('boatrace-result-rank');
+        if(resultEl) resultEl.innerText=`確定: ${pair}（${st.rankResult?.map(n=>['','🚤','⛵️','🛥️','🛳️','🚣'][n]).join(' → ')}）`;
+        const breakdown=document.getElementById('boatrace-result-breakdown');
+        if(breakdown){
+          breakdown.innerHTML=Object.entries(st.bets||{}).map(([uid,bets])=>{
+            const p=this.players.find(x=>x.uid===uid);
+            if(!p) return '';
+            return `<div class="border-b border-slate-800 pb-1"><b>${p.name}</b>：${(bets||[]).map(b=>`${b.pair} ¥${b.amount.toLocaleString()}`).join(' / ')||'投票なし'}</div>`;
+          }).join('');
+        }
+      },
+
+      applyRemoteBoatRaceState(st) {
+        if (!st) return;
+        this.boatRaceState = st;
+        this.boatRaceActive = ['betting','race','result'].includes(st.phase);
+        if (st.phase === 'betting') this._renderBoatRaceForCurrentDevice();
+        else if (st.phase === 'race') {
+          this._showBoatRaceScreen('boatrace-race-screen');
+          this._renderBoatRaceTrack(st.rankResult || null);
+        } else if (st.phase === 'result') {
+          this._showBoatRaceScreen('boatrace-result-screen');
+          this._renderBoatRaceResult();
+        }
+      },
+
+      async closeBoatRaceEvent() {
+        clearInterval(this.boatRaceTimer);
+        clearTimeout(this.boatRaceResultCloseTimer);
+        const st=this.boatRaceState;
+        if (!st) return;
+        this._showBoatRaceScreen('boatrace-result-screen');
+        if (this.isMultiplayer && !this.isHost) {
+          // Guests close only their local modal; host advances the turn.
+          document.getElementById('boatrace-modal')?.classList.add('hidden');
+          return;
+        }
+        this.boatRaceActive=false;
+        this.boatRaceState=null;
+        document.getElementById('boatrace-modal')?.classList.add('hidden');
+        this.addLog('🚤 江戸川競艇終了。次のターンへ進みます。');
+        await this.syncGameStateToRoom();
+        this.finishTurn();
+        this.panToCurrentPlayer();
       },
 
       toggleFullscreen() {
