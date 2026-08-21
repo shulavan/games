@@ -1813,16 +1813,18 @@
       geocodeRefreshDone: false,
       geocodeRefreshPromise: null,
       facilityMarkerRefs: new Map(),
+      resumeInProgress: false,
 
       async init() {
         try {
           const savedGeo = localStorage.getItem('edogawa_sugoroku_geocode_cache_v3');
           if (savedGeo) this.geocodeCache = JSON.parse(savedGeo) || {};
         } catch (_) { this.geocodeCache = {}; }
-        // 座標データを全面更新するため、旧版の保存ボードと旧ジオコードキャッシュは強制破棄。
-        // ニックネーム等の設定は残します。
+        // 座標全面更新版でも、現在のゲーム途中のセーブは保持する。
+        // 旧座標キャッシュだけを破棄し、ゲーム状態は「前回の続きから遊ぶ」で復元する。
+        // ※ゲーム状態を消すと、再起動時に「前回の続きから遊ぶ」が表示されなくなるため、
+        //   edogawa_sugoroku_state はここでは削除しない。
         try {
-          localStorage.removeItem('edogawa_sugoroku_state');
           localStorage.removeItem('edogawa_sugoroku_geocode_cache_v1');
           localStorage.removeItem('edogawa_sugoroku_geocode_cache_v2');
         } catch (_) {}
@@ -2667,7 +2669,8 @@
         if (this.countdownTimer) clearInterval(this.countdownTimer);
         this.tryFullscreen();
         this.isMultiplayer = false;
-        // 旧セーブはinit()で破棄済み。今回のゲームは必ず新しい座標から開始します。
+        // 「ひとりで遊ぶ」は新規ゲーム。既存の途中セーブは明示的に新規開始した時だけ置き換える。
+        try { localStorage.removeItem("edogawa_sugoroku_state"); } catch (_) {}
 
         const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
         localStorage.setItem("edogawa_sugoroku_nickname", pName);
@@ -2691,9 +2694,85 @@
       },
 
       async resumeGame() {
-        // 座標全面更新版では旧ボードを再利用しません。
-        try { localStorage.removeItem("edogawa_sugoroku_state"); } catch (_) {}
-        return this.startGame();
+        if (this.resumeInProgress) return;
+        this.resumeInProgress = true;
+        try {
+          const raw = localStorage.getItem("edogawa_sugoroku_state");
+          if (!raw) {
+            this.checkSaveData();
+            return;
+          }
+
+          const state = JSON.parse(raw);
+          if (!state || state.coordinateDataVersion !== 3 || !Array.isArray(state.players) ||
+              !Array.isArray(state.roadNetworkNodes) || !state.roadNetworkNodes.length ||
+              !state.currentDestination) {
+            // 旧形式や壊れたセーブだけを無効化する。
+            localStorage.removeItem("edogawa_sugoroku_state");
+            this.checkSaveData();
+            return this.startGame();
+          }
+
+          this.tryFullscreen();
+          this.isMultiplayer = false;
+          this.isRolling = false;
+          this.miniGameActive = false;
+          this.currentPlayerIdx = Number.isInteger(state.currentPlayerIdx) ? state.currentPlayerIdx : 0;
+          this.turnCount = Number.isInteger(state.turnCount) ? state.turnCount : 0;
+          this.currentDestination = state.currentDestination;
+          this.roadNetworkNodes = state.roadNetworkNodes;
+          this.goalNodeIdx = Number.isInteger(state.goalNodeIdx) ? state.goalNodeIdx : null;
+          this.specialEventUsed = !!state.specialEventUsed;
+          this.players = state.players;
+
+          // 念のため各プレイヤーの保存値を正規化。既存のセーブデータを壊さず、
+          // 新しいプロパティだけ安全な初期値を補完する。
+          this.players.forEach((p, i) => {
+            p.id = Number.isInteger(p.id) ? p.id : i;
+            p.isCpu = i !== 0 ? true : !!p.isCpu;
+            p.avatar = p.avatar || (i === 0 ? this.selectedAvatar : "🧑");
+            p.money = Number.isFinite(p.money) ? p.money : 100000;
+            p.path = this.normalizePathIndices(p.path || []);
+            p.pathIndex = Number.isInteger(p.pathIndex) ? p.pathIndex : 0;
+            p.currentNodeIdx = Number.isInteger(p.currentNodeIdx) ? p.currentNodeIdx : (p.path[p.pathIndex] ?? 0);
+            p.vehicle = p.vehicle || null;
+            p.isFlying = !!p.isFlying;
+          });
+
+          document.getElementById("lobby-screen").classList.add("hidden");
+          sound.playBGM('map');
+          this.initMap();
+
+          // 保存済みの盤面をそのまま復元する。再度OSRMで作り直さないため、
+          // 「途中まで進んだ位置」「各プレイヤー固有のルート」「40mマス」を維持できる。
+          const startNodeIdx = this.players[0]?.currentNodeIdx ?? 0;
+          this.renderBoardVisuals(this.roadNetworkNodes, startNodeIdx, this.goalNodeIdx, this.currentDestination);
+
+          this.playerMarkers.forEach(m => m && this.map.removeLayer(m));
+          this.playerMarkers = [];
+          this.players.forEach(p => {
+            const node = this.roadNetworkNodes[p.currentNodeIdx];
+            if (!node) return;
+            const marker = L.marker([node.lat, node.lng], {
+              icon: this.createPlayerIcon(p, ""),
+              zIndexOffset: 1000
+            }).addTo(this.map);
+            this.playerMarkers[p.id] = marker;
+          });
+
+          this.updatePlayerRoutes();
+          this.updateHUD();
+          this.checkRocketGiftEligibility();
+          this.addLog(`💾 前回の続きから再開しました。目的地：${this.currentDestination.name}`);
+          this.panToCurrentPlayer();
+        } catch (e) {
+          console.error("セーブデータの復元に失敗しました:", e);
+          try { localStorage.removeItem("edogawa_sugoroku_state"); } catch (_) {}
+          this.checkSaveData();
+          return this.startGame();
+        } finally {
+          this.resumeInProgress = false;
+        }
       },
 
       initMap() {
@@ -3803,6 +3882,8 @@
           }
 
           this.updatePlayerRoutes();
+          // ブラウザを途中終了しても、直前に進んだマスまで「前回の続き」に残す。
+          if (!this.isMultiplayer) this.saveGameState();
 
           if (!silent) {
             sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
