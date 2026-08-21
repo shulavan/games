@@ -1783,10 +1783,29 @@
       specialEventUsed: false,
       boatRaceActive: false,
       miniGameActive: false,
+      geocodeCache: {},
+      geocodeLastAt: 0,
+      geocodeRefreshStarted: false,
+      geocodeRefreshDone: false,
+      geocodeRefreshPromise: null,
+      facilityMarkerRefs: new Map(),
 
       async init() {
+        try {
+          const savedGeo = localStorage.getItem('edogawa_sugoroku_geocode_cache_v3');
+          if (savedGeo) this.geocodeCache = JSON.parse(savedGeo) || {};
+        } catch (_) { this.geocodeCache = {}; }
+        // 座標データを全面更新するため、旧版の保存ボードと旧ジオコードキャッシュは強制破棄。
+        // ニックネーム等の設定は残します。
+        try {
+          localStorage.removeItem('edogawa_sugoroku_state');
+          localStorage.removeItem('edogawa_sugoroku_geocode_cache_v1');
+          localStorage.removeItem('edogawa_sugoroku_geocode_cache_v2');
+        } catch (_) {}
         this.renderAvatarGrid();
         this.checkSaveData();
+        // 施設POIはバックグラウンドで全件再測位。ルート生成時は必ず個別に再確認します。
+        this.refreshAllFacilityCoordinates().catch(e => console.warn('施設座標の全面更新に失敗:', e));
 
         sound.playBGM('lobby');
         document.addEventListener('click', () => {
@@ -2624,6 +2643,7 @@
         if (this.countdownTimer) clearInterval(this.countdownTimer);
         this.tryFullscreen();
         this.isMultiplayer = false;
+        // 旧セーブはinit()で破棄済み。今回のゲームは必ず新しい座標から開始します。
 
         const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
         localStorage.setItem("edogawa_sugoroku_nickname", pName);
@@ -2647,62 +2667,9 @@
       },
 
       async resumeGame() {
-        const saved = localStorage.getItem("edogawa_sugoroku_state");
-        if (!saved) return;
-        this.tryFullscreen();
-        this.isMultiplayer = false;
-
-        try {
-          const state = JSON.parse(saved);
-          this.players = state.players;
-          this.players.forEach(p => {
-            if (typeof p.forcedMoveCount !== 'number') p.forcedMoveCount = 0;
-            if (typeof p.boatRaceCount !== 'number') p.boatRaceCount = 0;
-          });
-          this.turnCount = state.turnCount;
-          this.currentPlayerIdx = state.currentPlayerIdx;
-          this.currentDestination = state.currentDestination;
-          this.specialEventUsed = typeof state.specialEventUsed === 'boolean' ? state.specialEventUsed : false;
-
-          document.getElementById("lobby-screen").classList.add("hidden");
-          sound.playBGM('map');
-
-          this.initMap();
-
-          if (state.roadNetworkNodes && state.roadNetworkNodes.length && typeof state.goalNodeIdx === 'number') {
-            // Restore the exact saved board and player positions, instead of regenerating
-            // a brand new random board and resetting everyone back to the starting point.
-            this.roadNetworkNodes = state.roadNetworkNodes;
-            this.goalNodeIdx = state.goalNodeIdx;
-            const startNodeForDisplay = this.findNearestNodeIdx(EDOGAWA_START);
-            this.renderBoardVisuals(this.roadNetworkNodes, startNodeForDisplay, this.goalNodeIdx, this.currentDestination);
-
-            this.playerMarkers = [];
-            this.players.forEach((p) => {
-              const node = this.roadNetworkNodes[p.currentNodeIdx];
-              if (!node) return;
-              const marker = L.marker([node.lat, node.lng], {
-                icon: this.createPlayerIcon(p, ""),
-                zIndexOffset: 1000
-              }).addTo(this.map);
-              this.playerMarkers[p.id] = marker;
-            });
-            this.updatePlayerRoutes();
-
-            const activePlayer = this.players[this.currentPlayerIdx];
-            const activeNode = activePlayer ? this.roadNetworkNodes[activePlayer.currentNodeIdx] : null;
-            this.map.setView([activeNode ? activeNode.lat : EDOGAWA_START.lat, activeNode ? activeNode.lng : EDOGAWA_START.lng], 19);
-          } else {
-            // Old save format without board data — fall back to regenerating (best effort).
-            await this.setupBoard(EDOGAWA_START, this.currentDestination);
-          }
-
-          this.updateHUD();
-          this.addLog("💾 保存データからゲームを復元しました。");
-        } catch(e) {
-          console.error("Resume failed, starting a new game:", e);
-          this.startGame();
-        }
+        // 座標全面更新版では旧ボードを再利用しません。
+        try { localStorage.removeItem("edogawa_sugoroku_state"); } catch (_) {}
+        return this.startGame();
       },
 
       initMap() {
@@ -2725,8 +2692,9 @@
       },
 
       renderFacilityMarkers() {
-        if (this.facilityLayerMarkers && this.facilityLayerMarkers.length) return; // only render once
+        if (this.facilityLayerMarkers && this.facilityLayerMarkers.length) return;
         this.facilityLayerMarkers = [];
+        this.facilityMarkerRefs = new Map();
 
         const addGroup = (list, emoji) => {
           (list || []).forEach(loc => {
@@ -2739,6 +2707,8 @@
             const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100 }).addTo(this.map);
             marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
             this.facilityLayerMarkers.push(marker);
+            if (!this.facilityMarkerRefs.has(loc.name)) this.facilityMarkerRefs.set(loc.name, []);
+            this.facilityMarkerRefs.get(loc.name).push(marker);
           });
         };
 
@@ -2750,6 +2720,14 @@
         addGroup(SCHOOLS, '🏫');
         addGroup(POST_OFFICES, '🏣');
         addGroup(TEMPLES_SHRINES, '⛩️');
+      },
+
+      updateFacilityMarkerPosition(place) {
+        if (!place || !this.facilityMarkerRefs) return;
+        const markers = this.facilityMarkerRefs.get(place.name) || [];
+        markers.forEach(marker => {
+          try { marker.setLatLng([place.lat, place.lng]); } catch (_) {}
+        });
       },
 
       async fetchStreetRouteOSRM(start, goal) {
@@ -2781,6 +2759,8 @@
       },
 
       async setupBoard(startLoc, goalLoc) {
+        startLoc = await this.resolvePlaceCoordinates(startLoc, { force: true });
+        goalLoc = await this.resolvePlaceCoordinates(goalLoc, { force: true });
         this.currentDestination = goalLoc;
         this.rocketGiftUsedThisLeg = false;
         this.goalHandledThisLeg = false;
@@ -2959,6 +2939,121 @@
         return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
       },
 
+      async resolvePlaceCoordinates(place, options = {}) {
+        if (!place || !place.name) return place;
+        const key = String(place.name).trim();
+        const force = options.force === true;
+
+        if (!force) {
+          const cached = this.geocodeCache[key];
+          if (cached && Number.isFinite(cached.lat) && Number.isFinite(cached.lng)) {
+            const resolved = { ...place, lat: cached.lat, lng: cached.lng, geocoded: true };
+            this.updateFacilityMarkerPosition(resolved);
+            return resolved;
+          }
+        }
+
+        const base = key
+          .replace(/（[^）]*）/g, '')
+          .replace(/\([^)]*\)/g, '')
+          .replace(/^（医）|^（福）|^（特養）/g, '')
+          .trim();
+        const variants = [
+          `${key}, 江戸川区, 東京都, 日本`,
+          `${base}, 江戸川区, 東京都, 日本`,
+          `${base.replace(/ バス停$/,'')}, 江戸川区, 東京都, 日本`
+        ].filter((q, i, arr) => q && arr.indexOf(q) === i);
+
+        for (const q of variants) {
+          try {
+            // 公開Nominatimの利用制限に合わせ、リクエスト間隔を最低1.1秒確保。
+            const wait = Math.max(0, 1100 - (Date.now() - (this.geocodeLastAt || 0)));
+            if (wait) await new Promise(r => setTimeout(r, wait));
+            this.geocodeLastAt = Date.now();
+
+            const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=jp&accept-language=ja&q=${encodeURIComponent(q)}`;
+            const resp = await fetch(url, { cache: 'no-store' });
+            if (!resp.ok) continue;
+            const data = await resp.json();
+            if (!Array.isArray(data) || !data.length) continue;
+
+            // 江戸川区内の候補を優先。複数候補なら、施設名に含まれる語が
+            // display_name に多く含まれるものを選びます。旧座標は候補選択の基準にしません。
+            const normalizedKey = base.replace(/\s+/g, '').toLowerCase();
+            const candidates = data.filter(hit => {
+              const lat = Number(hit.lat), lng = Number(hit.lon);
+              return Number.isFinite(lat) && Number.isFinite(lng) &&
+                lat >= 35.60 && lat <= 35.80 && lng >= 139.80 && lng <= 139.95;
+            });
+            candidates.sort((a,b) => {
+              const sa = String(a.display_name || '').replace(/\s+/g,'').toLowerCase();
+              const sb = String(b.display_name || '').replace(/\s+/g,'').toLowerCase();
+              const score = x => {
+                let n = 0;
+                if (sa.includes(normalizedKey)) n += 10;
+                if (String(x.type || '').match(/amenity|shop|leisure|place|public_transport|healthcare/)) n += 1;
+                return n;
+              };
+              return score(b) - score(a);
+            });
+            const hit = candidates[0];
+            if (!hit) continue;
+
+            const lat = Number(hit.lat), lng = Number(hit.lon);
+            const resolved = { ...place, lat, lng, geocoded: true, geocodeSource: 'Nominatim', geocodeDisplayName: hit.display_name || '' };
+            this.geocodeCache[key] = { lat, lng, displayName: hit.display_name || '' };
+            try { localStorage.setItem('edogawa_sugoroku_geocode_cache_v3', JSON.stringify(this.geocodeCache)); } catch (_) {}
+            this.updateFacilityMarkerPosition(resolved);
+            return resolved;
+          } catch (e) {
+            console.warn('座標確認に失敗:', key, e);
+          }
+        }
+
+        // 見つからない場合は元座標を残します。ただしルート生成ではこの結果を
+        // そのまま信用せず、OSRMが有効な道路ルートを返すことを必須にします。
+        return place;
+      },
+
+      getAllFacilityObjects() {
+        const groups = [
+          STATIONS_FOR_MAP, BUS_STOPS_FOR_MAP, POLICE_STATIONS, HOSPITALS,
+          PARKS, SCHOOLS, POST_OFFICES, TEMPLES_SHRINES
+        ];
+        Object.values(DESTINATION_PRESETS || {}).forEach(list => groups.push(list));
+        groups.push([EDOGAWA_START, FIRST_GOAL, BOAT_RACE_LOC]);
+        const seen = new Set();
+        const result = [];
+        groups.flat().forEach(loc => {
+          if (!loc || !loc.name || seen.has(loc.name)) return;
+          seen.add(loc.name);
+          result.push(loc);
+        });
+        return result;
+      },
+
+      async refreshAllFacilityCoordinates() {
+        if (this.geocodeRefreshPromise) return this.geocodeRefreshPromise;
+        this.geocodeRefreshStarted = true;
+        const all = this.getAllFacilityObjects();
+        this.geocodeRefreshPromise = (async () => {
+          let done = 0;
+          for (const loc of all) {
+            // v3キャッシュは今回の全面更新で得た正確な位置だけを利用。
+            const resolved = await this.resolvePlaceCoordinates(loc);
+            if (resolved.geocoded) {
+              loc.lat = resolved.lat;
+              loc.lng = resolved.lng;
+              loc.geocoded = true;
+            }
+            done++;
+            this.geocodeRefreshProgress = { done, total: all.length, name: loc.name };
+          }
+          this.geocodeRefreshDone = true;
+          this.addLog?.(`📍 施設座標を全面確認しました（${done}/${all.length}件）`);
+        })();
+        return this.geocodeRefreshPromise;
+      },
       // Builds a standalone route (own OSRM fetch, own nodes appended to the shared node
       // array) from a player's real current position to the new goal. Used when that
       // player is too far from the leg's main shared route to sensibly snap onto it.
@@ -4301,6 +4396,21 @@
       },
 
       handleGoalReach(player) {
+        // 誰かがゴールした時点で、そのレグの🚁/✈️フライト状態を全員解除する。
+        // フライト中は player.vehicle が🚁/✈️のため、次の盤面へ進む前に
+        // isFlying と vehicle の両方を戻さないと、プレーヤーアイコンが
+        // 次のゲームでも🚁/✈️のまま残ってしまう。
+        const flyingPlayers = this.players.filter(p => p && p.isFlying);
+        flyingPlayers.forEach(p => {
+          p.isFlying = false;
+          p.vehicle = null;
+          this.setPlayerIconState(p, { bubbleText: '' });
+        });
+        if (flyingPlayers.length > 0) {
+          this.updatePlayerRoutes();
+          this.addLog(`✈️/🚁 空の旅終了：${player.name} のゴールによりフライト状態を解除しました。`);
+        }
+
         sound.playGoalFanfare();
         sound.playBGM('goal');
         if (typeof confetti === 'function') {
@@ -4371,8 +4481,11 @@
         // at 40m/square ≈ 4km — real streets zig-zag, so we filter on a shorter straight-line
         // radius to stay comfortably under that once actual road routing is applied).
         const MAX_DISTANCE_METERS = 2600;
-        let options = allOptions.filter(opt => this.haversineMeters(fromLoc, opt) <= MAX_DISTANCE_METERS);
-        if (options.length === 0) options = allOptions;
+        // 距離判定には古い手入力座標を使わない。正確な座標が既に取得済みの候補だけで距離制限を行い、
+        // まだ未測位の候補はルーレット確定時に施設名から再測位してからルートを作ります。
+        const accurateOptions = allOptions.filter(opt => this.geocodeCache[opt.name] &&
+          this.haversineMeters(fromLoc, { lat: this.geocodeCache[opt.name].lat, lng: this.geocodeCache[opt.name].lng }) <= MAX_DISTANCE_METERS);
+        let options = accurateOptions.length ? accurateOptions : allOptions;
 
         let counter = 0;
 
@@ -4383,17 +4496,20 @@
           counter++;
           if (counter > 15) {
             clearInterval(timer);
-            const nextGoal = options[Math.floor(Math.random() * options.length)];
-            box.innerText = `🎯 決定: ${nextGoal.name}`;
-            this.nextDestinationCandidate = nextGoal;
-            document.getElementById("roulette-confirm-btn").classList.remove("hidden");
-            sound.playLandBlue();
+            const selectedGoal = options[Math.floor(Math.random() * options.length)];
+            box.innerText = `📍 ${selectedGoal.name} の位置を確認中...`;
+            this.resolvePlaceCoordinates(selectedGoal, { force: true }).then(nextGoal => {
+              box.innerText = `🎯 決定: ${nextGoal.name}`;
+              this.nextDestinationCandidate = nextGoal;
+              document.getElementById("roulette-confirm-btn").classList.remove("hidden");
+              sound.playLandBlue();
 
-            if (this.players[this.selectedCategoryWinnerIdx].isCpu) {
-              this.runCpuCountdown("roulette-cpu-countdown", "roulette-cpu-countdown-num", 3, () => {
-                this.confirmNextSugoroku();
-              });
-            }
+              if (this.players[this.selectedCategoryWinnerIdx].isCpu) {
+                this.runCpuCountdown("roulette-cpu-countdown", "roulette-cpu-countdown-num", 3, () => {
+                  this.confirmNextSugoroku();
+                });
+              }
+            });
           }
         }, 120);
       },
@@ -4487,6 +4603,7 @@
           turnCount: this.turnCount,
           currentPlayerIdx: this.currentPlayerIdx,
           currentDestination: this.currentDestination,
+          coordinateDataVersion: 3,
           roadNetworkNodes: this.roadNetworkNodes,
           goalNodeIdx: this.goalNodeIdx,
           specialEventUsed: this.specialEventUsed
