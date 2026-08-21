@@ -3943,15 +3943,262 @@
       // 順番に交互で発生させる「特別イベント」の入り口。将来ミニゲームが増えても
       // SPECIAL_EVENT_ROTATIONに追加するだけで済むようにしている。
       resolveStarEvent(player) {
+        // ★マスは、このターンをミニゲームへ引き渡す専用入口。
+        // 以前は SPECIAL_EVENT_ROTATION / startQuizInvite / startKingyoInvite が
+        // 最新HTMLに存在しない状態で呼ばれていたため、ここで例外が発生し、
+        // isRolling=true のままターンが進まず「フリーズ」していました。
         if (typeof this.specialEventRotationIdx !== 'number') this.specialEventRotationIdx = 0;
-        const kind = SPECIAL_EVENT_ROTATION[this.specialEventRotationIdx % SPECIAL_EVENT_ROTATION.length];
+        const rotation = ['quiz', 'kingyo'];
+        const kind = rotation[this.specialEventRotationIdx % rotation.length];
         this.specialEventRotationIdx++;
+        this.miniGameActive = true;
+        this.activeMiniGamePlayerId = player.id;
 
         if (kind === 'quiz') {
           this.startQuizInvite(player);
         } else {
           this.startKingyoInvite(player);
         }
+      },
+
+      finishMiniGameTurn(player, logText = '') {
+        const p = player || this.players[this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        this.miniGameActive = false;
+        this.activeMiniGamePlayerId = null;
+        if (logText) this.addLog(logText);
+        // ★マスから戻るときは finishTurn() ではなく直接継続処理へ。
+        // finishTurn() を再度呼ぶと、別の特別イベント抽選と競合するため。
+        this.finishTurnContinue();
+      },
+
+      ensureMiniGameResultButton(containerId, text, handlerName) {
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+        let btn = container.querySelector('[data-mini-game-close]');
+        if (!btn) {
+          btn = document.createElement('button');
+          btn.setAttribute('data-mini-game-close', '1');
+          btn.className = 'w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition mt-2';
+          container.appendChild(btn);
+        }
+        btn.textContent = text;
+        btn.onclick = () => this[handlerName]();
+        return btn;
+      },
+
+      startQuizInvite(player) {
+        const modal = document.getElementById('quiz-modal');
+        if (!modal) {
+          this.finishMiniGameTurn(player, `⭐ ${player.name} の江戸川クイズを開始できなかったため、通常ターンへ戻ります。`);
+          return;
+        }
+        ['quiz-invite-screen','quiz-roulette-screen','quiz-question-screen','quiz-result-screen'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add('hidden');
+        });
+        document.getElementById('quiz-invite-screen')?.classList.remove('hidden');
+        const nameEl = document.getElementById('quiz-invite-name');
+        if (nameEl) nameEl.textContent = `${player.name} が★マスに止まりました！`;
+        modal.classList.remove('hidden');
+        this.activeQuizPlayerId = player.id;
+
+        if (player.isCpu) {
+          this.runCpuCountdown('goal-cpu-countdown','goal-cpu-countdown-num',2,() => this.respondQuizInvite(true));
+        }
+      },
+
+      respondQuizInvite(join) {
+        const player = this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        if (!player) return this.closeQuizEvent();
+        if (!join) {
+          document.getElementById('quiz-modal')?.classList.add('hidden');
+          this.finishMiniGameTurn(player, `⭐ ${player.name} は江戸川クイズを見送りました。`);
+          return;
+        }
+
+        const fee = 10000;
+        player.money = Math.max(0, player.money - fee);
+        this.addLog(`🧠 [江戸川クイズ] ${player.name} が参加料¥${fee.toLocaleString()}を支払いました。`);
+
+        document.getElementById('quiz-invite-screen')?.classList.add('hidden');
+        document.getElementById('quiz-roulette-screen')?.classList.remove('hidden');
+        const genreEl = document.getElementById('quiz-roulette-genre');
+        const genres = ['江戸川区の名所','江戸川区の地理','江戸川区の豆知識'];
+        let i = 0;
+        const roulette = setInterval(() => {
+          if (genreEl) genreEl.textContent = genres[i % genres.length];
+          i++;
+        }, 120);
+        setTimeout(() => {
+          clearInterval(roulette);
+          this.showQuizQuestion(player);
+        }, 900);
+      },
+
+      showQuizQuestion(player) {
+        const questions = [
+          { genre:'江戸川区の名所', difficulty:'カンタン', q:'江戸川区にあるタワーホール船堀の展望室がある建物はどれでしょう？', options:['船堀タワー','東京タワー','スカイツリー'], answer:0 },
+          { genre:'江戸川区の地理', difficulty:'カンタン', q:'江戸川区の東側を流れる大きな川はどれでしょう？', options:['江戸川','多摩川','隅田川'], answer:0 },
+          { genre:'江戸川区の豆知識', difficulty:'カンタン', q:'江戸川区の区名の由来となった川はどれでしょう？', options:['江戸川','荒川','神田川'], answer:0 },
+          { genre:'江戸川区の名所', difficulty:'カンタン', q:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:0 }
+        ];
+        const question = questions[Math.floor(Math.random() * questions.length)];
+        this.activeQuizQuestion = question;
+        document.getElementById('quiz-roulette-screen')?.classList.add('hidden');
+        document.getElementById('quiz-question-screen')?.classList.remove('hidden');
+        document.getElementById('quiz-genre-badge').textContent = question.genre;
+        document.getElementById('quiz-difficulty-badge').textContent = question.difficulty;
+        document.getElementById('quiz-question-text').textContent = question.q;
+        const optionsEl = document.getElementById('quiz-options');
+        optionsEl.innerHTML = question.options.map((opt, idx) => `
+          <button class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition" onclick="EdogawaSugoroku.answerQuiz(${idx})">${idx + 1}. ${opt}</button>
+        `).join('');
+
+        if (player.isCpu) {
+          setTimeout(() => this.answerQuiz(question.answer), 1100);
+        }
+      },
+
+      answerQuiz(index) {
+        const player = this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        const q = this.activeQuizQuestion;
+        if (!player || !q || this.quizAnswered) return;
+        this.quizAnswered = true;
+        const buttons = document.querySelectorAll('#quiz-options button');
+        buttons.forEach((b, i) => {
+          b.disabled = true;
+          if (i === q.answer) b.classList.add('correct');
+          if (i === index && i !== q.answer) b.classList.add('wrong');
+        });
+        const correct = index === q.answer;
+        const prize = correct ? 50000 : 0;
+        player.money += prize;
+        document.getElementById('quiz-question-screen')?.classList.add('hidden');
+        document.getElementById('quiz-result-screen')?.classList.remove('hidden');
+        document.getElementById('quiz-result-icon').textContent = correct ? '⭕' : '❌';
+        document.getElementById('quiz-result-text').textContent = correct ? '正解！おめでとう！' : '残念！不正解です';
+        document.getElementById('quiz-result-answer').textContent = `正解：${q.options[q.answer]}`;
+        document.getElementById('quiz-result-money').textContent = correct ? '賞金 ＋¥50,000' : '賞金なし';
+        this.ensureMiniGameResultButton('quiz-result-screen','了解！次のターンへ','closeQuizEvent');
+        this.addLog(`🧠 [江戸川クイズ] ${player.name} は${correct ? '正解！＋¥50,000' : '不正解'}。`);
+        this.updateHUD();
+      },
+
+      closeQuizEvent() {
+        const player = this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        document.getElementById('quiz-modal')?.classList.add('hidden');
+        this.quizAnswered = false;
+        this.activeQuizQuestion = null;
+        if (player) this.finishMiniGameTurn(player);
+      },
+
+      startKingyoInvite(player) {
+        const modal = document.getElementById('kingyo-modal');
+        if (!modal) {
+          this.finishMiniGameTurn(player, `⭐ ${player.name} の金魚すくいを開始できなかったため、通常ターンへ戻ります。`);
+          return;
+        }
+        ['kingyo-invite-screen','kingyo-game-screen','kingyo-result-screen'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+        document.getElementById('kingyo-invite-screen')?.classList.remove('hidden');
+        document.getElementById('kingyo-invite-name').textContent = `${player.name} が★マスに止まりました！`;
+        modal.classList.remove('hidden');
+        this.activeKingyoPlayerId = player.id;
+        if (player.isCpu) {
+          this.runCpuCountdown('goal-cpu-countdown','goal-cpu-countdown-num',2,() => this.respondKingyoInvite(true));
+        }
+      },
+
+      respondKingyoInvite(join) {
+        const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        if (!player) return this.closeKingyoEvent();
+        if (!join) {
+          document.getElementById('kingyo-modal')?.classList.add('hidden');
+          this.finishMiniGameTurn(player, `🐟 ${player.name} は江戸川金魚すくいを見送りました。`);
+          return;
+        }
+        player.money = Math.max(0, player.money - 1000);
+        this.kingyoEarnings = 0;
+        this.kingyoTimeLeft = 30;
+        this.kingyoFishTimer = null;
+        this.kingyoCountdownTimer = null;
+        document.getElementById('kingyo-invite-screen')?.classList.add('hidden');
+        document.getElementById('kingyo-result-screen')?.classList.add('hidden');
+        document.getElementById('kingyo-game-screen')?.classList.remove('hidden');
+        document.getElementById('kingyo-timer').textContent = '30';
+        document.getElementById('kingyo-earnings').textContent = '¥0';
+        const tank = document.getElementById('kingyo-tank');
+        tank.innerHTML = '';
+        this.addLog(`🐟 [江戸川金魚すくい] ${player.name} が参加料¥1,000を支払いました。`);
+
+        const spawnFish = () => {
+          if (!document.getElementById('kingyo-modal') || document.getElementById('kingyo-game-screen').classList.contains('hidden')) return;
+          const fish = document.createElement('button');
+          fish.type = 'button';
+          fish.className = 'kingyo-fish absolute text-4xl select-none';
+          fish.textContent = Math.random() < 0.5 ? '🐟' : '🐠';
+          fish.style.left = `${5 + Math.random() * 82}%`;
+          fish.style.top = `${8 + Math.random() * 78}%`;
+          fish.onclick = () => {
+            if (fish.dataset.caught) return;
+            fish.dataset.caught = '1';
+            this.kingyoEarnings += 2000;
+            fish.classList.add('caught');
+            document.getElementById('kingyo-earnings').textContent = `¥${this.kingyoEarnings.toLocaleString()}`;
+            setTimeout(() => fish.remove(), 450);
+          };
+          tank.appendChild(fish);
+          setTimeout(() => fish.remove(), 2500);
+        };
+
+        this.kingyoFishTimer = setInterval(spawnFish, 500);
+        spawnFish();
+        this.kingyoCountdownTimer = setInterval(() => {
+          this.kingyoTimeLeft--;
+          document.getElementById('kingyo-timer').textContent = Math.max(0, this.kingyoTimeLeft);
+          if (this.kingyoTimeLeft <= 0) this.finishKingyoGame();
+        }, 1000);
+
+        if (player.isCpu) {
+          this.kingyoCpuTimer = setInterval(() => {
+            const fish = tank.querySelector('.kingyo-fish:not([data-caught])');
+            if (fish) fish.click();
+          }, 650);
+        }
+      },
+
+      finishKingyoGame() {
+        if (this.kingyoCountdownTimer) clearInterval(this.kingyoCountdownTimer);
+        if (this.kingyoFishTimer) clearInterval(this.kingyoFishTimer);
+        if (this.kingyoCpuTimer) clearInterval(this.kingyoCpuTimer);
+        this.kingyoCountdownTimer = null;
+        this.kingyoFishTimer = null;
+        this.kingyoCpuTimer = null;
+        const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        if (!player) return this.closeKingyoEvent();
+        const prize = this.kingyoEarnings || 0;
+        player.money += prize;
+        document.getElementById('kingyo-game-screen')?.classList.add('hidden');
+        document.getElementById('kingyo-result-screen')?.classList.remove('hidden');
+        document.getElementById('kingyo-result-breakdown').innerHTML = `参加料：▲¥1,000<br>金魚すくい賞金：＋¥${prize.toLocaleString()}`;
+        document.getElementById('kingyo-result-total').textContent = `獲得賞金 ＋¥${prize.toLocaleString()}`;
+        this.updateHUD();
+        this.addLog(`🐟 [江戸川金魚すくい] ${player.name} は＋¥${prize.toLocaleString()}を獲得しました。`);
+      },
+
+      closeKingyoEvent() {
+        if (this.kingyoCountdownTimer) clearInterval(this.kingyoCountdownTimer);
+        if (this.kingyoFishTimer) clearInterval(this.kingyoFishTimer);
+        if (this.kingyoCpuTimer) clearInterval(this.kingyoCpuTimer);
+        this.kingyoCountdownTimer = null;
+        this.kingyoFishTimer = null;
+        this.kingyoCpuTimer = null;
+        const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        document.getElementById('kingyo-modal')?.classList.add('hidden');
+        document.getElementById('kingyo-tank').innerHTML = '';
+        this.kingyoEarnings = 0;
+        this.kingyoTimeLeft = 0;
+        this.activeKingyoPlayerId = null;
+        if (player) this.finishMiniGameTurn(player);
       },
 
       async teleportPlayer(player, targetLoc) {
