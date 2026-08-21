@@ -233,8 +233,17 @@
 
     /* --- 江戸川金魚すくい --- */
     .kingyo-fish {
-      position: absolute; font-size: 32px; cursor: pointer; user-select: none;
-      transition: transform 0.15s; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+      position: absolute; left: -12%; font-size: 32px; cursor: pointer; user-select: none;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.4));
+      animation: kingyo-swim var(--fish-duration, 8s) linear infinite;
+      will-change: transform, left; border: 0; background: transparent; padding: 0;
+    }
+    @keyframes kingyo-swim {
+      0% { left: -12%; transform: translateY(0) rotate(-4deg) scaleX(var(--fish-scale, 1)); }
+      25% { transform: translateY(-10px) rotate(4deg) scaleX(var(--fish-scale, 1)); }
+      50% { left: 48%; transform: translateY(8px) rotate(-4deg) scaleX(var(--fish-scale, 1)); }
+      75% { transform: translateY(-8px) rotate(4deg) scaleX(var(--fish-scale, 1)); }
+      100% { left: 108%; transform: translateY(0) rotate(-4deg) scaleX(var(--fish-scale, 1)); }
     }
     .kingyo-fish:active { transform: scale(0.85); }
     .kingyo-fish.caught { animation: kingyo-caught 0.4s ease-out forwards; pointer-events: none; }
@@ -696,81 +705,65 @@
     </div>
   </div>
 
-  <!-- MODAL: 江戸川クイズ（3〜5ターン目、誰かのサイコロ後にランダム発生する特別イベントの1種） -->
+  <!-- MODAL: 江戸川クイズ -->
   <div id="quiz-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
-    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 text-center space-y-4">
-
-      <div id="quiz-invite-screen">
-        <span class="text-5xl">🧠</span>
-        <h2 class="font-mincho text-xl font-bold text-amber-300 mt-2">江戸川クイズに参加しますか？</h2>
-        <p id="quiz-invite-name" class="text-sm text-slate-300 mt-2"></p>
-        <p class="text-sm text-slate-200 mt-3">参加料：<span class="text-red-400 font-bold">￥10,000</span></p>
-        <p class="text-sm text-slate-200">正解すると賞金<span class="text-amber-400 font-bold">￥50,000</span>です</p>
-        <div class="grid grid-cols-2 gap-3 pt-3">
-          <button onclick="EdogawaSugoroku.respondQuizInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">はい</button>
-          <button onclick="EdogawaSugoroku.respondQuizInvite(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition">いいえ</button>
-        </div>
-      </div>
-
-      <div id="quiz-roulette-screen" class="hidden space-y-3">
-        <span class="text-4xl">🎡</span>
-        <p class="text-slate-300 text-sm">ジャンル抽選中...</p>
-        <div id="quiz-roulette-genre" class="text-2xl font-black text-amber-400 h-10">-</div>
-      </div>
-
-      <div id="quiz-question-screen" class="hidden space-y-3 text-left">
-        <div class="flex items-center justify-between text-xs">
-          <span id="quiz-genre-badge" class="px-2 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 font-bold"></span>
-          <span id="quiz-difficulty-badge" class="px-2 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300 font-bold"></span>
-        </div>
-        <p id="quiz-question-text" class="text-base font-bold text-white leading-relaxed text-center py-2"></p>
+    <div class="relative bg-slate-900 border border-amber-500/50 rounded-3xl max-w-md w-full max-h-[92vh] overflow-hidden shadow-2xl">
+      <div id="quiz-invite-screen" class="hidden"></div>
+      <div id="quiz-roulette-screen" class="hidden"></div>
+      <div id="quiz-question-screen" class="p-5 text-center">
+        <div class="flex items-center justify-center gap-2 text-amber-300 font-black text-sm"><span>🧠</span><span>江戸川クイズ</span></div>
+        <div id="quiz-announcer-status" class="text-xs text-slate-400 mt-2">アナウンサーが問題を読み上げます</div>
+        <div id="quiz-genre-badge" class="inline-block mt-3 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs"></div>
+        <p id="quiz-question-text" class="text-lg font-black text-white leading-relaxed py-4"></p>
         <div id="quiz-options" class="space-y-2"></div>
       </div>
-
-      <div id="quiz-result-screen" class="hidden space-y-3">
-        <span id="quiz-result-icon" class="text-5xl">⭕</span>
-        <p id="quiz-result-text" class="text-lg font-black"></p>
-        <p id="quiz-result-answer" class="text-sm text-slate-300"></p>
-        <p id="quiz-result-money" class="text-base font-bold"></p>
+      <div id="quiz-result-screen" class="hidden absolute inset-0 z-20 bg-slate-950/98 flex flex-col items-center justify-center p-6 text-center">
+        <div id="quiz-result-icon" class="text-[120px] leading-none font-black">〇</div>
+        <div class="text-amber-300 font-black text-lg mt-2">答え</div>
+        <div id="quiz-result-answer" class="text-white font-black text-xl mt-2"></div>
+        <div id="quiz-result-text" class="text-base font-bold mt-3"></div>
+        <div id="quiz-result-money" class="text-amber-400 font-black mt-2"></div>
+        <button onclick="EdogawaSugoroku.closeQuizEvent()" class="mt-6 w-full max-w-xs bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95">閉じる</button>
       </div>
-
     </div>
   </div>
 
-  <!-- MODAL: 江戸川金魚すくい（クイズと同じ特別イベント枠のもう1種） -->
+  <!-- MODAL: 江戸川金魚すくい -->
   <div id="kingyo-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
-    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto shadow-2xl">
-
+    <div class="bg-slate-900 border border-amber-500/50 rounded-3xl max-w-md w-full max-h-[92vh] overflow-hidden shadow-2xl">
       <div id="kingyo-invite-screen" class="p-6 text-center space-y-4">
-        <span class="text-5xl">🐠</span>
-        <h2 class="font-mincho text-xl font-bold text-amber-300">江戸川金魚すくいに参加しますか？</h2>
+        <div class="text-5xl">🐟🐠</div>
+        <h2 class="font-mincho text-xl font-bold text-amber-300">江戸川金魚すくいを遊びますか？</h2>
         <p id="kingyo-invite-name" class="text-sm text-slate-300"></p>
-        <p class="text-sm text-slate-200">参加料：<span class="text-red-400 font-bold">￥1,000</span></p>
-        <p class="text-xs text-slate-400">30秒間で金魚をすくって稼ごう！</p>
         <div class="grid grid-cols-2 gap-3 pt-2">
-          <button onclick="EdogawaSugoroku.respondKingyoInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">参加する</button>
-          <button onclick="EdogawaSugoroku.respondKingyoInvite(false)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 active:scale-95 transition">見送る</button>
+          <button onclick="EdogawaSugoroku.respondKingyoInvite(true)" class="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95">はい（参加費￥1,000）</button>
+          <button onclick="EdogawaSugoroku.respondKingyoInvite(false)" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl border border-slate-700 active:scale-95">いいえ</button>
         </div>
       </div>
-
       <div id="kingyo-game-screen" class="hidden">
-        <div class="flex items-center justify-between px-4 py-2 bg-slate-950/70 border-b border-slate-800">
-          <span class="text-xs text-slate-400">残り時間</span>
-          <span id="kingyo-timer" class="text-xl font-black text-amber-400 tabular-nums">30</span>
-          <span class="text-xs text-slate-400">獲得金額</span>
-          <span id="kingyo-earnings" class="text-lg font-black text-emerald-400">¥0</span>
+        <div class="flex items-center justify-between px-4 py-2 bg-slate-950/90 border-b border-slate-800">
+          <span class="text-sm font-black text-amber-300">残り <span id="kingyo-timer">30</span> 秒</span>
+          <span class="text-sm font-black text-emerald-300">所持金 <span id="kingyo-money">¥0</span></span>
         </div>
-        <div id="kingyo-tank" class="relative h-80 bg-gradient-to-b from-sky-700 via-sky-800 to-blue-950 overflow-hidden"></div>
+        <div id="kingyo-tank" class="relative h-[390px] bg-gradient-to-b from-sky-700 via-sky-800 to-blue-950 overflow-hidden">
+          <div class="absolute bottom-0 left-[10%] text-4xl z-10">🌿</div>
+          <div class="absolute bottom-0 left-[45%] text-6xl z-10">🌿</div>
+          <div class="absolute bottom-0 right-[8%] text-5xl z-10">🌿</div>
+          <div id="kingyo-countdown-overlay" class="hidden absolute inset-0 z-30 items-center justify-center bg-slate-950/35 pointer-events-none">
+            <span id="kingyo-countdown-number" class="text-[110px] font-black text-white drop-shadow-[0_4px_8px_rgba(0,0,0,.8)]"></span>
+          </div>
+        </div>
+        <div id="kingyo-footer" class="px-2 py-3 bg-slate-950/95 border-t border-slate-800 text-center text-sm font-black tracking-wide">
+          🐟×<span data-fish-count="🐟">0</span>　🐠×<span data-fish-count="🐠">0</span>　🐡×<span data-fish-count="🐡">0</span>　🦈×<span data-fish-count="🦈">0</span>　🦪×<span data-fish-count="🦪">0</span>
+        </div>
       </div>
-
       <div id="kingyo-result-screen" class="hidden p-6 text-center space-y-3">
-        <span class="text-4xl">🏆</span>
-        <h2 class="font-mincho text-xl font-bold text-amber-300">結果発表</h2>
-        <div id="kingyo-result-breakdown" class="text-xs text-slate-300 space-y-1 bg-slate-950/60 rounded-xl p-3 text-left"></div>
-        <p id="kingyo-result-total" class="text-lg font-black text-amber-400"></p>
-        <button onclick="EdogawaSugoroku.closeKingyoEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">了解！次のターンへ</button>
+        <div class="text-5xl">🎉</div>
+        <h2 class="font-mincho text-xl font-bold text-amber-300">金魚すくい 結果発表</h2>
+        <div id="kingyo-result-breakdown" class="text-sm text-slate-200 bg-slate-950/60 rounded-xl p-4 text-left leading-8"></div>
+        <div id="kingyo-result-total" class="text-lg font-black text-amber-400"></div>
+        <button onclick="EdogawaSugoroku.closeKingyoEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95">閉じる</button>
       </div>
-
     </div>
   </div>
 
@@ -1680,6 +1673,37 @@
         } catch(e){}
       }
 
+      playQuizStart() {
+        this.init();
+        this.playTone(880, 'triangle', 0.12, 0.16);
+        setTimeout(() => this.playTone(1174.66, 'triangle', 0.12, 0.16), 110);
+        setTimeout(() => this.playTone(1567.98, 'triangle', 0.28, 0.18), 220);
+      }
+      playQuizCorrect() {
+        this.init();
+        this.playTone(880, 'sine', 0.10, 0.14);
+        setTimeout(() => this.playTone(1174.66, 'sine', 0.10, 0.14), 90);
+        setTimeout(() => this.playTone(1567.98, 'sine', 0.28, 0.16), 180);
+      }
+      playQuizWrong() {
+        this.init();
+        this.playTone(180, 'square', 0.16, 0.13);
+        setTimeout(() => this.playTone(110, 'sawtooth', 0.28, 0.12), 120);
+      }
+      playFishCatch() {
+        this.init();
+        this.playTone(1046.5, 'sine', 0.08, 0.12);
+        setTimeout(() => this.playTone(1567.98, 'sine', 0.18, 0.14), 75);
+      }
+      playFishMiss() {
+        this.init();
+        this.playTone(240, 'square', 0.12, 0.10);
+        setTimeout(() => this.playTone(150, 'sawtooth', 0.20, 0.10), 100);
+      }
+      playFishCountdown() {
+        this.init();
+        [660, 660, 660, 990].forEach((n, i) => setTimeout(() => this.playTone(n, 'triangle', 0.10, 0.12), i * 120));
+      }
       playDiceRoll() {
         this.init();
         for (let i = 0; i < 6; i++) {
@@ -4081,53 +4105,38 @@
         return btn;
       },
 
-      startQuizInvite(player) {
-        const modal = document.getElementById('quiz-modal');
-        if (!modal) {
-          this.finishMiniGameTurn(player, `⭐ ${player.name} の江戸川クイズを開始できなかったため、通常ターンへ戻ります。`);
-          return;
-        }
-        ['quiz-invite-screen','quiz-roulette-screen','quiz-question-screen','quiz-result-screen'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.classList.add('hidden');
-        });
-        document.getElementById('quiz-invite-screen')?.classList.remove('hidden');
-        const nameEl = document.getElementById('quiz-invite-name');
-        if (nameEl) nameEl.textContent = `${player.name} が★マスに止まりました！`;
-        modal.classList.remove('hidden');
-        this.activeQuizPlayerId = player.id;
-
-        if (player.isCpu) {
-          this.runCpuCountdown('goal-cpu-countdown','goal-cpu-countdown-num',2,() => this.respondQuizInvite(true));
-        }
+      speakQuizQuestion(text, onEnd) {
+        const status = document.getElementById('quiz-announcer-status');
+        const done = () => { if (status) status.textContent = '三択から答えを選んでください'; if (typeof onEnd === 'function') onEnd(); };
+        if (!('speechSynthesis' in window)) { done(); return; }
+        try {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = 'ja-JP';
+          utter.rate = 1.15;
+          utter.pitch = 1.12;
+          const voices = window.speechSynthesis.getVoices();
+          const female = voices.find(v => /ja(-|_)?JP/i.test(v.lang) && /(female|女性|kyoko|haruka|otoya|sayaka|nanami|mizuki)/i.test(v.name)) || voices.find(v => /ja(-|_)?JP/i.test(v.lang));
+          if (female) utter.voice = female;
+          utter.onend = done;
+          utter.onerror = done;
+          if (status) status.textContent = '🎙 女性アナウンサーが読み上げ中…';
+          window.speechSynthesis.speak(utter);
+        } catch(e) { done(); }
       },
 
-      respondQuizInvite(join) {
-        const player = this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
-        if (!player) return this.closeQuizEvent();
-        if (!join) {
-          document.getElementById('quiz-modal')?.classList.add('hidden');
-          this.finishMiniGameTurn(player, `⭐ ${player.name} は江戸川クイズを見送りました。`);
-          return;
-        }
-
-        const fee = 10000;
-        player.money = Math.max(0, player.money - fee);
-        this.addLog(`🧠 [江戸川クイズ] ${player.name} が参加料¥${fee.toLocaleString()}を支払いました。`);
-
-        document.getElementById('quiz-invite-screen')?.classList.add('hidden');
-        document.getElementById('quiz-roulette-screen')?.classList.remove('hidden');
-        const genreEl = document.getElementById('quiz-roulette-genre');
-        const genres = ['江戸川区の名所','江戸川区の地理','江戸川区の豆知識'];
-        let i = 0;
-        const roulette = setInterval(() => {
-          if (genreEl) genreEl.textContent = genres[i % genres.length];
-          i++;
-        }, 120);
-        setTimeout(() => {
-          clearInterval(roulette);
-          this.showQuizQuestion(player);
-        }, 900);
+      startQuizInvite(player) {
+        const modal = document.getElementById('quiz-modal');
+        if (!modal) { this.finishMiniGameTurn(player, `⭐ ${player.name} の江戸川クイズを開始できませんでした。`); return; }
+        this.activeQuizPlayerId = player.id;
+        this.quizAnswered = false;
+        this.quizAnswerEnabled = false;
+        this.quizAutoCloseTimer && clearTimeout(this.quizAutoCloseTimer);
+        document.getElementById('quiz-result-screen')?.classList.add('hidden');
+        document.getElementById('quiz-question-screen')?.classList.remove('hidden');
+        modal.classList.remove('hidden');
+        sound.playQuizStart();
+        setTimeout(() => this.showQuizQuestion(player), 420);
       },
 
       showQuizQuestion(player) {
@@ -4137,162 +4146,175 @@
           { genre:'江戸川区の豆知識', difficulty:'カンタン', q:'江戸川区の区名の由来となった川はどれでしょう？', options:['江戸川','荒川','神田川'], answer:0 },
           { genre:'江戸川区の名所', difficulty:'カンタン', q:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:0 }
         ];
-        const question = questions[Math.floor(Math.random() * questions.length)];
-        this.activeQuizQuestion = question;
-        document.getElementById('quiz-roulette-screen')?.classList.add('hidden');
-        document.getElementById('quiz-question-screen')?.classList.remove('hidden');
-        document.getElementById('quiz-genre-badge').textContent = question.genre;
-        document.getElementById('quiz-difficulty-badge').textContent = question.difficulty;
-        document.getElementById('quiz-question-text').textContent = question.q;
+        const q = questions[Math.floor(Math.random() * questions.length)];
+        this.activeQuizQuestion = q;
+        document.getElementById('quiz-genre-badge').textContent = q.genre;
+        document.getElementById('quiz-question-text').textContent = q.q;
         const optionsEl = document.getElementById('quiz-options');
-        optionsEl.innerHTML = question.options.map((opt, idx) => `
-          <button class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition" onclick="EdogawaSugoroku.answerQuiz(${idx})">${idx + 1}. ${opt}</button>
-        `).join('');
-
-        if (player.isCpu) {
-          setTimeout(() => this.answerQuiz(question.answer), 1100);
-        }
+        optionsEl.innerHTML = q.options.map((opt, idx) => `<button disabled class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition opacity-60" onclick="EdogawaSugoroku.answerQuiz(${idx})">${idx + 1}. ${opt}</button>`).join('');
+        this.speakQuizQuestion(q.q, () => {
+          this.quizAnswerEnabled = true;
+          document.querySelectorAll('#quiz-options button').forEach(b => { b.disabled = false; b.classList.remove('opacity-60'); });
+          if (player.isCpu) {
+            setTimeout(() => { if (!this.quizAnswered) this.answerQuiz(q.answer); }, 500);
+          }
+        });
       },
 
       answerQuiz(index) {
         const player = this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         const q = this.activeQuizQuestion;
-        if (!player || !q || this.quizAnswered) return;
+        if (!player || !q || this.quizAnswered || !this.quizAnswerEnabled) return;
         this.quizAnswered = true;
-        const buttons = document.querySelectorAll('#quiz-options button');
-        buttons.forEach((b, i) => {
-          b.disabled = true;
-          if (i === q.answer) b.classList.add('correct');
-          if (i === index && i !== q.answer) b.classList.add('wrong');
-        });
         const correct = index === q.answer;
-        const prize = correct ? 50000 : 0;
-        player.money += prize;
+        document.querySelectorAll('#quiz-options button').forEach(b => b.disabled = true);
+        if (correct) { player.money += 50000; sound.playQuizCorrect(); } else { sound.playQuizWrong(); }
         document.getElementById('quiz-question-screen')?.classList.add('hidden');
-        document.getElementById('quiz-result-screen')?.classList.remove('hidden');
-        document.getElementById('quiz-result-icon').textContent = correct ? '⭕' : '❌';
-        document.getElementById('quiz-result-text').textContent = correct ? '正解！おめでとう！' : '残念！不正解です';
-        document.getElementById('quiz-result-answer').textContent = `正解：${q.options[q.answer]}`;
+        const result = document.getElementById('quiz-result-screen');
+        result?.classList.remove('hidden');
+        const icon = document.getElementById('quiz-result-icon');
+        icon.textContent = correct ? '〇' : '×';
+        icon.className = `text-[120px] leading-none font-black ${correct ? 'text-red-500' : 'text-blue-500'}`;
+        document.getElementById('quiz-result-answer').textContent = q.options[q.answer];
+        document.getElementById('quiz-result-text').textContent = correct ? '正解！' : '不正解！';
+        document.getElementById('quiz-result-text').className = `text-base font-black ${correct ? 'text-red-400' : 'text-blue-400'}`;
         document.getElementById('quiz-result-money').textContent = correct ? '賞金 ＋¥50,000' : '賞金なし';
-        this.ensureMiniGameResultButton('quiz-result-screen','了解！次のターンへ','closeQuizEvent');
-        this.addLog(`🧠 [江戸川クイズ] ${player.name} は${correct ? '正解！＋¥50,000' : '不正解'}。`);
         this.updateHUD();
+        this.addLog(`🧠 [江戸川クイズ] ${player.name} は${correct ? '正解！＋¥50,000' : '不正解'}。`);
+        this.quizAutoCloseTimer = setTimeout(() => this.closeQuizEvent(), 3000);
       },
 
       closeQuizEvent() {
+        if (this.quizAutoCloseTimer) clearTimeout(this.quizAutoCloseTimer);
+        this.quizAutoCloseTimer = null;
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
         const player = this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         document.getElementById('quiz-modal')?.classList.add('hidden');
-        this.quizAnswered = false;
-        this.activeQuizQuestion = null;
+        document.getElementById('quiz-result-screen')?.classList.add('hidden');
+        document.getElementById('quiz-question-screen')?.classList.remove('hidden');
+        this.quizAnswered = false; this.quizAnswerEnabled = false; this.activeQuizQuestion = null; this.activeQuizPlayerId = null;
         if (player) this.finishMiniGameTurn(player);
       },
 
       startKingyoInvite(player) {
         const modal = document.getElementById('kingyo-modal');
-        if (!modal) {
-          this.finishMiniGameTurn(player, `⭐ ${player.name} の金魚すくいを開始できなかったため、通常ターンへ戻ります。`);
-          return;
-        }
+        if (!modal) { this.finishMiniGameTurn(player, `⭐ ${player.name} の金魚すくいを開始できませんでした。`); return; }
         ['kingyo-invite-screen','kingyo-game-screen','kingyo-result-screen'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
         document.getElementById('kingyo-invite-screen')?.classList.remove('hidden');
         document.getElementById('kingyo-invite-name').textContent = `${player.name} が★マスに止まりました！`;
         modal.classList.remove('hidden');
         this.activeKingyoPlayerId = player.id;
-        if (player.isCpu) {
-          this.runCpuCountdown('goal-cpu-countdown','goal-cpu-countdown-num',2,() => this.respondKingyoInvite(true));
-        }
+        if (player.isCpu) setTimeout(() => this.respondKingyoInvite(true), 1200);
       },
 
       respondKingyoInvite(join) {
         const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         if (!player) return this.closeKingyoEvent();
-        if (!join) {
-          document.getElementById('kingyo-modal')?.classList.add('hidden');
-          this.finishMiniGameTurn(player, `🐟 ${player.name} は江戸川金魚すくいを見送りました。`);
-          return;
-        }
-        player.money = Math.max(0, player.money - 1000);
-        this.kingyoEarnings = 0;
+        if (!join) { document.getElementById('kingyo-modal')?.classList.add('hidden'); this.finishMiniGameTurn(player, `🐟 ${player.name} は金魚すくいを見送りました。`); return; }
+        if (player.money < 1000) { alert('参加費￥1,000が足りません。今回は見送ります。'); return this.respondKingyoInvite(false); }
+        player.money -= 1000;
         this.kingyoTimeLeft = 30;
-        this.kingyoFishTimer = null;
-        this.kingyoCountdownTimer = null;
+        this.kingyoFishStats = { '🐟':0, '🐠':0, '🐡':0, '🦈':0, '🦪':0 };
+        this.kingyoFishTimers = [];
+        this.kingyoCountdownTimer = null; this.kingyoCpuTimer = null; this.kingyoAutoCloseTimer = null;
         document.getElementById('kingyo-invite-screen')?.classList.add('hidden');
         document.getElementById('kingyo-result-screen')?.classList.add('hidden');
         document.getElementById('kingyo-game-screen')?.classList.remove('hidden');
         document.getElementById('kingyo-timer').textContent = '30';
-        document.getElementById('kingyo-earnings').textContent = '¥0';
+        document.getElementById('kingyo-money').textContent = `¥${player.money.toLocaleString()}`;
         const tank = document.getElementById('kingyo-tank');
-        tank.innerHTML = '';
-        this.addLog(`🐟 [江戸川金魚すくい] ${player.name} が参加料¥1,000を支払いました。`);
-
-        const spawnFish = () => {
-          if (!document.getElementById('kingyo-modal') || document.getElementById('kingyo-game-screen').classList.contains('hidden')) return;
-          const fish = document.createElement('button');
-          fish.type = 'button';
-          fish.className = 'kingyo-fish absolute text-4xl select-none';
-          fish.textContent = Math.random() < 0.5 ? '🐟' : '🐠';
-          fish.style.left = `${5 + Math.random() * 82}%`;
-          fish.style.top = `${8 + Math.random() * 78}%`;
-          fish.onclick = () => {
-            if (fish.dataset.caught) return;
-            fish.dataset.caught = '1';
-            this.kingyoEarnings += 2000;
-            fish.classList.add('caught');
-            document.getElementById('kingyo-earnings').textContent = `¥${this.kingyoEarnings.toLocaleString()}`;
-            setTimeout(() => fish.remove(), 450);
-          };
-          tank.appendChild(fish);
-          setTimeout(() => fish.remove(), 2500);
-        };
-
-        this.kingyoFishTimer = setInterval(spawnFish, 500);
-        spawnFish();
+        tank.querySelectorAll('.kingyo-fish').forEach(f => f.remove());
+        document.querySelectorAll('[data-fish-count]').forEach(e => e.textContent = '0');
+        this.spawnAllKingyoFish(player);
         this.kingyoCountdownTimer = setInterval(() => {
           this.kingyoTimeLeft--;
           document.getElementById('kingyo-timer').textContent = Math.max(0, this.kingyoTimeLeft);
+          if (this.kingyoTimeLeft <= 5 && this.kingyoTimeLeft > 0) {
+            const overlay = document.getElementById('kingyo-countdown-overlay');
+            const num = document.getElementById('kingyo-countdown-number');
+            overlay.classList.remove('hidden'); overlay.classList.add('flex'); num.textContent = this.kingyoTimeLeft;
+            sound.playFishCountdown();
+          }
           if (this.kingyoTimeLeft <= 0) this.finishKingyoGame();
         }, 1000);
-
         if (player.isCpu) {
           this.kingyoCpuTimer = setInterval(() => {
-            const fish = tank.querySelector('.kingyo-fish:not([data-caught])');
+            const fish = [...tank.querySelectorAll('.kingyo-fish:not([data-caught])')].sort(() => Math.random() - 0.5)[0];
             if (fish) fish.click();
           }, 650);
         }
+        this.updateHUD();
+      },
+
+      spawnAllKingyoFish(player) {
+        const tank = document.getElementById('kingyo-tank');
+        const defs = [
+          { emoji:'🐟', count:10, value:500, chance:.50, speed:5, behind:false },
+          { emoji:'🐠', count:8, value:600, chance:.40, speed:3, behind:false },
+          { emoji:'🐡', count:5, value:700, chance:.30, speed:4, behind:false },
+          { emoji:'🦈', count:1, value:2000, chance:.10, speed:9, behind:true },
+          { emoji:'🦪', count:1, value:5000, chance:.05, speed:1, behind:true }
+        ];
+        defs.forEach(def => {
+          for (let i=0;i<def.count;i++) {
+            const fish = document.createElement('button'); fish.type='button'; fish.className='kingyo-fish'; fish.textContent=def.emoji;
+            fish.dataset.emoji=def.emoji; fish.dataset.caught=''; fish.dataset.used='0';
+            const dir = Math.random() < .5 ? 1 : -1;
+            fish.style.top = `${8 + Math.random()*72}%`; fish.style.setProperty('--fish-duration', `${Math.max(5, 16 - def.speed*1.2 + Math.random()*1.5)}s`);
+            fish.style.setProperty('--fish-scale', dir > 0 ? '1' : '-1'); fish.style.zIndex = def.behind ? '3' : '4';
+            fish.style.animationDelay = `${-Math.random()*8}s`;
+            fish.onclick = () => {
+              if (fish.dataset.used === '1' || fish.dataset.caught) return;
+              fish.dataset.used='1';
+              const caught = Math.random() < def.chance;
+              if (caught) {
+                fish.dataset.caught='1'; this.kingyoFishStats[def.emoji]++;
+                document.querySelectorAll(`[data-fish-count="${def.emoji}"]`).forEach(e=>e.textContent=this.kingyoFishStats[def.emoji]);
+                fish.classList.add('caught'); sound.playFishCatch();
+                setTimeout(()=>fish.remove(),450);
+              } else {
+                fish.classList.add('spooked'); sound.playFishMiss();
+                setTimeout(()=>fish.remove(),250);
+              }
+            };
+            tank.appendChild(fish);
+          }
+        });
       },
 
       finishKingyoGame() {
         if (this.kingyoCountdownTimer) clearInterval(this.kingyoCountdownTimer);
-        if (this.kingyoFishTimer) clearInterval(this.kingyoFishTimer);
         if (this.kingyoCpuTimer) clearInterval(this.kingyoCpuTimer);
-        this.kingyoCountdownTimer = null;
-        this.kingyoFishTimer = null;
-        this.kingyoCpuTimer = null;
+        this.kingyoCountdownTimer=null; this.kingyoCpuTimer=null;
         const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         if (!player) return this.closeKingyoEvent();
-        const prize = this.kingyoEarnings || 0;
-        player.money += prize;
+        const stats=this.kingyoFishStats || {'🐟':0,'🐠':0,'🐡':0,'🦈':0,'🦪':0};
+        const values={'🐟':500,'🐠':600,'🐡':700,'🦈':2000,'🦪':5000};
+        const gross=Object.keys(values).reduce((sum,k)=>sum+(stats[k]||0)*values[k],0);
+        player.money += gross;
+        document.getElementById('kingyo-countdown-overlay')?.classList.add('hidden');
+        document.getElementById('kingyo-countdown-overlay')?.classList.remove('flex');
         document.getElementById('kingyo-game-screen')?.classList.add('hidden');
         document.getElementById('kingyo-result-screen')?.classList.remove('hidden');
-        document.getElementById('kingyo-result-breakdown').innerHTML = `参加料：▲¥1,000<br>金魚すくい賞金：＋¥${prize.toLocaleString()}`;
-        document.getElementById('kingyo-result-total').textContent = `獲得賞金 ＋¥${prize.toLocaleString()}`;
+        document.getElementById('kingyo-result-breakdown').innerHTML = `🐟 ×${stats['🐟']}　￥${(stats['🐟']*500).toLocaleString()}<br>🐠 ×${stats['🐠']}　￥${(stats['🐠']*600).toLocaleString()}<br>🐡 ×${stats['🐡']}　￥${(stats['🐡']*700).toLocaleString()}<br>🦈 ×${stats['🦈']}　￥${(stats['🦈']*2000).toLocaleString()}<br>🦪 ×${stats['🦪']}　￥${(stats['🦪']*5000).toLocaleString()}<br><hr class='border-slate-700 my-2'>獲得金額　＋￥${gross.toLocaleString()}<br>参加費　▲￥1,000`;
+        document.getElementById('kingyo-result-total').textContent=`合計　￥${(gross-1000).toLocaleString()}`;
         this.updateHUD();
-        this.addLog(`🐟 [江戸川金魚すくい] ${player.name} は＋¥${prize.toLocaleString()}を獲得しました。`);
+        this.addLog(`🐟 [江戸川金魚すくい] ${player.name} は＋¥${gross.toLocaleString()}を獲得。`);
+        this.kingyoAutoCloseTimer=setTimeout(()=>this.closeKingyoEvent(),3000);
       },
 
       closeKingyoEvent() {
         if (this.kingyoCountdownTimer) clearInterval(this.kingyoCountdownTimer);
-        if (this.kingyoFishTimer) clearInterval(this.kingyoFishTimer);
         if (this.kingyoCpuTimer) clearInterval(this.kingyoCpuTimer);
-        this.kingyoCountdownTimer = null;
-        this.kingyoFishTimer = null;
-        this.kingyoCpuTimer = null;
-        const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+        if (this.kingyoAutoCloseTimer) clearTimeout(this.kingyoAutoCloseTimer);
+        this.kingyoCountdownTimer=null; this.kingyoCpuTimer=null; this.kingyoAutoCloseTimer=null;
+        const player=this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         document.getElementById('kingyo-modal')?.classList.add('hidden');
-        document.getElementById('kingyo-tank').innerHTML = '';
-        this.kingyoEarnings = 0;
-        this.kingyoTimeLeft = 0;
-        this.activeKingyoPlayerId = null;
+        document.getElementById('kingyo-tank')?.querySelectorAll('.kingyo-fish').forEach(f=>f.remove());
+        document.getElementById('kingyo-countdown-overlay')?.classList.add('hidden');
+        document.getElementById('kingyo-countdown-overlay')?.classList.remove('flex');
+        document.getElementById('kingyo-result-screen')?.classList.add('hidden');
+        this.kingyoTimeLeft=0; this.activeKingyoPlayerId=null;
         if (player) this.finishMiniGameTurn(player);
       },
 
