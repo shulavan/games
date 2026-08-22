@@ -1,0 +1,36 @@
+{
+  "name": "江戸川双六",
+  "short_name": "江戸川双六",
+  "description": "江戸川区の本物の地図の上をサイコロで進むスマホすごろく。CPU対戦とQRコードで最大4人プレイ、江戸川クイズ・金魚すくい・江戸川競艇のミニゲームも満載。",
+  "lang": "ja",
+  "dir": "ltr",
+  "start_url": "./sugoroku.html",
+  "scope": "./",
+  "id": "/games/sugoroku",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
