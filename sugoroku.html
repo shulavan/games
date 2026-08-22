@@ -250,7 +250,9 @@
     .boat-lane { position: relative; height: 15%; }
     .boat-lane-track { position: absolute; inset: 0; border-top: 1px dashed rgba(255,255,255,0.15); }
     .boat-runner {
-      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      position: absolute; left: 0; top: 50%;
+      /* 絵文字のボートは既定で左向きのため、右（ゴール方向）へ進む向きに左右反転させる */
+      transform: translateY(-50%) scaleX(-1);
       font-size: 22px; transition: left 0.12s linear; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
     }
     .boat-lane-num {
