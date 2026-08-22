@@ -4142,6 +4142,44 @@
         return Math.max(1, Math.round(meters / 40));
       },
 
+      // 所持金の表示。マイナスは「▲¥1,234」の形にする（赤字であることが一目でわかるように）。
+      formatMoney(value) {
+        const n = Math.round(Number(value) || 0);
+        return n < 0 ? `▲¥${Math.abs(n).toLocaleString()}` : `¥${n.toLocaleString()}`;
+      },
+
+      // フッターのカード用（万円表示）。マイナスは「▲1.2万」。
+      formatMoneyMan(value) {
+        const n = Number(value) || 0;
+        return (n < 0 ? '▲' : '') + (Math.abs(n) / 10000).toFixed(1) + '万';
+      },
+
+      // 「ビリ」＝盤上で最も遅れている人（ゴールまでの残りマスが最も多い人）を返す。
+      // ・ゴールした本人（1着）は対象外
+      // ・残りマスが同じ人が複数いる場合は、所持金が少ない人をビリとする
+      // ・それでも並ぶ場合は、プレーヤー番号が後ろの人（1Pが不利に偏らないように）
+      // ※以前は「所持金が最少」で判定していたが、所持金が¥0で止まる仕様だったため
+      //   複数人が¥0で並び、常に先頭のプレーヤーが選ばれてしまっていた。
+      findLastPlacePlayer(excludePlayer) {
+        const candidates = this.players.filter(p => p && p !== excludePlayer);
+        if (!candidates.length) return null;
+
+        let best = null;
+        let bestRemaining = -1;
+        candidates.forEach(p => {
+          const r = this.remainingSquares(p);
+          // 経路が未設定（null）の人は判定不能なので、最後の候補としてのみ扱う
+          const remaining = (r === null) ? -1 : r;
+          if (best === null) { best = p; bestRemaining = remaining; return; }
+          if (remaining > bestRemaining) { best = p; bestRemaining = remaining; return; }
+          if (remaining === bestRemaining) {
+            if (p.money < best.money) { best = p; return; }
+            if (p.money === best.money && p.id > best.id) { best = p; }
+          }
+        });
+        return best;
+      },
+
       // 「あと〇マス」の表示文字列。ゴールして0マスになったプレーヤーは、
       // 次の目的地が決まった時点から「あと約〇マス」として次のゴールまでの目安を表示する。
       remainingSquaresLabel(player) {
@@ -4185,7 +4223,10 @@
         document.getElementById("active-player-avatar").innerText = displayAvatar;
         document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md`;
         document.getElementById("active-player-name").innerText = cp.name;
-        document.getElementById("active-player-money").innerText = `¥${cp.money.toLocaleString()}`;
+        const activeMoneyEl = document.getElementById("active-player-money");
+        activeMoneyEl.innerText = this.formatMoney(cp.money);
+        // マイナスは赤字で表示
+        activeMoneyEl.classList.toggle("text-rose-400", cp.money < 0);
         document.getElementById("active-player-vehicle").innerText = cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '';
 
         const remainingBadge = document.getElementById("active-player-remaining");
@@ -4225,7 +4266,7 @@
                 <span class="text-[9px] font-bold px-1 rounded ${p.color.bg} text-slate-950">${idx+1}P</span>
               </div>
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
-              <div class="text-[10px] font-bold text-amber-400">¥${(p.money/10000).toFixed(1)}万</div>
+              <div class="text-[10px] font-bold ${p.money < 0 ? 'text-rose-400' : 'text-amber-400'}">${this.formatMoneyMan(p.money)}</div>
               <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
               ${offline ? '<div class="absolute top-1 left-1 px-1 rounded bg-slate-950/85 border border-slate-600 text-[8px] font-black text-slate-300">離脱</div>' : ''}
             </div>
@@ -4373,11 +4414,11 @@
 
           if (skipType === "police") {
             const bail = 10000;
-            cp.money = Math.max(0, cp.money - bail);
+            cp.money -= bail;   // マイナスも許容（所持金は「▲¥〇〇」で表示）
             this.showEventModal(
               "1回休み",
               `${reason}、${cp.name} はお休み中のためパスします。`,
-              `保釈金：▲¥${bail.toLocaleString()}（残 ¥${cp.money.toLocaleString()}）`,
+              `保釈金：▲¥${bail.toLocaleString()}（残 ${this.formatMoney(cp.money)}）`,
               { icon: "👮", type: "red" }
             );
             this.addLog(`👮 ${cp.name} は1回休み。保釈金 ¥${bail.toLocaleString()} を支払いました。`);
@@ -4386,11 +4427,11 @@
 
           if (skipType === "hospital") {
             const fee = 5000;
-            cp.money = Math.max(0, cp.money - fee);
+            cp.money -= fee;    // マイナスも許容（所持金は「▲¥〇〇」で表示）
             this.showEventModal(
               "1回休み",
               `${reason}、${cp.name} はお休み中のためパスします。`,
-              `治療費：▲¥${fee.toLocaleString()}（残 ¥${cp.money.toLocaleString()}）`,
+              `治療費：▲¥${fee.toLocaleString()}（残 ${this.formatMoney(cp.money)}）`,
               { icon: "💉", type: "red" }
             );
             this.addLog(`💉 ${cp.name} は1回休み。治療費 ¥${fee.toLocaleString()} を支払いました。`);
@@ -4604,15 +4645,15 @@
         if (node && node.type === 'red') {
           sound.playLandRed();
           const amount = (Math.floor(Math.random() * 8) + 1) * 500;
-          player.money = Math.max(0, player.money - amount);
+          player.money -= amount;   // マイナスも許容（所持金は「▲¥〇〇」で表示）
 
           if (player.isFlying) {
             const skyReason = SKY_RED_REASONS[Math.floor(Math.random() * SKY_RED_REASONS.length)];
-            this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅トラブル…`, skyReason.text, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "🌪️", type: "red", reasonIcon: skyReason.emoji });
+            this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅トラブル…`, skyReason.text, `▲¥${amount.toLocaleString()} (残 ${this.formatMoney(player.money)})`, { icon: "🌪️", type: "red", reasonIcon: skyReason.emoji });
             this.addLog(`🔴 [空の旅] ${player.name}: ${skyReason.text} (-¥${amount.toLocaleString()})`);
           } else {
             const reason = RED_REASONS[Math.floor(Math.random() * RED_REASONS.length)];
-            this.showEventModal("お金が減ってしまった！", reason.text, `▲¥${amount.toLocaleString()} (残¥${player.money.toLocaleString()})`, { icon: "💸", type: "red", reasonIcon: reason.emoji });
+            this.showEventModal("お金が減ってしまった！", reason.text, `▲¥${amount.toLocaleString()} (残 ${this.formatMoney(player.money)})`, { icon: "💸", type: "red", reasonIcon: reason.emoji });
             this.addLog(`🔴 [赤マス] ${player.name}: ${reason.text} (-¥${amount.toLocaleString()})`);
           }
 
@@ -4623,11 +4664,11 @@
 
           if (player.isFlying) {
             const skyReason = SKY_BLUE_REASONS[Math.floor(Math.random() * SKY_BLUE_REASONS.length)];
-            this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅で幸運！`, skyReason.text, `＋¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "💨", type: "blue", reasonIcon: skyReason.emoji });
+            this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅で幸運！`, skyReason.text, `＋¥${amount.toLocaleString()} (計 ${this.formatMoney(player.money)})`, { icon: "💨", type: "blue", reasonIcon: skyReason.emoji });
             this.addLog(`🔵 [空の旅] ${player.name}: ${skyReason.text} (+¥${amount.toLocaleString()})`);
           } else {
             const reason = BLUE_REASONS[Math.floor(Math.random() * BLUE_REASONS.length)];
-            this.showEventModal("お金が増えた！", reason.text, `＋¥${amount.toLocaleString()} (計¥${player.money.toLocaleString()})`, { icon: "🎉", type: "blue", reasonIcon: reason.emoji });
+            this.showEventModal("お金が増えた！", reason.text, `＋¥${amount.toLocaleString()} (計 ${this.formatMoney(player.money)})`, { icon: "🎉", type: "blue", reasonIcon: reason.emoji });
             this.addLog(`🔵 [青マス] ${player.name}: ${reason.text} (+¥${amount.toLocaleString()})`);
           }
 
@@ -5090,12 +5131,7 @@
         const player = this.players[this.activeKingyoPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
         if (!player) return this.closeKingyoEvent();
         if (!join) { document.getElementById('kingyo-modal')?.classList.add('hidden'); this.finishMiniGameTurn(player, `🐟 ${player.name} は金魚すくいを見送りました。`); return; }
-        if (player.money < 1000) {
-          alert('参加費￥1,000が足りません。今回は見送ります。');
-          this.kingyoInviteAnswered = false;
-          return this.respondKingyoInvite(false);
-        }
-        player.money -= 1000;
+        player.money -= 1000;   // 参加費。マイナスになっても参加できる（借金になる）
 
         // CPUは実際にタップ操作ができないため、視覚的なタンク画面の代わりに、
         // 人間より控えめ（成績低め）な確率でランダムに結果だけを計算して表示する。
@@ -5115,7 +5151,7 @@
         document.getElementById('kingyo-result-screen')?.classList.add('hidden');
         document.getElementById('kingyo-game-screen')?.classList.remove('hidden');
         document.getElementById('kingyo-timer').textContent = '30';
-        document.getElementById('kingyo-money').textContent = `¥${player.money.toLocaleString()}`;
+        document.getElementById('kingyo-money').textContent = this.formatMoney(player.money);
         const tank = document.getElementById('kingyo-tank');
         tank.querySelectorAll('.kingyo-fish').forEach(f => f.remove());
         document.querySelectorAll('[data-fish-count]').forEach(e => e.textContent = '0');
@@ -5259,7 +5295,7 @@
         document.getElementById('kingyo-game-screen')?.classList.add('hidden');
         document.getElementById('kingyo-result-screen')?.classList.remove('hidden');
         document.getElementById('kingyo-result-breakdown').innerHTML = `🐟 ×${stats['🐟']}　￥${(stats['🐟']*500).toLocaleString()}<br>🐠 ×${stats['🐠']}　￥${(stats['🐠']*600).toLocaleString()}<br>🐡 ×${stats['🐡']}　￥${(stats['🐡']*700).toLocaleString()}<br>🦈 ×${stats['🦈']}　￥${(stats['🦈']*2000).toLocaleString()}<br>🦪 ×${stats['🦪']}　￥${(stats['🦪']*5000).toLocaleString()}<br><hr class='border-slate-700 my-2'>獲得金額　＋￥${gross.toLocaleString()}<br>参加費　▲￥1,000`;
-        document.getElementById('kingyo-result-total').textContent=`合計　￥${(gross-1000).toLocaleString()}`;
+        document.getElementById('kingyo-result-total').textContent=`合計　${(gross-1000) >= 0 ? '＋' : ''}${this.formatMoney(gross-1000)}`;
         this.updateHUD();
         this.addLog(`🐟 [江戸川金魚すくい] ${player.name} は＋¥${gross.toLocaleString()}を獲得。`);
         this.kingyoSyncState = { phase: 'result', playerId: player.id, playerName: player.name, gross, seq: (this.kingyoSyncState?.seq || 0) + 1 };
@@ -5292,7 +5328,7 @@
         document.getElementById('kingyo-result-breakdown').innerHTML = defs.map(d =>
           `${d.emoji} ×${stats[d.emoji]}　￥${(stats[d.emoji] * d.value).toLocaleString()}`
         ).join('<br>') + `<br><hr class='border-slate-700 my-2'>獲得金額　＋￥${gross.toLocaleString()}<br>参加費　▲￥1,000`;
-        document.getElementById('kingyo-result-total').textContent = `合計　￥${(gross - 1000).toLocaleString()}`;
+        document.getElementById('kingyo-result-total').textContent = `合計　${(gross - 1000) >= 0 ? '＋' : ''}${this.formatMoney(gross - 1000)}`;
         this.updateHUD();
         this.addLog(`🐟 [江戸川金魚すくい] ${player.name}（CPU）は＋¥${gross.toLocaleString()}を獲得。`);
         this.kingyoSyncState = { phase: 'result', playerId: player.id, playerName: player.name, gross, seq: (this.kingyoSyncState?.seq || 0) + 1 };
@@ -5480,17 +5516,27 @@
         }
         player.money += 100000;
 
-        // 毎回のゴールで、その時点で所持金が最も少ない（ビリの）プレーヤーに罰金。
-        let poorest = this.players[0];
-        this.players.forEach(p => { if (p.money < poorest.money) poorest = p; });
+        // 毎回のゴールで「ビリ」のプレーヤーに罰金。
+        // ビリ＝盤上で最も遅れている人（ゴールまでの残りマスが最も多い人）。
+        // ゴールした本人（＝1着）は必ず対象外。残りマスが同じ場合は所持金の少ない人。
+        const lastPlace = this.findLastPlacePlayer(player);
         const penalty = 50000;
-        poorest.money = Math.max(0, poorest.money - penalty);
-        this.addLog(`💥 ビリ罰金：${poorest.name} に ▲¥${penalty.toLocaleString()}（残 ¥${poorest.money.toLocaleString()}）`);
         const penaltyEl = document.getElementById("goal-penalty-text");
-        if (penaltyEl) {
-          penaltyEl.textContent = `💥 ビリ罰金：${poorest.name} に ▲¥${penalty.toLocaleString()}`;
-          penaltyEl.classList.remove("hidden");
+        if (lastPlace) {
+          lastPlace.money -= penalty;
+          const remain = this.remainingSquares(lastPlace);
+          this.addLog(`💥 ビリ罰金：${lastPlace.name}（残り${remain === null ? '-' : remain}マスで最下位）に ▲¥${penalty.toLocaleString()}（残 ${this.formatMoney(lastPlace.money)}）`);
+          if (penaltyEl) {
+            penaltyEl.textContent = `💥 ビリ罰金：${lastPlace.name}（残り${remain === null ? '-' : remain}マス・最下位）に ▲¥${penalty.toLocaleString()}`;
+            penaltyEl.classList.remove("hidden");
+          }
+        } else if (penaltyEl) {
+          penaltyEl.classList.add("hidden");
         }
+
+        // 賞金とビリ罰金を反映した所持金を、その場でフッターにも反映する
+        // （ゴール演出中は次のupdateHUDまで古い金額が残ってしまうため）。
+        this.updateHUD();
 
         document.getElementById("goal-winner-text").innerText = `${player.name} が ${this.currentDestination.name} に先着ゴール！`;
         document.getElementById("category-select-section").classList.remove("hidden");
@@ -6037,7 +6083,7 @@
 
         // CPUは確認画面を出さず、参加費￥1,000を払って自動参加。
         this.players.filter(p => this.isAutoPlayedPlayer(p) && !this.boatRaceState.participants[p.id]).forEach(p => {
-          if (p.money >= 1000) {
+          {
             p.money -= 1000;
             this.boatRaceState.participants[p.id] = true;
             this.addLog(`🚤 ${p.name}（${p.isCpu ? 'CPU' : '離脱中・自動'}）が江戸川競艇に参加（参加費 ¥1,000）`);
@@ -6070,10 +6116,8 @@
             const pair = pairs[Math.floor(Math.random() * pairs.length)];
             if (list.some(b => b.pair === pair)) continue;
             const amount = [100, 500, 1000, 3000][Math.floor(Math.random() * 4)];
-            if (p.money >= amount) {
-              p.money -= amount;
-              list.push({ pair, amount });
-            }
+            p.money -= amount;
+            list.push({ pair, amount });
           }
           st.bets[p.id] = list;
         });
@@ -6114,7 +6158,11 @@
         if (weather) weather.innerText = st.weather.text;
 
         const moneyEl = document.getElementById('boatrace-my-money');
-        if (moneyEl && me) moneyEl.innerText = `¥${me.money.toLocaleString()}`;
+        if (moneyEl && me) {
+          moneyEl.innerText = this.formatMoney(me.money);
+          moneyEl.classList.toggle('text-rose-400', me.money < 0);
+          moneyEl.classList.toggle('text-emerald-300', me.money >= 0);
+        }
 
         const myBets = this._boatRaceMyBets();
         const cntEl = document.getElementById('boatrace-my-bet-count');
@@ -6190,10 +6238,6 @@
           document.getElementById('boatrace-invite-desc').innerText = '今回は見送ります。レースの様子だけ見学しましょう。';
           return;
         }
-        if (me.money < 1000) {
-          alert('参加費￥1,000が足りません。今回は見送ります。');
-          return;
-        }
         await this._submitBoatRaceAction({ type: 'join', amount: 1000 });
       },
 
@@ -6205,7 +6249,7 @@
         this.boatRaceSelectedPair = pair;
         this.boatRaceSelectedAmount = 1000;
         document.getElementById('boatrace-buy-pair').innerText = `${pair}（${this._boatIcon(Number(pair.split('-')[0]))}→${this._boatIcon(Number(pair.split('-')[1]))}） オッズ ${st.odds[pair]}倍`;
-        document.getElementById('boatrace-buy-money').innerText = `¥${me.money.toLocaleString()}`;
+        document.getElementById('boatrace-buy-money').innerText = this.formatMoney(me.money);
         document.getElementById('boatrace-buy-amount-display').innerText = '¥1,000';
         this._updateBoatRaceBuyPayout();
         this._showBoatRaceScreen('boatrace-buy-screen');
@@ -6232,7 +6276,7 @@
         const pair = this.boatRaceSelectedPair;
         const me = this._boatRaceLocalPlayer();
         if (!me || !pair || amount < 100) return;
-        if (me.money < amount) { alert('所持金が足りません。'); return; }
+        // マイナスも許容する仕様のため、所持金を超える舟券も購入できる（借金になる）
         await this._submitBoatRaceAction({ type: 'bet', pair, amount });
         this._showBoatRaceScreen('boatrace-betting-screen');
         this._renderBoatRaceBetting();
@@ -6256,7 +6300,7 @@
         const st = this.boatRaceState;
         const me = this._boatRaceLocalPlayer();
         if (!st || !me) return;
-        if (me.money < 100) { alert('所持金が足りません（予想屋は￥100）'); return; }
+        // マイナスも許容する仕様のため、所持金が足りなくても予想を買える（借金になる）
         me.money -= 100;
         this.addLog(`🔮 ${me.name} は予想屋 ${emoji} に ¥100 を支払いました。`);
         this.updateHUD();
@@ -6345,8 +6389,7 @@
 
         if (action.type === 'join') {
           if (this.boatRaceState.participants[player.id]) return;
-          if (player.money < 1000) return;
-          player.money -= 1000;
+          player.money -= 1000;   // マイナスも許容
           this.boatRaceState.participants[player.id] = true;
           this.addLog(`🚤 ${player.name} が江戸川競艇に参加（参加費 ¥1,000）`);
         } else if (action.type === 'bet') {
@@ -6354,7 +6397,7 @@
           const list = this.boatRaceState.bets[player.id] || [];
           if (list.length >= 3) return;
           const amount = Math.floor(Number(action.amount) / 100) * 100;
-          if (amount < 100 || player.money < amount || !this.boatRaceState.odds[action.pair]) return;
+          if (amount < 100 || amount > 5000 || !this.boatRaceState.odds[action.pair]) return;
           player.money -= amount;
           list.push({ pair: action.pair, amount });
           this.boatRaceState.bets[player.id] = list;
@@ -6582,11 +6625,11 @@
               : `<span class="text-sky-400 font-black">▲¥${Math.abs(total).toLocaleString()}</span>`;
             mineEl.innerHTML = `
               <div class="text-amber-300 font-bold">${me.avatar || ''} ${me.name} の収支</div>
-              <div>元持ち金: ¥${before.toLocaleString()}</div>
+              <div>元持ち金: ${this.formatMoney(before)}</div>
               <div>賭け金合計: ¥${pay.spent.toLocaleString()}</div>
               <div>払戻金合計: ¥${pay.payout.toLocaleString()}</div>
               <div>参加費・予想屋代を含めた増減: ${totalText}</div>
-              <div class="text-emerald-300 font-black">現在持ち金: ¥${me.money.toLocaleString()}</div>`;
+              <div class="${me.money < 0 ? 'text-rose-400' : 'text-emerald-300'} font-black">現在持ち金: ${this.formatMoney(me.money)}</div>`;
           }
         }
       },
