@@ -3,8 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>江戸川双六 - スマホ対応全画面マップ双六</title>
-  
+  <title>江戸川双六 ｜ 江戸川区のリアル地図で遊ぶスマホすごろく</title>
+  <meta name="description" content="江戸川双六は、江戸川区の本物の地図の上をサイコロで進むスマホ向けすごろくゲーム。CPU対戦とQRコードで最大4人プレイ、電車や飛行機などの乗り物で加速、江戸川クイズ・金魚すくい・江戸川競艇のミニゲームも満載。目的地に先着してお金を一番稼いだ人が勝ちです。">
+  <meta name="author" content="M.Tsuda">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="canonical" href="https://shulavan.github.io/games/sugoroku.html">
+
+  <!-- ファビコン -->
+  <link rel="icon" href="https://shulavan.github.io/img/sugoroku.ico" sizes="any">
+  <link rel="shortcut icon" href="https://shulavan.github.io/img/sugoroku.ico">
+  <link rel="apple-touch-icon" href="https://shulavan.github.io/img/sugoroku.png">
+
+  <!-- OGP（LINE・Facebook・各SNSでの共有カード用） -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="江戸川双六">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:title" content="江戸川双六 ｜ 江戸川区のリアル地図で遊ぶスマホすごろく">
+  <meta property="og:description" content="江戸川区の本物の地図をサイコロで進むスマホすごろく！CPU対戦とQRコードで最大4人プレイ。乗り物で加速、江戸川クイズ・金魚すくい・江戸川競艇のミニゲームも。目的地に先着してお金を一番稼いだ人が勝ち！">
+  <meta property="og:url" content="https://shulavan.github.io/games/sugoroku.html">
+  <meta property="og:image" content="https://shulavan.github.io/img/sugoroku.png">
+  <meta property="og:image:secure_url" content="https://shulavan.github.io/img/sugoroku.png">
+  <meta property="og:image:type" content="image/png">
+  <!-- ↓画像の実サイズに合わせて数値を変更してください（LINE推奨は 1200×630） -->
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="江戸川双六 - 江戸川区のリアル地図で遊ぶスマホすごろく">
+
+  <!-- X（Twitter）カード -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="江戸川双六 ｜ 江戸川区のリアル地図で遊ぶスマホすごろく">
+  <meta name="twitter:description" content="江戸川区の本物の地図をサイコロで進むスマホすごろく！最大4人プレイ、ミニゲームも満載。目的地に先着してお金を一番稼いだ人が勝ち！">
+  <meta name="twitter:image" content="https://shulavan.github.io/img/sugoroku.png">
+
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -381,7 +412,16 @@
       </div>
     </div>
 
-    <div class="text-center text-[11px] text-slate-500 pb-2">
+    <!-- LINEで紹介（このゲーム自体をLINEで友だちに紹介する） -->
+    <div class="max-w-3xl w-full mx-auto mt-4 flex flex-col items-center gap-1.5">
+      <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full sm:w-auto sm:px-8 bg-[#06C755] hover:bg-[#05b34c] text-white font-black py-3 px-4 rounded-2xl shadow-lg shadow-[#06C755]/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
+        <span class="text-lg">💬</span>
+        <span class="text-sm">LINEで紹介</span>
+      </button>
+      <p class="text-[10px] text-slate-500">友だちや家族に「江戸川双六」を教えてあげてください</p>
+    </div>
+
+    <div class="text-center text-[11px] text-slate-500 pb-2 pt-3">
       ©2026 江戸川双六 Produced by M.Tsuda
     </div>
   </div>
@@ -945,6 +985,9 @@
     // ※ここが空欄のままだと、既存の固定リストから飲食店の目的地が選ばれます（動作に支障はありません）。
     const HOTPEPPER_PROXY_URL = "https://script.google.com/macros/s/AKfycbya4Rz4HM2RXWbQjLH3nMEMiLkWxekRPQ_-iYKc4JN-vdDPkKhB4SuM1Yueo3OwK97PyA/exec";
     // ▲▲▲ ここまで ▲▲▲
+
+    // LINE等での紹介に使う公開URL（OGPのog:urlと合わせています）
+    const GAME_SHARE_URL = "https://shulavan.github.io/games/sugoroku.html";
 
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
     const EDOGAWA_START = {
@@ -2280,6 +2323,15 @@
       },
 
       // LINEアプリ（またはLINE公式のWeb共有）を開き、招待URLを遠方の友達にも送れるようにする。
+      // トップページの「LINEで紹介」ボタン。部屋への招待ではなく、
+      // ゲーム自体（公開URL）を友だちに紹介するための共有。
+      shareGameViaLine() {
+        const text = encodeURIComponent(
+          `江戸川双六🎲\n江戸川区のリアルな地図の上をサイコロで進むスマホすごろく！\nCPU対戦・QRコードで最大4人プレイ。クイズや金魚すくい、江戸川競艇のミニゲームも！\n${GAME_SHARE_URL}`
+        );
+        window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
+      },
+
       shareRoomViaLine() {
         const url = this.currentJoinUrl || `${window.location.origin}${window.location.pathname}?room=${this.roomId || ''}`;
         const text = encodeURIComponent(`江戸川双六、一緒に遊びませんか？🎲\n下のリンクから参加できます！\n${url}`);
@@ -3854,9 +3906,33 @@
         return Math.max(0, (p.path.length - 1) - (p.pathIndex || 0));
       },
 
-      updateActivePlayerRemainingLive(player) {
+      // ゴール直後、ルーレットで次の目的地が確定した時点での「次のゴールまであと何マスか」の概算。
+      // 実際の盤面（40mごとのマス）はまだ生成されていないので、直線距離を道の曲がり分（約1.3倍）
+      // 補正して40mで割り、目安として表示する。盤面が完成したら本当のマス数に置き換わる。
+      estimatedSquaresToNextGoal(player) {
+        const goal = this.nextDestinationCandidate;
+        if (!goal || !Number.isFinite(goal.lat) || !Number.isFinite(goal.lng)) return null;
+        const node = this.roadNetworkNodes?.[player.currentNodeIdx];
+        const from = (node && Number.isFinite(node.lat) && Number.isFinite(node.lng)) ? node : this.currentDestination;
+        if (!from || !Number.isFinite(from.lat)) return null;
+        const meters = this.haversineMeters(from, goal) * 1.3;
+        return Math.max(1, Math.round(meters / 40));
+      },
+
+      // 「あと〇マス」の表示文字列。ゴールして0マスになったプレーヤーは、
+      // 次の目的地が決まった時点から「あと約〇マス」として次のゴールまでの目安を表示する。
+      remainingSquaresLabel(player) {
         const remaining = this.remainingSquares(player);
-        const text = remaining === null ? "あと-マス" : `あと${remaining}マス`;
+        if (remaining === null) return "あと-マス";
+        if (remaining === 0) {
+          const est = this.estimatedSquaresToNextGoal(player);
+          if (est !== null) return `あと約${est}マス`;
+        }
+        return `あと${remaining}マス`;
+      },
+
+      updateActivePlayerRemainingLive(player) {
+        const text = this.remainingSquaresLabel(player);
 
         if (player.id === this.currentPlayerIdx) {
           const badge = document.getElementById("active-player-remaining");
@@ -3889,9 +3965,8 @@
         document.getElementById("active-player-money").innerText = `¥${cp.money.toLocaleString()}`;
         document.getElementById("active-player-vehicle").innerText = cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '';
 
-        const cpRemaining = this.remainingSquares(cp);
         const remainingBadge = document.getElementById("active-player-remaining");
-        if (remainingBadge) remainingBadge.innerText = cpRemaining === null ? "あと-マス" : `あと${cpRemaining}マス`;
+        if (remainingBadge) remainingBadge.innerText = this.remainingSquaresLabel(cp);
 
         const badge = document.getElementById("active-player-status-badge");
         if (cp.skipTurn) {
@@ -3909,7 +3984,7 @@
         cardsContainer.innerHTML = this.players.map((p, idx) => {
           const isActive = idx === this.currentPlayerIdx;
           const cardAvatar = p.wheelchairTurns > 0 ? '🦽' : (p.vehicle ? p.vehicle.emoji : p.avatar);
-          const pRemaining = this.remainingSquares(p);
+          const pRemaining = this.remainingSquares(p) === null ? null : this.remainingSquaresLabel(p);
           return `
             <div onclick="EdogawaSugoroku.panToPlayer(${idx})" class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} border p-2 rounded-xl flex flex-col justify-between transition cursor-pointer active:scale-95">
               <div class="flex items-center justify-between">
@@ -3918,7 +3993,7 @@
               </div>
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold text-amber-400">¥${(p.money/10000).toFixed(1)}万</div>
-              <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : `あと${pRemaining}マス`}</div>
+              <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
             </div>
           `;
         }).join("");
@@ -4105,6 +4180,9 @@
         const cube = document.getElementById("dice-cube");
 
         if (!isRemoteTurn) {
+          // サイコロを振る瞬間は、必ずそのプレーヤーの居場所を映しておく
+          // （ミニゲームや強制移動のあとで地図が別の場所に残るのを防ぐ）。
+          this.panToCurrentPlayer();
           sound.playDiceRoll();
           const rollBubble = ROLL_BUBBLES[Math.floor(Math.random() * ROLL_BUBBLES.length)];
           this.updatePlayerBubble(cp, rollBubble);
@@ -5255,6 +5333,9 @@
               this.nextDestinationCandidate = nextGoal;
               document.getElementById("roulette-confirm-btn").classList.remove("hidden");
               sound.playLandBlue();
+              // 目的地が決まった時点で、ゴールした人のフッターの「あと0マス」を
+              // 「次の目的地まであと約〇マス」に更新する。
+              this.updateHUD();
 
               const winner = this.players[this.selectedCategoryWinnerIdx];
               // CPU、または人間プレーヤー自身がオートモード中なら、
@@ -5338,6 +5419,11 @@
 
         this.updateHUD();
         this.saveGameState();
+
+        // ターンが変わったら必ず「次の人」の位置へ地図を戻す。
+        // 江戸川競艇（強制移動先）やクイズ・金魚すくいのミニゲームから戻ってきた時に、
+        // 地図が競艇場などのまま残って「自分の地図じゃない」状態になるのを防ぐ。
+        this.panToCurrentPlayer();
 
         if (this.isMultiplayer && this.isHost) {
           this.syncGameStateToRoom();
