@@ -176,6 +176,12 @@
       filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
     }
 
+    /* Leafletのdiv-iconはデフォルトで白背景＋グレー枠が付くため、明示的に打ち消しておく。
+       打ち消さないと、施設/マス/プレーヤー等の自作アイコンの外側に白い箱が出る可能性がある。 */
+    .leaflet-div-icon {
+      background: transparent !important;
+      border: none !important;
+    }
     .facility-poi {
       width: 78px;
       height: 78px;
@@ -527,7 +533,7 @@
 
   <!-- OVERLAY: WAITING WHILE HOST RESOLVES GOAL / NEXT DESTINATION -->
   <!-- OVERLAY: HOST WAITING FOR GUESTS TO CATCH UP (goal transitions / group mini-games) -->
-  <div id="host-wait-guests-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 text-center select-none pointer-events-auto">
+  <div id="host-wait-guests-overlay" class="hidden fixed inset-0 z-[65] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 text-center select-none pointer-events-auto">
     <div class="max-w-xs w-full space-y-4 bg-slate-900 border border-amber-500/40 rounded-2xl p-5">
       <div class="relative flex justify-center items-center">
         <div class="w-14 h-14 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
@@ -571,6 +577,18 @@
   <div id="angel-rocket-overlay" class="hidden fixed inset-0 z-[61] pointer-events-none overflow-hidden"></div>
 
   <!-- MODAL: EVENT POPUP -->
+  <!-- MODAL: ゲームログ（ヘッダーの「ログ閲覧」ボタン用。以前はこのHTMLが欠落しており、
+       ボタンを押すとエラーになりログ機能自体が動作していなかった） -->
+  <div id="log-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[80vh] flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between p-4 border-b border-slate-800 shrink-0">
+        <h2 class="font-mincho text-lg font-bold text-amber-300">📜 ゲームログ</h2>
+        <button onclick="EdogawaSugoroku.closeLogModal()" class="w-8 h-8 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 active:scale-95 transition">✕</button>
+      </div>
+      <div id="log-history-list" class="flex-1 overflow-y-auto p-3 space-y-1.5 text-xs text-slate-300"></div>
+    </div>
+  </div>
+
   <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div id="event-modal-card" class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-3 transition-colors">
       <div id="event-modal-avatar" class="absolute top-3 left-3 w-10 h-10 rounded-full bg-slate-950/70 border border-slate-700 flex items-center justify-center text-xl shadow-md"></div>
@@ -756,7 +774,10 @@
       <div id="quiz-question-screen" class="p-5 text-center">
         <div class="flex items-center justify-center gap-2 text-amber-300 font-black text-sm"><span>🧠</span><span>江戸川クイズ</span></div>
         <div id="quiz-announcer-status" class="text-xs text-slate-400 mt-2">アナウンサーが問題を読み上げます</div>
-        <div id="quiz-genre-badge" class="inline-block mt-3 px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs"></div>
+        <div class="flex items-center justify-center gap-2 mt-3">
+          <div id="quiz-genre-badge" class="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 font-bold text-xs"></div>
+          <div id="quiz-difficulty-badge" class="inline-block px-3 py-1 bg-slate-800 border border-slate-700 rounded-full text-slate-300 font-bold text-xs"></div>
+        </div>
         <p id="quiz-question-text" class="text-lg font-black text-white leading-relaxed py-4"></p>
         <div id="quiz-options" class="space-y-2"></div>
       </div>
@@ -4408,7 +4429,7 @@
         // 差し替わるまでに間がある。その間、前回のクイズの中身がそのまま残っていると
         // 一瞬「違う問題」が見えてしまうため、表示直後にいったん中身をリセットしておく。
         document.getElementById('quiz-genre-badge').textContent = '江戸川クイズ';
-        document.getElementById('quiz-difficulty-badge') && (document.getElementById('quiz-difficulty-badge').textContent = '');
+        document.getElementById('quiz-difficulty-badge').textContent = '';
         document.getElementById('quiz-question-text').textContent = '問題を読み込み中…';
         document.getElementById('quiz-options').innerHTML = '';
         const status = document.getElementById('quiz-announcer-status');
@@ -4443,10 +4464,11 @@
         const q = questions[Math.floor(Math.random() * questions.length)] || fallbackQuestions[0];
         this.activeQuizQuestion = q;
         document.getElementById('quiz-genre-badge').textContent = q.genre || '江戸川クイズ';
+        document.getElementById('quiz-difficulty-badge').textContent = q.difficulty || '';
         document.getElementById('quiz-question-text').textContent = q.question;
         const optionsEl = document.getElementById('quiz-options');
         optionsEl.innerHTML = q.options.map((opt, idx) => `<button disabled class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition opacity-60" onclick="EdogawaSugoroku.answerQuiz(${idx})">${idx + 1}. ${opt}</button>`).join('');
-        this._syncQuizState({ phase: 'question', playerId: player.id, playerName: player.name, genre: q.genre || '江戸川クイズ', question: q.question, options: q.options });
+        this._syncQuizState({ phase: 'question', playerId: player.id, playerName: player.name, genre: q.genre || '江戸川クイズ', difficulty: q.difficulty || '', question: q.question, options: q.options });
         let ended = false;
         const enableAnswers = () => {
           if (ended) return; ended = true;
@@ -4525,6 +4547,7 @@
           document.getElementById('quiz-result-screen')?.classList.add('hidden');
           document.getElementById('quiz-question-screen')?.classList.remove('hidden');
           document.getElementById('quiz-genre-badge').textContent = st.genre || '江戸川クイズ';
+          document.getElementById('quiz-difficulty-badge').textContent = st.difficulty || '';
           document.getElementById('quiz-question-text').textContent = st.question;
           const optionsEl = document.getElementById('quiz-options');
           optionsEl.innerHTML = (st.options || []).map((opt, idx) => `<button disabled class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition opacity-60">${idx + 1}. ${opt}</button>`).join('');
