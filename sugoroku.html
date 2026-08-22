@@ -12,7 +12,17 @@
   <!-- ファビコン -->
   <link rel="icon" href="https://shulavan.github.io/img/sugoroku.ico" sizes="any">
   <link rel="shortcut icon" href="https://shulavan.github.io/img/sugoroku.ico">
-  <link rel="apple-touch-icon" href="https://shulavan.github.io/img/sugoroku.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+
+  <!-- PWA（ホーム画面アプリ化）: manifest.json と sw.js は sugoroku.html と同じ /games/ に置いてください -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="application-name" content="江戸川双六">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="江戸川双六">
 
   <!-- OGP（LINE・Facebook・各SNSでの共有カード用） -->
   <meta property="og:type" content="website">
@@ -358,8 +368,15 @@
             <span class="text-[10px] sm:text-xs font-black tracking-wide mt-0.5">非公認</span>
           </div>
         </div>
-        <div class="inline-block px-3 py-1 h-fit bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-xs font-semibold tracking-wider shrink-0">
-          江戸川区限定・全画面マップ双六
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="inline-block px-2.5 py-1 h-fit bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-[10px] sm:text-xs font-semibold tracking-wider leading-tight text-center">
+            江戸川区限定<br class="sm:hidden">全画面マップ双六
+          </div>
+          <!-- アプリ（PWA）インストール -->
+          <button id="pwa-install-btn" onclick="EdogawaSugoroku.openInstallModal()" title="アプリとしてインストール"
+            class="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-slate-900 border border-amber-500/40 text-xl sm:text-2xl leading-none flex items-center justify-center shadow-lg active:scale-95 transition">
+            📲
+          </button>
         </div>
       </div>
       <h1 class="font-mincho text-4xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 gold-glow tracking-widest text-center -mt-3 sm:-mt-2">
@@ -396,7 +413,7 @@
           </button>
           <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeGame()" class="hidden w-full bg-gradient-to-b from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold py-3 px-2 rounded-2xl shadow-md active:scale-[0.98] transition flex flex-col items-center justify-center gap-1 text-center leading-tight">
             <span class="text-lg">💾</span>
-            <span class="text-[11px] sm:text-xs">前回の続き<br>から遊ぶ</span>
+            <span id="resume-save-label" class="text-[11px] sm:text-xs">前回の続き<br>から遊ぶ</span>
           </button>
         </div>
 
@@ -455,6 +472,10 @@
       </button>
       <button onclick="EdogawaSugoroku.openLogModal()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="ログ閲覧">
         <span>📜</span> <span class="hidden sm:inline">履歴</span>
+      </button>
+      <!-- マルチプレイのホストのみ表示：ゲームを保存して終了 -->
+      <button id="host-save-btn" onclick="EdogawaSugoroku.openHostSaveModal()" class="hidden p-2 bg-slate-900 hover:bg-slate-800 border border-amber-500/50 rounded-lg text-amber-300 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="ゲームを保存して終了">
+        <span>💾</span> <span class="hidden sm:inline">保存終了</span>
       </button>
     </div>
   </header>
@@ -637,6 +658,138 @@
         決定
       </button>
     </div>
+  </div>
+
+  <!-- MODAL: アプリ（PWA）インストール -->
+  <div id="pwa-install-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-6 text-center shadow-2xl space-y-4">
+      <div class="text-5xl">📲</div>
+      <h3 class="font-mincho text-lg font-bold text-amber-400">アプリインストールしますか？</h3>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        ホーム画面から全画面で起動できるようになり、次回からの読み込みも速くなります。
+      </p>
+
+      <!-- インストール可能な場合 -->
+      <div id="pwa-install-available" class="hidden space-y-2">
+        <button onclick="EdogawaSugoroku.runInstallPrompt()" class="w-full bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+          インストールする
+        </button>
+      </div>
+
+      <!-- すでにインストール済み／アプリとして起動中 -->
+      <div id="pwa-install-done" class="hidden text-sm text-emerald-300 font-bold bg-slate-950/60 rounded-xl p-3">
+        ✅ すでにアプリとして起動しています。<br>ホーム画面のアイコンからいつでも遊べます。
+      </div>
+
+      <!-- インストールできない環境（iOS / LINE内ブラウザ など）向けの手順 -->
+      <div id="pwa-install-manual" class="hidden text-left space-y-3">
+        <p id="pwa-manual-lead" class="text-xs text-amber-200 bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 leading-relaxed"></p>
+
+        <div id="pwa-manual-line" class="hidden bg-slate-950/60 rounded-xl p-3 space-y-1">
+          <p class="text-xs font-black text-[#06C755]">LINEのブラウザで開いている場合</p>
+          <ol class="text-[11px] text-slate-300 leading-relaxed list-decimal pl-4 space-y-0.5">
+            <li>画面右下（または右上）の「⋯」メニューをタップ</li>
+            <li>「他のブラウザで開く」または「Safari / Chrome で開く」を選ぶ</li>
+            <li>開いたブラウザで、下の手順でホーム画面に追加</li>
+          </ol>
+        </div>
+
+        <div class="bg-slate-950/60 rounded-xl p-3 space-y-1">
+          <p class="text-xs font-black text-sky-300">iPhone / iPad（Safari）</p>
+          <ol class="text-[11px] text-slate-300 leading-relaxed list-decimal pl-4 space-y-0.5">
+            <li>画面下の「共有」ボタン（□に↑）をタップ</li>
+            <li>メニューを下にスクロールして「ホーム画面に追加」をタップ</li>
+            <li>右上の「追加」をタップ</li>
+          </ol>
+        </div>
+
+        <div class="bg-slate-950/60 rounded-xl p-3 space-y-1">
+          <p class="text-xs font-black text-emerald-300">Android（Chrome）</p>
+          <ol class="text-[11px] text-slate-300 leading-relaxed list-decimal pl-4 space-y-0.5">
+            <li>右上の「⋮」メニューをタップ</li>
+            <li>「アプリをインストール」または「ホーム画面に追加」をタップ</li>
+          </ol>
+        </div>
+
+        <div class="bg-slate-950/60 rounded-xl p-3 space-y-1">
+          <p class="text-xs font-black text-slate-200">パソコン（Chrome / Edge）</p>
+          <p class="text-[11px] text-slate-300 leading-relaxed">アドレスバー右端のインストールアイコン（⊕ / 🖥）をクリックしてインストールできます。</p>
+        </div>
+
+        <button onclick="EdogawaSugoroku.copyGameUrl()" class="w-full bg-slate-800 border border-slate-700 text-slate-200 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition">
+          🔗 このゲームのURLをコピー
+        </button>
+        <p id="pwa-copy-done" class="hidden text-[11px] text-emerald-300 text-center font-bold">URLをコピーしました！</p>
+      </div>
+
+      <button onclick="EdogawaSugoroku.closeInstallModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: ホストの「保存して終了」確認 -->
+  <div id="mp-save-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="text-5xl">💾</div>
+      <h3 class="font-mincho text-base font-bold text-amber-400 leading-relaxed">
+        ゲームを保存し、終了します。<br>宜しいですか？
+      </h3>
+      <p class="text-xs text-slate-400 leading-relaxed">（このゲームの続きを参加者にも送ります）</p>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="EdogawaSugoroku.closeHostSaveModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-3 rounded-xl transition">キャンセル</button>
+        <button onclick="EdogawaSugoroku.confirmHostSaveAndExit()" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">保存して終了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: 参加者への「ホストが保存して終了しました」通知 -->
+  <div id="mp-saved-notice-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="text-5xl">💾</div>
+      <p id="mp-saved-notice-text" class="text-sm text-slate-100 font-bold leading-relaxed"></p>
+      <button onclick="EdogawaSugoroku.closeSavedNoticeAndGoTop()" class="w-full bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: 「前回の続き」がソロとマルチの両方ある時の選択 -->
+  <div id="resume-choice-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="text-4xl">💾</div>
+      <h3 class="font-mincho text-lg font-bold text-amber-400">どちらの前回の続きを遊びますか？</h3>
+      <div class="grid grid-cols-1 gap-2.5">
+        <button onclick="EdogawaSugoroku.resumeSoloGame()" class="w-full bg-gradient-to-b from-sky-500 to-sky-600 hover:from-sky-400 text-white font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+          🎮 ひとりで遊ぶ<span id="resume-solo-info" class="block text-[10px] font-bold opacity-80"></span>
+        </button>
+        <button onclick="EdogawaSugoroku.resumeMultiplayerGame()" class="w-full bg-gradient-to-b from-rose-500 to-red-600 hover:from-rose-400 text-white font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+          👥 マルチプレイ<span id="resume-mp-info" class="block text-[10px] font-bold opacity-80"></span>
+        </button>
+      </div>
+      <button onclick="EdogawaSugoroku.closeResumeChoiceModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
+        キャンセル
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: ホスト不在でマルチプレイを開始できない -->
+  <div id="host-absent-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-rose-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="text-5xl">📵</div>
+      <p id="host-absent-text" class="text-sm text-slate-100 font-bold leading-relaxed"></p>
+      <p class="text-[11px] text-slate-400 leading-relaxed">ホストがゲームを再開したら、もう一度お試しください。</p>
+      <button onclick="EdogawaSugoroku.closeHostAbsentModal()" class="w-full bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <!-- OVERLAY: ホスト接続の確認中 -->
+  <div id="host-check-overlay" class="hidden fixed inset-0 z-[86] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-3">
+    <div class="text-4xl animate-pulse">📡</div>
+    <p class="text-sm text-amber-300 font-bold text-center">ホストの接続を確認しています…</p>
+    <p class="text-[11px] text-slate-400 text-center">数秒お待ちください</p>
   </div>
 
   <!-- OVERLAY: ANGELS FLYING + ROCKET GIFT ANNOUNCEMENT -->
@@ -990,6 +1143,13 @@
 
     // LINE等での紹介に使う公開URL（OGPのog:urlと合わせています）
     const GAME_SHARE_URL = "https://shulavan.github.io/games/sugoroku.html";
+
+    // セーブデータのキー。「ひとりで遊ぶ」と「マルチプレイ」で各1件だけ保存します。
+    const SOLO_SAVE_KEY = "edogawa_sugoroku_state";
+    const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
+    // 相手の端末が「生きているか」の判定に使う無反応の許容時間（ミリ秒）。
+    // 各端末は4秒ごとに心拍（presence）を書き込みます。
+    const PRESENCE_TIMEOUT_MS = 20000;
 
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
     const EDOGAWA_START = {
@@ -2046,6 +2206,16 @@
       facilityMarkerRefs: new Map(),
       resumeInProgress: false,
 
+      // --- PWA（ホーム画面アプリ化） ---
+      deferredInstallPrompt: null,
+
+      // --- マルチプレイの在席管理（離脱者のグレーアウト用） ---
+      presenceTimer: null,       // 自分の心拍を送るタイマー
+      presenceUiTimer: null,     // 離脱表示を定期更新するタイマー
+      presenceSeen: {},          // uid → { val: 相手が書いた値, at: それを最初に見た自分の時刻 }
+      mpSessionStartedAt: 0,
+      savedGameHandled: false,
+
       async init() {
         try {
           const savedGeo = localStorage.getItem('edogawa_sugoroku_geocode_cache_v3');
@@ -2061,6 +2231,7 @@
         } catch (_) {}
         this.renderAvatarGrid();
         this.checkSaveData();
+        this._initPwa();
         // 施設POIはバックグラウンドで全件再測位。ルート生成時は必ず個別に再確認します。
         this.refreshAllFacilityCoordinates().catch(e => console.warn('施設座標の全面更新に失敗:', e));
 
@@ -2290,13 +2461,21 @@
               status: 'waiting',
               countdown: this.countdownVal,
               players: initialPlayers,
-              createdAt: Date.now()
+              createdAt: Date.now(),
+              hostPresence: Date.now(),
+              presence: {},
+              guestAcks: {},
+              savedGame: null
             });
 
             this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
               if (!snapshot.exists()) return;
               this.handleRoomSnapshot(snapshot.data());
             }, (err) => console.error("Room Snapshot Error:", err));
+
+            // ホストの在席（心拍）を送り始める。参加者が後から戻ってきた時の
+            // 「ホストがいるか」の判定に使われる。
+            this._startPresenceHeartbeat();
           } catch(e) {
             console.error("ルーム作成に失敗しました。この端末内プレビューのみで続行します:", e);
             this.db = null;
@@ -2487,6 +2666,23 @@
 
           const data = snap.data();
           let players = data.players || [];
+          if (data.hostUid) this.hostUidForSave = data.hostUid;
+          const hostNameFromRoom = (data.savedGame && data.savedGame.hostName) ||
+            (players.find(p => p.uid === data.hostUid)?.name) ||
+            ((data.finalPlayers || []).find(p => p.uid === data.hostUid)?.name) || 'ホスト';
+
+          // 途中参加・再参加（すでに開始済み／保存済みの部屋）では、ホストの端末が
+          // 動いているかを先に確認する。ホストがいないとゲームは進行できないため、
+          // マップ画面には入らずトップページに戻す。
+          if (data.status === 'playing' || data.status === 'saved') {
+            document.getElementById("host-check-overlay")?.classList.remove("hidden");
+            const alive = await this._isHostAlive(this.roomId);
+            document.getElementById("host-check-overlay")?.classList.add("hidden");
+            if (!alive) {
+              this._showHostAbsent(hostNameFromRoom);
+              return;
+            }
+          }
 
           if (players.length >= 4 && !players.some(p => p.uid === this.myUid)) {
             showGuestError("この部屋はすでに満員です（最大4名）。");
@@ -2508,6 +2704,9 @@
 
             await window.FirebaseLib.updateDoc(roomRef, { players: players });
           }
+
+          // 自分の在席（心拍）を送り始める。ホスト側でグレーアウト判定に使われる。
+          this._startPresenceHeartbeat();
 
           // Real-time listener for countdown, start signal, and (once playing) live game state
           this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
@@ -2555,6 +2754,16 @@
       // the lobby ("waiting") phase and throughout the actual game ("playing" phase), so the
       // multiplayer game state stays continuously synced instead of only being read once at start.
       handleRoomSnapshot(data) {
+        // 各端末の心拍を記録（離脱＝グレーアウト判定に使う）
+        this._trackPresence(data.presence);
+        if (data.hostUid) this.hostUidForSave = data.hostUid;
+
+        // ホストが「保存して終了」した通知（参加者側）
+        if (data.status === 'saved' && data.savedGame && !this.isHost) {
+          this._handleRemoteSavedGame(data.savedGame);
+          return;
+        }
+
         if (data.status === 'waiting') {
           if (this.isHost) {
             this.recruitmentPlayers = data.players || this.recruitmentPlayers;
@@ -2587,6 +2796,9 @@
         // needs to keep receiving live game-state updates for the rest of the session.
 
         this.isMultiplayer = true;
+        this.mpSessionStartedAt = Date.now();
+        this.savedGameHandled = false;
+        this._startPresenceHeartbeat();
 
         this.players = finalPlayersData.map((p, idx) => ({
           id: idx,
@@ -2868,7 +3080,8 @@
         if (!this.isMultiplayer || !this.isHost || !this.db || !this.roomId) return;
         const overlay = document.getElementById("host-wait-guests-overlay");
         const targetVersion = this.gameStateVersion;
-        const guestUids = this.players.filter(p => !p.isCpu && p.uid !== this.myUid).map(p => p.uid);
+        // 離脱した参加者はいつまでも応答しないため、待ち合わせの対象から外す。
+        const guestUids = this.players.filter(p => !p.isCpu && p.uid !== this.myUid && !this.isPlayerOffline(p)).map(p => p.uid);
         if (!guestUids.length) return;
 
         const start = Date.now();
@@ -2999,10 +3212,16 @@
       },
 
       checkSaveData() {
-        const saved = localStorage.getItem("edogawa_sugoroku_state");
-        if (saved) {
-          const btn = document.getElementById("resume-save-btn");
-          if (btn) btn.classList.remove("hidden");
+        // 「ひとりで遊ぶ」「マルチプレイ」のどちらかに保存があればボタンを出す。
+        const hasSolo = !!localStorage.getItem(SOLO_SAVE_KEY);
+        const hasMp = !!localStorage.getItem(MP_SAVE_KEY);
+        const btn = document.getElementById("resume-save-btn");
+        if (btn) btn.classList.toggle("hidden", !(hasSolo || hasMp));
+        const label = document.getElementById("resume-save-label");
+        if (label) {
+          label.innerHTML = (hasSolo && hasMp)
+            ? '前回の続き<br>から遊ぶ（2件）'
+            : '前回の続き<br>から遊ぶ';
         }
       },
 
@@ -3011,7 +3230,7 @@
         this.tryFullscreen();
         this.isMultiplayer = false;
         // 「ひとりで遊ぶ」は新規ゲーム。既存の途中セーブは明示的に新規開始した時だけ置き換える。
-        try { localStorage.removeItem("edogawa_sugoroku_state"); } catch (_) {}
+        try { localStorage.removeItem(SOLO_SAVE_KEY); } catch (_) {}
 
         const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
         localStorage.setItem("edogawa_sugoroku_nickname", pName);
@@ -3034,11 +3253,13 @@
         this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
       },
 
-      async resumeGame() {
+      // 「ひとりで遊ぶ」の続きから再開（マルチプレイの再開は resumeMultiplayerGame）
+      async resumeSoloGame() {
+        this.closeResumeChoiceModal();
         if (this.resumeInProgress) return;
         this.resumeInProgress = true;
         try {
-          const raw = localStorage.getItem("edogawa_sugoroku_state");
+          const raw = localStorage.getItem(SOLO_SAVE_KEY);
           if (!raw) {
             this.checkSaveData();
             return;
@@ -3049,7 +3270,7 @@
               !Array.isArray(state.roadNetworkNodes) || !state.roadNetworkNodes.length ||
               !state.currentDestination) {
             // 旧形式や壊れたセーブだけを無効化する。
-            localStorage.removeItem("edogawa_sugoroku_state");
+            localStorage.removeItem(SOLO_SAVE_KEY);
             this.checkSaveData();
             return this.startGame();
           }
@@ -3108,7 +3329,7 @@
           this.panToCurrentPlayer();
         } catch (e) {
           console.error("セーブデータの復元に失敗しました:", e);
-          try { localStorage.removeItem("edogawa_sugoroku_state"); } catch (_) {}
+          try { localStorage.removeItem(SOLO_SAVE_KEY); } catch (_) {}
           this.checkSaveData();
           return this.startGame();
         } finally {
@@ -3977,18 +4198,28 @@
         } else if (cp.wheelchairTurns > 0) {
           badge.className = "px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] rounded font-bold";
           badge.innerText = `ケガ (あと${cp.wheelchairTurns}回)`;
+        } else if (this.isPlayerOffline(cp)) {
+          // 離脱した参加者の手番。ゲームは止めず、ホストが代理で自動進行する。
+          badge.className = "px-1.5 py-0.2 bg-slate-600/30 text-slate-300 border border-slate-500/40 text-[10px] rounded font-bold";
+          badge.innerText = "離脱中（自動）";
         } else {
           badge.className = "px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] rounded font-bold";
           badge.innerText = cp.isCpu ? "CPUの番" : "あなたの番";
         }
+
+        // マルチプレイのホストだけ「保存して終了」ボタンを出す
+        const hostSaveBtn = document.getElementById("host-save-btn");
+        if (hostSaveBtn) hostSaveBtn.classList.toggle("hidden", !(this.isMultiplayer && this.isHost));
 
         const cardsContainer = document.getElementById("players-card-container");
         cardsContainer.innerHTML = this.players.map((p, idx) => {
           const isActive = idx === this.currentPlayerIdx;
           const cardAvatar = p.wheelchairTurns > 0 ? '🦽' : (p.vehicle ? p.vehicle.emoji : p.avatar);
           const pRemaining = this.remainingSquares(p) === null ? null : this.remainingSquaresLabel(p);
+          // 離脱した参加者はグレーアウトして「離脱」を表示（ゲームは止めない）
+          const offline = this.isPlayerOffline(p);
           return `
-            <div onclick="EdogawaSugoroku.panToPlayer(${idx})" class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} border p-2 rounded-xl flex flex-col justify-between transition cursor-pointer active:scale-95">
+            <div onclick="EdogawaSugoroku.panToPlayer(${idx})" class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} ${offline ? 'opacity-40 grayscale' : ''} border p-2 rounded-xl flex flex-col justify-between transition cursor-pointer active:scale-95 relative">
               <div class="flex items-center justify-between">
                 <span class="text-sm">${cardAvatar}</span>
                 <span class="text-[9px] font-bold px-1 rounded ${p.color.bg} text-slate-950">${idx+1}P</span>
@@ -3996,6 +4227,7 @@
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold text-amber-400">¥${(p.money/10000).toFixed(1)}万</div>
               <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
+              ${offline ? '<div class="absolute top-1 left-1 px-1 rounded bg-slate-950/85 border border-slate-600 text-[8px] font-black text-slate-300">離脱</div>' : ''}
             </div>
           `;
         }).join("");
@@ -4037,13 +4269,20 @@
         // try to roll for the CPU at once). In solo mode this device is always authoritative.
         // Also gated on the mini-game flags directly (belt-and-suspenders alongside isRolling):
         // a stray HUD refresh while a mini-game modal is open must never queue up a real roll.
-        const shouldAutoRollCpu = (!this.isMultiplayer || this.isHost) && cp.isCpu;
+        // CPU、および「離脱した参加者」の手番はホストが代理で自動進行する
+        // （誰かが抜けてもゲームが止まらないようにするため）。
+        const shouldAutoRollCpu = (!this.isMultiplayer || this.isHost) && this.isAutoPlayedPlayer(cp);
         const shouldAutoRollSelf = this.autoMode && !cp.isCpu && canRollNow;
 
         // 自動サイコロの予約は常に1本だけ。updateHUD() が何回呼ばれても
         // 予約が増えないようにし、ターン処理の分裂（＝イベント連打バグ）を防ぐ。
-        this.cancelAutoRoll();
-        if ((shouldAutoRollCpu || shouldAutoRollSelf) && !this.isRolling && !this.miniGameActive && !this.boatRaceActive) {
+        // すでに予約済みなら「積み直さない」ことも重要（定期的なHUD更新で
+        // 予約が毎回先送りされて永久に発火しなくなるのを防ぐ）。
+        const wantAutoRoll = (shouldAutoRollCpu || shouldAutoRollSelf) &&
+          !this.isRolling && !this.miniGameActive && !this.boatRaceActive;
+        if (!wantAutoRoll) {
+          this.cancelAutoRoll();
+        } else if (!this.autoRollTimer) {
           this.autoRollTimer = setTimeout(() => {
             this.autoRollTimer = null;
             this.rollDice();
@@ -4175,7 +4414,9 @@
         // screen plays the "real" spin + walk (see animateGuestPlayerMovement) — so the
         // host doesn't need to replay the same spectacle locally; it resolves quietly and
         // quickly in the background instead.
-        const isRemoteTurn = this.isMultiplayer && !cp.isCpu && cp.uid !== this.myUid;
+        // 離脱した参加者の手番はホストが代理で進めるので、CPUと同じように
+        // サイコロ演出＋コマ移動をきちんと見せる（相手の端末はもう見ていない）。
+        const isRemoteTurn = this.isMultiplayer && !cp.isCpu && cp.uid !== this.myUid && !this.isPlayerOffline(cp);
         const initialDelay = isRemoteTurn ? 200 : 1200;
         const stepDelay = isRemoteTurn ? 80 : 350;
 
@@ -4719,7 +4960,8 @@
           if (ended) return; ended = true;
           this.quizAnswerEnabled = true;
           document.querySelectorAll('#quiz-options button').forEach(b => { b.disabled = false; b.classList.remove('opacity-60'); });
-          if (player.isCpu || this.autoMode) {
+          // CPU・オートモード・離脱した参加者は自動で回答する（ゲームを止めない）
+          if (player.isCpu || this.autoMode || this.isPlayerOffline(player)) {
             setTimeout(() => {
               if (this.quizAnswered) return;
               const correctIdx = q.options.findIndex(o => o === q.answer);
@@ -4836,7 +5078,8 @@
         if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
         // CPUだけでなく、人間プレーヤーのオートモードでも自動参加。
         // 確認モーダルを少し見せてから「はい」を自動選択。
-        if (player.isCpu || this.autoMode) setTimeout(() => this.respondKingyoInvite(true), 1200);
+        // CPU・オートモード・離脱した参加者は自動で参加する（ゲームを止めない）
+        if (player.isCpu || this.autoMode || this.isPlayerOffline(player)) setTimeout(() => this.respondKingyoInvite(true), 1200);
       },
 
       respondKingyoInvite(join) {
@@ -4856,7 +5099,8 @@
 
         // CPUは実際にタップ操作ができないため、視覚的なタンク画面の代わりに、
         // 人間より控えめ（成績低め）な確率でランダムに結果だけを計算して表示する。
-        if (player.isCpu) {
+        // CPU（および離脱した参加者）はタップ操作ができないため、結果だけを計算して表示する。
+        if (player.isCpu || this.isPlayerOffline(player)) {
           this.updateHUD();
           setTimeout(() => this.simulateKingyoForCpu(player), 900);
           return;
@@ -5267,7 +5511,9 @@
 
         // CPUだけでなく、人間プレーヤーのオートモードでもゴール後を完全自動化。
         // カテゴリ選択 → 目的地ルーレット → 次の盤面生成まで人の操作を要求しない。
-        if (player.isCpu || (player.id === 0 && this.autoMode)) {
+        // CPU・離脱した参加者・オートモード中の自分がゴールした時は、
+        // カテゴリ選択→ルーレット→次の盤面まで自動で進める（誰も操作できず止まるのを防ぐ）。
+        if (this.isAutoPlayedPlayer(player) || (player.id === 0 && this.autoMode)) {
           this.runCpuCountdown("goal-cpu-countdown", "goal-cpu-countdown-num", 3, () => {
             const categories = ["飲食店", "スーパー（薬屋含む）", "公園", "駅（バス停含む）"];
             const randomCat = categories[Math.floor(Math.random() * categories.length)];
@@ -5342,7 +5588,7 @@
               const winner = this.players[this.selectedCategoryWinnerIdx];
               // CPU、または人間プレーヤー自身がオートモード中なら、
               // ルーレット決定後も自動で次の双六へ進む。
-              if (winner && (winner.isCpu || (winner.id === 0 && this.autoMode))) {
+              if (winner && (this.isAutoPlayedPlayer(winner) || (winner.id === 0 && this.autoMode))) {
                 this.runCpuCountdown("roulette-cpu-countdown", "roulette-cpu-countdown-num", 3, () => {
                   this.confirmNextSugoroku();
                 });
@@ -5444,7 +5690,7 @@
           goalNodeIdx: this.goalNodeIdx,
           specialEventUsed: this.specialEventUsed
         };
-        localStorage.setItem("edogawa_sugoroku_state", JSON.stringify(state));
+        localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
       },
 
       showEventModal(title, desc, extra = null, options = {}) {
@@ -5790,11 +6036,11 @@
         this.addLog(`🚤 ${forced.name} は江戸川競艇場に強制連行され、そのまま参戦！（参加費なし）`);
 
         // CPUは確認画面を出さず、参加費￥1,000を払って自動参加。
-        this.players.filter(p => p.isCpu && !this.boatRaceState.participants[p.id]).forEach(p => {
+        this.players.filter(p => this.isAutoPlayedPlayer(p) && !this.boatRaceState.participants[p.id]).forEach(p => {
           if (p.money >= 1000) {
             p.money -= 1000;
             this.boatRaceState.participants[p.id] = true;
-            this.addLog(`🚤 ${p.name}（CPU）が江戸川競艇に参加（参加費 ¥1,000）`);
+            this.addLog(`🚤 ${p.name}（${p.isCpu ? 'CPU' : '離脱中・自動'}）が江戸川競艇に参加（参加費 ¥1,000）`);
           }
         });
 
@@ -5816,8 +6062,8 @@
         const st = this.boatRaceState;
         if (!st) return;
         const pairs = Object.keys(st.odds);
-        this.players.filter(p => p.isCpu && st.participants[p.id]).forEach(p => {
-          if (st.bets[p.id]) return; // すでに決まっているCPUはそのまま
+        this.players.filter(p => this.isAutoPlayedPlayer(p) && st.participants[p.id]).forEach(p => {
+          if (st.bets[p.id]) return; // すでに決まっている人はそのまま
           const count = 1 + Math.floor(Math.random() * 3); // 1〜3点買い
           const list = [];
           for (let i = 0; i < count; i++) {
@@ -6404,6 +6650,489 @@
         if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
         this.finishTurn();
         this.panToCurrentPlayer();
+      },
+
+      // ============================================================
+      // PWA（ホーム画面アプリ化）
+      // manifest.json / sw.js / icon-*.png を sugoroku.html と同じフォルダに置くと
+      // Android Chrome・PC Chrome/Edge で「インストール」ボタンが使えるようになります。
+      // iOSやLINE内ブラウザはブラウザ側の仕様でインストールAPIが使えないため、
+      // 「ホーム画面に追加」の手順を案内します。
+      // ============================================================
+      _initPwa() {
+        // Service Worker（http/https のときだけ。file:// では登録できません）
+        if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(e => {
+              console.warn('Service Workerの登録に失敗しました（PWAインストールは無効・ゲームは通常どおり動きます）:', e);
+            });
+          });
+        }
+
+        // Chrome系がインストール可能と判断した時に飛んでくるイベントを保持しておく
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          this.deferredInstallPrompt = e;
+          const btn = document.getElementById('pwa-install-btn');
+          if (btn) btn.classList.add('ring-2', 'ring-amber-400/70', 'animate-pulse');
+        });
+
+        window.addEventListener('appinstalled', () => {
+          this.deferredInstallPrompt = null;
+          const btn = document.getElementById('pwa-install-btn');
+          if (btn) btn.classList.remove('ring-2', 'ring-amber-400/70', 'animate-pulse');
+          this.addLog('📲 アプリとしてインストールされました。');
+        });
+      },
+
+      _isStandaloneApp() {
+        try {
+          return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+                 window.navigator.standalone === true;
+        } catch (e) { return false; }
+      },
+
+      _detectBrowserEnv() {
+        const ua = navigator.userAgent || '';
+        const isIos = /iPad|iPhone|iPod/.test(ua) ||
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        return {
+          ua,
+          isIos,
+          isAndroid: /Android/i.test(ua),
+          isLine: /\bLine\//i.test(ua),
+          isOtherInApp: /(FBAN|FBAV|Instagram|Twitter|MicroMessenger)/i.test(ua)
+        };
+      },
+
+      openInstallModal() {
+        const modal = document.getElementById('pwa-install-modal');
+        if (!modal) return;
+        const env = this._detectBrowserEnv();
+        const available = document.getElementById('pwa-install-available');
+        const done = document.getElementById('pwa-install-done');
+        const manual = document.getElementById('pwa-install-manual');
+        const lineBox = document.getElementById('pwa-manual-line');
+        const lead = document.getElementById('pwa-manual-lead');
+        const copyDone = document.getElementById('pwa-copy-done');
+
+        [available, done, manual].forEach(el => el && el.classList.add('hidden'));
+        if (copyDone) copyDone.classList.add('hidden');
+
+        if (this._isStandaloneApp()) {
+          done && done.classList.remove('hidden');
+        } else if (this.deferredInstallPrompt) {
+          available && available.classList.remove('hidden');
+        } else {
+          manual && manual.classList.remove('hidden');
+          if (lineBox) lineBox.classList.toggle('hidden', !(env.isLine || env.isOtherInApp));
+          if (lead) {
+            if (env.isLine || env.isOtherInApp) {
+              lead.textContent = 'ご利用中のアプリ内ブラウザでは「インストール」ができません。下の手順でSafari／Chromeで開いてから、ホーム画面に追加してください。';
+            } else if (env.isIos) {
+              lead.textContent = 'iPhone / iPad では「共有」からホーム画面に追加すると、アプリと同じように全画面で遊べます。';
+            } else {
+              lead.textContent = 'この環境では自動インストールに対応していないため、ブラウザのメニューから「ホーム画面に追加」を行ってください。';
+            }
+          }
+        }
+        modal.classList.remove('hidden');
+      },
+
+      closeInstallModal() {
+        document.getElementById('pwa-install-modal')?.classList.add('hidden');
+      },
+
+      async runInstallPrompt() {
+        const prompt = this.deferredInstallPrompt;
+        if (!prompt) { this.openInstallModal(); return; }
+        this.deferredInstallPrompt = null;
+        try {
+          prompt.prompt();
+          const choice = await prompt.userChoice;
+          if (choice && choice.outcome === 'accepted') {
+            this.addLog('📲 アプリのインストールを開始しました。');
+          }
+        } catch (e) {
+          console.warn('インストールプロンプトの表示に失敗:', e);
+        }
+        this.closeInstallModal();
+      },
+
+      copyGameUrl() {
+        const url = GAME_SHARE_URL;
+        const done = () => {
+          const el = document.getElementById('pwa-copy-done');
+          if (el) { el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 2500); }
+        };
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done).catch(() => window.prompt('URLをコピーしてください', url));
+          } else {
+            window.prompt('URLをコピーしてください', url);
+          }
+        } catch (e) {
+          window.prompt('URLをコピーしてください', url);
+        }
+      },
+
+      // ============================================================
+      // マルチプレイ：在席（プレゼンス）管理
+      // 各端末が4秒ごとに自分の心拍を書き込み、「値が更新されたか」で生存を判定する。
+      // 端末ごとの時計のズレに影響されないよう、書かれた時刻そのものではなく
+      // 「自分の端末で、その値を最初に見た時刻」を基準にしている。
+      // ============================================================
+      _startPresenceHeartbeat() {
+        clearInterval(this.presenceTimer);
+        const beat = async () => {
+          if (!this.db || !this.roomId || !this.myUid || !window.FirebaseLib) return;
+          try {
+            const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            const patch = { [`presence.${this.myUid}`]: Date.now() };
+            if (this.isHost) patch.hostPresence = Date.now();
+            await window.FirebaseLib.updateDoc(ref, patch);
+          } catch (e) { /* ベストエフォート */ }
+        };
+        beat();
+        this.presenceTimer = setInterval(beat, 4000);
+
+        // 離脱表示（グレーアウト）を定期的に見直す
+        clearInterval(this.presenceUiTimer);
+        this.presenceUiTimer = setInterval(() => {
+          if (!this.isMultiplayer) return;
+          this.updateHUD();
+        }, 5000);
+      },
+
+      _stopPresenceHeartbeat() {
+        clearInterval(this.presenceTimer);
+        clearInterval(this.presenceUiTimer);
+        this.presenceTimer = null;
+        this.presenceUiTimer = null;
+      },
+
+      _trackPresence(presenceMap) {
+        if (!presenceMap) return;
+        const now = Date.now();
+        this.presenceSeen = this.presenceSeen || {};
+        Object.keys(presenceMap).forEach(uid => {
+          const val = presenceMap[uid];
+          const prev = this.presenceSeen[uid];
+          if (!prev || prev.val !== val) this.presenceSeen[uid] = { val, at: now };
+        });
+      },
+
+      // 「離脱した（画面を閉じた）参加者」かどうか。CPU・自分自身は常にfalse。
+      isPlayerOffline(player) {
+        if (!this.isMultiplayer || !player) return false;
+        if (player.isCpu) return false;
+        if (player.uid && player.uid === this.myUid) return false;
+        const seen = this.presenceSeen && this.presenceSeen[player.uid];
+        const startedAgo = this.mpSessionStartedAt ? (Date.now() - this.mpSessionStartedAt) : 0;
+        // 一度も心拍が届いていない場合は、開始直後の猶予（8秒）を過ぎたら離脱扱い
+        if (!seen) return startedAgo > 8000;
+        return (Date.now() - seen.at) > PRESENCE_TIMEOUT_MS;
+      },
+
+      // CPUと同じ「自動で進める対象」か（離脱した人の手番でゲームを止めないため）
+      isAutoPlayedPlayer(player) {
+        if (!player) return false;
+        return !!player.isCpu || this.isPlayerOffline(player);
+      },
+
+      // ============================================================
+      // マルチプレイ：ホストの「保存して終了」
+      // ============================================================
+      openHostSaveModal() {
+        if (!this.isMultiplayer || !this.isHost) return;
+        document.getElementById('mp-save-modal')?.classList.remove('hidden');
+      },
+
+      closeHostSaveModal() {
+        document.getElementById('mp-save-modal')?.classList.add('hidden');
+      },
+
+      _buildMultiplayerSaveState(asHost) {
+        const hostPlayer = this.players.find(p => p.uid === (this.isHost ? this.myUid : this.hostUidForSave)) ||
+                           this.players.find(p => !p.isCpu) || this.players[0];
+        return {
+          mode: 'multiplayer',
+          savedAt: Date.now(),
+          isHost: !!asHost,
+          myUid: this.myUid || null,
+          roomId: this.roomId || null,
+          hostUid: this.isHost ? (this.myUid || null) : (this.hostUidForSave || null),
+          hostName: hostPlayer ? hostPlayer.name : 'ホスト',
+          coordinateDataVersion: 3,
+          players: this.players.map(p => ({
+            id: p.id, uid: p.uid || null, name: p.name, avatar: p.avatar, isCpu: !!p.isCpu,
+            money: p.money, path: p.path || [], pathIndex: p.pathIndex || 0,
+            currentNodeIdx: p.currentNodeIdx, vehicle: p.vehicle || null,
+            skipTurn: !!p.skipTurn, skipTurnType: p.skipTurnType || null, skipTurnReason: p.skipTurnReason || null,
+            wheelchairTurns: p.wheelchairTurns || 0, forcedMoveCount: p.forcedMoveCount || 0,
+            boatRaceCount: p.boatRaceCount || 0, isFlying: !!p.isFlying, rocketBoost: !!p.rocketBoost
+          })),
+          turnCount: this.turnCount,
+          currentPlayerIdx: this.currentPlayerIdx,
+          currentDestination: this.currentDestination,
+          roadNetworkNodes: this.roadNetworkNodes,
+          goalNodeIdx: this.goalNodeIdx,
+          specialEventUsed: !!this.specialEventUsed
+        };
+      },
+
+      async confirmHostSaveAndExit() {
+        if (!this.isMultiplayer || !this.isHost) return;
+        this.closeHostSaveModal();
+
+        const state = this._buildMultiplayerSaveState(true);
+        try {
+          localStorage.setItem(MP_SAVE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.error('マルチプレイの保存に失敗しました:', e);
+          alert('保存に失敗しました（端末の保存容量が不足している可能性があります）。');
+          return;
+        }
+
+        // 参加者の端末にも「保存して終了した」ことと続きのデータを届ける
+        if (this.db && this.roomId && window.FirebaseLib) {
+          try {
+            const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            await window.FirebaseLib.updateDoc(ref, {
+              status: 'saved',
+              savedGame: { hostName: state.hostName, hostUid: state.hostUid, at: Date.now(), state }
+            });
+          } catch (e) {
+            console.error('参加者への保存通知に失敗しました:', e);
+          }
+        }
+
+        this.addLog('💾 ホストがゲームを保存して終了しました。');
+        this._goToTopPage();
+      },
+
+      // 参加者側：ホストが保存して終了した通知を受け取った時
+      _handleRemoteSavedGame(savedGame) {
+        if (!savedGame || this.savedGameHandled) return;
+        this.savedGameHandled = true;
+
+        const state = savedGame.state;
+        if (state) {
+          const mine = { ...state, isHost: false, myUid: this.myUid || null, hostUid: savedGame.hostUid || state.hostUid || null };
+          try { localStorage.setItem(MP_SAVE_KEY, JSON.stringify(mine)); } catch (e) { console.error('続きの保存に失敗:', e); }
+        }
+
+        this._stopPresenceHeartbeat();
+        this.cancelAutoRoll();
+        const text = document.getElementById('mp-saved-notice-text');
+        if (text) {
+          text.innerText = `${savedGame.hostName || 'ホスト'}（ホスト）がゲームを保存して終了しました。\n（次回は「前回の続きから遊ぶ」からスタートできます）`;
+        }
+        document.getElementById('mp-saved-notice-modal')?.classList.remove('hidden');
+      },
+
+      closeSavedNoticeAndGoTop() {
+        document.getElementById('mp-saved-notice-modal')?.classList.add('hidden');
+        this._goToTopPage();
+      },
+
+      // トップページへ戻る（?room= などのパラメータを外して読み込み直す）
+      _goToTopPage() {
+        this._stopPresenceHeartbeat();
+        try { if (this.roomUnsubscribe) this.roomUnsubscribe(); } catch (e) {}
+        try {
+          window.location.replace(window.location.pathname);
+        } catch (e) {
+          window.location.reload();
+        }
+      },
+
+      // ============================================================
+      // 「前回の続きから遊ぶ」：ソロ／マルチの選択とマルチの再開
+      // ============================================================
+      _readSave(key) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) return null;
+          const data = JSON.parse(raw);
+          return data || null;
+        } catch (e) { return null; }
+      },
+
+      _formatSaveInfo(save) {
+        if (!save) return '';
+        const d = save.savedAt ? new Date(save.savedAt) : null;
+        const when = d ? `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '';
+        const dest = save.currentDestination?.name ? `目的地：${save.currentDestination.name}` : '';
+        return [when, dest].filter(Boolean).join(' ／ ');
+      },
+
+      closeResumeChoiceModal() {
+        document.getElementById('resume-choice-modal')?.classList.add('hidden');
+      },
+
+      closeHostAbsentModal() {
+        document.getElementById('host-absent-modal')?.classList.add('hidden');
+      },
+
+      _showHostAbsent(hostName) {
+        const el = document.getElementById('host-absent-text');
+        if (el) el.innerText = `${hostName || 'ホスト'}（ホスト）が不在なのでゲームを開始できません`;
+        document.getElementById('host-check-overlay')?.classList.add('hidden');
+        document.getElementById('guest-waiting-modal')?.classList.add('hidden');
+        document.getElementById('lobby-screen')?.classList.remove('hidden');
+        document.getElementById('host-absent-modal')?.classList.remove('hidden');
+      },
+
+      // ホストが「今この瞬間も動いているか」を、時計のズレに依存せず判定する。
+      // ホストは4秒ごとに hostPresence を書き換えるので、少し待って値が変わったかを見る。
+      async _isHostAlive(roomId, waitMs = 7000) {
+        if (!this.db || !roomId || !window.FirebaseLib) return false;
+        try {
+          const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', roomId);
+          const s1 = await window.FirebaseLib.getDoc(ref);
+          if (!s1.exists()) return false;
+          const p1 = s1.data().hostPresence || 0;
+          if (!p1) return false;
+          await new Promise(res => setTimeout(res, waitMs));
+          const s2 = await window.FirebaseLib.getDoc(ref);
+          const p2 = (s2.exists() && s2.data().hostPresence) || 0;
+          return p2 > p1;
+        } catch (e) {
+          console.warn('ホストの在席確認に失敗:', e);
+          return false;
+        }
+      },
+
+      // 「前回の続きから遊ぶ」ボタンの入口。保存が2種類あれば選択モーダルを出す。
+      resumeGame() {
+        const solo = this._readSave(SOLO_SAVE_KEY);
+        const mp = this._readSave(MP_SAVE_KEY);
+
+        if (solo && mp) {
+          const soloInfo = document.getElementById('resume-solo-info');
+          const mpInfo = document.getElementById('resume-mp-info');
+          if (soloInfo) soloInfo.innerText = this._formatSaveInfo(solo);
+          if (mpInfo) mpInfo.innerText = `${mp.isHost ? 'ホストとして' : `${mp.hostName || 'ホスト'}の部屋`} ／ ${this._formatSaveInfo(mp)}`;
+          document.getElementById('resume-choice-modal')?.classList.remove('hidden');
+          return;
+        }
+        if (mp) return this.resumeMultiplayerGame();
+        return this.resumeSoloGame();
+      },
+
+      async resumeMultiplayerGame() {
+        this.closeResumeChoiceModal();
+        const save = this._readSave(MP_SAVE_KEY);
+        if (!save) { alert('マルチプレイの保存データが見つかりませんでした。'); return; }
+
+        await this.initFirebase();
+
+        if (save.isHost) {
+          await this._resumeMultiplayerAsHost(save);
+        } else {
+          // 参加者はホストが起動していないと再開できない
+          document.getElementById('host-check-overlay')?.classList.remove('hidden');
+          const alive = await this._isHostAlive(save.roomId);
+          document.getElementById('host-check-overlay')?.classList.add('hidden');
+          if (!alive) { this._showHostAbsent(save.hostName); return; }
+          this.myGuestNickname = localStorage.getItem('edogawa_sugoroku_nickname') || this.myGuestNickname;
+          await this.joinRoomAsGuest(save.roomId);
+        }
+      },
+
+      async _resumeMultiplayerAsHost(save) {
+        this.tryFullscreen();
+        this.isMultiplayer = true;
+        this.isHost = true;
+        this.roomId = save.roomId || ('room_' + Math.floor(100000 + Math.random() * 900000));
+        this.isRolling = false;
+        this.turnSettled = true;
+        this.miniGameActive = false;
+        this.boatRaceActive = false;
+        this.savedGameHandled = false;
+        this.gameStateVersion = 0;
+        this.eventSeq = 0;
+        this.lastAppliedEventSeq = 0;
+        this.awaitingGoalSelection = null;
+        this.presenceSeen = {};
+        this.mpSessionStartedAt = Date.now();
+
+        this.currentPlayerIdx = Number.isInteger(save.currentPlayerIdx) ? save.currentPlayerIdx : 0;
+        this.turnCount = Number.isInteger(save.turnCount) ? save.turnCount : 1;
+        this.currentDestination = save.currentDestination;
+        this.roadNetworkNodes = save.roadNetworkNodes || [];
+        this.goalNodeIdx = Number.isInteger(save.goalNodeIdx) ? save.goalNodeIdx : null;
+        this.specialEventUsed = !!save.specialEventUsed;
+
+        // ホストの端末IDは再ログインで変わることがあるため、保存時のホストUIDを今のUIDに置き換える。
+        const savedHostUid = save.hostUid;
+        this.players = (save.players || []).map((p, i) => ({
+          id: Number.isInteger(p.id) ? p.id : i,
+          uid: (savedHostUid && p.uid === savedHostUid) ? (this.myUid || p.uid) : p.uid,
+          name: p.name, avatar: p.avatar || '🧑',
+          color: PLAYER_COLORS[i % PLAYER_COLORS.length],
+          money: Number.isFinite(p.money) ? p.money : 100000,
+          path: this.normalizePathIndices(p.path || []),
+          pathIndex: Number.isInteger(p.pathIndex) ? p.pathIndex : 0,
+          currentNodeIdx: Number.isInteger(p.currentNodeIdx) ? p.currentNodeIdx : 0,
+          vehicle: p.vehicle || null,
+          skipTurn: !!p.skipTurn, skipTurnType: p.skipTurnType || null, skipTurnReason: p.skipTurnReason || null,
+          wheelchairTurns: p.wheelchairTurns || 0, forcedMoveCount: p.forcedMoveCount || 0,
+          boatRaceCount: p.boatRaceCount || 0, isFlying: !!p.isFlying, rocketBoost: !!p.rocketBoost,
+          isCpu: !!p.isCpu
+        }));
+
+        document.getElementById('lobby-screen').classList.add('hidden');
+        sound.playBGM('map');
+        this.initMap();
+
+        const startNodeIdx = this.players[0]?.currentNodeIdx ?? 0;
+        this.renderBoardVisuals(this.roadNetworkNodes, startNodeIdx, this.goalNodeIdx, this.currentDestination);
+
+        this.playerMarkers.forEach(m => m && this.map.removeLayer(m));
+        this.playerMarkers = [];
+        this.players.forEach(p => {
+          const node = this.roadNetworkNodes[p.currentNodeIdx];
+          if (!node) return;
+          const marker = L.marker([node.lat, node.lng], { icon: this.createPlayerIcon(p, ''), zIndexOffset: 1000 }).addTo(this.map);
+          this.playerMarkers[p.id] = marker;
+        });
+        this.updatePlayerRoutes();
+        this.updateHUD();
+        this.panToCurrentPlayer();
+        this.addLog(`💾 前回の続き（マルチプレイ）から再開しました。目的地：${this.currentDestination?.name || '-'}`);
+        this.addLog('👥 参加者が戻ってくるまでは、離脱中の人の手番は自動で進みます。');
+
+        // 参加者が同じ部屋に戻ってこられるよう、部屋を「プレイ中」で作り直す
+        if (this.db && window.FirebaseLib) {
+          try {
+            const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            const roster = this.players.map(p => ({ uid: p.uid, name: p.name, avatar: p.avatar, isCpu: !!p.isCpu }));
+            await window.FirebaseLib.setDoc(ref, {
+              roomId: this.roomId,
+              hostUid: this.myUid,
+              status: 'playing',
+              resumedAt: Date.now(),
+              hostPresence: Date.now(),
+              presence: {},
+              guestAcks: {},
+              players: roster,
+              finalPlayers: roster,
+              savedGame: null,
+              boatRaceAction: null
+            });
+            if (this.roomUnsubscribe) { try { this.roomUnsubscribe(); } catch (e) {} }
+            this.roomUnsubscribe = window.FirebaseLib.onSnapshot(ref, (snap) => {
+              if (!snap.exists()) return;
+              this.handleRoomSnapshot(snap.data());
+            }, (err) => console.error('Room Snapshot Error:', err));
+            await this.syncGameStateToRoom();
+          } catch (e) {
+            console.error('部屋の再作成に失敗しました（この端末だけで続行します）:', e);
+          }
+        }
+        this._startPresenceHeartbeat();
       },
 
       toggleFullscreen() {
