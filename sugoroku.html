@@ -1042,6 +1042,27 @@
     </div>
   </div>
 
+  <!-- MODAL: 競艇を引き続き遊ぶか（人間プレーヤーのみ。CPUはそのままサイコロを振ります） -->
+  <div id="boatrace-continue-modal" class="hidden fixed inset-0 z-[75] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="text-5xl">🚤</div>
+      <h3 class="font-mincho text-lg font-bold text-amber-400">引続き江戸川競艇で遊びますか？</h3>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        遊ぶ場合、このターンはサイコロを振らずに競艇となります。<br>
+        （他の参加者も同じレースに参加できます）
+      </p>
+      <p id="boatrace-continue-info" class="text-[11px] text-slate-500"></p>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="EdogawaSugoroku.answerBoatRaceContinue(false)" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-3 rounded-xl transition">
+          やめる<span class="block text-[10px] font-normal">サイコロを振る</span>
+        </button>
+        <button onclick="EdogawaSugoroku.answerBoatRaceContinue(true)" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+          遊ぶ<span class="block text-[10px] font-bold">このターンを使う</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: 江戸川クイズ -->
   <div id="quiz-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
     <div class="relative bg-slate-900 border border-amber-500/50 rounded-3xl max-w-md w-full max-h-[92vh] min-h-[340px] overflow-y-auto shadow-2xl">
@@ -1147,6 +1168,8 @@
     // セーブデータのキー。「ひとりで遊ぶ」と「マルチプレイ」で各1件だけ保存します。
     const SOLO_SAVE_KEY = "edogawa_sugoroku_state";
     const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
+    // 「引続き江戸川競艇で遊びますか？」で連続開催できる上限（1レグあたり・1人あたり）。
+    const BOAT_RACE_CONTINUE_LIMIT = 3;
     // 相手の端末が「生きているか」の判定に使う無反応の許容時間（ミリ秒）。
     // 各端末は4秒ごとに心拍（presence）を書き込みます。
     const PRESENCE_TIMEOUT_MS = 20000;
@@ -2193,6 +2216,8 @@
       boatRaceSelectedPair: null,
       boatRaceSelectedAmount: 1000,
       _lastBoatRacePhase: null,
+      _boatRaceOfferOpen: false,      // 「引続き遊びますか？」を表示中か
+      _lastBoatRaceStartTs: 0,        // ゲストからの継続開催依頼の重複処理防止
       miniGameActive: false,
       kingyoSpawnTimer: null,
       kingyoFishSpawned: 0,
@@ -2786,6 +2811,9 @@
           if (this.isHost && data.boatRaceAction) {
             this.handleBoatRaceAction(data.boatRaceAction);
           }
+          if (this.isHost && data.pendingBoatRaceStart) {
+            this._handlePendingBoatRaceStart(data.pendingBoatRaceStart);
+          }
         }
       },
 
@@ -2870,7 +2898,9 @@
             skipTurn: !!p.skipTurn,
             wheelchairTurns: p.wheelchairTurns || 0,
             forcedMoveCount: p.forcedMoveCount || 0,
-            rocketBoost: !!p.rocketBoost
+            rocketBoost: !!p.rocketBoost,
+            boatRaceContinue: !!p.boatRaceContinue,
+            boatRaceContinueCount: p.boatRaceContinueCount || 0
           })),
           pendingRoll: null,
           awaitingGoalSelection: this.awaitingGoalSelection || null,
@@ -2987,6 +3017,8 @@
             local.wheelchairTurns = rp.wheelchairTurns;
             local.forcedMoveCount = rp.forcedMoveCount;
             local.rocketBoost = !!rp.rocketBoost;
+            local.boatRaceContinue = !!rp.boatRaceContinue;
+            local.boatRaceContinueCount = rp.boatRaceContinueCount || 0;
             if (local === mover) return; // leave position alone — the walk animation below advances it
             local.currentNodeIdx = rp.currentNodeIdx;
             local.pathIndex = rp.pathIndex;
@@ -3431,6 +3463,7 @@
         this.goalHandledThisLeg = false;
         this.boatRaceEventsThisLeg = 0;
         this.boatRaceCapThisLeg = 1;
+        (this.players || []).forEach(p => { p.boatRaceContinue = false; p.boatRaceContinueCount = 0; });
         // 新しい盤面を作る前に、前のレグに残っている自動サイコロ予約・移動intervalを止める。
         this.cancelAutoRoll();
         if (this.moveInterval) { clearInterval(this.moveInterval); this.moveInterval = null; }
@@ -4329,6 +4362,9 @@
             this.rollDice();
           }, 1200);
         }
+
+        // 競艇で遊んだ人の次の手番なら「引続き遊びますか？」を出す（本人の端末だけ）
+        this._maybeOfferBoatRaceContinue();
       },
 
       cancelAutoRoll() {
@@ -4350,7 +4386,7 @@
           if (this.turnSettled) return;
           if (this.currentPlayerIdx !== idxAtStart || this.turnCount !== countAtStart) return;
           if (this.miniGameActive || this.boatRaceActive || this.awaitingGoalSelection) return;
-          const openModal = ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','goal-modal','rocket-gift-modal']
+          const openModal = ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','boatrace-continue-modal','goal-modal','rocket-gift-modal']
             .some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
           if (openModal) return;
           this.addLog('⚠️ ターンが止まっていたため自動的に次のターンへ進めました。');
@@ -5001,13 +5037,15 @@
           if (ended) return; ended = true;
           this.quizAnswerEnabled = true;
           document.querySelectorAll('#quiz-options button').forEach(b => { b.disabled = false; b.classList.remove('opacity-60'); });
-          // CPU・オートモード・離脱した参加者は自動で回答する（ゲームを止めない）
+          // CPU・オートモード・離脱した参加者は自動で回答する（ゲームを止めない）。
+          // ただし常に正解させると人間だけが不利で現実味がないため、
+          // 三択なら約33%になるよう「選択肢からランダムに1つ選ぶ」＝素の確率で答える。
           if (player.isCpu || this.autoMode || this.isPlayerOffline(player)) {
             setTimeout(() => {
               if (this.quizAnswered) return;
-              const correctIdx = q.options.findIndex(o => o === q.answer);
-              this.answerQuiz(correctIdx >= 0 ? correctIdx : 0);
-            }, 500);
+              const guessIdx = Math.floor(Math.random() * q.options.length);
+              this.answerQuiz(guessIdx);
+            }, 1200);
           }
         };
         this.speakQuizQuestion(q.question, enableAnswers);
@@ -5700,6 +5738,10 @@
         this.cancelAutoRoll();
         clearTimeout(this.turnWatchdogTimer);
         this.turnWatchdogTimer = null;
+        if (this._boatRaceOfferOpen) {
+          document.getElementById('boatrace-continue-modal')?.classList.add('hidden');
+          this._boatRaceOfferOpen = false;
+        }
         if (this.moveInterval) { clearInterval(this.moveInterval); this.moveInterval = null; }
         this.isRolling = false;
 
@@ -6026,7 +6068,9 @@
         }
       },
 
-      async startBoatRaceEvent(forcedPlayer) {
+      // continued=true は「引続き遊ぶ」を選んだ2回目以降の開催。
+      // この場合は強制移動ではなく本人の意思なので、参加費なし・レグの回数制限に含めない。
+      async startBoatRaceEvent(forcedPlayer, continued = false) {
         if (this.boatRaceActive) return false;
         const forced = forcedPlayer || this.players[this.currentPlayerIdx];
         if (!forced) return false;
@@ -6060,6 +6104,7 @@
           weights,
           weather: { wind, wave, text: `天候: 晴れ ｜ 風速: ${wind}m ｜ 波高: ${wave}cm` },
           moneyAtStart,
+          continued: !!continued,
           payouts: null,
           startedAt: Date.now(),
           deadline: Date.now() + 30000,
@@ -6077,9 +6122,11 @@
         }
         this.boatRaceState.odds = odds;
 
-        // 強制移動した本人は参加費なしで自動エントリー。
+        // 開催者本人（強制移動された人／引き続き遊ぶ人）は参加費なしで自動エントリー。
         this.boatRaceState.participants[forced.id] = true;
-        this.addLog(`🚤 ${forced.name} は江戸川競艇場に強制連行され、そのまま参戦！（参加費なし）`);
+        this.addLog(continued
+          ? `🚤 ${forced.name} が引き続き江戸川競艇で遊びます！（参加費なし）`
+          : `🚤 ${forced.name} は江戸川競艇場に強制連行され、そのまま参戦！（参加費なし）`);
 
         // CPUは確認画面を出さず、参加費￥1,000を払って自動参加。
         this.players.filter(p => this.isAutoPlayedPlayer(p) && !this.boatRaceState.participants[p.id]).forEach(p => {
@@ -6136,8 +6183,9 @@
             this._renderBoatRaceBetting();
           } else if (!me.isCpu) {
             const forced = this._boatRacePlayerById(st.forcedPlayerId);
-            document.getElementById('boatrace-invite-desc').innerText =
-              `${forced ? forced.name : 'プレーヤー'} が江戸川競艇場へ強制移動しました。\n参加費は￥1,000です。`;
+            document.getElementById('boatrace-invite-desc').innerText = st.continued
+              ? `${forced ? forced.name : 'プレーヤー'} が引き続き江戸川競艇で遊びます。\n一緒に参加しますか？（参加費￥1,000）`
+              : `${forced ? forced.name : 'プレーヤー'} が江戸川競艇場へ強制移動しました。\n参加費は￥1,000です。`;
             this._showBoatRaceScreen('boatrace-invite-screen');
           }
         } else if (st.phase === 'race') {
@@ -6689,10 +6737,130 @@
         this.boatRaceState = null;
         this._lastBoatRacePhase = null;
         document.getElementById('boatrace-modal')?.classList.add('hidden');
+
+        // 今回の開催者（＝この手番の人）が人間なら、次の自分の手番で
+        // 「引続き江戸川競艇で遊びますか？」を出せるように印を付ける。
+        // CPU・離脱中の人はそのままサイコロを振るので対象外。
+        const owner = this.players[this.currentPlayerIdx];
+        if (owner && !owner.isCpu && !this.isPlayerOffline(owner)) {
+          owner.boatRaceContinueCount = (owner.boatRaceContinueCount || 0) + 1;
+          if (owner.boatRaceContinueCount <= BOAT_RACE_CONTINUE_LIMIT) {
+            owner.boatRaceContinue = true;
+          } else {
+            owner.boatRaceContinue = false;
+            this.addLog(`🚤 ${owner.name} は連続開催の上限（${BOAT_RACE_CONTINUE_LIMIT}回）に達したため、次のターンは通常進行です。`);
+          }
+        }
+
         this.addLog('🚤 江戸川競艇終了。次のターンへ進みます。');
         if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
         this.finishTurn();
         this.panToCurrentPlayer();
+      },
+
+      // ============================================================
+      // 「引続き江戸川競艇で遊びますか？」
+      // 競艇で遊んだ人の“次の自分の手番”に、その人の端末だけで確認を出す。
+      // 「遊ぶ」を選ぶとそのターンはサイコロを振らず競艇になり、
+      // 他のホスト・参加者も通常どおり参加できる。
+      // CPU（と離脱中の人）にはこの確認は出さず、そのままサイコロを振る。
+      // ============================================================
+      _maybeOfferBoatRaceContinue() {
+        if (this._boatRaceOfferOpen) return;
+        const cp = this.players[this.currentPlayerIdx];
+        if (!cp || !cp.boatRaceContinue) return;
+        if (this.boatRaceActive || this.miniGameActive || this.isRolling) return;
+        if (this.awaitingGoalSelection) return;
+
+        // CPU・離脱中の人は確認なしで通常進行
+        if (this.isAutoPlayedPlayer(cp)) { cp.boatRaceContinue = false; return; }
+        // オートモード中は自動で辞退（サイコロ進行を止めないため）
+        if (this.autoMode && cp.uid === this.myUid) { cp.boatRaceContinue = false; return; }
+        // その手番を操作できる端末（本人）だけに出す
+        if (!this.canActNow()) return;
+
+        const info = document.getElementById('boatrace-continue-info');
+        if (info) {
+          const left = BOAT_RACE_CONTINUE_LIMIT - (cp.boatRaceContinueCount || 0) + 1;
+          info.innerText = `所持金 ${this.formatMoney(cp.money)}／連続で遊べるのは残り${Math.max(0, left)}回です`;
+        }
+        this._boatRaceOfferOpen = true;
+        document.getElementById('boatrace-continue-modal')?.classList.remove('hidden');
+      },
+
+      answerBoatRaceContinue(play) {
+        document.getElementById('boatrace-continue-modal')?.classList.add('hidden');
+        this._boatRaceOfferOpen = false;
+        const cp = this.players[this.currentPlayerIdx];
+        if (!cp) return;
+        cp.boatRaceContinue = false;
+
+        if (!play) {
+          this.addLog(`🎲 ${cp.name} は競艇をやめて、そのままサイコロを振ります。`);
+          this.updateHUD();
+          return;
+        }
+
+        // このターンは競艇で消費する（サイコロは振らない）
+        this.isRolling = true;
+        this.turnSettled = false;
+        this._armTurnWatchdog();
+        this.updateHUD();
+
+        if (!this.isMultiplayer || this.isHost) {
+          Promise.resolve(this.startBoatRaceEvent(cp, true)).then(started => {
+            if (started === false) this.finishTurn();
+          }).catch(e => {
+            console.error('競艇の継続開催に失敗しました:', e);
+            this.finishTurn();
+          });
+        } else {
+          // ゲストは自分で開催できないため、ホストに開催を依頼する
+          this._requestBoatRaceContinueFromHost(cp);
+        }
+      },
+
+      async _requestBoatRaceContinueFromHost(player) {
+        if (!this.db || !this.roomId || !window.FirebaseLib) { this.isRolling = false; this.updateHUD(); return; }
+        try {
+          const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          await window.FirebaseLib.updateDoc(ref, {
+            pendingBoatRaceStart: { playerId: player.id, uid: this.myUid, ts: Date.now() }
+          });
+        } catch (e) {
+          console.error('競艇開催の依頼に失敗しました:', e);
+          this.isRolling = false;
+          this.updateHUD();
+        }
+      },
+
+      // ホスト側：ゲストからの「引き続き競艇で遊ぶ」依頼を受けて開催する
+      async _handlePendingBoatRaceStart(req) {
+        if (!req || !this.isHost) return;
+        if (req.ts === this._lastBoatRaceStartTs) return;
+        this._lastBoatRaceStartTs = req.ts;
+        if (this.boatRaceActive) return;
+
+        const player = (typeof req.playerId === 'number' ? this._boatRacePlayerById(req.playerId) : null) ||
+                       this.players.find(p => p.uid === req.uid);
+        if (!player) return;
+        if (this.players[this.currentPlayerIdx] !== player) return; // その人の手番でなければ無視
+
+        player.boatRaceContinue = false;
+        this.isRolling = true;
+        this.turnSettled = false;
+        this._armTurnWatchdog();
+        try {
+          const started = await this.startBoatRaceEvent(player, true);
+          if (started === false) this.finishTurn();
+        } catch (e) {
+          console.error('競艇の継続開催に失敗しました:', e);
+          this.finishTurn();
+        }
+        try {
+          const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          await window.FirebaseLib.updateDoc(ref, { pendingBoatRaceStart: null });
+        } catch (e) { /* ベストエフォート */ }
       },
 
       // ============================================================
@@ -6913,7 +7081,8 @@
             currentNodeIdx: p.currentNodeIdx, vehicle: p.vehicle || null,
             skipTurn: !!p.skipTurn, skipTurnType: p.skipTurnType || null, skipTurnReason: p.skipTurnReason || null,
             wheelchairTurns: p.wheelchairTurns || 0, forcedMoveCount: p.forcedMoveCount || 0,
-            boatRaceCount: p.boatRaceCount || 0, isFlying: !!p.isFlying, rocketBoost: !!p.rocketBoost
+            boatRaceCount: p.boatRaceCount || 0, isFlying: !!p.isFlying, rocketBoost: !!p.rocketBoost,
+            boatRaceContinue: !!p.boatRaceContinue, boatRaceContinueCount: p.boatRaceContinueCount || 0
           })),
           turnCount: this.turnCount,
           currentPlayerIdx: this.currentPlayerIdx,
@@ -7123,6 +7292,7 @@
           skipTurn: !!p.skipTurn, skipTurnType: p.skipTurnType || null, skipTurnReason: p.skipTurnReason || null,
           wheelchairTurns: p.wheelchairTurns || 0, forcedMoveCount: p.forcedMoveCount || 0,
           boatRaceCount: p.boatRaceCount || 0, isFlying: !!p.isFlying, rocketBoost: !!p.rocketBoost,
+          boatRaceContinue: !!p.boatRaceContinue, boatRaceContinueCount: p.boatRaceContinueCount || 0,
           isCpu: !!p.isCpu
         }));
 
