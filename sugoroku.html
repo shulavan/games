@@ -240,18 +240,18 @@
     }
     .kingyo-fish.reverse { animation-name: kingyo-swim-left; }
     @keyframes kingyo-swim-right {
-      0% { left: -12%; transform: translateY(0) rotate(-4deg) scaleX(1); }
-      25% { transform: translateY(-11px) rotate(4deg) scaleX(1); }
-      50% { left: 48%; transform: translateY(9px) rotate(-4deg) scaleX(1); }
-      75% { transform: translateY(-9px) rotate(4deg) scaleX(1); }
-      100% { left: 108%; transform: translateY(0) rotate(-4deg) scaleX(1); }
+      0% { left: -12%; transform: translateY(0) rotate(-4deg) scaleX(-1); }
+      25% { transform: translateY(-11px) rotate(4deg) scaleX(-1); }
+      50% { left: 48%; transform: translateY(9px) rotate(-4deg) scaleX(-1); }
+      75% { transform: translateY(-9px) rotate(4deg) scaleX(-1); }
+      100% { left: 108%; transform: translateY(0) rotate(-4deg) scaleX(-1); }
     }
     @keyframes kingyo-swim-left {
-      0% { left: 108%; transform: translateY(0) rotate(4deg) scaleX(-1); }
-      25% { transform: translateY(10px) rotate(-4deg) scaleX(-1); }
-      50% { left: 48%; transform: translateY(-9px) rotate(4deg) scaleX(-1); }
-      75% { transform: translateY(9px) rotate(-4deg) scaleX(-1); }
-      100% { left: -12%; transform: translateY(0) rotate(4deg) scaleX(-1); }
+      0% { left: 108%; transform: translateY(0) rotate(4deg) scaleX(1); }
+      25% { transform: translateY(10px) rotate(-4deg) scaleX(1); }
+      50% { left: 48%; transform: translateY(-9px) rotate(4deg) scaleX(1); }
+      75% { transform: translateY(9px) rotate(-4deg) scaleX(1); }
+      100% { left: -12%; transform: translateY(0) rotate(4deg) scaleX(1); }
     }
     .kingyo-fish:active { transform: scale(0.85); }
     .kingyo-fish.caught { pointer-events: none; animation: none !important; }
@@ -449,6 +449,9 @@
         <p class="text-xs text-slate-300 font-medium">
           スマホのカメラで上のQRコードを撮影して参加してください
         </p>
+        <button id="modal-line-share-btn" onclick="EdogawaSugoroku.shareRoomViaLine()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md">
+          <span>💬</span> <span>LINEで招待リンクを送る（遠方の友達にも！）</span>
+        </button>
       </div>
 
       <div id="modal-firebase-warning" class="hidden text-[11px] text-amber-300 bg-amber-950/40 border border-amber-800/50 rounded-lg p-2 text-left leading-relaxed">
@@ -465,7 +468,10 @@
         </div>
         <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800">
           <span class="text-slate-400">自動開始まで:</span>
-          <span id="modal-countdown-badge" class="px-2.5 py-0.5 bg-amber-500 text-slate-950 font-black rounded-full text-xs animate-pulse">30秒</span>
+          <div class="flex items-center gap-1.5">
+            <span id="modal-countdown-badge" class="px-2.5 py-0.5 bg-amber-500 text-slate-950 font-black rounded-full text-xs animate-pulse">30秒</span>
+            <button id="modal-countdown-toggle-btn" onclick="EdogawaSugoroku.toggleHostCountdown()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold rounded-full text-[10px] transition">⏸ 一時停止</button>
+          </div>
         </div>
       </div>
 
@@ -483,32 +489,54 @@
   <!-- MODAL: GUEST WAITING MODAL (USER B, C - NON-INTERACTIVE) -->
   <div id="guest-waiting-modal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
     <div class="max-w-xs w-full space-y-5">
-      <div class="relative flex justify-center items-center">
-        <div class="w-20 h-20 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
-        <div class="absolute text-3xl animate-bounce">⏳</div>
-      </div>
-      
-      <div class="space-y-2">
-        <h3 class="font-mincho text-xl font-bold text-amber-400">招待者が準備してます</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          ホストがゲームを開始するまでこのままお待ちください。
-        </p>
+
+      <div id="guest-nickname-screen" class="space-y-4">
+        <span class="text-4xl">🎲</span>
+        <h3 class="font-mincho text-xl font-bold text-amber-400">江戸川双六に参加</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">あなたのニックネームを入力してください</p>
+        <input type="text" id="guest-nickname-input" maxlength="6" placeholder="ニックネーム（6文字以内）" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-amber-300 text-center focus:outline-none focus:border-amber-500 font-bold">
+        <button onclick="EdogawaSugoroku.confirmGuestNickname()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg active:scale-95 transition">参加する</button>
       </div>
 
-      <div id="guest-waiting-normal" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
-        <div class="text-[11px] text-slate-400">現在の参加状況</div>
-        <div id="guest-participant-count" class="text-lg font-extrabold text-amber-300">参加人数 1名</div>
-        <div id="guest-participant-list" class="flex justify-center gap-2 pt-1"></div>
-        <div class="text-[10px] text-slate-500 pt-2 border-t border-slate-800/80">
-          カウントダウン終了またはホストの操作で自動開始します (<span id="guest-countdown-seconds" class="text-amber-400 font-bold">30</span>s)
+      <div id="guest-waiting-wrapper" class="hidden space-y-5">
+        <div class="relative flex justify-center items-center">
+          <div class="w-20 h-20 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
+          <div class="absolute text-3xl animate-bounce">⏳</div>
         </div>
-      </div>
 
-      <div id="guest-waiting-error" class="hidden bg-rose-950/40 border border-rose-800/50 rounded-2xl p-4 text-xs text-rose-200 leading-relaxed"></div>
+        <div class="space-y-2">
+          <h3 class="font-mincho text-xl font-bold text-amber-400">招待者が準備してます</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            ホストがゲームを開始するまでこのままお待ちください。
+          </p>
+        </div>
+
+        <div id="guest-waiting-normal" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
+          <div class="text-[11px] text-slate-400">現在の参加状況</div>
+          <div id="guest-participant-count" class="text-lg font-extrabold text-amber-300">参加人数 1名</div>
+          <div id="guest-participant-list" class="flex justify-center gap-2 pt-1"></div>
+          <div class="text-[10px] text-slate-500 pt-2 border-t border-slate-800/80">
+            カウントダウン終了またはホストの操作で自動開始します (<span id="guest-countdown-seconds" class="text-amber-400 font-bold">30</span>s)
+          </div>
+        </div>
+
+        <div id="guest-waiting-error" class="hidden bg-rose-950/40 border border-rose-800/50 rounded-2xl p-4 text-xs text-rose-200 leading-relaxed"></div>
+      </div>
     </div>
   </div>
 
   <!-- OVERLAY: WAITING WHILE HOST RESOLVES GOAL / NEXT DESTINATION -->
+  <!-- OVERLAY: HOST WAITING FOR GUESTS TO CATCH UP (goal transitions / group mini-games) -->
+  <div id="host-wait-guests-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 text-center select-none pointer-events-auto">
+    <div class="max-w-xs w-full space-y-4 bg-slate-900 border border-amber-500/40 rounded-2xl p-5">
+      <div class="relative flex justify-center items-center">
+        <div class="w-14 h-14 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
+      </div>
+      <h3 class="font-mincho text-base font-bold text-amber-400">他の参加者の反映を待っています…</h3>
+      <p class="text-xs text-slate-300 leading-relaxed">通信のタイムラグにより、他の端末がまだ現在の状態に追いついていない可能性があります。少しだけお待ちください。</p>
+    </div>
+  </div>
+
   <div id="mp-goal-wait-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
     <div class="max-w-xs space-y-3">
       <div class="text-4xl">🏆</div>
@@ -567,6 +595,7 @@
         <h2 class="font-mincho text-2xl font-extrabold text-amber-400 mt-1">GOAL! 先着ゴール達成！</h2>
         <p id="goal-winner-text" class="text-sm text-slate-300 mt-1">賞金10万円を獲得しました！</p>
         <p class="text-lg font-black text-amber-300 mt-2">💰 賞金 ¥100,000 獲得！</p>
+        <p id="goal-penalty-text" class="hidden text-xs font-bold text-red-400 mt-1"></p>
         <p id="goal-cpu-countdown" class="hidden text-xs font-bold text-sky-300 mt-2">CPU自動進行まで… <span id="goal-cpu-countdown-num">3</span></p>
       </div>
 
@@ -1586,11 +1615,18 @@
       }
 
       init() {
-        if (!this.ctx) {
-          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (this.ctx.state === 'suspended') {
-          this.ctx.resume();
+        // モバイルブラウザ（特にiOS Safari）ではAudioContextの生成やresume()が
+        // ユーザー操作の文脈外で例外を投げることがある。ここで確実に握りつぶし、
+        // 効果音が原因でボートレース等のミニゲーム自体が起動しなくなるのを防ぐ。
+        try {
+          if (!this.ctx) {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+        } catch (e) {
+          console.warn('AudioContext の初期化に失敗しました（音声なしで続行します）:', e);
         }
       }
 
@@ -1868,12 +1904,28 @@
         const joinRoomId = urlParams.get('room');
 
         if (joinRoomId) {
+          this.pendingJoinRoomId = joinRoomId;
           this.applyCachedNickname();
-          await this.initFirebase();
-          this.joinRoomAsGuest(joinRoomId);
+          const guestModal = document.getElementById("guest-waiting-modal");
+          if (guestModal) guestModal.classList.remove("hidden");
+          const nicknameInput = document.getElementById("guest-nickname-input");
+          const cached = localStorage.getItem("edogawa_sugoroku_nickname");
+          if (nicknameInput && cached) nicknameInput.value = cached;
         } else {
           this.checkNickname();
         }
+      },
+
+      // ゲストがニックネームを入力してから参加フローに進む（従来は「ゲスト1」のような
+      // 自動採番の名前で即参加していたが、自分の名前を選べるようにする）。
+      confirmGuestNickname() {
+        const input = document.getElementById("guest-nickname-input");
+        const nickname = (input?.value || "").trim().slice(0, 6) || "ゲスト";
+        localStorage.setItem("edogawa_sugoroku_nickname", nickname);
+        this.myGuestNickname = nickname;
+        document.getElementById("guest-nickname-screen")?.classList.add("hidden");
+        document.getElementById("guest-waiting-wrapper")?.classList.remove("hidden");
+        this.initFirebase().then(() => this.joinRoomAsGuest(this.pendingJoinRoomId));
       },
 
       applyCachedNickname() {
@@ -2029,6 +2081,7 @@
 
         // Generate QR Code URL
         const joinUrl = `${window.location.origin}${window.location.pathname}?room=${this.roomId}`;
+        this.currentJoinUrl = joinUrl;
         const qrContainer = document.getElementById("modal-qrcode-container");
         if (qrContainer) {
           qrContainer.innerHTML = "";
@@ -2094,6 +2147,29 @@
         const countdownBadge = document.getElementById("modal-countdown-badge");
         if (countdownBadge && typeof countdown === 'number') {
           countdownBadge.innerText = `${countdown}秒`;
+        }
+      },
+
+      // LINEアプリ（またはLINE公式のWeb共有）を開き、招待URLを遠方の友達にも送れるようにする。
+      shareRoomViaLine() {
+        const url = this.currentJoinUrl || `${window.location.origin}${window.location.pathname}?room=${this.roomId || ''}`;
+        const text = encodeURIComponent(`江戸川双六、一緒に遊びませんか？🎲\n下のリンクから参加できます！\n${url}`);
+        window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
+      },
+
+      // ホストが30秒の自動開始カウントダウンを一時停止／再開できるようにする。
+      // 遠方の友達がLINEリンク経由で参加するのを待ちたい時などに使う。
+      toggleHostCountdown() {
+        const btn = document.getElementById('modal-countdown-toggle-btn');
+        if (this.countdownTimer) {
+          clearInterval(this.countdownTimer);
+          this.countdownTimer = null;
+          if (btn) { btn.textContent = '▶ 再開する'; }
+          this.addLog('⏸ ホストがカウントダウンを一時停止しました。');
+        } else {
+          this.startHostCountdown();
+          if (btn) { btn.textContent = '⏸ 一時停止'; }
+          this.addLog('▶ ホストがカウントダウンを再開しました。');
         }
       },
 
@@ -2236,7 +2312,7 @@
 
           // Add self if not already in list
           if (!players.some(p => p.uid === this.myUid)) {
-            const myGuestName = `ゲスト ${players.length + 1}`;
+            const myGuestName = this.myGuestNickname || `ゲスト ${players.length + 1}`;
             const availableAvatars = AVATAR_LIST.filter(a => !players.some(p => p.avatar === a));
             const myAvatar = availableAvatars[0] || "🧑";
 
@@ -2407,7 +2483,9 @@
           eventSeq: this.eventSeq || 0,
           lastDiceValue: this.lastDiceValueForSync || null,
           rocketGiftEventSeq: this.rocketGiftEventSeq || 0,
-          boatRace: this.boatRaceState || null
+          boatRace: this.boatRaceState || null,
+          quiz: this.quizSyncState || null,
+          kingyo: this.kingyoSyncState || null
         };
 
         try {
@@ -2451,6 +2529,8 @@
       applyRemoteGameState(gs) {
         if (!gs) return;
         if (!this.isHost) this.applyRemoteBoatRaceState(gs.boatRace || null);
+        if (!this.isHost) this.applyRemoteQuizState(gs.quiz || null);
+        if (!this.isHost) this.applyRemoteKingyoState(gs.kingyo || null);
         if (typeof gs.version === 'number' && gs.version <= this.gameStateVersion) return;
         this.gameStateVersion = gs.version || this.gameStateVersion;
 
@@ -2574,6 +2654,54 @@
             if (cube) cube.classList.remove("dice-rolling");
           }
         }
+
+        // ゲストは状態の反映が終わった時点で「ここまで追いついた」ことをホストに知らせる。
+        // アニメーション中はまだ追いついていないので、完了を待ってから知らせる。
+        if (!this.isHost) {
+          const ackVersion = gs.version || this.gameStateVersion;
+          const sendAck = () => this._sendGuestAck(ackVersion);
+          if (animatingMovement) {
+            setTimeout(sendAck, 900);
+          } else {
+            sendAck();
+          }
+        }
+      },
+
+      // ゲスト側：現在反映済みのバージョンをFirestoreに書き込む（ベストエフォート）。
+      async _sendGuestAck(version) {
+        if (!this.db || !this.roomId || !this.myUid) return;
+        try {
+          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+          await window.FirebaseLib.updateDoc(roomRef, { [`guestAcks.${this.myUid}`]: version });
+        } catch (e) { /* best-effort */ }
+      },
+
+      // ホスト側：ゴール後の次の盤面生成や、全員参加のミニゲーム開始など「みんなが揃って
+      // からでないと不自然になる」瞬間の前に呼ぶ。通信のタイムラグでゲストが前の状態の
+      // アニメーション途中のまま次の状態が来てしまう事故を防ぐ。繋がっていないゲストや
+      // 応答のないゲストで永久に待ち続けないよう、必ずタイムアウトする。
+      async waitForGuestsToCatchUp(timeoutMs = 6000) {
+        if (!this.isMultiplayer || !this.isHost || !this.db || !this.roomId) return;
+        const overlay = document.getElementById("host-wait-guests-overlay");
+        const targetVersion = this.gameStateVersion;
+        const guestUids = this.players.filter(p => !p.isCpu && p.uid !== this.myUid).map(p => p.uid);
+        if (!guestUids.length) return;
+
+        const start = Date.now();
+        let shown = false;
+        try {
+          while (Date.now() - start < timeoutMs) {
+            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+            const snap = await window.FirebaseLib.getDoc(roomRef);
+            const acks = (snap.exists() && snap.data().guestAcks) || {};
+            const allCaughtUp = guestUids.every(uid => (acks[uid] || 0) >= targetVersion);
+            if (allCaughtUp) break;
+            if (!shown && overlay) { overlay.classList.remove("hidden"); shown = true; this.addLog("⏳ 他の参加者の反映を待っています…"); }
+            await new Promise(res => setTimeout(res, 400));
+          }
+        } catch (e) { /* best-effort — fall through and proceed anyway */ }
+        if (overlay) overlay.classList.add("hidden");
       },
 
       // Mirrors the host's own dice-spin + step-by-step walk on a guest's screen, instead of
@@ -3819,12 +3947,21 @@
           const usedRocket = !!cp.rocketBoost;
 
           // 🚁/✈️は「1回だけの倍率ボーナス」ではなく、ゴールに着くか誰かが先にゴールするまで
-          // 続く状態異常のようなもの。サイコロの出目そのままのマス数を、道路ではなく専用の
-          // 直線フライトルート（40m間隔のマス付き）上で進める。アイコンも✈️/🚁のまま。
+          // 続く状態異常のようなもの。ただし進む速さそのものは固定倍率にする：
+          // ✈️は常に3倍、🚁は常に2倍。専用の直線フライトルート（40m間隔のマス付き）上を進め、
+          // アイコンも✈️/🚁のまま。🚀ロケット中の獲得は他の乗り物と同様に加算で重ねられる。
           if (cp.isFlying) {
-            if (usedRocket) cp.rocketBoost = false; // ロケットは飛行中には重複適用しない
-            this.addLog(`🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】 ➔ ${usedVehicle ? usedVehicle.emoji : "✈️"} 空の旅を続けます。`);
-            this.movePlayerSteps(cp, rawRoll, stepDelay, isRemoteTurn);
+            const flyMult = (usedVehicle && usedVehicle.emoji === "✈️") ? 3 : 2;
+            let flySteps = rawRoll * flyMult;
+            let flyLog = `🎲 ${cp.name} がサイコロを出しました！ 【 目: ${rawRoll} 】 ➔ ${usedVehicle ? usedVehicle.emoji : "✈️"} (${flyMult}倍)`;
+            if (usedRocket) {
+              flySteps = (rawRoll * 10) + (rawRoll * flyMult);
+              flyLog += ` + 🚀ロケット(10倍)`;
+              cp.rocketBoost = false;
+            }
+            flyLog += ` で ${flySteps} マス空の旅を続けます。`;
+            this.addLog(flyLog);
+            this.movePlayerSteps(cp, flySteps, stepDelay, isRemoteTurn);
             return;
           }
 
@@ -4229,6 +4366,13 @@
         return btn;
       },
 
+      // ホストのみが呼ぶ：クイズの進行状況をFirestoreに同期し、他の参加者の画面にも
+      // 「誰が」「どのジャンル/問題で」「何を選んだか」「正解は何か」を表示できるようにする。
+      _syncQuizState(patch) {
+        this.quizSyncState = Object.assign({}, this.quizSyncState, patch, { seq: (this.quizSyncState?.seq || 0) + 1 });
+        if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
+      },
+
       speakQuizQuestion(text, onEnd) {
         const status = document.getElementById('quiz-announcer-status');
         const done = () => { if (status) status.textContent = '三択から答えを選んでください'; if (typeof onEnd === 'function') onEnd(); };
@@ -4253,13 +4397,26 @@
         const modal = document.getElementById('quiz-modal');
         if (!modal) { this.finishMiniGameTurn(player, `⭐ ${player.name} の江戸川クイズを開始できませんでした。`); return; }
         this.activeQuizPlayerId = player.id;
+        this.activeQuizQuestion = null;
         this.quizAnswered = false;
         this.quizAnswerEnabled = false;
         this.quizAutoCloseTimer && clearTimeout(this.quizAutoCloseTimer);
         document.getElementById('quiz-result-screen')?.classList.add('hidden');
         document.getElementById('quiz-question-screen')?.classList.remove('hidden');
+
+        // showQuizQuestion()はデータ取得を挟む非同期処理なので、実際に今回の問題へ
+        // 差し替わるまでに間がある。その間、前回のクイズの中身がそのまま残っていると
+        // 一瞬「違う問題」が見えてしまうため、表示直後にいったん中身をリセットしておく。
+        document.getElementById('quiz-genre-badge').textContent = '江戸川クイズ';
+        document.getElementById('quiz-difficulty-badge') && (document.getElementById('quiz-difficulty-badge').textContent = '');
+        document.getElementById('quiz-question-text').textContent = '問題を読み込み中…';
+        document.getElementById('quiz-options').innerHTML = '';
+        const status = document.getElementById('quiz-announcer-status');
+        if (status) status.textContent = '準備中…';
+
         modal.classList.remove('hidden');
         sound.playQuizStart();
+        this._syncQuizState({ phase: 'question', playerId: player.id, playerName: player.name });
         setTimeout(() => this.showQuizQuestion(player), 420);
       },
 
@@ -4289,6 +4446,7 @@
         document.getElementById('quiz-question-text').textContent = q.question;
         const optionsEl = document.getElementById('quiz-options');
         optionsEl.innerHTML = q.options.map((opt, idx) => `<button disabled class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition opacity-60" onclick="EdogawaSugoroku.answerQuiz(${idx})">${idx + 1}. ${opt}</button>`).join('');
+        this._syncQuizState({ phase: 'question', playerId: player.id, playerName: player.name, genre: q.genre || '江戸川クイズ', question: q.question, options: q.options });
         let ended = false;
         const enableAnswers = () => {
           if (ended) return; ended = true;
@@ -4329,6 +4487,7 @@
         document.getElementById('quiz-result-money').textContent = correct ? '賞金 ＋¥50,000' : '賞金なし';
         this.updateHUD();
         this.addLog(`🧠 [江戸川クイズ] ${player.name} は${correct ? '正解！＋¥50,000' : '不正解'}。`);
+        this._syncQuizState({ phase: 'result', chosenIndex: index, chosenText: chosenText, correct, answerText: q.answer });
         this.quizAutoCloseTimer = setTimeout(() => this.closeQuizEvent(), 3000);
       },
 
@@ -4343,8 +4502,49 @@
         document.getElementById('quiz-result-screen')?.classList.add('hidden');
         document.getElementById('quiz-question-screen')?.classList.remove('hidden');
         this.quizAnswered = false; this.quizAnswerEnabled = false; this.activeQuizQuestion = null; this.activeQuizPlayerId = null;
+        this.quizSyncState = null;
+        if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
         if (player) this.finishMiniGameTurn(player);
       },
+
+      // ゲスト（観戦・他の参加者）の画面でクイズの進行を読み取り専用で表示する。
+      // CPUや他プレーヤーが答えている最中でも「何が起きているか」「正解は何か」が見えるようにする。
+      applyRemoteQuizState(st) {
+        if (!st) {
+          if (this._lastQuizSeqApplied) { document.getElementById('quiz-modal')?.classList.add('hidden'); this._lastQuizSeqApplied = null; }
+          return;
+        }
+        if (st.seq === this._lastQuizSeqApplied) return;
+        this._lastQuizSeqApplied = st.seq;
+
+        const modal = document.getElementById('quiz-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+
+        if (st.phase === 'question' && st.question) {
+          document.getElementById('quiz-result-screen')?.classList.add('hidden');
+          document.getElementById('quiz-question-screen')?.classList.remove('hidden');
+          document.getElementById('quiz-genre-badge').textContent = st.genre || '江戸川クイズ';
+          document.getElementById('quiz-question-text').textContent = st.question;
+          const optionsEl = document.getElementById('quiz-options');
+          optionsEl.innerHTML = (st.options || []).map((opt, idx) => `<button disabled class="quiz-option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-700 bg-slate-950/60 text-white font-bold transition opacity-60">${idx + 1}. ${opt}</button>`).join('');
+          const status = document.getElementById('quiz-announcer-status');
+          if (status) status.textContent = `🎙 ${st.playerName || ''} が挑戦中…`;
+        } else if (st.phase === 'result') {
+          document.getElementById('quiz-question-screen')?.classList.add('hidden');
+          const result = document.getElementById('quiz-result-screen');
+          result?.classList.remove('hidden');
+          const icon = document.getElementById('quiz-result-icon');
+          icon.textContent = st.correct ? '〇' : '×';
+          icon.className = `text-[120px] leading-none font-black ${st.correct ? 'text-red-500' : 'text-blue-500'}`;
+          document.getElementById('quiz-result-answer').textContent = st.answerText || '';
+          document.getElementById('quiz-result-text').textContent = st.correct ? '正解！' : '不正解！';
+          document.getElementById('quiz-result-text').className = `text-base font-black ${st.correct ? 'text-red-400' : 'text-blue-400'}`;
+          document.getElementById('quiz-result-money').textContent = st.correct ? '賞金 ＋¥50,000' : '賞金なし';
+          setTimeout(() => document.getElementById('quiz-modal')?.classList.add('hidden'), 3000);
+        }
+      },
+
 
       startKingyoInvite(player) {
         const modal = document.getElementById('kingyo-modal');
@@ -4354,6 +4554,8 @@
         document.getElementById('kingyo-invite-name').textContent = `${player.name} が★マスに止まりました！`;
         modal.classList.remove('hidden');
         this.activeKingyoPlayerId = player.id;
+        this.kingyoSyncState = { phase: 'playing', playerId: player.id, playerName: player.name, seq: (this.kingyoSyncState?.seq || 0) + 1 };
+        if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
         // CPUだけでなく、人間プレーヤーのオートモードでも自動参加。
         // 確認モーダルを少し見せてから「はい」を自動選択。
         if (player.isCpu || this.autoMode) setTimeout(() => this.respondKingyoInvite(true), 1200);
@@ -4365,6 +4567,15 @@
         if (!join) { document.getElementById('kingyo-modal')?.classList.add('hidden'); this.finishMiniGameTurn(player, `🐟 ${player.name} は金魚すくいを見送りました。`); return; }
         if (player.money < 1000) { alert('参加費￥1,000が足りません。今回は見送ります。'); return this.respondKingyoInvite(false); }
         player.money -= 1000;
+
+        // CPUは実際にタップ操作ができないため、視覚的なタンク画面の代わりに、
+        // 人間より控えめ（成績低め）な確率でランダムに結果だけを計算して表示する。
+        if (player.isCpu) {
+          this.updateHUD();
+          setTimeout(() => this.simulateKingyoForCpu(player), 900);
+          return;
+        }
+
         this.kingyoTimeLeft = 30;
         this.kingyoFishStats = { '🐟':0, '🐠':0, '🐡':0, '🦈':0, '🦪':0 };
         this.kingyoFishTimers = [];
@@ -4399,7 +4610,7 @@
           }
           if (this.kingyoTimeLeft <= 0) this.finishKingyoGame();
         }, 1000);
-        if (player.isCpu || this.autoMode) {
+        if (this.autoMode) {
           this.kingyoCpuTimer = setInterval(() => {
             const fish = [...tank.querySelectorAll('.kingyo-fish:not([data-caught])')].filter(f => f.dataset.used !== '1');
             if (fish.length) fish[Math.floor(Math.random() * fish.length)].click();
@@ -4517,7 +4728,75 @@
         document.getElementById('kingyo-result-total').textContent=`合計　￥${(gross-1000).toLocaleString()}`;
         this.updateHUD();
         this.addLog(`🐟 [江戸川金魚すくい] ${player.name} は＋¥${gross.toLocaleString()}を獲得。`);
+        this.kingyoSyncState = { phase: 'result', playerId: player.id, playerName: player.name, gross, seq: (this.kingyoSyncState?.seq || 0) + 1 };
+        if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
         this.kingyoAutoCloseTimer=setTimeout(()=>this.closeKingyoEvent(),3000);
+      },
+
+      // CPUは実際にタップ操作を行わないため、視覚的なタンク画面の代わりに、人間より
+      // 控えめ（成績低め）な確率でランダムに結果だけを計算して結果画面を表示する。
+      simulateKingyoForCpu(player) {
+        const defs = [
+          { emoji:'🐟', value:500, attempts:10, chance:.28 },
+          { emoji:'🐠', value:600, attempts:8,  chance:.22 },
+          { emoji:'🐡', value:700, attempts:6,  chance:.16 },
+          { emoji:'🦈', value:2000, attempts:2, chance:.06 },
+          { emoji:'🦪', value:5000, attempts:1, chance:.03 }
+        ];
+        const stats = {};
+        defs.forEach(d => {
+          let count = 0;
+          for (let i = 0; i < d.attempts; i++) { if (Math.random() < d.chance) count++; }
+          stats[d.emoji] = count;
+        });
+        const gross = defs.reduce((sum, d) => sum + stats[d.emoji] * d.value, 0);
+        player.money += gross;
+
+        document.getElementById('kingyo-invite-screen')?.classList.add('hidden');
+        document.getElementById('kingyo-game-screen')?.classList.add('hidden');
+        document.getElementById('kingyo-result-screen')?.classList.remove('hidden');
+        document.getElementById('kingyo-result-breakdown').innerHTML = defs.map(d =>
+          `${d.emoji} ×${stats[d.emoji]}　￥${(stats[d.emoji] * d.value).toLocaleString()}`
+        ).join('<br>') + `<br><hr class='border-slate-700 my-2'>獲得金額　＋￥${gross.toLocaleString()}<br>参加費　▲￥1,000`;
+        document.getElementById('kingyo-result-total').textContent = `合計　￥${(gross - 1000).toLocaleString()}`;
+        this.updateHUD();
+        this.addLog(`🐟 [江戸川金魚すくい] ${player.name}（CPU）は＋¥${gross.toLocaleString()}を獲得。`);
+        this.kingyoSyncState = { phase: 'result', playerId: player.id, playerName: player.name, gross, seq: (this.kingyoSyncState?.seq || 0) + 1 };
+        if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
+        this.kingyoAutoCloseTimer = setTimeout(() => this.closeKingyoEvent(), 3000);
+      },
+
+      // ゲスト（観戦・他の参加者）の画面で金魚すくいの進行を簡易表示する。実際のタップ操作は
+      // プレイ中の本人の端末でのみ行われるため、他の画面には「誰が挑戦中か」と結果のみを示す。
+      applyRemoteKingyoState(st) {
+        if (!st) {
+          if (this._lastKingyoSeqApplied) { document.getElementById('kingyo-modal')?.classList.add('hidden'); this._lastKingyoSeqApplied = null; }
+          return;
+        }
+        if (st.seq === this._lastKingyoSeqApplied) return;
+        this._lastKingyoSeqApplied = st.seq;
+
+        // このデバイス自身がプレイ中（respondKingyoInvite等で自分のタンク画面を出している）
+        // 場合は、ホストからの簡易ミラーで上書きしない。
+        const localHuman = this.players.find(p => !p.isCpu);
+        if (localHuman && st.playerId === localHuman.id && !localHuman.isCpu && (!this.isMultiplayer || localHuman.uid === this.myUid)) return;
+
+        const modal = document.getElementById('kingyo-modal');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        ['kingyo-invite-screen','kingyo-game-screen','kingyo-result-screen'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+
+        if (st.phase === 'playing') {
+          document.getElementById('kingyo-invite-screen')?.classList.remove('hidden');
+          const nameEl = document.getElementById('kingyo-invite-name');
+          if (nameEl) nameEl.textContent = `${st.playerName || ''} が江戸川金魚すくいに挑戦中…`;
+          document.querySelectorAll('#kingyo-invite-screen button').forEach(b => b.style.display = 'none');
+        } else if (st.phase === 'result') {
+          document.getElementById('kingyo-result-screen')?.classList.remove('hidden');
+          document.getElementById('kingyo-result-breakdown').innerHTML = `${st.playerName || ''} の獲得金額`;
+          document.getElementById('kingyo-result-total').textContent = `＋￥${(st.gross || 0).toLocaleString()}`;
+          setTimeout(() => modal.classList.add('hidden'), 3000);
+        }
       },
 
       closeKingyoEvent() {
@@ -4534,6 +4813,8 @@
         document.getElementById('kingyo-countdown-overlay')?.classList.remove('flex');
         document.getElementById('kingyo-result-screen')?.classList.add('hidden');
         this.kingyoTimeLeft=0; this.activeKingyoPlayerId=null;
+        this.kingyoSyncState = null;
+        if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
         if (player) this.finishMiniGameTurn(player);
       },
 
@@ -4659,6 +4940,18 @@
         }
         player.money += 100000;
 
+        // 毎回のゴールで、その時点で所持金が最も少ない（ビリの）プレーヤーに罰金。
+        let poorest = this.players[0];
+        this.players.forEach(p => { if (p.money < poorest.money) poorest = p; });
+        const penalty = 50000;
+        poorest.money = Math.max(0, poorest.money - penalty);
+        this.addLog(`💥 ビリ罰金：${poorest.name} に ▲¥${penalty.toLocaleString()}（残 ¥${poorest.money.toLocaleString()}）`);
+        const penaltyEl = document.getElementById("goal-penalty-text");
+        if (penaltyEl) {
+          penaltyEl.textContent = `💥 ビリ罰金：${poorest.name} に ▲¥${penalty.toLocaleString()}`;
+          penaltyEl.classList.remove("hidden");
+        }
+
         document.getElementById("goal-winner-text").innerText = `${player.name} が ${this.currentDestination.name} に先着ゴール！`;
         document.getElementById("category-select-section").classList.remove("hidden");
         document.getElementById("category-cpu-countdown").classList.add("hidden");
@@ -4771,6 +5064,10 @@
 
         try {
           document.getElementById("goal-modal").classList.add("hidden");
+
+          // マルチプレイの場合、通信のタイムラグでゲストがまだ前の状態のアニメーション中の
+          // ことがあるため、次の盤面を組む前に全員が追いつくのを待つ（タイムアウトあり）。
+          await this.waitForGuestsToCatchUp();
 
           const currentStartLoc = {
             name: this.currentDestination.name,
@@ -4996,7 +5293,14 @@
       },
 
       _boatRaceLocalPlayer() {
-        return this.players.find(p => p.uid === this.myUid) || null;
+        // ソロ/CPU対戦ではmyUid・player.uidが未設定なことがあるため、その場合は
+        // 人間プレーヤー（またはプレーヤー0）にフォールバックし、確実にローカルの
+        // 参加者を特定できるようにする。
+        if (this.myUid) {
+          const byUid = this.players.find(p => p.uid === this.myUid);
+          if (byUid) return byUid;
+        }
+        return this.players.find(p => !p.isCpu) || this.players[0] || null;
       },
 
       async _submitBoatRaceAction(action) {
@@ -5019,6 +5323,10 @@
         if (this.boatRaceActive) return;
         const forced = forcedPlayer || this.players[this.currentPlayerIdx];
         if (!forced) return;
+
+        // 全員参加型イベントなので、開始前にゲストが前の状態に追いついているか確認する
+        // （タイムラグで置いてけぼりのまま競艇が始まるのを防ぐ）。
+        await this.waitForGuestsToCatchUp();
 
         const winds = [2,4,8,12];
         const waves = [5,15,35,50];
@@ -5267,7 +5575,7 @@
         [1,2,3,4,5].forEach(n=>{
           const row=document.createElement('div');
           row.className='relative h-6 bg-sky-500/30 rounded border border-white/10 overflow-hidden';
-          row.innerHTML=`<span class="absolute left-1 top-0.5 text-[9px] text-white/80">${n}</span><span id="br-boat-${n}" class="absolute left-6 top-0 text-lg"> ${icons[n]}</span>`;
+          row.innerHTML=`<span class="absolute left-1 top-0.5 text-[9px] text-white/80">${n}</span><span id="br-boat-${n}" class="absolute left-6 top-0 text-lg" style="display:inline-block; transform: scaleX(-1);"> ${icons[n]}</span>`;
           track.appendChild(row);
         });
         if (!result) return;
