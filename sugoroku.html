@@ -1224,6 +1224,11 @@
     // セーブデータのキー。「ひとりで遊ぶ」と「マルチプレイ」で各1件だけ保存します。
     const SOLO_SAVE_KEY = "edogawa_sugoroku_state";
     const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
+    // 🚁/✈️を配る条件（残りマス数のしきい値）。ゴール1回につき、それぞれ1人だけ・早い者勝ち。
+    const FLIGHT_HELI_MIN_SQUARES = 100;   // 🚁ヘリコプター
+    const FLIGHT_PLANE_MIN_SQUARES = 150;  // ✈️飛行機
+    // 競艇実況の読み上げ速度（1.0が標準。競艇の実況らしく早口にしている）
+    const BOAT_RACE_SPEECH_RATE = 1.9;
     // すべてのモーダルの「閉じる（自動進行：〇秒）」の秒数。
     const MODAL_AUTO_CLOSE_SECONDS = 3;
     // 「引続き江戸川競艇で遊びますか？」で連続開催できる上限（1レグあたり・1人あたり）。
@@ -1873,8 +1878,9 @@
       { emoji: "🚁", name: "ヘリコプター", mult: 6 },
       { emoji: "✈️", name: "飛行機", mult: 7 }
     ];
-    // 🚁/✈️は「ゴールから最も離れているプレーヤー優先・同時最大2名まで」の特別枠(grantFlight)
-    // 専用になったため、通常の乗り物獲得イベントの抽選プールからは除外している。
+    // 🚁/✈️は特別枠(grantFlight)専用。ゴール1回につき、残りマス100以上で🚁を1人、
+    // 150以上で✈️を1人、緑▲マスに止まった順（早い者勝ち）で配る。
+    // そのため、通常の乗り物獲得イベントの抽選プールからは除外している。
     const NON_FLIGHT_VEHICLES = VEHICLES.filter(v => v.emoji !== "🚁" && v.emoji !== "✈️");
 
     // 🚁/✈️で空の旅をしている最中に赤●・青■マスに着地した時専用のフレーバーテキスト。
@@ -2121,6 +2127,20 @@
         setTimeout(() => this.playTone(1174.66, 'triangle', 0.12, 0.16), 110);
         setTimeout(() => this.playTone(1567.98, 'triangle', 0.28, 0.18), 220);
       }
+
+      // クイズ開始の「ジャジャン♪」。読み上げの前に鳴らす。
+      playQuizFanfare() {
+        this.init();
+        // 「ジャ」＝短く2音重ね
+        this.playTone(587.33, 'triangle', 0.16, 0.20);   // D5
+        this.playTone(880.00, 'triangle', 0.16, 0.14);   // A5
+        // 「ジャン」＝少し高く長めに3音重ね
+        setTimeout(() => {
+          this.playTone(783.99, 'triangle', 0.55, 0.20); // G5
+          this.playTone(1174.66, 'triangle', 0.55, 0.15); // D6
+          this.playTone(1567.98, 'sine', 0.55, 0.10);     // G6
+        }, 210);
+      }
       playQuizCorrect() {
         this.init();
         this.playTone(880, 'sine', 0.10, 0.14);
@@ -2262,6 +2282,8 @@
       legTransitionInProgress: false,
       specialEventUsed: false,
       boatRaceActive: false,
+      helicopterGrantedThisLeg: false,   // 🚁を今回のゴールまでに配ったか（1人だけ）
+      planeGrantedThisLeg: false,        // ✈️を今回のゴールまでに配ったか（1人だけ）
       boatRaceEventsThisLeg: 0,
       boatRaceCapThisLeg: 1,
       boatRaceState: null,
@@ -3377,6 +3399,8 @@
           this.goalNodeIdx = Number.isInteger(state.goalNodeIdx) ? state.goalNodeIdx : null;
           this.specialEventUsed = !!state.specialEventUsed;
           this.recentDestinationNames = Array.isArray(state.recentDestinationNames) ? state.recentDestinationNames : [];
+          this.helicopterGrantedThisLeg = !!state.helicopterGrantedThisLeg;
+          this.planeGrantedThisLeg = !!state.planeGrantedThisLeg;
           this.players = state.players;
 
           // 念のため各プレイヤーの保存値を正規化。既存のセーブデータを壊さず、
@@ -3532,6 +3556,9 @@
         this.goalHandledThisLeg = false;
         this.boatRaceEventsThisLeg = 0;
         this.boatRaceCapThisLeg = 1;
+        // 🚁/✈️は「1ゴールにつきそれぞれ1人だけ」なので、新しい盤面でリセットする
+        this.helicopterGrantedThisLeg = false;
+        this.planeGrantedThisLeg = false;
         (this.players || []).forEach(p => { p.boatRaceContinue = false; p.boatRaceContinueCount = 0; });
         // 新しい盤面を作る前に、前のレグに残っている自動サイコロ予約・移動intervalを止める。
         this.cancelAutoRoll();
@@ -4809,6 +4836,29 @@
         if (typeof player.forcedMoveCount !== 'number') player.forcedMoveCount = 0;
         if (typeof player.boatRaceCount !== 'number') player.boatRaceCount = 0;
 
+        // ★最優先★ 🚁/✈️の特別枠
+        // 「ゴール1回（1レグ）につき、それぞれ1人だけ・早い者勝ち」。
+        //   ・残りマスが150以上 → ✈️（飛行機）を1人だけ
+        //   ・残りマスが100以上 → 🚁（ヘリコプター）を1人だけ
+        // 条件を満たしている人が緑▲マスに止まったら、強制移動の抽選より先に必ず付与する
+        // （そうしないと警察・病院の抽選に吸われて、なかなか配られないため）。
+        // 両方の条件を満たす場合は、より強い✈️を優先（✈️が出ていれば🚁）。
+        const myRemaining = this.remainingSquares(player);
+        let flightEmoji = null;
+        if (!player.isFlying && myRemaining !== null) {
+          if (myRemaining >= FLIGHT_PLANE_MIN_SQUARES && !this.planeGrantedThisLeg) {
+            flightEmoji = "✈️";
+          } else if (myRemaining >= FLIGHT_HELI_MIN_SQUARES && !this.helicopterGrantedThisLeg) {
+            flightEmoji = "🚁";
+          }
+        }
+        if (flightEmoji) {
+          if (flightEmoji === "✈️") this.planeGrantedThisLeg = true;
+          else this.helicopterGrantedThisLeg = true;
+          this.grantFlight(player, flightEmoji);
+          return;
+        }
+
         // Cap forced teleports (boat race / police / hospital) at 2 per player per goal-leg,
         // otherwise a run of bad luck can bounce a player back and forth forever and the
         // game never progresses. Once the cap is hit, this player only draws the vehicle-boost
@@ -4889,30 +4939,6 @@
           return;
         }
 
-        // ここから乗り物イベント。🚁/✈️だけは特別枠：ゴールから最も離れているプレーヤーを
-        // 優先し、1ゴール(1レグ)につき同時最大2名まで、それでも低確率にしている。
-        const flyingCount = this.players.filter(p => p.isFlying).length;
-        let qualifiesForFlight = false;
-
-        if (flyingCount < 2 && !player.isFlying) {
-          const myRemaining = this.remainingSquares(player);
-          let maxRemaining = myRemaining;
-          this.players.forEach(p => {
-            if (p.isFlying) return; // 既に飛行中のプレーヤーは比較対象から除外
-            const r = this.remainingSquares(p);
-            if (r !== null && (maxRemaining === null || r > maxRemaining)) maxRemaining = r;
-          });
-          const isFurthestBehind = myRemaining !== null && maxRemaining !== null && myRemaining >= maxRemaining;
-          if (isFurthestBehind && myRemaining >= 200) {
-            qualifiesForFlight = true;
-          }
-        }
-
-        if (qualifiesForFlight) {
-          this.grantFlight(player);
-          return;
-        }
-
         const vehicle = NON_FLIGHT_VEHICLES[Math.floor(Math.random() * NON_FLIGHT_VEHICLES.length)];
         player.vehicle = vehicle;
 
@@ -4932,8 +4958,9 @@
       // ではなく、道や建物を無視した専用の直線ルート(40m間隔・赤●青■のみ)を新設し、
       // 誰かがゴールするまでプレーヤーは✈️/🚁のアイコンのまま、その直線ルート上を通常の
       // サイコロで進み続ける（＝状態異常に近い、複数ターンにわたる効果）。
-      async grantFlight(player) {
-        const vehicle = VEHICLES[Math.random() < 0.5 ? 4 : 5]; // 🚁 or ✈️
+      async grantFlight(player, emoji) {
+        // emoji で 🚁 / ✈️ を指定（未指定なら🚁）
+        const vehicle = VEHICLES.find(v => v.emoji === emoji) || VEHICLES[4];
         const fromNode = this.roadNetworkNodes[player.currentNodeIdx];
         const goal = this.currentDestination;
         const fromPt = (fromNode && Number.isFinite(fromNode.lat) && Number.isFinite(fromNode.lng)) ? fromNode : goal;
@@ -4982,11 +5009,11 @@
         sound.playChime();
         this.showEventModal(
           "追い上げチャンス！",
-          `ゴールから大きく離されていたので「${vehicle.name} (${vehicle.emoji})」を特別にゲット！\n道や建物を無視して、ゴールまで一直線の空の旅がスタートします（誰かがゴールするまで継続）！`,
+          `ゴールまであと${this.remainingSquares(player) ?? '-'}マス。大きく離されているので「${vehicle.name} (${vehicle.emoji})」を特別にゲット！\n道や建物を無視して、ゴールまで一直線の空の旅がスタートします（誰かがゴールするまで継続）！\n※この機体は今回のゴールまで1人だけの早い者勝ちです。`,
           null,
           { icon: vehicle.emoji, type: "green" }
         );
-        this.addLog(`🚀 [緑マス] ${player.name} は ${vehicle.emoji} ${vehicle.name} で空の旅に出発！（同時最大2名まで）`);
+        this.addLog(`🚀 [緑マス] ${player.name} が ${vehicle.emoji} ${vehicle.name} を獲得！（今回のゴールまで1人だけの早い者勝ち）`);
       },
 
       // 黄★マス（新設）: プレーヤーを問わず、クイズ・金魚すくいなど複数のミニゲームを
@@ -5085,9 +5112,10 @@
         if (status) status.textContent = '準備中…';
 
         modal.classList.remove('hidden');
-        sound.playQuizStart();
+        // モーダルが出た瞬間に「ジャジャン♪」。効果音が鳴り終わってから問題を読み上げる。
+        sound.playQuizFanfare();
         this._syncQuizState({ phase: 'question', playerId: player.id, playerName: player.name });
-        setTimeout(() => this.showQuizQuestion(player), 420);
+        setTimeout(() => this.showQuizQuestion(player), 1000);
       },
 
       async showQuizQuestion(player) {
@@ -5110,7 +5138,15 @@
         // 実データのフィールド名は "question"（"q" ではない）で、answer は選択肢と一致する
         // 文字列（インデックスではない）。フォールバック問題も同じ形に揃えてある。
         questions = (questions || fallbackQuestions).filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
-        const q = questions[Math.floor(Math.random() * questions.length)] || fallbackQuestions[0];
+        const picked = questions[Math.floor(Math.random() * questions.length)] || fallbackQuestions[0];
+        // 元データは正解が先頭に並んでいることが多いため、選択肢の順番を毎回シャッフルする。
+        // 正解の判定は「文字列の一致」で行っているので、並べ替えても判定は正しく動く。
+        const shuffled = picked.options.slice();
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        const q = { ...picked, options: shuffled };
         this.activeQuizQuestion = q;
         document.getElementById('quiz-genre-badge').textContent = q.genre || '江戸川クイズ';
         document.getElementById('quiz-difficulty-badge').textContent = q.difficulty || '';
@@ -6004,7 +6040,9 @@
           roadNetworkNodes: this.roadNetworkNodes,
           goalNodeIdx: this.goalNodeIdx,
           specialEventUsed: this.specialEventUsed,
-          recentDestinationNames: this.recentDestinationNames || []
+          recentDestinationNames: this.recentDestinationNames || [],
+          helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
+          planeGrantedThisLeg: !!this.planeGrantedThisLeg
         };
         localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
       },
@@ -6372,6 +6410,15 @@
       },
 
       // --- 実況（音声＋字幕スーパー） ---
+      // 実況の読み上げにかかる時間の見積もり（ミリ秒）。
+      // 日本語は等速1.0でおよそ7.2文字/秒。実況は早口なので rate で割って求める。
+      // speechSynthesis の onend はブラウザによって発火しないため、
+      // 次の演出へ移るタイミングはこの見積もりで組み立てる。
+      _estimateSpeechMs(text) {
+        const chars = String(text || '').length;
+        return Math.round((chars / (7.2 * BOAT_RACE_SPEECH_RATE)) * 1000) + 350;
+      },
+
       _speakBoatRace(text) {
         if (typeof sound !== 'undefined' && sound.isMuted) return;
         if (!('speechSynthesis' in window)) return;
@@ -6379,7 +6426,7 @@
           window.speechSynthesis.cancel();
           const uttr = new SpeechSynthesisUtterance(text);
           uttr.lang = 'ja-JP';
-          uttr.rate = 1.55;   // 競艇実況らしい早口
+          uttr.rate = BOAT_RACE_SPEECH_RATE;   // 競艇実況らしい早口
           uttr.pitch = 0.8;   // 男性アナウンサー寄り
           const voices = window.speechSynthesis.getVoices() || [];
           const ja = voices.filter(v => /ja/i.test(v.lang || ''));
@@ -6390,7 +6437,7 @@
         } catch (e) { /* 音声が使えない環境でもゲームは進行させる */ }
       },
 
-      _setBoatRaceMarquee(text, durationSec = 22) {
+      _setBoatRaceMarquee(text, durationSec = 12) {
         const el = document.getElementById('boatrace-marquee');
         if (!el) return;
         el.textContent = text;
@@ -6400,9 +6447,13 @@
         el.classList.add('run');
       },
 
-      _boatRaceAnnounce(text, durationSec = 22) {
-        this._setBoatRaceMarquee(text, durationSec);
+      // 実況を1つ読み上げる。戻り値は「読み終わるまでの目安（ミリ秒）」。
+      // 字幕スーパーも読み上げと同じ長さで流れるようにして、途中で切れないようにする。
+      _boatRaceAnnounce(text, durationSec = null) {
+        const ms = this._estimateSpeechMs(text);
+        this._setBoatRaceMarquee(text, durationSec || Math.max(5, ms / 1000 + 1.2));
         this._speakBoatRace(text);
+        return ms;
       },
 
       _boatRaceStartBeeps(onComplete) {
@@ -6415,10 +6466,10 @@
           } catch (e) {}
           if (count >= 3) {
             clearInterval(timer);
-            setTimeout(onComplete, 350);
+            setTimeout(onComplete, 250);
           }
           count++;
-        }, 520);
+        }, 400);
         this.boatRaceBeepTimer = timer;
       },
 
@@ -6517,7 +6568,7 @@
         this.updateHUD();
         this._renderBoatRaceForCurrentDevice();
         this._boatRaceAnnounce(
-          `お待たせいたしました。江戸川競艇場、双六記念杯。本日の天候は晴れ、風速${wind}メートル、波の高さ${wave}センチ。投票の締め切りまで、あと30秒です。`, 20
+          `江戸川競艇場、双六記念杯。天候は晴れ、風速${wind}メートル、波の高さ${wave}センチ。締め切りまであと30秒です。`
         );
         this._startBoatRaceTimerHost();
 
@@ -6640,7 +6691,7 @@
           const left = Math.ceil((this.boatRaceState.deadline - Date.now()) / 1000);
           if (left === 10 && !this.boatRaceState._warned10) {
             this.boatRaceState._warned10 = true;
-            this._boatRaceAnnounce('締め切りまで、あと10秒。お買い忘れのないよう、お願いいたします。', 10);
+            this._boatRaceAnnounce('締め切りまで、あと10秒。お買い忘れのないよう。');
           }
           this._renderBoatRaceBetting();
           if (Date.now() >= this.boatRaceState.deadline) {
@@ -6857,9 +6908,13 @@
         this._renderBoatRaceRaceScreen();
         if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
 
-        this._boatRaceAnnounce('さあ、各艇ピットを離れ、大時計の針が回ります。インコースを主張する1号艇、ゆっくりと舳先を向けます。', 8);
-
-        this._boatRaceStartBeeps(() => this._runBoatRaceAnimation());
+        // ピット離れの実況 → 言い終わってから合図音 → レース＆実況の順に、
+        // 前の音声が途中で切れないように時間を組み立てる。
+        const pitMs = this._boatRaceAnnounce('各艇ピットを離れました。大時計が回ります。');
+        clearTimeout(this.boatRacePitTimer);
+        this.boatRacePitTimer = setTimeout(() => {
+          this._boatRaceStartBeeps(() => this._runBoatRaceAnimation());
+        }, pitMs);
       },
 
       _renderBoatRaceRaceScreen() {
@@ -6919,15 +6974,16 @@
         const [c1, c2, c3] = st.rankResult;
 
         const commentary =
-          `スタートしていきました！${c1}号艇${this._boatIcon(c1)}、スリット通り先マイへ！` +
-          `外から${c2}号艇${this._boatIcon(c2)}が間を狙う！${c3}号艇${this._boatIcon(c3)}も懸命に追いかけます！` +
-          `最終ターンマークを回って直線コース、先頭は${c1}号艇！2番手${c2}号艇が食い下がる！まもなくゴール！`;
-        this._boatRaceAnnounce(commentary, 15);
+          `スタートしました！${c1}号艇、インから先マイへ！` +
+          `外から${c2}号艇が食い下がる！${c3}号艇も懸命に追う！` +
+          `最終ターンマークを回って直線、先頭は${c1}号艇！まもなくゴール！`;
+        const raceMs = this._boatRaceAnnounce(commentary);
 
-        // 着順どおりにゴールするよう、艇ごとのゴール到達時刻をあらかじめ決めておく。
+        // 実況が言い終わるのとほぼ同時に先頭がゴールするよう、走る時間を実況に合わせる。
         const startPct = 6, goalPct = 88;
+        const leadMs = Math.max(3800, Math.min(9000, raceMs - 400));
         const finishAt = {};
-        st.rankResult.forEach((boat, rank) => { finishAt[boat] = 4200 + rank * 300; });
+        st.rankResult.forEach((boat, rank) => { finishAt[boat] = leadMs + rank * 220; });
         const t0 = Date.now();
 
         clearInterval(this.boatRaceAnimTimer);
@@ -6978,20 +7034,22 @@
 
         // 的中した舟券を点灯させてから結果画面へ。
         this._renderBoatRaceBetsSummary(winningPair);
-        this._boatRaceAnnounce(
-          `ゴールイン！1着、${st.rankResult[0]}号艇。2着、${st.rankResult[1]}号艇。2連単、${st.rankResult[0]}の${st.rankResult[1]}、${st.odds[winningPair]}倍でございます。`, 12
+        const goalMs = this._boatRaceAnnounce(
+          `ゴールイン！1着${st.rankResult[0]}号艇、2着${st.rankResult[1]}号艇。2連単${st.rankResult[0]}の${st.rankResult[1]}、${st.odds[winningPair]}倍。`
         );
         this.updateHUD();
         this.addLog(`🏁 [江戸川競艇] 2連単 ${winningPair} （${st.odds[winningPair]}倍）が的中。`);
         if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
 
+        // ゴールの実況を言い終わってから結果画面へ。
+        // 結果画面では短い一言だけ喋り、3秒の自動進行の中で必ず言い終わるようにする。
         clearTimeout(this.boatRaceResultShowTimer);
         this.boatRaceResultShowTimer = setTimeout(() => {
           this._showBoatRaceScreen('boatrace-result-screen');
           this._renderBoatRaceResult();
-          // 結果を見せてから自動的に閉じて次のターンへ（他モーダルと同じ3秒）。
+          this._speakBoatRace('レース結果です。');
           this.armModalAutoClose('boatrace', 'boatrace-close-btn', () => this.closeBoatRaceEvent());
-        }, 2600);
+        }, Math.max(1200, goalMs));
       },
 
       _renderBoatRaceResult() {
@@ -7079,7 +7137,7 @@
           this._renderBoatRaceRaceScreen();
           // ゲスト側でも1回だけレース演出と実況を再生する。
           if (prevPhase !== 'race') {
-            this._boatRaceAnnounce('スタートしていきました！江戸川競艇、双六記念杯、いよいよ決着です！', 20);
+            this._boatRaceAnnounce('スタートしました！江戸川競艇、双六記念杯、いよいよ決着です！');
             this._runBoatRaceAnimation();
           }
         } else if (st.phase === 'result') {
@@ -7098,7 +7156,9 @@
         clearInterval(this.boatRaceBeepTimer);
         clearTimeout(this.boatRaceResultShowTimer);
         clearTimeout(this.boatRaceResultCloseTimer);
+        clearTimeout(this.boatRacePitTimer);
         this.boatRaceTimer = null; this.boatRaceAnimTimer = null; this.boatRaceBeepTimer = null;
+        this.boatRacePitTimer = null;
         if ('speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
 
         const st = this.boatRaceState;
@@ -7467,7 +7527,9 @@
           roadNetworkNodes: this.roadNetworkNodes,
           goalNodeIdx: this.goalNodeIdx,
           specialEventUsed: !!this.specialEventUsed,
-          recentDestinationNames: this.recentDestinationNames || []
+          recentDestinationNames: this.recentDestinationNames || [],
+          helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
+          planeGrantedThisLeg: !!this.planeGrantedThisLeg
         };
       },
 
@@ -7655,6 +7717,8 @@
         this.goalNodeIdx = Number.isInteger(save.goalNodeIdx) ? save.goalNodeIdx : null;
         this.specialEventUsed = !!save.specialEventUsed;
         this.recentDestinationNames = Array.isArray(save.recentDestinationNames) ? save.recentDestinationNames : [];
+        this.helicopterGrantedThisLeg = !!save.helicopterGrantedThisLeg;
+        this.planeGrantedThisLeg = !!save.planeGrantedThisLeg;
 
         // ホストの端末IDは再ログインで変わることがあるため、保存時のホストUIDを今のUIDに置き換える。
         const savedHostUid = save.hostUid;
