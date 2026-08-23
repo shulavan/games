@@ -503,11 +503,17 @@
       <span id="mobile-destination-name" class="text-slate-200 font-medium">カラオケ酔処「ゆう」</span>
     </div>
 
-    <!-- 現在いる場所の目安（サイコロ移動中は非表示。止まった時とスワイプ後に表示） -->
+    <!-- 現在いる場所の目安（サイコロ移動中は非表示。止まった時とスワイプ後に表示）
+         ・近くに地図の施設アイコンがあれば「〇〇周辺」を即表示（通信なし）
+         ・無い場合、自分の手番のときだけ「現在地を表示」ボタンを出し、押した時だけ調べる -->
     <div id="nearby-place-badge" class="hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[220px] truncate">
       <span class="text-sky-300 font-bold">現在地:</span>
       <span id="nearby-place-name" class="text-slate-200 font-medium">-</span>
     </div>
+    <button id="nearby-locate-btn" onclick="EdogawaSugoroku.locateNearbyNow()"
+      class="hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 border border-sky-700/70 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg text-sky-300 font-bold active:scale-95 transition">
+      📍 現在地を表示
+    </button>
   </main>
 
   <!-- MAIN GAME UI FOOTER -->
@@ -3408,7 +3414,7 @@
           this.map.on('dragend', () => {
             if (this._suppressNearby) return;
             const c = this.map.getCenter && this.map.getCenter();
-            if (c) this.showNearbyPlace(c.lat, c.lng);
+            if (c) this.updateNearbyDisplay(c.lat, c.lng);
           });
 
           L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -5548,10 +5554,13 @@
         this.updatePlayerBubble(player, `${facilitySymbol} ${targetLoc.name}へ移動！`);
         this.updatePlayerRoutes();
 
+        // 強制移動先のピンを覚えておき、「〇〇周辺」を通信なしで表示できるようにする
+        this._lastFacilityPin = { name: targetLoc.name, lat: targetLoc.lat, lng: targetLoc.lng, emoji: facilitySymbol };
+
         if (targetNode) {
           this.map.flyTo([targetNode.lat, targetNode.lng], 19, { duration: 1.5 });
           this._suppressNearby = false;
-          this.showNearbyPlace(targetNode.lat, targetNode.lng);
+          this.updateNearbyDisplay(targetNode.lat, targetNode.lng);
         }
       },
 
@@ -5991,6 +6000,73 @@
 
       hideNearbyBadge() {
         document.getElementById('nearby-place-badge')?.classList.add('hidden');
+        document.getElementById('nearby-locate-btn')?.classList.add('hidden');
+      },
+
+      _showLocateButton(show) {
+        const btn = document.getElementById('nearby-locate-btn');
+        if (btn) btn.classList.toggle('hidden', !show);
+        if (show) document.getElementById('nearby-place-badge')?.classList.add('hidden');
+      },
+
+      // 地図上に絵文字アイコンで表示している施設の一覧（座標はその都度読む＝再測位に追従）
+      _facilityPoiGroups() {
+        if (this._facilityPoiCache) return this._facilityPoiCache;
+        this._facilityPoiCache = [
+          [STATIONS_FOR_MAP, '🚉'], [BUS_STOPS_FOR_MAP, '🚏'], [POLICE_STATIONS, '🚨'],
+          [HOSPITALS, '🏥'], [PARKS, '⛲️'], [SCHOOLS, '🏫'], [POST_OFFICES, '🏣'],
+          [TEMPLES_SHRINES, '⛩️'], [[BOAT_RACE_LOC], '🚤']
+        ];
+        return this._facilityPoiCache;
+      },
+
+      // 指定地点の近くにある施設アイコンを探す（ローカルデータのみ＝通信なしで即決まる）
+      findNearbyFacility(lat, lng, maxMeters = 160) {
+        let best = null, bestD = Infinity;
+        const here = { lat, lng };
+        this._facilityPoiGroups().forEach(([list, emoji]) => {
+          (list || []).forEach(loc => {
+            if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
+            const d = this.haversineMeters(here, loc);
+            if (d < bestD) { bestD = d; best = { name: loc.name, emoji }; }
+          });
+        });
+        // 強制移動で立てたピン（競艇場・警察・病院）も候補に含める
+        if (this._lastFacilityPin && Number.isFinite(this._lastFacilityPin.lat)) {
+          const d = this.haversineMeters(here, this._lastFacilityPin);
+          if (d < bestD) { bestD = d; best = { name: this._lastFacilityPin.name, emoji: this._lastFacilityPin.emoji || '📍' }; }
+        }
+        return (best && bestD <= maxMeters) ? { ...best, distance: Math.round(bestD) } : null;
+      },
+
+      // 現在地表示の出し分け。
+      // ① 近くに施設アイコンがある → 「〇〇周辺」を即表示（通信なし）
+      // ② 無くて、自分が操作できる手番 → 「現在地を表示」ボタン（押した時だけ調べる）
+      // ③ それ以外（CPUや自動進行中） → 何も表示しない
+      updateNearbyDisplay(lat, lng) {
+        this._nearbySeq = (this._nearbySeq || 0) + 1;   // 進行中の読み込みを無効化
+        this.hideNearbyBadge();
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        this._nearbyLastPoint = { lat, lng };
+        if (this._suppressNearby) return;
+
+        const facility = this.findNearbyFacility(lat, lng);
+        if (facility) {
+          this._setNearbyBadge(`${facility.emoji} ${facility.name}周辺`);
+          return;
+        }
+
+        const cp = this.players[this.currentPlayerIdx];
+        const myManualTurn = !this.autoMode && !this.isAutoPlayedPlayer(cp) && this.canActNow();
+        this._showLocateButton(!!myManualTurn);
+      },
+
+      // 「現在地を表示」ボタンを押した時だけ、地名の問い合わせを行う
+      locateNearbyNow() {
+        const p = this._nearbyLastPoint;
+        if (!p) return;
+        this._showLocateButton(false);
+        this.showNearbyPlace(p.lat, p.lng);
       },
 
       _formatNearbyLabel(data) {
@@ -6035,16 +6111,22 @@
           this._nearbyCache[key] = label;
           if (token === this._nearbySeq && !this._suppressNearby) this._setNearbyBadge(label);
         } catch (e) {
-          if (token === this._nearbySeq) this.hideNearbyBadge();
+          // 取得できなかった時は、もう一度押せるようにボタンへ戻す
+          if (token === this._nearbySeq) {
+            this.hideNearbyBadge();
+            const cp = this.players[this.currentPlayerIdx];
+            if (!this.autoMode && !this.isAutoPlayedPlayer(cp) && this.canActNow()) this._showLocateButton(true);
+          }
         }
       },
 
-      // 今の手番のプレーヤーがいる場所を表示する
+      // 今の手番のプレーヤーがいる場所の表示を更新する（通信は行わない）
       showNearbyForCurrentPlayer() {
         const cp = this.players[this.currentPlayerIdx];
-        if (!cp || !this.roadNetworkNodes) return;
+        if (!cp || !this.roadNetworkNodes) { this.hideNearbyBadge(); return; }
         const node = this.roadNetworkNodes[cp.currentNodeIdx];
-        if (node) this.showNearbyPlace(node.lat, node.lng);
+        if (node) this.updateNearbyDisplay(node.lat, node.lng);
+        else this.hideNearbyBadge();
       },
 
       panToCurrentPlayer() {
