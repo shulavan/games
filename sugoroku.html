@@ -454,8 +454,11 @@
       <p class="text-[10px] text-slate-500">友だちや家族に「江戸川双六」を教えてあげてください</p>
     </div>
 
-    <div class="text-center text-[11px] text-slate-500 pb-2 pt-3">
-      ©2026 江戸川双六 Produced by M.Tsuda
+    <div class="text-center text-[11px] text-slate-500 pb-2 pt-3 leading-relaxed">
+      ©2026 江戸川双六 Produced by M.Tsuda<br>
+      <span class="text-[9px] text-slate-600">
+        区境データ：国土交通省 国土数値情報「行政区域データ 2025年版」（CC BY 4.0）を加工して作成
+      </span>
     </div>
   </div>
 
@@ -1189,6 +1192,32 @@
     const HOTPEPPER_PROXY_URL = "https://script.google.com/macros/s/AKfycbya4Rz4HM2RXWbQjLH3nMEMiLkWxekRPQ_-iYKc4JN-vdDPkKhB4SuM1Yueo3OwK97PyA/exec";
     // ▲▲▲ ここまで ▲▲▲
 
+    // ============================================================
+    // 江戸川区の区境ポリゴン（目的地を江戸川区内に限定するために使用）
+    // 出典：国土交通省 国土数値情報「行政区域データ 2025年版」（CC BY 4.0）を加工して作成。
+    //       https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N03-2025.html
+    // 経度・緯度の順（GeoJSON準拠）。区の飛び地（葛西沖の埋立部など）も含む4つの多角形。
+    // ============================================================
+    const EDOGAWA_WARD_POLYGONS = [[[139.84944,35.64276],[139.85038,35.65653],[139.84554,35.65672],[139.84689,35.67385],[139.84823,35.67913],[139.84551,35.68129],[139.84638,35.68338],[139.84789,35.69055],[139.84771,35.69497],[139.84381,35.69954],[139.8354,35.70302],[139.83439,35.70473],[139.83564,35.70669],[139.8395,35.70981],[139.83931,35.71087],[139.83597,35.7122],[139.83363,35.71402],[139.83316,35.71576],[139.8355,35.71787],[139.83905,35.71711],[139.84215,35.71931],[139.85136,35.71085],[139.85627,35.71446],[139.85962,35.71366],[139.86056,35.71434],[139.86224,35.71283],[139.86661,35.71291],[139.8674,35.71212],[139.86857,35.71458],[139.86627,35.71853],[139.86874,35.7238],[139.87055,35.72471],[139.87027,35.72875],[139.87218,35.73004],[139.87217,35.73444],[139.87395,35.73602],[139.87293,35.73737],[139.87654,35.73704],[139.87759,35.74092],[139.88051,35.74028],[139.88185,35.74438],[139.88502,35.7456],[139.88231,35.74862],[139.88044,35.74848],[139.88075,35.74973],[139.88271,35.74954],[139.88592,35.75067],[139.88998,35.75077],[139.89288,35.74808],[139.89666,35.74671],[139.89945,35.74439],[139.90097,35.74006],[139.90089,35.73746],[139.89794,35.73187],[139.89721,35.72675],[139.89865,35.72345],[139.90398,35.71959],[139.9057,35.71784],[139.90812,35.71386],[139.91344,35.71051],[139.91621,35.708],[139.91699,35.70352],[139.91865,35.69984],[139.91874,35.69771],[139.91385,35.69093],[139.90865,35.68551],[139.90594,35.68367],[139.90379,35.68312],[139.89356,35.682],[139.88795,35.67999],[139.88643,35.67857],[139.88562,35.67486],[139.88565,35.67207],[139.88723,35.66879],[139.88739,35.65617],[139.8869,35.65373],[139.88349,35.64512],[139.88263,35.64438],[139.87146,35.63864],[139.86904,35.6392],[139.86405,35.63853],[139.86015,35.6388],[139.85612,35.63991],[139.85199,35.64212],[139.84944,35.64276]],[[139.85548,35.63867],[139.85747,35.63753],[139.85359,35.63851],[139.84991,35.63847],[139.85026,35.63995],[139.85195,35.64039],[139.85548,35.63867]],[[139.86467,35.63695],[139.86712,35.63568],[139.86652,35.63492],[139.86454,35.63665],[139.86327,35.6357],[139.8611,35.63693],[139.86467,35.63695]],[[139.86296,35.63547],[139.86296,35.63547],[139.86296,35.63547],[139.86296,35.63547]]];
+
+    // 指定座標が江戸川区の中かどうか（外部通信なしで即判定）
+    function isInsideEdogawaWard(lat, lng) {
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+      for (const ring of EDOGAWA_WARD_POLYGONS) {
+        let inside = false;
+        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+          const xi = ring[i][0], yi = ring[i][1];
+          const xj = ring[j][0], yj = ring[j][1];
+          if (((yi > lat) !== (yj > lat)) &&
+              (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
+            inside = !inside;
+          }
+        }
+        if (inside) return true;
+      }
+      return false;
+    }
+
     // LINE等での紹介に使う公開URL（OGPのog:urlと合わせています）
     const GAME_SHARE_URL = "https://shulavan.github.io/games/sugoroku.html";
 
@@ -1228,7 +1257,7 @@
       { name: "西葛西駅前交番", lat: 35.664077, lng: 139.859360, type: "🚨" },
       { name: "葛西駅前交番", lat: 35.66380, lng: 139.87300, type: "🚨" },
       { name: "船堀交番", lat: 35.68350, lng: 139.86400, type: "🚨" },
-      { name: "小松川警察署", lat: 35.69345, lng: 139.84521, type: "🚨" },
+      { name: "小松川警察署", lat: 35.6900, lng: 139.8560, type: "🚨" },
       { name: "小岩警察署", lat: 35.73250, lng: 139.87850, type: "🚨" },
       { name: "西小岩交番", lat: 35.72800, lng: 139.87200, type: "🚨" },
       { name: "南小岩交番", lat: 35.73000, lng: 139.88000, type: "🚨" },
@@ -1240,9 +1269,9 @@
       { name: "行船公園 (江戸川区自然動物園)", lat: 35.6685, lng: 139.8588 },
       { name: "篠崎公園", lat: 35.7088, lng: 139.8980 },
       { name: "宇喜田公園", lat: 35.6680, lng: 139.8630 },
-      { name: "総合レクリエーション公園", lat: 35.6350, lng: 139.8650 },
+      { name: "総合レクリエーション公園", lat: 35.6600, lng: 139.8620 },
       { name: "新左近川親水公園", lat: 35.6430, lng: 139.8550 },
-      { name: "なぎさ公園", lat: 35.6380, lng: 139.8490 },
+      { name: "なぎさ公園", lat: 35.6455, lng: 139.8730 },
       { name: "一之江境川親水公園", lat: 35.6850, lng: 139.8840 },
       { name: "小松川境川親水公園", lat: 35.7000, lng: 139.8450 },
       { name: "東小松川公園", lat: 35.7020, lng: 139.8470 },
@@ -1255,7 +1284,7 @@
       { name: "天祖神社 (南篠崎)", lat: 35.693, lng: 139.896 },
       { name: "豊田神社", lat: 35.696, lng: 139.894 },
       { name: "天祖神社 (一之江)", lat: 35.687, lng: 139.879 },
-      { name: "最勝寺 (目黄不動)", lat: 35.7175, lng: 139.839 },
+      { name: "最勝寺 (目黄不動)", lat: 35.7060, lng: 139.8430 },
       { name: "上一色氷川神社", lat: 35.722, lng: 139.871 },
       { name: "興之宮神社", lat: 35.724, lng: 139.876 }
     ];
@@ -3729,11 +3758,14 @@
                 lat >= 35.60 && lat <= 35.80 && lng >= 139.80 && lng <= 139.95;
             });
             candidates.sort((a,b) => {
-              const sa = String(a.display_name || '').replace(/\s+/g,'').toLowerCase();
-              const sb = String(b.display_name || '').replace(/\s+/g,'').toLowerCase();
               const score = x => {
                 let n = 0;
-                if (sa.includes(normalizedKey)) n += 10;
+                const dn = String(x.display_name || '').replace(/\s+/g,'').toLowerCase();
+                if (dn.includes(normalizedKey)) n += 10;
+                // 「江戸川双六」なので、江戸川区内の候補を強く優先する
+                // （同名店舗が浦安市・市川市などにあると区外に飛んでしまうため）
+                if (isInsideEdogawaWard(Number(x.lat), Number(x.lon))) n += 20;
+                if (String(x.display_name || '').includes('江戸川区')) n += 8;
                 if (String(x.type || '').match(/amenity|shop|leisure|place|public_transport|healthcare/)) n += 1;
                 return n;
               };
@@ -5693,7 +5725,16 @@
           if (!resp.ok) return null;
           const data = await resp.json();
           if (data.error || !data.shops || !data.shops.length) return null;
-          return data.shops.map(s => ({ name: s.name, lat: s.lat, lng: s.lng }));
+          // この双六は「江戸川双六」なので、江戸川区の外にある店舗は目的地の候補にしない。
+          // （APIは半径指定のため、浦安市・市川市・江東区などの店舗も返ってくる）
+          const all = data.shops.map(s => ({ name: s.name, lat: Number(s.lat), lng: Number(s.lng), address: s.address || '' }));
+          const inWard = all.filter(s => isInsideEdogawaWard(s.lat, s.lng) &&
+            !/(浦安|市川市|船橋|葛飾区|江東区|墨田区|足立区|足立|千葉県)/.test(s.address || ''));
+          if (!inWard.length) {
+            console.warn('近くの飲食店が江戸川区内に見つかりませんでした（固定リストを使用します）');
+            return null;
+          }
+          return inWard;
         } catch(e) {
           console.error("ホットペッパーAPI取得に失敗、固定リストにフォールバックします:", e);
           return null;
@@ -5735,6 +5776,16 @@
         );
         let pool = allOptions.filter(o => o && o.name && !excludedNames.has(o.name));
         if (!pool.length) pool = allOptions.slice();
+
+        // 「江戸川双六」なので目的地は江戸川区内だけ。区外（浦安市・市川市・葛飾区・江東区など）は除外する。
+        // 座標が分かっている候補だけを対象に判定し、判定できない候補は測位後に再チェックする。
+        const inWardPool = pool.filter(o => {
+          const c = (this.geocodeCache[o.name] && Number.isFinite(this.geocodeCache[o.name].lat))
+            ? this.geocodeCache[o.name]
+            : (Number.isFinite(o.lat) ? o : null);
+          return c ? isInsideEdogawaWard(c.lat, c.lng) : true;
+        });
+        if (inWardPool.length) pool = inWardPool;
 
         // 座標は「再測位済みキャッシュ」を優先し、無ければ元データの座標を使う
         const coordOf = (o) => {
@@ -5801,18 +5852,31 @@
             clearInterval(timer);
             box.innerText = `📍 ${selectedGoal.name} の位置を確認中...`;
             goalResolving.then(nextGoal => {
-              // 測位の結果、1着が今いる場所とほぼ同じ地点だった場合の保険。
-              // そのままだと「あと0マス」になってしまうため、候補の中から別の場所に差し替える。
-              if (nextGoal && Number.isFinite(nextGoal.lat) &&
-                  this.haversineMeters(fromLoc, nextGoal) < 150) {
+              // 測位の結果が「1着の現在地とほぼ同じ」または「江戸川区の外」だった場合の保険。
+              // 候補の中から、区内かつ十分離れている場所に差し替える。
+              const needsSwap = nextGoal && Number.isFinite(nextGoal.lat) &&
+                (this.haversineMeters(fromLoc, nextGoal) < 150 || !isInsideEdogawaWard(nextGoal.lat, nextGoal.lng));
+              if (needsSwap) {
+                const outOfWard = !isInsideEdogawaWard(nextGoal.lat, nextGoal.lng);
                 const alt = shortlist
                   .map(s => s.o)
                   .find(o => o !== selectedGoal && coordOf(o) &&
+                    isInsideEdogawaWard(coordOf(o).lat, coordOf(o).lng) &&
                     this.haversineMeters(fromLoc, coordOf(o)) >= MIN_FROM_WINNER);
                 if (alt) {
                   const c = coordOf(alt);
+                  const oldName = nextGoal.name;
                   nextGoal = { ...alt, lat: c.lat, lng: c.lng };
-                  this.addLog(`↺ 抽選結果が今いる場所に近すぎたため、目的地を ${nextGoal.name} に変更しました。`);
+                  this.addLog(outOfWard
+                    ? `↺ ${oldName} は江戸川区外だったため、目的地を ${nextGoal.name} に変更しました。`
+                    : `↺ 抽選結果が今いる場所に近すぎたため、目的地を ${nextGoal.name} に変更しました。`);
+                } else if (outOfWard) {
+                  // 差し替え先が無い場合は、測位前の座標（区内データ）をそのまま使う
+                  const c0 = coordOf(selectedGoal);
+                  if (c0) {
+                    nextGoal = { ...selectedGoal, lat: c0.lat, lng: c0.lng };
+                    this.addLog(`↺ ${selectedGoal.name} の測位結果が区外だったため、区内の登録座標を使用します。`);
+                  }
                 }
               }
               box.innerText = `🎯 決定: ${nextGoal.name}`;
