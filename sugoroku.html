@@ -307,6 +307,20 @@
     .br-bet-cell.hit { background: #fbbf24 !important; color: #0f172a !important; border-color: #fff !important; animation: br-bet-flash 0.5s ease-in-out infinite alternate; }
     @keyframes br-bet-flash { from { box-shadow: 0 0 2px #fbbf24; transform: scale(1); } to { box-shadow: 0 0 9px #ef4444; transform: scale(1.05); } }
 
+    /* 的中した人の行に押す「🎯」のハンコ */
+    .br-hit-stamp {
+      position: absolute; right: -6px; top: 50%;
+      transform: translateY(-50%) rotate(-14deg);
+      font-size: 54px; line-height: 1; pointer-events: none;
+      opacity: 0.92; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55));
+      animation: br-stamp-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) 1 both;
+    }
+    @keyframes br-stamp-in {
+      0%   { transform: translateY(-50%) rotate(-14deg) scale(2.6); opacity: 0; }
+      60%  { transform: translateY(-50%) rotate(-14deg) scale(0.94); opacity: 1; }
+      100% { transform: translateY(-50%) rotate(-14deg) scale(1); opacity: 0.92; }
+    }
+
     /* レースコースのスタート／ゴールライン */
     .br-line-start { position: absolute; left: 9%; top: 0; bottom: 0; width: 3px; background: #facc15; opacity: 0.85; z-index: 1; }
     .br-line-goal { position: absolute; right: 8%; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(0deg, #fff, #fff 5px, #ef4444 5px, #ef4444 10px); opacity: 0.9; z-index: 1; }
@@ -487,6 +501,12 @@
     <div onclick="EdogawaSugoroku.panToDestination()" class="sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[180px] truncate cursor-pointer active:scale-95 transition">
       <span class="text-amber-400 font-bold">目的地:</span>
       <span id="mobile-destination-name" class="text-slate-200 font-medium">カラオケ酔処「ゆう」</span>
+    </div>
+
+    <!-- 現在いる場所の目安（サイコロ移動中は非表示。止まった時とスワイプ後に表示） -->
+    <div id="nearby-place-badge" class="hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[220px] truncate">
+      <span class="text-sky-300 font-bold">現在地:</span>
+      <span id="nearby-place-name" class="text-slate-200 font-medium">-</span>
     </div>
   </main>
 
@@ -825,8 +845,8 @@
         <p id="event-modal-desc" class="text-sm text-slate-100 font-medium leading-relaxed whitespace-pre-line text-left">イベント説明文</p>
       </div>
       <div id="event-modal-extra" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-sm text-amber-300 font-extrabold text-center hidden"></div>
-      <button onclick="EdogawaSugoroku.closeEventModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-md transition">
-        了解！
+      <button id="event-modal-close-btn" onclick="EdogawaSugoroku.closeEventModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-md transition">
+        閉じる
       </button>
     </div>
   </div>
@@ -1036,7 +1056,7 @@
         <p id="boatrace-result-order" class="text-[11px] text-slate-400"></p>
         <div id="boatrace-result-breakdown" class="text-xs text-slate-300 space-y-1.5 bg-slate-950/60 rounded-xl p-3 text-left"></div>
         <div id="boatrace-result-mine" class="text-xs bg-slate-950/60 rounded-xl p-3 text-left space-y-1"></div>
-        <button onclick="EdogawaSugoroku.closeBoatRaceEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">了解！次のターンへ</button>
+        <button id="boatrace-close-btn" onclick="EdogawaSugoroku.closeBoatRaceEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">閉じる</button>
       </div>
 
     </div>
@@ -1088,7 +1108,7 @@
         <div id="quiz-result-chosen" class="text-[12px] font-bold text-slate-300 mt-1"></div>
         <div id="quiz-result-text" class="text-base font-bold mt-3"></div>
         <div id="quiz-result-money" class="text-amber-400 font-black mt-2"></div>
-        <button onclick="EdogawaSugoroku.closeQuizEvent()" class="mt-6 w-full max-w-xs bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95">閉じる</button>
+        <button id="quiz-close-btn" onclick="EdogawaSugoroku.closeQuizEvent()" class="mt-6 w-full max-w-xs bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95">閉じる</button>
       </div>
     </div>
   </div>
@@ -1127,7 +1147,7 @@
         <h2 class="font-mincho text-xl font-bold text-amber-300">金魚すくい 結果発表</h2>
         <div id="kingyo-result-breakdown" class="text-sm text-slate-200 bg-slate-950/60 rounded-xl p-4 text-left leading-8"></div>
         <div id="kingyo-result-total" class="text-lg font-black text-amber-400"></div>
-        <button onclick="EdogawaSugoroku.closeKingyoEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95">閉じる</button>
+        <button id="kingyo-close-btn" onclick="EdogawaSugoroku.closeKingyoEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95">閉じる</button>
       </div>
     </div>
   </div>
@@ -1168,6 +1188,8 @@
     // セーブデータのキー。「ひとりで遊ぶ」と「マルチプレイ」で各1件だけ保存します。
     const SOLO_SAVE_KEY = "edogawa_sugoroku_state";
     const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
+    // すべてのモーダルの「閉じる（自動進行：〇秒）」の秒数。
+    const MODAL_AUTO_CLOSE_SECONDS = 3;
     // 「引続き江戸川競艇で遊びますか？」で連続開催できる上限（1レグあたり・1人あたり）。
     const BOAT_RACE_CONTINUE_LIMIT = 3;
     // 相手の端末が「生きているか」の判定に使う無反応の許容時間（ミリ秒）。
@@ -3234,13 +3256,13 @@
         }
 
         document.getElementById("event-modal").classList.remove("hidden");
-        const modalBtn = document.querySelector("#event-modal button");
-        if (modalBtn) modalBtn.innerText = "了解！";
 
+        // 他のモーダルと同じ「閉じる（自動進行：3秒）」で統一。
+        // ゲスト側は自分でターンを進めないため、閉じるだけ。
         if (this.guestEventAutoCloseTimer) clearTimeout(this.guestEventAutoCloseTimer);
-        this.guestEventAutoCloseTimer = setTimeout(() => {
+        this.armModalAutoClose('event', 'event-modal-close-btn', () => {
           document.getElementById("event-modal").classList.add("hidden");
-        }, 3000);
+        });
       },
 
       checkSaveData() {
@@ -3379,6 +3401,15 @@
             doubleClickZoom: false,
             touchZoom: false
           }).setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 19);
+
+          // スワイプで地図を動かした時は、動かしている間は非表示にし、
+          // 指を離した位置（画面中央）の地名を表示する。
+          this.map.on('dragstart', () => { this._nearbySeq = (this._nearbySeq || 0) + 1; this.hideNearbyBadge(); });
+          this.map.on('dragend', () => {
+            if (this._suppressNearby) return;
+            const c = this.map.getCenter && this.map.getCenter();
+            if (c) this.showNearbyPlace(c.lat, c.lng);
+          });
 
           L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
@@ -4347,13 +4378,17 @@
         // （誰かが抜けてもゲームが止まらないようにするため）。
         const shouldAutoRollCpu = (!this.isMultiplayer || this.isHost) && this.isAutoPlayedPlayer(cp);
         const shouldAutoRollSelf = this.autoMode && !cp.isCpu && canRollNow;
+        // 【1回休み】は選択の余地がないので、人間プレーヤーでも自動で消化する。
+        // これにより「江戸川競艇へ強制移動された次のターン」は、サイコロを押さなくても
+        // 競艇ミニゲームがそのまま自動で始まる。
+        const shouldAutoResolveSkip = !!cp.skipTurn && this.canActNow();
 
         // 自動サイコロの予約は常に1本だけ。updateHUD() が何回呼ばれても
         // 予約が増えないようにし、ターン処理の分裂（＝イベント連打バグ）を防ぐ。
         // すでに予約済みなら「積み直さない」ことも重要（定期的なHUD更新で
         // 予約が毎回先送りされて永久に発火しなくなるのを防ぐ）。
-        const wantAutoRoll = (shouldAutoRollCpu || shouldAutoRollSelf) &&
-          !this.isRolling && !this.miniGameActive && !this.boatRaceActive;
+        const wantAutoRoll = (shouldAutoRollCpu || shouldAutoRollSelf || shouldAutoResolveSkip) &&
+          !this.isRolling && !this.miniGameActive && !this.boatRaceActive && !this._boatRaceOfferOpen;
         if (!wantAutoRoll) {
           this.cancelAutoRoll();
         } else if (!this.autoRollTimer) {
@@ -4611,6 +4646,8 @@
 
         if (actualSteps === 0) {
           this.updateMoveCountdown(player, 0, 0);
+          this._suppressNearby = false;
+          this.showNearbyForCurrentPlayer();
           if (player.currentNodeIdx === this.goalNodeIdx) {
             setTimeout(() => this.handleGoalReach(player), silent ? 0 : 50);
           } else {
@@ -4621,6 +4658,9 @@
 
         let currentStep = 0;
         if (!silent) this.updateMoveCountdown(player, actualSteps, actualSteps);
+        // サイコロでコマが動いている間は「現在地」表示を消す
+        this._suppressNearby = true;
+        this.hideNearbyBadge();
 
         // コマ移動のintervalも常に1本だけ。二重に走ると2人分の移動が同時に進み、
         // ターンの二重進行につながる。
@@ -4658,6 +4698,8 @@
             if (this.moveInterval === interval) this.moveInterval = null;
             this.clearUsedVehicle(player);
             this.updateMoveCountdown(player, 0, 0);
+            this._suppressNearby = false;
+            this.showNearbyForCurrentPlayer();
             setTimeout(() => this.handleGoalReach(player), silent ? 0 : 300);
             return;
           }
@@ -4667,6 +4709,9 @@
             if (this.moveInterval === interval) this.moveInterval = null;
             this.clearUsedVehicle(player);
             this.updateMoveCountdown(player, 0, 0);
+            // 止まった地点で「〇〇付近」を表示する
+            this._suppressNearby = false;
+            this.showNearbyForCurrentPlayer();
             setTimeout(() => this.landOnSpot(player), silent ? 0 : 300);
           }
         }, stepDelay);
@@ -5080,10 +5125,11 @@
         this.updateHUD();
         this.addLog(`🧠 [江戸川クイズ] ${player.name} は${correct ? '正解！＋¥50,000' : '不正解'}。`);
         this._syncQuizState({ phase: 'result', chosenIndex: index, chosenText: chosenText, correct, answerText: q.answer });
-        this.quizAutoCloseTimer = setTimeout(() => this.closeQuizEvent(), 3000);
+        this.armModalAutoClose('quiz', 'quiz-close-btn', () => this.closeQuizEvent());
       },
 
       closeQuizEvent() {
+        this.clearModalAutoClose('quiz');
         if (this.quizAutoCloseTimer) clearTimeout(this.quizAutoCloseTimer);
         this.quizAutoCloseTimer = null;
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -5338,7 +5384,7 @@
         this.addLog(`🐟 [江戸川金魚すくい] ${player.name} は＋¥${gross.toLocaleString()}を獲得。`);
         this.kingyoSyncState = { phase: 'result', playerId: player.id, playerName: player.name, gross, seq: (this.kingyoSyncState?.seq || 0) + 1 };
         if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
-        this.kingyoAutoCloseTimer=setTimeout(()=>this.closeKingyoEvent(),3000);
+        this.armModalAutoClose('kingyo', 'kingyo-close-btn', () => this.closeKingyoEvent());
       },
 
       // CPUは実際にタップ操作を行わないため、視覚的なタンク画面の代わりに、人間より
@@ -5371,7 +5417,7 @@
         this.addLog(`🐟 [江戸川金魚すくい] ${player.name}（CPU）は＋¥${gross.toLocaleString()}を獲得。`);
         this.kingyoSyncState = { phase: 'result', playerId: player.id, playerName: player.name, gross, seq: (this.kingyoSyncState?.seq || 0) + 1 };
         if (this.isMultiplayer && this.isHost) this.syncGameStateToRoom();
-        this.kingyoAutoCloseTimer = setTimeout(() => this.closeKingyoEvent(), 3000);
+        this.armModalAutoClose('kingyo', 'kingyo-close-btn', () => this.closeKingyoEvent());
       },
 
       // ゲスト（観戦・他の参加者）の画面で金魚すくいの進行を簡易表示する。実際のタップ操作は
@@ -5408,6 +5454,7 @@
       },
 
       closeKingyoEvent() {
+        this.clearModalAutoClose('kingyo');
         if (this.kingyoCountdownTimer) clearInterval(this.kingyoCountdownTimer);
         if (this.kingyoCpuTimer) clearInterval(this.kingyoCpuTimer);
         if (this.kingyoSpawnTimer) clearInterval(this.kingyoSpawnTimer);
@@ -5503,6 +5550,8 @@
 
         if (targetNode) {
           this.map.flyTo([targetNode.lat, targetNode.lng], 19, { duration: 1.5 });
+          this._suppressNearby = false;
+          this.showNearbyPlace(targetNode.lat, targetNode.lng);
         }
       },
 
@@ -5572,6 +5621,10 @@
           penaltyEl.classList.add("hidden");
         }
 
+        // ルーレットのAPI読み込み（近くの飲食店リスト）をゴールした時点で先読みしておく。
+        // カテゴリを選んだ瞬間には結果が揃っているので、すぐルーレットが回り始める。
+        this._prefetchRouletteData();
+
         // 賞金とビリ罰金を反映した所持金を、その場でフッターにも反映する
         // （ゴール演出中は次のupdateHUDまで古い金額が残ってしまうため）。
         this.updateHUD();
@@ -5606,6 +5659,21 @@
         }
       },
 
+      // ゴールした瞬間に「近くの飲食店」APIを先読みしておく（ルーレットの待ち時間対策）。
+      // 失敗しても何もしない＝カテゴリ選択時に通常どおり取得しにいく。
+      _prefetchRouletteData() {
+        if (!HOTPEPPER_PROXY_URL) return;
+        const from = this.currentDestination || EDOGAWA_START;
+        if (!from || !Number.isFinite(from.lat)) return;
+        const pre = this._restaurantPrefetch;
+        if (pre && pre.lat === from.lat && pre.lng === from.lng) return; // すでに先読み済み
+        this._restaurantPrefetch = {
+          lat: from.lat,
+          lng: from.lng,
+          promise: this.fetchNearbyRestaurants(from).catch(() => null)
+        };
+      },
+
       async fetchNearbyRestaurants(fromLoc) {
         try {
           const url = `${HOTPEPPER_PROXY_URL}?lat=${fromLoc.lat}&lng=${fromLoc.lng}&range=4&count=30`;
@@ -5632,8 +5700,11 @@
         let allOptions = DESTINATION_PRESETS[catName] || DESTINATION_PRESETS["飲食店"];
 
         if (catName === "飲食店" && HOTPEPPER_PROXY_URL) {
-          box.innerText = "近くのお店を検索中...";
-          const liveShops = await this.fetchNearbyRestaurants(fromLoc);
+          // ゴールした時点で先読みを始めているので、通常はここで待ち時間が発生しない。
+          const pre = this._restaurantPrefetch;
+          const usable = pre && pre.lat === fromLoc.lat && pre.lng === fromLoc.lng;
+          if (!usable) box.innerText = "近くのお店を検索中...";
+          const liveShops = usable ? await pre.promise : await this.fetchNearbyRestaurants(fromLoc);
           if (liveShops && liveShops.length > 0) {
             allOptions = liveShops;
           }
@@ -5651,6 +5722,12 @@
 
         let counter = 0;
 
+        // 抽選結果は先に決め、座標の測位（ネットワーク）をルーレット演出と同時に走らせる。
+        // これで「📍位置を確認中…」の待ち時間が演出の裏に隠れて体感が速くなる。
+        const selectedGoal = options[Math.floor(Math.random() * options.length)];
+        const goalResolving = this.resolvePlaceCoordinates(selectedGoal, { force: true })
+          .catch(e => { console.warn('目的地の測位に失敗:', e); return selectedGoal; });
+
         const timer = setInterval(() => {
           const item = options[counter % options.length];
           box.innerText = `${item.name}`;
@@ -5658,9 +5735,8 @@
           counter++;
           if (counter > 15) {
             clearInterval(timer);
-            const selectedGoal = options[Math.floor(Math.random() * options.length)];
             box.innerText = `📍 ${selectedGoal.name} の位置を確認中...`;
-            this.resolvePlaceCoordinates(selectedGoal, { force: true }).then(nextGoal => {
+            goalResolving.then(nextGoal => {
               box.innerText = `🎯 決定: ${nextGoal.name}`;
               this.nextDestinationCandidate = nextGoal;
               document.getElementById("roulette-confirm-btn").classList.remove("hidden");
@@ -5756,6 +5832,10 @@
         this.updateHUD();
         this.saveGameState();
 
+        // ターンが変わったら「現在地」表示も次の人の場所に更新する
+        this._suppressNearby = false;
+        this.showNearbyForCurrentPlayer();
+
         // ターンが変わったら必ず「次の人」の位置へ地図を戻す。
         // 江戸川競艇（強制移動先）やクイズ・金魚すくいのミニゲームから戻ってきた時に、
         // 地図が競艇場などのまま残って「自分の地図じゃない」状態になるのを防ぐ。
@@ -5831,47 +5911,47 @@
 
         document.getElementById("event-modal").classList.remove("hidden");
 
-        const cp = this.players[this.currentPlayerIdx];
-        const modalBtn = document.querySelector("#event-modal button");
-
-        // In multiplayer, only the device controlling the current player's own turn shows a
-        // manual "了解" button — every other case (CPU turns, and any other human's turn
-        // being resolved here by the host) auto-continues after a few seconds.
-        const isOwnTurn = this.isMultiplayer ? (cp && cp.uid === this.myUid) : (cp && !cp.isCpu);
-        const isSelfManualTurn = isOwnTurn && !this.autoMode;
-
         if (this.isMultiplayer && this.isHost) {
           this.lastEventForSync = { title, desc, extra, icon: options.icon || null, type: options.type || null, reasonIcon: options.reasonIcon || null, avatar: activePlayer ? activePlayer.avatar : null };
           this.eventSeq = (this.eventSeq || 0) + 1;
         }
 
-        if (this.cpuAutoCloseTimer) {
-          clearInterval(this.cpuAutoCloseTimer);
-          this.cpuAutoCloseTimer = null;
-        }
+        // すべてのモーダルと同じ「閉じる（自動進行：3秒）」で統一。
+        // オートモードのON/OFFや自分の手番かどうかに関係なく、同じ動きにする。
+        this.armModalAutoClose('event', 'event-modal-close-btn', () => this.closeEventModal());
+      },
 
-        if (cp && !isSelfManualTurn) {
-          let count = 3;
-          if (modalBtn) modalBtn.innerText = `了解！ (自動進行: ${count}秒)`;
-          
-          this.cpuAutoCloseTimer = setInterval(() => {
-            count--;
-            if (count > 0) {
-              if (modalBtn) modalBtn.innerText = `了解！ (自動進行: ${count}秒)`;
-            } else {
-              if (this.cpuAutoCloseTimer) {
-                clearInterval(this.cpuAutoCloseTimer);
-                this.cpuAutoCloseTimer = null;
-              }
-              this.closeEventModal();
-            }
-          }, 1000);
-        } else {
-          if (modalBtn) modalBtn.innerText = "了解！";
+      // ============================================================
+      // モーダル共通の「閉じる（自動進行：3秒）」
+      // どのモーダルでも同じ見た目・同じ秒数で自動的に閉じる。
+      // ボタンを自分でタップした時は、カウントダウンを止めて即座に閉じる。
+      // ============================================================
+      armModalAutoClose(key, buttonId, onClose, seconds = MODAL_AUTO_CLOSE_SECONDS) {
+        this._modalAutoCloseTimers = this._modalAutoCloseTimers || {};
+        this.clearModalAutoClose(key);
+        const btn = document.getElementById(buttonId);
+        let count = seconds;
+        const paint = () => { if (btn) btn.innerText = `閉じる（自動進行：${count}秒）`; };
+        paint();
+        this._modalAutoCloseTimers[key] = setInterval(() => {
+          count--;
+          if (count > 0) { paint(); return; }
+          this.clearModalAutoClose(key);
+          if (btn) btn.innerText = '閉じる';
+          if (typeof onClose === 'function') onClose();
+        }, 1000);
+      },
+
+      clearModalAutoClose(key) {
+        this._modalAutoCloseTimers = this._modalAutoCloseTimers || {};
+        if (this._modalAutoCloseTimers[key]) {
+          clearInterval(this._modalAutoCloseTimers[key]);
+          this._modalAutoCloseTimers[key] = null;
         }
       },
 
       closeEventModal() {
+        this.clearModalAutoClose('event');
         if (this.cpuAutoCloseTimer) {
           clearInterval(this.cpuAutoCloseTimer);
           this.cpuAutoCloseTimer = null;
@@ -5892,6 +5972,79 @@
           this.finishTurn();
           this.panToCurrentPlayer();
         }
+      },
+
+      // ============================================================
+      // 「江戸川区〇〇丁目付近」「〇〇公園付近」の現在地表示（マップ右下）
+      // ・サイコロでコマが動いている間は非表示。止まった地点で表示する
+      // ・スワイプ（ドラッグ）で地図を動かした時は、画面中央付近の地名を表示
+      // ・Nominatimのリバースジオコーディングを使い、利用制限に配慮して
+      //   1.2秒以上の間隔＋約100m単位のキャッシュで再問い合わせを減らしている
+      // ============================================================
+      _setNearbyBadge(text) {
+        const badge = document.getElementById('nearby-place-badge');
+        const nameEl = document.getElementById('nearby-place-name');
+        if (!badge || !nameEl) return;
+        nameEl.innerText = text;
+        badge.classList.remove('hidden');
+      },
+
+      hideNearbyBadge() {
+        document.getElementById('nearby-place-badge')?.classList.add('hidden');
+      },
+
+      _formatNearbyLabel(data) {
+        if (!data) return null;
+        const a = data.address || {};
+        const rawName = (data.name || '').trim();
+        const ward = [a.city_district, a.city, a.town, a.county, a.suburb].find(v => v && /区$/.test(v)) || '';
+        const area = a.neighbourhood || a.quarter || a.hamlet || a.suburb || a.town || a.village || '';
+
+        // 公園・警察署・駅などの施設名が取れた場合はそれを優先（数字だけの名前は除外）
+        if (rawName && !/^[0-9０-９\-−ー]+$/.test(rawName)) return `${rawName}付近`;
+        if (area) return `${(ward && !area.startsWith(ward)) ? ward : ''}${area}付近`;
+        if (a.road) return `${a.road}付近`;
+        if (ward) return `${ward}付近`;
+        return null;
+      },
+
+      async showNearbyPlace(lat, lng) {
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        if (this._suppressNearby) return;
+        this._nearbyCache = this._nearbyCache || {};
+        // 約100m単位でキャッシュ（「付近」表示にはこの粒度で十分）
+        const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+        const token = (this._nearbySeq = (this._nearbySeq || 0) + 1);
+
+        if (this._nearbyCache[key]) { this._setNearbyBadge(this._nearbyCache[key]); return; }
+
+        this._setNearbyBadge('確認中…');
+        try {
+          // Nominatimの利用制限（1秒1リクエスト）に合わせて、施設検索と同じ間隔管理を使う
+          const wait = Math.max(0, 1200 - (Date.now() - (this.geocodeLastAt || 0)));
+          if (wait) await new Promise(r => setTimeout(r, wait));
+          if (token !== this._nearbySeq || this._suppressNearby) return;
+          this.geocodeLastAt = Date.now();
+
+          const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=ja&lat=${lat}&lon=${lng}`;
+          const resp = await fetch(url);
+          if (!resp.ok) throw new Error('reverse geocode failed');
+          const data = await resp.json();
+          const label = this._formatNearbyLabel(data);
+          if (!label) throw new Error('no label');
+          this._nearbyCache[key] = label;
+          if (token === this._nearbySeq && !this._suppressNearby) this._setNearbyBadge(label);
+        } catch (e) {
+          if (token === this._nearbySeq) this.hideNearbyBadge();
+        }
+      },
+
+      // 今の手番のプレーヤーがいる場所を表示する
+      showNearbyForCurrentPlayer() {
+        const cp = this.players[this.currentPlayerIdx];
+        if (!cp || !this.roadNetworkNodes) return;
+        const node = this.roadNetworkNodes[cp.currentNodeIdx];
+        if (node) this.showNearbyPlace(node.lat, node.lng);
       },
 
       panToCurrentPlayer() {
@@ -6615,9 +6768,8 @@
         this.boatRaceResultShowTimer = setTimeout(() => {
           this._showBoatRaceScreen('boatrace-result-screen');
           this._renderBoatRaceResult();
-          // 結果を見せてから自動的に閉じて次のターンへ。
-          clearTimeout(this.boatRaceResultCloseTimer);
-          this.boatRaceResultCloseTimer = setTimeout(() => this.closeBoatRaceEvent(), 7000);
+          // 結果を見せてから自動的に閉じて次のターンへ（他モーダルと同じ3秒）。
+          this.armModalAutoClose('boatrace', 'boatrace-close-btn', () => this.closeBoatRaceEvent());
         }, 2600);
       },
 
@@ -6651,8 +6803,10 @@
             const diffText = diff >= 0
               ? `<span class="text-rose-400 font-bold">＋¥${diff.toLocaleString()}</span>`
               : `<span class="text-sky-400 font-bold">▲¥${Math.abs(diff).toLocaleString()}</span>`;
-            return `<div class="border-b border-slate-800 pb-1">
-              <b>${p.avatar || ''} ${p.name}</b>${bets.some(b => b.pair === winningPair) ? ' <span class="text-amber-300">的中🎯</span>' : ''}<br>
+            const isHit = bets.some(b => b.pair === winningPair);
+            return `<div class="relative border-b border-slate-800 pb-1 overflow-hidden">
+              ${isHit ? '<span class="br-hit-stamp">🎯</span>' : ''}
+              <b>${p.avatar || ''} ${p.name}</b>${isHit ? ' <span class="text-amber-300 font-black">的中</span>' : ''}<br>
               ${betText}<br>
               投票 ¥${pay.spent.toLocaleString()} ／ 払戻 ¥${pay.payout.toLocaleString()} ／ 収支 ${diffText}
             </div>`;
@@ -6712,10 +6866,12 @@
           this._renderBoatRaceBetsSummary(winningPair);
           this._showBoatRaceScreen('boatrace-result-screen');
           this._renderBoatRaceResult();
+          this.armModalAutoClose('boatrace', 'boatrace-close-btn', () => this.closeBoatRaceEvent());
         }
       },
 
       async closeBoatRaceEvent() {
+        this.clearModalAutoClose('boatrace');
         clearInterval(this.boatRaceTimer);
         clearInterval(this.boatRaceAnimTimer);
         clearInterval(this.boatRaceBeepTimer);
