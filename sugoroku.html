@@ -909,6 +909,7 @@
         <div id="roulette-box" class="text-lg font-bold text-slate-100 py-3 bg-slate-900 border border-slate-700 rounded-xl shadow-inner font-mincho">
           ---
         </div>
+        <p id="roulette-anchor-note" class="hidden text-[11px] font-bold text-sky-300 leading-relaxed"></p>
         <p id="roulette-cpu-countdown" class="hidden text-xs font-bold text-sky-300">CPU自動決定まで… <span id="roulette-cpu-countdown-num">3</span></p>
       </div>
 
@@ -2206,6 +2207,7 @@
       playerRoutePolylines: [],
       goalNodeIdx: null,
       nextDestinationCandidate: null,
+      recentDestinationNames: [],   // 直近に使った目的地（同じ施設の連続選出を防ぐ）
       cpuAutoCloseTimer: null,
       quizSpeechFallbackTimer: null,
 
@@ -3345,6 +3347,7 @@
           this.roadNetworkNodes = state.roadNetworkNodes;
           this.goalNodeIdx = Number.isInteger(state.goalNodeIdx) ? state.goalNodeIdx : null;
           this.specialEventUsed = !!state.specialEventUsed;
+          this.recentDestinationNames = Array.isArray(state.recentDestinationNames) ? state.recentDestinationNames : [];
           this.players = state.players;
 
           // 念のため各プレイヤーの保存値を正規化。既存のセーブデータを壊さず、
@@ -5719,15 +5722,67 @@
           }
         }
 
-        // Keep the next destination reasonably close (roughly ~100 squares of road distance
-        // at 40m/square ≈ 4km — real streets zig-zag, so we filter on a shorter straight-line
-        // radius to stay comfortably under that once actual road routing is applied).
-        const MAX_DISTANCE_METERS = 2600;
-        // 距離判定には古い手入力座標を使わない。正確な座標が既に取得済みの候補だけで距離制限を行い、
-        // まだ未測位の候補はルーレット確定時に施設名から再測位してからルートを作ります。
-        const accurateOptions = allOptions.filter(opt => this.geocodeCache[opt.name] &&
-          this.haversineMeters(fromLoc, { lat: this.geocodeCache[opt.name].lat, lng: this.geocodeCache[opt.name].lng }) <= MAX_DISTANCE_METERS);
-        let options = accurateOptions.length ? accurateOptions : allOptions;
+        // ============================================================
+        // 次の目的地の選び方
+        //  ① 今の目的地（＝1着が今いる場所）と、直近に使った目的地は候補から外す
+        //     （同じ施設が続くと1着が「あと0マス」のまま連勝してしまうため）
+        //  ② 1着の現在地から近すぎる候補（250m以内）も外す
+        //  ③ そのうえで「ビリ（残りマスが最も多い人）の近場エリア」を優先し、
+        //     上位数件からルーレットで抽選する（＝連続1位になりにくくする）
+        // ============================================================
+        const excludedNames = new Set(
+          [this.currentDestination?.name, ...(this.recentDestinationNames || [])].filter(Boolean)
+        );
+        let pool = allOptions.filter(o => o && o.name && !excludedNames.has(o.name));
+        if (!pool.length) pool = allOptions.slice();
+
+        // 座標は「再測位済みキャッシュ」を優先し、無ければ元データの座標を使う
+        const coordOf = (o) => {
+          const c = this.geocodeCache[o.name];
+          if (c && Number.isFinite(c.lat) && Number.isFinite(c.lng)) return c;
+          return (Number.isFinite(o.lat) && Number.isFinite(o.lng)) ? o : null;
+        };
+
+        // 「ビリ」＝ゴールした人を除いて残りマスが最も多い人。その人の現在地を目安にする。
+        const winnerPlayer = this.players[this.selectedCategoryWinnerIdx];
+        const laggard = this.findLastPlacePlayer(winnerPlayer);
+        const laggardNode = laggard ? this.roadNetworkNodes?.[laggard.currentNodeIdx] : null;
+        const anchor = (laggardNode && Number.isFinite(laggardNode.lat)) ? laggardNode : fromLoc;
+
+        const MIN_FROM_WINNER = 250;    // 1着の現在地から近すぎるのは除外（あと0マス防止）
+        const MAX_FROM_WINNER = 3000;   // 遠すぎてターンが伸び過ぎるのも防ぐ
+        const scored = pool.map(o => {
+          const c = coordOf(o);
+          return {
+            o,
+            dWin: c ? this.haversineMeters(fromLoc, c) : null,
+            dLag: c ? this.haversineMeters(anchor, c) : null
+          };
+        });
+
+        let usable = scored.filter(s => s.dWin !== null && s.dWin >= MIN_FROM_WINNER && s.dWin <= MAX_FROM_WINNER);
+        if (!usable.length) usable = scored.filter(s => s.dWin !== null && s.dWin >= MIN_FROM_WINNER);
+        if (!usable.length) usable = scored.filter(s => s.dWin === null);
+        if (!usable.length) usable = scored;
+
+        // ビリに近い順。上位数件をルーレットの対象にする（毎回同じにならないよう複数残す）
+        usable.sort((a, b) => (a.dLag ?? Infinity) - (b.dLag ?? Infinity));
+        const shortlist = usable.slice(0, Math.min(6, Math.max(3, usable.length)));
+        let options = shortlist.map(s => s.o);
+        if (!options.length) options = allOptions.slice();
+
+        const note = document.getElementById('roulette-anchor-note');
+        if (note) {
+          if (laggard && laggard !== winnerPlayer) {
+            note.innerText = `📍 ビリの ${laggard.name} さんの近くのエリアから抽選します`;
+            note.classList.remove('hidden');
+          } else {
+            note.classList.add('hidden');
+          }
+        }
+        if (laggard && laggard !== winnerPlayer) {
+          this.addLog(`🎯 次の目的地は、ビリの ${laggard.name} の近場エリアから抽選します（連続1位を防ぐ調整）。`);
+        }
 
         let counter = 0;
 
@@ -5746,6 +5801,20 @@
             clearInterval(timer);
             box.innerText = `📍 ${selectedGoal.name} の位置を確認中...`;
             goalResolving.then(nextGoal => {
+              // 測位の結果、1着が今いる場所とほぼ同じ地点だった場合の保険。
+              // そのままだと「あと0マス」になってしまうため、候補の中から別の場所に差し替える。
+              if (nextGoal && Number.isFinite(nextGoal.lat) &&
+                  this.haversineMeters(fromLoc, nextGoal) < 150) {
+                const alt = shortlist
+                  .map(s => s.o)
+                  .find(o => o !== selectedGoal && coordOf(o) &&
+                    this.haversineMeters(fromLoc, coordOf(o)) >= MIN_FROM_WINNER);
+                if (alt) {
+                  const c = coordOf(alt);
+                  nextGoal = { ...alt, lat: c.lat, lng: c.lng };
+                  this.addLog(`↺ 抽選結果が今いる場所に近すぎたため、目的地を ${nextGoal.name} に変更しました。`);
+                }
+              }
               box.innerText = `🎯 決定: ${nextGoal.name}`;
               this.nextDestinationCandidate = nextGoal;
               document.getElementById("roulette-confirm-btn").classList.remove("hidden");
@@ -5778,6 +5847,7 @@
 
         try {
           document.getElementById("goal-modal").classList.add("hidden");
+          document.getElementById("roulette-anchor-note")?.classList.add("hidden");
 
           // マルチプレイの場合、通信のタイムラグでゲストがまだ前の状態のアニメーション中の
           // ことがあるため、次の盤面を組む前に全員が追いつくのを待つ（タイムアウトあり）。
@@ -5791,6 +5861,10 @@
 
           await this.setupBoard(currentStartLoc, nextGoal);
           this.nextDestinationCandidate = null;
+          // 直近3件の目的地を覚えておき、同じ施設が続けて選ばれないようにする
+          this.recentDestinationNames = [currentStartLoc.name, nextGoal.name,
+            ...(this.recentDestinationNames || [])]
+            .filter(Boolean).filter((n, i, arr) => arr.indexOf(n) === i).slice(0, 4);
           sound.playBGM('map');
           this.addLog(`🚩 次の目的地が 【${nextGoal.name}】 に設定されました！`);
 
@@ -5865,7 +5939,8 @@
           coordinateDataVersion: 3,
           roadNetworkNodes: this.roadNetworkNodes,
           goalNodeIdx: this.goalNodeIdx,
-          specialEventUsed: this.specialEventUsed
+          specialEventUsed: this.specialEventUsed,
+          recentDestinationNames: this.recentDestinationNames || []
         };
         localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
       },
@@ -7327,7 +7402,8 @@
           currentDestination: this.currentDestination,
           roadNetworkNodes: this.roadNetworkNodes,
           goalNodeIdx: this.goalNodeIdx,
-          specialEventUsed: !!this.specialEventUsed
+          specialEventUsed: !!this.specialEventUsed,
+          recentDestinationNames: this.recentDestinationNames || []
         };
       },
 
@@ -7514,6 +7590,7 @@
         this.roadNetworkNodes = save.roadNetworkNodes || [];
         this.goalNodeIdx = Number.isInteger(save.goalNodeIdx) ? save.goalNodeIdx : null;
         this.specialEventUsed = !!save.specialEventUsed;
+        this.recentDestinationNames = Array.isArray(save.recentDestinationNames) ? save.recentDestinationNames : [];
 
         // ホストの端末IDは再ログインで変わることがあるため、保存時のホストUIDを今のUIDに置き換える。
         const savedHostUid = save.hostUid;
