@@ -93,6 +93,15 @@
       display: none !important;
     }
 
+    /* 画面下に固定表示される広告の高さぶんだけ、下に余白を作る（サイコロが隠れないように） */
+    :root { --ad-reserve: 0px; --ad-slot-h: 0px; }
+    footer { padding-bottom: calc(0.75rem + var(--ad-reserve)) !important; }
+    /* トップページは画面いっぱいに広がるので、広告枠のぶんだけ下を空ける */
+    #lobby-screen {
+      bottom: var(--ad-slot-h) !important;
+      padding-bottom: calc(1rem + var(--ad-reserve)) !important;
+    }
+
     /* メニューの各ドキュメント（使い方・利用規約・プライバシーポリシー・運営元）の本文 */
     .doc-body { font-size: 12px; line-height: 1.8; color: #cbd5e1; }
     .doc-body h4 {
@@ -397,7 +406,7 @@
 <body class="h-full w-full bg-slate-900 text-slate-100 flex flex-col relative overflow-hidden">
 
   <!-- LOBBY OVERLAY -->
-  <div id="lobby-screen" class="absolute inset-0 z-50 bg-slate-950 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto">
+  <div data-app="1" id="lobby-screen" class="absolute inset-0 z-50 bg-slate-950 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto">
     <div class="pt-2 sm:pt-4">
       <div class="flex items-start justify-between gap-2 px-1">
         <!-- 江戸川区非公認ハンコ（丸に二重線＋左傾きでスタンプらしく） -->
@@ -499,7 +508,7 @@
   </div>
 
   <!-- MAIN HEADER -->
-  <header class="h-14 bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
+  <header data-app="1" class="h-14 bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
     <div class="flex items-center gap-2">
       <span id="game-turn-badge" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold rounded-md">
         1ターン
@@ -541,7 +550,7 @@
   </header>
 
   <!-- FULLSCREEN GOOGLE MAPS / LEAFLET CANVAS -->
-  <main class="flex-1 relative w-full overflow-hidden bg-slate-900">
+  <main data-app="1" class="flex-1 relative w-full overflow-hidden bg-slate-900">
     <div id="map" class="w-full h-full z-10"></div>
 
     <div onclick="EdogawaSugoroku.panToDestination()" class="sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[180px] truncate cursor-pointer active:scale-95 transition">
@@ -569,7 +578,7 @@
   </main>
 
   <!-- MAIN GAME UI FOOTER -->
-  <footer class="bg-slate-950/95 border-t border-slate-800/90 p-3 sm:p-4 z-20 shrink-0 backdrop-blur-md flex flex-col gap-3">
+  <footer data-app="1" class="bg-slate-950/95 border-t border-slate-800/90 p-3 sm:p-4 z-20 shrink-0 backdrop-blur-md flex flex-col gap-3">
     <div id="players-card-container" class="grid grid-cols-4 gap-2 w-full"></div>
 
     <div class="flex items-center justify-between gap-3 pt-1 border-t border-slate-800/60">
@@ -612,8 +621,17 @@
     </div>
   </footer>
 
+  <!-- 広告枠（フッターの「下」に場所を確保して、サイコロや所持金が隠れないようにする）
+       ・その場に表示されるタイプの広告は、この枠の中に入るので重なりません
+       ・画面下に固定表示されるタイプの広告は、高さを測って自動で余白を作ります（_watchAdBanner）-->
+  <div id="ad-slot" data-app="1" class="shrink-0 w-full bg-slate-950 flex items-center justify-center overflow-hidden">
+    <!-- admax -->
+    <script src="https://adm.shinobi.jp/s/5d7ec317deaa0d07748ae65c55f4b14a"></script>
+    <!-- admax -->
+  </div>
+
   <!-- MODAL: HOST RECRUITMENT QR MODAL (USER A) -->
-  <div id="host-recruitment-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="host-recruitment-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-800 pb-2">
         <h3 class="font-mincho font-bold text-amber-400 text-base flex items-center gap-1.5">
@@ -665,7 +683,7 @@
   </div>
 
   <!-- MODAL: GUEST WAITING MODAL (USER B, C - NON-INTERACTIVE) -->
-  <div id="guest-waiting-modal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
+  <div data-app="1" id="guest-waiting-modal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
     <div class="max-w-xs w-full space-y-5">
 
       <div id="guest-nickname-screen" class="space-y-4">
@@ -705,7 +723,7 @@
 
   <!-- OVERLAY: WAITING WHILE HOST RESOLVES GOAL / NEXT DESTINATION -->
   <!-- OVERLAY: HOST WAITING FOR GUESTS TO CATCH UP (goal transitions / group mini-games) -->
-  <div id="host-wait-guests-overlay" class="hidden fixed inset-0 z-[65] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 text-center select-none pointer-events-auto">
+  <div data-app="1" id="host-wait-guests-overlay" class="hidden fixed inset-0 z-[65] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 text-center select-none pointer-events-auto">
     <div class="max-w-xs w-full space-y-4 bg-slate-900 border border-amber-500/40 rounded-2xl p-5">
       <div class="relative flex justify-center items-center">
         <div class="w-14 h-14 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
@@ -715,7 +733,7 @@
     </div>
   </div>
 
-  <div id="mp-goal-wait-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
+  <div data-app="1" id="mp-goal-wait-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
     <div class="max-w-xs space-y-3">
       <div class="text-4xl">🏆</div>
       <div id="mp-goal-wait-text" class="text-sm font-bold text-amber-300 leading-relaxed">
@@ -726,7 +744,7 @@
   </div>
 
   <!-- MODAL: NICKNAME ENTRY -->
-  <div id="nickname-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="nickname-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
       <div class="text-4xl">👋</div>
       <h3 class="font-mincho text-lg font-bold text-amber-400">ニックネームを入力してください</h3>
@@ -739,7 +757,7 @@
   </div>
 
   <!-- MODAL: アプリ（PWA）インストール -->
-  <div id="pwa-install-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="pwa-install-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-6 text-center shadow-2xl space-y-4">
       <div class="text-5xl">📲</div>
       <h3 class="font-mincho text-lg font-bold text-amber-400">アプリインストールしますか？</h3>
@@ -807,7 +825,40 @@
   </div>
 
   <!-- MODAL: 施設の詳細（地図の絵文字アイコンをタップ／ゴール地点の紹介） -->
-  <div id="facility-modal" class="hidden fixed inset-0 z-[92] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+  <!-- MODAL: 初回起動時の同意（アクセス解析・広告のお知らせ） -->
+  <div data-app="1" id="consent-modal" class="hidden fixed inset-0 z-[98] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl space-y-3">
+      <div class="text-center">
+        <div class="text-4xl">🍪</div>
+        <h3 class="font-mincho text-lg font-bold text-amber-400 mt-1">はじめる前にお知らせ</h3>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed">
+        「江戸川双六」は無料でお楽しみいただくため、<strong class="text-slate-100">広告</strong>を表示しています。
+        また、遊びやすさの改善のために <strong class="text-slate-100">Google アナリティクス</strong>で
+        アクセス状況（どの画面がよく使われたかなど）を測定させていただきたいです。
+      </p>
+      <ul class="text-[11px] text-slate-400 leading-relaxed bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-1">
+        <li>・お名前・住所・電話番号などの個人情報は取得しません。</li>
+        <li>・ニックネームやセーブデータは、お使いの端末の中だけに保存されます。</li>
+        <li>・「解析はオフ」を選んでもゲームはすべて遊べます（広告は表示されます）。</li>
+        <li>・設定はあとからメニューの「設定」で変更できます。</li>
+      </ul>
+      <div class="flex items-center justify-center gap-3 text-[11px]">
+        <button onclick="EdogawaSugoroku.openDocModal('privacy')" class="underline text-sky-300">プライバシーポリシー</button>
+        <button onclick="EdogawaSugoroku.openDocModal('terms')" class="underline text-sky-300">利用規約</button>
+      </div>
+      <button onclick="EdogawaSugoroku.acceptConsent(true)"
+        class="w-full bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+        同意して始める
+      </button>
+      <button onclick="EdogawaSugoroku.acceptConsent(false)"
+        class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">
+        解析はオフにして始める
+      </button>
+    </div>
+  </div>
+
+  <div data-app="1" id="facility-modal" class="hidden fixed inset-0 z-[92] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl">
       <div class="flex items-start justify-between gap-2 p-4 pb-2">
         <div class="min-w-0">
@@ -838,9 +889,17 @@
           <a id="facility-tel" href="#" class="text-xs text-sky-300 underline font-bold">-</a>
         </div>
         <div id="facility-note" class="hidden text-[11px] text-slate-400"></div>
+        <div id="facility-wiki-row" class="hidden">
+          <p id="facility-wiki-status" class="text-[11px] text-slate-500">📖 Wikipediaで調べています…</p>
+          <p id="facility-wiki-extract" class="hidden text-[11px] text-slate-300 leading-relaxed bg-slate-950/60 border border-slate-800 rounded-xl p-2.5"></p>
+        </div>
         <button id="facility-home-btn" onclick="EdogawaSugoroku.openFacilityHomepage()"
           class="hidden w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition">
           🌐 ホームページを開く
+        </button>
+        <button id="facility-wiki-btn" onclick="EdogawaSugoroku.openFacilityWikipedia()"
+          class="hidden w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition">
+          📖 Wikipediaで見る
         </button>
         <p id="facility-credit" class="hidden text-[9px] text-slate-600 leading-tight"></p>
         <button id="facility-close-btn" onclick="EdogawaSugoroku.closeFacilityModal()"
@@ -852,7 +911,7 @@
   </div>
 
   <!-- MODAL: ハンバーガーメニュー -->
-  <div id="menu-modal" class="hidden fixed inset-0 z-[95] bg-slate-950/92 backdrop-blur-md flex items-start justify-center p-4 pt-16 sm:items-center sm:pt-4">
+  <div data-app="1" id="menu-modal" class="hidden fixed inset-0 z-[95] bg-slate-950/92 backdrop-blur-md flex items-start justify-center p-4 pt-16 sm:items-center sm:pt-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-4 shadow-2xl space-y-2">
       <div class="flex items-center justify-between pb-1">
         <h3 class="font-mincho text-lg font-bold text-amber-400">メニュー</h3>
@@ -882,7 +941,7 @@
   </div>
 
   <!-- MODAL: 設定 -->
-  <div id="settings-modal" class="hidden fixed inset-0 z-[96] bg-slate-950/92 backdrop-blur-md flex items-start justify-center p-4 pt-16 sm:items-center sm:pt-4">
+  <div data-app="1" id="settings-modal" class="hidden fixed inset-0 z-[96] bg-slate-950/92 backdrop-blur-md flex items-start justify-center p-4 pt-16 sm:items-center sm:pt-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-4 shadow-2xl space-y-3">
       <div class="flex items-center justify-between">
         <h3 class="font-mincho text-lg font-bold text-amber-400">⚙️ 設定</h3>
@@ -905,6 +964,11 @@
             <span class="text-[10px] text-slate-500">自分の手番も自動でサイコロを振る</span></span>
           <span id="settings-auto-state" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-slate-800 text-slate-400 border border-slate-700">OFF</span>
         </button>
+        <button onclick="EdogawaSugoroku.settingsToggleAnalytics()" class="w-full flex items-center justify-between gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-3 active:scale-[0.98] transition">
+          <span class="text-left"><span class="text-sm font-bold text-slate-100">📈 アクセス解析</span><br>
+            <span class="text-[10px] text-slate-500">遊びやすさの改善に使わせていただきます</span></span>
+          <span id="settings-analytics-state" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-slate-800 text-slate-400 border border-slate-700">OFF</span>
+        </button>
         <button onclick="EdogawaSugoroku.settingsOpenInstall()" class="w-full flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
           <span class="text-xl">📲</span><span class="text-sm font-bold text-slate-100">アプリとしてインストール</span>
         </button>
@@ -921,7 +985,7 @@
   </div>
 
   <!-- MODAL: 使い方 / 利用規約 / プライバシーポリシー / 運営元 -->
-  <div id="doc-modal" class="hidden fixed inset-0 z-[96] bg-slate-950/95 backdrop-blur-md flex items-start justify-center p-3 pt-12 sm:items-center sm:pt-3">
+  <div data-app="1" id="doc-modal" class="hidden fixed inset-0 z-[96] bg-slate-950/95 backdrop-blur-md flex items-start justify-center p-3 pt-12 sm:items-center sm:pt-3">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full max-h-[88vh] flex flex-col shadow-2xl">
       <div class="flex items-center justify-between gap-2 p-4 pb-2 border-b border-slate-800">
         <h3 id="doc-modal-title" class="font-mincho text-base sm:text-lg font-bold text-amber-400"></h3>
@@ -938,7 +1002,7 @@
   </div>
 
   <!-- MODAL: ホストの「保存して終了」確認 -->
-  <div id="mp-save-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="mp-save-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
       <div class="text-5xl">💾</div>
       <h3 class="font-mincho text-base font-bold text-amber-400 leading-relaxed">
@@ -953,7 +1017,7 @@
   </div>
 
   <!-- MODAL: 参加者への「ホストが保存して終了しました」通知 -->
-  <div id="mp-saved-notice-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="mp-saved-notice-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
       <div class="text-5xl">💾</div>
       <p id="mp-saved-notice-text" class="text-sm text-slate-100 font-bold leading-relaxed"></p>
@@ -964,7 +1028,7 @@
   </div>
 
   <!-- MODAL: 「前回の続き」がソロとマルチの両方ある時の選択 -->
-  <div id="resume-choice-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="resume-choice-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
       <div class="text-4xl">💾</div>
       <h3 class="font-mincho text-lg font-bold text-amber-400">どちらの前回の続きを遊びますか？</h3>
@@ -983,7 +1047,7 @@
   </div>
 
   <!-- MODAL: ホスト不在でマルチプレイを開始できない -->
-  <div id="host-absent-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="host-absent-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-rose-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
       <div class="text-5xl">📵</div>
       <p id="host-absent-text" class="text-sm text-slate-100 font-bold leading-relaxed"></p>
@@ -995,26 +1059,26 @@
   </div>
 
   <!-- OVERLAY: ホスト接続の確認中 -->
-  <div id="host-check-overlay" class="hidden fixed inset-0 z-[86] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-3">
+  <div data-app="1" id="host-check-overlay" class="hidden fixed inset-0 z-[86] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-3">
     <div class="text-4xl animate-pulse">📡</div>
     <p class="text-sm text-amber-300 font-bold text-center">ホストの接続を確認しています…</p>
     <p class="text-[11px] text-slate-400 text-center">数秒お待ちください</p>
   </div>
 
   <!-- OVERLAY: ANGELS FLYING + ROCKET GIFT ANNOUNCEMENT -->
-  <div id="rocket-gift-modal" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+  <div data-app="1" id="rocket-gift-modal" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-gradient-to-br from-indigo-900 to-slate-900 border border-amber-400/50 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-3">
       <div class="text-6xl">🚀</div>
       <h3 class="font-mincho text-xl font-bold text-amber-400">天使からの贈り物！</h3>
       <p class="text-sm text-slate-100 leading-relaxed">全プレーヤーが目的地からまだ遠いようです。<br>天使が全員に🚀ロケットをプレゼント！<br>次のサイコロが【10倍】進みます！<br>（乗り物を持っている場合は合算されます）</p>
     </div>
   </div>
-  <div id="angel-rocket-overlay" class="hidden fixed inset-0 z-[61] pointer-events-none overflow-hidden"></div>
+  <div data-app="1" id="angel-rocket-overlay" class="hidden fixed inset-0 z-[61] pointer-events-none overflow-hidden"></div>
 
   <!-- MODAL: EVENT POPUP -->
   <!-- MODAL: ゲームログ（ヘッダーの「ログ閲覧」ボタン用。以前はこのHTMLが欠落しており、
        ボタンを押すとエラーになりログ機能自体が動作していなかった） -->
-  <div id="log-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="log-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[80vh] flex flex-col shadow-2xl">
       <div class="flex items-center justify-between p-4 border-b border-slate-800 shrink-0">
         <h2 class="font-mincho text-lg font-bold text-amber-300">📜 ゲームログ</h2>
@@ -1024,7 +1088,7 @@
     </div>
   </div>
 
-  <div id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+  <div data-app="1" id="event-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
     <div id="event-modal-card" class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-3 transition-colors">
       <div id="event-modal-avatar" class="absolute top-3 left-3 w-10 h-10 rounded-full bg-slate-950/70 border border-slate-700 flex items-center justify-center text-xl shadow-md"></div>
       <div id="event-modal-icon" class="text-6xl">🎉</div>
@@ -1041,7 +1105,7 @@
   </div>
 
   <!-- MODAL: GOAL & CATEGORY ROULETTE -->
-  <div id="goal-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="goal-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl space-y-5">
       <div>
         <span class="text-4xl">👑</span>
@@ -1115,7 +1179,7 @@
   </script>
 
   <!-- MODAL: 江戸川競艇（黄マスの強制移動から発生するミニゲーム。sugoroku.htmlのUIに合わせて再構築） -->
-  <div id="boatrace-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
+  <div data-app="1" id="boatrace-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
     <div class="bg-slate-900 border border-amber-500/40 rounded-3xl max-w-md w-full max-h-[94vh] overflow-y-auto shadow-2xl">
 
       <!-- ① 参加確認（強制移動した本人以外に表示） -->
@@ -1253,7 +1317,7 @@
   </div>
 
   <!-- MODAL: 競艇を引き続き遊ぶか（人間プレーヤーのみ。CPUはそのままサイコロを振ります） -->
-  <div id="boatrace-continue-modal" class="hidden fixed inset-0 z-[75] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+  <div data-app="1" id="boatrace-continue-modal" class="hidden fixed inset-0 z-[75] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
       <div class="text-5xl">🚤</div>
       <h3 class="font-mincho text-lg font-bold text-amber-400">引続き江戸川競艇で遊びますか？</h3>
@@ -1274,7 +1338,7 @@
   </div>
 
   <!-- MODAL: 江戸川クイズ -->
-  <div id="quiz-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
+  <div data-app="1" id="quiz-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
     <div class="relative bg-slate-900 border border-amber-500/50 rounded-3xl max-w-md w-full max-h-[92vh] min-h-[340px] overflow-y-auto shadow-2xl">
       <div id="quiz-invite-screen" class="hidden"></div>
       <div id="quiz-roulette-screen" class="hidden"></div>
@@ -1304,7 +1368,7 @@
   </div>
 
   <!-- MODAL: 江戸川金魚すくい -->
-  <div id="kingyo-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
+  <div data-app="1" id="kingyo-modal" class="hidden fixed inset-0 z-[70] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3">
     <div class="bg-slate-900 border border-amber-500/50 rounded-3xl max-w-md w-full max-h-[92vh] overflow-hidden shadow-2xl">
       <div id="kingyo-invite-screen" class="p-6 text-center space-y-4">
         <div class="text-5xl">🐟🐠</div>
@@ -1421,8 +1485,13 @@
     const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
     // メニューの「設定」で切り替えた内容（音・読み上げ）の保存先。
     const SETTINGS_KEY = "edogawa_sugoroku_settings";
+    // アクセス解析（Google アナリティクス）の同意状態の保存先
+    const CONSENT_KEY = "edogawa_sugoroku_consent";
+    // Wikipediaで調べた結果の保存先（同じ施設で何度も通信しないため）
+    const WIKI_CACHE_KEY = "edogawa_sugoroku_wiki_v1";
+    const GA_MEASUREMENT_ID = "G-LFEX859EVC";
     // 利用規約などの改定日（表示用）
-    const DOC_UPDATED = "2026年8月23日";
+    const DOC_UPDATED = "2026年8月24日";
     // 🚁/✈️を配る条件（残りマス数のしきい値）。ゴール1回につき、それぞれ1人だけ・早い者勝ち。
     const FLIGHT_HELI_MIN_SQUARES = 100;   // 🚁ヘリコプター
     const FLIGHT_PLANE_MIN_SQUARES = 150;  // ✈️飛行機
@@ -1480,6 +1549,8 @@
           <h4>地図の絵文字アイコン</h4>
           <p>地図に出ている 🚉 ⛲️ 📚 ♨️ 🏥 などの絵文字をタップすると、その施設の<strong>写真・ホームページ・住所（地図ボタン）・電話番号</strong>が見られます（江戸川区オープンデータより。写真が無い施設は「No Photo」と表示されます）。</p>
           <p>ゴールした時にも、その施設の紹介が3秒間表示されます。ゴールした飲食店は 🍴 として地図に残っていくので、遊ぶほど「行ったお店の地図」になっていきます。</p>
+          <p>🏩 は楽天トラベルに掲載されている江戸川区内の宿泊施設です。タップすると写真・料金の目安・評価が見られ、そのまま楽天トラベルのページを開けます。</p>
+          <p>公共施設（駅・公園・図書館・区の施設など）は、区のオープンデータに写真が無い場合、ウィキペディアの写真と説明も表示します。</p>
 
           <h4>便利な機能</h4>
           <ul>
@@ -1517,6 +1588,8 @@
             <li>本ゲーム内の金額・順位・イベントはすべて架空のものです。現実の金銭のやり取りは一切発生しません。</li>
             <li>「江戸川競艇」は実在の競艇（ボートレース）の勝敗や払戻金とは無関係の、架空のミニゲームです。実際の公営競技の予想・投票を目的としたものではありません。</li>
             <li>本ゲームの利用により生じたいかなる損害についても、制作者は責任を負いません。</li>
+            <li>宿泊施設（🏩）の料金・評価・空室状況は取得時点のもので、実際の予約内容と異なる場合があります。ご予約前に必ず楽天トラベルの画面でご確認ください。</li>
+            <li>施設の写真・説明はWikipediaなど外部の情報を含み、内容の正確性は保証しません。</li>
             <li>外部の地図・API提供元の都合により、予告なく一部機能が使えなくなる場合があります。</li>
           </ul>
 
@@ -1550,9 +1623,27 @@
             <span id="doc-opendata-state"></span>
           </div>
 
-          <h5>店舗情報</h5>
+          <h5>店舗・宿泊施設の情報</h5>
           <div class="doc-src">
             Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a>（株式会社リクルート）
+          </div>
+          <div class="doc-src">
+            宿泊施設（🏩）：Supported by <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener">楽天ウェブサービス</a>（楽天トラベル／楽天グループ株式会社）<br>
+            ※本ゲームには楽天トラベルのアフィリエイトリンクを含みます。リンク経由でご予約された場合、
+            制作者に成果報酬が支払われることがあります（お客様の支払額は変わりません）。
+          </div>
+
+          <h5>施設の写真・説明</h5>
+          <div class="doc-src">
+            公共施設の写真・説明の一部：<a href="https://ja.wikipedia.org/" target="_blank" rel="noopener">ウィキペディア日本語版</a>
+            （文章は <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ja" target="_blank" rel="noopener">CC BY-SA 4.0</a>、
+            画像は各ファイルのライセンスに従います）。各施設の詳細画面から元のページをご覧いただけます。
+          </div>
+
+          <h5>アクセス解析・広告</h5>
+          <div class="doc-src">
+            アクセス解析：Google アナリティクス（Google LLC）。初回起動時の同意がある場合にのみ読み込みます。<br>
+            広告配信：忍者AdMax（サムライファクトリー株式会社）
           </div>
 
           <h5>ソフトウェア</h5>
@@ -1581,6 +1672,8 @@
             <li>ゲームの途中セーブ（ひとり用・マルチプレイ用に各1件）</li>
             <li>音・読み上げなどの設定</li>
             <li>地名検索の結果の一時保存（同じ場所を何度も問い合わせないため）</li>
+            <li>アクセス解析への同意／不同意の選択</li>
+            <li>Wikipediaで調べた施設の説明、楽天トラベルの宿泊施設一覧の一時保存（通信を減らすため）</li>
           </ul>
 
           <h4>マルチプレイで送信される情報</h4>
@@ -1594,13 +1687,30 @@
             <li>OSRM（道路経路の取得）</li>
             <li>ホットペッパーグルメ Webサービス（飲食店情報。Google Apps Script 経由で取得）</li>
             <li>Firebase（マルチプレイ時のみ）</li>
+            <li>ウィキペディア日本語版（施設の写真・説明）</li>
+            <li>楽天ウェブサービス／楽天トラベル（宿泊施設の情報）</li>
+            <li>Google アナリティクス（同意がある場合のみ）、忍者AdMax（広告）</li>
           </ul>
 
           <h4>位置情報について</h4>
           <p>本ゲームは、端末のGPSなどの位置情報を取得しません。ゲーム内の「現在地」は、地図上のコマの位置を表しているだけで、実際にいる場所ではありません。</p>
 
-          <h4>広告・アクセス解析について</h4>
-          <p>本ゲームは広告を表示しません。アクセス解析ツールも使用していません。</p>
+          <h4>アクセス解析について</h4>
+          <p>本ゲームは、遊びやすさの改善のために Google アナリティクス（GA4）を利用します。
+          <strong>初回起動時に「同意して始める」を選んだ場合にのみ</strong>解析用のプログラムを読み込み、
+          どの画面がよく使われたかなどの統計情報を取得します。氏名・住所などの個人情報は送信しません。
+          「解析はオフにして始める」を選んだ場合、解析用のプログラムは読み込まれません。
+          設定はメニューの「設定 → アクセス解析」でいつでも変更できます。</p>
+
+          <h4>広告について</h4>
+          <p>本ゲームは無料で提供するため、画面下部に広告（忍者AdMax）を表示します。
+          広告配信事業者がCookieなどを使って広告の表示・効果測定を行う場合があります。
+          広告の表示自体はオフにできませんが、端末やブラウザの設定で広告のパーソナライズを制限できます。</p>
+
+          <h4>Wikipedia・楽天トラベルの情報について</h4>
+          <p>施設の詳細を開いた時に、ウィキペディア日本語版と楽天トラベル（楽天ウェブサービス）へ
+          施設名や地図の座標を送信して、写真・説明・宿泊施設の情報を取得します。
+          個人を特定する情報は送信しません。</p>
 
           <h4>お子さまのご利用について</h4>
           <p>本ゲームは個人情報を取得しないため、お子さまでも安心してご利用いただけます。マルチプレイでニックネームが他の参加者に表示される点にご注意ください。</p>
@@ -1775,7 +1885,33 @@
       { key: 'flower',      emoji: '🌸', into: OD_FLOWER,     markerMax: 6,  weight: 0.9 }
     ];
     // 内蔵データと合流させるグループは、地図アイコンの上限を「合流先ごと」にかける。
-    const OPENDATA_MERGED_MARKER_MAX = { PARKS: 60, HOSPITALS: 20, POLICE_STATIONS: 20, SCHOOLS: 20, POST_OFFICES: 9 };
+    // 地図に同時に描く施設アイコンの上限と、アイコン同士の最低間隔（メートル）。
+    // 表示範囲の中で「目印になりやすいもの・中心に近いもの」から順に置き、
+    // 近すぎる場所は重ならないよう間引きます。
+    const FACILITY_MARKER_LIMIT = 30;
+    const FACILITY_MARKER_MIN_GAP_M = 45;
+
+    // ============================================================
+    // 楽天トラベル（楽天ウェブサービス）で江戸川区の宿泊施設を取得して🏩で表示
+    //   https://webservice.rakuten.co.jp/documentation/simple-hotel-search
+    // ブラウザから直接呼べるよう JSONP（callback）で取得します。
+    // 半径は最大3kmなので、区内を4か所に分けて検索します。
+    // ============================================================
+    const RAKUTEN_APP_ID = "a9cd9bec-a76c-4e8a-affa-e7c462cd3518";
+    const RAKUTEN_AFFILIATE_ID = "07190876.228b5fb2.07190877.c0d8ecf3";
+    // ※「アクセスキー（pk_...）」は秘密の鍵なので、誰でも見られるHTMLには書きません。
+    //   楽天トラベルの検索は applicationId とアフィリエイトIDだけで動きます。
+    const RAKUTEN_HOTEL_API = "https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426";
+    const RAKUTEN_SEARCH_POINTS = [
+      { lat: 35.6640, lng: 139.8700 },   // 葛西・西葛西あたり
+      { lat: 35.6870, lng: 139.8700 },   // 船堀・松江あたり
+      { lat: 35.7100, lng: 139.8800 },   // 区役所・小岩方面
+      { lat: 35.7300, lng: 139.8850 },   // 小岩・北小岩あたり
+      { lat: 35.7000, lng: 139.9000 }    // 瑞江・篠崎あたり
+    ];
+    const RAKUTEN_CACHE_KEY = "edogawa_sugoroku_rakuten_hotels_v1";
+    const RAKUTEN_CACHE_HOURS = 24;
+    const RAKUTEN_HOTELS = [];   // 取得した宿泊施設（🏩）
 
     const DESTINATION_PRESETS = {
       // 中身は /data/sugoroku-data.json から読み込みます（「公園」はPARKSと同じ配列）
@@ -2170,10 +2306,13 @@
         this.renderAvatarGrid();
         this.checkSaveData();
         this.loadUserSettings();
+        this.initConsent();      // 初回だけ「同意して始める」を表示（同意後にGAを読み込む）
+        this._watchAdBanner();   // 下部固定の広告に隠れないよう余白を確保
         this._initPwa();
         // 施設・目的地・文言などのゲームデータと、江戸川区オープンデータを /data/ から読み込む。
         this.gameDataPromise = this.loadGameData()
           .then(() => this.loadEdogawaOpenData())
+          .then(() => this.loadRakutenHotels())
           .catch(e => { console.warn('データの読み込みに失敗:', e); this.applyFallbackGameData(); });
         // 施設POIはバックグラウンドで全件再測位（データ読み込み後）。
         // ルート生成時は必ず個別に再確認します。区オープンデータの座標は再測位しません。
@@ -3326,6 +3465,10 @@
             if (c) this.updateNearbyDisplay(c.lat, c.lng);
           });
 
+          // 地図が動いたら、その範囲の施設アイコンを描き直す
+          this.map.on('moveend', () => this.scheduleFacilityMarkerRefresh(120));
+          this.map.on('zoomend', () => this.scheduleFacilityMarkerRefresh(120));
+
           L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
             subdomains: 'abcd'
@@ -3334,68 +3477,252 @@
         this.renderFacilityMarkers();
       },
 
+      // ============================================================
+      // 施設アイコン（絵文字）の描画
+      // 江戸川区オープンデータで施設が2,000件以上あるため、全部描くと重くなります。
+      // そこで「いま地図に映っている範囲」だけを描き、地図を動かすたびに描き直します。
+      // こうすると、プレイヤーの周りの施設アイコンは必ず表示されます。
+      // ============================================================
+      _mapPoiGroups() {
+        // [配列, 絵文字, 優先度]（優先度が小さいほど、混み合った時に優先して描く）
+        const groups = [
+          [STATIONS_FOR_MAP, '🚉', 0.4], [BUS_STOPS_FOR_MAP, '🚏', 0.9],
+          [TEMPLES_SHRINES, '⛩️', 0.8], [POLICE_STATIONS, '🚨', 0.9],
+          [HOSPITALS, '🏥', 1], [SCHOOLS, '🏫', 0.8],
+          [POST_OFFICES, '🏣', 0.9], [PARKS, '⛲️', 0.7],
+          [[BOAT_RACE_LOC], '🚤', 0.4]
+        ];
+        const merged = [PARKS, HOSPITALS, POLICE_STATIONS, SCHOOLS, POST_OFFICES];
+        const seen = new Set();
+        OPENDATA_GROUPS.forEach(g => {
+          if (merged.includes(g.into) || seen.has(g.into)) return;
+          seen.add(g.into);
+          groups.push([g.into, g.emoji, g.weight || 1]);
+        });
+        groups.push([RAKUTEN_HOTELS, '🏩', 0.7]);           // 楽天トラベルの宿泊施設
+        groups.push([this.goaledRestaurants || [], '🍴', 0.3]); // ゴールした飲食店
+        return groups;
+      },
+
+      _facilityMarkerKey(loc, emoji) {
+        return `${emoji}|${loc.name}|${loc.lat.toFixed(5)},${loc.lng.toFixed(5)}`;
+      },
+
+      _createFacilityMarker(loc, emoji) {
+        const icon = L.divIcon({
+          className: 'facility-poi-icon',
+          html: `<div class="facility-poi">${emoji}</div>`,
+          iconSize: [78, 78],
+          iconAnchor: [39, 39]
+        });
+        const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100 }).addTo(this.map);
+        marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
+        // タップすると施設の詳細（写真・ホームページ・住所・電話）を表示する
+        try {
+          marker.on('click', () => this.showFacilityDetail({ ...loc, emoji: loc.emoji || emoji }));
+        } catch (e) {}
+        return marker;
+      },
+
+      // いま映っている範囲（少し広め）の中心付近の施設を描く。
       renderFacilityMarkers(force = false) {
         if (!this.map) return;
-        if (this.facilityLayerMarkers && this.facilityLayerMarkers.length) {
-          if (!force) return;
-          this.facilityLayerMarkers.forEach(m => { try { this.map.removeLayer(m); } catch (_) {} });
-          this.facilityLayerMarkers = [];
+        this.facilityMarkerRefs = this.facilityMarkerRefs || new Map();
+        this._facilityMarkerByKey = this._facilityMarkerByKey || new Map();
+
+        // 表示範囲。Leafletのbounds が取れない時は中心から一定の広さで代用する。
+        let center = null, bounds = null;
+        try { center = this.map.getCenter ? this.map.getCenter() : null; } catch (e) {}
+        try { bounds = this.map.getBounds ? this.map.getBounds() : null; } catch (e) {}
+        let minLat, maxLat, minLng, maxLng;
+        if (bounds && typeof bounds.getSouth === 'function') {
+          const padLat = (bounds.getNorth() - bounds.getSouth()) * 0.35;
+          const padLng = (bounds.getEast() - bounds.getWest()) * 0.35;
+          minLat = bounds.getSouth() - padLat; maxLat = bounds.getNorth() + padLat;
+          minLng = bounds.getWest() - padLng;  maxLng = bounds.getEast() + padLng;
+        } else if (center && Number.isFinite(center.lat)) {
+          minLat = center.lat - 0.0035; maxLat = center.lat + 0.0035;
+          minLng = center.lng - 0.0042; maxLng = center.lng + 0.0042;
+        } else {
+          return;
         }
-        this.facilityLayerMarkers = [];
-        this.facilityMarkerRefs = new Map();
+        const c = center && Number.isFinite(center.lat) ? center
+          : { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 };
 
-        // 上限を超える時は、地域が偏らないよう等間隔で間引く（先頭だけ描くと一部に固まるため）
-        const spread = (list, max) => {
-          const arr = (list || []).filter(x => x && Number.isFinite(x.lat) && Number.isFinite(x.lng));
-          if (!Number.isFinite(max) || arr.length <= max) return arr;
-          if (max <= 0) return [];
-          const step = arr.length / max, out = [];
-          for (let i = 0; i < max; i++) out.push(arr[Math.floor(i * step)]);
-          return out;
-        };
-
-        const addGroup = (list, emoji, max = Infinity) => {
-          spread(list, max).forEach(loc => {
-            const icon = L.divIcon({
-              className: 'facility-poi-icon',
-              html: `<div class="facility-poi">${emoji}</div>`,
-              iconSize: [78, 78],
-              iconAnchor: [39, 39]
-            });
-            const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100 }).addTo(this.map);
-            marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
-            // タップすると施設の詳細（写真・ホームページ・住所・電話）を表示する
-            try {
-              marker.on('click', () => this.showFacilityDetail({ ...loc, emoji: loc.emoji || emoji }));
-            } catch (e) {}
-            this.facilityLayerMarkers.push(marker);
-            if (!this.facilityMarkerRefs.has(loc.name)) this.facilityMarkerRefs.set(loc.name, []);
-            this.facilityMarkerRefs.get(loc.name).push(marker);
+        // 範囲内の候補を集める
+        const cand = [];
+        this._mapPoiGroups().forEach(([list, emoji, weight]) => {
+          (list || []).forEach(loc => {
+            if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
+            if (loc.lat < minLat || loc.lat > maxLat || loc.lng < minLng || loc.lng > maxLng) return;
+            cand.push({ loc, emoji, score: this.haversineMeters(c, loc) * (weight || 1) });
           });
-        };
-        this._addFacilityGroup = addGroup;
-
-        // 内蔵データ＋オープンデータが合流している配列は、合流先ごとの上限で間引く。
-        // （オープンデータ未読込のときは配列が小さいので、上限は実質かからない）
-        const cap = (name) => this.openDataInfo ? (OPENDATA_MERGED_MARKER_MAX[name] || Infinity) : Infinity;
-        addGroup(STATIONS_FOR_MAP, '🚉');
-        addGroup(BUS_STOPS_FOR_MAP, '🚏');
-        addGroup(TEMPLES_SHRINES, '⛩️');
-        addGroup(POLICE_STATIONS, '🚨', cap('POLICE_STATIONS'));
-        addGroup(HOSPITALS, '🏥', cap('HOSPITALS'));
-        addGroup(SCHOOLS, '🏫', cap('SCHOOLS'));
-        addGroup(POST_OFFICES, '🏣', cap('POST_OFFICES'));
-        addGroup(PARKS, '⛲️', cap('PARKS'));
-        // 区のオープンデータ専用のグループ（未読込ならすべて空配列なので何も増えない）
-        const merged = [PARKS, HOSPITALS, POLICE_STATIONS, SCHOOLS, POST_OFFICES];
-        const drawn = new Set();
-        OPENDATA_GROUPS.forEach(g => {
-          if (merged.includes(g.into) || !g.markerMax || drawn.has(g.into)) return;
-          drawn.add(g.into);
-          addGroup(g.into, g.emoji, g.markerMax);
         });
-        // これまでゴールした飲食店は🍴として地図に残す
-        addGroup(this.goaledRestaurants || [], '🍴');
+        // 混み合っている時は、目印になりやすいものと中心に近いものを優先。
+        // さらにアイコン同士が重ならないよう、近すぎるものは省く。
+        cand.sort((a, b) => a.score - b.score);
+        const wanted = new Map();
+        const placed = [];
+        for (const x of cand) {
+          if (wanted.size >= FACILITY_MARKER_LIMIT) break;
+          if (placed.some(p => this.haversineMeters(p, x.loc) < FACILITY_MARKER_MIN_GAP_M)) continue;
+          placed.push(x.loc);
+          wanted.set(this._facilityMarkerKey(x.loc, x.emoji), x);
+        }
+
+        // 画面外に出たものを消し、新しく入ったものを描く（毎回作り直さないので軽い）
+        this._facilityMarkerByKey.forEach((marker, key) => {
+          if (wanted.has(key)) return;
+          try { this.map.removeLayer(marker); } catch (e) {}
+          this._facilityMarkerByKey.delete(key);
+        });
+        wanted.forEach((x, key) => {
+          if (this._facilityMarkerByKey.has(key)) return;
+          const marker = this._createFacilityMarker(x.loc, x.emoji);
+          this._facilityMarkerByKey.set(key, marker);
+          if (!this.facilityMarkerRefs.has(x.loc.name)) this.facilityMarkerRefs.set(x.loc.name, []);
+          this.facilityMarkerRefs.get(x.loc.name).push(marker);
+        });
+        this.facilityLayerMarkers = Array.from(this._facilityMarkerByKey.values());
+      },
+
+      // 地図を動かした／ズームした時に描き直す（連続で動く間はまとめて1回）
+      scheduleFacilityMarkerRefresh(delay = 250) {
+        clearTimeout(this._facilityRefreshTimer);
+        this._facilityRefreshTimer = setTimeout(() => {
+          this._facilityRefreshTimer = null;
+          this.renderFacilityMarkers();
+        }, delay);
+      },
+
+      // ============================================================
+      // 楽天トラベル（楽天ウェブサービス）から江戸川区の宿泊施設を取得して🏩で表示
+      // ・ブラウザから直接呼ぶため JSONP を使います（CORS非対応のため）
+      // ・結果は24時間だけ端末に保存して、毎回の通信を減らします
+      // ・取得できなくてもゲームは通常どおり動きます
+      // ============================================================
+      async loadRakutenHotels() {
+        // まずは保存済みのものを使う
+        try {
+          const raw = localStorage.getItem(RAKUTEN_CACHE_KEY);
+          if (raw) {
+            const cached = JSON.parse(raw);
+            const age = Date.now() - (cached.savedAt || 0);
+            if (Array.isArray(cached.hotels) && cached.hotels.length &&
+                age < RAKUTEN_CACHE_HOURS * 3600 * 1000) {
+              this._applyRakutenHotels(cached.hotels, true);
+              return true;
+            }
+          }
+        } catch (e) {}
+
+        // 緯度経度の単位は「度」で指定しますが、APIが受け付けない場合に備えて
+        // 「ミリ秒」でも1度だけ試します（どちらで取れたかを覚えて以降はそれを使う）。
+        const found = new Map();
+        for (const pt of RAKUTEN_SEARCH_POINTS) {
+          let rows = await this._fetchRakutenHotelsAt(pt.lat, pt.lng, this._rakutenUnit || 'deg');
+          if ((!rows || !rows.length) && !this._rakutenUnit) {
+            const alt = await this._fetchRakutenHotelsAt(pt.lat, pt.lng, 'msec');
+            if (alt && alt.length) { this._rakutenUnit = 'msec'; rows = alt; }
+            else this._rakutenUnit = 'deg';
+          } else if (rows && rows.length && !this._rakutenUnit) {
+            this._rakutenUnit = 'deg';
+          }
+          (rows || []).forEach(h => { if (h && !found.has(h.hotelNo)) found.set(h.hotelNo, h); });
+        }
+        const hotels = Array.from(found.values());
+        if (!hotels.length) {
+          console.info('楽天トラベルの宿泊施設は取得できませんでした（🏩は表示されません）。');
+          return false;
+        }
+        try {
+          localStorage.setItem(RAKUTEN_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), hotels }));
+        } catch (e) {}
+        this._applyRakutenHotels(hotels, false);
+        return true;
+      },
+
+      _applyRakutenHotels(hotels, fromCache) {
+        RAKUTEN_HOTELS.length = 0;
+        hotels.forEach(h => {
+          if (!h || !Number.isFinite(h.lat) || !Number.isFinite(h.lng)) return;
+          if (!isInsideEdogawaWard(h.lat, h.lng)) return;   // 江戸川双六なので区内だけ
+          RAKUTEN_HOTELS.push({ ...h, emoji: '🏩', fromRakuten: true });
+        });
+        this.rakutenInfo = { count: RAKUTEN_HOTELS.length, fromCache: !!fromCache };
+        this._facilityPoiCache = null;
+        if (this.map) this.renderFacilityMarkers(true);
+        console.info(`楽天トラベル：江戸川区内の宿泊施設 ${RAKUTEN_HOTELS.length}件を表示します${fromCache ? '（保存済みデータ）' : ''}`);
+      },
+
+      // JSONPで1地点ぶん取得する（半径3km・最大30件）
+      _fetchRakutenHotelsAt(lat, lng, unit = 'deg') {
+        return new Promise(resolve => {
+          if (typeof document === 'undefined') return resolve(null);
+          const cbName = `__rakutenCb${Math.floor(Date.now() % 100000)}_${(this._rakutenSeq = (this._rakutenSeq || 0) + 1)}`;
+          const toParam = (v) => unit === 'msec' ? String(Math.round(v * 3600000)) : String(v);
+          const params = new URLSearchParams({
+            format: 'json',
+            formatVersion: '2',
+            applicationId: RAKUTEN_APP_ID,
+            affiliateId: RAKUTEN_AFFILIATE_ID,
+            latitude: toParam(lat),
+            longitude: toParam(lng),
+            searchRadius: '3.0',
+            datumType: '1',           // 1 = 世界測地系（度）
+            hits: '30',
+            responseType: 'small',
+            callback: cbName
+          });
+          const script = document.createElement('script');
+          let done = false;
+          const cleanup = () => {
+            try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+            try { script.remove(); } catch (e) {}
+            clearTimeout(timer);
+          };
+          const timer = setTimeout(() => { if (!done) { done = true; cleanup(); resolve(null); } }, 8000);
+          window[cbName] = (data) => {
+            done = true;
+            let rows = [];
+            try { rows = this._parseRakutenResponse(data); } catch (e) { rows = []; }
+            cleanup();
+            resolve(rows);
+          };
+          script.onerror = () => { if (!done) { done = true; cleanup(); resolve(null); } };
+          script.src = `${RAKUTEN_HOTEL_API}?${params.toString()}`;
+          document.head.appendChild(script);
+        });
+      },
+
+      // 楽天APIの応答（formatVersion=2）から必要な項目だけ取り出す
+      _parseRakutenResponse(data) {
+        const out = [];
+        const list = (data && (data.hotels || data.Hotels)) || [];
+        list.forEach(entry => {
+          // formatVersion=2 は [ {hotelBasicInfo}, ... ] の配列、1は {hotel:[...]}
+          const arr = Array.isArray(entry) ? entry : (entry.hotel || [entry]);
+          let basic = null;
+          arr.forEach(x => {
+            const b = x && (x.hotelBasicInfo || x.HotelBasicInfo);
+            if (b) basic = b;
+          });
+          if (!basic) return;
+          const lat = Number(basic.latitude), lng = Number(basic.longitude);
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+          out.push({
+            hotelNo: String(basic.hotelNo || basic.hotelName || ''),
+            name: String(basic.hotelName || '宿泊施設'),
+            lat, lng,
+            address: [basic.address1, basic.address2].filter(Boolean).join('') || '',
+            tel: basic.telephoneNo || '',
+            url: basic.hotelInformationUrl || basic.planListUrl || '',
+            photo: basic.hotelImageUrl || basic.hotelThumbnailUrl || '',
+            reviewAverage: basic.reviewAverage || null,
+            minCharge: basic.hotelMinCharge || null
+          });
+        });
+        return out;
       },
 
       // ゴールした飲食店を🍴で地図に残す（盤面が変わっても消えない）
@@ -3413,7 +3740,8 @@
         this.goaledRestaurants.push(item);
         // 上限を決めて増えすぎないようにする（古いものから消す）
         if (this.goaledRestaurants.length > 40) this.goaledRestaurants.shift();
-        if (this.map && this._addFacilityGroup) this._addFacilityGroup([item], '🍴');
+        this._facilityPoiCache = null;
+        if (this.map) this.renderFacilityMarkers(true);
         this.addLog(`🍴 ${item.name} を「ゴールしたお店」として地図に残しました。`);
       },
 
@@ -3636,17 +3964,27 @@
           telRow.classList.add('hidden');
         }
 
-        // ホームページ
+        // ホームページ（宿泊施設は楽天トラベルのページ）
         const homeBtn = document.getElementById('facility-home-btn');
         homeBtn.classList.toggle('hidden', !info.url);
+        homeBtn.innerText = info.fromRakuten ? '🏨 楽天トラベルで見る' : '🌐 ホームページを開く';
 
         const note = document.getElementById('facility-note');
-        if (opts.note) { note.innerText = opts.note; note.classList.remove('hidden'); }
+        const notes = [];
+        if (opts.note) notes.push(opts.note);
+        if (info.fromRakuten) {
+          if (info.reviewAverage) notes.push(`楽天トラベルの評価：★${info.reviewAverage}`);
+          if (info.minCharge) notes.push(`最安料金の目安：¥${Number(info.minCharge).toLocaleString()}〜`);
+        }
+        if (notes.length) { note.innerText = notes.join(' ／ '); note.classList.remove('hidden'); }
         else note.classList.add('hidden');
 
         const credit = document.getElementById('facility-credit');
-        if (info.fromOpenData) {
-          credit.innerText = '出典：江戸川区オープンデータ（CC BY 4.0）を加工して作成';
+        const credits = [];
+        if (info.fromOpenData) credits.push('出典：江戸川区オープンデータ（CC BY 4.0）を加工して作成');
+        if (info.fromRakuten) credits.push('Supported by 楽天ウェブサービス（楽天トラベル）');
+        if (credits.length) {
+          credit.innerText = credits.join(' ／ ');
           credit.classList.remove('hidden');
         } else {
           credit.classList.add('hidden');
@@ -3661,6 +3999,154 @@
         } else if (btn) {
           btn.innerText = '閉じる';
         }
+
+        // 公共施設（公園・図書館・駅・区の施設など）は Wikipedia からも
+        // 写真と説明を取ってきて補います。お店や宿泊施設は対象外です。
+        this._loadWikipediaForFacility(info);
+      },
+
+      // ============================================================
+      // Wikipedia日本語版から施設の写真・説明を取得する
+      //  ・出典表示が必要なため、モーダルに出典とリンクを必ず出します（CC BY-SA）
+      //  ・一度調べた施設は端末に保存して、同じ施設で何度も通信しません
+      // ============================================================
+      _isPublicFacility(info) {
+        if (!info) return false;
+        if (info.fromRakuten) return false;                    // 宿泊施設は対象外
+        const shopLists = [OD_INSHOKU, OD_SUPER, OD_SHOPS, OD_YASAI, OD_CAFE, OD_SENTO];
+        if (shopLists.some(list => (list || []).some(x => x && x.name === info.name))) return false;
+        if ((this.goaledRestaurants || []).some(x => x && x.name === info.name)) return false;
+        if ((DESTINATION_PRESETS['飲食店'] || []).some(x => x && x.name === info.name)) return false;
+        return true;
+      },
+
+      _wikiCacheRead() {
+        if (this._wikiCache) return this._wikiCache;
+        try { this._wikiCache = JSON.parse(localStorage.getItem(WIKI_CACHE_KEY) || '{}') || {}; }
+        catch (e) { this._wikiCache = {}; }
+        return this._wikiCache;
+      },
+
+      _wikiCacheWrite(key, value) {
+        const cache = this._wikiCacheRead();
+        cache[key] = value;
+        // 増えすぎたら古いものから捨てる
+        const keys = Object.keys(cache);
+        if (keys.length > 400) keys.slice(0, keys.length - 400).forEach(k => delete cache[k]);
+        try { localStorage.setItem(WIKI_CACHE_KEY, JSON.stringify(cache)); } catch (e) {}
+      },
+
+      // 検索に使う名前を整える（「〇〇(江戸川区)」「〇〇店」などを落とす）
+      _wikiQueryFor(name) {
+        return String(name || '')
+          .replace(/[（(][^）)]*[）)]/g, '')
+          .replace(/\s*(店|支店|営業所)$/, '')
+          .trim();
+      },
+
+      async _loadWikipediaForFacility(info) {
+        const row = document.getElementById('facility-wiki-row');
+        const status = document.getElementById('facility-wiki-status');
+        const extract = document.getElementById('facility-wiki-extract');
+        const wikiBtn = document.getElementById('facility-wiki-btn');
+        if (row) row.classList.add('hidden');
+        if (extract) { extract.classList.add('hidden'); extract.innerText = ''; }
+        if (wikiBtn) wikiBtn.classList.add('hidden');
+        this._facilityWikiUrl = null;
+        if (!info || !this._isPublicFacility(info)) return;
+
+        const seq = (this._wikiSeq = (this._wikiSeq || 0) + 1);
+        const q = this._wikiQueryFor(info.name);
+        if (!q || q.length < 2) return;
+
+        const cache = this._wikiCacheRead();
+        let data = cache[q];
+        if (data === undefined) {
+          if (row) row.classList.remove('hidden');
+          if (status) { status.classList.remove('hidden'); status.innerText = '📖 Wikipediaで調べています…'; }
+          data = await this._fetchWikipedia(q);
+          this._wikiCacheWrite(q, data || null);
+        }
+        if (seq !== this._wikiSeq) return;                  // 別の施設を開いたら反映しない
+        this._applyWikipediaInfo(info, data);
+      },
+
+      _applyWikipediaInfo(info, data) {
+        const row = document.getElementById('facility-wiki-row');
+        const status = document.getElementById('facility-wiki-status');
+        const extract = document.getElementById('facility-wiki-extract');
+        const wikiBtn = document.getElementById('facility-wiki-btn');
+        const credit = document.getElementById('facility-credit');
+
+        if (!data || !data.title) {
+          if (row) row.classList.add('hidden');
+          return;
+        }
+        this._facilityWikiUrl = data.url || null;
+        if (row) row.classList.remove('hidden');
+        if (status) status.classList.add('hidden');
+        if (extract && data.extract) {
+          extract.innerText = data.extract;
+          extract.classList.remove('hidden');
+        }
+        if (wikiBtn && data.url) wikiBtn.classList.remove('hidden');
+
+        // 区のデータに写真が無い場合は、Wikipediaの写真を使う
+        const img = document.getElementById('facility-photo');
+        const none = document.getElementById('facility-photo-none');
+        const target = this._facilityModalTarget;
+        if (data.thumbnail && img && (!target || !target.photo)) {
+          img.onerror = () => { img.classList.add('hidden'); none.classList.remove('hidden'); };
+          img.onload = () => { img.classList.remove('hidden'); none.classList.add('hidden'); };
+          img.src = data.thumbnail;
+          img.alt = data.title;
+        }
+        if (credit) {
+          const base = (target && target.fromOpenData)
+            ? '出典：江戸川区オープンデータ（CC BY 4.0）を加工して作成' : '';
+          credit.innerText = [base, '文章・写真：Wikipedia（CC BY-SA 4.0）'].filter(Boolean).join(' ／ ');
+          credit.classList.remove('hidden');
+        }
+      },
+
+      // Wikipedia API（origin=* でブラウザから直接呼べます）
+      async _fetchWikipedia(query) {
+        const api = 'https://ja.wikipedia.org/w/api.php';
+        const common = 'format=json&origin=*&redirects=1&prop=pageimages%7Cextracts%7Cinfo&inprop=url&exintro=1&explaintext=1&exsentences=3&piprop=thumbnail&pithumbsize=640';
+        const pick = (json) => {
+          const pages = json?.query?.pages;
+          if (!pages) return null;
+          const page = Object.values(pages).find(p => p && !p.missing && p.pageid);
+          if (!page) return null;
+          const extract = String(page.extract || '').replace(/\s+/g, ' ').trim();
+          return {
+            title: page.title,
+            extract: extract ? extract.slice(0, 180) + (extract.length > 180 ? '…' : '') : '',
+            thumbnail: page.thumbnail?.source || '',
+            url: page.fullurl || `https://ja.wikipedia.org/wiki/${encodeURIComponent(page.title)}`
+          };
+        };
+        try {
+          // ① 施設名そのままのページを探す
+          let resp = await fetch(`${api}?action=query&${common}&titles=${encodeURIComponent(query)}`, { cache: 'no-store' });
+          if (resp.ok) {
+            const hit = pick(await resp.json());
+            if (hit) return hit;
+          }
+          // ② 無ければ「江戸川区 〇〇」で検索して先頭のページを使う
+          resp = await fetch(`${api}?action=query&${common}&generator=search&gsrlimit=1&gsrsearch=${encodeURIComponent(query + ' 江戸川区')}`, { cache: 'no-store' });
+          if (resp.ok) {
+            const hit = pick(await resp.json());
+            if (hit) return hit;
+          }
+        } catch (e) {
+          console.info('Wikipediaの取得に失敗しました:', e && e.message);
+        }
+        return null;
+      },
+
+      openFacilityWikipedia() {
+        if (this._facilityWikiUrl) window.open(this._facilityWikiUrl, '_blank', 'noopener');
       },
 
       closeFacilityModal() {
@@ -3668,6 +4154,9 @@
         document.getElementById('facility-modal')?.classList.add('hidden');
         const btn = document.getElementById('facility-close-btn');
         if (btn) btn.innerText = '閉じる';
+        this._wikiSeq = (this._wikiSeq || 0) + 1;   // 進行中のWikipedia取得を無効化
+        document.getElementById('facility-wiki-row')?.classList.add('hidden');
+        document.getElementById('facility-wiki-btn')?.classList.add('hidden');
       },
 
       openFacilityHomepage() {
@@ -6462,6 +6951,8 @@
             this._facilityPoiCache.push([g.into, g.emoji, g.weight || 1]);
           }
         });
+        if (RAKUTEN_HOTELS.length) this._facilityPoiCache.push([RAKUTEN_HOTELS, '🏩', 0.8]);
+        if ((this.goaledRestaurants || []).length) this._facilityPoiCache.push([this.goaledRestaurants, '🍴', 0.6]);
         return this._facilityPoiCache;
       },
 
@@ -7748,6 +8239,106 @@
       // ============================================================
       // ハンバーガーメニュー（設定・使い方・利用規約・プライバシーポリシー・運営元）
       // ============================================================
+      // ============================================================
+      // アクセス解析（Google アナリティクス）の同意
+      //  ・同意があるときだけ gtag.js を読み込みます（同意前は一切送信しません）
+      //  ・「設定」からいつでもON/OFFできます
+      // ============================================================
+      readConsent() {
+        try { return localStorage.getItem(CONSENT_KEY); } catch (e) { return null; }
+      },
+
+      analyticsEnabled() {
+        return this.readConsent() === 'granted';
+      },
+
+      // 初回起動時だけ同意モーダルを出す。2回目以降は前回の選択に従う。
+      initConsent() {
+        const c = this.readConsent();
+        if (c === 'granted') { this.enableAnalytics(); return; }
+        if (c === 'denied') return;
+        document.getElementById('consent-modal')?.classList.remove('hidden');
+      },
+
+      acceptConsent(granted) {
+        try { localStorage.setItem(CONSENT_KEY, granted ? 'granted' : 'denied'); } catch (e) {}
+        document.getElementById('consent-modal')?.classList.add('hidden');
+        if (granted) this.enableAnalytics();
+        try { sound.init(); } catch (e) {}
+        this.refreshSettingsModal();
+      },
+
+      enableAnalytics() {
+        if (window.__gaLoaded) return;
+        window.__gaLoaded = true;
+        try {
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = function () { window.dataLayer.push(arguments); };
+          const s = document.createElement('script');
+          s.async = true;
+          s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+          document.head.appendChild(s);
+          window.gtag('js', new Date());
+          window.gtag('config', GA_MEASUREMENT_ID, { anonymize_ip: true });
+        } catch (e) { console.warn('アクセス解析の初期化に失敗:', e); }
+      },
+
+      // 解析を後からOFFにした場合、次の読み込みからは送信しない（今の画面でも送信を止める）
+      disableAnalytics() {
+        try {
+          window['ga-disable-' + GA_MEASUREMENT_ID] = true;
+        } catch (e) {}
+      },
+
+      // ゲーム内の出来事をイベントとして送る（同意がある時だけ）
+      trackEvent(name, params = {}) {
+        if (!this.analyticsEnabled() || typeof window.gtag !== 'function') return;
+        try { window.gtag('event', name, params); } catch (e) {}
+      },
+
+      // ============================================================
+      // 画面下に固定表示される広告の高さを測って、その分だけ余白を作る。
+      // （その場に表示されるタイプの広告は #ad-slot の中に入るので、この処理は不要）
+      // ============================================================
+      _watchAdBanner() {
+        const update = () => {
+          let h = 0;
+          const vh = window.innerHeight || 0;
+          Array.from(document.body.children).forEach(el => {
+            if (!el || el.dataset?.app === '1') return;   // 自分たちの要素は対象外
+            if (['SCRIPT', 'STYLE', 'LINK', 'NOSCRIPT', 'TEMPLATE'].includes(el.tagName)) return;
+            let cs;
+            try { cs = getComputedStyle(el); } catch (e) { return; }
+            if (cs.display === 'none' || cs.visibility === 'hidden') return;
+            if (cs.position !== 'fixed' && cs.position !== 'absolute' && cs.position !== 'sticky') return;
+            const r = el.getBoundingClientRect();
+            if (!r.height || r.height > 260) return;
+            // 画面の下のほうに重なっているものだけを「下部固定の広告」とみなす
+            if (r.bottom >= vh - 12) h = Math.max(h, r.height);
+          });
+          const px = h ? `${Math.ceil(h)}px` : '0px';
+          // その場に表示されるタイプの広告（#ad-slotの中）の高さも測って、
+          // トップページが広告に重ならないようにする
+          let slotH = 0;
+          const slot = document.getElementById('ad-slot');
+          if (slot) { try { slotH = Math.ceil(slot.getBoundingClientRect().height); } catch (e) {} }
+          const slotPx = slotH ? `${slotH}px` : '0px';
+          if (this._adReserve !== px || this._adSlotH !== slotPx) {
+            this._adReserve = px; this._adSlotH = slotPx;
+            document.documentElement.style.setProperty('--ad-reserve', px);
+            document.documentElement.style.setProperty('--ad-slot-h', slotPx);
+            if (this.map) { try { this.map.invalidateSize(); } catch (e) {} }
+          }
+        };
+        update();
+        window.addEventListener('resize', update);
+        window.addEventListener('orientationchange', update);
+        setTimeout(update, 1200);
+        setTimeout(update, 4000);
+        setInterval(update, 3000);
+        try { new MutationObserver(update).observe(document.body, { childList: true }); } catch (e) {}
+      },
+
       openMenuModal() {
         try { sound.init(); } catch (e) {}
         document.getElementById('menu-modal')?.classList.remove('hidden');
@@ -7780,6 +8371,7 @@
         this._paintSettingToggle('settings-sound-state', !(typeof sound !== 'undefined' && sound.isMuted));
         this._paintSettingToggle('settings-speech-state', this.speechEnabled !== false);
         this._paintSettingToggle('settings-auto-state', !!this.autoMode);
+        this._paintSettingToggle('settings-analytics-state', this.analyticsEnabled());
         const note = document.getElementById('settings-clear-note');
         if (note) {
           const hasSolo = !!localStorage.getItem(SOLO_SAVE_KEY);
@@ -7808,6 +8400,18 @@
       settingsToggleAuto() {
         this.toggleAutoMode();
         this.refreshSettingsModal();
+      },
+
+      settingsToggleAnalytics() {
+        const on = !this.analyticsEnabled();
+        try { localStorage.setItem(CONSENT_KEY, on ? 'granted' : 'denied'); } catch (e) {}
+        if (on) { this.disableAnalyticsFlagOff(); this.enableAnalytics(); }
+        else this.disableAnalytics();
+        this.refreshSettingsModal();
+      },
+
+      disableAnalyticsFlagOff() {
+        try { window['ga-disable-' + GA_MEASUREMENT_ID] = false; } catch (e) {}
       },
 
       // 設定からインストール案内を開く時は、重ならないよう設定を閉じる。
@@ -8247,17 +8851,5 @@
       EdogawaSugoroku.init();
     });
   </script>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-LFEX859EVC"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-LFEX859EVC');
-  </script>
-  <!-- admax -->
-  <script src="https://adm.shinobi.jp/s/5d7ec317deaa0d07748ae65c55f4b14a"></script>
-  <!-- admax -->
 </body>
 </html>
