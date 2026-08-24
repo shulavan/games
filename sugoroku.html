@@ -839,6 +839,29 @@
   </div>
 
   <!-- MODAL: 施設の詳細（地図の絵文字アイコンをタップ／ゴール地点の紹介） -->
+  <!-- MODAL: 保存データがある時の「最初から遊びますか？」確認 -->
+  <div data-app="1" id="restart-confirm-modal" class="hidden fixed inset-0 z-[94] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-3">
+      <div class="text-4xl">💾</div>
+      <h3 class="font-mincho text-lg font-bold text-amber-400">すでに前回の状態が残っています</h3>
+      <p id="restart-confirm-text" class="text-xs text-slate-300 leading-relaxed">
+        最初から遊ぶと、前回の続きは消えます。最初から遊びますか？
+      </p>
+      <button onclick="EdogawaSugoroku.confirmRestartNewGame()"
+        class="w-full bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
+        最初から遊ぶ（前回の続きは消えます）
+      </button>
+      <button onclick="EdogawaSugoroku.resumeFromRestartConfirm()"
+        class="w-full bg-gradient-to-b from-sky-500 to-sky-600 hover:from-sky-400 text-white font-bold py-2.5 rounded-xl text-sm active:scale-[0.98] transition">
+        💾 前回の続きから遊ぶ
+      </button>
+      <button onclick="EdogawaSugoroku.closeRestartConfirm()"
+        class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">
+        やめる
+      </button>
+    </div>
+  </div>
+
   <!-- MODAL: 初回起動時の同意（アクセス解析・広告のお知らせ） -->
   <div data-app="1" id="consent-modal" class="hidden fixed inset-0 z-[98] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-5 shadow-2xl space-y-3">
@@ -885,9 +908,8 @@
 
       <!-- 写真（無ければ No Photo） -->
       <div class="px-4">
-        <div id="facility-photo-wrap" class="w-full aspect-[16/10] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+        <div id="facility-photo-wrap" class="hidden w-full aspect-[16/10] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
           <img id="facility-photo" alt="" class="hidden w-full h-full object-cover">
-          <span id="facility-photo-none" class="text-slate-600 text-xs font-bold tracking-wider">No Photo</span>
         </div>
       </div>
 
@@ -1133,33 +1155,61 @@
       <div id="category-select-section" class="space-y-3">
         <p class="text-xs font-bold text-slate-300 uppercase tracking-wider">次の目的地ジャンルを選択してください</p>
         <p id="category-cpu-countdown" class="hidden text-xs font-bold text-sky-300">CPUが選択中… <span id="category-cpu-countdown-num">3</span></p>
-        <div class="grid grid-cols-2 gap-2.5">
-          <button onclick="EdogawaSugoroku.selectCategory('飲食店')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="EdogawaSugoroku.selectCategory('飲食店')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
             <span class="text-2xl">🍜</span>
             <div>
               <div class="text-xs font-bold text-slate-100">飲食店</div>
               <div class="text-[10px] text-slate-400">グルメ・カフェ</div>
             </div>
           </button>
-          <button onclick="EdogawaSugoroku.selectCategory('スーパー（薬屋含む）')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+          <button onclick="EdogawaSugoroku.selectCategory('スーパー（薬屋含む）')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
             <span class="text-2xl">🛒</span>
             <div>
               <div class="text-xs font-bold text-slate-100">スーパー・薬局</div>
               <div class="text-[10px] text-slate-400">買物・ドラッグ</div>
             </div>
           </button>
-          <button onclick="EdogawaSugoroku.selectCategory('公園')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+          <button onclick="EdogawaSugoroku.selectCategory('公園')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
             <span class="text-2xl">🌳</span>
             <div>
               <div class="text-xs font-bold text-slate-100">公園</div>
               <div class="text-[10px] text-slate-400">自然・広場</div>
             </div>
           </button>
-          <button onclick="EdogawaSugoroku.selectCategory('駅（バス停含む）')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-3 rounded-xl text-left transition flex items-center gap-2">
+          <button onclick="EdogawaSugoroku.selectCategory('駅（バス停含む）')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
             <span class="text-2xl">🚉</span>
             <div>
               <div class="text-xs font-bold text-slate-100">駅・バス停</div>
               <div class="text-[10px] text-slate-400">交通スポット</div>
+            </div>
+          </button>
+          <button onclick="EdogawaSugoroku.selectCategory('公共・スポーツ施設')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">🏛</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">公共・スポーツ</div>
+              <div class="text-[10px] text-slate-400">区の施設・体育館</div>
+            </div>
+          </button>
+          <button onclick="EdogawaSugoroku.selectCategory('学校・神社仏閣')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">⛩️</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">学校・神社仏閣</div>
+              <div class="text-[10px] text-slate-400">学校・お寺・神社</div>
+            </div>
+          </button>
+          <button onclick="EdogawaSugoroku.selectCategory('宿泊施設')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">🏩</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">宿泊施設</div>
+              <div class="text-[10px] text-slate-400">ホテル・旅館</div>
+            </div>
+          </button>
+          <button onclick="EdogawaSugoroku.selectCategory('その他')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
+            <span class="text-2xl">📍</span>
+            <div>
+              <div class="text-xs font-bold text-slate-100">その他</div>
+              <div class="text-[10px] text-slate-400">お店・病院など</div>
             </div>
           </button>
         </div>
@@ -1551,8 +1601,9 @@
             <li><span style="color:#fbbf24">★ 黄マス</span>…ミニゲーム（江戸川クイズ・金魚すくいなど）。</li>
           </ul>
 
-          <h4>乗り物</h4>
+          <h4>乗り物とケガ</h4>
           <p>乗り物を手に入れると、サイコロの目が倍になります。🚁ヘリコプターや✈️飛行機は、目的地までの残りマスが多い人に、ゴール1回につき1人だけ配られます（早い者勝ち）。空を飛ぶ乗り物は道路を無視して直線で進みます。</p>
+          <p>緑マスで病院に運ばれると 🦽 になり、治るまでの数ターンはサイコロの目が1のままです。その間は乗り物も使えないので、表示も 🦽 だけになります。</p>
 
           <h4>江戸川競艇</h4>
           <p>競艇場に止まると、次のターンでミニゲーム「江戸川競艇」が始まります。予想屋に100円払って予想を聞き、2連単の舟券を買って的中すれば払戻金がもらえます。他のプレイヤーも参加費￥1,000で参加できます。終わった次のターンには「引続き江戸川競艇で遊びますか？」と聞かれ、遊ぶ場合はそのターンを競艇に使います。</p>
@@ -1564,7 +1615,10 @@
           自分の陣地の数は、下のプレイヤーカードとゴール画面で確認できます。</p>
 
           <h4>ゴールしたあと</h4>
-          <p>だれかがゴールすると順位とご祝儀が決まり、ルーレットで次の目的地が選ばれます。次の目的地は江戸川区内から選ばれ、直前と同じ場所は選ばれません。ゲームは繰り返し続けられます。</p>
+          <p>だれかがゴールすると順位とご祝儀が決まり、ルーレットで次の目的地が選ばれます。
+          ジャンルは <strong>飲食店／スーパー・薬局／公園／駅・バス停／公共・スポーツ施設／学校・神社仏閣／宿泊施設／その他</strong> の8種類で、
+          地図に出るすべての絵文字アイコン（約2,100か所）が目的地の対象です。
+          次の目的地は江戸川区内から選ばれ、直前と同じ場所は選ばれません。ゲームは繰り返し続けられます。</p>
 
           <h4>地図の絵文字アイコン</h4>
           <p>地図に出ている 🚉 ⛲️ 📚 ♨️ 🏥 などの絵文字をタップすると、その施設の<strong>写真・ホームページ・住所（地図ボタン）・電話番号</strong>が見られます（江戸川区オープンデータより。写真が無い施設は「No Photo」と表示されます）。</p>
@@ -1776,7 +1830,12 @@
     const FIRST_GOAL = {
       name: "カラオケ酔処「ゆう」",
       lat: 35.65702449234845,
-      lng: 139.86178672585876
+      lng: 139.86178672585876,
+      emoji: "🎤",
+      address: "〒134-0088 東京都江戸川区西葛西8丁目13-13 ハイツ島崎",
+      tel: "03-6808-8689",
+      photo: "https://lh3.googleusercontent.com/gps-cs-s/AHRPTWmsMaTItoBBceoAeISBX04ByHaCt5RbfjBC8oL4ev0DKBqmksd08_DrKI4JvDbrQgxURdzP9P7kJtTNVLhPuNEY6uzGawqCtUHynr_W_R4SYlWMhdi3uxCD4raBJtKuNw7aO1ZECLnARk0A=s1360-w1360-h1020-rw",
+      category: "その他"
     };
 
     const BOAT_RACE_LOC = {
@@ -1917,7 +1976,23 @@
     //   ・塗る範囲：ゴール地点から半径300m
     //   ・すでに他の人の色でも、あとからゴールした人が上書きします
     // ============================================================
-    const TERRITORY_RADIUS_M = 300;
+    // 陣地はゴールした施設そのものだけ（周辺は塗りません）
+    const TERRITORY_RADIUS_M = 0;
+
+    // ============================================================
+    // 目的地ルーレットのカテゴリ。地図に出るすべての絵文字アイコンが対象です。
+    // pools は「どの配列から選ぶか」を名前で書いておき、実行時に中身を集めます。
+    // ============================================================
+    const DESTINATION_CATEGORY_DEFS = [
+      { name: '飲食店', emoji: '🍜', sub: 'グルメ・カフェ' },
+      { name: 'スーパー（薬屋含む）', emoji: '🛒', sub: '買物・ドラッグ' },
+      { name: '公園', emoji: '🌳', sub: '自然・広場' },
+      { name: '駅（バス停含む）', emoji: '🚉', sub: '交通スポット' },
+      { name: '公共・スポーツ施設', emoji: '🏛', sub: '区の施設・体育館' },
+      { name: '学校・神社仏閣', emoji: '⛩️', sub: '学校・お寺・神社' },
+      { name: '宿泊施設', emoji: '🏩', sub: 'ホテル・旅館' },
+      { name: 'その他', emoji: '📍', sub: 'お店・病院など' }
+    ];
 
     // ============================================================
     // 楽天トラベル（楽天ウェブサービス）で江戸川区の宿泊施設を取得して🏩で表示
@@ -2271,7 +2346,7 @@
       recruitmentPlayers: [],
       autoMode: false,
       speechEnabled: true,   // メニューの「設定」で切り替える音声読み上げ
-      goaledRestaurants: [], // これまでゴールした飲食店（🍴として地図に残す）
+      goaledPlaces: [],      // これまでゴールした場所（陣地の色つきアイコンで残す）
       territory: {},          // 陣取り：施設ごとに「誰の色か」（キー→プレイヤーID）
       isMultiplayer: false,
       gameStateVersion: 0,
@@ -2522,7 +2597,12 @@
       },
 
       // --- MULTIPLAYER ROOM RECRUITMENT LOGIC ---
-      async openRecruitmentModal() {
+      async openRecruitmentModal(opts = {}) {
+        // マルチプレイの続きが残っている時は、消してしまう前に確認する
+        if (!opts.force && this._hasSave(MP_SAVE_KEY)) {
+          this.openRestartConfirm('multi');
+          return;
+        }
         // Show the modal & QR code immediately — never let a backend problem
         // (missing/invalid Firebase project) prevent the button from doing anything.
         await this.initFirebase();
@@ -3005,7 +3085,7 @@
           boatRace: this.boatRaceState || null,
           quiz: this.quizSyncState || null,
           kingyo: this.kingyoSyncState || null,
-          goaledRestaurants: this.goaledRestaurants || [],
+          goaledPlaces: this.goaledPlaces || [],
           territory: this.territory || {}
         };
 
@@ -3064,10 +3144,10 @@
         if (gs.destination) this.currentDestination = gs.destination;
 
         // ゴールした飲食店（🍴）と陣取りの状態は、ホストが持っているものに合わせる
-        if (!this.isHost && Array.isArray(gs.goaledRestaurants)) {
-          const before = (this.goaledRestaurants || []).length;
-          this.goaledRestaurants = gs.goaledRestaurants;
-          if (this.goaledRestaurants.length !== before) this.renderFacilityMarkers(true);
+        if (!this.isHost && Array.isArray(gs.goaledPlaces)) {
+          const before = (this.goaledPlaces || []).length;
+          this.goaledPlaces = gs.goaledPlaces;
+          if (this.goaledPlaces.length !== before) this.renderFacilityMarkers(true);
         }
         if (!this.isHost && gs.territory && typeof gs.territory === 'object') {
           const beforeN = Object.keys(this.territory || {}).length;
@@ -3365,12 +3445,17 @@
         }
       },
 
-      async startGame() {
+      async startGame(opts = {}) {
+        // 前回の続きが残っている時は、消してしまう前に確認する
+        if (!opts.force && this._hasSave(SOLO_SAVE_KEY)) {
+          this.openRestartConfirm('solo');
+          return;
+        }
         if (this.countdownTimer) clearInterval(this.countdownTimer);
         await this.ensureGameDataReady();
         this.tryFullscreen();
         this.isMultiplayer = false;
-        this.goaledRestaurants = [];   // 新しいゲームでは🍴の履歴をリセット
+        this.goaledPlaces = [];        // 新しいゲームではゴール履歴（陣地）をリセット
         this.territory = {};           // 陣取りもリセット
         // 「ひとりで遊ぶ」は新規ゲーム。既存の途中セーブは明示的に新規開始した時だけ置き換える。
         try { localStorage.removeItem(SOLO_SAVE_KEY); } catch (_) {}
@@ -3416,7 +3501,7 @@
             // 旧形式や壊れたセーブだけを無効化する。
             localStorage.removeItem(SOLO_SAVE_KEY);
             this.checkSaveData();
-            return this.startGame();
+            return this.startGame({ force: true });
           }
 
           this.tryFullscreen();
@@ -3432,7 +3517,7 @@
           this.recentDestinationNames = Array.isArray(state.recentDestinationNames) ? state.recentDestinationNames : [];
           this.helicopterGrantedThisLeg = !!state.helicopterGrantedThisLeg;
           this.planeGrantedThisLeg = !!state.planeGrantedThisLeg;
-          this.goaledRestaurants = Array.isArray(state.goaledRestaurants) ? state.goaledRestaurants : [];
+          this.goaledPlaces = Array.isArray(state.goaledPlaces) ? state.goaledPlaces : [];
           this.territory = (state.territory && typeof state.territory === 'object') ? state.territory : {};
           this.players = state.players;
 
@@ -3480,7 +3565,7 @@
           console.error("セーブデータの復元に失敗しました:", e);
           try { localStorage.removeItem(SOLO_SAVE_KEY); } catch (_) {}
           this.checkSaveData();
-          return this.startGame();
+          return this.startGame({ force: true });
         } finally {
           this.resumeInProgress = false;
         }
@@ -3542,7 +3627,7 @@
         });
         groups.push([HOTPEPPER_SHOPS, '🍽', 0.9]);          // ホットペッパーの飲食店
         groups.push([RAKUTEN_HOTELS, '🏩', 0.7]);           // 楽天トラベルの宿泊施設
-        groups.push([this.goaledRestaurants || [], '🍴', 0.3]); // ゴールした飲食店
+        groups.push([this.goaledPlaces || [], null, 0.25]);  // ゴールした場所（陣地）
         return groups;
       },
 
@@ -3605,7 +3690,8 @@
             if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
             if (loc.lat < minLat || loc.lat > maxLat || loc.lng < minLng || loc.lng > maxLng) return;
             const w = Number.isFinite(loc.w) ? loc.w : (weight || 1);
-            cand.push({ loc, emoji, score: this.haversineMeters(c, loc) * w });
+            const em = emoji || loc.emoji || '📍';
+            cand.push({ loc, emoji: em, score: this.haversineMeters(c, loc) * w });
           });
         });
         // 混み合っている時は、目印になりやすいものと中心に近いものを優先。
@@ -3671,31 +3757,76 @@
         return n;
       },
 
-      // ゴール地点のまわりの施設を、その人の色に塗る。塗った数を返す。
-      claimTerritory(player, center, radius = TERRITORY_RADIUS_M) {
-        if (!player || !center || !Number.isFinite(center.lat)) return 0;
+      // ゴールした施設そのものを、その人の色にする（まわりは塗りません）。
+      // ゴール地点は区のデータに無い場所（お店など）のこともあるので、
+      // goaledPlaces にも登録して、色つきのアイコンとして地図に残します。
+      claimTerritory(player, place) {
+        if (!player || !place || !Number.isFinite(place.lat)) return 0;
         this.territory = this.territory || {};
-        let claimed = 0, stolen = 0;
-        this._mapPoiGroups().forEach(([list]) => {
-          (list || []).forEach(loc => {
-            if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
-            if (this.haversineMeters(center, loc) > radius) return;
-            const key = this.territoryKey(loc);
-            if (!key) return;
-            const before = this.territory[key];
-            if (before === player.id) return;
-            if (before !== undefined && before !== null) stolen++;
-            this.territory[key] = player.id;
-            claimed++;
-          });
-        });
-        if (claimed) {
-          this.addLog(`🎨 ${player.name} が ${center.name || 'ゴール地点'} の周辺 ${claimed}施設を自分の色にしました` +
-            (stolen ? `（うち ${stolen}施設は他のプレイヤーから奪取）` : ''));
-          if (this.map) this.renderFacilityMarkers(true);
-          this.updateHUD();
+        const key = this.territoryKey(place);
+        if (!key) return 0;
+        const before = this.territory[key];
+        const stolenFrom = (before !== undefined && before !== null && before !== player.id)
+          ? (this.players || []).find(p => p && p.id === before) : null;
+        this.territory[key] = player.id;
+        this.registerGoaledPlace(place, player);
+        if (before !== player.id) {
+          this.addLog(`🎨 ${place.name} は ${player.name} の陣地になりました` +
+            (stolenFrom ? `（${stolenFrom.name} から奪取）` : '') +
+            `（${player.name} の陣地は計${this.territoryCount(player.id)}か所）`);
         }
-        return claimed;
+        this._facilityPoiCache = null;
+        if (this.map) this.renderFacilityMarkers(true);
+        this.updateHUD();
+        return 1;
+      },
+
+      // ゴールした場所を地図に残す（陣地の色つきアイコンとして表示）
+      registerGoaledPlace(place, player) {
+        if (!place || !place.name || !Number.isFinite(place.lat)) return;
+        this.goaledPlaces = this.goaledPlaces || [];
+        const info = this.facilityInfoFor(place) || place;
+        const emoji = place.emoji || info.emoji || this.goalEmojiFor(place);
+        const idx = this.goaledPlaces.findIndex(x => x && x.name === place.name);
+        const item = {
+          name: info.name, lat: info.lat, lng: info.lng,
+          address: info.address || '', tel: info.tel || '',
+          url: info.url || '', photo: info.photo || '',
+          emoji, goaled: true,
+          category: place.category || info.category || '',
+          fromOpenData: !!info.fromOpenData, fromRakuten: !!info.fromRakuten,
+          wiki: info.wiki === true
+        };
+        if (idx >= 0) this.goaledPlaces[idx] = item;
+        else this.goaledPlaces.push(item);
+        if (this.goaledPlaces.length > 200) this.goaledPlaces.shift();
+      },
+
+      // ゴールした場所のカテゴリから絵文字を決める
+      goalEmojiFor(place) {
+        const name = String(place && place.name || '');
+        const cat = String(place && place.category || '');
+        if (/神社|神宮|天祖|香取|氷川/.test(name)) return '⛩️';
+        if (/寺|院$/.test(name)) return '🛕';
+        if (/学校|高校|中学|小学/.test(name)) return '🏫';
+        if (/公園|ひろば|広場|遊園|緑道/.test(name)) return '⛲️';
+        if (/駅$/.test(name)) return '🚉';
+        if (/バス停/.test(name)) return '🚏';
+        if (/図書館/.test(name)) return '📚';
+        if (/病院|クリニック|医院/.test(name)) return '🏥';
+        if (/警察|交番/.test(name)) return '🚨';
+        if (/郵便局/.test(name)) return '🏣';
+        if (/湯$|温泉|銭湯/.test(name)) return '♨️';
+        switch (cat) {
+          case '飲食店': return '🍴';
+          case 'スーパー（薬屋含む）': return '🛒';
+          case '公園': return '⛲️';
+          case '駅（バス停含む）': return '🚉';
+          case '公共・スポーツ施設': return '🏛';
+          case '学校・神社仏閣': return '🏫';
+          case '宿泊施設': return '🏩';
+          default: return '📍';
+        }
       },
 
       // 地図を動かした／ズームした時に描き直す（連続で動く間はまとめて1回）
@@ -3879,26 +4010,6 @@
         return shops.find(x => norm(x.name) === norm(info.name)) || null;
       },
 
-      // ゴールした飲食店を🍴で地図に残す（盤面が変わっても消えない）
-      addGoaledRestaurant(place) {
-        if (!place || !place.name || !Number.isFinite(place.lat)) return;
-        this.goaledRestaurants = this.goaledRestaurants || [];
-        if (this.goaledRestaurants.some(r => r.name === place.name)) return;
-        const info = this.facilityInfoFor(place) || place;
-        const item = {
-          name: info.name, lat: info.lat, lng: info.lng,
-          address: info.address || '', tel: info.tel || '',
-          url: info.url || '', photo: info.photo || '',
-          emoji: '🍴', goaled: true, fromOpenData: !!info.fromOpenData
-        };
-        this.goaledRestaurants.push(item);
-        // 上限を決めて増えすぎないようにする（古いものから消す）
-        if (this.goaledRestaurants.length > 40) this.goaledRestaurants.shift();
-        this._facilityPoiCache = null;
-        if (this.map) this.renderFacilityMarkers(true);
-        this.addLog(`🍴 ${item.name} を「ゴールしたお店」として地図に残しました。`);
-      },
-
       // 目的地が飲食店かどうか（ルーレットのカテゴリ、または区オープンデータの飲食店リストで判定）
       isRestaurantDestination(dest) {
         if (!dest || !dest.name) return false;
@@ -4072,7 +4183,8 @@
         const name = String(place.name || '').trim();
         if (!name) return base;
         const lists = this._facilityPoiGroups().map(([l]) => l)
-          .concat(Object.values(DESTINATION_PRESETS || {}));
+          .concat(Object.values(DESTINATION_PRESETS || {}))
+          .concat([[EDOGAWA_START, FIRST_GOAL, BOAT_RACE_LOC], this.goaledPlaces || []]);
         for (const list of lists) {
           const hit = (list || []).find(x => x && x.name === name);
           if (hit && (hit.photo || hit.url || hit.tel || hit.address)) return { ...base, ...hit, name };
@@ -4091,21 +4203,8 @@
         document.getElementById('facility-modal-title').innerText =
           `${info.emoji ? info.emoji + ' ' : ''}${info.name}`;
 
-        // 写真（読み込めなかった時も No Photo に切り替える）
-        const img = document.getElementById('facility-photo');
-        const none = document.getElementById('facility-photo-none');
-        if (info.photo) {
-          img.onerror = () => { img.classList.add('hidden'); none.classList.remove('hidden'); };
-          img.onload = () => { img.classList.remove('hidden'); none.classList.add('hidden'); };
-          img.classList.add('hidden');
-          none.classList.remove('hidden');
-          img.src = info.photo;
-          img.alt = info.name;
-        } else {
-          img.removeAttribute('src');
-          img.classList.add('hidden');
-          none.classList.remove('hidden');
-        }
+        // 写真（無い時・読み込めなかった時は、写真の枠ごと表示しない）
+        this._setFacilityPhoto(info.photo, info.name);
 
         // 住所＋地図ボタン
         const addrRow = document.getElementById('facility-address-row');
@@ -4174,7 +4273,7 @@
         if (!info || info.photo || info.fromRakuten) return;
         const isRestaurant = this.isRestaurantDestination(info) ||
           OD_INSHOKU.some(x => x && x.name === info.name) ||
-          (this.goaledRestaurants || []).some(x => x && x.name === info.name);
+          (this.goaledPlaces || []).some(x => x && x.name === info.name);
         if (!isRestaurant) return;
         const seq = (this._hpSeq = (this._hpSeq || 0) + 1);
         const found = await this.enrichRestaurantFromHotpepper(info);
@@ -4182,13 +4281,7 @@
         if (this._facilityModalTarget && this._facilityModalTarget.name !== info.name) return;
         // 見つかった情報をその場の表示に反映する（データ側にも残す）
         if (found.photo) {
-          const img = document.getElementById('facility-photo');
-          const none = document.getElementById('facility-photo-none');
-          if (img) {
-            img.onerror = () => { img.classList.add('hidden'); if (none) none.classList.remove('hidden'); };
-            img.onload = () => { img.classList.remove('hidden'); if (none) none.classList.add('hidden'); };
-            img.src = found.photo;
-          }
+          this._setFacilityPhoto(found.photo, info.name);
           info.photo = found.photo;
         }
         if (found.url) {
@@ -4326,14 +4419,9 @@
         if (wikiBtn && data.url) wikiBtn.classList.remove('hidden');
 
         // 区のデータに写真が無い場合は、Wikipediaの写真を使う
-        const img = document.getElementById('facility-photo');
-        const none = document.getElementById('facility-photo-none');
         const target = this._facilityModalTarget;
-        if (data.thumbnail && img && (!target || !target.photo)) {
-          img.onerror = () => { img.classList.add('hidden'); none.classList.remove('hidden'); };
-          img.onload = () => { img.classList.remove('hidden'); none.classList.add('hidden'); };
-          img.src = data.thumbnail;
-          img.alt = data.title;
+        if (data.thumbnail && (!target || !target.photo)) {
+          this._setFacilityPhoto(data.thumbnail, data.title);
         }
         if (credit) {
           const base = (target && target.fromOpenData)
@@ -4380,6 +4468,25 @@
 
       openFacilityWikipedia() {
         if (this._facilityWikiUrl) window.open(this._facilityWikiUrl, '_blank', 'noopener');
+      },
+
+      // 写真の出し入れ。無い時・読み込めない時は枠ごと隠します（No Photoは出しません）。
+      _setFacilityPhoto(url, alt = '') {
+        const wrap = document.getElementById('facility-photo-wrap');
+        const img = document.getElementById('facility-photo');
+        if (!wrap || !img) return;
+        if (!url) {
+          img.removeAttribute('src');
+          img.classList.add('hidden');
+          wrap.classList.add('hidden');
+          return;
+        }
+        img.onerror = () => { img.classList.add('hidden'); wrap.classList.add('hidden'); };
+        img.onload = () => { img.classList.remove('hidden'); wrap.classList.remove('hidden'); };
+        img.classList.add('hidden');
+        wrap.classList.add('hidden');   // 読み込めたら onload で出す
+        img.alt = alt;
+        img.src = url;
       },
 
       closeFacilityModal() {
@@ -5262,7 +5369,11 @@
         activeMoneyEl.innerText = this.formatMoney(cp.money);
         // マイナスは赤字で表示
         activeMoneyEl.classList.toggle("text-rose-400", cp.money < 0);
-        document.getElementById("active-player-vehicle").innerText = cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '';
+        // ケガ（🦽）の間は乗り物は使えないので、乗り物カードは出さず🦽の案内にする
+        document.getElementById("active-player-vehicle").innerText =
+          cp.wheelchairTurns > 0
+            ? `🦽 ケガ中（あと${cp.wheelchairTurns}回はサイコロの目が1）`
+            : (cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '');
 
         const remainingBadge = document.getElementById("active-player-remaining");
         if (remainingBadge) remainingBadge.innerText = this.remainingSquaresLabel(cp);
@@ -6659,10 +6770,14 @@
         // （ゴール演出中は次のupdateHUDまで古い金額が残ってしまうため）。
         this.updateHUD();
 
+        // 陣取り：ゴールした施設そのものが、この人の色になる（地図にも残る）
+        if (this.currentDestination) this.claimTerritory(player, this.currentDestination);
+
         document.getElementById("goal-winner-text").innerText =
           `${player.name} が ${this.currentDestination.name} に先着ゴール！` +
-          `（陣地 ${this.territoryCount(player.id)}施設）`;
+          `（陣地 ${this.territoryCount(player.id)}か所）`;
         document.getElementById("category-select-section").classList.remove("hidden");
+        this.refreshCategoryButtons();
         document.getElementById("category-cpu-countdown").classList.add("hidden");
         document.getElementById("roulette-section").classList.add("hidden");
         document.getElementById("roulette-cpu-countdown").classList.add("hidden");
@@ -6676,14 +6791,9 @@
         // ゴール地点の紹介を3秒だけ表示（写真・ホームページ・住所・電話）。
         // 飲食店だった場合は🍴として地図に残す（次の盤面でも見えるように）。
         if (this.currentDestination) {
-          if (this.isRestaurantDestination(this.currentDestination)) {
-            this.addGoaledRestaurant(this.currentDestination);
-          }
-          // 陣取り：ゴール地点の周辺300mの施設アイコンを、この人の色に塗る
-          const claimed = this.claimTerritory(player, this.currentDestination);
           this.showFacilityDetail(this.currentDestination, {
             heading: `🏁 ゴール地点：${player.name} が到達`,
-            note: claimed ? `🎨 まわりの ${claimed}施設が ${player.name} の色になりました（陣地 計${this.territoryCount(player.id)}施設）` : '',
+            note: `🎨 ここは ${player.name} の陣地になりました（陣地 計${this.territoryCount(player.id)}か所）`,
             autoCloseSec: 3
           });
         }
@@ -6699,8 +6809,11 @@
         // カテゴリ選択→ルーレット→次の盤面まで自動で進める（誰も操作できず止まるのを防ぐ）。
         if (this.isAutoPlayedPlayer(player) || (player.id === 0 && this.autoMode)) {
           this.runCpuCountdown("goal-cpu-countdown", "goal-cpu-countdown-num", 3, () => {
-            const categories = ["飲食店", "スーパー（薬屋含む）", "公園", "駅（バス停含む）"];
-            const randomCat = categories[Math.floor(Math.random() * categories.length)];
+            // 候補が十分あるカテゴリの中から抽選する
+            const cats = DESTINATION_CATEGORY_DEFS
+              .map(d => d.name).filter(n => this.destinationPoolFor(n).length >= 3);
+            const catPool = cats.length ? cats : ["駅（バス停含む）"];
+            const randomCat = catPool[Math.floor(Math.random() * catPool.length)];
             this.selectCategory(randomCat);
           });
         }
@@ -6765,6 +6878,60 @@
         }
       },
 
+      // ============================================================
+      // 目的地カテゴリごとの候補（地図に出るすべての絵文字アイコンが対象）
+      //  ・「その他」は、他のカテゴリに入らない全部（病院・交番・銭湯・お店など）
+      //  ・データが未読込のカテゴリは候補が無いので、他のカテゴリで代用します
+      // ============================================================
+      destinationPoolFor(catName) {
+        const uniq = (lists) => {
+          const seen = new Set(), out = [];
+          lists.forEach(list => (list || []).forEach(x => {
+            if (!x || !x.name || !Number.isFinite(x.lat) || !Number.isFinite(x.lng)) return;
+            if (seen.has(x.name)) return;
+            seen.add(x.name);
+            out.push(x);
+          }));
+          return out;
+        };
+        switch (catName) {
+          case '飲食店':
+            return uniq([DESTINATION_PRESETS['飲食店'], OD_INSHOKU, HOTPEPPER_SHOPS]);
+          case 'スーパー（薬屋含む）':
+            return uniq([DESTINATION_PRESETS['スーパー（薬屋含む）'], OD_SUPER]);
+          case '公園':
+            return uniq([PARKS, OD_RYOKUDOU, OD_JABUJABU]);
+          case '駅（バス停含む）':
+            return uniq([DESTINATION_PRESETS['駅（バス停含む）'], STATIONS_FOR_MAP, BUS_STOPS_FOR_MAP]);
+          case '公共・スポーツ施設':
+            return uniq([OD_SPORTS, OD_CULTURE, OD_REKU, OD_LIBRARIES, OD_OFFICES,
+                         OD_KYOIKU, OD_HEALTH, [BOAT_RACE_LOC]]);
+          case '学校・神社仏閣':
+            return uniq([SCHOOLS, OD_HIGHSCHOOL, TEMPLES_SHRINES, OD_HOIKU, OD_KOSODATE]);
+          case '宿泊施設':
+            return uniq([RAKUTEN_HOTELS]);
+          case 'その他':
+            return uniq([HOSPITALS, POLICE_STATIONS, POST_OFFICES, OD_SENTO, OD_CAFE,
+                         OD_YASAI, OD_FLOWER, OD_SHOPS, OD_ER, OD_WELFARE, OD_JUKUNEN,
+                         OD_TOKUYOU, this.goaledPlaces || []]);
+          default:
+            return uniq([DESTINATION_PRESETS[catName]]);
+        }
+      },
+
+      // 候補が無いカテゴリのボタンは、選べないように薄く表示する
+      refreshCategoryButtons() {
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+          const m = String(btn.getAttribute('onclick') || '').match(/selectCategory\('([^']+)'\)/);
+          if (!m) return;
+          const n = this.destinationPoolFor(m[1]).length;
+          btn.classList.toggle('opacity-30', n === 0);
+          btn.classList.toggle('pointer-events-none', n === 0);
+          const sub = btn.querySelector('div > div:last-child');
+          if (sub && n === 0) sub.innerText = '候補なし';
+        });
+      },
+
       // 目的地としての「分かりやすさ」。値が小さいほど選ばれやすい。
       destinationPreferenceWeight(place) {
         const n = String(place?.name || '');
@@ -6782,7 +6949,15 @@
         const box = document.getElementById("roulette-box");
         const fromLoc = this.currentDestination || EDOGAWA_START;
 
-        let allOptions = DESTINATION_PRESETS[catName] || DESTINATION_PRESETS["飲食店"];
+        // カテゴリの候補（データ未読込などで空の場合は、候補のある他カテゴリで代用）
+        let allOptions = this.destinationPoolFor(catName);
+        if (!allOptions.length) {
+          for (const def of DESTINATION_CATEGORY_DEFS) {
+            const alt = this.destinationPoolFor(def.name);
+            if (alt.length) { allOptions = alt; break; }
+          }
+        }
+        if (!allOptions.length) allOptions = [FIRST_GOAL];
 
         if (catName === "飲食店" && HOTPEPPER_PROXY_URL) {
           // ゴールした時点で先読みを始めているので、通常はここで待ち時間が発生しない。
@@ -6792,7 +6967,7 @@
           const liveShops = usable ? await pre.promise : await this.fetchNearbyRestaurants(fromLoc);
           if (liveShops && liveShops.length > 0) {
             // 区のオープンデータの飲食店（位置が正確）も候補に混ぜる。
-            allOptions = OD_INSHOKU.length ? liveShops.concat(OD_INSHOKU) : liveShops;
+            allOptions = liveShops.concat(allOptions);
           }
         }
 
@@ -7045,7 +7220,7 @@
           recentDestinationNames: this.recentDestinationNames || [],
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
           planeGrantedThisLeg: !!this.planeGrantedThisLeg,
-          goaledRestaurants: this.goaledRestaurants || [],
+          goaledPlaces: this.goaledPlaces || [],
           territory: this.territory || {}
         };
         localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
@@ -7210,7 +7385,7 @@
         });
         if (HOTPEPPER_SHOPS.length) this._facilityPoiCache.push([HOTPEPPER_SHOPS, '🍽', 1.2]);
         if (RAKUTEN_HOTELS.length) this._facilityPoiCache.push([RAKUTEN_HOTELS, '🏩', 0.8]);
-        if ((this.goaledRestaurants || []).length) this._facilityPoiCache.push([this.goaledRestaurants, '🍴', 0.6]);
+        if ((this.goaledPlaces || []).length) this._facilityPoiCache.push([this.goaledPlaces, null, 0.5]);
         return this._facilityPoiCache;
       },
 
@@ -7231,7 +7406,10 @@
             const d = this.haversineMeters(here, loc);
             if (d > maxMeters) return;
             const score = d * w;
-            if (score < bestScore) { bestScore = score; bestD = d; best = { name: loc.name, emoji }; }
+            if (score < bestScore) {
+              bestScore = score; bestD = d;
+              best = { name: loc.name, emoji: emoji || loc.emoji || '📍' };
+            }
           });
         });
         // 強制移動で立てたピン（競艇場・警察・病院）も候補に含める（こちらは常に優先）
@@ -8501,6 +8679,40 @@
       // ハンバーガーメニュー（設定・使い方・利用規約・プライバシーポリシー・運営元）
       // ============================================================
       // ============================================================
+      // 「最初から遊びますか？」の確認（保存データを消してしまう前に）
+      // ============================================================
+      _hasSave(key) {
+        try { return !!localStorage.getItem(key); } catch (e) { return false; }
+      },
+
+      openRestartConfirm(mode) {
+        this._restartMode = mode;
+        const text = document.getElementById('restart-confirm-text');
+        if (text) {
+          text.innerText = mode === 'multi'
+            ? '前回のマルチプレイの続きが保存されています。参加者を募集して新しく始めると、前回の続きは消えます。最初から遊びますか？'
+            : '前回の「ひとりで遊ぶ」の続きが保存されています。最初から遊ぶと、前回の続きは消えます。最初から遊びますか？';
+        }
+        document.getElementById('restart-confirm-modal')?.classList.remove('hidden');
+      },
+
+      closeRestartConfirm() {
+        document.getElementById('restart-confirm-modal')?.classList.add('hidden');
+      },
+
+      confirmRestartNewGame() {
+        this.closeRestartConfirm();
+        if (this._restartMode === 'multi') this.openRecruitmentModal({ force: true });
+        else this.startGame({ force: true });
+      },
+
+      resumeFromRestartConfirm() {
+        this.closeRestartConfirm();
+        if (this._restartMode === 'multi') this.resumeMultiplayerGame();
+        else this.resumeSoloGame();
+      },
+
+      // ============================================================
       // アクセス解析（Google アナリティクス）の同意
       //  ・同意があるときだけ gtag.js を読み込みます（同意前は一切送信しません）
       //  ・「設定」からいつでもON/OFFできます
@@ -8835,7 +9047,7 @@
           recentDestinationNames: this.recentDestinationNames || [],
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
           planeGrantedThisLeg: !!this.planeGrantedThisLeg,
-          goaledRestaurants: this.goaledRestaurants || [],
+          goaledPlaces: this.goaledPlaces || [],
           territory: this.territory || {}
         };
       },
@@ -9027,7 +9239,7 @@
         this.recentDestinationNames = Array.isArray(save.recentDestinationNames) ? save.recentDestinationNames : [];
         this.helicopterGrantedThisLeg = !!save.helicopterGrantedThisLeg;
         this.planeGrantedThisLeg = !!save.planeGrantedThisLeg;
-        this.goaledRestaurants = Array.isArray(save.goaledRestaurants) ? save.goaledRestaurants : [];
+        this.goaledPlaces = Array.isArray(save.goaledPlaces) ? save.goaledPlaces : [];
         this.territory = (save.territory && typeof save.territory === 'object') ? save.territory : {};
 
         // ホストの端末IDは再ログインで変わることがあるため、保存時のホストUIDを今のUIDに置き換える。
