@@ -11,15 +11,19 @@
  * アプリを更新した時は、下の CACHE_VERSION の数字を1つ上げてアップロードしてください。
  * 次回起動時に古いキャッシュを破棄して新しいHTMLを取り込みます。
  */
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `edogawa-sugoroku-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
   './sugoroku.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  './icon-maskable-512.png'
+  // データは /data/ に、アイコンは /img/ に置いています
+  '../data/sugoroku-data.json',
+  '../data/edogawa-opendata.json',
+  '../data/quiz_data.json',
+  '../img/icon-192.png',
+  '../img/icon-512.png',
+  '../img/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -57,9 +61,12 @@ self.addEventListener('fetch', (event) => {
 
   // HTMLは「ネットワーク優先・失敗したらキャッシュ」。
   // 更新をすぐ反映しつつ、オフラインでも起動できるようにする。
+  // JSON（manifest.json・江戸川区オープンデータ）も同じくネットワーク優先にして、
+  // 差し替えたデータがすぐ反映されるようにする。
   const isHtml = req.mode === 'navigate' ||
     (req.headers.get('accept') || '').includes('text/html') ||
-    url.pathname.endsWith('.html');
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.json');
 
   if (isHtml) {
     event.respondWith((async () => {
@@ -69,7 +76,8 @@ self.addEventListener('fetch', (event) => {
         cache.put(req, fresh.clone());
         return fresh;
       } catch (e) {
-        const cached = await caches.match(req) || await caches.match('./sugoroku.html');
+        const cached = await caches.match(req) ||
+          (url.pathname.endsWith('.json') ? null : await caches.match('./sugoroku.html'));
         if (cached) return cached;
         throw e;
       }

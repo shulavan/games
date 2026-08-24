@@ -12,9 +12,9 @@
   <!-- ファビコン -->
   <link rel="icon" href="https://shulavan.github.io/img/sugoroku.ico" sizes="any">
   <link rel="shortcut icon" href="https://shulavan.github.io/img/sugoroku.ico">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="https://shulavan.github.io/img/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="https://shulavan.github.io/img/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="https://shulavan.github.io/img/icon-512.png">
 
   <!-- PWA（ホーム画面アプリ化）: manifest.json と sw.js は sugoroku.html と同じ /games/ に置いてください -->
   <link rel="manifest" href="manifest.json">
@@ -92,6 +92,30 @@
     .leaflet-control-zoom, .leaflet-control-attribution {
       display: none !important;
     }
+
+    /* メニューの各ドキュメント（使い方・利用規約・プライバシーポリシー・運営元）の本文 */
+    .doc-body { font-size: 12px; line-height: 1.8; color: #cbd5e1; }
+    .doc-body h4 {
+      font-size: 13px; font-weight: 900; color: #fbbf24;
+      margin: 14px 0 4px; padding-bottom: 2px; border-bottom: 1px solid #334155;
+    }
+    .doc-body h4:first-child { margin-top: 0; }
+    .doc-body h5 { font-size: 12px; font-weight: 800; color: #e2e8f0; margin: 10px 0 2px; }
+    .doc-body p { margin: 4px 0; }
+    .doc-body ul, .doc-body ol { margin: 4px 0 4px 1.1em; }
+    .doc-body ul { list-style: disc; }
+    .doc-body ol { list-style: decimal; }
+    .doc-body li { margin: 2px 0; }
+    .doc-body a { color: #7dd3fc; text-decoration: underline; word-break: break-all; }
+    .doc-body .doc-note {
+      background: rgba(2,6,23,.7); border: 1px solid #1e293b;
+      border-radius: 10px; padding: 8px 10px; margin: 6px 0; font-size: 11px;
+    }
+    .doc-body .doc-src {
+      font-size: 11px; line-height: 1.7; color: #94a3b8;
+      border-left: 2px solid #475569; padding-left: 8px; margin: 6px 0;
+    }
+    .doc-body .doc-date { font-size: 10px; color: #64748b; margin-top: 12px; }
 
     .speech-bubble {
       position: absolute;
@@ -224,6 +248,7 @@
       border: none !important;
     }
     .facility-poi {
+      cursor: pointer;
       width: 78px;
       height: 78px;
       background: rgba(15, 23, 42, 0.78);
@@ -391,6 +416,13 @@
             class="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-slate-900 border border-amber-500/40 text-xl sm:text-2xl leading-none flex items-center justify-center shadow-lg active:scale-95 transition">
             📲
           </button>
+          <!-- メニュー（設定・使い方・利用規約・プライバシーポリシー・運営元） -->
+          <button id="lobby-menu-btn" onclick="EdogawaSugoroku.openMenuModal()" title="メニュー" aria-label="メニュー"
+            class="w-10 h-10 sm:w-11 sm:h-11 shrink-0 rounded-full bg-slate-900 border border-slate-700 text-slate-200 flex flex-col items-center justify-center gap-[3px] shadow-lg active:scale-95 transition">
+            <span class="block w-4 sm:w-5 h-[2px] bg-current rounded"></span>
+            <span class="block w-4 sm:w-5 h-[2px] bg-current rounded"></span>
+            <span class="block w-4 sm:w-5 h-[2px] bg-current rounded"></span>
+          </button>
         </div>
       </div>
       <h1 class="font-mincho text-4xl sm:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-100 gold-glow tracking-widest text-center -mt-3 sm:-mt-2">
@@ -456,9 +488,13 @@
 
     <div class="text-center text-[11px] text-slate-500 pb-2 pt-3 leading-relaxed">
       ©2026 江戸川双六 Produced by M.Tsuda<br>
-      <span class="text-[9px] text-slate-600">
-        区境データ：国土交通省 国土数値情報「行政区域データ 2025年版」（CC BY 4.0）を加工して作成
-      </span>
+      <span class="text-[10px] text-slate-600">
+        <button onclick="EdogawaSugoroku.openDocModal('howto')" class="underline hover:text-slate-400">使い方</button>
+        ・<button onclick="EdogawaSugoroku.openDocModal('terms')" class="underline hover:text-slate-400">利用規約・出典</button>
+        ・<button onclick="EdogawaSugoroku.openDocModal('privacy')" class="underline hover:text-slate-400">プライバシーポリシー</button>
+        ・<button onclick="EdogawaSugoroku.openDocModal('about')" class="underline hover:text-slate-400">運営元</button>
+      </span><br>
+      <span class="text-[9px] text-slate-600">江戸川区非公認の個人制作ゲームです</span>
     </div>
   </div>
 
@@ -494,6 +530,13 @@
       <button id="host-save-btn" onclick="EdogawaSugoroku.openHostSaveModal()" class="hidden p-2 bg-slate-900 hover:bg-slate-800 border border-amber-500/50 rounded-lg text-amber-300 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="ゲームを保存して終了">
         <span>💾</span> <span class="hidden sm:inline">保存終了</span>
       </button>
+      <!-- メニュー（設定・使い方・利用規約・プライバシーポリシー・運営元） -->
+      <button id="game-menu-btn" onclick="EdogawaSugoroku.openMenuModal()" title="メニュー" aria-label="メニュー"
+        class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition flex flex-col items-center justify-center gap-[3px]">
+        <span class="block w-4 h-[2px] bg-current rounded"></span>
+        <span class="block w-4 h-[2px] bg-current rounded"></span>
+        <span class="block w-4 h-[2px] bg-current rounded"></span>
+      </button>
     </div>
   </header>
 
@@ -516,6 +559,12 @@
     <button id="nearby-locate-btn" onclick="EdogawaSugoroku.locateNearbyNow()"
       class="hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 border border-sky-700/70 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg text-sky-300 font-bold active:scale-95 transition">
       📍 現在地を表示
+    </button>
+
+    <!-- 地図の出典表記（タップで利用規約の「出典・クレジット」を開く） -->
+    <button onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
+      class="absolute bottom-1 left-1 z-20 px-1.5 py-[1px] rounded bg-slate-950/70 text-[8px] leading-tight text-slate-400 hover:text-slate-200 active:scale-95 transition">
+      © OpenStreetMap / CARTO ・出典
     </button>
   </main>
 
@@ -754,6 +803,137 @@
       <button onclick="EdogawaSugoroku.closeInstallModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
         閉じる
       </button>
+    </div>
+  </div>
+
+  <!-- MODAL: 施設の詳細（地図の絵文字アイコンをタップ／ゴール地点の紹介） -->
+  <div id="facility-modal" class="hidden fixed inset-0 z-[92] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex items-start justify-between gap-2 p-4 pb-2">
+        <div class="min-w-0">
+          <p id="facility-modal-heading" class="text-[10px] font-bold text-amber-400 tracking-wider"></p>
+          <h3 id="facility-modal-title" class="font-mincho text-base sm:text-lg font-bold text-slate-100 leading-tight break-words"></h3>
+        </div>
+        <button onclick="EdogawaSugoroku.closeFacilityModal()" aria-label="閉じる"
+          class="w-8 h-8 shrink-0 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-lg leading-none active:scale-95 transition">×</button>
+      </div>
+
+      <!-- 写真（無ければ No Photo） -->
+      <div class="px-4">
+        <div id="facility-photo-wrap" class="w-full aspect-[16/10] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+          <img id="facility-photo" alt="" class="hidden w-full h-full object-cover">
+          <span id="facility-photo-none" class="text-slate-600 text-xs font-bold tracking-wider">No Photo</span>
+        </div>
+      </div>
+
+      <div class="p-4 pt-3 space-y-2">
+        <div id="facility-address-row" class="hidden flex items-start gap-2">
+          <span class="text-[11px] text-slate-400 shrink-0 pt-0.5">住所</span>
+          <span id="facility-address" class="text-xs text-slate-200 flex-1 break-words"></span>
+          <button id="facility-map-btn" onclick="EdogawaSugoroku.openFacilityMapLink()"
+            class="shrink-0 px-2.5 py-1 rounded-lg bg-slate-800 border border-sky-700/70 text-sky-300 text-[11px] font-bold active:scale-95 transition">🗺 地図</button>
+        </div>
+        <div id="facility-tel-row" class="hidden flex items-center gap-2">
+          <span class="text-[11px] text-slate-400 shrink-0">電話</span>
+          <a id="facility-tel" href="#" class="text-xs text-sky-300 underline font-bold">-</a>
+        </div>
+        <div id="facility-note" class="hidden text-[11px] text-slate-400"></div>
+        <button id="facility-home-btn" onclick="EdogawaSugoroku.openFacilityHomepage()"
+          class="hidden w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition">
+          🌐 ホームページを開く
+        </button>
+        <p id="facility-credit" class="hidden text-[9px] text-slate-600 leading-tight"></p>
+        <button id="facility-close-btn" onclick="EdogawaSugoroku.closeFacilityModal()"
+          class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ハンバーガーメニュー -->
+  <div id="menu-modal" class="hidden fixed inset-0 z-[95] bg-slate-950/92 backdrop-blur-md flex items-start justify-center p-4 pt-16 sm:items-center sm:pt-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-4 shadow-2xl space-y-2">
+      <div class="flex items-center justify-between pb-1">
+        <h3 class="font-mincho text-lg font-bold text-amber-400">メニュー</h3>
+        <button onclick="EdogawaSugoroku.closeMenuModal()" aria-label="閉じる"
+          class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-lg leading-none active:scale-95 transition">×</button>
+      </div>
+      <button onclick="EdogawaSugoroku.openSettingsModal()" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+        <span class="text-xl">⚙️</span><span class="text-sm font-bold text-slate-100">設定</span>
+      </button>
+      <button onclick="EdogawaSugoroku.openDocModal('howto')" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+        <span class="text-xl">📖</span><span class="text-sm font-bold text-slate-100">使い方・遊び方</span>
+      </button>
+      <button onclick="EdogawaSugoroku.openDocModal('terms')" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+        <span class="text-xl">📜</span><span class="text-sm font-bold text-slate-100">利用規約・出典</span>
+      </button>
+      <button onclick="EdogawaSugoroku.openDocModal('privacy')" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+        <span class="text-xl">🔒</span><span class="text-sm font-bold text-slate-100">プライバシーポリシー</span>
+      </button>
+      <button onclick="EdogawaSugoroku.openDocModal('about')" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+        <span class="text-xl">🏛</span><span class="text-sm font-bold text-slate-100">運営元</span>
+      </button>
+      <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full flex items-center gap-3 bg-[#06C755]/15 hover:bg-[#06C755]/25 border border-[#06C755]/40 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+        <span class="text-xl">💬</span><span class="text-sm font-bold text-[#06C755]">LINEで紹介</span>
+      </button>
+      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda</p>
+    </div>
+  </div>
+
+  <!-- MODAL: 設定 -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-[96] bg-slate-950/92 backdrop-blur-md flex items-start justify-center p-4 pt-16 sm:items-center sm:pt-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto p-4 shadow-2xl space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-mincho text-lg font-bold text-amber-400">⚙️ 設定</h3>
+        <button onclick="EdogawaSugoroku.closeSettingsModal()" aria-label="閉じる"
+          class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-lg leading-none active:scale-95 transition">×</button>
+      </div>
+      <div class="space-y-2">
+        <button onclick="EdogawaSugoroku.settingsToggleSound()" class="w-full flex items-center justify-between gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-3 active:scale-[0.98] transition">
+          <span class="text-left"><span class="text-sm font-bold text-slate-100">🎵 BGM・効果音</span><br>
+            <span class="text-[10px] text-slate-500">ゲーム中の音楽と効果音</span></span>
+          <span id="settings-sound-state" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">ON</span>
+        </button>
+        <button onclick="EdogawaSugoroku.settingsToggleSpeech()" class="w-full flex items-center justify-between gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-3 active:scale-[0.98] transition">
+          <span class="text-left"><span class="text-sm font-bold text-slate-100">🎙 音声読み上げ</span><br>
+            <span class="text-[10px] text-slate-500">競艇の実況・クイズの読み上げ</span></span>
+          <span id="settings-speech-state" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">ON</span>
+        </button>
+        <button onclick="EdogawaSugoroku.settingsToggleAuto()" class="w-full flex items-center justify-between gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-3 active:scale-[0.98] transition">
+          <span class="text-left"><span class="text-sm font-bold text-slate-100">🤖 オートモード</span><br>
+            <span class="text-[10px] text-slate-500">自分の手番も自動でサイコロを振る</span></span>
+          <span id="settings-auto-state" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-slate-800 text-slate-400 border border-slate-700">OFF</span>
+        </button>
+        <button onclick="EdogawaSugoroku.settingsOpenInstall()" class="w-full flex items-center gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+          <span class="text-xl">📲</span><span class="text-sm font-bold text-slate-100">アプリとしてインストール</span>
+        </button>
+        <button onclick="EdogawaSugoroku.settingsClearSaves()" class="w-full flex items-center gap-3 bg-slate-950/70 border border-rose-800/60 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+          <span class="text-xl">🗑</span>
+          <span><span class="text-sm font-bold text-rose-300">保存データを消す</span><br>
+            <span id="settings-clear-note" class="text-[10px] text-slate-500">「前回の続きから遊ぶ」の保存を削除します</span></span>
+        </button>
+      </div>
+      <button onclick="EdogawaSugoroku.closeSettingsModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
+        閉じる
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: 使い方 / 利用規約 / プライバシーポリシー / 運営元 -->
+  <div id="doc-modal" class="hidden fixed inset-0 z-[96] bg-slate-950/95 backdrop-blur-md flex items-start justify-center p-3 pt-12 sm:items-center sm:pt-3">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full max-h-[88vh] flex flex-col shadow-2xl">
+      <div class="flex items-center justify-between gap-2 p-4 pb-2 border-b border-slate-800">
+        <h3 id="doc-modal-title" class="font-mincho text-base sm:text-lg font-bold text-amber-400"></h3>
+        <button onclick="EdogawaSugoroku.closeDocModal()" aria-label="閉じる"
+          class="w-8 h-8 shrink-0 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-lg leading-none active:scale-95 transition">×</button>
+      </div>
+      <div id="doc-modal-body" class="doc-body flex-1 overflow-y-auto px-4 py-3"></div>
+      <div class="p-3 pt-2 border-t border-slate-800">
+        <button onclick="EdogawaSugoroku.closeDocModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
+          閉じる
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1221,21 +1401,240 @@
     // LINE等での紹介に使う公開URL（OGPのog:urlと合わせています）
     const GAME_SHARE_URL = "https://shulavan.github.io/games/sugoroku.html";
 
+    // ============================================================
+    // ファイルの置き場所
+    //   画像（OGP・ファビコン・PWAアイコン） → https://shulavan.github.io/img/
+    //   データ（JSON）                       → https://shulavan.github.io/data/
+    // ※データは上のURLで読めなかった場合、同じサーバの ../data/ と
+    //   HTMLと同じ階層も順に試します（別の場所に置いても動くように）。
+    // ============================================================
+    const DATA_BASE_URL = "https://shulavan.github.io/data/";
+    const GAME_DATA_FILE = "sugoroku-data.json";        // 施設・目的地・文言などのゲームデータ
+    const OPENDATA_DATA_FILE = "edogawa-opendata.json"; // 江戸川区オープンデータ
+    const QUIZ_DATA_FILE = "quiz_data.json";            // 江戸川クイズ
+    function dataFileUrls(name) {
+      return [DATA_BASE_URL + name, "../data/" + name, "./" + name];
+    }
+
     // セーブデータのキー。「ひとりで遊ぶ」と「マルチプレイ」で各1件だけ保存します。
     const SOLO_SAVE_KEY = "edogawa_sugoroku_state";
     const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
+    // メニューの「設定」で切り替えた内容（音・読み上げ）の保存先。
+    const SETTINGS_KEY = "edogawa_sugoroku_settings";
+    // 利用規約などの改定日（表示用）
+    const DOC_UPDATED = "2026年8月23日";
     // 🚁/✈️を配る条件（残りマス数のしきい値）。ゴール1回につき、それぞれ1人だけ・早い者勝ち。
     const FLIGHT_HELI_MIN_SQUARES = 100;   // 🚁ヘリコプター
     const FLIGHT_PLANE_MIN_SQUARES = 150;  // ✈️飛行機
-    // 競艇実況の読み上げ速度（1.0が標準。競艇の実況らしく早口にしている）
-    const BOAT_RACE_SPEECH_RATE = 1.9;
+    // 競艇実況の読み上げ速度（1.0が標準）。場面によって喋り方を切り替える。
+    // 舟券購入中と結果発表は落ち着いた喋り、レースが始まったら実況らしい早口にする。
+    const BOAT_RACE_SPEECH_RATE_CALM = 1.15;
+    const BOAT_RACE_SPEECH_RATE_FAST = 1.9;
     // すべてのモーダルの「閉じる（自動進行：〇秒）」の秒数。
     const MODAL_AUTO_CLOSE_SECONDS = 3;
+    // 競艇の結果画面だけは、落ち着いた締めの実況を言い終えられるよう長めにとる。
+    const BOAT_RACE_RESULT_SECONDS = 10;
     // 「引続き江戸川競艇で遊びますか？」で連続開催できる上限（1レグあたり・1人あたり）。
     const BOAT_RACE_CONTINUE_LIMIT = 3;
     // 相手の端末が「生きているか」の判定に使う無反応の許容時間（ミリ秒）。
     // 各端末は4秒ごとに心拍（presence）を書き込みます。
     const PRESENCE_TIMEOUT_MS = 20000;
+
+    // ============================================================
+    // メニューに表示する各ドキュメント。
+    // 出典表記（クレジット）が必要なデータ・APIはすべて「利用規約・出典」にまとめている。
+    // ============================================================
+    const INFO_DOCS = {
+      howto: {
+        title: '📖 使い方・遊び方',
+        body: `
+          <h4>これはどんなゲーム？</h4>
+          <p>東京都江戸川区の実際の地図と道路を盤面にした、スマートフォン向けの双六（すごろく）ゲームです。
+          サイコロを振って実際の道路の上をコマが進み、目的地に一番早く着いた人が1着になります。</p>
+
+          <h4>始め方</h4>
+          <ol>
+            <li>トップページでニックネーム（6文字以内）とキャラクターを選びます。</li>
+            <li><strong>ひとりで遊ぶ</strong>…CPU3人と対戦します。</li>
+            <li><strong>参加者募集（QRコード発行）</strong>…表示されたQRコードやLINEのURLを友だちに送ると、最大4人で対戦できます。空いた席はCPUが入ります。</li>
+            <li><strong>前回の続きから遊ぶ</strong>…保存したゲームを再開します（ひとり用・マルチプレイ用に各1件まで）。</li>
+          </ol>
+
+          <h4>マスの種類</h4>
+          <ul>
+            <li><span style="color:#f87171">● 赤マス</span>…お金を失います。</li>
+            <li><span style="color:#60a5fa">■ 青マス</span>…お金がもらえます。</li>
+            <li><span style="color:#34d399">▲ 緑マス</span>…イベント。乗り物がもらえたり、強制移動させられたりします。</li>
+            <li><span style="color:#fbbf24">★ 黄マス</span>…ミニゲーム（江戸川クイズ・金魚すくいなど）。</li>
+          </ul>
+
+          <h4>乗り物</h4>
+          <p>乗り物を手に入れると、サイコロの目が倍になります。🚁ヘリコプターや✈️飛行機は、目的地までの残りマスが多い人に、ゴール1回につき1人だけ配られます（早い者勝ち）。空を飛ぶ乗り物は道路を無視して直線で進みます。</p>
+
+          <h4>江戸川競艇</h4>
+          <p>競艇場に止まると、次のターンでミニゲーム「江戸川競艇」が始まります。予想屋に100円払って予想を聞き、2連単の舟券を買って的中すれば払戻金がもらえます。他のプレイヤーも参加費￥1,000で参加できます。終わった次のターンには「引続き江戸川競艇で遊びますか？」と聞かれ、遊ぶ場合はそのターンを競艇に使います。</p>
+
+          <h4>ゴールしたあと</h4>
+          <p>だれかがゴールすると順位とご祝儀が決まり、ルーレットで次の目的地が選ばれます。次の目的地は江戸川区内から選ばれ、直前と同じ場所は選ばれません。ゲームは繰り返し続けられます。</p>
+
+          <h4>地図の絵文字アイコン</h4>
+          <p>地図に出ている 🚉 ⛲️ 📚 ♨️ 🏥 などの絵文字をタップすると、その施設の<strong>写真・ホームページ・住所（地図ボタン）・電話番号</strong>が見られます（江戸川区オープンデータより。写真が無い施設は「No Photo」と表示されます）。</p>
+          <p>ゴールした時にも、その施設の紹介が3秒間表示されます。ゴールした飲食店は 🍴 として地図に残っていくので、遊ぶほど「行ったお店の地図」になっていきます。</p>
+
+          <h4>便利な機能</h4>
+          <ul>
+            <li><strong>オートモード</strong>…自分の手番も自動でサイコロを振ります。</li>
+            <li><strong>📍現在地を表示</strong>…画面右下。自分がいま江戸川区のどのあたりにいるかを調べます。</li>
+            <li><strong>💾保存終了</strong>（マルチプレイのホストのみ）…途中でやめて、次回続きから遊べます。</li>
+            <li><strong>📲</strong>…ホーム画面にアプリとして追加できます。</li>
+          </ul>
+        `
+      },
+
+      terms: {
+        title: '📜 利用規約・出典',
+        body: `
+          <div class="doc-note">
+            「江戸川双六」（以下「本ゲーム」）は個人が趣味で制作した非公式のゲームです。
+            <strong>東京都江戸川区および区の関係機関とは一切関係がありません。</strong>
+            本ゲーム内の「江戸川区非公認」の表示は、この点をわかりやすくするためのものです。
+          </div>
+
+          <h4>第1条（利用条件）</h4>
+          <p>本ゲームは無料でご利用いただけます。本ページの内容に同意のうえご利用ください。ブラウザで本ゲームを開いた時点で、同意いただいたものとみなします。</p>
+
+          <h4>第2条（禁止事項）</h4>
+          <ul>
+            <li>本ゲームの改変・再配布・販売、および商用利用</li>
+            <li>不正アクセス、過度な連続アクセスなど、提供元やAPI提供元に負荷をかける行為</li>
+            <li>他の参加者に不快感を与えるニックネームの使用</li>
+            <li>法令または公序良俗に反する行為</li>
+          </ul>
+
+          <h4>第3条（免責事項）</h4>
+          <ul>
+            <li>本ゲーム内の地図・施設名・所在地などの情報は、正確性・最新性を保証しません。実際の施設の営業状況や所在地とは異なる場合があります。</li>
+            <li>本ゲーム内の金額・順位・イベントはすべて架空のものです。現実の金銭のやり取りは一切発生しません。</li>
+            <li>「江戸川競艇」は実在の競艇（ボートレース）の勝敗や払戻金とは無関係の、架空のミニゲームです。実際の公営競技の予想・投票を目的としたものではありません。</li>
+            <li>本ゲームの利用により生じたいかなる損害についても、制作者は責任を負いません。</li>
+            <li>外部の地図・API提供元の都合により、予告なく一部機能が使えなくなる場合があります。</li>
+          </ul>
+
+          <h4>第4条（歩きスマホの禁止・安全のお願い）</h4>
+          <p>本ゲームは実際の地図を使いますが、実際に歩いて移動する必要はまったくありません。歩きながらの操作（歩きスマホ）や、私有地・施設内での迷惑になる行為は絶対におやめください。</p>
+
+          <h4>第5条（規約の変更）</h4>
+          <p>本規約は予告なく変更されることがあります。変更後の内容は本ページに掲載した時点から適用されます。</p>
+
+          <h4>出典・クレジット</h4>
+          <p>本ゲームは、以下のデータ・サービスを利用（加工して利用しているものを含む）しています。</p>
+
+          <h5>地図・地理データ</h5>
+          <div class="doc-src">
+            地図タイル：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors（ODbL）／
+            © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>
+          </div>
+          <div class="doc-src">
+            地名・住所の検索および逆ジオコーディング：<a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim</a>（OpenStreetMap Foundation）
+          </div>
+          <div class="doc-src">
+            道路経路（ルーティング）：<a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM（Open Source Routing Machine）</a>／道路データは © OpenStreetMap contributors
+          </div>
+          <div class="doc-src">
+            区境データ：国土交通省 国土数値情報「行政区域データ 2025年版」（<a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank" rel="noopener">CC BY 4.0</a>）を加工して作成
+          </div>
+          <div class="doc-src">
+            区内施設データ（公園・親水緑道・図書館・スポーツ施設・文化施設・区役所・保健所・病院・交番・学校・銭湯・食べきり推進店など）：
+            <a href="https://www.city.edogawa.tokyo.jp/e004/kuseijoho/opendata/map_data.html" target="_blank" rel="noopener">江戸川区オープンデータ（地図データ）</a>
+            （<a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank" rel="noopener">CC BY 4.0</a>）を加工して作成
+            <span id="doc-opendata-state"></span>
+          </div>
+
+          <h5>店舗情報</h5>
+          <div class="doc-src">
+            Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a>（株式会社リクルート）
+          </div>
+
+          <h5>ソフトウェア</h5>
+          <div class="doc-src">
+            <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>（BSD-2-Clause）／
+            <a href="https://tailwindcss.com/" target="_blank" rel="noopener">Tailwind CSS</a>（MIT）／
+            canvas-confetti（ISC）／ qrcode.js（MIT）／
+            <a href="https://firebase.google.com/" target="_blank" rel="noopener">Firebase</a>（Google LLC、マルチプレイの通信に使用）／
+            音声読み上げ：各ブラウザの Web Speech API
+          </div>
+
+          <p class="doc-date">最終改定日：${DOC_UPDATED}</p>
+        `
+      },
+
+      privacy: {
+        title: '🔒 プライバシーポリシー',
+        body: `
+          <h4>基本的な考え方</h4>
+          <p>本ゲームは、氏名・住所・電話番号・メールアドレスなどの個人情報を一切取得しません。会員登録も不要です。</p>
+
+          <h4>お使いの端末に保存される情報</h4>
+          <p>次の情報を、お使いのブラウザ内（localStorage）にのみ保存します。制作者が見ることはできません。ブラウザの設定から削除でき、メニューの「設定 → 保存データを消す」からも削除できます。</p>
+          <ul>
+            <li>ニックネームと選んだキャラクター</li>
+            <li>ゲームの途中セーブ（ひとり用・マルチプレイ用に各1件）</li>
+            <li>音・読み上げなどの設定</li>
+            <li>地名検索の結果の一時保存（同じ場所を何度も問い合わせないため）</li>
+          </ul>
+
+          <h4>マルチプレイで送信される情報</h4>
+          <p>マルチプレイで遊ぶ場合のみ、参加者どうしでゲームを同期するため、Google の Firebase（Cloud Firestore／匿名認証）にニックネーム・キャラクター・コマの位置・持ち金・サイコロの結果などのゲーム進行情報を送信します。匿名認証のため、あなたの Google アカウントなどとは結び付きません。この情報はゲームの進行のみに使用します。</p>
+
+          <h4>外部サービスへの通信</h4>
+          <p>地図の表示や目的地の検索のため、次の外部サービスに通信します。その際、表示している地図の範囲や検索する地名などが各サービスに送信され、各サービス側で通信記録（IPアドレスを含む）が記録される場合があります。詳しくは各サービスの規約をご確認ください。</p>
+          <ul>
+            <li>OpenStreetMap / CARTO（地図タイル）</li>
+            <li>Nominatim（地名・住所の検索）</li>
+            <li>OSRM（道路経路の取得）</li>
+            <li>ホットペッパーグルメ Webサービス（飲食店情報。Google Apps Script 経由で取得）</li>
+            <li>Firebase（マルチプレイ時のみ）</li>
+          </ul>
+
+          <h4>位置情報について</h4>
+          <p>本ゲームは、端末のGPSなどの位置情報を取得しません。ゲーム内の「現在地」は、地図上のコマの位置を表しているだけで、実際にいる場所ではありません。</p>
+
+          <h4>広告・アクセス解析について</h4>
+          <p>本ゲームは広告を表示しません。アクセス解析ツールも使用していません。</p>
+
+          <h4>お子さまのご利用について</h4>
+          <p>本ゲームは個人情報を取得しないため、お子さまでも安心してご利用いただけます。マルチプレイでニックネームが他の参加者に表示される点にご注意ください。</p>
+
+          <p class="doc-date">最終改定日：${DOC_UPDATED}</p>
+        `
+      },
+
+      about: {
+        title: '🏛 運営元',
+        body: `
+          <h4>本ゲームについて</h4>
+          <p><strong>江戸川双六</strong>（Edogawa Sugoroku）</p>
+          <p>江戸川区の街をもっと楽しく知ってもらいたい、という思いから個人で制作した非公式のゲームです。</p>
+
+          <h4>制作・運営</h4>
+          <p>M.Tsuda</p>
+          <p>©2026 江戸川双六 Produced by M.Tsuda</p>
+
+          <div class="doc-note">
+            本ゲームは個人制作の非公式ゲームであり、<strong>東京都江戸川区、および本ゲームで利用しているデータ・APIの提供元とは一切関係がありません。</strong>
+            本ゲームに関するお問い合わせを、江戸川区や各データ提供元にお寄せいただくことはお控えください。
+          </div>
+
+          <h4>ゲームのURL</h4>
+          <div class="doc-src"><a href="${GAME_SHARE_URL}" target="_blank" rel="noopener">${GAME_SHARE_URL}</a></div>
+
+          <h4>ご意見・不具合のご報告</h4>
+          <p>地図上の施設名の誤りや、うまく動かない点などがありましたら、本ゲームを教えてくれた方を通じてお知らせください。いただいたご指摘をもとに少しずつ直しています。</p>
+
+          <p class="doc-date">最終更新日：${DOC_UPDATED}</p>
+        `
+      }
+    };
 
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
     const EDOGAWA_START = {
@@ -1257,145 +1656,21 @@
       type: "🚤"
     };
 
-    const POLICE_STATIONS = [
-      { name: "葛西警察署", lat: 35.661526, lng: 139.879538, type: "🚨" },
-      { name: "西葛西駅前交番", lat: 35.664077, lng: 139.859360, type: "🚨" },
-      { name: "葛西駅前交番", lat: 35.66380, lng: 139.87300, type: "🚨" },
-      { name: "船堀交番", lat: 35.68350, lng: 139.86400, type: "🚨" },
-      { name: "小松川警察署", lat: 35.6900, lng: 139.8560, type: "🚨" },
-      { name: "小岩警察署", lat: 35.73250, lng: 139.87850, type: "🚨" },
-      { name: "西小岩交番", lat: 35.72800, lng: 139.87200, type: "🚨" },
-      { name: "南小岩交番", lat: 35.73000, lng: 139.88000, type: "🚨" },
-      { name: "一里塚交番", lat: 35.73500, lng: 139.88500, type: "🚨" }
-    ];
-
-    const PARKS = [
-      { name: "葛西臨海公園", lat: 35.6425, lng: 139.8601 },
-      { name: "行船公園 (江戸川区自然動物園)", lat: 35.6685, lng: 139.8588 },
-      { name: "篠崎公園", lat: 35.7088, lng: 139.8980 },
-      { name: "宇喜田公園", lat: 35.6680, lng: 139.8630 },
-      { name: "総合レクリエーション公園", lat: 35.6600, lng: 139.8620 },
-      { name: "新左近川親水公園", lat: 35.6430, lng: 139.8550 },
-      { name: "なぎさ公園", lat: 35.6455, lng: 139.8730 },
-      { name: "一之江境川親水公園", lat: 35.6850, lng: 139.8840 },
-      { name: "小松川境川親水公園", lat: 35.7000, lng: 139.8450 },
-      { name: "東小松川公園", lat: 35.7020, lng: 139.8470 },
-      { name: "春江公園", lat: 35.6650, lng: 139.8780 }
-    ];
-
-    const TEMPLES_SHRINES = [
-      { name: "香取神社", lat: 35.7055, lng: 139.8695 },
-      { name: "天祖神社 (北小岩)", lat: 35.7305, lng: 139.885 },
-      { name: "天祖神社 (南篠崎)", lat: 35.693, lng: 139.896 },
-      { name: "豊田神社", lat: 35.696, lng: 139.894 },
-      { name: "天祖神社 (一之江)", lat: 35.687, lng: 139.879 },
-      { name: "最勝寺 (目黄不動)", lat: 35.7060, lng: 139.8430 },
-      { name: "上一色氷川神社", lat: 35.722, lng: 139.871 },
-      { name: "興之宮神社", lat: 35.724, lng: 139.876 }
-    ];
-
-    const POST_OFFICES = [
-      { name: "江戸川郵便局", lat: 35.703, lng: 139.858 },
-      { name: "江戸川区役所前郵便局", lat: 35.706, lng: 139.868 },
-      { name: "江戸川中央郵便局", lat: 35.7055, lng: 139.87 },
-      { name: "小岩郵便局", lat: 35.73, lng: 139.883 },
-      { name: "江戸川一之江郵便局", lat: 35.686, lng: 139.883 },
-      { name: "江戸川鹿骨郵便局", lat: 35.716, lng: 139.895 }
-    ];
-
-    const SCHOOLS = [
-      { name: "都立小岩高等学校", lat: 35.728, lng: 139.885 },
-      { name: "都立紅葉川高等学校", lat: 35.664, lng: 139.86 },
-      { name: "江戸川区立松江小学校", lat: 35.698, lng: 139.862 },
-      { name: "江戸川区立葛西小学校", lat: 35.661, lng: 139.871 },
-      { name: "江戸川区立第三中学校", lat: 35.69, lng: 139.87 },
-      { name: "江戸川区立篠崎中学校", lat: 35.706, lng: 139.894 }
-    ];
-
-    const STATIONS_FOR_MAP = [
-      { name: "葛西駅", lat: 35.6636, lng: 139.8733 },
-      { name: "船堀駅", lat: 35.6838, lng: 139.8643 },
-      { name: "一之江駅", lat: 35.6859, lng: 139.8828 },
-      { name: "平井駅", lat: 35.7064, lng: 139.8423 },
-      { name: "西葛西駅", lat: 35.6648, lng: 139.8577 },
-      { name: "瑞江駅", lat: 35.6942, lng: 139.8912 },
-      { name: "篠崎駅", lat: 35.7089, lng: 139.8930 },
-      { name: "小岩駅", lat: 35.7332, lng: 139.8790 },
-      { name: "新小岩駅", lat: 35.7267, lng: 139.8595 }
-    ];
-
-    const BUS_STOPS_FOR_MAP = [
-        { name: "銀杏並木通り バス停", lat: 35.692829, lng: 139.872325 },
-        { name: "農業試験場 バス停", lat: 35.711292, lng: 139.885806 },
-        { name: "大杉四 バス停", lat: 35.710672, lng: 139.879458 },
-        { name: "小松川健康サポートセンター バス停", lat: 35.695620, lng: 139.848933 },
-        { name: "清新町健康サポートセンター バス停", lat: 35.663042, lng: 139.856924 },
-        { name: "自由の広場 バス停", lat: 35.694597, lng: 139.850808 },
-        { name: "堀江団地入口 バス停", lat: 35.649861, lng: 139.869410 },
-        { name: "小松川二 バス停", lat: 35.693676, lng: 139.848433 },
-        { name: "七軒町 バス停", lat: 35.680018, lng: 139.859358 },
-        { name: "明和橋 バス停", lat: 35.689199, lng: 139.887795 },
-        { name: "小学校通り バス停", lat: 35.657989, lng: 139.875866 },
-        { name: "新小岩一 バス停", lat: 35.715334, lng: 139.861063 },
-        { name: "松本小 バス停", lat: 35.715202, lng: 139.884563 },
-        { name: "本一色 バス停", lat: 35.719598, lng: 139.866963 },
-        { name: "南葛西第二小 バス停", lat: 35.649924, lng: 139.880125 },
-        { name: "鹿本橋 バス停", lat: 35.713217, lng: 139.880116 },
-        { name: "東大島駅入口 バス停", lat: 35.690629, lng: 139.844181 },
-        { name: "臨海町四 バス停", lat: 35.646742, lng: 139.866591 },
-        { name: "下今井 バス停", lat: 35.678039, lng: 139.885372 },
-        { name: "葛西駅通り バス停", lat: 35.660648, lng: 139.870166 }
-    ];
-
-    const HOSPITALS = [
-      { name: "（医）双仁会一盛病院", lat: 35.697626, lng: 139.850696, type: "🏥" },
-      { name: "（医）岩井医療財団岩井整形外科内科病院", lat: 35.733467, lng: 139.885006, type: "🏥" },
-      { name: "岩倉病院", lat: 35.732404, lng: 139.883246, type: "🏥" },
-      { name: "（医）総風会江戸川共済病院", lat: 35.693411, lng: 139.905576, type: "🏥" },
-      { name: "（福）仁生社江戸川病院", lat: 35.728510, lng: 139.893184, type: "🏥" },
-      { name: "（医）昌医会葛西昌医会病院", lat: 35.660536, lng: 139.877734, type: "🏥" },
-      { name: "（医）葛西中央病院", lat: 35.676734, lng: 139.868565, type: "🏥" },
-      { name: "片山病院", lat: 35.720361, lng: 139.881770, type: "🏥" },
-      { name: "（医）津端会京葉病院", lat: 35.702718, lng: 139.875760, type: "🏥" },
-      { name: "（医）福仁会小松川病院", lat: 35.703807, lng: 139.868269, type: "🏥" },
-      { name: "（医）同愛会病院", lat: 35.705754, lng: 139.867412, type: "🏥" },
-      { name: "東京さくら病院", lat: 35.701518, lng: 139.916119, type: "🏥" },
-      { name: "東京東病院", lat: 35.716677, lng: 139.891683, type: "🏥" },
-      { name: "日本私立学校振興・共済事業団東京臨海病院", lat: 35.652332, lng: 139.853779, type: "🏥" },
-      { name: "（医）済安堂西葛西・井上眼科病院", lat: 35.665549, lng: 139.860888, type: "🏥" },
-      { name: "（医）茜会西村記念病院", lat: 35.705532, lng: 139.843275, type: "🏥" },
-      { name: "二本松眼科病院", lat: 35.706043, lng: 139.844450, type: "🏥" },
-      { name: "（医）晃山会松江病院", lat: 35.697191, lng: 139.871079, type: "🏥" },
-      { name: "（医）向日葵会まつしま病院", lat: 35.706716, lng: 139.867030, type: "🏥" },
-      { name: "（医）松寿会松寿会病院", lat: 35.662898, lng: 139.871203, type: "🏥" },
-      { name: "（医）森山医会森山記念病院", lat: 35.661796, lng: 139.860609, type: "🏥" },
-      { name: "（医）森山医会森山リハビリテーション病院", lat: 35.664106, lng: 139.860098, type: "🏥" },
-      { name: "西葛西クリニック", lat: 35.666488, lng: 139.864935, type: "🏥" },
-      { name: "しん皮フ科クリニック", lat: 35.705489, lng: 139.903568, type: "🏥" },
-      { name: "渡内科・胃腸科", lat: 35.663928, lng: 139.857977, type: "🏥" },
-      { name: "すぎやま耳鼻咽喉科クリニック", lat: 35.733035, lng: 139.880732, type: "🏥" },
-      { name: "原眼科", lat: 35.711676, lng: 139.865725, type: "🏥" },
-      { name: "中村医院", lat: 35.689301, lng: 139.879639, type: "🏥" },
-      { name: "さとう医院", lat: 35.741601, lng: 139.882612, type: "🏥" },
-      { name: "江戸川区鹿骨健康サポートセンター", lat: 35.709754, lng: 139.890532, type: "🏥" },
-      { name: "赤上医院", lat: 35.730768, lng: 139.881996, type: "🏥" },
-      { name: "養護老人ホーム江東園診療室", lat: 35.688402, lng: 139.902833, type: "🏥" },
-      { name: "医療検査センター附属診療所", lat: 35.684296, lng: 139.864966, type: "🏥" },
-      { name: "宮下医院", lat: 35.732362, lng: 139.883572, type: "🏥" },
-      { name: "（特養）わとなーる診療所", lat: 35.707227, lng: 139.886472, type: "🏥" },
-      { name: "南葛西整形外科・リウマチ科", lat: 35.646606, lng: 139.877667, type: "🏥" },
-      { name: "扇内整形外科", lat: 35.665619, lng: 139.860523, type: "🏥" },
-      { name: "安藤内科医院", lat: 35.662025, lng: 139.876642, type: "🏥" },
-      { name: "メディカルプラザ江戸川", lat: 35.728171, lng: 139.891659, type: "🏥" },
-      { name: "田村医院", lat: 35.684926, lng: 139.891215, type: "🏥" },
-      { name: "北浦医院", lat: 35.700743, lng: 139.847696, type: "🏥" },
-      { name: "敷井耳鼻咽喉科クリニック", lat: 35.647339, lng: 139.879229, type: "🏥" },
-      { name: "まつえ整形外科", lat: 35.696641, lng: 139.870506, type: "🏥" },
-      { name: "平嶋胃腸科眼科", lat: 35.692177, lng: 139.897308, type: "🏥" },
-      { name: "北小岩胃腸科クリニック", lat: 35.742369, lng: 139.892046, type: "🏥" },
-      { name: "江戸川共済病院付属東瑞江医院", lat: 35.690404, lng: 139.899080, type: "🏥" }
-    ];
-    // 産婦人科・歯科（歯医者）は「病院・クリニックへ強制搬送」イベントの対象から除外する方針のため未掲載。
+    // ============================================================
+    // 施設データ・文言データは外部のJSONにまとめています（このファイルには持たせません）。
+    //   https://shulavan.github.io/data/sugoroku-data.json      … ゲーム内蔵データ
+    //   https://shulavan.github.io/data/edogawa-opendata.json   … 江戸川区オープンデータ
+    // 起動時に読み込み、下の配列に流し込みます（配列の参照はそのまま使い続けます）。
+    // ============================================================
+    const POLICE_STATIONS = [];   // 警察署・交番
+    const PARKS = [];             // 公園（ルーレットの「公園」と同じ配列）
+    const TEMPLES_SHRINES = [];   // 寺社
+    const POST_OFFICES = [];      // 郵便局
+    const SCHOOLS = [];           // 小・中学校
+    const STATIONS_FOR_MAP = [];  // 駅
+    const BUS_STOPS_FOR_MAP = []; // バス停
+    // 産婦人科・歯科（歯医者）は「病院・クリニックへ強制搬送」イベントの対象から除外する方針。
+    const HOSPITALS = [];         // 病院・クリニック
 
     /* High-precision street centerline waypoints around Nishi-Kasai station plaza & major avenues */
     const EDOGAWA_MAJOR_ROADS_HIGH_PRECISION = [
@@ -1429,112 +1704,85 @@
       ]
     ];
 
+    // ============================================================
+    // 江戸川区オープンデータ（地図データ）の取り込み
+    //   https://www.city.edogawa.tokyo.jp/e004/kuseijoho/opendata/map_data.html
+    // 区が公開しているCSV（CC BY 4.0）を JSON に変換し、このHTMLと同じ場所に
+    // edogawa-opendata.json として置くと、起動時に読み込んで
+    //   ・地図の施設アイコン
+    //   ・「現在地：〇〇周辺」の判定
+    //   ・目的地ルーレットの「公園」
+    // に反映します。ファイルが無い場合は内蔵データだけで通常どおり動きます。
+    //
+    // JSONの形式:
+    //   { "updated": "2025-12-11",
+    //     "groups": { "kouen": [ { "name": "篠崎公園", "lat": 35.7, "lng": 139.9 }, ... ], ... } }
+    // ============================================================
+    const OPENDATA_FILE = 'edogawa-opendata.json';
+    const OD_RYOKUDOU = [], OD_JABUJABU = [], OD_LIBRARIES = [], OD_SPORTS = [],
+          OD_CULTURE = [], OD_REKU = [], OD_KYOIKU = [], OD_OFFICES = [],
+          OD_ER = [], OD_HEALTH = [], OD_HIGHSCHOOL = [], OD_HOIKU = [],
+          OD_KOSODATE = [], OD_WELFARE = [], OD_JUKUNEN = [], OD_TOKUYOU = [],
+          OD_CAFE = [], OD_SENTO = [], OD_INSHOKU = [], OD_SUPER = [],
+          OD_SHOPS = [], OD_YASAI = [], OD_FLOWER = [];
+    // key        : JSONのグループ名（変換スクリプトが付ける名前）
+    // emoji      : 地図アイコン／「〇〇周辺」表示に使う絵文字
+    // into       : 取り込み先の配列。内蔵データの配列を指定すると合流する
+    //              （PARKSはルーレットの「公園」と同じ配列なので、公園の候補も自動で増える）
+    // dest       : 目的地ルーレットのカテゴリにも候補として加える場合に指定
+    // markerMax  : 地図にアイコンを描く上限（0＝描かない）。多すぎると重くなるため間引く。
+    //              上限をかけても「現在地：〇〇周辺」の判定には全件を使う。
+    // weight     : 「〇〇周辺」を選ぶときの優先度（小さいほど選ばれやすい。目印になりやすい施設を優先）
+    const OPENDATA_GROUPS = [
+      // 公園・水辺（公園と親水公園は内蔵のPARKSに合流＝ルーレットの「公園」にも反映）
+      { key: 'kouen',       emoji: '⛲️', into: PARKS,         markerMax: 0,  weight: 0.7 },
+      { key: 'sinsuikouen', emoji: '🌊', into: PARKS,         markerMax: 0,  weight: 0.7 },
+      { key: 'ryokudou',    emoji: '🌿', into: OD_RYOKUDOU,   markerMax: 8,  weight: 0.8 },
+      { key: 'jabujabu',    emoji: '💦', into: OD_JABUJABU,   markerMax: 5,  weight: 0.8 },
+      // 文化・スポーツ・図書館
+      { key: 'library',     emoji: '📚', into: OD_LIBRARIES,  markerMax: 15, weight: 0.7 },
+      { key: 'sports',      emoji: '🏟', into: OD_SPORTS,     markerMax: 10, weight: 0.7 },
+      { key: 'bunka',       emoji: '🎭', into: OD_CULTURE,    markerMax: 10, weight: 0.8 },
+      { key: 'reku',        emoji: '🎡', into: OD_REKU,       markerMax: 8,  weight: 0.6 },
+      { key: 'kyouiku',     emoji: '🎒', into: OD_KYOIKU,     markerMax: 0,  weight: 0.9 },
+      // 役所・公共
+      { key: 'kuyakusyo',   emoji: '🏛', into: OD_OFFICES,    markerMax: 8,  weight: 0.7 },
+      { key: 'kanchou',     emoji: '📑', into: OD_OFFICES,    markerMax: 0,  weight: 0.9 },
+      { key: 'yubin',       emoji: '🏣', into: POST_OFFICES,  markerMax: 0,  weight: 0.9 },
+      // 医療・保健
+      { key: 'byoin',       emoji: '🏥', into: HOSPITALS,     markerMax: 0,  weight: 1.05 },
+      { key: 'kyuukyuu',    emoji: '🚑', into: OD_ER,         markerMax: 6,  weight: 0.85 },
+      { key: 'hoken',       emoji: '🩺', into: OD_HEALTH,     markerMax: 6,  weight: 0.9 },
+      // 警察
+      { key: 'koban',       emoji: '🚨', into: POLICE_STATIONS, markerMax: 0, weight: 0.9 },
+      { key: 'police',      emoji: '👮', into: POLICE_STATIONS, markerMax: 0, weight: 0.9 },
+      // 学校・こども
+      { key: 'school',      emoji: '🏫', into: SCHOOLS,       markerMax: 0,  weight: 0.8 },
+      { key: 'highschool',  emoji: '🎓', into: OD_HIGHSCHOOL, markerMax: 8,  weight: 0.8 },
+      { key: 'hoiku',       emoji: '🧒', into: OD_HOIKU,      markerMax: 0,  weight: 1.2 },
+      { key: 'kosodate',    emoji: '👶', into: OD_KOSODATE,   markerMax: 0,  weight: 1.25 },
+      // 福祉・熟年
+      { key: 'fukushi',     emoji: '🏢', into: OD_WELFARE,    markerMax: 0,  weight: 1.15 },
+      { key: 'jukunen',     emoji: '🧘', into: OD_JUKUNEN,    markerMax: 0,  weight: 1.25 },
+      { key: 'tokuyou',     emoji: '🏨', into: OD_TOKUYOU,    markerMax: 0,  weight: 1.15 },
+      { key: 'cafe',        emoji: '☕️', into: OD_CAFE,       markerMax: 6,  weight: 1.1 },
+      // 銭湯・お店・直売
+      { key: 'sento',       emoji: '♨️', into: OD_SENTO,      markerMax: 15, weight: 0.7 },
+      { key: 'inshoku',     emoji: '🍽', into: OD_INSHOKU,    markerMax: 0,  weight: 1.2,  dest: '飲食店' },
+      { key: 'super',       emoji: '🛒', into: OD_SUPER,      markerMax: 0,  weight: 1.05, dest: 'スーパー（薬屋含む）' },
+      { key: 'tabekiri',    emoji: '🏪', into: OD_SHOPS,      markerMax: 0,  weight: 1.3 },
+      { key: 'yasai',       emoji: '🥕', into: OD_YASAI,      markerMax: 6,  weight: 1.2 },
+      { key: 'flower',      emoji: '🌸', into: OD_FLOWER,     markerMax: 6,  weight: 0.9 }
+    ];
+    // 内蔵データと合流させるグループは、地図アイコンの上限を「合流先ごと」にかける。
+    const OPENDATA_MERGED_MARKER_MAX = { PARKS: 60, HOSPITALS: 20, POLICE_STATIONS: 20, SCHOOLS: 20, POST_OFFICES: 9 };
+
     const DESTINATION_PRESETS = {
-      "飲食店": [
-        { name: "独一処餃子 (葛西)", lat: 35.6631, lng: 139.8732 },
-        { name: "スパイスレーン (西葛西)", lat: 35.6648, lng: 139.8580 },
-        { name: "ラーメン珍来 (小岩)", lat: 35.7328, lng: 139.8810 },
-        { name: "インド料理 タンドール (船堀)", lat: 35.6835, lng: 139.8638 }
-      ],
-      "スーパー（薬屋含む）": [
-        { name: "イオン葛西店", lat: 35.6672, lng: 139.8665 },
-        { name: "マツモトキヨシ 西葛西駅前店", lat: 35.6642, lng: 139.8590 },
-        { name: "サミットストア 葛西店", lat: 35.6580, lng: 139.8690 },
-        { name: "オリンピック 葛西店", lat: 35.6510, lng: 139.8720 },
-        { name: "イトーヨーカドー 西葛西店", lat: 35.6660, lng: 139.8560 },
-        { name: "ライフ 船堀駅前店", lat: 35.6845, lng: 139.8650 },
-        { name: "マルエツ 一之江店", lat: 35.6870, lng: 139.8820 },
-        { name: "いなげや 瑞江店", lat: 35.6950, lng: 139.8905 },
-        { name: "オーケー 篠崎店", lat: 35.7095, lng: 139.8940 },
-        { name: "西友 小岩店", lat: 35.7340, lng: 139.8800 },
-        { name: "ダイエー 新小岩店", lat: 35.7270, lng: 139.8600 },
-        { name: "業務スーパー 平井店", lat: 35.7070, lng: 139.8430 },
-        { name: "ウエルシア薬局 西葛西駅前店", lat: 35.6655, lng: 139.8590 },
-        { name: "スギ薬局 船堀店", lat: 35.6830, lng: 139.8630 },
-        { name: "ココカラファイン 一之江店", lat: 35.6855, lng: 139.8810 },
-        { name: "トモズ 葛西駅前店", lat: 35.6640, lng: 139.8740 },
-        { name: "クリエイトエス・ディー 瑞江店", lat: 35.6935, lng: 139.8920 },
-        { name: "マツモトキヨシ 小岩駅前店", lat: 35.7328, lng: 139.8785 },
-        { name: "サミットストア 東葛西店", lat: 35.6580, lng: 139.8830 },
-        { name: "マルエツプチ 南葛西店", lat: 35.6480, lng: 139.8700 },
-        { name: "いなげや 北葛西店", lat: 35.6720, lng: 139.8560 },
-        { name: "ライフ 中葛西店", lat: 35.6600, lng: 139.8700 },
-        { name: "イオン 篠崎店", lat: 35.7080, lng: 139.8950 },
-        { name: "オリンピック 平井店", lat: 35.7050, lng: 139.8440 },
-        { name: "ウエルシア薬局 新小岩店", lat: 35.7280, lng: 139.8580 },
-        { name: "スギ薬局 小岩店", lat: 35.7350, lng: 139.8770 },
-        { name: "マツモトキヨシ 船堀駅前店", lat: 35.6840, lng: 139.8660 },
-        { name: "サミットストア 瑞江店", lat: 35.6960, lng: 139.8930 },
-        { name: "ココカラファイン 平井駅前店", lat: 35.7060, lng: 139.8410 },
-        { name: "業務スーパー 篠崎店", lat: 35.7100, lng: 139.8910 }
-      ],
+      // 中身は /data/sugoroku-data.json から読み込みます（「公園」はPARKSと同じ配列）
+      "飲食店": [],
+      "スーパー（薬屋含む）": [],
       "公園": PARKS,
-      "駅（バス停含む）": [
-        { name: "葛西駅", lat: 35.6636, lng: 139.8733 },
-        { name: "船堀駅", lat: 35.6838, lng: 139.8643 },
-        { name: "一之江駅", lat: 35.6859, lng: 139.8828 },
-        { name: "平井駅", lat: 35.7064, lng: 139.8423 },
-        { name: "西葛西駅", lat: 35.6648, lng: 139.8577 },
-        { name: "瑞江駅", lat: 35.6942, lng: 139.8912 },
-        { name: "篠崎駅", lat: 35.7089, lng: 139.8930 },
-        { name: "小岩駅", lat: 35.7332, lng: 139.8790 },
-        { name: "新小岩駅", lat: 35.7267, lng: 139.8595 },
-        { name: "銀杏並木通り バス停", lat: 35.692829, lng: 139.872325 },
-        { name: "農業試験場 バス停", lat: 35.711292, lng: 139.885806 },
-        { name: "大杉四 バス停", lat: 35.710672, lng: 139.879458 },
-        { name: "小松川健康サポートセンター バス停", lat: 35.695620, lng: 139.848933 },
-        { name: "清新町健康サポートセンター バス停", lat: 35.663042, lng: 139.856924 },
-        { name: "自由の広場 バス停", lat: 35.694597, lng: 139.850808 },
-        { name: "堀江団地入口 バス停", lat: 35.649861, lng: 139.869410 },
-        { name: "小松川二 バス停", lat: 35.693676, lng: 139.848433 },
-        { name: "七軒町 バス停", lat: 35.680018, lng: 139.859358 },
-        { name: "明和橋 バス停", lat: 35.689199, lng: 139.887795 },
-        { name: "小学校通り バス停", lat: 35.657989, lng: 139.875866 },
-        { name: "新小岩一 バス停", lat: 35.715334, lng: 139.861063 },
-        { name: "松本小 バス停", lat: 35.715202, lng: 139.884563 },
-        { name: "本一色 バス停", lat: 35.719598, lng: 139.866963 },
-        { name: "南葛西第二小 バス停", lat: 35.649924, lng: 139.880125 },
-        { name: "鹿本橋 バス停", lat: 35.713217, lng: 139.880116 },
-        { name: "東大島駅入口 バス停", lat: 35.690629, lng: 139.844181 },
-        { name: "臨海町四 バス停", lat: 35.646742, lng: 139.866591 },
-        { name: "下今井 バス停", lat: 35.678039, lng: 139.885372 },
-        { name: "葛西駅通り バス停", lat: 35.660648, lng: 139.870166 },
-        { name: "小松川アパート バス停", lat: 35.691060, lng: 139.848478 },
-        { name: "名主屋敷 バス停", lat: 35.698370, lng: 139.890509 },
-        { name: "新田 バス停", lat: 35.656142, lng: 139.868703 },
-        { name: "松江コミュニティ会館 バス停", lat: 35.690500, lng: 139.871832 },
-        { name: "鹿骨五 バス停", lat: 35.714348, lng: 139.884786 },
-        { name: "鹿骨二 バス停", lat: 35.703892, lng: 139.897078 },
-        { name: "鹿本中 バス停", lat: 35.719217, lng: 139.877417 },
-        { name: "葛西駅 バス停", lat: 35.663423, lng: 139.873297 },
-        { name: "船堀スポーツ公園 バス停", lat: 35.681610, lng: 139.867444 },
-        { name: "中央三 バス停", lat: 35.713512, lng: 139.874164 },
-        { name: "大島駅 バス停", lat: 35.689645, lng: 139.833465 },
-        { name: "江戸川五 バス停", lat: 35.674683, lng: 139.884653 },
-        { name: "東葛西三 バス停", lat: 35.668547, lng: 139.883644 },
-        { name: "東大島駅 バス停", lat: 35.689660, lng: 139.848565 },
-        { name: "江戸川文化センター バス停", lat: 35.711037, lng: 139.869786 },
-        { name: "東砂五 バス停", lat: 35.675166, lng: 139.842899 },
-        { name: "船堀小 バス停", lat: 35.681798, lng: 139.862537 },
-        { name: "篠崎町七 バス停", lat: 35.702565, lng: 139.901456 },
-        { name: "第七葛西小 バス停", lat: 35.659959, lng: 139.858456 },
-        { name: "第六葛西小 バス停", lat: 35.667681, lng: 139.865678 },
-        { name: "なぎさニュータウン バス停", lat: 35.646698, lng: 139.879433 },
-        { name: "平井駅 バス停", lat: 35.706940, lng: 139.841735 },
-        { name: "堀江団地 バス停", lat: 35.647414, lng: 139.871547 },
-        { name: "春江町四 バス停", lat: 35.682398, lng: 139.874643 },
-        { name: "臨海町五 バス停", lat: 35.643837, lng: 139.867753 },
-        { name: "臨海町三 バス停", lat: 35.648841, lng: 139.861152 },
-        { name: "西葛西駅南 バス停", lat: 35.661982, lng: 139.858568 },
-        { name: "平井七北公園 バス停", lat: 35.716834, lng: 139.837127 },
-        { name: "葛西橋東詰 バス停", lat: 35.670625, lng: 139.853961 },
-        { name: "江戸川区役所 バス停", lat: 35.707425, lng: 139.867590 },
-        { name: "東葛西九 バス停", lat: 35.652441, lng: 139.880470 },
-        { name: "仲町会館入口 バス停", lat: 35.656421, lng: 139.872756 },
-        { name: "新木場東 バス停", lat: 35.645053, lng: 139.835993 },
-        { name: "一之江高速入口 バス停", lat: 35.697666, lng: 139.881986 },
-        { name: "中央通り バス停", lat: 35.700481, lng: 139.873320 }
-      ]
+      "駅（バス停含む）": []
     };
 
     const AVATAR_LIST = ["🧑‍🦱", "👩", "👨‍🦰", "👩‍🦰", "🧑‍🦳", "👩‍🦳", "🧔", "👳‍♂️", "👧", "🧔‍♀️"];
@@ -1545,211 +1793,10 @@
       { bg: "bg-cyan-500", border: "border-cyan-400", stroke: "#06b6d4", name: "シアン" }
     ];
 
-    const RED_REASONS = [
-      { emoji: "🚗", text: "新小岩の駐車場で長時間料金を払うはめに" },
-      { emoji: "🍴", text: "船堀タワーのファミレスでつい豪華なコースを注文してしまった" },
-      { emoji: "🚕", text: "篠崎近くでタクシー代を奮発してしまった" },
-      { emoji: "🎣", text: "一之江で釣り道具を新調してしまった" },
-      { emoji: "💐", text: "新小岩の花屋でお祝いの花束を購入" },
-      { emoji: "🎂", text: "船堀タワーのケーキ屋で誕生日ケーキを予約してしまった" },
-      { emoji: "🎳", text: "北葛西のボウリング場で盛り上がりすぎて延長した" },
-      { emoji: "🍰", text: "南葛西のケーキ屋で新作スイーツを大人買い" },
-      { emoji: "🎫", text: "葛西臨海公園で映画のプレミアムシートを予約" },
-      { emoji: "🍴", text: "船堀のファミレスでつい豪華なコースを注文してしまった" },
-      { emoji: "🎮", text: "篠崎のゲームセンターでクレーンゲームに夢中になった" },
-      { emoji: "🎪", text: "江戸川スポーツランドのお祭りで屋台をはしごして使いすぎた" },
-      { emoji: "🍴", text: "北葛西のファミレスでつい豪華なコースを注文してしまった" },
-      { emoji: "🎮", text: "江戸川区民センターのゲームセンターでクレーンゲームに夢中になった" },
-      { emoji: "🚗", text: "江戸川区民センターの駐車場で長時間料金を払うはめに" },
-      { emoji: "📚", text: "江戸川区役所前の書店で本を大人買いしてしまった" },
-      { emoji: "🎣", text: "春江町で釣り道具を新調してしまった" },
-      { emoji: "🧸", text: "東大島のおもちゃ屋で甥っ子へのプレゼントを奮発" },
-      { emoji: "🎧", text: "なぎさ公園の家電量販店でイヤホンを衝動買い" },
-      { emoji: "🍴", text: "市川橋のたもとのファミレスでつい豪華なコースを注文してしまった" },
-      { emoji: "🎧", text: "小岩の家電量販店でイヤホンを衝動買い" },
-      { emoji: "🍺", text: "江戸川区役所前の居酒屋でついつい飲みすぎて会計が高くついた" },
-      { emoji: "💊", text: "東大島のドラッグストアでサプリメントを大量購入" },
-      { emoji: "👟", text: "瑞江の靴屋でつい新しいスニーカーを購入" },
-      { emoji: "🧻", text: "亀戸のスーパーで日用品をまとめ買いしすぎた" },
-      { emoji: "☕", text: "船堀のカフェで高級コーヒー豆を衝動買い" },
-      { emoji: "🏧", text: "新小岩のATMで手数料を取られてしまった" },
-      { emoji: "🎁", text: "なぎさ公園で友人へのお土産を買いすぎた" },
-      { emoji: "🎁", text: "江戸川スポーツランドで友人へのお土産を買いすぎた" },
-      { emoji: "🚕", text: "篠崎公園近くでタクシー代を奮発してしまった" },
-      { emoji: "🍜", text: "船堀タワーのラーメン屋で限定の特盛りを頼んで散財" },
-      { emoji: "🧴", text: "北葛西のドラッグストアで化粧品セットを買ってしまった" },
-      { emoji: "☕", text: "つり堀のカフェで高級コーヒー豆を衝動買い" },
-      { emoji: "🏧", text: "船堀のATMで手数料を取られてしまった" },
-      { emoji: "📚", text: "平井の書店で本を大人買いしてしまった" },
-      { emoji: "🛴", text: "なぎさニュータウンでキックボードのレンタル代がかさんだ" },
-      { emoji: "🌂", text: "新川さくら館で急な雨に降られてビニール傘を購入" },
-      { emoji: "🍣", text: "南砂町の回転寿司で高級ネタばかり頼んでしまった" },
-      { emoji: "🧸", text: "瑞江のおもちゃ屋で甥っ子へのプレゼントを奮発" },
-      { emoji: "🍺", text: "船堀の居酒屋でついつい飲みすぎて会計が高くついた" },
-      { emoji: "🍜", text: "タワーホール船堀のラーメン屋で限定の特盛りを頼んで散財" },
-      { emoji: "🎣", text: "市川橋のたもとで釣り道具を新調してしまった" },
-      { emoji: "🚲", text: "船堀で自転車のタイヤがパンクして修理代がかかった" },
-      { emoji: "🍣", text: "篠崎の回転寿司で高級ネタばかり頼んでしまった" },
-      { emoji: "🍣", text: "新小岩の回転寿司で高級ネタばかり頼んでしまった" },
-      { emoji: "🏧", text: "東大島のATMで手数料を取られてしまった" },
-      { emoji: "🧴", text: "なぎさニュータウンのドラッグストアで化粧品セットを買ってしまった" },
-      { emoji: "🛴", text: "南砂町でキックボードのレンタル代がかさんだ" },
-      { emoji: "👕", text: "南砂町の洋服屋でセール品を買いすぎた" },
-      { emoji: "🎁", text: "瑞江で友人へのお土産を買いすぎた" },
-      { emoji: "🎂", text: "東大島のケーキ屋で誕生日ケーキを予約してしまった" },
-      { emoji: "🍺", text: "つり堀の居酒屋でついつい飲みすぎて会計が高くついた" },
-      { emoji: "🎂", text: "なぎさニュータウンのケーキ屋で誕生日ケーキを予約してしまった" },
-      { emoji: "🍰", text: "江戸川スポーツランドのケーキ屋で新作スイーツを大人買い" },
-      { emoji: "🚗", text: "小岩の駐車場で長時間料金を払うはめに" },
-      { emoji: "📚", text: "船堀タワーの書店で本を大人買いしてしまった" },
-      { emoji: "🎣", text: "小岩で釣り道具を新調してしまった" },
-      { emoji: "🧴", text: "東西線沿いの商店街のドラッグストアで化粧品セットを買ってしまった" },
-      { emoji: "🚕", text: "つり堀近くでタクシー代を奮発してしまった" },
-      { emoji: "📚", text: "篠崎の書店で本を大人買いしてしまった" },
-      { emoji: "🎂", text: "亀戸のケーキ屋で誕生日ケーキを予約してしまった" },
-      { emoji: "🛴", text: "市川橋のたもとでキックボードのレンタル代がかさんだ" },
-      { emoji: "🧻", text: "葛西臨海公園のスーパーで日用品をまとめ買いしすぎた" },
-      { emoji: "🎣", text: "小松川千本桜で釣り道具を新調してしまった" },
-      { emoji: "🍜", text: "篠崎公園のラーメン屋で限定の特盛りを頼んで散財" },
-      { emoji: "💊", text: "東西線沿いの商店街のドラッグストアでサプリメントを大量購入" },
-      { emoji: "🚕", text: "船堀近くでタクシー代を奮発してしまった" },
-      { emoji: "🎮", text: "つり堀のゲームセンターでクレーンゲームに夢中になった" },
-      { emoji: "🧸", text: "新川さくら館のおもちゃ屋で甥っ子へのプレゼントを奮発" },
-      { emoji: "🍺", text: "亀戸の居酒屋でついつい飲みすぎて会計が高くついた" },
-      { emoji: "🎮", text: "なぎさニュータウンのゲームセンターでクレーンゲームに夢中になった" },
-      { emoji: "🍦", text: "東西線沿いの商店街のアイスクリーム屋でファミリーパックを購入" },
-      { emoji: "🎳", text: "つり堀のボウリング場で盛り上がりすぎて延長した" },
-      { emoji: "🚗", text: "春江町の駐車場で長時間料金を払うはめに" },
-      { emoji: "👟", text: "東大島の靴屋でつい新しいスニーカーを購入" },
-      { emoji: "👟", text: "篠崎の靴屋でつい新しいスニーカーを購入" },
-      { emoji: "💐", text: "北葛西の花屋でお祝いの花束を購入" },
-      { emoji: "📚", text: "東大島の書店で本を大人買いしてしまった" },
-      { emoji: "💐", text: "南葛西の花屋でお祝いの花束を購入" },
-      { emoji: "🎫", text: "新川さくら館で映画のプレミアムシートを予約" },
-      { emoji: "🧸", text: "東西線沿いの商店街のおもちゃ屋で甥っ子へのプレゼントを奮発" },
-      { emoji: "🎁", text: "篠崎で友人へのお土産を買いすぎた" },
-      { emoji: "👟", text: "中葛西の靴屋でつい新しいスニーカーを購入" },
-      { emoji: "🍦", text: "船堀のアイスクリーム屋でファミリーパックを購入" },
-      { emoji: "👟", text: "なぎさニュータウンの靴屋でつい新しいスニーカーを購入" },
-      { emoji: "👕", text: "篠崎公園の洋服屋でセール品を買いすぎた" },
-      { emoji: "🎂", text: "江戸川区役所前のケーキ屋で誕生日ケーキを予約してしまった" },
-      { emoji: "🌂", text: "船堀で急な雨に降られてビニール傘を購入" },
-      { emoji: "🏧", text: "東西線沿いの商店街のATMで手数料を取られてしまった" },
-      { emoji: "🌂", text: "春江町で急な雨に降られてビニール傘を購入" },
-      { emoji: "🎪", text: "東大島のお祭りで屋台をはしごして使いすぎた" },
-      { emoji: "📚", text: "なぎさ公園の書店で本を大人買いしてしまった" },
-      { emoji: "🍴", text: "タワーホール船堀のファミレスでつい豪華なコースを注文してしまった" },
-      { emoji: "🎂", text: "新川さくら館のケーキ屋で誕生日ケーキを予約してしまった" },
-      { emoji: "📚", text: "市川橋のたもとの書店で本を大人買いしてしまった" },
-      { emoji: "🚕", text: "市川橋のたもと近くでタクシー代を奮発してしまった" },
-      { emoji: "🚗", text: "亀戸の駐車場で長時間料金を払うはめに" },
-      { emoji: "☕", text: "平井のカフェで高級コーヒー豆を衝動買い" },
-      { emoji: "🎫", text: "小岩で映画のプレミアムシートを予約" },
-      { emoji: "🧴", text: "西葛西のドラッグストアで化粧品セットを買ってしまった" }
-    ];
-
-    const BLUE_REASONS = [
-      { emoji: "🚲", text: "新川さくら館で自転車の空気入れを手伝ってお礼をもらった" },
-      { emoji: "🚲", text: "東大島で自転車の空気入れを手伝ってお礼をもらった" },
-      { emoji: "🧧", text: "市川橋のたもとの商店会からお祝い金をもらった" },
-      { emoji: "🎰", text: "中葛西でスクラッチくじを買ったら見事に当たった" },
-      { emoji: "🏦", text: "新小岩の銀行キャンペーンでポイントがついた" },
-      { emoji: "🐟", text: "なぎさニュータウンの魚屋さんで大安売りに遭遇して得した" },
-      { emoji: "🎣", text: "小松川千本桜で大物を釣り上げて釣具屋に高く買い取られた" },
-      { emoji: "🎗️", text: "中葛西のボランティア活動で謝礼をもらった" },
-      { emoji: "📦", text: "瑞江でフリマアプリの荷物がすぐ売れて臨時収入に" },
-      { emoji: "🧧", text: "親戚から南砂町で「お年玉」をもらった" },
-      { emoji: "🧁", text: "小岩のお菓子屋さんの新作モニターで謝礼をもらった" },
-      { emoji: "🎯", text: "市川橋のたもとの縁日で射的の景品を高く買い取ってもらえた" },
-      { emoji: "🏦", text: "中葛西の銀行キャンペーンでポイントがついた" },
-      { emoji: "🏦", text: "西葛西の銀行キャンペーンでポイントがついた" },
-      { emoji: "📦", text: "亀戸でフリマアプリの荷物がすぐ売れて臨時収入に" },
-      { emoji: "🏅", text: "西葛西のマラソン大会で完走賞金をもらった" },
-      { emoji: "💳", text: "つり堀の地域ポイント還元でキャッシュバックがあった" },
-      { emoji: "🧺", text: "新川さくら館のバザーで掘り出し物を安く仕入れて転売できた" },
-      { emoji: "🎪", text: "篠崎公園のお祭りの福引で一等が当たった" },
-      { emoji: "🎣", text: "篠崎で大物を釣り上げて釣具屋に高く買い取られた" },
-      { emoji: "🎟️", text: "篠崎のフリマに出店したら即完売した" },
-      { emoji: "🧃", text: "南葛西の自販機で当たりが出てもう一本もらえた" },
-      { emoji: "🏆", text: "船堀のイベントクイズ大会で優勝した" },
-      { emoji: "🚲", text: "東葛西で自転車の空気入れを手伝ってお礼をもらった" },
-      { emoji: "🎪", text: "船堀のお祭りの福引で一等が当たった" },
-      { emoji: "🧁", text: "北葛西のお菓子屋さんの新作モニターで謝礼をもらった" },
-      { emoji: "🧁", text: "一之江のお菓子屋さんの新作モニターで謝礼をもらった" },
-      { emoji: "🧧", text: "親戚からタワーホール船堀で「お年玉」をもらった" },
-      { emoji: "🏅", text: "北葛西のマラソン大会で完走賞金をもらった" },
-      { emoji: "🎰", text: "東大島でスクラッチくじを買ったら見事に当たった" },
-      { emoji: "🧧", text: "なぎさ公園の商店会からお祝い金をもらった" },
-      { emoji: "📦", text: "江戸川区役所前でフリマアプリの荷物がすぐ売れて臨時収入に" },
-      { emoji: "🎁", text: "つり堀の商店街の福引で特賞をゲットした" },
-      { emoji: "🚲", text: "江戸川区民センターで自転車の空気入れを手伝ってお礼をもらった" },
-      { emoji: "🎁", text: "江戸川区民センターの商店街の福引で特賞をゲットした" },
-      { emoji: "🎣", text: "東西線沿いの商店街で大物を釣り上げて釣具屋に高く買い取られた" },
-      { emoji: "🍻", text: "なぎさニュータウンの居酒屋の店長と意気投合してご馳走してもらった" },
-      { emoji: "🧺", text: "春江町のバザーで掘り出し物を安く仕入れて転売できた" },
-      { emoji: "🧃", text: "中葛西の自販機で当たりが出てもう一本もらえた" },
-      { emoji: "🎵", text: "新小岩でストリートライブの投げ銭をもらった" },
-      { emoji: "♻️", text: "篠崎のリサイクルショップで不要品が高値で売れた" },
-      { emoji: "🏆", text: "亀戸のイベントクイズ大会で優勝した" },
-      { emoji: "💰", text: "南葛西の路上で小銭を拾った" },
-      { emoji: "🎯", text: "篠崎の縁日で射的の景品を高く買い取ってもらえた" },
-      { emoji: "💵", text: "篠崎で落とし物を届けたらお礼をもらった" },
-      { emoji: "💰", text: "船堀の路上で小銭を拾った" },
-      { emoji: "🎫", text: "なぎさニュータウンで当選したイベントチケットを譲って感謝された" },
-      { emoji: "🏆", text: "新川さくら館のイベントクイズ大会で優勝した" },
-      { emoji: "🎟️", text: "なぎさ公園のフリマに出店したら即完売した" },
-      { emoji: "📮", text: "船堀で懸賞に当選した通知が届いた" },
-      { emoji: "🧧", text: "篠崎の商店会からお祝い金をもらった" },
-      { emoji: "🍀", text: "タワーホール船堀で四つ葉のクローバーを見つけて縁起が良かった" },
-      { emoji: "🏅", text: "瑞江のマラソン大会で完走賞金をもらった" },
-      { emoji: "🎯", text: "一之江の縁日で射的の景品を高く買い取ってもらえた" },
-      { emoji: "🚲", text: "つり堀で自転車の空気入れを手伝ってお礼をもらった" },
-      { emoji: "💵", text: "東葛西で落とし物を届けたらお礼をもらった" },
-      { emoji: "♻️", text: "篠崎公園のリサイクルショップで不要品が高値で売れた" },
-      { emoji: "🏅", text: "篠崎公園のマラソン大会で完走賞金をもらった" },
-      { emoji: "🍎", text: "瑞江の八百屋さんに野菜の詰め合わせをタダでもらった" },
-      { emoji: "💳", text: "新小岩の地域ポイント還元でキャッシュバックがあった" },
-      { emoji: "🍻", text: "江戸川区役所前の居酒屋でツケを払ってもらい浮いたお金が戻った" },
-      { emoji: "🧺", text: "江戸川区役所前のバザーで掘り出し物を安く仕入れて転売できた" },
-      { emoji: "🍎", text: "春江町の八百屋さんの手伝いをしたら野菜と一緒に謝礼をもらった" },
-      { emoji: "🐟", text: "船堀タワーの魚屋さんで大安売りに遭遇して得した" },
-      { emoji: "🎟️", text: "タワーホール船堀のフリマに出店したら即完売した" },
-      { emoji: "🎗️", text: "なぎさニュータウンのボランティア活動で謝礼をもらった" },
-      { emoji: "💳", text: "葛西臨海公園の地域ポイント還元でキャッシュバックがあった" },
-      { emoji: "🎨", text: "船堀タワーのフリーマーケットでハンドメイド作品が売れた" },
-      { emoji: "📮", text: "篠崎公園で懸賞に当選した通知が届いた" },
-      { emoji: "🐟", text: "新小岩の魚屋さんで大安売りに遭遇して得した" },
-      { emoji: "♻️", text: "瑞江のリサイクルショップで不要品が高値で売れた" },
-      { emoji: "🎁", text: "北葛西の商店街の福引で特賞をゲットした" },
-      { emoji: "🎵", text: "一之江でストリートライブの投げ銭をもらった" },
-      { emoji: "🍊", text: "小岩の八百屋さんの配達を手伝ったらお駄賃をもらった" },
-      { emoji: "🍀", text: "春江町で四つ葉のクローバーを見つけて縁起が良かった" },
-      { emoji: "♻️", text: "なぎさ公園のリサイクルショップで不要品が高値で売れた" },
-      { emoji: "🏦", text: "船堀の銀行キャンペーンでポイントがついた" },
-      { emoji: "🎵", text: "篠崎公園でストリートライブの投げ銭をもらった" },
-      { emoji: "🐟", text: "なぎさ公園の魚屋さんで大安売りに遭遇して得した" },
-      { emoji: "🎯", text: "新小岩の縁日で射的の景品を高く買い取ってもらえた" },
-      { emoji: "🎟️", text: "なぎさニュータウンのフリマに出店したら即完売した" },
-      { emoji: "🎯", text: "小松川千本桜の縁日で射的の景品を高く買い取ってもらえた" },
-      { emoji: "🏦", text: "市川橋のたもとの銀行キャンペーンでポイントがついた" },
-      { emoji: "🐟", text: "篠崎の魚屋さんで大安売りに遭遇して得した" },
-      { emoji: "🎰", text: "江戸川区役所前でスクラッチくじを買ったら見事に当たった" },
-      { emoji: "🏅", text: "東葛西のマラソン大会で完走賞金をもらった" },
-      { emoji: "🎁", text: "なぎさ公園の商店街の福引で特賞をゲットした" },
-      { emoji: "🎨", text: "新川さくら館のフリーマーケットでハンドメイド作品が売れた" },
-      { emoji: "🎟️", text: "小岩のフリマに出店したら即完売した" },
-      { emoji: "🎨", text: "西葛西のフリーマーケットでハンドメイド作品が売れた" },
-      { emoji: "🎨", text: "東大島のフリーマーケットでハンドメイド作品が売れた" },
-      { emoji: "🏦", text: "篠崎公園の銀行キャンペーンでポイントがついた" },
-      { emoji: "📱", text: "春江町でフリマアプリの取引がスムーズにいき臨時収入" },
-      { emoji: "🎣", text: "江戸川区役所前で大物を釣り上げて釣具屋に高く買い取られた" },
-      { emoji: "🎫", text: "船堀タワーで当選したイベントチケットを譲って感謝された" },
-      { emoji: "📱", text: "北葛西でフリマアプリの取引がスムーズにいき臨時収入" },
-      { emoji: "🍻", text: "江戸川区民センターの居酒屋でビール早飲み大会に勝って賞金をもらった" },
-      { emoji: "🏅", text: "一之江のマラソン大会で完走賞金をもらった" },
-      { emoji: "🎁", text: "平井の商店街の福引で特賞をゲットした" },
-      { emoji: "🎁", text: "葛西臨海公園の商店街の福引で特賞をゲットした" }
-    ];
+    // 赤●・青■マスの文言。/data/sugoroku-data.json から読み込みます。
+    // 文中の {place} は、止まったマスの周辺施設名（無ければ江戸川区の町丁目）に置き換わります。
+    const RED_REASONS = [];
+    const BLUE_REASONS = [];
 
     const DICE_ROTATIONS = {
       1: "rotateX(0deg) rotateY(0deg)",
@@ -1760,115 +1807,9 @@
       6: "rotateX(90deg)"
     };
 
-    const ROLL_BUBBLES = [
-      "頼む！大きい目を出してくれ！",
-      "サイコロの神様、よろしく！",
-      "江戸川区の風になるぜ！",
-      "一発逆転を狙う！",
-      "焦らず着実に進むぞ！",
-      "ゴールはもうすぐそこだ！",
-      "今日はツイてる気がする！",
-      "さあ勝負だ！",
-      "次で決めるぞ！",
-      "気合を入れていくぞ！",
-      "運を天に任せる！",
-      "絶対に大きい目！",
-      "みんな見ててくれ！",
-      "この一投にかける！",
-      "そろそろいい目が出てもいいはず！",
-      "負けてられない！",
-      "行くぞー！",
-      "ドキドキするなあ！",
-      "今度こそ！",
-      "風よ、味方してくれ！",
-      "勝負の分かれ目だ！",
-      "ここが正念場！",
-      "願いを込めて…！",
-      "チャンス到来！",
-      "粘り強くいくぞ！",
-      "集中、集中！",
-      "よし、いい流れだ！",
-      "負けじと頑張るぞ！",
-      "一歩でも前へ！",
-      "今こそ運を試す時！",
-      "この調子でいこう！",
-      "まだまだこれから！",
-      "さあ来い、幸運！",
-      "気持ちを切り替えて！",
-      "次のマスが気になるな…",
-      "どんな目が出るかな？",
-      "楽しくなってきた！",
-      "ここは慎重に…",
-      "勢いに乗るぞ！",
-      "負けん気を出すぞ！",
-      "目指せ大逆転！",
-      "江戸川の街を駆け抜けろ！",
-      "今日は絶好調！",
-      "さすがに疲れたけど頑張る！",
-      "仲間に負けてられない！",
-      "冷静に、冷静に…",
-      "運試しといこう！",
-      "気持ちいい結果を願う！",
-      "次のマスは何かな〜",
-      "ワクワクが止まらない！",
-      "サイコロよ、応えてくれ！",
-      "勝利をつかむぞ！",
-      "こつこつ進むのみ！",
-      "一気に差をつけたい！",
-      "追い風が吹いてきた！",
-      "このチャンスを逃さない！",
-      "集中力を高めていく！",
-      "負けても楽しむぞ！",
-      "さあ運命の一投！",
-      "ここまで来たら最後まで！",
-      "いい流れを引き寄せろ！",
-      "勝負師の顔になってきた！",
-      "落ち着いて、落ち着いて…",
-      "次で流れを変える！",
-      "今日という日を楽しもう！",
-      "本気を出す時が来た！",
-      "皆に追いつくぞ！",
-      "トップを目指すぞ！",
-      "そろそろ運が向いてくるはず！",
-      "江戸川の空に願いを！",
-      "気合十分だ！",
-      "この一投で流れが変わる！",
-      "楽しみながらいくぞ！",
-      "運も実力のうち！",
-      "焦らず騒がず！",
-      "ここからが本番！",
-      "小さな一歩を大切に！",
-      "次こそビッグチャンス！",
-      "みんなで楽しもう！",
-      "負けたくない一心！",
-      "今日は特に気合が入る！",
-      "さあ、どうなるか！",
-      "自分を信じて振る！",
-      "このターンに賭ける！",
-      "次で流れを掴みたい！",
-      "気持ちよく振るぞ！",
-      "ゆっくり確実に！",
-      "びっくりする目が出るかも！",
-      "今度は連続でいい目を！",
-      "江戸川を制覇するぞ！",
-      "一投入魂！",
-      "負けは気にしない、楽しむだけ！",
-      "次のマスで何が起きるかな！",
-      "いい予感がする！",
-      "さあ勝負のとき！",
-      "仲間と競い合うのが楽しい！",
-      "運命のサイコロよ回れ！",
-      "最後まで諦めない！"
-    ];
+    const ROLL_BUBBLES = [];
 
-    const LAND_BUBBLES = [
-      "ここに着いたぞ！何かあるかな？",
-      "ふぅ〜、ちょっと一休み。",
-      "江戸川区の街並みは最高だな！",
-      "よっしゃ、いいマスに止まった！",
-      "うわっ！ここはヤバい場所かも…？",
-      "次もこの調子で行こう！"
-    ];
+    const LAND_BUBBLES = [];
 
     const VEHICLES = [
       { emoji: "🚲", name: "自転車", mult: 2 },
@@ -1884,121 +1825,10 @@
     const NON_FLIGHT_VEHICLES = VEHICLES.filter(v => v.emoji !== "🚁" && v.emoji !== "✈️");
 
     // 🚁/✈️で空の旅をしている最中に赤●・青■マスに着地した時専用のフレーバーテキスト。
-    const SKY_RED_REASONS = [
-      { emoji: "🌪️", text: "上空で乱気流に巻き込まれ、追加の燃料を消費してしまった。" },
-      { emoji: "⛽", text: "向かい風が強く、燃料代が予定よりかさんでしまった。" },
-      { emoji: "🧳", text: "機内販売でついお土産を買いすぎてしまった。" },
-      { emoji: "🌧️", text: "天候不良で旋回を強いられ、余分な料金がかかった。" }
-    ];
-    const SKY_BLUE_REASONS = [
-      { emoji: "💨", text: "上空で強い追い風に恵まれ、燃料が節約できた！" },
-      { emoji: "🎫", text: "機内の抽選会で臨時収入を獲得した！" },
-      { emoji: "🌤️", text: "絶好の飛行日和で、割引運賃が適用された！" },
-      { emoji: "🧭", text: "近道の航路が見つかり、経費が浮いた！" }
-    ];
+    const SKY_RED_REASONS = [];
+    const SKY_BLUE_REASONS = [];
 
-    const CPU_NAME_POOL = [
-      "さおり",
-      "洋子",
-      "江戸師匠",
-      "ゆたか",
-      "江戸王",
-      "いちろう",
-      "江戸名人",
-      "あきら",
-      "江戸若旦那",
-      "結衣名人",
-      "ふみお地元民",
-      "洋子さん",
-      "江戸課長",
-      "江戸姉御",
-      "翔太さん",
-      "まゆみ名人",
-      "幸子さん",
-      "しんじ旅人",
-      "かずおさん",
-      "ゆうたさん",
-      "えみうさぎ",
-      "花子王",
-      "三郎さん",
-      "ゆうた兄貴",
-      "健太ベテラン",
-      "幸子",
-      "えみ姉御",
-      "江戸うさぎ",
-      "よしこさん",
-      "いちろう策士",
-      "幸子うさぎ",
-      "ひまり案内人",
-      "たけし隊長",
-      "翔太",
-      "江戸兄貴",
-      "江戸地元民",
-      "江戸きつね",
-      "江戸通",
-      "めい",
-      "江戸先生",
-      "まさみさん",
-      "のぼる",
-      "はると博士",
-      "たけしさん",
-      "じろうさん",
-      "りく",
-      "ゆいマスター",
-      "次郎さん",
-      "ひまり",
-      "えみ",
-      "江戸ベテラン",
-      "江戸健脚",
-      "健太",
-      "幸子隊長",
-      "さくら隊長",
-      "なおきさん",
-      "たかし",
-      "じろう",
-      "りく旅人",
-      "江戸隊長",
-      "みなと健脚",
-      "結衣さん",
-      "ひまりさん",
-      "よしこ",
-      "江戸大将",
-      "かおりさん",
-      "はるとさん",
-      "のぼる姉御",
-      "健太名人",
-      "はなこさん",
-      "洋子女将",
-      "みつるさん",
-      "みつるきつね",
-      "江戸策士",
-      "ゆいさん",
-      "ゆうた",
-      "つよし兄貴",
-      "三郎",
-      "のぼる名人",
-      "ゆい姉御",
-      "たかし通",
-      "ゆか",
-      "結衣うさぎ",
-      "健太先生",
-      "江戸たぬき",
-      "翔太うさぎ",
-      "次郎健脚",
-      "まゆみさん",
-      "まゆみ",
-      "だいちさん",
-      "かずお",
-      "江戸マスター",
-      "けんた",
-      "しょうさん",
-      "江戸博士",
-      "たろう",
-      "しんじ名人",
-      "かなえさん",
-      "洋子チャンプ",
-      "ちひろ"
-    ];
+    const CPU_NAME_POOL = [];
 
     const CPU_AVATAR_POOL = ["🐶", "🐱", "🐻", "🐼", "🦊", "🐰", "🐯", "🦁", "🐨", "🐵", "🐔", "🐧", "🐤", "🦉", "🦄", "🐷", "🐸", "🐙", "🐢", "🦜", "🦝", "🐺", "🦌", "🐘"];
 
@@ -2272,6 +2102,8 @@
       firebaseReady: false,
       recruitmentPlayers: [],
       autoMode: false,
+      speechEnabled: true,   // メニューの「設定」で切り替える音声読み上げ
+      goaledRestaurants: [], // これまでゴールした飲食店（🍴として地図に残す）
       isMultiplayer: false,
       gameStateVersion: 0,
       lastAppliedEventSeq: 0,
@@ -2337,9 +2169,17 @@
         } catch (_) {}
         this.renderAvatarGrid();
         this.checkSaveData();
+        this.loadUserSettings();
         this._initPwa();
-        // 施設POIはバックグラウンドで全件再測位。ルート生成時は必ず個別に再確認します。
-        this.refreshAllFacilityCoordinates().catch(e => console.warn('施設座標の全面更新に失敗:', e));
+        // 施設・目的地・文言などのゲームデータと、江戸川区オープンデータを /data/ から読み込む。
+        this.gameDataPromise = this.loadGameData()
+          .then(() => this.loadEdogawaOpenData())
+          .catch(e => { console.warn('データの読み込みに失敗:', e); this.applyFallbackGameData(); });
+        // 施設POIはバックグラウンドで全件再測位（データ読み込み後）。
+        // ルート生成時は必ず個別に再確認します。区オープンデータの座標は再測位しません。
+        this.gameDataPromise
+          .then(() => this.refreshAllFacilityCoordinates())
+          .catch(e => console.warn('施設座標の全面更新に失敗:', e));
 
         sound.playBGM('lobby');
         document.addEventListener('click', () => {
@@ -2734,6 +2574,7 @@
 
       // --- GUEST JOIN LOGIC (USER B, C) ---
       async joinRoomAsGuest(roomId) {
+        await this.ensureGameDataReady();
         this.roomId = roomId;
         this.isHost = false;
         this.isMultiplayer = false;
@@ -2991,7 +2832,8 @@
           rocketGiftEventSeq: this.rocketGiftEventSeq || 0,
           boatRace: this.boatRaceState || null,
           quiz: this.quizSyncState || null,
-          kingyo: this.kingyoSyncState || null
+          kingyo: this.kingyoSyncState || null,
+          goaledRestaurants: this.goaledRestaurants || []
         };
 
         try {
@@ -3047,6 +2889,13 @@
         this.roadNetworkNodes = gs.boardNodes || [];
         this.goalNodeIdx = gs.goalNodeIdx;
         if (gs.destination) this.currentDestination = gs.destination;
+
+        // ゴールした飲食店（🍴）の一覧はホストが持っているものに合わせる
+        if (!this.isHost && Array.isArray(gs.goaledRestaurants)) {
+          const before = (this.goaledRestaurants || []).length;
+          this.goaledRestaurants = gs.goaledRestaurants;
+          if (this.goaledRestaurants.length !== before) this.renderFacilityMarkers(true);
+        }
 
         if (!this.isHost && boardChanged) {
           const startNodeForDisplay = this.findNearestNodeIdx(EDOGAWA_START);
@@ -3340,8 +3189,10 @@
 
       async startGame() {
         if (this.countdownTimer) clearInterval(this.countdownTimer);
+        await this.ensureGameDataReady();
         this.tryFullscreen();
         this.isMultiplayer = false;
+        this.goaledRestaurants = [];   // 新しいゲームでは🍴の履歴をリセット
         // 「ひとりで遊ぶ」は新規ゲーム。既存の途中セーブは明示的に新規開始した時だけ置き換える。
         try { localStorage.removeItem(SOLO_SAVE_KEY); } catch (_) {}
 
@@ -3371,6 +3222,7 @@
         this.closeResumeChoiceModal();
         if (this.resumeInProgress) return;
         this.resumeInProgress = true;
+        await this.ensureGameDataReady();
         try {
           const raw = localStorage.getItem(SOLO_SAVE_KEY);
           if (!raw) {
@@ -3401,6 +3253,7 @@
           this.recentDestinationNames = Array.isArray(state.recentDestinationNames) ? state.recentDestinationNames : [];
           this.helicopterGrantedThisLeg = !!state.helicopterGrantedThisLeg;
           this.planeGrantedThisLeg = !!state.planeGrantedThisLeg;
+          this.goaledRestaurants = Array.isArray(state.goaledRestaurants) ? state.goaledRestaurants : [];
           this.players = state.players;
 
           // 念のため各プレイヤーの保存値を正規化。既存のセーブデータを壊さず、
@@ -3481,13 +3334,28 @@
         this.renderFacilityMarkers();
       },
 
-      renderFacilityMarkers() {
-        if (this.facilityLayerMarkers && this.facilityLayerMarkers.length) return;
+      renderFacilityMarkers(force = false) {
+        if (!this.map) return;
+        if (this.facilityLayerMarkers && this.facilityLayerMarkers.length) {
+          if (!force) return;
+          this.facilityLayerMarkers.forEach(m => { try { this.map.removeLayer(m); } catch (_) {} });
+          this.facilityLayerMarkers = [];
+        }
         this.facilityLayerMarkers = [];
         this.facilityMarkerRefs = new Map();
 
-        const addGroup = (list, emoji) => {
-          (list || []).forEach(loc => {
+        // 上限を超える時は、地域が偏らないよう等間隔で間引く（先頭だけ描くと一部に固まるため）
+        const spread = (list, max) => {
+          const arr = (list || []).filter(x => x && Number.isFinite(x.lat) && Number.isFinite(x.lng));
+          if (!Number.isFinite(max) || arr.length <= max) return arr;
+          if (max <= 0) return [];
+          const step = arr.length / max, out = [];
+          for (let i = 0; i < max; i++) out.push(arr[Math.floor(i * step)]);
+          return out;
+        };
+
+        const addGroup = (list, emoji, max = Infinity) => {
+          spread(list, max).forEach(loc => {
             const icon = L.divIcon({
               className: 'facility-poi-icon',
               html: `<div class="facility-poi">${emoji}</div>`,
@@ -3496,20 +3364,325 @@
             });
             const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100 }).addTo(this.map);
             marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
+            // タップすると施設の詳細（写真・ホームページ・住所・電話）を表示する
+            try {
+              marker.on('click', () => this.showFacilityDetail({ ...loc, emoji: loc.emoji || emoji }));
+            } catch (e) {}
             this.facilityLayerMarkers.push(marker);
             if (!this.facilityMarkerRefs.has(loc.name)) this.facilityMarkerRefs.set(loc.name, []);
             this.facilityMarkerRefs.get(loc.name).push(marker);
           });
         };
+        this._addFacilityGroup = addGroup;
 
+        // 内蔵データ＋オープンデータが合流している配列は、合流先ごとの上限で間引く。
+        // （オープンデータ未読込のときは配列が小さいので、上限は実質かからない）
+        const cap = (name) => this.openDataInfo ? (OPENDATA_MERGED_MARKER_MAX[name] || Infinity) : Infinity;
         addGroup(STATIONS_FOR_MAP, '🚉');
         addGroup(BUS_STOPS_FOR_MAP, '🚏');
-        addGroup(POLICE_STATIONS, '🚨');
-        addGroup(HOSPITALS, '🏥');
-        addGroup(PARKS, '⛲️');
-        addGroup(SCHOOLS, '🏫');
-        addGroup(POST_OFFICES, '🏣');
         addGroup(TEMPLES_SHRINES, '⛩️');
+        addGroup(POLICE_STATIONS, '🚨', cap('POLICE_STATIONS'));
+        addGroup(HOSPITALS, '🏥', cap('HOSPITALS'));
+        addGroup(SCHOOLS, '🏫', cap('SCHOOLS'));
+        addGroup(POST_OFFICES, '🏣', cap('POST_OFFICES'));
+        addGroup(PARKS, '⛲️', cap('PARKS'));
+        // 区のオープンデータ専用のグループ（未読込ならすべて空配列なので何も増えない）
+        const merged = [PARKS, HOSPITALS, POLICE_STATIONS, SCHOOLS, POST_OFFICES];
+        const drawn = new Set();
+        OPENDATA_GROUPS.forEach(g => {
+          if (merged.includes(g.into) || !g.markerMax || drawn.has(g.into)) return;
+          drawn.add(g.into);
+          addGroup(g.into, g.emoji, g.markerMax);
+        });
+        // これまでゴールした飲食店は🍴として地図に残す
+        addGroup(this.goaledRestaurants || [], '🍴');
+      },
+
+      // ゴールした飲食店を🍴で地図に残す（盤面が変わっても消えない）
+      addGoaledRestaurant(place) {
+        if (!place || !place.name || !Number.isFinite(place.lat)) return;
+        this.goaledRestaurants = this.goaledRestaurants || [];
+        if (this.goaledRestaurants.some(r => r.name === place.name)) return;
+        const info = this.facilityInfoFor(place) || place;
+        const item = {
+          name: info.name, lat: info.lat, lng: info.lng,
+          address: info.address || '', tel: info.tel || '',
+          url: info.url || '', photo: info.photo || '',
+          emoji: '🍴', goaled: true, fromOpenData: !!info.fromOpenData
+        };
+        this.goaledRestaurants.push(item);
+        // 上限を決めて増えすぎないようにする（古いものから消す）
+        if (this.goaledRestaurants.length > 40) this.goaledRestaurants.shift();
+        if (this.map && this._addFacilityGroup) this._addFacilityGroup([item], '🍴');
+        this.addLog(`🍴 ${item.name} を「ゴールしたお店」として地図に残しました。`);
+      },
+
+      // 目的地が飲食店かどうか（ルーレットのカテゴリ、または区オープンデータの飲食店リストで判定）
+      isRestaurantDestination(dest) {
+        if (!dest || !dest.name) return false;
+        if (dest.category === '飲食店') return true;
+        if (OD_INSHOKU.some(x => x && x.name === dest.name)) return true;
+        return (DESTINATION_PRESETS['飲食店'] || []).some(x => x && x.name === dest.name);
+      },
+
+      // ============================================================
+      // 外部データ（/data/ のJSON）の読み込み
+      // ============================================================
+      // 置き場所の候補を順に試す（本番URL → 同サーバの ../data/ → 同じ階層）。
+      async fetchDataFile(name, extraUrls = []) {
+        const urls = dataFileUrls(name).concat(extraUrls || []);
+        for (const url of urls) {
+          try {
+            const resp = await fetch(url, { cache: 'no-cache' });
+            if (!resp.ok) continue;
+            const data = await resp.json();
+            if (data) { this._dataFileSource = this._dataFileSource || {}; this._dataFileSource[name] = url; return data; }
+          } catch (e) { /* 次の候補を試す */ }
+        }
+        console.warn(`データファイルを読み込めませんでした: ${name}`);
+        return null;
+      },
+
+      // ゲームデータ（施設・目的地・文言）を読み込んで各配列に流し込む。
+      // 配列の「中身」だけを入れ替えるので、他のコードが持っている参照はそのまま使える。
+      async loadGameData() {
+        const data = await this.fetchDataFile(GAME_DATA_FILE);
+        if (!data) { this.applyFallbackGameData(); return false; }
+
+        const fill = (arr, rows) => {
+          if (!Array.isArray(rows)) return;
+          arr.length = 0;
+          rows.forEach(r => { if (r) arr.push(r); });
+        };
+        const f = data.facilities || {};
+        fill(STATIONS_FOR_MAP, f.stations);
+        fill(BUS_STOPS_FOR_MAP, f.busStops);
+        fill(POLICE_STATIONS, f.police);
+        fill(HOSPITALS, f.hospitals);
+        fill(PARKS, f.parks);
+        fill(SCHOOLS, f.schools);
+        fill(POST_OFFICES, f.postOffices);
+        fill(TEMPLES_SHRINES, f.temples);
+
+        const d = data.destinations || {};
+        Object.keys(DESTINATION_PRESETS).forEach(cat => {
+          if (cat === '公園') return;            // PARKSと同じ配列なので上で入っている
+          fill(DESTINATION_PRESETS[cat], d[cat]);
+        });
+
+        const t = data.texts || {};
+        fill(RED_REASONS, t.redReasons);
+        fill(BLUE_REASONS, t.blueReasons);
+        fill(SKY_RED_REASONS, t.skyRedReasons);
+        fill(SKY_BLUE_REASONS, t.skyBlueReasons);
+        fill(ROLL_BUBBLES, t.rollBubbles);
+        fill(LAND_BUBBLES, t.landBubbles);
+        fill(CPU_NAME_POOL, t.cpuNames);
+
+        this.gameDataLoaded = true;
+        this._facilityPoiCache = null;
+        console.info(`ゲームデータを読み込みました（施設${STATIONS_FOR_MAP.length + BUS_STOPS_FOR_MAP.length + HOSPITALS.length + PARKS.length}件ほか）`);
+        return true;
+      },
+
+      // データが読めなかった時でもゲームが止まらないよう、最小限の代替を入れる。
+      applyFallbackGameData() {
+        this.gameDataLoaded = false;
+        const put = (arr, rows) => { if (!arr.length) rows.forEach(r => arr.push(r)); };
+        put(STATIONS_FOR_MAP, [EDOGAWA_START]);
+        put(RED_REASONS, [{ emoji: '💸', text: '{place}で思わぬ出費があった' }]);
+        put(BLUE_REASONS, [{ emoji: '🎉', text: '{place}で思わぬ収入があった' }]);
+        put(SKY_RED_REASONS, [{ emoji: '🌪️', text: '上空で乱気流に巻き込まれ、追加の燃料を消費してしまった。' }]);
+        put(SKY_BLUE_REASONS, [{ emoji: '💨', text: '上空で強い追い風に恵まれ、燃料が節約できた！' }]);
+        put(ROLL_BUBBLES, ['さあ勝負だ！']);
+        put(LAND_BUBBLES, ['ここに着いたぞ！何かあるかな？']);
+        put(CPU_NAME_POOL, ['江戸川さん', '葛西さん', '小岩さん', '船堀さん']);
+        put(DESTINATION_PRESETS['駅（バス停含む）'], [EDOGAWA_START, FIRST_GOAL]);
+        put(DESTINATION_PRESETS['飲食店'], [FIRST_GOAL]);
+        put(DESTINATION_PRESETS['スーパー（薬屋含む）'], [FIRST_GOAL]);
+        put(PARKS, [{ name: '葛西臨海公園', lat: 35.6425, lng: 139.8601 }]);
+        console.warn('ゲームデータを読み込めなかったため、最小限のデータで動作します。');
+      },
+
+      // ゲーム開始前にデータの読み込みを待つ（通常は起動直後に終わっている）。
+      async ensureGameDataReady() {
+        try { if (this.gameDataPromise) await this.gameDataPromise; } catch (e) {}
+        if (!STATIONS_FOR_MAP.length && !PARKS.length) this.applyFallbackGameData();
+      },
+
+      // 江戸川区オープンデータ（地図データ）を読み込んで施設データに合流させる。
+      // ファイルが無い／読めない場合は内蔵データのまま静かに続行する。
+      async loadEdogawaOpenData() {
+        const data = await this.fetchDataFile(OPENDATA_DATA_FILE);
+        if (!data) {
+          console.info('江戸川区オープンデータは未設置のため、内蔵データで動作します。');
+          return false;
+        }
+        // URLは共通部分を "0|残り" の形にまとめてあるので元に戻す
+        const prefixes = Array.isArray(data.prefixes) ? data.prefixes : [];
+        const expand = (v) => {
+          const s = String(v || '');
+          const m = s.match(/^(\d+)\|(.*)$/);
+          if (m && prefixes[Number(m[1])] !== undefined) return prefixes[Number(m[1])] + m[2];
+          return s;
+        };
+        const groups = (data && data.groups) || data || {};
+        let added = 0, skipped = 0;
+        OPENDATA_GROUPS.forEach(g => {
+          const rows = Array.isArray(groups[g.key]) ? groups[g.key] : [];
+          const seen = new Set(g.into.map(p => p && p.name));
+          const dest = g.dest ? DESTINATION_PRESETS[g.dest] : null;
+          const destSeen = dest ? new Set(dest.map(p => p && p.name)) : null;
+          rows.forEach(r => {
+            if (!r) return;
+            const name = String(r.name || '').trim();
+            const lat = Number(r.lat), lng = Number(r.lng);
+            if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) { skipped++; return; }
+            // 江戸川双六なので、区外の座標は取り込まない。
+            if (!isInsideEdogawaWard(lat, lng)) { skipped++; return; }
+            if (seen.has(name)) { skipped++; return; }
+            seen.add(name);
+            const item = {
+              name, lat, lng,
+              address: r.a || r.address || '',
+              tel: r.t || '',
+              url: r.u ? expand(r.u) : '',
+              photo: r.p ? expand(r.p) : '',
+              emoji: g.emoji,
+              fromOpenData: true
+            };
+            g.into.push(item);
+            // 目的地ルーレットの候補にも加える（公園はPARKSと同じ配列なので自動で入る）
+            if (dest && !destSeen.has(name)) { dest.push(item); destSeen.add(name); }
+            added++;
+          });
+        });
+        if (!added) return false;
+
+        this.openDataInfo = { updated: (data && data.updated) || null, count: added, skipped };
+        this._facilityPoiCache = null;          // 「〇〇周辺」の判定にも反映させる
+        this.renderFacilityMarkers(true);       // 地図が既にあれば描き直す
+        console.info(`江戸川区オープンデータを読み込みました：${added}件（除外 ${skipped}件）`);
+        return true;
+      },
+
+      // ============================================================
+      // 施設の詳細モーダル
+      //  ・地図の絵文字アイコンをタップした時
+      //  ・ゴールした時の紹介（3秒で自動的に閉じる）
+      // 情報は江戸川区オープンデータ（写真・ホームページ・住所・電話）を使います。
+      // ============================================================
+      // 名前から詳しい情報を探す（座標だけの目的地でも、写真や電話を補える）
+      facilityInfoFor(place) {
+        if (!place) return null;
+        const base = { ...place };
+        const hasDetail = base.photo || base.url || base.tel || base.address;
+        if (hasDetail) return base;
+        const name = String(place.name || '').trim();
+        if (!name) return base;
+        const lists = this._facilityPoiGroups().map(([l]) => l)
+          .concat(Object.values(DESTINATION_PRESETS || {}));
+        for (const list of lists) {
+          const hit = (list || []).find(x => x && x.name === name);
+          if (hit && (hit.photo || hit.url || hit.tel || hit.address)) return { ...base, ...hit, name };
+        }
+        return base;
+      },
+
+      showFacilityDetail(place, opts = {}) {
+        const info = this.facilityInfoFor(place);
+        if (!info || !info.name) return;
+        const modal = document.getElementById('facility-modal');
+        if (!modal) return;
+        this._facilityModalTarget = info;
+
+        document.getElementById('facility-modal-heading').innerText = opts.heading || '施設情報';
+        document.getElementById('facility-modal-title').innerText =
+          `${info.emoji ? info.emoji + ' ' : ''}${info.name}`;
+
+        // 写真（読み込めなかった時も No Photo に切り替える）
+        const img = document.getElementById('facility-photo');
+        const none = document.getElementById('facility-photo-none');
+        if (info.photo) {
+          img.onerror = () => { img.classList.add('hidden'); none.classList.remove('hidden'); };
+          img.onload = () => { img.classList.remove('hidden'); none.classList.add('hidden'); };
+          img.classList.add('hidden');
+          none.classList.remove('hidden');
+          img.src = info.photo;
+          img.alt = info.name;
+        } else {
+          img.removeAttribute('src');
+          img.classList.add('hidden');
+          none.classList.remove('hidden');
+        }
+
+        // 住所＋地図ボタン
+        const addrRow = document.getElementById('facility-address-row');
+        if (info.address) {
+          document.getElementById('facility-address').innerText = info.address;
+          addrRow.classList.remove('hidden');
+        } else {
+          addrRow.classList.add('hidden');
+        }
+
+        // 電話番号（タップで発信）
+        const telRow = document.getElementById('facility-tel-row');
+        const telLink = document.getElementById('facility-tel');
+        if (info.tel) {
+          telLink.innerText = info.tel;
+          telLink.href = `tel:${String(info.tel).replace(/[^0-9+]/g, '')}`;
+          telRow.classList.remove('hidden');
+        } else {
+          telRow.classList.add('hidden');
+        }
+
+        // ホームページ
+        const homeBtn = document.getElementById('facility-home-btn');
+        homeBtn.classList.toggle('hidden', !info.url);
+
+        const note = document.getElementById('facility-note');
+        if (opts.note) { note.innerText = opts.note; note.classList.remove('hidden'); }
+        else note.classList.add('hidden');
+
+        const credit = document.getElementById('facility-credit');
+        if (info.fromOpenData) {
+          credit.innerText = '出典：江戸川区オープンデータ（CC BY 4.0）を加工して作成';
+          credit.classList.remove('hidden');
+        } else {
+          credit.classList.add('hidden');
+        }
+
+        modal.classList.remove('hidden');
+        this.clearModalAutoClose('facility');
+        const btn = document.getElementById('facility-close-btn');
+        if (opts.autoCloseSec) {
+          this.armModalAutoClose('facility', 'facility-close-btn',
+            () => this.closeFacilityModal(), opts.autoCloseSec);
+        } else if (btn) {
+          btn.innerText = '閉じる';
+        }
+      },
+
+      closeFacilityModal() {
+        this.clearModalAutoClose('facility');
+        document.getElementById('facility-modal')?.classList.add('hidden');
+        const btn = document.getElementById('facility-close-btn');
+        if (btn) btn.innerText = '閉じる';
+      },
+
+      openFacilityHomepage() {
+        const url = this._facilityModalTarget?.url;
+        if (url) window.open(url, '_blank', 'noopener');
+      },
+
+      openFacilityMapLink() {
+        const t = this._facilityModalTarget;
+        if (!t) return;
+        const q = t.address ? `${t.name} ${t.address}` : t.name;
+        const url = (Number.isFinite(t.lat) && Number.isFinite(t.lng))
+          ? `https://www.google.com/maps/search/?api=1&query=${t.lat},${t.lng}`
+          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+        window.open(url, '_blank', 'noopener');
       },
 
       updateFacilityMarkerPosition(place) {
@@ -3740,6 +3913,10 @@
 
       async resolvePlaceCoordinates(place, options = {}) {
         if (!place || !place.name) return place;
+        // 江戸川区オープンデータの座標は区の公式データなので、そのまま使う（測位しない）。
+        if (place.fromOpenData && Number.isFinite(place.lat) && Number.isFinite(place.lng)) {
+          return { ...place, geocoded: true };
+        }
         const key = String(place.name).trim();
         const force = options.force === true;
 
@@ -3828,6 +4005,9 @@
         const result = [];
         groups.flat().forEach(loc => {
           if (!loc || !loc.name || seen.has(loc.name)) return;
+          // 江戸川区オープンデータの施設は区の公式座標なので、再測位（Nominatim）はしない。
+          // （件数が多く、1件ずつ問い合わせると時間がかかり相手のサーバにも負荷がかかる）
+          if (loc.fromOpenData) return;
           seen.add(loc.name);
           result.push(loc);
         });
@@ -3841,6 +4021,7 @@
         this.geocodeRefreshPromise = (async () => {
           let done = 0;
           for (const loc of all) {
+            if (loc.fromOpenData) { done++; continue; }   // 区の公式座標はそのまま使う
             // v3キャッシュは今回の全面更新で得た正確な位置だけを利用。
             const resolved = await this.resolvePlaceCoordinates(loc);
             if (resolved.geocoded) {
@@ -4785,6 +4966,52 @@
         }, stepDelay);
       },
 
+      // ============================================================
+      // 赤●・青■マスの文言に差し込む「今いる場所の名前」
+      //  ① 近くの施設名（区オープンデータ由来を含む）
+      //  ② 無ければ、近くの施設の住所から「江戸川区〇〇丁目」を取り出す
+      //  ③ それも無ければ「江戸川区」
+      // すべて手元のデータだけで決めるので通信は発生しません。
+      // ============================================================
+      nearbyAreaName(lat, lng, maxMeters = 900) {
+        let best = null, bestD = Infinity;
+        const here = { lat, lng };
+        this._facilityPoiGroups().forEach(([list]) => {
+          (list || []).forEach(loc => {
+            if (!loc || !loc.address || !Number.isFinite(loc.lat)) return;
+            const d = this.haversineMeters(here, loc);
+            if (d < bestD) { bestD = d; best = loc; }
+          });
+        });
+        if (!best || bestD > maxMeters) return null;
+        // 「江戸川区中葛西3丁目10番1号」→「中葛西3丁目」
+        const m = String(best.address).replace(/^東京都/, '').replace(/^江戸川区/, '')
+          .match(/^(.+?[0-9０-９一二三四五六七八九十]+丁目)/);
+        if (m) return `江戸川区${m[1]}`;
+        const m2 = String(best.address).replace(/^東京都/, '').match(/^(江戸川区[^0-9０-９]{1,8})/);
+        return m2 ? m2[1] : null;
+      },
+
+      // maxWeight を渡すと「お店」など目印にしにくい種類を除いて探す。
+      // 赤●・青■の文言は「〇〇のケーキ屋で…」のように施設名の後ろに店の種類が続くため、
+      // お店の名前そのものが入ると意味が重なる。そこで文言用は
+      //   駅・公園・学校などの目印 → 無ければ「江戸川区〇〇丁目」 → 「江戸川区」
+      // の順で選ぶ。
+      placeLabelAt(lat, lng, maxWeight = Infinity) {
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return '江戸川区';
+        const f = this.findNearbyFacility(lat, lng, 220, maxWeight);
+        if (f && f.name) return f.name;
+        return this.nearbyAreaName(lat, lng) || '江戸川区';
+      },
+
+      // 文言リストから1つ選び、{place} を今いる場所の名前に置き換えて返す。
+      pickPlaceReason(list, node) {
+        const pool = (list && list.length) ? list : [{ emoji: '💰', text: '{place}でお金が動いた' }];
+        const picked = pool[Math.floor(Math.random() * pool.length)];
+        const place = node ? this.placeLabelAt(node.lat, node.lng, 0.85) : '江戸川区';
+        return { emoji: picked.emoji, text: String(picked.text || '').replace(/\{place\}/g, place) };
+      },
+
       landOnSpot(player) {
         const node = this.roadNetworkNodes[player.currentNodeIdx];
 
@@ -4801,7 +5028,8 @@
             this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅トラブル…`, skyReason.text, `▲¥${amount.toLocaleString()} (残 ${this.formatMoney(player.money)})`, { icon: "🌪️", type: "red", reasonIcon: skyReason.emoji });
             this.addLog(`🔴 [空の旅] ${player.name}: ${skyReason.text} (-¥${amount.toLocaleString()})`);
           } else {
-            const reason = RED_REASONS[Math.floor(Math.random() * RED_REASONS.length)];
+            // 文言の {place} は、止まった場所の周辺施設名（無ければ町丁目）に置き換える。
+            const reason = this.pickPlaceReason(RED_REASONS, node);
             this.showEventModal("お金が減ってしまった！", reason.text, `▲¥${amount.toLocaleString()} (残 ${this.formatMoney(player.money)})`, { icon: "💸", type: "red", reasonIcon: reason.emoji });
             this.addLog(`🔴 [赤マス] ${player.name}: ${reason.text} (-¥${amount.toLocaleString()})`);
           }
@@ -4816,7 +5044,7 @@
             this.showEventModal(`${player.vehicle ? player.vehicle.emoji : "✈️"} 空の旅で幸運！`, skyReason.text, `＋¥${amount.toLocaleString()} (計 ${this.formatMoney(player.money)})`, { icon: "💨", type: "blue", reasonIcon: skyReason.emoji });
             this.addLog(`🔵 [空の旅] ${player.name}: ${skyReason.text} (+¥${amount.toLocaleString()})`);
           } else {
-            const reason = BLUE_REASONS[Math.floor(Math.random() * BLUE_REASONS.length)];
+            const reason = this.pickPlaceReason(BLUE_REASONS, node);
             this.showEventModal("お金が増えた！", reason.text, `＋¥${amount.toLocaleString()} (計 ${this.formatMoney(player.money)})`, { icon: "🎉", type: "blue", reasonIcon: reason.emoji });
             this.addLog(`🔵 [青マス] ${player.name}: ${reason.text} (+¥${amount.toLocaleString()})`);
           }
@@ -5073,7 +5301,7 @@
       speakQuizQuestion(text, onEnd) {
         const status = document.getElementById('quiz-announcer-status');
         const done = () => { if (status) status.textContent = '三択から答えを選んでください'; if (typeof onEnd === 'function') onEnd(); };
-        if (!('speechSynthesis' in window)) { done(); return; }
+        if (!('speechSynthesis' in window) || this.speechEnabled === false) { done(); return; }
         try {
           window.speechSynthesis.cancel();
           const utter = new SpeechSynthesisUtterance(text);
@@ -5126,15 +5354,13 @@
           { genre:'江戸川区の名所', difficulty:'カンタン', question:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:'南部' }
         ];
         let questions = null;
-        try {
-          const resp = await fetch('https://shulavan.github.io/games/quiz_data.json', { cache: 'no-store' });
-          if (resp.ok) {
-            const data = await resp.json();
-            if (Array.isArray(data)) questions = data;
-            else if (Array.isArray(data.questions)) questions = data.questions;
-            else if (Array.isArray(data.data)) questions = data.data;
-          }
-        } catch (e) { console.warn('quiz_data.json の読み込みに失敗:', e); }
+        // クイズも /data/ に置いたものを優先。旧置き場所（/games/）も候補として試す。
+        const data = await this.fetchDataFile(QUIZ_DATA_FILE, ['https://shulavan.github.io/games/quiz_data.json']);
+        if (data) {
+          if (Array.isArray(data)) questions = data;
+          else if (Array.isArray(data.questions)) questions = data.questions;
+          else if (Array.isArray(data.data)) questions = data.data;
+        }
         // 実データのフィールド名は "question"（"q" ではない）で、answer は選択肢と一致する
         // 文字列（インデックスではない）。フォールバック問題も同じ形に揃えてある。
         questions = (questions || fallbackQuestions).filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
@@ -5721,6 +5947,18 @@
         this.selectedCategoryWinnerIdx = player.id;
         this.addLog(`🏆 【GOAL!】 ${player.name} が ${this.currentDestination.name} に到達！賞金¥100,000獲得！`);
 
+        // ゴール地点の紹介を3秒だけ表示（写真・ホームページ・住所・電話）。
+        // 飲食店だった場合は🍴として地図に残す（次の盤面でも見えるように）。
+        if (this.currentDestination) {
+          if (this.isRestaurantDestination(this.currentDestination)) {
+            this.addGoaledRestaurant(this.currentDestination);
+          }
+          this.showFacilityDetail(this.currentDestination, {
+            heading: `🏁 ゴール地点：${player.name} が到達`,
+            autoCloseSec: 3
+          });
+        }
+
         if (this.isMultiplayer && this.isHost) {
           this.awaitingGoalSelection = { winnerUid: player.uid, winnerName: player.name };
           this.syncGameStateToRoom();
@@ -5763,7 +6001,12 @@
           if (data.error || !data.shops || !data.shops.length) return null;
           // この双六は「江戸川双六」なので、江戸川区の外にある店舗は目的地の候補にしない。
           // （APIは半径指定のため、浦安市・市川市・江東区などの店舗も返ってくる）
-          const all = data.shops.map(s => ({ name: s.name, lat: Number(s.lat), lng: Number(s.lng), address: s.address || '' }));
+          // 写真・ホームページ・電話はプロキシが返していれば施設詳細モーダルで使う
+          const all = data.shops.map(s => ({
+            name: s.name, lat: Number(s.lat), lng: Number(s.lng), address: s.address || '',
+            tel: s.tel || '', url: s.url || s.urls || '',
+            photo: s.photo || s.photo_l || s.image || '', emoji: '🍴'
+          }));
           const inWard = all.filter(s => isInsideEdogawaWard(s.lat, s.lng) &&
             !/(浦安|市川市|船橋|葛飾区|江東区|墨田区|足立区|足立|千葉県)/.test(s.address || ''));
           if (!inWard.length) {
@@ -5775,6 +6018,14 @@
           console.error("ホットペッパーAPI取得に失敗、固定リストにフォールバックします:", e);
           return null;
         }
+      },
+
+      // 目的地としての「分かりやすさ」。値が小さいほど選ばれやすい。
+      destinationPreferenceWeight(place) {
+        const n = String(place?.name || '');
+        if (/(児童遊園|遊び場|ひろば|広場)/.test(n)) return 1.8;   // 小さな公園・広場
+        if (/(公園|臨海|水族園|区民館|図書館|体育館|球場|プール|会館|駅)/.test(n)) return 0.8;
+        return 1;
       },
 
       async selectCategory(catName) {
@@ -5795,7 +6046,8 @@
           if (!usable) box.innerText = "近くのお店を検索中...";
           const liveShops = usable ? await pre.promise : await this.fetchNearbyRestaurants(fromLoc);
           if (liveShops && liveShops.length > 0) {
-            allOptions = liveShops;
+            // 区のオープンデータの飲食店（位置が正確）も候補に混ぜる。
+            allOptions = OD_INSHOKU.length ? liveShops.concat(OD_INSHOKU) : liveShops;
           }
         }
 
@@ -5852,8 +6104,12 @@
         if (!usable.length) usable = scored.filter(s => s.dWin === null);
         if (!usable.length) usable = scored;
 
-        // ビリに近い順。上位数件をルーレットの対象にする（毎回同じにならないよう複数残す）
-        usable.sort((a, b) => (a.dLag ?? Infinity) - (b.dLag ?? Infinity));
+        // ビリに近い順。ただし「〇〇児童遊園」「〇〇ひろば」のような小さな場所ばかりが
+        // 選ばれないよう、目印になりやすい施設を少し優先する（区のオープンデータは
+        // 小さな公園まで網羅しているため）。
+        usable.sort((a, b) =>
+          (a.dLag ?? Infinity) * this.destinationPreferenceWeight(a.o) -
+          (b.dLag ?? Infinity) * this.destinationPreferenceWeight(b.o));
         const shortlist = usable.slice(0, Math.min(6, Math.max(3, usable.length)));
         let options = shortlist.map(s => s.o);
         if (!options.length) options = allOptions.slice();
@@ -5916,7 +6172,8 @@
                 }
               }
               box.innerText = `🎯 決定: ${nextGoal.name}`;
-              this.nextDestinationCandidate = nextGoal;
+              // どのカテゴリから選ばれたかを覚えておく（ゴール時の🍴判定に使う）
+              this.nextDestinationCandidate = { ...nextGoal, category: catName };
               document.getElementById("roulette-confirm-btn").classList.remove("hidden");
               sound.playLandBlue();
               // 目的地が決まった時点で、ゴールした人のフッターの「あと0マス」を
@@ -6042,7 +6299,8 @@
           specialEventUsed: this.specialEventUsed,
           recentDestinationNames: this.recentDestinationNames || [],
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
-          planeGrantedThisLeg: !!this.planeGrantedThisLeg
+          planeGrantedThisLeg: !!this.planeGrantedThisLeg,
+          goaledRestaurants: this.goaledRestaurants || []
         };
         localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
       },
@@ -6189,31 +6447,50 @@
       // 地図上に絵文字アイコンで表示している施設の一覧（座標はその都度読む＝再測位に追従）
       _facilityPoiGroups() {
         if (this._facilityPoiCache) return this._facilityPoiCache;
+        // [配列, 絵文字, 優先度]。優先度が小さいほど「〇〇周辺」に選ばれやすい。
         this._facilityPoiCache = [
-          [STATIONS_FOR_MAP, '🚉'], [BUS_STOPS_FOR_MAP, '🚏'], [POLICE_STATIONS, '🚨'],
-          [HOSPITALS, '🏥'], [PARKS, '⛲️'], [SCHOOLS, '🏫'], [POST_OFFICES, '🏣'],
-          [TEMPLES_SHRINES, '⛩️'], [[BOAT_RACE_LOC], '🚤']
+          [STATIONS_FOR_MAP, '🚉', 0.4], [BUS_STOPS_FOR_MAP, '🚏', 0.9], [POLICE_STATIONS, '🚨', 0.9],
+          [HOSPITALS, '🏥', 1], [PARKS, '⛲️', 0.7], [SCHOOLS, '🏫', 0.8], [POST_OFFICES, '🏣', 0.9],
+          [TEMPLES_SHRINES, '⛩️', 0.8], [[BOAT_RACE_LOC], '🚤', 0.5]
         ];
+        // 区のオープンデータから取り込んだ施設も「〇〇周辺」の候補にする
+        // （地図アイコンの上限とは関係なく、名前の判定には全件を使う）
+        const merged = [PARKS, HOSPITALS, POLICE_STATIONS, SCHOOLS, POST_OFFICES];
+        OPENDATA_GROUPS.forEach(g => {
+          if (merged.includes(g.into)) return;
+          if (g.into.length && !this._facilityPoiCache.some(([list]) => list === g.into)) {
+            this._facilityPoiCache.push([g.into, g.emoji, g.weight || 1]);
+          }
+        });
         return this._facilityPoiCache;
       },
 
       // 指定地点の近くにある施設アイコンを探す（ローカルデータのみ＝通信なしで即決まる）
-      findNearbyFacility(lat, lng, maxMeters = 160) {
-        let best = null, bestD = Infinity;
+      findNearbyFacility(lat, lng, maxMeters = 160, maxWeight = Infinity) {
+        let best = null, bestScore = Infinity, bestD = Infinity;
         const here = { lat, lng };
-        this._facilityPoiGroups().forEach(([list, emoji]) => {
+        // 距離に優先度をかけた「スコア」で比べる。距離が近くても、駅や公園のような
+        // 分かりやすい目印を優先して「〇〇周辺」に出す（保育園より駅、など）。
+        this._facilityPoiGroups().forEach(([list, emoji, weight]) => {
+          const w = weight || 1;
+          if (w > maxWeight) return;   // お店など「目印にしにくい」種類を除く指定
           (list || []).forEach(loc => {
             if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
             const d = this.haversineMeters(here, loc);
-            if (d < bestD) { bestD = d; best = { name: loc.name, emoji }; }
+            if (d > maxMeters) return;
+            const score = d * w;
+            if (score < bestScore) { bestScore = score; bestD = d; best = { name: loc.name, emoji }; }
           });
         });
-        // 強制移動で立てたピン（競艇場・警察・病院）も候補に含める
+        // 強制移動で立てたピン（競艇場・警察・病院）も候補に含める（こちらは常に優先）
         if (this._lastFacilityPin && Number.isFinite(this._lastFacilityPin.lat)) {
           const d = this.haversineMeters(here, this._lastFacilityPin);
-          if (d < bestD) { bestD = d; best = { name: this._lastFacilityPin.name, emoji: this._lastFacilityPin.emoji || '📍' }; }
+          if (d <= maxMeters && d * 0.5 < bestScore) {
+            bestScore = d * 0.5; bestD = d;
+            best = { name: this._lastFacilityPin.name, emoji: this._lastFacilityPin.emoji || '📍' };
+          }
         }
-        return (best && bestD <= maxMeters) ? { ...best, distance: Math.round(bestD) } : null;
+        return best ? { ...best, distance: Math.round(bestD) } : null;
       },
 
       // 現在地表示の出し分け。
@@ -6414,19 +6691,27 @@
       // 日本語は等速1.0でおよそ7.2文字/秒。実況は早口なので rate で割って求める。
       // speechSynthesis の onend はブラウザによって発火しないため、
       // 次の演出へ移るタイミングはこの見積もりで組み立てる。
-      _estimateSpeechMs(text) {
-        const chars = String(text || '').length;
-        return Math.round((chars / (7.2 * BOAT_RACE_SPEECH_RATE)) * 1000) + 350;
+      // いまの喋り方（落ち着いた喋り／早口）。場面に応じて切り替える。
+      boatRaceSpeechRate: BOAT_RACE_SPEECH_RATE_CALM,
+      setBoatRaceSpeechRate(rate) {
+        this.boatRaceSpeechRate = rate;
       },
 
-      _speakBoatRace(text) {
+      _estimateSpeechMs(text, rate = null) {
+        const chars = String(text || '').length;
+        const r = rate || this.boatRaceSpeechRate || BOAT_RACE_SPEECH_RATE_CALM;
+        return Math.round((chars / (7.2 * r)) * 1000) + 350;
+      },
+
+      _speakBoatRace(text, rate = null) {
         if (typeof sound !== 'undefined' && sound.isMuted) return;
+        if (this.speechEnabled === false) return;
         if (!('speechSynthesis' in window)) return;
         try {
           window.speechSynthesis.cancel();
           const uttr = new SpeechSynthesisUtterance(text);
           uttr.lang = 'ja-JP';
-          uttr.rate = BOAT_RACE_SPEECH_RATE;   // 競艇実況らしい早口
+          uttr.rate = rate || this.boatRaceSpeechRate || BOAT_RACE_SPEECH_RATE_CALM;
           uttr.pitch = 0.8;   // 男性アナウンサー寄り
           const voices = window.speechSynthesis.getVoices() || [];
           const ja = voices.filter(v => /ja/i.test(v.lang || ''));
@@ -6449,10 +6734,10 @@
 
       // 実況を1つ読み上げる。戻り値は「読み終わるまでの目安（ミリ秒）」。
       // 字幕スーパーも読み上げと同じ長さで流れるようにして、途中で切れないようにする。
-      _boatRaceAnnounce(text, durationSec = null) {
-        const ms = this._estimateSpeechMs(text);
+      _boatRaceAnnounce(text, durationSec = null, rate = null) {
+        const ms = this._estimateSpeechMs(text, rate);
         this._setBoatRaceMarquee(text, durationSec || Math.max(5, ms / 1000 + 1.2));
-        this._speakBoatRace(text);
+        this._speakBoatRace(text, rate);
         return ms;
       },
 
@@ -6567,6 +6852,8 @@
 
         this.updateHUD();
         this._renderBoatRaceForCurrentDevice();
+        // 舟券購入中（最初の30秒）は落ち着いた喋り方で案内する。
+        this.setBoatRaceSpeechRate(BOAT_RACE_SPEECH_RATE_CALM);
         this._boatRaceAnnounce(
           `江戸川競艇場、双六記念杯。天候は晴れ、風速${wind}メートル、波の高さ${wave}センチ。締め切りまであと30秒です。`
         );
@@ -6691,7 +6978,7 @@
           const left = Math.ceil((this.boatRaceState.deadline - Date.now()) / 1000);
           if (left === 10 && !this.boatRaceState._warned10) {
             this.boatRaceState._warned10 = true;
-            this._boatRaceAnnounce('締め切りまで、あと10秒。お買い忘れのないよう。');
+            this._boatRaceAnnounce('締め切りまで、あと10秒。お買い忘れのないよう。', null, BOAT_RACE_SPEECH_RATE_CALM);
           }
           this._renderBoatRaceBetting();
           if (Date.now() >= this.boatRaceState.deadline) {
@@ -6910,6 +7197,8 @@
 
         // ピット離れの実況 → 言い終わってから合図音 → レース＆実況の順に、
         // 前の音声が途中で切れないように時間を組み立てる。
+        // ここからレース。喋り方を実況らしい早口に切り替える。
+        this.setBoatRaceSpeechRate(BOAT_RACE_SPEECH_RATE_FAST);
         const pitMs = this._boatRaceAnnounce('各艇ピットを離れました。大時計が回ります。');
         clearTimeout(this.boatRacePitTimer);
         this.boatRacePitTimer = setTimeout(() => {
@@ -7042,14 +7331,41 @@
         if (this.isMultiplayer && this.isHost) await this.syncGameStateToRoom();
 
         // ゴールの実況を言い終わってから結果画面へ。
-        // 結果画面では短い一言だけ喋り、3秒の自動進行の中で必ず言い終わるようにする。
+        // 結果画面では早口をやめ、10秒の中で落ち着いた締めの実況を言い終える。
         clearTimeout(this.boatRaceResultShowTimer);
         this.boatRaceResultShowTimer = setTimeout(() => {
           this._showBoatRaceScreen('boatrace-result-screen');
           this._renderBoatRaceResult();
-          this._speakBoatRace('レース結果です。');
-          this.armModalAutoClose('boatrace', 'boatrace-close-btn', () => this.closeBoatRaceEvent());
+          this._speakBoatRaceOutro();
+          this.armModalAutoClose('boatrace', 'boatrace-close-btn',
+            () => this.closeBoatRaceEvent(), BOAT_RACE_RESULT_SECONDS);
         }, Math.max(1200, goalMs));
+      },
+
+      // 結果画面の締めの実況。「2連単、〇-〇、〇.〇倍」→「ではまた次回お会いしましょう」を
+      // 落ち着いた喋り方で続けて読み上げる（前の音声を消さないよう間を取る）。
+      _speakBoatRaceOutro() {
+        const st = this.boatRaceState;
+        if (!st || !st.rankResult) return;
+        this.setBoatRaceSpeechRate(BOAT_RACE_SPEECH_RATE_CALM);
+        const a = st.rankResult[0], b = st.rankResult[1];
+        const odds = st.odds?.[`${a}-${b}`] || '';
+        // 読み上げ用は「3の5」と読ませ、字幕は「3-5」と表示する。
+        const speak1 = `2連単、${a}の${b}、${odds}倍。`;
+        const show1 = `２連単 ${a}-${b} ${odds}倍`;
+        const line2 = 'ではまた次回、お会いしましょう。';
+        this._setBoatRaceMarquee(show1, 4.5);
+        const ms = this._speakBoatRaceCalmAndEstimate(speak1);
+        clearTimeout(this.boatRaceOutroTimer);
+        this.boatRaceOutroTimer = setTimeout(() => {
+          this._setBoatRaceMarquee(line2, 4.5);
+          this._speakBoatRaceCalmAndEstimate(line2);
+        }, ms + 250);
+      },
+
+      _speakBoatRaceCalmAndEstimate(text) {
+        this._speakBoatRace(text, BOAT_RACE_SPEECH_RATE_CALM);
+        return this._estimateSpeechMs(text, BOAT_RACE_SPEECH_RATE_CALM);
       },
 
       _renderBoatRaceResult() {
@@ -7137,6 +7453,7 @@
           this._renderBoatRaceRaceScreen();
           // ゲスト側でも1回だけレース演出と実況を再生する。
           if (prevPhase !== 'race') {
+            this.setBoatRaceSpeechRate(BOAT_RACE_SPEECH_RATE_FAST);
             this._boatRaceAnnounce('スタートしました！江戸川競艇、双六記念杯、いよいよ決着です！');
             this._runBoatRaceAnimation();
           }
@@ -7145,7 +7462,9 @@
           this._renderBoatRaceBetsSummary(winningPair);
           this._showBoatRaceScreen('boatrace-result-screen');
           this._renderBoatRaceResult();
-          this.armModalAutoClose('boatrace', 'boatrace-close-btn', () => this.closeBoatRaceEvent());
+          if (prevPhase !== 'result') this._speakBoatRaceOutro();
+          this.armModalAutoClose('boatrace', 'boatrace-close-btn',
+            () => this.closeBoatRaceEvent(), BOAT_RACE_RESULT_SECONDS);
         }
       },
 
@@ -7157,8 +7476,10 @@
         clearTimeout(this.boatRaceResultShowTimer);
         clearTimeout(this.boatRaceResultCloseTimer);
         clearTimeout(this.boatRacePitTimer);
+        clearTimeout(this.boatRaceOutroTimer);
         this.boatRaceTimer = null; this.boatRaceAnimTimer = null; this.boatRaceBeepTimer = null;
-        this.boatRacePitTimer = null;
+        this.boatRacePitTimer = null; this.boatRaceOutroTimer = null;
+        this.setBoatRaceSpeechRate(BOAT_RACE_SPEECH_RATE_CALM);
         if ('speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
 
         const st = this.boatRaceState;
@@ -7425,6 +7746,125 @@
       },
 
       // ============================================================
+      // ハンバーガーメニュー（設定・使い方・利用規約・プライバシーポリシー・運営元）
+      // ============================================================
+      openMenuModal() {
+        try { sound.init(); } catch (e) {}
+        document.getElementById('menu-modal')?.classList.remove('hidden');
+      },
+
+      closeMenuModal() {
+        document.getElementById('menu-modal')?.classList.add('hidden');
+      },
+
+      openSettingsModal() {
+        this.closeMenuModal();
+        this.refreshSettingsModal();
+        document.getElementById('settings-modal')?.classList.remove('hidden');
+      },
+
+      closeSettingsModal() {
+        document.getElementById('settings-modal')?.classList.add('hidden');
+      },
+
+      _paintSettingToggle(id, on) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = on ? 'ON' : 'OFF';
+        el.className = on
+          ? 'px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+          : 'px-2.5 py-1 rounded-full text-[11px] font-black bg-slate-800 text-slate-400 border border-slate-700';
+      },
+
+      refreshSettingsModal() {
+        this._paintSettingToggle('settings-sound-state', !(typeof sound !== 'undefined' && sound.isMuted));
+        this._paintSettingToggle('settings-speech-state', this.speechEnabled !== false);
+        this._paintSettingToggle('settings-auto-state', !!this.autoMode);
+        const note = document.getElementById('settings-clear-note');
+        if (note) {
+          const hasSolo = !!localStorage.getItem(SOLO_SAVE_KEY);
+          const hasMp = !!localStorage.getItem(MP_SAVE_KEY);
+          note.innerText = (hasSolo || hasMp)
+            ? `保存中：${[hasSolo ? 'ひとりで遊ぶ' : null, hasMp ? 'マルチプレイ' : null].filter(Boolean).join('・')}`
+            : '保存データはありません';
+        }
+      },
+
+      settingsToggleSound() {
+        this.toggleBGM();
+        this._saveUserSettings();
+        this.refreshSettingsModal();
+      },
+
+      settingsToggleSpeech() {
+        this.speechEnabled = this.speechEnabled === false;
+        if (!this.speechEnabled && 'speechSynthesis' in window) {
+          try { window.speechSynthesis.cancel(); } catch (e) {}
+        }
+        this._saveUserSettings();
+        this.refreshSettingsModal();
+      },
+
+      settingsToggleAuto() {
+        this.toggleAutoMode();
+        this.refreshSettingsModal();
+      },
+
+      // 設定からインストール案内を開く時は、重ならないよう設定を閉じる。
+      settingsOpenInstall() {
+        this.closeSettingsModal();
+        this.openInstallModal();
+      },
+
+      settingsClearSaves() {
+        try {
+          localStorage.removeItem(SOLO_SAVE_KEY);
+          localStorage.removeItem(MP_SAVE_KEY);
+        } catch (e) {}
+        this.checkSaveData();
+        this.refreshSettingsModal();
+      },
+
+      _saveUserSettings() {
+        try {
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+            muted: !!(typeof sound !== 'undefined' && sound.isMuted),
+            speech: this.speechEnabled !== false
+          }));
+        } catch (e) {}
+      },
+
+      loadUserSettings() {
+        let s = null;
+        try { s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch (e) {}
+        this.speechEnabled = !s || s.speech !== false;
+        if (s && s.muted && typeof sound !== 'undefined' && !sound.isMuted) this.toggleBGM();
+      },
+
+      openDocModal(key) {
+        this.closeMenuModal();
+        const doc = INFO_DOCS[key];
+        if (!doc) return;
+        const titleEl = document.getElementById('doc-modal-title');
+        const bodyEl = document.getElementById('doc-modal-body');
+        if (titleEl) titleEl.innerText = doc.title;
+        if (bodyEl) { bodyEl.innerHTML = doc.body; bodyEl.scrollTop = 0; }
+        if (key === 'terms') {
+          const st = document.getElementById('doc-opendata-state');
+          if (st) {
+            st.innerHTML = this.openDataInfo
+              ? `<br><span style="color:#34d399">取り込み済み：${this.openDataInfo.count}件${this.openDataInfo.updated ? `（データ更新日 ${this.openDataInfo.updated}）` : ''}</span>`
+              : `<br><span style="color:#64748b">※このバージョンでは未読込（内蔵の施設データで動作中）</span>`;
+          }
+        }
+        document.getElementById('doc-modal')?.classList.remove('hidden');
+      },
+
+      closeDocModal() {
+        document.getElementById('doc-modal')?.classList.add('hidden');
+      },
+
+      // ============================================================
       // マルチプレイ：在席（プレゼンス）管理
       // 各端末が4秒ごとに自分の心拍を書き込み、「値が更新されたか」で生存を判定する。
       // 端末ごとの時計のズレに影響されないよう、書かれた時刻そのものではなく
@@ -7529,7 +7969,8 @@
           specialEventUsed: !!this.specialEventUsed,
           recentDestinationNames: this.recentDestinationNames || [],
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
-          planeGrantedThisLeg: !!this.planeGrantedThisLeg
+          planeGrantedThisLeg: !!this.planeGrantedThisLeg,
+          goaledRestaurants: this.goaledRestaurants || []
         };
       },
 
@@ -7675,6 +8116,7 @@
 
       async resumeMultiplayerGame() {
         this.closeResumeChoiceModal();
+        await this.ensureGameDataReady();
         const save = this._readSave(MP_SAVE_KEY);
         if (!save) { alert('マルチプレイの保存データが見つかりませんでした。'); return; }
 
@@ -7719,6 +8161,7 @@
         this.recentDestinationNames = Array.isArray(save.recentDestinationNames) ? save.recentDestinationNames : [];
         this.helicopterGrantedThisLeg = !!save.helicopterGrantedThisLeg;
         this.planeGrantedThisLeg = !!save.planeGrantedThisLeg;
+        this.goaledRestaurants = Array.isArray(save.goaledRestaurants) ? save.goaledRestaurants : [];
 
         // ホストの端末IDは再ログインで変わることがあるため、保存時のホストUIDを今のUIDに置き換える。
         const savedHostUid = save.hostUid;
