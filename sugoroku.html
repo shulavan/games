@@ -93,6 +93,20 @@
       display: none !important;
     }
 
+    /* 陣取りで塗られた施設アイコン（プレイヤーの色の枠とうすい色の背景） */
+    .facility-poi.owned {
+      border-width: 4px;
+      box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.45);
+    }
+    .facility-poi .owner-dot {
+      position: absolute;
+      right: 2px; bottom: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.85);
+    }
+    .facility-poi { position: relative; }
+
     /* 画面下に固定表示される広告の高さぶんだけ、下に余白を作る（サイコロが隠れないように） */
     :root { --ad-reserve: 0px; --ad-slot-h: 0px; }
     footer { padding-bottom: calc(0.75rem + var(--ad-reserve)) !important; }
@@ -1543,6 +1557,12 @@
           <h4>江戸川競艇</h4>
           <p>競艇場に止まると、次のターンでミニゲーム「江戸川競艇」が始まります。予想屋に100円払って予想を聞き、2連単の舟券を買って的中すれば払戻金がもらえます。他のプレイヤーも参加費￥1,000で参加できます。終わった次のターンには「引続き江戸川競艇で遊びますか？」と聞かれ、遊ぶ場合はそのターンを競艇に使います。</p>
 
+          <h4>陣取り（地図が4色に染まっていきます）</h4>
+          <p>だれかがゴールすると、<strong>ゴール地点の周辺300mにある施設の絵文字アイコンが、その人の色</strong>になります。
+          遊ぶほど江戸川区の地図が4人の色に染まっていきます。すでに他の人の色になっている施設も、
+          あとからゴールした人が塗り替えられます（奪われた数はログに出ます）。
+          自分の陣地の数は、下のプレイヤーカードとゴール画面で確認できます。</p>
+
           <h4>ゴールしたあと</h4>
           <p>だれかがゴールすると順位とご祝儀が決まり、ルーレットで次の目的地が選ばれます。次の目的地は江戸川区内から選ばれ、直前と同じ場所は選ばれません。ゲームは繰り返し続けられます。</p>
 
@@ -1845,18 +1865,18 @@
     // weight     : 「〇〇周辺」を選ぶときの優先度（小さいほど選ばれやすい。目印になりやすい施設を優先）
     const OPENDATA_GROUPS = [
       // 公園・水辺（公園と親水公園は内蔵のPARKSに合流＝ルーレットの「公園」にも反映）
-      { key: 'kouen',       emoji: '⛲️', into: PARKS,         markerMax: 0,  weight: 0.7 },
-      { key: 'sinsuikouen', emoji: '🌊', into: PARKS,         markerMax: 0,  weight: 0.7 },
-      { key: 'ryokudou',    emoji: '🌿', into: OD_RYOKUDOU,   markerMax: 8,  weight: 0.8 },
+      { key: 'kouen',       emoji: '⛲️', into: PARKS,         markerMax: 0,  weight: 0.7, wiki: true },
+      { key: 'sinsuikouen', emoji: '🌊', into: PARKS,         markerMax: 0,  weight: 0.7, wiki: true },
+      { key: 'ryokudou',    emoji: '🌿', into: OD_RYOKUDOU,   markerMax: 8,  weight: 0.8, wiki: true },
       { key: 'jabujabu',    emoji: '💦', into: OD_JABUJABU,   markerMax: 5,  weight: 0.8 },
       // 文化・スポーツ・図書館
-      { key: 'library',     emoji: '📚', into: OD_LIBRARIES,  markerMax: 15, weight: 0.7 },
-      { key: 'sports',      emoji: '🏟', into: OD_SPORTS,     markerMax: 10, weight: 0.7 },
-      { key: 'bunka',       emoji: '🎭', into: OD_CULTURE,    markerMax: 10, weight: 0.8 },
-      { key: 'reku',        emoji: '🎡', into: OD_REKU,       markerMax: 8,  weight: 0.6 },
+      { key: 'library',     emoji: '📚', into: OD_LIBRARIES,  markerMax: 15, weight: 0.7, wiki: true },
+      { key: 'sports',      emoji: '🏟', into: OD_SPORTS,     markerMax: 10, weight: 0.7, wiki: true },
+      { key: 'bunka',       emoji: '🎭', into: OD_CULTURE,    markerMax: 10, weight: 0.8, wiki: true },
+      { key: 'reku',        emoji: '🎡', into: OD_REKU,       markerMax: 8,  weight: 0.6, wiki: true },
       { key: 'kyouiku',     emoji: '🎒', into: OD_KYOIKU,     markerMax: 0,  weight: 0.9 },
       // 役所・公共
-      { key: 'kuyakusyo',   emoji: '🏛', into: OD_OFFICES,    markerMax: 8,  weight: 0.7 },
+      { key: 'kuyakusyo',   emoji: '🏛', into: OD_OFFICES,    markerMax: 8,  weight: 0.7, wiki: true },
       { key: 'kanchou',     emoji: '📑', into: OD_OFFICES,    markerMax: 0,  weight: 0.9 },
       { key: 'yubin',       emoji: '🏣', into: POST_OFFICES,  markerMax: 0,  weight: 0.9 },
       // 医療・保健
@@ -1868,7 +1888,7 @@
       { key: 'police',      emoji: '👮', into: POLICE_STATIONS, markerMax: 0, weight: 0.9 },
       // 学校・こども
       { key: 'school',      emoji: '🏫', into: SCHOOLS,       markerMax: 0,  weight: 0.8 },
-      { key: 'highschool',  emoji: '🎓', into: OD_HIGHSCHOOL, markerMax: 8,  weight: 0.8 },
+      { key: 'highschool',  emoji: '🎓', into: OD_HIGHSCHOOL, markerMax: 8,  weight: 0.8, wiki: true },
       { key: 'hoiku',       emoji: '🧒', into: OD_HOIKU,      markerMax: 0,  weight: 1.2 },
       { key: 'kosodate',    emoji: '👶', into: OD_KOSODATE,   markerMax: 0,  weight: 1.25 },
       // 福祉・熟年
@@ -1889,7 +1909,15 @@
     // 表示範囲の中で「目印になりやすいもの・中心に近いもの」から順に置き、
     // 近すぎる場所は重ならないよう間引きます。
     const FACILITY_MARKER_LIMIT = 30;
-    const FACILITY_MARKER_MIN_GAP_M = 45;
+    const FACILITY_MARKER_MIN_GAP_M = 30;
+
+    // ============================================================
+    // 陣取り：ゴールするたびに、その周辺の施設アイコンがゴールした人の色になる。
+    // 遊ぶほど江戸川区の地図が4人の色に染まっていきます。
+    //   ・塗る範囲：ゴール地点から半径300m
+    //   ・すでに他の人の色でも、あとからゴールした人が上書きします
+    // ============================================================
+    const TERRITORY_RADIUS_M = 300;
 
     // ============================================================
     // 楽天トラベル（楽天ウェブサービス）で江戸川区の宿泊施設を取得して🏩で表示
@@ -1912,6 +1940,10 @@
     const RAKUTEN_CACHE_KEY = "edogawa_sugoroku_rakuten_hotels_v1";
     const RAKUTEN_CACHE_HOURS = 24;
     const RAKUTEN_HOTELS = [];   // 取得した宿泊施設（🏩）
+
+    // ホットペッパーグルメから取得した飲食店（🍽）。写真・ホームページ付きなので、
+    // 地図にも表示し、区オープンデータの飲食店の写真を補うためにも使います。
+    const HOTPEPPER_SHOPS = [];
 
     const DESTINATION_PRESETS = {
       // 中身は /data/sugoroku-data.json から読み込みます（「公園」はPARKSと同じ配列）
@@ -2240,6 +2272,7 @@
       autoMode: false,
       speechEnabled: true,   // メニューの「設定」で切り替える音声読み上げ
       goaledRestaurants: [], // これまでゴールした飲食店（🍴として地図に残す）
+      territory: {},          // 陣取り：施設ごとに「誰の色か」（キー→プレイヤーID）
       isMultiplayer: false,
       gameStateVersion: 0,
       lastAppliedEventSeq: 0,
@@ -2972,7 +3005,8 @@
           boatRace: this.boatRaceState || null,
           quiz: this.quizSyncState || null,
           kingyo: this.kingyoSyncState || null,
-          goaledRestaurants: this.goaledRestaurants || []
+          goaledRestaurants: this.goaledRestaurants || [],
+          territory: this.territory || {}
         };
 
         try {
@@ -3029,11 +3063,16 @@
         this.goalNodeIdx = gs.goalNodeIdx;
         if (gs.destination) this.currentDestination = gs.destination;
 
-        // ゴールした飲食店（🍴）の一覧はホストが持っているものに合わせる
+        // ゴールした飲食店（🍴）と陣取りの状態は、ホストが持っているものに合わせる
         if (!this.isHost && Array.isArray(gs.goaledRestaurants)) {
           const before = (this.goaledRestaurants || []).length;
           this.goaledRestaurants = gs.goaledRestaurants;
           if (this.goaledRestaurants.length !== before) this.renderFacilityMarkers(true);
+        }
+        if (!this.isHost && gs.territory && typeof gs.territory === 'object') {
+          const beforeN = Object.keys(this.territory || {}).length;
+          this.territory = gs.territory;
+          if (Object.keys(this.territory).length !== beforeN) this.renderFacilityMarkers(true);
         }
 
         if (!this.isHost && boardChanged) {
@@ -3332,6 +3371,7 @@
         this.tryFullscreen();
         this.isMultiplayer = false;
         this.goaledRestaurants = [];   // 新しいゲームでは🍴の履歴をリセット
+        this.territory = {};           // 陣取りもリセット
         // 「ひとりで遊ぶ」は新規ゲーム。既存の途中セーブは明示的に新規開始した時だけ置き換える。
         try { localStorage.removeItem(SOLO_SAVE_KEY); } catch (_) {}
 
@@ -3393,6 +3433,7 @@
           this.helicopterGrantedThisLeg = !!state.helicopterGrantedThisLeg;
           this.planeGrantedThisLeg = !!state.planeGrantedThisLeg;
           this.goaledRestaurants = Array.isArray(state.goaledRestaurants) ? state.goaledRestaurants : [];
+          this.territory = (state.territory && typeof state.territory === 'object') ? state.territory : {};
           this.players = state.players;
 
           // 念のため各プレイヤーの保存値を正規化。既存のセーブデータを壊さず、
@@ -3499,6 +3540,7 @@
           seen.add(g.into);
           groups.push([g.into, g.emoji, g.weight || 1]);
         });
+        groups.push([HOTPEPPER_SHOPS, '🍽', 0.9]);          // ホットペッパーの飲食店
         groups.push([RAKUTEN_HOTELS, '🏩', 0.7]);           // 楽天トラベルの宿泊施設
         groups.push([this.goaledRestaurants || [], '🍴', 0.3]); // ゴールした飲食店
         return groups;
@@ -3509,9 +3551,16 @@
       },
 
       _createFacilityMarker(loc, emoji) {
+        // 陣取りで塗られている施設は、そのプレイヤーの色で表示する
+        const owner = this.territoryOwnerOf(loc);
+        const color = owner ? (owner.color && owner.color.stroke) || '#f59e0b' : null;
+        const style = color
+          ? ` style="border-color:${color};background:${this._rgba(color, 0.42)}"`
+          : '';
+        const dot = color ? `<span class="owner-dot" style="background:${color}"></span>` : '';
         const icon = L.divIcon({
           className: 'facility-poi-icon',
-          html: `<div class="facility-poi">${emoji}</div>`,
+          html: `<div class="facility-poi${color ? ' owned' : ''}"${style}>${emoji}${dot}</div>`,
           iconSize: [78, 78],
           iconAnchor: [39, 39]
         });
@@ -3555,7 +3604,8 @@
           (list || []).forEach(loc => {
             if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
             if (loc.lat < minLat || loc.lat > maxLat || loc.lng < minLng || loc.lng > maxLng) return;
-            cand.push({ loc, emoji, score: this.haversineMeters(c, loc) * (weight || 1) });
+            const w = Number.isFinite(loc.w) ? loc.w : (weight || 1);
+            cand.push({ loc, emoji, score: this.haversineMeters(c, loc) * w });
           });
         });
         // 混み合っている時は、目印になりやすいものと中心に近いものを優先。
@@ -3584,6 +3634,68 @@
           this.facilityMarkerRefs.get(x.loc.name).push(marker);
         });
         this.facilityLayerMarkers = Array.from(this._facilityMarkerByKey.values());
+      },
+
+      // ============================================================
+      // 陣取り（ゴールした人の色で地図を染める）
+      //  ・施設ごとに「誰の色か」を this.territory に持ちます
+      //  ・ゴールするたびに、その周辺300mの施設をゴールした人の色に塗り替えます
+      //  ・保存データとマルチプレイの同期にも含めます
+      // ============================================================
+      _rgba(hex, alpha) {
+        const m = String(hex || '').match(/^#?([0-9a-f]{6})$/i);
+        if (!m) return `rgba(148,163,184,${alpha})`;
+        const n = parseInt(m[1], 16);
+        return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+      },
+
+      // 陣取りの管理キーは座標だけにしています（短くて保存・同期が軽く、
+      // 同じ場所にある別データ＝🍽と🍴などをまとめて1つの陣地として扱えます）
+      territoryKey(loc) {
+        if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return null;
+        return `${loc.lat.toFixed(5)},${loc.lng.toFixed(5)}`;
+      },
+
+      territoryOwnerOf(loc) {
+        const key = this.territoryKey(loc);
+        if (!key || !this.territory) return null;
+        const id = this.territory[key];
+        if (id === undefined || id === null) return null;
+        return (this.players || []).find(p => p && p.id === id) || null;
+      },
+
+      territoryCount(playerId) {
+        if (!this.territory) return 0;
+        let n = 0;
+        for (const k in this.territory) if (this.territory[k] === playerId) n++;
+        return n;
+      },
+
+      // ゴール地点のまわりの施設を、その人の色に塗る。塗った数を返す。
+      claimTerritory(player, center, radius = TERRITORY_RADIUS_M) {
+        if (!player || !center || !Number.isFinite(center.lat)) return 0;
+        this.territory = this.territory || {};
+        let claimed = 0, stolen = 0;
+        this._mapPoiGroups().forEach(([list]) => {
+          (list || []).forEach(loc => {
+            if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
+            if (this.haversineMeters(center, loc) > radius) return;
+            const key = this.territoryKey(loc);
+            if (!key) return;
+            const before = this.territory[key];
+            if (before === player.id) return;
+            if (before !== undefined && before !== null) stolen++;
+            this.territory[key] = player.id;
+            claimed++;
+          });
+        });
+        if (claimed) {
+          this.addLog(`🎨 ${player.name} が ${center.name || 'ゴール地点'} の周辺 ${claimed}施設を自分の色にしました` +
+            (stolen ? `（うち ${stolen}施設は他のプレイヤーから奪取）` : ''));
+          if (this.map) this.renderFacilityMarkers(true);
+          this.updateHUD();
+        }
+        return claimed;
       },
 
       // 地図を動かした／ズームした時に描き直す（連続で動く間はまとめて1回）
@@ -3725,6 +3837,48 @@
         return out;
       },
 
+      // ============================================================
+      // ホットペッパーの飲食店を地図に足す／区オープンデータの飲食店の写真を補う
+      // ============================================================
+      mergeHotpepperShops(shops) {
+        if (!Array.isArray(shops) || !shops.length) return;
+        const norm = (v) => String(v || '').replace(/[\s　]/g, '').toLowerCase();
+        const known = new Set(HOTPEPPER_SHOPS.map(x => norm(x.name)));
+        let added = 0;
+        shops.forEach(sp => {
+          if (!sp || !Number.isFinite(sp.lat) || !Number.isFinite(sp.lng)) return;
+          if (known.has(norm(sp.name))) return;
+          known.add(norm(sp.name));
+          HOTPEPPER_SHOPS.push({ ...sp, emoji: sp.emoji || '🍽', fromHotpepper: true });
+          added++;
+          // 区オープンデータ側に同じ名前の飲食店があれば、写真などを補う
+          const same = OD_INSHOKU.find(x => x && norm(x.name) === norm(sp.name));
+          if (same) {
+            if (!same.photo && sp.photo) same.photo = sp.photo;
+            if (!same.url && sp.url) same.url = sp.url;
+            if (!same.tel && sp.tel) same.tel = sp.tel;
+          }
+        });
+        if (!added) return;
+        if (HOTPEPPER_SHOPS.length > 200) HOTPEPPER_SHOPS.splice(0, HOTPEPPER_SHOPS.length - 200);
+        this._facilityPoiCache = null;
+        if (this.map) this.renderFacilityMarkers(true);
+      },
+
+      // 写真の無い飲食店をタップした時、その場所のまわりをホットペッパーで調べて写真を補う。
+      async enrichRestaurantFromHotpepper(info) {
+        if (!info || !info.name || !HOTPEPPER_PROXY_URL) return null;
+        const norm = (v) => String(v || '').replace(/[\s　]/g, '').toLowerCase();
+        const hit = HOTPEPPER_SHOPS.find(x => norm(x.name) === norm(info.name));
+        if (hit) return hit;
+        this._hotpepperTried = this._hotpepperTried || new Set();
+        if (this._hotpepperTried.has(norm(info.name))) return null;
+        this._hotpepperTried.add(norm(info.name));
+        const shops = await this.fetchNearbyRestaurants({ lat: info.lat, lng: info.lng });
+        if (!shops) return null;
+        return shops.find(x => norm(x.name) === norm(info.name)) || null;
+      },
+
       // ゴールした飲食店を🍴で地図に残す（盤面が変わっても消えない）
       addGoaledRestaurant(place) {
         if (!place || !place.name || !Number.isFinite(place.lat)) return;
@@ -3783,14 +3937,21 @@
           rows.forEach(r => { if (r) arr.push(r); });
         };
         const f = data.facilities || {};
-        fill(STATIONS_FOR_MAP, f.stations);
-        fill(BUS_STOPS_FOR_MAP, f.busStops);
-        fill(POLICE_STATIONS, f.police);
-        fill(HOSPITALS, f.hospitals);
-        fill(PARKS, f.parks);
-        fill(SCHOOLS, f.schools);
-        fill(POST_OFFICES, f.postOffices);
-        fill(TEMPLES_SHRINES, f.temples);
+        // wiki:true の種類だけ、詳細を開いた時にWikipediaも調べます
+        // （交番・クリニック・小中学校などは同名の記事が無く、
+        //   別の施設の写真が出てしまうため対象外にしています）
+        const fillW = (arr, rows, w, wiki) => {
+          fill(arr, rows);
+          arr.forEach(x => { if (x) { x.w = w; if (wiki) x.wiki = true; } });
+        };
+        fillW(BUS_STOPS_FOR_MAP, f.busStops, 0.9);
+        fillW(POLICE_STATIONS, f.police, 0.85);
+        fillW(HOSPITALS, f.hospitals, 1);
+        fillW(SCHOOLS, f.schools, 0.8);
+        fillW(POST_OFFICES, f.postOffices, 0.9);
+        fillW(STATIONS_FOR_MAP, f.stations, 0.4, true);
+        fillW(PARKS, f.parks, 0.7, true);
+        fillW(TEMPLES_SHRINES, f.temples, 0.8, true);
 
         const d = data.destinations || {};
         Object.keys(DESTINATION_PRESETS).forEach(cat => {
@@ -3877,6 +4038,8 @@
               url: r.u ? expand(r.u) : '',
               photo: r.p ? expand(r.p) : '',
               emoji: g.emoji,
+              wiki: !!g.wiki,          // Wikipediaで説明を探してよい種類か
+              w: g.weight || 1,        // 「〇〇の近くの…」に使ってよいかの優先度
               fromOpenData: true
             };
             g.into.push(item);
@@ -4003,6 +4166,55 @@
         // 公共施設（公園・図書館・駅・区の施設など）は Wikipedia からも
         // 写真と説明を取ってきて補います。お店や宿泊施設は対象外です。
         this._loadWikipediaForFacility(info);
+        // 飲食店で写真が無い場合は、ホットペッパーグルメから写真を探して補います。
+        this._loadHotpepperPhotoForFacility(info);
+      },
+
+      async _loadHotpepperPhotoForFacility(info) {
+        if (!info || info.photo || info.fromRakuten) return;
+        const isRestaurant = this.isRestaurantDestination(info) ||
+          OD_INSHOKU.some(x => x && x.name === info.name) ||
+          (this.goaledRestaurants || []).some(x => x && x.name === info.name);
+        if (!isRestaurant) return;
+        const seq = (this._hpSeq = (this._hpSeq || 0) + 1);
+        const found = await this.enrichRestaurantFromHotpepper(info);
+        if (!found || seq !== this._hpSeq) return;
+        if (this._facilityModalTarget && this._facilityModalTarget.name !== info.name) return;
+        // 見つかった情報をその場の表示に反映する（データ側にも残す）
+        if (found.photo) {
+          const img = document.getElementById('facility-photo');
+          const none = document.getElementById('facility-photo-none');
+          if (img) {
+            img.onerror = () => { img.classList.add('hidden'); if (none) none.classList.remove('hidden'); };
+            img.onload = () => { img.classList.remove('hidden'); if (none) none.classList.add('hidden'); };
+            img.src = found.photo;
+          }
+          info.photo = found.photo;
+        }
+        if (found.url) {
+          info.url = found.url;
+          if (this._facilityModalTarget) this._facilityModalTarget.url = found.url;
+          const homeBtn = document.getElementById('facility-home-btn');
+          if (homeBtn) { homeBtn.classList.remove('hidden'); homeBtn.innerText = '🌐 お店のページを開く'; }
+        }
+        if (found.tel && !info.tel) {
+          info.tel = found.tel;
+          const telRow = document.getElementById('facility-tel-row');
+          const telLink = document.getElementById('facility-tel');
+          if (telRow && telLink) {
+            telLink.innerText = found.tel;
+            telLink.href = `tel:${String(found.tel).replace(/[^0-9+]/g, '')}`;
+            telRow.classList.remove('hidden');
+          }
+        }
+        const credit = document.getElementById('facility-credit');
+        if (credit) {
+          const t = credit.innerText || '';
+          if (!t.includes('ホットペッパー')) {
+            credit.innerText = [t, '写真：ホットペッパーグルメ Webサービス'].filter(Boolean).join(' ／ ');
+            credit.classList.remove('hidden');
+          }
+        }
       },
 
       // ============================================================
@@ -4010,14 +4222,34 @@
       //  ・出典表示が必要なため、モーダルに出典とリンクを必ず出します（CC BY-SA）
       //  ・一度調べた施設は端末に保存して、同じ施設で何度も通信しません
       // ============================================================
-      _isPublicFacility(info) {
-        if (!info) return false;
-        if (info.fromRakuten) return false;                    // 宿泊施設は対象外
-        const shopLists = [OD_INSHOKU, OD_SUPER, OD_SHOPS, OD_YASAI, OD_CAFE, OD_SENTO];
-        if (shopLists.some(list => (list || []).some(x => x && x.name === info.name))) return false;
-        if ((this.goaledRestaurants || []).some(x => x && x.name === info.name)) return false;
-        if ((DESTINATION_PRESETS['飲食店'] || []).some(x => x && x.name === info.name)) return false;
-        return true;
+      // Wikipediaを調べるのは「同名の記事がありそうな施設」だけに限定します。
+      // 交番・クリニック・小中学校・保育園・お店などは、名前が一致する記事が無く、
+      // 検索でよく似た別の施設（例：東小松川交番→小松川警察署）が出てしまうため対象外。
+      _wikiAllowed(info) {
+        if (!info || !info.name) return false;
+        if (info.fromRakuten) return false;
+        return info.wiki === true || info.name === BOAT_RACE_LOC.name;
+      },
+
+      // 施設名と記事名が「同じものを指している」と言えるかを厳しく判定する。
+      _wikiTitleMatches(facilityName, title) {
+        const norm = (v) => String(v || '')
+          .replace(/[（(][^）)]*[）)]/g, '')
+          .replace(/[\s　・,、.。]/g, '')
+          .replace(/^東京都/, '').replace(/^江戸川区/, '')
+          .toLowerCase();
+        const a = norm(facilityName), b = norm(title);
+        if (!a || !b) return false;
+        if (a === b) return true;
+        // 「小岩公園」⊂「小岩公園(甲和亭)」のような包含だけ許可（4文字以上で誤爆を防ぐ）
+        if (a.length >= 4 && b.length >= 4 && (a.includes(b) || b.includes(a))) {
+          // 施設の種類を表す語（公園・図書館・駅など）が両方に入っていること
+          const kinds = ['公園', '緑道', '図書館', '体育館', '球場', 'プール', '駅', '区民館',
+                         '会館', 'ホール', '神社', '寺', '競艇', '高等学校', '区役所', '水族園', '動物園'];
+          const kind = kinds.find(k => a.includes(k));
+          if (kind && b.includes(kind)) return true;
+        }
+        return false;
       },
 
       _wikiCacheRead() {
@@ -4053,7 +4285,7 @@
         if (extract) { extract.classList.add('hidden'); extract.innerText = ''; }
         if (wikiBtn) wikiBtn.classList.add('hidden');
         this._facilityWikiUrl = null;
-        if (!info || !this._isPublicFacility(info)) return;
+        if (!info || !this._wikiAllowed(info)) return;
 
         const seq = (this._wikiSeq = (this._wikiSeq || 0) + 1);
         const q = this._wikiQueryFor(info.name);
@@ -4086,7 +4318,9 @@
         if (row) row.classList.remove('hidden');
         if (status) status.classList.add('hidden');
         if (extract && data.extract) {
-          extract.innerText = data.extract;
+          extract.innerHTML =
+            `<span class="text-[10px] text-sky-300 font-bold">Wikipedia「${data.title}」より</span><br>` +
+            String(data.extract).replace(/[<>]/g, '');
           extract.classList.remove('hidden');
         }
         if (wikiBtn && data.url) wikiBtn.classList.remove('hidden');
@@ -4127,17 +4361,16 @@
           };
         };
         try {
-          // ① 施設名そのままのページを探す
-          let resp = await fetch(`${api}?action=query&${common}&titles=${encodeURIComponent(query)}`, { cache: 'no-store' });
-          if (resp.ok) {
+          // 施設名と同じ名前の記事だけを使う（あいまい検索はしません）。
+          // 「〇〇公園（△△）」のような表記ゆれに備えて、括弧を外した名前も試します。
+          const candidates = [query];
+          const bare = query.replace(/[（(][^）)]*[）)]/g, '').trim();
+          if (bare && bare !== query) candidates.push(bare);
+          for (const t of candidates) {
+            const resp = await fetch(`${api}?action=query&${common}&titles=${encodeURIComponent(t)}`, { cache: 'no-store' });
+            if (!resp.ok) continue;
             const hit = pick(await resp.json());
-            if (hit) return hit;
-          }
-          // ② 無ければ「江戸川区 〇〇」で検索して先頭のページを使う
-          resp = await fetch(`${api}?action=query&${common}&generator=search&gsrlimit=1&gsrsearch=${encodeURIComponent(query + ' 江戸川区')}`, { cache: 'no-store' });
-          if (resp.ok) {
-            const hit = pick(await resp.json());
-            if (hit) return hit;
+            if (hit && this._wikiTitleMatches(query, hit.title)) return hit;
           }
         } catch (e) {
           console.info('Wikipediaの取得に失敗しました:', e && e.message);
@@ -5061,6 +5294,7 @@
           const pRemaining = this.remainingSquares(p) === null ? null : this.remainingSquaresLabel(p);
           // 離脱した参加者はグレーアウトして「離脱」を表示（ゲームは止めない）
           const offline = this.isPlayerOffline(p);
+          const terr = this.territoryCount(p.id);   // 陣取りで塗った施設の数
           return `
             <div onclick="EdogawaSugoroku.panToPlayer(${idx})" class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} ${offline ? 'opacity-40 grayscale' : ''} border p-2 rounded-xl flex flex-col justify-between transition cursor-pointer active:scale-95 relative">
               <div class="flex items-center justify-between">
@@ -5070,6 +5304,7 @@
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold ${p.money < 0 ? 'text-rose-400' : 'text-amber-400'}">${this.formatMoneyMan(p.money)}</div>
               <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
+              ${terr ? `<div class="text-[9px] font-bold" style="color:${p.color.stroke || '#f59e0b'}">🎨 陣地${terr}</div>` : ''}
               ${offline ? '<div class="absolute top-1 left-1 px-1 rounded bg-slate-950/85 border border-slate-600 text-[8px] font-black text-slate-300">離脱</div>' : ''}
             </div>
           `;
@@ -6424,7 +6659,9 @@
         // （ゴール演出中は次のupdateHUDまで古い金額が残ってしまうため）。
         this.updateHUD();
 
-        document.getElementById("goal-winner-text").innerText = `${player.name} が ${this.currentDestination.name} に先着ゴール！`;
+        document.getElementById("goal-winner-text").innerText =
+          `${player.name} が ${this.currentDestination.name} に先着ゴール！` +
+          `（陣地 ${this.territoryCount(player.id)}施設）`;
         document.getElementById("category-select-section").classList.remove("hidden");
         document.getElementById("category-cpu-countdown").classList.add("hidden");
         document.getElementById("roulette-section").classList.add("hidden");
@@ -6442,8 +6679,11 @@
           if (this.isRestaurantDestination(this.currentDestination)) {
             this.addGoaledRestaurant(this.currentDestination);
           }
+          // 陣取り：ゴール地点の周辺300mの施設アイコンを、この人の色に塗る
+          const claimed = this.claimTerritory(player, this.currentDestination);
           this.showFacilityDetail(this.currentDestination, {
             heading: `🏁 ゴール地点：${player.name} が到達`,
+            note: claimed ? `🎨 まわりの ${claimed}施設が ${player.name} の色になりました（陣地 計${this.territoryCount(player.id)}施設）` : '',
             autoCloseSec: 3
           });
         }
@@ -6490,11 +6730,25 @@
           if (data.error || !data.shops || !data.shops.length) return null;
           // この双六は「江戸川双六」なので、江戸川区の外にある店舗は目的地の候補にしない。
           // （APIは半径指定のため、浦安市・市川市・江東区などの店舗も返ってくる）
-          // 写真・ホームページ・電話はプロキシが返していれば施設詳細モーダルで使う
+          // 写真・ホームページ・電話を拾う。ホットペッパーの元データは
+          // photo:{mobile:{l},pc:{l}} / urls:{pc} のような入れ子なので、両方に対応する。
+          const pickStr = (...cands) => {
+            for (const c of cands) {
+              if (typeof c === 'string' && c) return c;
+              if (c && typeof c === 'object') {
+                const v = pickStr(c.l, c.large, c.pc, c.mobile, c.m, c.s);
+                if (v) return v;
+              }
+            }
+            return '';
+          };
           const all = data.shops.map(s => ({
             name: s.name, lat: Number(s.lat), lng: Number(s.lng), address: s.address || '',
-            tel: s.tel || '', url: s.url || s.urls || '',
-            photo: s.photo || s.photo_l || s.image || '', emoji: '🍴'
+            tel: pickStr(s.tel, s.telephone, s.phone),
+            url: pickStr(s.url, s.urls, s.coupon_urls),
+            photo: pickStr(s.photo, s.photo_l, s.image, s.logo_image),
+            genre: pickStr(s.genre && s.genre.name, s.genre, s.catch),
+            emoji: '🍽', fromHotpepper: true
           }));
           const inWard = all.filter(s => isInsideEdogawaWard(s.lat, s.lng) &&
             !/(浦安|市川市|船橋|葛飾区|江東区|墨田区|足立区|足立|千葉県)/.test(s.address || ''));
@@ -6502,6 +6756,8 @@
             console.warn('近くの飲食店が江戸川区内に見つかりませんでした（固定リストを使用します）');
             return null;
           }
+          // 取得した店舗は地図にも🍽で出す（写真つきなので詳細も見られる）
+          this.mergeHotpepperShops(inWard);
           return inWard;
         } catch(e) {
           console.error("ホットペッパーAPI取得に失敗、固定リストにフォールバックします:", e);
@@ -6789,7 +7045,8 @@
           recentDestinationNames: this.recentDestinationNames || [],
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
           planeGrantedThisLeg: !!this.planeGrantedThisLeg,
-          goaledRestaurants: this.goaledRestaurants || []
+          goaledRestaurants: this.goaledRestaurants || [],
+          territory: this.territory || {}
         };
         localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
       },
@@ -6951,6 +7208,7 @@
             this._facilityPoiCache.push([g.into, g.emoji, g.weight || 1]);
           }
         });
+        if (HOTPEPPER_SHOPS.length) this._facilityPoiCache.push([HOTPEPPER_SHOPS, '🍽', 1.2]);
         if (RAKUTEN_HOTELS.length) this._facilityPoiCache.push([RAKUTEN_HOTELS, '🏩', 0.8]);
         if ((this.goaledRestaurants || []).length) this._facilityPoiCache.push([this.goaledRestaurants, '🍴', 0.6]);
         return this._facilityPoiCache;
@@ -6963,10 +7221,13 @@
         // 距離に優先度をかけた「スコア」で比べる。距離が近くても、駅や公園のような
         // 分かりやすい目印を優先して「〇〇周辺」に出す（保育園より駅、など）。
         this._facilityPoiGroups().forEach(([list, emoji, weight]) => {
-          const w = weight || 1;
-          if (w > maxWeight) return;   // お店など「目印にしにくい」種類を除く指定
+          const groupW = weight || 1;
           (list || []).forEach(loc => {
             if (!loc || !Number.isFinite(loc.lat) || !Number.isFinite(loc.lng)) return;
+            // 同じ配列に別の種類が混ざっている場合があるので、項目ごとの優先度を優先する
+            // （例：区役所と下水道局は同じ配列だが、目印としての分かりやすさが違う）
+            const w = Number.isFinite(loc.w) ? loc.w : groupW;
+            if (w > maxWeight) return;   // お店など「目印にしにくい」種類を除く指定
             const d = this.haversineMeters(here, loc);
             if (d > maxMeters) return;
             const score = d * w;
@@ -8574,7 +8835,8 @@
           recentDestinationNames: this.recentDestinationNames || [],
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
           planeGrantedThisLeg: !!this.planeGrantedThisLeg,
-          goaledRestaurants: this.goaledRestaurants || []
+          goaledRestaurants: this.goaledRestaurants || [],
+          territory: this.territory || {}
         };
       },
 
@@ -8766,6 +9028,7 @@
         this.helicopterGrantedThisLeg = !!save.helicopterGrantedThisLeg;
         this.planeGrantedThisLeg = !!save.planeGrantedThisLeg;
         this.goaledRestaurants = Array.isArray(save.goaledRestaurants) ? save.goaledRestaurants : [];
+        this.territory = (save.territory && typeof save.territory === 'object') ? save.territory : {};
 
         // ホストの端末IDは再ログインで変わることがあるため、保存時のホストUIDを今のUIDに置き換える。
         const savedHostUid = save.hostUid;
