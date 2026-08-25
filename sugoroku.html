@@ -1204,7 +1204,7 @@
             </div>
           </button>
           <button onclick="EdogawaSugoroku.selectCategory('宿泊施設')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-2">
-            <span class="text-2xl">🏩</span>
+            <span class="text-2xl">🛏️</span>
             <div>
               <div class="text-xs font-bold text-slate-100">宿泊施設</div>
               <div class="text-[10px] text-slate-400">ホテル・旅館</div>
@@ -1626,9 +1626,9 @@
           次の目的地は江戸川区内から選ばれ、直前と同じ場所は選ばれません。ゲームは繰り返し続けられます。</p>
 
           <h4>地図の絵文字アイコン</h4>
-          <p>地図に出ている 🚉 ⛲️ 📚 ♨️ 🏥 などの絵文字をタップすると、その施設の<strong>写真・ホームページ・住所（地図ボタン）・電話番号</strong>が見られます（江戸川区オープンデータより。写真が無い施設は「No Photo」と表示されます）。</p>
+          <p>地図に出ている 🚉 ⛲️ 📚 ♨️ 🏥 などの絵文字をタップすると、その施設の<strong>写真・ホームページ・住所（地図ボタン）・電話番号</strong>が見られます（江戸川区オープンデータより。写真が無い施設は写真の枠ごと省略されます）。</p>
           <p>ゴールした時にも、その施設の紹介が3秒間表示されます。ゴールした飲食店は 🍴 として地図に残っていくので、遊ぶほど「行ったお店の地図」になっていきます。</p>
-          <p>🏩 は楽天トラベルに掲載されている江戸川区内の宿泊施設です（あらかじめ取得した一覧を表示しています）。タップすると写真・料金の目安・評価が見られ、そのまま楽天トラベルのページを開けます。</p>
+          <p>🛏️ は楽天トラベルに掲載されている江戸川区内の宿泊施設です（起動時に楽天トラベルAPIから取得します）。タップすると写真・料金の目安・評価が見られ、そのまま楽天トラベルのページを開けます。</p>
           <p>公共施設（駅・公園・図書館・区の施設など）は、区のオープンデータに写真が無い場合、ウィキペディアの写真と説明も表示します。</p>
 
           <h4>便利な機能</h4>
@@ -1667,7 +1667,7 @@
             <li>本ゲーム内の金額・順位・イベントはすべて架空のものです。現実の金銭のやり取りは一切発生しません。</li>
             <li>「江戸川競艇」は実在の競艇（ボートレース）の勝敗や払戻金とは無関係の、架空のミニゲームです。実際の公営競技の予想・投票を目的としたものではありません。</li>
             <li>本ゲームの利用により生じたいかなる損害についても、制作者は責任を負いません。</li>
-            <li>宿泊施設（🏩）の料金・評価・空室状況は取得時点のもので、実際の予約内容と異なる場合があります。ご予約前に必ず楽天トラベルの画面でご確認ください。</li>
+            <li>宿泊施設（🛏️）の料金・評価・空室状況は取得時点のもので、実際の予約内容と異なる場合があります。ご予約前に必ず楽天トラベルの画面でご確認ください。</li>
             <li>施設の写真・説明はWikipediaなど外部の情報を含み、内容の正確性は保証しません。</li>
             <li>外部の地図・API提供元の都合により、予告なく一部機能が使えなくなる場合があります。</li>
           </ul>
@@ -1707,7 +1707,7 @@
             Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a>（株式会社リクルート）
           </div>
           <div class="doc-src">
-            宿泊施設（🏩）：Supported by <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener">楽天ウェブサービス</a>（楽天トラベル／楽天グループ株式会社）<br>
+            宿泊施設（🛏️）：Supported by <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener">楽天ウェブサービス</a>（楽天トラベル／楽天グループ株式会社）<br>
             ※江戸川区内の宿泊施設は、起動時に楽天トラベルAPIから取得しています。
             通信できない時は、あらかじめ取得しておいた一覧に自動で切り替えます。
             料金・評価・空室状況は取得時点のものです。<span id="doc-hotels-state"></span><br>
@@ -1791,7 +1791,7 @@
 
           <h4>Wikipedia・楽天トラベルの情報について</h4>
           <p>施設の詳細を開いた時に、ウィキペディア日本語版へ施設名を送信して写真・説明を取得します。
-          個人を特定する情報は送信しません。宿泊施設（🏩）の情報はあらかじめ用意した一覧を読み込むだけで、
+          個人を特定する情報は送信しません。宿泊施設（🛏️）の情報はあらかじめ用意した一覧を読み込むだけで、
           楽天トラベルへの接続は行いません。</p>
 
           <h4>お子さまのご利用について</h4>
@@ -1948,7 +1948,7 @@
       { key: 'yubin',       emoji: '🏣', into: POST_OFFICES,  markerMax: 0,  weight: 0.9 },
       // 医療・保健
       { key: 'byoin',       emoji: '🏥', into: HOSPITALS,     markerMax: 0,  weight: 1.05 },
-      { key: 'kyuukyuu',    emoji: '🚑', into: OD_ER,         markerMax: 6,  weight: 0.85 },
+      { key: 'kyuukyuu',    emoji: '🏥', into: OD_ER,         markerMax: 6,  weight: 0.85 },
       { key: 'hoken',       emoji: '🩺', into: OD_HEALTH,     markerMax: 6,  weight: 0.9 },
       // 警察
       { key: 'koban',       emoji: '🚨', into: POLICE_STATIONS, markerMax: 0, weight: 0.9 },
@@ -1956,7 +1956,7 @@
       // 学校・こども
       { key: 'school',      emoji: '🏫', into: SCHOOLS,       markerMax: 0,  weight: 0.8 },
       { key: 'highschool',  emoji: '🎓', into: OD_HIGHSCHOOL, markerMax: 8,  weight: 0.8, wiki: true },
-      { key: 'hoiku',       emoji: '🧒', into: OD_HOIKU,      markerMax: 0,  weight: 1.2 },
+      { key: 'hoiku',       emoji: '🛝', into: OD_HOIKU,      markerMax: 0,  weight: 1.2 },
       { key: 'kosodate',    emoji: '👶', into: OD_KOSODATE,   markerMax: 0,  weight: 1.25 },
       // 福祉・熟年
       { key: 'fukushi',     emoji: '🏢', into: OD_WELFARE,    markerMax: 0,  weight: 1.15 },
@@ -1998,27 +1998,27 @@
       { name: '駅（バス停含む）', emoji: '🚉', sub: '交通スポット' },
       { name: '公共・スポーツ施設', emoji: '🏛', sub: '区の施設・体育館' },
       { name: '学校・神社仏閣', emoji: '⛩️', sub: '学校・お寺・神社' },
-      { name: '宿泊施設', emoji: '🏩', sub: 'ホテル・旅館' },
+      { name: '宿泊施設', emoji: '🛏️', sub: 'ホテル・旅館' },
       { name: 'その他', emoji: '📍', sub: 'お店・病院など' }
     ];
 
     // ============================================================
-    // 宿泊施設（🏩）の取り方
+    // 宿泊施設（🛏️）の取り方
     //
     //  ① 通常時：楽天トラベルAPI（楽天ウェブサービス）から、その場で取得します。
     //     ただしブラウザから直接は呼べません（CORSで弾かれ、Refererも付けられず、
     //     アクセスキーがHTMLに載って誰でも見られてしまいます）。
     //     そのためホットペッパーと同じ方式で、Google Apps Script の中継を経由します。
     //     中継の作り方は rakuten_proxy.gs.txt を参照してください。
-    //     ここが空欄のままだと②だけを使います（🏩は出ますが最新にはなりません）。
+    //     ここが空欄のままだと②だけを使います（🛏️は出ますが最新にはなりません）。
     //
     //  ② 通信エラー・APIの障害・中継が未設定の時：あらかじめ作っておいた一覧
     //       https://shulavan.github.io/data/edogawa-hotels.json
     //     を読み込みます（fetch_rakuten_hotels.py または build_hotels_json.py で作成）。
     // ============================================================
-    const RAKUTEN_PROXY_URL = "https://script.google.com/macros/s/AKfycby2mwBpId-egLkosv3APzkLbSCDJLQ5ZJlbU2CNUnp5SM1d8CZlLbOxz9oGftrzunF-PA/exec";
+    const RAKUTEN_PROXY_URL = "";
     const HOTELS_DATA_FILE = "edogawa-hotels.json";
-    const RAKUTEN_HOTELS = [];   // 取得した宿泊施設（🏩）
+    const RAKUTEN_HOTELS = [];   // 取得した宿泊施設（🛏️）
 
     // ホットペッパーグルメから取得した飲食店（🍽）。写真・ホームページ付きなので、
     // 地図にも表示し、区オープンデータの飲食店の写真を補うためにも使います。
@@ -3630,7 +3630,7 @@
           groups.push([g.into, g.emoji, g.weight || 1]);
         });
         groups.push([HOTPEPPER_SHOPS, '🍽', 0.9]);          // ホットペッパーの飲食店
-        groups.push([RAKUTEN_HOTELS, '🏩', 0.7]);           // 楽天トラベルの宿泊施設
+        groups.push([RAKUTEN_HOTELS, '🛏️', 0.7]);           // 楽天トラベルの宿泊施設
         groups.push([this.goaledPlaces || [], null, 0.25]);  // ゴールした場所（陣地）
         return groups;
       },
@@ -3810,14 +3810,16 @@
       goalEmojiFor(place) {
         const name = String(place && place.name || '');
         const cat = String(place && place.category || '');
+        // 「病院」「医院」は 院$ で寺と誤判定されるので、医療を先に見ます
+        if (/病院|クリニック|医院|診療所|眼科|歯科|内科|外科|皮膚科|小児科/.test(name)) return '🏥';
         if (/神社|神宮|天祖|香取|氷川/.test(name)) return '⛩️';
         if (/寺|院$/.test(name)) return '🛕';
+        if (/保育園|こども園|幼稚園|保育室|学童/.test(name)) return '🛝';
         if (/学校|高校|中学|小学/.test(name)) return '🏫';
         if (/公園|ひろば|広場|遊園|緑道/.test(name)) return '⛲️';
         if (/駅$/.test(name)) return '🚉';
         if (/バス停/.test(name)) return '🚏';
         if (/図書館/.test(name)) return '📚';
-        if (/病院|クリニック|医院/.test(name)) return '🏥';
         if (/警察|交番/.test(name)) return '🚨';
         if (/郵便局/.test(name)) return '🏣';
         if (/湯$|温泉|銭湯/.test(name)) return '♨️';
@@ -3828,7 +3830,7 @@
           case '駅（バス停含む）': return '🚉';
           case '公共・スポーツ施設': return '🏛';
           case '学校・神社仏閣': return '🏫';
-          case '宿泊施設': return '🏩';
+          case '宿泊施設': return '🛏️';
           default: return '📍';
         }
       },
@@ -3843,13 +3845,13 @@
       },
 
       // ============================================================
-      // 楽天トラベル（楽天ウェブサービス）から江戸川区の宿泊施設を取得して🏩で表示
+      // 楽天トラベル（楽天ウェブサービス）から江戸川区の宿泊施設を取得して🛏️で表示
       // ・ブラウザから直接呼ぶため JSONP を使います（CORS非対応のため）
       // ・結果は24時間だけ端末に保存して、毎回の通信を減らします
       // ・取得できなくてもゲームは通常どおり動きます
       // ============================================================
-      // 宿泊施設の一覧（/data/edogawa-hotels.json）を読み込んで🏩で表示する。
-      // ファイルが無い場合は🏩を出さずに、他はそのまま動きます。
+      // 宿泊施設の一覧（/data/edogawa-hotels.json）を読み込んで🛏️で表示する。
+      // ファイルが無い場合は🛏️を出さずに、他はそのまま動きます。
       // 楽天トラベルAPI（GAS中継経由）から江戸川区の宿泊施設を取得します。
       // 取れなかった時は null を返し、呼び出し側が保存済みの一覧に切り替えます。
       async fetchHotelsFromRakuten() {
@@ -3880,7 +3882,7 @@
         const rows = Array.isArray(data) ? data
           : (data && (Array.isArray(data.hotels) ? data.hotels : null));
         if (!rows || !rows.length) {
-          console.info('宿泊施設の一覧が取得できなかったため、🏩は表示しません。');
+          console.info('宿泊施設の一覧が取得できなかったため、🛏️は表示しません。');
           return false;
         }
         RAKUTEN_HOTELS.length = 0;
@@ -3911,7 +3913,7 @@
             special: h.special || h.hotelSpecial || '',
             rating: (h.rating && typeof h.rating === 'object') ? h.rating : null,
             roomImage: h.roomImage || '',
-            emoji: '🏩', w: 0.7, fromRakuten: true
+            emoji: '🛏️', w: 0.7, fromRakuten: true
           });
         });
         this.rakutenInfo = {
@@ -7443,7 +7445,7 @@
           }
         });
         if (HOTPEPPER_SHOPS.length) this._facilityPoiCache.push([HOTPEPPER_SHOPS, '🍽', 1.2]);
-        if (RAKUTEN_HOTELS.length) this._facilityPoiCache.push([RAKUTEN_HOTELS, '🏩', 0.8]);
+        if (RAKUTEN_HOTELS.length) this._facilityPoiCache.push([RAKUTEN_HOTELS, '🛏️', 0.8]);
         if ((this.goaledPlaces || []).length) this._facilityPoiCache.push([this.goaledPlaces, null, 0.5]);
         return this._facilityPoiCache;
       },
