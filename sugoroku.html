@@ -1623,7 +1623,7 @@
           <h4>地図の絵文字アイコン</h4>
           <p>地図に出ている 🚉 ⛲️ 📚 ♨️ 🏥 などの絵文字をタップすると、その施設の<strong>写真・ホームページ・住所（地図ボタン）・電話番号</strong>が見られます（江戸川区オープンデータより。写真が無い施設は「No Photo」と表示されます）。</p>
           <p>ゴールした時にも、その施設の紹介が3秒間表示されます。ゴールした飲食店は 🍴 として地図に残っていくので、遊ぶほど「行ったお店の地図」になっていきます。</p>
-          <p>🏩 は楽天トラベルに掲載されている江戸川区内の宿泊施設です。タップすると写真・料金の目安・評価が見られ、そのまま楽天トラベルのページを開けます。</p>
+          <p>🏩 は楽天トラベルに掲載されている江戸川区内の宿泊施設です（あらかじめ取得した一覧を表示しています）。タップすると写真・料金の目安・評価が見られ、そのまま楽天トラベルのページを開けます。</p>
           <p>公共施設（駅・公園・図書館・区の施設など）は、区のオープンデータに写真が無い場合、ウィキペディアの写真と説明も表示します。</p>
 
           <h4>便利な機能</h4>
@@ -1703,6 +1703,8 @@
           </div>
           <div class="doc-src">
             宿泊施設（🏩）：Supported by <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener">楽天ウェブサービス</a>（楽天トラベル／楽天グループ株式会社）<br>
+            ※江戸川区内の宿泊施設の一覧は、あらかじめ取得したものを使用しています（ゲーム中にAPIへ接続はしません）。
+            料金・評価・空室状況は取得時点のものです。<br>
             ※本ゲームには楽天トラベルのアフィリエイトリンクを含みます。リンク経由でご予約された場合、
             制作者に成果報酬が支払われることがあります（お客様の支払額は変わりません）。
           </div>
@@ -1762,7 +1764,6 @@
             <li>ホットペッパーグルメ Webサービス（飲食店情報。Google Apps Script 経由で取得）</li>
             <li>Firebase（マルチプレイ時のみ）</li>
             <li>ウィキペディア日本語版（施設の写真・説明）</li>
-            <li>楽天ウェブサービス／楽天トラベル（宿泊施設の情報）</li>
             <li>Google アナリティクス（同意がある場合のみ）、忍者AdMax（広告）</li>
           </ul>
 
@@ -1782,9 +1783,9 @@
           広告の表示自体はオフにできませんが、端末やブラウザの設定で広告のパーソナライズを制限できます。</p>
 
           <h4>Wikipedia・楽天トラベルの情報について</h4>
-          <p>施設の詳細を開いた時に、ウィキペディア日本語版と楽天トラベル（楽天ウェブサービス）へ
-          施設名や地図の座標を送信して、写真・説明・宿泊施設の情報を取得します。
-          個人を特定する情報は送信しません。</p>
+          <p>施設の詳細を開いた時に、ウィキペディア日本語版へ施設名を送信して写真・説明を取得します。
+          個人を特定する情報は送信しません。宿泊施設（🏩）の情報はあらかじめ用意した一覧を読み込むだけで、
+          楽天トラベルへの接続は行いません。</p>
 
           <h4>お子さまのご利用について</h4>
           <p>本ゲームは個人情報を取得しないため、お子さまでも安心してご利用いただけます。マルチプレイでニックネームが他の参加者に表示される点にご注意ください。</p>
@@ -1995,25 +1996,13 @@
     ];
 
     // ============================================================
-    // 楽天トラベル（楽天ウェブサービス）で江戸川区の宿泊施設を取得して🏩で表示
-    //   https://webservice.rakuten.co.jp/documentation/simple-hotel-search
-    // ブラウザから直接呼べるよう JSONP（callback）で取得します。
-    // 半径は最大3kmなので、区内を4か所に分けて検索します。
+    // 宿泊施設（🏩）は、あらかじめ楽天トラベル（楽天ウェブサービス）で
+    // 江戸川区ぶんを取得して作った一覧を読み込みます。
+    //   https://shulavan.github.io/data/edogawa-hotels.json
+    // ・ゲームからAPIを呼ばないので、表示が速く、APIキーもHTMLに載りません
+    // ・一覧の作り方は fetch_rakuten_hotels.py（パソコンで実行）を参照
     // ============================================================
-    const RAKUTEN_APP_ID = "a9cd9bec-a76c-4e8a-affa-e7c462cd3518";
-    const RAKUTEN_AFFILIATE_ID = "07190876.228b5fb2.07190877.c0d8ecf3";
-    // ※「アクセスキー（pk_...）」は秘密の鍵なので、誰でも見られるHTMLには書きません。
-    //   楽天トラベルの検索は applicationId とアフィリエイトIDだけで動きます。
-    const RAKUTEN_HOTEL_API = "https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426";
-    const RAKUTEN_SEARCH_POINTS = [
-      { lat: 35.6640, lng: 139.8700 },   // 葛西・西葛西あたり
-      { lat: 35.6870, lng: 139.8700 },   // 船堀・松江あたり
-      { lat: 35.7100, lng: 139.8800 },   // 区役所・小岩方面
-      { lat: 35.7300, lng: 139.8850 },   // 小岩・北小岩あたり
-      { lat: 35.7000, lng: 139.9000 }    // 瑞江・篠崎あたり
-    ];
-    const RAKUTEN_CACHE_KEY = "edogawa_sugoroku_rakuten_hotels_v1";
-    const RAKUTEN_CACHE_HOURS = 24;
+    const HOTELS_DATA_FILE = "edogawa-hotels.json";
     const RAKUTEN_HOTELS = [];   // 取得した宿泊施設（🏩）
 
     // ホットペッパーグルメから取得した飲食店（🍽）。写真・ホームページ付きなので、
@@ -2420,7 +2409,7 @@
         // 施設・目的地・文言などのゲームデータと、江戸川区オープンデータを /data/ から読み込む。
         this.gameDataPromise = this.loadGameData()
           .then(() => this.loadEdogawaOpenData())
-          .then(() => this.loadRakutenHotels())
+          .then(() => this.loadHotels())
           .catch(e => { console.warn('データの読み込みに失敗:', e); this.applyFallbackGameData(); });
         // 施設POIはバックグラウンドで全件再測位（データ読み込み後）。
         // ルート生成時は必ず個別に再確認します。区オープンデータの座標は再測位しません。
@@ -3844,128 +3833,45 @@
       // ・結果は24時間だけ端末に保存して、毎回の通信を減らします
       // ・取得できなくてもゲームは通常どおり動きます
       // ============================================================
-      async loadRakutenHotels() {
-        // まずは保存済みのものを使う
-        try {
-          const raw = localStorage.getItem(RAKUTEN_CACHE_KEY);
-          if (raw) {
-            const cached = JSON.parse(raw);
-            const age = Date.now() - (cached.savedAt || 0);
-            if (Array.isArray(cached.hotels) && cached.hotels.length &&
-                age < RAKUTEN_CACHE_HOURS * 3600 * 1000) {
-              this._applyRakutenHotels(cached.hotels, true);
-              return true;
-            }
-          }
-        } catch (e) {}
-
-        // 緯度経度の単位は「度」で指定しますが、APIが受け付けない場合に備えて
-        // 「ミリ秒」でも1度だけ試します（どちらで取れたかを覚えて以降はそれを使う）。
-        const found = new Map();
-        for (const pt of RAKUTEN_SEARCH_POINTS) {
-          let rows = await this._fetchRakutenHotelsAt(pt.lat, pt.lng, this._rakutenUnit || 'deg');
-          if ((!rows || !rows.length) && !this._rakutenUnit) {
-            const alt = await this._fetchRakutenHotelsAt(pt.lat, pt.lng, 'msec');
-            if (alt && alt.length) { this._rakutenUnit = 'msec'; rows = alt; }
-            else this._rakutenUnit = 'deg';
-          } else if (rows && rows.length && !this._rakutenUnit) {
-            this._rakutenUnit = 'deg';
-          }
-          (rows || []).forEach(h => { if (h && !found.has(h.hotelNo)) found.set(h.hotelNo, h); });
-        }
-        const hotels = Array.from(found.values());
-        if (!hotels.length) {
-          console.info('楽天トラベルの宿泊施設は取得できませんでした（🏩は表示されません）。');
+      // 宿泊施設の一覧（/data/edogawa-hotels.json）を読み込んで🏩で表示する。
+      // ファイルが無い場合は🏩を出さずに、他はそのまま動きます。
+      async loadHotels() {
+        const data = await this.fetchDataFile(HOTELS_DATA_FILE);
+        const rows = Array.isArray(data) ? data
+          : (data && (Array.isArray(data.hotels) ? data.hotels : null));
+        if (!rows || !rows.length) {
+          console.info('宿泊施設の一覧（' + HOTELS_DATA_FILE + '）が無いため、🏩は表示しません。');
           return false;
         }
-        try {
-          localStorage.setItem(RAKUTEN_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), hotels }));
-        } catch (e) {}
-        this._applyRakutenHotels(hotels, false);
-        return true;
-      },
-
-      _applyRakutenHotels(hotels, fromCache) {
         RAKUTEN_HOTELS.length = 0;
-        hotels.forEach(h => {
-          if (!h || !Number.isFinite(h.lat) || !Number.isFinite(h.lng)) return;
-          if (!isInsideEdogawaWard(h.lat, h.lng)) return;   // 江戸川双六なので区内だけ
-          RAKUTEN_HOTELS.push({ ...h, emoji: '🏩', fromRakuten: true });
+        let skipped = 0;
+        rows.forEach(h => {
+          if (!h) return;
+          const lat = Number(h.lat), lng = Number(h.lng);
+          const name = String(h.name || '').trim();
+          if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) { skipped++; return; }
+          // 江戸川双六なので区内だけ
+          if (!isInsideEdogawaWard(lat, lng)) { skipped++; return; }
+          RAKUTEN_HOTELS.push({
+            name, lat, lng,
+            address: h.address || '',
+            tel: h.tel || '',
+            url: h.url || '',
+            photo: h.photo || '',
+            reviewAverage: h.review || h.reviewAverage || null,
+            minCharge: h.minCharge || null,
+            emoji: '🏩', w: 0.7, fromRakuten: true
+          });
         });
-        this.rakutenInfo = { count: RAKUTEN_HOTELS.length, fromCache: !!fromCache };
+        this.rakutenInfo = {
+          count: RAKUTEN_HOTELS.length,
+          skipped,
+          updated: (data && data.updated) || null
+        };
         this._facilityPoiCache = null;
         if (this.map) this.renderFacilityMarkers(true);
-        console.info(`楽天トラベル：江戸川区内の宿泊施設 ${RAKUTEN_HOTELS.length}件を表示します${fromCache ? '（保存済みデータ）' : ''}`);
-      },
-
-      // JSONPで1地点ぶん取得する（半径3km・最大30件）
-      _fetchRakutenHotelsAt(lat, lng, unit = 'deg') {
-        return new Promise(resolve => {
-          if (typeof document === 'undefined') return resolve(null);
-          const cbName = `__rakutenCb${Math.floor(Date.now() % 100000)}_${(this._rakutenSeq = (this._rakutenSeq || 0) + 1)}`;
-          const toParam = (v) => unit === 'msec' ? String(Math.round(v * 3600000)) : String(v);
-          const params = new URLSearchParams({
-            format: 'json',
-            formatVersion: '2',
-            applicationId: RAKUTEN_APP_ID,
-            affiliateId: RAKUTEN_AFFILIATE_ID,
-            latitude: toParam(lat),
-            longitude: toParam(lng),
-            searchRadius: '3.0',
-            datumType: '1',           // 1 = 世界測地系（度）
-            hits: '30',
-            responseType: 'small',
-            callback: cbName
-          });
-          const script = document.createElement('script');
-          let done = false;
-          const cleanup = () => {
-            try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
-            try { script.remove(); } catch (e) {}
-            clearTimeout(timer);
-          };
-          const timer = setTimeout(() => { if (!done) { done = true; cleanup(); resolve(null); } }, 8000);
-          window[cbName] = (data) => {
-            done = true;
-            let rows = [];
-            try { rows = this._parseRakutenResponse(data); } catch (e) { rows = []; }
-            cleanup();
-            resolve(rows);
-          };
-          script.onerror = () => { if (!done) { done = true; cleanup(); resolve(null); } };
-          script.src = `${RAKUTEN_HOTEL_API}?${params.toString()}`;
-          document.head.appendChild(script);
-        });
-      },
-
-      // 楽天APIの応答（formatVersion=2）から必要な項目だけ取り出す
-      _parseRakutenResponse(data) {
-        const out = [];
-        const list = (data && (data.hotels || data.Hotels)) || [];
-        list.forEach(entry => {
-          // formatVersion=2 は [ {hotelBasicInfo}, ... ] の配列、1は {hotel:[...]}
-          const arr = Array.isArray(entry) ? entry : (entry.hotel || [entry]);
-          let basic = null;
-          arr.forEach(x => {
-            const b = x && (x.hotelBasicInfo || x.HotelBasicInfo);
-            if (b) basic = b;
-          });
-          if (!basic) return;
-          const lat = Number(basic.latitude), lng = Number(basic.longitude);
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-          out.push({
-            hotelNo: String(basic.hotelNo || basic.hotelName || ''),
-            name: String(basic.hotelName || '宿泊施設'),
-            lat, lng,
-            address: [basic.address1, basic.address2].filter(Boolean).join('') || '',
-            tel: basic.telephoneNo || '',
-            url: basic.hotelInformationUrl || basic.planListUrl || '',
-            photo: basic.hotelImageUrl || basic.hotelThumbnailUrl || '',
-            reviewAverage: basic.reviewAverage || null,
-            minCharge: basic.hotelMinCharge || null
-          });
-        });
-        return out;
+        console.info(`宿泊施設（楽天トラベル）を ${RAKUTEN_HOTELS.length}件 読み込みました（区外など除外 ${skipped}件）`);
+        return true;
       },
 
       // ============================================================
