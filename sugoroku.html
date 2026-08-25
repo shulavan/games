@@ -924,6 +924,7 @@
           <span class="text-[11px] text-slate-400 shrink-0">電話</span>
           <a id="facility-tel" href="#" class="text-xs text-sky-300 underline font-bold">-</a>
         </div>
+        <div id="facility-rows" class="hidden space-y-1"></div>
         <div id="facility-note" class="hidden text-[11px] text-slate-400"></div>
         <div id="facility-wiki-row" class="hidden">
           <p id="facility-wiki-status" class="text-[11px] text-slate-500">📖 Wikipediaで調べています…</p>
@@ -936,6 +937,10 @@
         <button id="facility-wiki-btn" onclick="EdogawaSugoroku.openFacilityWikipedia()"
           class="hidden w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition">
           📖 Wikipediaで見る
+        </button>
+        <button id="facility-coupon-btn" onclick="EdogawaSugoroku.openFacilityCoupon()"
+          class="hidden w-full bg-rose-900/40 hover:bg-rose-900/60 border border-rose-700/60 text-rose-200 font-bold py-2.5 rounded-xl text-xs active:scale-95 transition">
+          🎫 クーポンを見る
         </button>
         <p id="facility-credit" class="hidden text-[9px] text-slate-600 leading-tight"></p>
         <button id="facility-close-btn" onclick="EdogawaSugoroku.closeFacilityModal()"
@@ -1761,7 +1766,8 @@
             <li>OpenStreetMap / CARTO（地図タイル）</li>
             <li>Nominatim（地名・住所の検索）</li>
             <li>OSRM（道路経路の取得）</li>
-            <li>ホットペッパーグルメ Webサービス（飲食店情報。Google Apps Script 経由で取得）</li>
+            <li>ホットペッパーグルメ Webサービス（飲食店の写真・ジャンル・予算・営業時間などの詳細。Google Apps Script 経由で取得）</li>
+            <li>楽天ウェブサービス／楽天トラベル（宿泊施設の写真・評価点・クチコミ件数など。あらかじめ取得したデータを読み込みます）</li>
             <li>Firebase（マルチプレイ時のみ）</li>
             <li>ウィキペディア日本語版（施設の写真・説明）</li>
             <li>Google アナリティクス（同意がある場合のみ）、忍者AdMax（広告）</li>
@@ -3850,8 +3856,12 @@
           const lat = Number(h.lat), lng = Number(h.lng);
           const name = String(h.name || '').trim();
           if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) { skipped++; return; }
-          // 江戸川双六なので区内だけ
-          if (!isInsideEdogawaWard(lat, lng)) { skipped++; return; }
+          // 江戸川双六なので区内だけ。
+          // 区境データは簡略化した多角形なので、境目のギザギザした所（平井・小松川あたり）で
+          // 区内なのに「外」と判定されることがあります。住所に「江戸川区」があれば残します。
+          const inWard = isInsideEdogawaWard(lat, lng) ||
+            /江戸川区/.test(String(h.address || ''));
+          if (!inWard) { skipped++; return; }
           RAKUTEN_HOTELS.push({
             name, lat, lng,
             address: h.address || '',
@@ -3859,7 +3869,14 @@
             url: h.url || '',
             photo: h.photo || '',
             reviewAverage: h.review || h.reviewAverage || null,
+            reviewCount: h.reviewCount || null,
             minCharge: h.minCharge || null,
+            maxCharge: h.maxCharge || null,
+            access: h.access || '',
+            station: h.station || '',
+            special: h.special || h.hotelSpecial || '',
+            rating: (h.rating && typeof h.rating === 'object') ? h.rating : null,
+            roomImage: h.roomImage || '',
             emoji: '🏩', w: 0.7, fromRakuten: true
           });
         });
@@ -4138,14 +4155,16 @@
         homeBtn.innerText = info.fromRakuten ? '🏨 楽天トラベルで見る' : '🌐 ホームページを開く';
 
         const note = document.getElementById('facility-note');
-        const notes = [];
-        if (opts.note) notes.push(opts.note);
-        if (info.fromRakuten) {
-          if (info.reviewAverage) notes.push(`楽天トラベルの評価：★${info.reviewAverage}`);
-          if (info.minCharge) notes.push(`最安料金の目安：¥${Number(info.minCharge).toLocaleString()}〜`);
-        }
-        if (notes.length) { note.innerText = notes.join(' ／ '); note.classList.remove('hidden'); }
+        if (opts.note) { note.innerText = opts.note; note.classList.remove('hidden'); }
         else note.classList.add('hidden');
+
+        // 評価・料金・アクセスなどの詳しい情報
+        this._setFacilityRows(this.facilityDetailRows(info));
+
+        // クーポン（ホットペッパーの店舗）
+        const coupon = document.getElementById('facility-coupon-btn');
+        this._facilityCouponUrl = info.coupon || '';
+        if (coupon) coupon.classList.toggle('hidden', !this._facilityCouponUrl);
 
         const credit = document.getElementById('facility-credit');
         const credits = [];
@@ -4176,7 +4195,9 @@
       },
 
       async _loadHotpepperPhotoForFacility(info) {
-        if (!info || info.photo || info.fromRakuten) return;
+        if (!info || info.fromRakuten) return;
+        // 写真も詳細情報も揃っている店は、もう調べません
+        if (info.photo && info.genre && info.budget) return;
         const isRestaurant = this.isRestaurantDestination(info) ||
           OD_INSHOKU.some(x => x && x.name === info.name) ||
           (this.goaledPlaces || []).some(x => x && x.name === info.name);
@@ -4206,11 +4227,21 @@
             telRow.classList.remove('hidden');
           }
         }
+        // 詳細情報（ジャンル・予算・営業時間など）も反映する
+        ['genre','subGenre','budget','catch','station','access','open','close',
+         'capacity','privateRoom','nonSmoking','parking','card','course',
+         'freeDrink','freeFood','coupon'].forEach(k => {
+          if (found[k] && !info[k]) info[k] = found[k];
+        });
+        this._setFacilityRows(this.facilityDetailRows(info));
+        this._facilityCouponUrl = info.coupon || '';
+        const cpBtn = document.getElementById('facility-coupon-btn');
+        if (cpBtn) cpBtn.classList.toggle('hidden', !this._facilityCouponUrl);
         const credit = document.getElementById('facility-credit');
         if (credit) {
           const t = credit.innerText || '';
           if (!t.includes('ホットペッパー')) {
-            credit.innerText = [t, '写真：ホットペッパーグルメ Webサービス'].filter(Boolean).join(' ／ ');
+            credit.innerText = [t, '写真・情報：ホットペッパーグルメ Webサービス'].filter(Boolean).join(' ／ ');
             credit.classList.remove('hidden');
           }
         }
@@ -4376,6 +4407,73 @@
         if (this._facilityWikiUrl) window.open(this._facilityWikiUrl, '_blank', 'noopener');
       },
 
+      // 「ラベル：値」の行をまとめて表示する（値が無い行は出しません）
+      _setFacilityRows(rows) {
+        const host = document.getElementById('facility-rows');
+        if (!host) return;
+        const list = (rows || []).filter(r => r && r.value !== '' && r.value !== null && r.value !== undefined);
+        if (!list.length) { host.innerHTML = ''; host.classList.add('hidden'); return; }
+        const esc = (v) => String(v).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+        host.innerHTML = list.map(r => `
+          <div class="flex items-start gap-2">
+            <span class="text-[11px] text-slate-400 shrink-0 pt-0.5 w-[52px]">${esc(r.label)}</span>
+            <span class="text-xs ${r.strong ? 'text-amber-300 font-bold' : 'text-slate-200'} flex-1 break-words">${esc(r.value)}</span>
+          </div>`).join('');
+        host.classList.remove('hidden');
+      },
+
+      // 施設の種類に応じた詳細情報の行を作る
+      facilityDetailRows(info) {
+        const rows = [];
+        if (!info) return rows;
+        const num = (v) => Number(v) ? Number(v) : null;
+
+        if (info.fromRakuten) {
+          // 楽天トラベルの宿泊施設
+          const avg = num(info.review || info.reviewAverage);
+          const cnt = num(info.reviewCount);
+          if (avg) rows.push({ label: '評価', value: `★${avg}${cnt ? `（クチコミ${cnt.toLocaleString()}件）` : ''}`, strong: true });
+          else if (cnt) rows.push({ label: '評価', value: `クチコミ${cnt.toLocaleString()}件` });
+          const min = num(info.minCharge);
+          if (min) rows.push({ label: '料金', value: `1泊 ¥${min.toLocaleString()}〜（目安）`, strong: true });
+          if (info.rating) {
+            const jp = { service: 'サービス', location: '立地', room: '部屋', equipment: '設備', bath: '風呂', breakfast: '朝食', cleanliness: '清潔感' };
+            const parts = Object.keys(jp).map(k => info.rating[k] ? `${jp[k]} ${info.rating[k]}` : null).filter(Boolean);
+            if (parts.length) rows.push({ label: '項目別', value: parts.join(' / ') });
+          }
+          if (info.station) rows.push({ label: '最寄駅', value: info.station });
+          if (info.access) rows.push({ label: 'アクセス', value: info.access });
+          if (info.special) rows.push({ label: 'ひとこと', value: info.special });
+          return rows;
+        }
+
+        // ホットペッパーグルメの飲食店
+        const genre = [info.genre, info.subGenre].filter(Boolean).join(' / ');
+        if (genre) rows.push({ label: 'ジャンル', value: genre, strong: true });
+        if (info.budget) rows.push({ label: '予算', value: info.budget, strong: true });
+        if (info.catch) rows.push({ label: 'お店から', value: info.catch });
+        if (info.station) rows.push({ label: '最寄駅', value: String(info.station).replace(/駅$/, '') + '駅' });
+        if (info.access) rows.push({ label: 'アクセス', value: info.access });
+        if (info.open) rows.push({ label: '営業時間', value: info.open });
+        if (info.close) rows.push({ label: '定休日', value: info.close });
+        if (num(info.capacity)) rows.push({ label: '席数', value: `${num(info.capacity)}席` });
+        const yes = (v) => v && !/^(なし|無し|不可|無|全席喫煙|禁煙席なし)/.test(String(v));
+        const feats = [];
+        if (yes(info.privateRoom)) feats.push('個室あり');
+        if (yes(info.nonSmoking)) feats.push('禁煙席あり');
+        if (yes(info.parking)) feats.push('駐車場あり');
+        if (yes(info.card)) feats.push('カード可');
+        if (yes(info.course)) feats.push('コースあり');
+        if (yes(info.freeDrink)) feats.push('飲み放題');
+        if (yes(info.freeFood)) feats.push('食べ放題');
+        if (feats.length) rows.push({ label: '設備', value: feats.join('・') });
+        return rows;
+      },
+
+      openFacilityCoupon() {
+        if (this._facilityCouponUrl) window.open(this._facilityCouponUrl, '_blank', 'noopener');
+      },
+
       // 写真の出し入れ。無い時・読み込めない時は枠ごと隠します（No Photoは出しません）。
       _setFacilityPhoto(url, alt = '') {
         const wrap = document.getElementById('facility-photo-wrap');
@@ -4403,6 +4501,8 @@
         this._wikiSeq = (this._wikiSeq || 0) + 1;   // 進行中のWikipedia取得を無効化
         document.getElementById('facility-wiki-row')?.classList.add('hidden');
         document.getElementById('facility-wiki-btn')?.classList.add('hidden');
+        document.getElementById('facility-coupon-btn')?.classList.add('hidden');
+        document.getElementById('facility-rows')?.classList.add('hidden');
       },
 
       openFacilityHomepage() {
@@ -6766,7 +6866,23 @@
             tel: pickStr(s.tel, s.telephone, s.phone),
             url: pickStr(s.url, s.urls, s.coupon_urls),
             photo: pickStr(s.photo, s.photo_l, s.image, s.logo_image),
-            genre: pickStr(s.genre && s.genre.name, s.genre, s.catch),
+            genre: pickStr(s.genre && s.genre.name, s.genre),
+            subGenre: pickStr(s.sub_genre && s.sub_genre.name, s.sub_genre, s.subGenre),
+            budget: pickStr(s.budget && (s.budget.name || s.budget.average), s.budget),
+            catch: pickStr(s.catch, s.genre && s.genre.catch, s.shopCatch),
+            station: pickStr(s.station_name, s.station, s.stationName),
+            access: pickStr(s.mobile_access, s.access),
+            open: pickStr(s.open),
+            close: pickStr(s.close),
+            capacity: (Number(s.capacity) ? Number(s.capacity) : null),
+            privateRoom: pickStr(s.private_room, s.privateRoom),
+            nonSmoking: pickStr(s.non_smoking, s.nonSmoking),
+            parking: pickStr(s.parking),
+            card: pickStr(s.card),
+            course: pickStr(s.course),
+            freeDrink: pickStr(s.free_drink, s.freeDrink),
+            freeFood: pickStr(s.free_food, s.freeFood),
+            coupon: pickStr(s.coupon_urls, s.couponUrls, s.coupon),
             emoji: '🍽', fromHotpepper: true
           }));
           const inWard = all.filter(s => isInsideEdogawaWard(s.lat, s.lng) &&
