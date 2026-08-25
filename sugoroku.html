@@ -1571,7 +1571,7 @@
     // すべてのモーダルの「閉じる（自動進行：〇秒）」の秒数。
     const MODAL_AUTO_CLOSE_SECONDS = 3;
     // 競艇の結果画面だけは、落ち着いた締めの実況を言い終えられるよう長めにとる。
-    const BOAT_RACE_RESULT_SECONDS = 7;
+    const BOAT_RACE_RESULT_SECONDS = 10;
     // 「引続き江戸川競艇で遊びますか？」で連続開催できる上限（1レグあたり・1人あたり）。
     const BOAT_RACE_CONTINUE_LIMIT = 3;
     // 相手の端末が「生きているか」の判定に使う無反応の許容時間（ミリ秒）。
@@ -8315,8 +8315,7 @@
         // 的中した舟券を点灯させてから結果画面へ。
         this._renderBoatRaceBetsSummary(winningPair);
         const goalMs = this._boatRaceAnnounce(
-          `ゴールイン！1着${st.rankResult[0]}号艇、2着${st.rankResult[1]}号艇。`
-          //`2連単${st.rankResult[0]}の${st.rankResult[1]}、${st.odds[winningPair]}倍。`は非表示
+          `ゴールイン！1着${st.rankResult[0]}号艇、2着${st.rankResult[1]}号艇。2連単${st.rankResult[0]}の${st.rankResult[1]}、${st.odds[winningPair]}倍。`
         );
         this.updateHUD();
         this.addLog(`🏁 [江戸川競艇] 2連単 ${winningPair} （${st.odds[winningPair]}倍）が的中。`);
