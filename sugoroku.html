@@ -1708,8 +1708,9 @@
           </div>
           <div class="doc-src">
             宿泊施設（🏩）：Supported by <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener">楽天ウェブサービス</a>（楽天トラベル／楽天グループ株式会社）<br>
-            ※江戸川区内の宿泊施設の一覧は、あらかじめ取得したものを使用しています（ゲーム中にAPIへ接続はしません）。
-            料金・評価・空室状況は取得時点のものです。<br>
+            ※江戸川区内の宿泊施設は、起動時に楽天トラベルAPIから取得しています。
+            通信できない時は、あらかじめ取得しておいた一覧に自動で切り替えます。
+            料金・評価・空室状況は取得時点のものです。<span id="doc-hotels-state"></span><br>
             ※本ゲームには楽天トラベルのアフィリエイトリンクを含みます。リンク経由でご予約された場合、
             制作者に成果報酬が支払われることがあります（お客様の支払額は変わりません）。
           </div>
@@ -2002,12 +2003,20 @@
     ];
 
     // ============================================================
-    // 宿泊施設（🏩）は、あらかじめ楽天トラベル（楽天ウェブサービス）で
-    // 江戸川区ぶんを取得して作った一覧を読み込みます。
-    //   https://shulavan.github.io/data/edogawa-hotels.json
-    // ・ゲームからAPIを呼ばないので、表示が速く、APIキーもHTMLに載りません
-    // ・一覧の作り方は fetch_rakuten_hotels.py（パソコンで実行）を参照
+    // 宿泊施設（🏩）の取り方
+    //
+    //  ① 通常時：楽天トラベルAPI（楽天ウェブサービス）から、その場で取得します。
+    //     ただしブラウザから直接は呼べません（CORSで弾かれ、Refererも付けられず、
+    //     アクセスキーがHTMLに載って誰でも見られてしまいます）。
+    //     そのためホットペッパーと同じ方式で、Google Apps Script の中継を経由します。
+    //     中継の作り方は rakuten_proxy.gs.txt を参照してください。
+    //     ここが空欄のままだと②だけを使います（🏩は出ますが最新にはなりません）。
+    //
+    //  ② 通信エラー・APIの障害・中継が未設定の時：あらかじめ作っておいた一覧
+    //       https://shulavan.github.io/data/edogawa-hotels.json
+    //     を読み込みます（fetch_rakuten_hotels.py または build_hotels_json.py で作成）。
     // ============================================================
+    const RAKUTEN_PROXY_URL = "https://script.google.com/macros/s/AKfycby2mwBpId-egLkosv3APzkLbSCDJLQ5ZJlbU2CNUnp5SM1d8CZlLbOxz9oGftrzunF-PA/exec";
     const HOTELS_DATA_FILE = "edogawa-hotels.json";
     const RAKUTEN_HOTELS = [];   // 取得した宿泊施設（🏩）
 
@@ -3841,12 +3850,37 @@
       // ============================================================
       // 宿泊施設の一覧（/data/edogawa-hotels.json）を読み込んで🏩で表示する。
       // ファイルが無い場合は🏩を出さずに、他はそのまま動きます。
+      // 楽天トラベルAPI（GAS中継経由）から江戸川区の宿泊施設を取得します。
+      // 取れなかった時は null を返し、呼び出し側が保存済みの一覧に切り替えます。
+      async fetchHotelsFromRakuten() {
+        if (!RAKUTEN_PROXY_URL) return null;
+        try {
+          const url = `${RAKUTEN_PROXY_URL}?keyword=${encodeURIComponent('江戸川区')}&hits=30&pages=3`;
+          const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          const timer = ctl ? setTimeout(() => ctl.abort(), 8000) : null;
+          const resp = await fetch(url, ctl ? { signal: ctl.signal } : undefined);
+          if (timer) clearTimeout(timer);
+          if (!resp.ok) { console.warn('楽天トラベル：中継の応答が異常です', resp.status); return null; }
+          const data = await resp.json();
+          if (!data || data.error) { console.warn('楽天トラベル：', data && data.error); return null; }
+          const rows = Array.isArray(data) ? data : (Array.isArray(data.hotels) ? data.hotels : null);
+          if (!rows || !rows.length) return null;
+          return { hotels: rows, updated: data.updated || null, live: true };
+        } catch (e) {
+          console.warn('楽天トラベルAPIに繋がらないため、保存済みの一覧を使います:', e && e.message);
+          return null;
+        }
+      },
+
       async loadHotels() {
-        const data = await this.fetchDataFile(HOTELS_DATA_FILE);
+        // ① まず楽天トラベルAPIから。② 失敗したら保存済みの一覧から。
+        let data = await this.fetchHotelsFromRakuten();
+        let live = !!data;
+        if (!data) data = await this.fetchDataFile(HOTELS_DATA_FILE);
         const rows = Array.isArray(data) ? data
           : (data && (Array.isArray(data.hotels) ? data.hotels : null));
         if (!rows || !rows.length) {
-          console.info('宿泊施設の一覧（' + HOTELS_DATA_FILE + '）が無いため、🏩は表示しません。');
+          console.info('宿泊施設の一覧が取得できなかったため、🏩は表示しません。');
           return false;
         }
         RAKUTEN_HOTELS.length = 0;
@@ -3883,11 +3917,14 @@
         this.rakutenInfo = {
           count: RAKUTEN_HOTELS.length,
           skipped,
+          live,
+          source: live ? '楽天トラベルAPI（取得したて）' : '保存済みの一覧（' + HOTELS_DATA_FILE + '）',
           updated: (data && data.updated) || null
         };
         this._facilityPoiCache = null;
         if (this.map) this.renderFacilityMarkers(true);
-        console.info(`宿泊施設（楽天トラベル）を ${RAKUTEN_HOTELS.length}件 読み込みました（区外など除外 ${skipped}件）`);
+        console.info(`宿泊施設（楽天トラベル）を ${RAKUTEN_HOTELS.length}件 読み込みました`
+          + `（${live ? 'APIから取得' : '保存済みの一覧'}／区外など除外 ${skipped}件）`);
         return true;
       },
 
@@ -8954,6 +8991,13 @@
             st.innerHTML = this.openDataInfo
               ? `<br><span style="color:#34d399">取り込み済み：${this.openDataInfo.count}件${this.openDataInfo.updated ? `（データ更新日 ${this.openDataInfo.updated}）` : ''}</span>`
               : `<br><span style="color:#64748b">※このバージョンでは未読込（内蔵の施設データで動作中）</span>`;
+          }
+          const hs = document.getElementById('doc-hotels-state');
+          if (hs) {
+            const r = this.rakutenInfo;
+            hs.innerHTML = r
+              ? `<br><span style="color:${r.live ? '#34d399' : '#fbbf24'}">${r.live ? '楽天トラベルAPIから取得' : '保存済みの一覧を使用中'}：${r.count}件${r.updated ? `（${r.updated}時点）` : ''}</span>`
+              : `<br><span style="color:#64748b">※宿泊施設は未読込</span>`;
           }
         }
         document.getElementById('doc-modal')?.classList.remove('hidden');
