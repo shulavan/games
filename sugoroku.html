@@ -3487,7 +3487,7 @@
         // 目的地・所持金・残りマス数を出す（ソロの保存がある時だけ）
         const info = this._soloSaveSummary(solo);
         if (destEl) {
-          destEl.innerText = info.dest ? `目的地：${info.dest}` : '';
+          destEl.innerText = info.dest || '';
           destEl.classList.toggle('hidden', !info.dest);
         }
         if (statsEl) {
