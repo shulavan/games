@@ -364,11 +364,18 @@
     .br-bet-cell.hit { background: #fbbf24 !important; color: #0f172a !important; border-color: #fff !important; animation: br-bet-flash 0.5s ease-in-out infinite alternate; }
     @keyframes br-bet-flash { from { box-shadow: 0 0 2px #fbbf24; transform: scale(1); } to { box-shadow: 0 0 9px #ef4444; transform: scale(1.05); } }
 
+    /* 結果画面：スクロールせずに「閉じる」まで届くよう行間を詰める */
+    .br-result-list { line-height: 1.35; }
+    .br-result-list > div { padding-bottom: 3px; margin-bottom: 3px; }
+    .br-result-list > div:last-child { border-bottom: 0 !important; padding-bottom: 0; margin-bottom: 0; }
+    .br-result-mine { line-height: 1.45; }
+    .br-result-mine > div + div { margin-top: 1px; }
+
     /* 的中した人の行に押す「🎯」のハンコ */
     .br-hit-stamp {
-      position: absolute; right: -6px; top: 50%;
+      position: absolute; right: -4px; top: 50%;
       transform: translateY(-50%) rotate(-14deg);
-      font-size: 54px; line-height: 1; pointer-events: none;
+      font-size: 38px; line-height: 1; pointer-events: none;
       opacity: 0.92; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55));
       animation: br-stamp-in 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) 1 both;
     }
@@ -495,17 +502,19 @@
             <span class="text-xl">🎮</span>
             <span class="text-xs sm:text-sm">ひとりで遊ぶ<br>（CPU対戦）</span>
           </button>
-          <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeGame()" class="hidden w-full bg-gradient-to-b from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold py-3 px-2 rounded-2xl shadow-md active:scale-[0.98] transition flex flex-col items-center justify-center gap-1 text-center leading-tight">
+          <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeSoloFromLobby()" class="hidden w-full flex-1 bg-gradient-to-b from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold py-3 px-2 rounded-2xl shadow-md active:scale-[0.98] transition flex flex-col items-center justify-center gap-0.5 text-center leading-tight">
             <span class="text-lg">💾</span>
-            <span id="resume-save-label" class="text-[11px] sm:text-xs">前回の続き<br>から遊ぶ</span>
+            <span id="resume-save-label" class="text-[13px] font-black">前回の続きから遊ぶ</span>
+            <span id="resume-save-dest" class="hidden text-[11px] font-bold text-sky-50/95 leading-snug break-words px-0.5"></span>
+            <span id="resume-save-stats" class="hidden text-[11px] font-black text-amber-200"></span>
           </button>
         </div>
 
         <div class="bg-slate-950/80 border border-slate-800/80 rounded-2xl p-2.5 flex flex-col items-center justify-center text-center gap-1.5">
           <span class="text-[11px] font-bold text-slate-300">マルチプレイ4人対戦</span>
-          <button id="recruit-btn" onclick="EdogawaSugoroku.openRecruitmentModal()" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white shadow-lg shadow-rose-900/40 active:scale-95 transition flex flex-col items-center justify-center gap-0.5 ring-2 ring-rose-400/40">
-            <span class="text-lg">👥</span>
-            <span class="text-[9px] font-extrabold leading-tight px-1">参加者募集<br>（QRコード発行）</span>
+          <button id="recruit-btn" onclick="EdogawaSugoroku.onRecruitButton()" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-rose-500 to-red-600 hover:from-rose-400 hover:to-red-500 text-white shadow-lg shadow-rose-900/40 active:scale-95 transition flex flex-col items-center justify-center gap-0.5 ring-2 ring-rose-400/40">
+            <span id="recruit-btn-emoji" class="text-lg">👥</span>
+            <span id="recruit-btn-label" class="text-[9px] font-extrabold leading-tight px-1">参加者募集<br>（QRコード発行）</span>
           </button>
           <span id="room-status-badge" class="px-2 py-0.5 bg-slate-800 text-slate-300 font-bold text-[9px] rounded-full">オフライン / ホスト待機</span>
           <p class="text-[9px] text-slate-500 leading-tight">
@@ -1031,7 +1040,7 @@
         <button onclick="EdogawaSugoroku.settingsClearSaves()" class="w-full flex items-center gap-3 bg-slate-950/70 border border-rose-800/60 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
           <span class="text-xl">🗑</span>
           <span><span class="text-sm font-bold text-rose-300">保存データを消す</span><br>
-            <span id="settings-clear-note" class="text-[10px] text-slate-500">「前回の続きから遊ぶ」の保存を削除します</span></span>
+            <span id="settings-clear-note" class="text-[11px] text-slate-500">「前回の続きから遊ぶ」の保存を削除します（消すと「ひとりで遊ぶ」から新しく始められます）</span></span>
         </button>
       </div>
       <button onclick="EdogawaSugoroku.closeSettingsModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
@@ -1387,13 +1396,15 @@
       </div>
 
       <!-- ④ 結果 -->
-      <div id="boatrace-result-screen" class="hidden p-5 text-center space-y-3">
-        <span class="text-4xl">🏁</span>
-        <h2 class="font-mincho text-xl font-bold text-amber-300">レース結果</h2>
-        <p id="boatrace-result-rank" class="text-base sm:text-lg text-slate-100 font-bold"></p>
-        <p id="boatrace-result-order" class="text-sm text-slate-300"></p>
-        <div id="boatrace-result-breakdown" class="text-[15px] text-slate-200 space-y-2 bg-slate-950/60 rounded-xl p-3.5 text-left leading-relaxed"></div>
-        <div id="boatrace-result-mine" class="text-[15px] bg-slate-950/60 rounded-xl p-3.5 text-left space-y-1.5 leading-relaxed"></div>
+      <div id="boatrace-result-screen" class="hidden px-4 py-3 text-center space-y-1.5">
+        <div class="flex items-center justify-center gap-2">
+          <span class="text-2xl">🏁</span>
+          <h2 class="font-mincho text-xl font-bold text-amber-300">レース結果</h2>
+        </div>
+        <p id="boatrace-result-rank" class="text-base sm:text-lg text-slate-100 font-bold leading-snug"></p>
+        <p id="boatrace-result-order" class="text-[13px] text-slate-300 leading-snug"></p>
+        <div id="boatrace-result-breakdown" class="br-result-list text-[14px] text-slate-200 bg-slate-950/60 rounded-xl px-3 py-2 text-left"></div>
+        <div id="boatrace-result-mine" class="br-result-mine text-[14px] bg-slate-950/60 rounded-xl px-3 py-2 text-left"></div>
         <button id="boatrace-close-btn" onclick="EdogawaSugoroku.closeBoatRaceEvent()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">閉じる</button>
       </div>
 
@@ -1570,6 +1581,8 @@
     // メニューの「設定」で切り替えた内容（音・読み上げ）の保存先。
     const SETTINGS_KEY = "edogawa_sugoroku_settings";
     // アクセス解析（Google アナリティクス）の同意状態の保存先
+    // 初回起動時に一度だけ「アプリとしてインストール」の案内を出すための記録
+    const INSTALL_HINT_KEY = "edogawa_sugoroku_install_hint_v1";
     const CONSENT_KEY = "edogawa_sugoroku_consent";
     // Wikipediaで調べた結果の保存先（同じ施設で何度も通信しないため）
     const WIKI_CACHE_KEY = "edogawa_sugoroku_wiki_v1";
@@ -2447,6 +2460,8 @@
         this.gameDataPromise
           .then(() => this.refreshAllFacilityCoordinates())
           .catch(e => console.warn('施設座標の全面更新に失敗:', e));
+        // 江戸川クイズは、★マスに止まった瞬間に待たせないよう先に1問用意しておく。
+        this.prepareNextQuizQuestion().catch(() => {});
 
         sound.playBGM('lobby');
         document.addEventListener('click', () => {
@@ -3452,17 +3467,74 @@
       },
 
       checkSaveData() {
-        // 「ひとりで遊ぶ」「マルチプレイ」のどちらかに保存があればボタンを出す。
-        const hasSolo = !!localStorage.getItem(SOLO_SAVE_KEY);
-        const hasMp = !!localStorage.getItem(MP_SAVE_KEY);
+        // 続きが残っている時は「前回の続き」だけを出し、「ひとりで遊ぶ（新規）」は隠します。
+        // （最初から遊びたい時は、続きのゲーム中に「保存せず終了」してください）
+        const solo = this._readSave(SOLO_SAVE_KEY);
+        const mp = this._readSave(MP_SAVE_KEY);
+
+        // 左側は「ひとりで遊ぶ」の枠。ソロの続きがある時だけ「前回の続き」に入れ替える。
+        // マルチプレイの続きは右側のボタンが担当する。
+        const startBtn = document.getElementById("start-game-btn");
         const btn = document.getElementById("resume-save-btn");
-        if (btn) btn.classList.toggle("hidden", !(hasSolo || hasMp));
+        if (btn) btn.classList.toggle("hidden", !solo);
+        if (startBtn) startBtn.classList.toggle("hidden", !!solo);
+
         const label = document.getElementById("resume-save-label");
-        if (label) {
-          label.innerHTML = (hasSolo && hasMp)
-            ? '前回の続き<br>から遊ぶ（2件）'
-            : '前回の続き<br>から遊ぶ';
+        const destEl = document.getElementById("resume-save-dest");
+        const statsEl = document.getElementById("resume-save-stats");
+        if (label) label.innerHTML = '前回の続きから遊ぶ';
+
+        // 目的地・所持金・残りマス数を出す（ソロの保存がある時だけ）
+        const info = this._soloSaveSummary(solo);
+        if (destEl) {
+          destEl.innerText = info.dest ? `目的地：${info.dest}` : '';
+          destEl.classList.toggle('hidden', !info.dest);
         }
+        if (statsEl) {
+          statsEl.innerText = info.stats || '';
+          statsEl.classList.toggle('hidden', !info.stats);
+        }
+
+        // マルチプレイ側のボタン。続きがあれば「前回の続き（ホスト：〇〇）」に変える。
+        const rEmoji = document.getElementById("recruit-btn-emoji");
+        const rLabel = document.getElementById("recruit-btn-label");
+        if (rLabel) {
+          if (mp) {
+            const host = mp.isHost ? '自分' : (mp.hostName || 'ホスト');
+            const esc = (v) => String(v).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+            rLabel.innerHTML = `前回の続き<br>（ホスト：${esc(host)}）`;
+            if (rEmoji) rEmoji.innerText = '💾';
+          } else {
+            rLabel.innerHTML = '参加者募集<br>（QRコード発行）';
+            if (rEmoji) rEmoji.innerText = '👥';
+          }
+        }
+      },
+
+      // 「前回の続き」ボタンに出す、目的地・所持金・残りマスのまとめ
+      _soloSaveSummary(save) {
+        if (!save) return { dest: '', stats: '' };
+        const dest = save.currentDestination?.name || '';
+        // 保存データの中の「自分」（ソロは先頭のプレーヤーが自分）
+        const list = Array.isArray(save.players) ? save.players : [];
+        const me = list.find(p => p && !p.isCpu) || list[0];
+        if (!me) return { dest, stats: '' };
+        const money = this.formatMoneyMan(me.money);
+        const remain = this.remainingSquares(me);
+        const stats = [money, (remain === null ? null : `あと${remain}マス`)].filter(Boolean).join(' ／ ');
+        return { dest, stats };
+      },
+
+      // トップページ左のボタン。ソロの続きから再開する（無ければマルチの続き）。
+      resumeSoloFromLobby() {
+        if (this._hasSave(SOLO_SAVE_KEY)) return this.resumeSoloGame();
+        return this.resumeGame();
+      },
+
+      // マルチプレイのボタン。続きがあれば再開、なければ参加者募集。
+      onRecruitButton() {
+        if (this._hasSave(MP_SAVE_KEY)) return this.resumeMultiplayerGame();
+        return this.openRecruitmentModal();
       },
 
       async startGame(opts = {}) {
@@ -6225,42 +6297,79 @@
         document.getElementById('quiz-result-screen')?.classList.add('hidden');
         document.getElementById('quiz-question-screen')?.classList.remove('hidden');
 
-        // showQuizQuestion()はデータ取得を挟む非同期処理なので、実際に今回の問題へ
-        // 差し替わるまでに間がある。その間、前回のクイズの中身がそのまま残っていると
-        // 一瞬「違う問題」が見えてしまうため、表示直後にいったん中身をリセットしておく。
-        document.getElementById('quiz-genre-badge').textContent = '江戸川クイズ';
-        document.getElementById('quiz-difficulty-badge').textContent = '';
-        document.getElementById('quiz-question-text').textContent = '問題を読み込み中…';
-        document.getElementById('quiz-options').innerHTML = '';
-        const status = document.getElementById('quiz-announcer-status');
-        if (status) status.textContent = '準備中…';
+        const ready = this.quizQuestionReady();
+        if (!ready) {
+          // 先読みが間に合わなかった時だけ「読み込み中」を出す。前回の問題が
+          // 一瞬見えてしまわないよう、中身をリセットしておく。
+          document.getElementById('quiz-genre-badge').textContent = '江戸川クイズ';
+          document.getElementById('quiz-difficulty-badge').textContent = '';
+          document.getElementById('quiz-question-text').textContent = '問題を読み込み中…';
+          document.getElementById('quiz-options').innerHTML = '';
+          const status = document.getElementById('quiz-announcer-status');
+          if (status) status.textContent = '準備中…';
+        }
 
         modal.classList.remove('hidden');
         // モーダルが出た瞬間に「ジャジャン♪」。効果音が鳴り終わってから問題を読み上げる。
         sound.playQuizFanfare();
         this._syncQuizState({ phase: 'question', playerId: player.id, playerName: player.name });
-        setTimeout(() => this.showQuizQuestion(player), 1000);
+        if (ready) {
+          // 問題は用意できているので、その場ですぐ表示する（読み上げだけ効果音のあと）。
+          this.showQuizQuestion(player, { speakDelay: 1000 });
+        } else {
+          setTimeout(() => this.showQuizQuestion(player), 1000);
+        }
       },
 
-      async showQuizQuestion(player) {
-        const fallbackQuestions = [
+      // クイズの問題集は1回だけ読み込んで端末のメモリに保持します。
+      // ★マスに止まった瞬間に待たせないため、次の問題は前もって決めておきます。
+      async loadQuizQuestions() {
+        if (this.quizQuestionPool && this.quizQuestionPool.length) return this.quizQuestionPool;
+        if (this._quizPoolPromise) return this._quizPoolPromise;
+        this._quizPoolPromise = (async () => {
+          let questions = null;
+          try {
+            const data = await this.fetchDataFile(QUIZ_DATA_FILE, ['https://shulavan.github.io/games/quiz_data.json']);
+            if (data) {
+              if (Array.isArray(data)) questions = data;
+              else if (Array.isArray(data.questions)) questions = data.questions;
+              else if (Array.isArray(data.data)) questions = data.data;
+            }
+          } catch (e) {
+            console.warn('クイズの問題集の読み込みに失敗しました（内蔵の問題を使います）:', e && e.message);
+          }
+          // 実データのフィールド名は "question"（"q" ではない）で、answer は選択肢と一致する
+          // 文字列（インデックスではない）。フォールバック問題も同じ形に揃えてある。
+          const list = (questions || this.quizFallbackQuestions())
+            .filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
+          this.quizQuestionPool = list.length ? list : this.quizFallbackQuestions();
+          console.info(`江戸川クイズの問題を ${this.quizQuestionPool.length}問 読み込みました`);
+          return this.quizQuestionPool;
+        })();
+        return this._quizPoolPromise;
+      },
+
+      quizFallbackQuestions() {
+        return [
           { genre:'江戸川区の名所', difficulty:'カンタン', question:'江戸川区にあるタワーホール船堀の展望室がある建物はどれでしょう？', options:['船堀タワー','東京タワー','スカイツリー'], answer:'船堀タワー' },
           { genre:'江戸川区の地理', difficulty:'カンタン', question:'江戸川区の東側を流れる大きな川はどれでしょう？', options:['江戸川','多摩川','隅田川'], answer:'江戸川' },
           { genre:'江戸川区の豆知識', difficulty:'カンタン', question:'江戸川区の区名の由来となった川はどれでしょう？', options:['江戸川','荒川','神田川'], answer:'江戸川' },
           { genre:'江戸川区の名所', difficulty:'カンタン', question:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:'南部' }
         ];
-        let questions = null;
-        // クイズも /data/ に置いたものを優先。旧置き場所（/games/）も候補として試す。
-        const data = await this.fetchDataFile(QUIZ_DATA_FILE, ['https://shulavan.github.io/games/quiz_data.json']);
-        if (data) {
-          if (Array.isArray(data)) questions = data;
-          else if (Array.isArray(data.questions)) questions = data.questions;
-          else if (Array.isArray(data.data)) questions = data.data;
+      },
+
+      // 問題を1問ぶん組み立てる（選択肢はここでシャッフルする）
+      _buildQuizQuestion() {
+        const pool = (this.quizQuestionPool && this.quizQuestionPool.length)
+          ? this.quizQuestionPool : this.quizFallbackQuestions();
+        // 直前に出た問題は避ける（同じ問題が続くと興ざめなので）
+        const recent = this._recentQuizQuestions || [];
+        let pick = null;
+        for (let i = 0; i < 12; i++) {
+          const cand = pool[Math.floor(Math.random() * pool.length)];
+          if (cand && !recent.includes(cand.question)) { pick = cand; break; }
         }
-        // 実データのフィールド名は "question"（"q" ではない）で、answer は選択肢と一致する
-        // 文字列（インデックスではない）。フォールバック問題も同じ形に揃えてある。
-        questions = (questions || fallbackQuestions).filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
-        const picked = questions[Math.floor(Math.random() * questions.length)] || fallbackQuestions[0];
+        const picked = pick || pool[Math.floor(Math.random() * pool.length)] || this.quizFallbackQuestions()[0];
         // 元データは正解が先頭に並んでいることが多いため、選択肢の順番を毎回シャッフルする。
         // 正解の判定は「文字列の一致」で行っているので、並べ替えても判定は正しく動く。
         const shuffled = picked.options.slice();
@@ -6268,8 +6377,46 @@
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
         }
-        const q = { ...picked, options: shuffled };
+        return { ...picked, options: shuffled };
+      },
+
+      // 次にクイズが始まった時、すぐ表示できるように1問だけ用意しておく
+      async prepareNextQuizQuestion() {
+        try {
+          await this.loadQuizQuestions();
+          this._preparedQuiz = this._buildQuizQuestion();
+        } catch (e) {
+          this._preparedQuiz = this._buildQuizQuestion();
+        }
+        return this._preparedQuiz;
+      },
+
+      quizQuestionReady() {
+        return !!this._preparedQuiz;
+      },
+
+      async showQuizQuestion(player, opts = {}) {
+        const fallbackQuestions = [
+          { genre:'江戸川区の名所', difficulty:'カンタン', question:'江戸川区にあるタワーホール船堀の展望室がある建物はどれでしょう？', options:['船堀タワー','東京タワー','スカイツリー'], answer:'船堀タワー' },
+          { genre:'江戸川区の地理', difficulty:'カンタン', question:'江戸川区の東側を流れる大きな川はどれでしょう？', options:['江戸川','多摩川','隅田川'], answer:'江戸川' },
+          { genre:'江戸川区の豆知識', difficulty:'カンタン', question:'江戸川区の区名の由来となった川はどれでしょう？', options:['江戸川','荒川','神田川'], answer:'江戸川' },
+          { genre:'江戸川区の名所', difficulty:'カンタン', question:'葛西臨海公園があるのは江戸川区のどの方面でしょう？', options:['南部','北部','西部'], answer:'南部' }
+        ];
+        // 先読みしてある問題があればそれを使う（通信も抽選もしないので待ち時間ゼロ）。
+        let q = this._preparedQuiz;
+        this._preparedQuiz = null;
+        if (!q) {
+          if (!this.quizQuestionPool || !this.quizQuestionPool.length) {
+            this.quizQuestionPool = null;
+            await this.loadQuizQuestions().catch(() => { this.quizQuestionPool = fallbackQuestions; });
+          }
+          q = this._buildQuizQuestion();
+        }
         this.activeQuizQuestion = q;
+        // 同じ問題が続かないように、出した問題を覚えておく（直近8問）
+        this._recentQuizQuestions = [q.question].concat(this._recentQuizQuestions || []).slice(0, 8);
+        // この問題を出したので、次の問題をここで先読みしておく
+        setTimeout(() => this.prepareNextQuizQuestion(), 0);
         document.getElementById('quiz-genre-badge').textContent = q.genre || '江戸川クイズ';
         document.getElementById('quiz-difficulty-badge').textContent = q.difficulty || '';
         document.getElementById('quiz-question-text').textContent = q.question;
@@ -6292,7 +6439,9 @@
             }, 1200);
           }
         };
-        this.speakQuizQuestion(q.question, enableAnswers);
+        const speakDelay = Math.max(0, Number(opts.speakDelay) || 0);
+        if (speakDelay) setTimeout(() => this.speakQuizQuestion(q.question, enableAnswers), speakDelay);
+        else this.speakQuizQuestion(q.question, enableAnswers);
         // speechSynthesis の onend がブラウザによって発火しない場合の安全弁。
         clearTimeout(this.quizSpeechFallbackTimer);
         this.quizSpeechFallbackTimer = setTimeout(enableAnswers, Math.max(4500, Math.min(12000, q.question.length * 180)));
@@ -7298,7 +7447,8 @@
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
           planeGrantedThisLeg: !!this.planeGrantedThisLeg,
           goaledPlaces: this.goaledPlaces || [],
-          territory: this.territory || {}
+          territory: this.territory || {},
+          savedAt: Date.now()
         };
         localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
       },
@@ -7985,7 +8135,7 @@
           const left = Math.ceil((this.boatRaceState.deadline - Date.now()) / 1000);
           if (left === 10 && !this.boatRaceState._warned10) {
             this.boatRaceState._warned10 = true;
-            this._boatRaceAnnounce('締め切りまで、あと10秒。お買い忘れのないよう。', null, BOAT_RACE_SPEECH_RATE_CALM);
+            this._boatRaceAnnounce('締め切りまで、あと10秒。お買い忘れのないよう、お願いします。', null, BOAT_RACE_SPEECH_RATE_CALM);
           }
           this._renderBoatRaceBetting();
           if (Date.now() >= this.boatRaceState.deadline) {
@@ -8363,7 +8513,7 @@
         const a = st.rankResult[0], b = st.rankResult[1];
         const odds = st.odds?.[`${a}-${b}`] || '';
         // 読み上げ用は「3の5」と読ませ、字幕は「3-5」と表示する。
-        const speak1 = `2連単、${a}の${b}、${odds}倍。`;
+        const speak1 = `2連単、${a}の${b}、${odds}倍です。`;
         const show1 = `２連単 ${a}-${b} ${odds}倍`;
         const line2 = 'ではまた次回、お会いしましょう。';
         this._setBoatRaceMarquee(show1, 4.5);
@@ -8420,11 +8570,11 @@
               ? `<span class="text-rose-400 font-bold">＋¥${diff.toLocaleString()}</span>`
               : `<span class="text-sky-400 font-bold">▲¥${Math.abs(diff).toLocaleString()}</span>`;
             const isHit = bets.some(b => b.pair === winningPair);
-            return `<div class="relative border-b border-slate-800 pb-1.5 overflow-hidden ${isHit ? 'pr-14' : ''}">
+            return `<div class="relative border-b border-slate-800 overflow-hidden ${isHit ? 'pr-9' : ''}">
               ${isHit ? '<span class="br-hit-stamp">🎯</span>' : ''}
-              <b>${p.avatar || ''} ${p.name}</b>${isHit ? ' <span class="text-amber-300 font-black">的中</span>' : ''}<br>
-              ${betText}<br>
-              投票 ¥${pay.spent.toLocaleString()} ／ 払戻 ¥${pay.payout.toLocaleString()} ／ 収支 ${diffText}
+              <b>${p.avatar || ''} ${p.name}</b>${isHit ? '<span class="text-amber-300 font-black"> 的中</span>' : ''}
+              <span class="text-slate-400"> ${betText}</span><br>
+              <span class="text-[13px]">投票¥${pay.spent.toLocaleString()}／払戻¥${pay.payout.toLocaleString()}／収支 ${diffText}</span>
             </div>`;
           }).join('');
         }
@@ -8443,11 +8593,9 @@
               : `<span class="text-sky-400 font-black">▲¥${Math.abs(total).toLocaleString()}</span>`;
             mineEl.innerHTML = `
               <div class="text-amber-300 font-bold">${me.avatar || ''} ${me.name} の収支</div>
-              <div>元持ち金: ${this.formatMoney(before)}</div>
-              <div>賭け金合計: ¥${pay.spent.toLocaleString()}</div>
-              <div>払戻金合計: ¥${pay.payout.toLocaleString()}</div>
-              <div>参加費・予想屋代を含めた増減: ${totalText}</div>
-              <div class="${me.money < 0 ? 'text-rose-400' : 'text-emerald-300'} font-black">現在持ち金: ${this.formatMoney(me.money)}</div>`;
+              <div>元持ち金 ${this.formatMoney(before)} ／ 賭け金 ¥${pay.spent.toLocaleString()}</div>
+              <div>払戻金 ¥${pay.payout.toLocaleString()} ／ 参加費込みの増減 ${totalText}</div>
+              <div class="${me.money < 0 ? 'text-rose-400' : 'text-emerald-300'} font-black">現在持ち金 ${this.formatMoney(me.money)}</div>`;
           }
         }
       },
@@ -8830,6 +8978,24 @@
         if (granted) this.enableAnalytics();
         try { sound.init(); } catch (e) {}
         this.refreshSettingsModal();
+        // 初回だけ、同意のあとに「アプリとしてインストール」の案内を出す。
+        setTimeout(() => this.maybeShowInstallHint(), 400);
+      },
+
+      // 初回起動時に一度だけインストール案内を出す。
+      //  ・すでにアプリとして起動している時は出しません
+      //  ・一度出したら二度と出しません（メニューからいつでも開けます）
+      maybeShowInstallHint() {
+        try {
+          if (localStorage.getItem(INSTALL_HINT_KEY)) return false;
+        } catch (e) {}
+        if (this._isStandaloneApp()) {
+          try { localStorage.setItem(INSTALL_HINT_KEY, '1'); } catch (e) {}
+          return false;
+        }
+        try { localStorage.setItem(INSTALL_HINT_KEY, '1'); } catch (e) {}
+        this.openInstallModal();
+        return true;
       },
 
       enableAnalytics() {
