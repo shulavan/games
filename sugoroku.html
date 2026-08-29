@@ -609,9 +609,9 @@
     </button>
 
     <!-- 地図の出典表記（タップで利用規約の「出典・クレジット」を開く） -->
-    <button onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
+    <button id="map-credit-btn" onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
       class="absolute bottom-1 left-1 z-20 px-1.5 py-[1px] rounded bg-slate-950/70 text-[8px] leading-tight text-slate-400 hover:text-slate-200 active:scale-95 transition">
-      © OpenStreetMap / CARTO ・出典
+      地理院タイル ・出典
     </button>
   </main>
 
@@ -659,14 +659,13 @@
     </div>
   </footer>
 
-  <!-- 広告枠（フッターの「下」に場所を確保して、サイコロや所持金が隠れないようにする）
-       ・その場に表示されるタイプの広告は、この枠の中に入るので重なりません
-       ・画面下に固定表示されるタイプの広告は、高さを測って自動で余白を作ります（_watchAdBanner）-->
-  <div id="ad-slot" data-app="1" class="shrink-0 w-full bg-slate-950 flex items-center justify-center overflow-hidden">
-    <!-- admax -->
-    <script src="https://adm.shinobi.jp/s/5d7ec317deaa0d07748ae65c55f4b14a"></script>
-    <!-- admax -->
-  </div>
+  <!-- 広告枠（現在は広告を出していないので空です）
+       非営利で運営するため、2026年8月に広告（忍者AdMax）を外しました。
+       将来また広告を入れる場合は、この中にタグを貼れば、_watchAdBanner が高さを測って
+       サイコロや所持金が隠れないよう自動で余白を作ります。
+       ※広告やアフィリエイトを入れると「商用利用」になり、OSRM（経路検索）など
+         「非営利のみ」と定めた無料サービスが使えなくなる点にご注意ください。 -->
+  <div id="ad-slot" data-app="1" class="shrink-0 w-full flex items-center justify-center overflow-hidden"></div>
 
   <!-- MODAL: HOST RECRUITMENT QR MODAL (USER A) -->
   <div data-app="1" id="host-recruitment-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
@@ -792,6 +791,36 @@
         決定
       </button>
     </div>
+  </div>
+
+  <!-- MODAL: 入場制限 -->
+  <div data-app="1" id="entry-limit-modal" class="hidden fixed inset-0 z-[99] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
+      <div class="text-5xl">🚧</div>
+      <h3 class="font-mincho text-lg font-bold text-amber-400">現在、入場制限しております</h3>
+      <p class="text-[15px] text-slate-200 leading-relaxed">
+        本日の受け入れ人数の上限に達しました。<br>
+        しばらく経ってから再入場ください。
+      </p>
+      <p id="entry-limit-detail" class="text-[13px] text-slate-400 leading-relaxed"></p>
+      <button onclick="EdogawaSugoroku.retryEntry()"
+        class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-95 transition">
+        もう一度ためす
+      </button>
+      <p class="text-[11px] text-slate-500 leading-relaxed">
+        たくさんの方に遊んでいただいているため、地図などの無料の仕組みを守れる範囲で
+        人数を調整しています。ご迷惑をおかけします。
+      </p>
+    </div>
+  </div>
+
+  <!-- 新しいバージョンが届いた時の案内（起動を速くするため、表示は保存済みのファイルから行っています） -->
+  <div data-app="1" id="update-banner" class="hidden fixed top-2 left-1/2 -translate-x-1/2 z-[97] flex items-center gap-2 bg-slate-900 border border-amber-500/60 rounded-full pl-4 pr-2 py-1.5 shadow-2xl">
+    <span class="text-[13px] font-bold text-amber-300 whitespace-nowrap">新しいバージョンがあります</span>
+    <button onclick="EdogawaSugoroku.reloadForUpdate()"
+      class="px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-[13px] font-black active:scale-95 transition">更新</button>
+    <button onclick="EdogawaSugoroku.dismissUpdateBanner()" aria-label="閉じる"
+      class="w-6 h-6 rounded-full text-slate-400 text-base leading-none active:scale-95 transition">×</button>
   </div>
 
   <!-- MODAL: アプリ（PWA）インストール -->
@@ -1581,6 +1610,59 @@
     // メニューの「設定」で切り替えた内容（音・読み上げ）の保存先。
     const SETTINGS_KEY = "edogawa_sugoroku_settings";
     // アクセス解析（Google アナリティクス）の同意状態の保存先
+    // 実行中に Nominatim（OpenStreetMapの住所検索）へ問い合わせるかどうか。
+    // false＝問い合わせない（データに入っている座標をそのまま使う）。
+    // Nominatimは「アプリ全体で1秒に1回まで」という共有ルールの無料サービスなので、
+    // 公開して大勢に遊んでもらう間は false のままにしてください。
+    const LIVE_GEOCODING_ENABLED = false;
+
+    // ============================================================
+    // 地図タイル（背景の地図画像）の取得先
+    //
+    //  ・既定は国土地理院の「地理院タイル（淡色地図）」です。
+    //    APIキー・申請とも不要で、出典を表示すれば誰でも使えます。
+    //      https://maps.gsi.go.jp/development/ichiran.html
+    //
+    //  ・CARTOは2026年8月からAPIキーなしの地図に
+    //    「API KEY REQUIRED」の透かしを入れるようになりました。
+    //    CARTOに戻したい場合は https://carto.com/basemaps/apikey/ で
+    //    無料キー（月500万タイルまで）を取り、下の CARTO_API_KEY に貼ってください。
+    //    キーが入っていれば自動でCARTOを使い、空なら地理院タイルを使います。
+    // ============================================================
+    // ============================================================
+    // 1日の入場制限（費用ゼロで運用するための安全弁）
+    //  ・地図画像や各APIの無料枠に収まる範囲まで、1日の人数に上限をつけます。
+    //  ・数える仕組みは Google Apps Script（entry_limit.gs.txt）です。
+    //    その /exec のURLを下に貼ると有効になります。空欄なら制限しません。
+    //  ・数えるのは「その日はじめて遊んだ端末」の数です。
+    //    同じ人が何度開いても1人ぶんで、いったん入った人はその日ずっと遊べます。
+    //  ・数える処理でエラーが出た時は「通す」側に倒します
+    //    （仕組みの不調で誰も遊べなくなる、という事態を避けるため）。
+    // ============================================================
+    const ENTRY_LIMIT_URL = "";
+    const DEVICE_ID_KEY = "edogawa_sugoroku_device_v1";
+
+    const CARTO_API_KEY = "";
+    const BASEMAPS = {
+      gsi: {
+        url: 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',
+        // 地理院タイルの淡色地図はズーム18まで。ゲームはズーム19で表示するので、
+        // 18のタイルを拡大して使います（そのぶん通信するタイル数も4分の1になります）。
+        options: { maxZoom: 19, maxNativeZoom: 18 },
+        credit: '地理院タイル（国土地理院）',
+        creditUrl: 'https://maps.gsi.go.jp/development/ichiran.html'
+      },
+      carto: {
+        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=' + CARTO_API_KEY,
+        options: { maxZoom: 19, subdomains: 'abcd' },
+        credit: '© OpenStreetMap / CARTO',
+        creditUrl: 'https://carto.com/attributions'
+      }
+    };
+    const ACTIVE_BASEMAP = CARTO_API_KEY ? BASEMAPS.carto : BASEMAPS.gsi;
+    // 「📍現在地を表示」で調べた地名を端末に保存しておくキー
+    const NEARBY_CACHE_KEY = "edogawa_sugoroku_nearby_v1";
+
     // 初回起動時に一度だけ「アプリとしてインストール」の案内を出すための記録
     const INSTALL_HINT_KEY = "edogawa_sugoroku_install_hint_v1";
     const CONSENT_KEY = "edogawa_sugoroku_consent";
@@ -1588,7 +1670,7 @@
     const WIKI_CACHE_KEY = "edogawa_sugoroku_wiki_v1";
     const GA_MEASUREMENT_ID = "G-LFEX859EVC";
     // 利用規約などの改定日（表示用）
-    const DOC_UPDATED = "2026年8月25日";
+    const DOC_UPDATED = "2026年8月26日";
     // 🚁/✈️を配る条件（残りマス数のしきい値）。ゴール1回につき、それぞれ1人だけ・早い者勝ち。
     const FLIGHT_HELI_MIN_SQUARES = 100;   // 🚁ヘリコプター
     const FLIGHT_PLANE_MIN_SQUARES = 150;  // ✈️飛行機
@@ -1711,12 +1793,13 @@
           <p>本ゲームは、以下のデータ・サービスを利用（加工して利用しているものを含む）しています。</p>
 
           <h5>地図・地理データ</h5>
-          <div class="doc-src">
-            地図タイル：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors（ODbL）／
-            © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>
+          <div class="doc-src" id="doc-basemap-credit">
+            地図画像：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル（国土地理院）</a>
           </div>
           <div class="doc-src">
-            地名・住所の検索および逆ジオコーディング：<a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim</a>（OpenStreetMap Foundation）
+            地名・住所の検索：<a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim</a>（OpenStreetMap Foundation）／
+            © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors（ODbL）。
+            「📍現在地を表示」を押した時にだけ使用します。
           </div>
           <div class="doc-src">
             道路経路（ルーティング）：<a href="https://project-osrm.org/" target="_blank" rel="noopener">OSRM（Open Source Routing Machine）</a>／道路データは © OpenStreetMap contributors
@@ -1740,8 +1823,8 @@
             ※江戸川区内の宿泊施設は、起動時に楽天トラベルAPIから取得しています。
             通信できない時は、あらかじめ取得しておいた一覧に自動で切り替えます。
             料金・評価・空室状況は取得時点のものです。<span id="doc-hotels-state"></span><br>
-            ※本ゲームには楽天トラベルのアフィリエイトリンクを含みます。リンク経由でご予約された場合、
-            制作者に成果報酬が支払われることがあります（お客様の支払額は変わりません）。
+            ※アフィリエイトリンクは使用していません。宿泊施設のページを開いても、
+            制作者に報酬は入りません。
           </div>
 
           <h5>施設の写真・説明</h5>
@@ -1751,10 +1834,10 @@
             画像は各ファイルのライセンスに従います）。各施設の詳細画面から元のページをご覧いただけます。
           </div>
 
-          <h5>アクセス解析・広告</h5>
+          <h5>アクセス解析</h5>
           <div class="doc-src">
             アクセス解析：Google アナリティクス（Google LLC）。初回起動時の同意がある場合にのみ読み込みます。<br>
-            広告配信：忍者AdMax（サムライファクトリー株式会社）
+            本ゲームは広告を掲載しておらず、営利を目的としていません。
           </div>
 
           <h5>ソフトウェア</h5>
@@ -1793,14 +1876,14 @@
           <h4>外部サービスへの通信</h4>
           <p>地図の表示や目的地の検索のため、次の外部サービスに通信します。その際、表示している地図の範囲や検索する地名などが各サービスに送信され、各サービス側で通信記録（IPアドレスを含む）が記録される場合があります。詳しくは各サービスの規約をご確認ください。</p>
           <ul>
-            <li>OpenStreetMap / CARTO（地図タイル）</li>
-            <li>Nominatim（地名・住所の検索）</li>
+            <li>地理院タイル／国土地理院（地図画像）</li>
+            <li>Nominatim（地名・住所の検索。「現在地を表示」を押した時のみ）</li>
             <li>OSRM（道路経路の取得）</li>
             <li>ホットペッパーグルメ Webサービス（飲食店の写真・ジャンル・予算・営業時間などの詳細。Google Apps Script 経由で取得）</li>
             <li>楽天ウェブサービス／楽天トラベル（宿泊施設の写真・評価点・クチコミ件数など。あらかじめ取得したデータを読み込みます）</li>
             <li>Firebase（マルチプレイ時のみ）</li>
             <li>ウィキペディア日本語版（施設の写真・説明）</li>
-            <li>Google アナリティクス（同意がある場合のみ）、忍者AdMax（広告）</li>
+            <li>Google アナリティクス（同意がある場合のみ）</li>
           </ul>
 
           <h4>位置情報について</h4>
@@ -1814,9 +1897,7 @@
           設定はメニューの「設定 → アクセス解析」でいつでも変更できます。</p>
 
           <h4>広告について</h4>
-          <p>本ゲームは無料で提供するため、画面下部に広告（忍者AdMax）を表示します。
-          広告配信事業者がCookieなどを使って広告の表示・効果測定を行う場合があります。
-          広告の表示自体はオフにできませんが、端末やブラウザの設定で広告のパーソナライズを制限できます。</p>
+          <p>本ゲームは広告を表示しません。広告配信事業者のCookieも使用しません。</p>
 
           <h4>Wikipedia・楽天トラベルの情報について</h4>
           <p>施設の詳細を開いた時に、ウィキペディア日本語版へ施設名を送信して写真・説明を取得します。
@@ -3687,12 +3768,20 @@
           this.map.on('moveend', () => this.scheduleFacilityMarkerRefresh(120));
           this.map.on('zoomend', () => this.scheduleFacilityMarkerRefresh(120));
 
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            subdomains: 'abcd'
-          }).addTo(this.map);
+          L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options }).addTo(this.map);
+          this._applyMapCredit();
         }
         this.renderFacilityMarkers();
+      },
+
+      // 地図の左下に出す出典表記を、使っているタイルに合わせる
+      _applyMapCredit() {
+        const el = document.getElementById('map-credit-btn');
+        if (el) el.innerText = `${ACTIVE_BASEMAP.credit} ・出典`;
+        const doc = document.getElementById('doc-basemap-credit');
+        if (doc) {
+          doc.innerHTML = `地図画像：<a href="${ACTIVE_BASEMAP.creditUrl}" target="_blank" rel="noopener">${ACTIVE_BASEMAP.credit}</a>`;
+        }
       },
 
       // ============================================================
@@ -4882,13 +4971,28 @@
         const key = String(place.name).trim();
         const force = options.force === true;
 
-        if (!force) {
-          const cached = this.geocodeCache[key];
-          if (cached && Number.isFinite(cached.lat) && Number.isFinite(cached.lng)) {
-            const resolved = { ...place, lat: cached.lat, lng: cached.lng, geocoded: true };
-            this.updateFacilityMarkerPosition(resolved);
-            return resolved;
-          }
+        // 端末に残っている過去の測位結果があれば、それを最優先で使う。
+        const cached = this.geocodeCache[key];
+        if (cached && Number.isFinite(cached.lat) && Number.isFinite(cached.lng)) {
+          const resolved = { ...place, lat: cached.lat, lng: cached.lng, geocoded: true };
+          this.updateFacilityMarkerPosition(resolved);
+          return resolved;
+        }
+
+        // ▼ 通常はここで終わり。データに入っている座標をそのまま使い、通信しません。
+        //   Nominatim（OpenStreetMapの住所検索）は「アプリ全体で1秒に1回まで」という
+        //   厳しい共有ルールで運営されている無料サービスです。以前は起動時に
+        //   施設186件ぶんを続けて問い合わせていましたが、利用者が2人同時に来ただけで
+        //   このルールを破ってしまうため、実行時の問い合わせをやめました。
+        //   施設の座標は sugoroku-data.json と江戸川区オープンデータに入っているので、
+        //   これで表示・経路とも問題なく動きます。
+        if (!LIVE_GEOCODING_ENABLED) {
+          return Number.isFinite(place.lat) && Number.isFinite(place.lng)
+            ? { ...place, geocoded: true }
+            : { ...place };
+        }
+        if (!force && Number.isFinite(place.lat) && Number.isFinite(place.lng)) {
+          return { ...place, geocoded: true };
         }
 
         const base = key
@@ -4977,6 +5081,14 @@
       },
 
       async refreshAllFacilityCoordinates() {
+        // 起動時の一括測位はやめました（上の resolvePlaceCoordinates の説明を参照）。
+        // データに入っている座標をそのまま使うので、この処理は何もしません。
+        if (!LIVE_GEOCODING_ENABLED) {
+          this.geocodeRefreshStarted = true;
+          this.geocodeRefreshDone = true;
+          this.geocodeRefreshProgress = { done: 0, total: 0, name: '' };
+          return null;
+        }
         if (this.geocodeRefreshPromise) return this.geocodeRefreshPromise;
         this.geocodeRefreshStarted = true;
         const all = this.getAllFacilityObjects();
@@ -7695,10 +7807,32 @@
         return null;
       },
 
+      // 「現在地」の地名キャッシュは端末に保存して、同じ場所を何度も問い合わせないようにする。
+      // （Nominatimへの問い合わせは、この機能のボタンを押した時だけです）
+      _loadNearbyCache() {
+        if (this._nearbyCache) return this._nearbyCache;
+        try { this._nearbyCache = JSON.parse(localStorage.getItem(NEARBY_CACHE_KEY) || '{}') || {}; }
+        catch (e) { this._nearbyCache = {}; }
+        return this._nearbyCache;
+      },
+
+      _saveNearbyCache() {
+        try {
+          const keys = Object.keys(this._nearbyCache || {});
+          // 増えすぎないよう、新しい方から400件だけ残す
+          if (keys.length > 400) {
+            const trimmed = {};
+            keys.slice(-400).forEach(k => { trimmed[k] = this._nearbyCache[k]; });
+            this._nearbyCache = trimmed;
+          }
+          localStorage.setItem(NEARBY_CACHE_KEY, JSON.stringify(this._nearbyCache));
+        } catch (e) {}
+      },
+
       async showNearbyPlace(lat, lng) {
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
         if (this._suppressNearby) return;
-        this._nearbyCache = this._nearbyCache || {};
+        this._loadNearbyCache();
         // 約100m単位でキャッシュ（「付近」表示にはこの粒度で十分）
         const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
         const token = (this._nearbySeq = (this._nearbySeq || 0) + 1);
@@ -7720,6 +7854,7 @@
           const label = this._formatNearbyLabel(data);
           if (!label) throw new Error('no label');
           this._nearbyCache[key] = label;
+          this._saveNearbyCache();
           if (token === this._nearbySeq && !this._suppressNearby) this._setNearbyBadge(label);
         } catch (e) {
           // 取得できなかった時は、もう一度押せるようにボタンへ戻す
@@ -8805,6 +8940,12 @@
               console.warn('Service Workerの登録に失敗しました（PWAインストールは無効・ゲームは通常どおり動きます）:', e);
             });
           });
+          // 通信量を抑えるため、起動時は保存済みのファイルで表示し、
+          // 新しいファイルがあるかどうかは裏で確認しています。
+          // 新しいバージョンが届いたら、その場で読み込み直せるように案内を出します。
+          navigator.serviceWorker.addEventListener('message', (ev) => {
+            if (ev.data && ev.data.type === 'content-updated') this.showUpdateBanner();
+          });
         }
 
         // Chrome系がインストール可能と判断した時に飛んでくるイベントを保持しておく
@@ -8821,6 +8962,22 @@
           if (btn) btn.classList.remove('ring-2', 'ring-amber-400/70', 'animate-pulse');
           this.addLog('📲 アプリとしてインストールされました。');
         });
+      },
+
+      // 「新しいバージョンがあります」の案内（画面上部に小さく出す）
+      showUpdateBanner() {
+        if (this._updateBannerShown) return;
+        this._updateBannerShown = true;
+        const el = document.getElementById('update-banner');
+        if (el) el.classList.remove('hidden');
+      },
+
+      reloadForUpdate() {
+        try { location.reload(); } catch (e) {}
+      },
+
+      dismissUpdateBanner() {
+        document.getElementById('update-banner')?.classList.add('hidden');
       },
 
       _isStandaloneApp() {
@@ -8967,8 +9124,12 @@
       // 初回起動時だけ同意モーダルを出す。2回目以降は前回の選択に従う。
       initConsent() {
         const c = this.readConsent();
-        if (c === 'granted') { this.enableAnalytics(); return; }
-        if (c === 'denied') return;
+        if (c === 'granted' || c === 'denied') {
+          if (c === 'granted') this.enableAnalytics();
+          // 同意済みの人は同意画面が出ないので、ここで入場枠を確認する
+          this.checkEntryAllowed().then(ok => { if (!ok) this.showEntryLimit(); });
+          return;
+        }
         document.getElementById('consent-modal')?.classList.remove('hidden');
       },
 
@@ -8978,8 +9139,68 @@
         if (granted) this.enableAnalytics();
         try { sound.init(); } catch (e) {}
         this.refreshSettingsModal();
-        // 初回だけ、同意のあとに「アプリとしてインストール」の案内を出す。
-        setTimeout(() => this.maybeShowInstallHint(), 400);
+        // 同意のあとに、本日の入場枠を確認する。
+        // 空きがあればそのまま、上限なら「入場制限」の案内を出す。
+        this.checkEntryAllowed().then(ok => {
+          if (!ok) { this.showEntryLimit(); return; }
+          // 初回だけ、「アプリとしてインストール」の案内を出す。
+          setTimeout(() => this.maybeShowInstallHint(), 400);
+        });
+      },
+
+      // ============================================================
+      // 1日の入場制限
+      // ============================================================
+      _deviceId() {
+        try {
+          let id = localStorage.getItem(DEVICE_ID_KEY);
+          if (!id) {
+            id = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+            localStorage.setItem(DEVICE_ID_KEY, id);
+          }
+          return id;
+        } catch (e) {
+          return 'd-temp-' + Math.random().toString(36).slice(2, 10);
+        }
+      },
+
+      // 入場できるかを確認する。エラー時・未設定時は必ず true（通す）。
+      async checkEntryAllowed() {
+        if (!ENTRY_LIMIT_URL) return true;
+        try {
+          const url = `${ENTRY_LIMIT_URL}?id=${encodeURIComponent(this._deviceId())}`;
+          const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+          const timer = ctl ? setTimeout(() => ctl.abort(), 4000) : null;
+          const resp = await fetch(url, ctl ? { signal: ctl.signal } : undefined);
+          if (timer) clearTimeout(timer);
+          if (!resp.ok) return true;
+          const data = await resp.json();
+          this.entryInfo = data || null;
+          if (data && data.allowed === false) return false;
+          return true;
+        } catch (e) {
+          console.info('入場者数の確認ができなかったため、そのまま遊べるようにします:', e && e.message);
+          return true;
+        }
+      },
+
+      showEntryLimit() {
+        const d = document.getElementById('entry-limit-detail');
+        const info = this.entryInfo || {};
+        if (d) {
+          d.innerText = (info.limit)
+            ? `本日の上限：${Number(info.limit).toLocaleString()}人（日付が変わるとリセットされます）`
+            : '';
+        }
+        document.getElementById('entry-limit-modal')?.classList.remove('hidden');
+      },
+
+      async retryEntry() {
+        const btn = document.querySelector('#entry-limit-modal button');
+        if (btn) { btn.disabled = true; btn.innerText = '確認中…'; }
+        const ok = await this.checkEntryAllowed();
+        if (btn) { btn.disabled = false; btn.innerText = 'もう一度ためす'; }
+        if (ok) document.getElementById('entry-limit-modal')?.classList.add('hidden');
       },
 
       // 初回起動時に一度だけインストール案内を出す。
