@@ -926,7 +926,7 @@
         <h3 class="font-mincho text-lg font-bold text-amber-400 mt-1">はじめる前にお知らせ</h3>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        「江戸川双六」は無料でお楽しみいただけます。
+        「江戸川双六」は一切広告なく無料でお楽しみいただけます。
         また、遊びやすさの改善のために <strong class="text-slate-100">Google アナリティクス</strong>で
         アクセス状況（どの画面がよく使われたかなど）を測定させていただきたいです。
       </p>
@@ -6530,9 +6530,11 @@
         }
         this.activeQuizQuestion = q;
 
-        // CPU・離脱中・人間プレーヤーのオートモードは、ミニゲームを実際には操作しない。
-        // 問題を読み上げたり三択を表示したりせず、ランダム回答の結果モーダルだけを表示する。
-        const quizAutoResult = !!(player.isCpu || this.isPlayerOffline(player) || (this.autoMode && player.id === 0));
+        // 離脱した参加者だけは実際のクイズ画面を操作できないため、
+        // ランダム回答の結果モーダルだけを表示する。
+        // CPUと人間プレーヤーのオートモードは、通常のクイズ画面を表示し、
+        // アナウンサーの読み上げ終了後に自動で三択へ回答する。
+        const quizAutoResult = !!(this.isPlayerOffline(player));
         if (quizAutoResult) {
           const guessIdx = Math.floor(Math.random() * q.options.length);
           const chosenText = q.options[guessIdx];
