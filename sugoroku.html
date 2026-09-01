@@ -926,14 +926,14 @@
         <h3 class="font-mincho text-lg font-bold text-amber-400 mt-1">はじめる前にお知らせ</h3>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        「江戸川双六」は一切広告なく無料でお楽しみいただけます。
+        「江戸川双六」は無料でお楽しみいただくため、<strong class="text-slate-100">広告</strong>を表示しています。
         また、遊びやすさの改善のために <strong class="text-slate-100">Google アナリティクス</strong>で
         アクセス状況（どの画面がよく使われたかなど）を測定させていただきたいです。
       </p>
       <ul class="text-[11px] text-slate-400 leading-relaxed bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-1">
         <li>・お名前・住所・電話番号などの個人情報は取得しません。</li>
         <li>・ニックネームやセーブデータは、お使いの端末の中だけに保存されます。</li>
-        <li>・「解析はオフ」を選んでもゲームはすべて遊べます。</li>
+        <li>・「解析はオフ」を選んでもゲームはすべて遊べます（広告は表示されます）。</li>
         <li>・設定はあとからメニューの「設定」で変更できます。</li>
       </ul>
       <div class="flex items-center justify-center gap-3 text-[11px]">
@@ -5359,13 +5359,12 @@
 
               let wasNew = false;
               if (matchedIdx === -1) {
-                // 赤:青:緑(旧イベントマス):★(新・特別イベントマス) = 40:30:25:5。
-                // ★は他のマスの5分の1程度の低頻度になるよう設計している。
+                // 赤:青:緑:★ = 40:30:15:15。★は従来の約3倍。
                 let type = 'blue';
                 const r = Math.random();
                 if (r < 0.40) type = 'red';
                 else if (r < 0.70) type = 'blue';
-                else if (r < 0.95) type = 'green';
+                else if (r < 0.85) type = 'green';
                 else type = 'star';
 
                 nodes.push({
@@ -6144,7 +6143,7 @@
 
       // 緑▲マス（旧・黄マス）: 強制移動系（競艇・警察・病院）と乗り物獲得系のイベント。
       resolveGreenEvent(player) {
-        if (this.startRegionalMiniGameForGreen(player)) return;
+        // 緑▲のミニゲームは江戸川競艇のみ。その他のミニゲームは★マスから起動。
         if (typeof player.forcedMoveCount !== 'number') player.forcedMoveCount = 0;
         if (typeof player.boatRaceCount !== 'number') player.boatRaceCount = 0;
 
@@ -6337,7 +6336,7 @@
         // 最新HTMLに存在しない状態で呼ばれていたため、ここで例外が発生し、
         // isRolling=true のままターンが進まず「フリーズ」していました。
         if (typeof this.specialEventRotationIdx !== 'number') this.specialEventRotationIdx = 0;
-        const rotation = ['quiz', 'kingyo'];
+        const rotation = ['quiz', 'kingyo', 'tower', 'wheel'];
         const kind = rotation[this.specialEventRotationIdx % rotation.length];
         this.specialEventRotationIdx++;
         this.miniGameActive = true;
@@ -6345,8 +6344,10 @@
 
         if (kind === 'quiz') {
           this.startQuizInvite(player);
-        } else {
+        } else if (kind === 'kingyo') {
           this.startKingyoInvite(player);
+        } else {
+          this.openRegionalMiniGame(kind, player);
         }
       },
 
@@ -6690,14 +6691,7 @@
 
       startKingyoInvite(player) { this.openRegionalMiniGame('kingyo', player); },
 
-      startRegionalMiniGameForGreen(player) {
-        const n=this.roadNetworkNodes?.[player?.currentNodeIdx]; const lat=Number(n?.lat),lng=Number(n?.lng);
-        if(!Number.isFinite(lat)||!Number.isFinite(lng)) return false;
-        const dist=(a,b)=>Math.hypot((a.lat-b.lat)*111000,(a.lng-b.lng)*111000*Math.cos(lat*Math.PI/180));
-        if(dist({lat,lng},{lat:35.66470,lng:139.86435})<=1100){this.openRegionalMiniGame('tower',player);return true;}
-        if(dist({lat,lng},{lat:35.64465,lng:139.86108})<=1300){this.openRegionalMiniGame('wheel',player);return true;}
-        return false;
-      },
+      startRegionalMiniGameForGreen(player) { return false; },
 
       openRegionalMiniGame(game,player){
         const overlay=document.getElementById('regional-mini-overlay'),frame=document.getElementById('regional-mini-frame'),title=document.getElementById('regional-mini-title');
@@ -6770,7 +6764,11 @@
         clearTimeout(this._regionalCpuResultTimer);
         this._regionalCpuResultTimer=null;
         document.getElementById('regional-cpu-result-modal')?.classList.add('hidden');
-        const p=this.players?.[this.regionalMiniGame?.playerId];
+        const state=this.regionalMiniGame;
+        if(!state || state.closing) return;
+        state.closing=true;
+        state.done=true;
+        const p=this.players?.[state.playerId];
         this.regionalMiniGame=null;
         this.miniGameActive=false;
         this.activeMiniGamePlayerId=null;
@@ -6778,12 +6776,36 @@
       },
 
       applyRegionalMiniGameResult(data){
-        const st=this.regionalMiniGame;if(!st||st.done)return;st.done=true;const p=this.players?.[st.playerId];
-        const delta=Number(data.delta)||0;if(p){p.money=Math.max(0,(Number(p.money)||0)+delta);this.updateHUD();this.addLog(`🎮 ${p.name}：${st.game==='tower'?'🏗増築船堀タワー':st.game==='wheel'?'🎡大観覧車':'🐟金魚すくい'} ${delta>=0?'＋':''}¥${delta.toLocaleString()}`);if(this.saveGameState)this.saveGameState();}
+        const st=this.regionalMiniGame;
+        if(!st || st.done || st.closing) return;
+        st.done=true;
+        const p=this.players?.[st.playerId];
+        const delta=Number(data.delta)||0;
+        if(p){
+          p.money=Math.max(0,(Number(p.money)||0)+delta);
+          this.updateHUD();
+          this.addLog(`🎮 ${p.name}：${st.game==='tower'?'🏗増築船堀タワー':st.game==='wheel'?'🎡大観覧車':'🐟金魚すくい'} ${delta>=0?'＋':''}¥${delta.toLocaleString()}`);
+          if(this.saveGameState)this.saveGameState();
+        }
       },
 
       closeRegionalMiniGame(){
-        const o=document.getElementById('regional-mini-overlay'),f=document.getElementById('regional-mini-frame');f&&(f.srcdoc='');o?.classList.add('hidden');const p=this.players?.[this.regionalMiniGame?.playerId];this.regionalMiniGame=null;this.miniGameActive=false;this.activeMiniGamePlayerId=null;if(p)this.finishMiniGameTurn(p);
+        const state = this.regionalMiniGame;
+        if (!state || state.closing) return;
+        // 「閉じる」は必ずミニゲームを終了して双六マップへ戻るだけにする。
+        // iframe側の結果表示タイマーや重複した CLOSE/RESULT メッセージが後から届いても、
+        // 一度終了したミニゲームを再起動・再判定しない。
+        state.closing = true;
+        state.done = true;
+        const o=document.getElementById('regional-mini-overlay');
+        const f=document.getElementById('regional-mini-frame');
+        if(f){ f.onload=null; f.srcdoc=''; }
+        o?.classList.add('hidden');
+        const p=this.players?.[state.playerId];
+        this.regionalMiniGame=null;
+        this.miniGameActive=false;
+        this.activeMiniGamePlayerId=null;
+        if(p)this.finishMiniGameTurn(p);
       },
 
       async teleportPlayer(player, targetLoc) {
