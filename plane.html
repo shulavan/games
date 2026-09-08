@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>江戸川飛行隊 - 3Dフライトシミュレーター</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Zen Kaku Gothic New', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            overflow: hidden;
+            background-color: #050b14;
+            color: #ffffff;
+        }
+        .digital-font {
+            font-family: 'Orbitron', monospace;
+        }
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(10, 20, 38, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+        /* Animated Alert Pulse */
+        @keyframes alert-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.03); opacity: 0.92; filter: drop-shadow(0 0 15px #ef4444); }
+        }
+        .animate-alert {
+            animation: alert-pulse 0.8s infinite ease-in-out;
+        }
+        /* Touch Steering Control Overlay */
+        .control-btn {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            backdrop-filter: blur(8px);
+            touch-action: manipulation;
+        }
+        .control-btn:active {
+            background: rgba(56, 189, 248, 0.4);
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative select-none bg-black overflow-hidden">
+
+    <!-- 3D Canvas Container -->
+    <div id="canvas-container" class="absolute inset-0 w-full h-full z-0"></div>
+
+    <!-- Flight HUD & Dashboard -->
+    <div id="game-hud" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-3 sm:p-5">
+        
+        <!-- Top Status Banner -->
+        <div class="w-full flex justify-between items-start">
+            <div class="glass-panel rounded-xl px-4 py-2 border-l-4 border-cyan-400">
+                <div class="text-[10px] text-cyan-300 font-bold uppercase tracking-wider">STAGE</div>
+                <div id="hud-stage-name" class="text-sm sm:text-lg font-black text-white">1: 離陸ステージ</div>
+            </div>
+            
+            <div class="flex items-center gap-2 pointer-events-auto">
+                <button id="permission-btn" class="hidden glass-panel px-3 py-1.5 rounded-xl text-xs text-amber-300 border-amber-400/50 hover:bg-amber-500/20 active:scale-95 transition-all">
+                    📲 センサー許可
+                </button>
+                <div id="gyro-status" class="glass-panel rounded-xl px-3 py-1.5 text-xs text-emerald-400 flex items-center gap-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span id="gyro-text">操作: スライド/ジャイロ</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Alerts & Prompts -->
+        <div id="center-alert-container" class="w-full flex flex-col justify-center items-center pointer-events-auto">
+            <!-- Countdown Display -->
+            <div id="countdown-display" class="hidden text-7xl sm:text-9xl font-black italic digital-font text-yellow-400 drop-shadow-[0_0_25px_rgba(250,204,21,0.8)]">
+                3
+            </div>
+
+            <!-- Takeoff Pull Back Alert -->
+            <div id="pull-back-alert" class="hidden glass-panel border-2 border-red-500 rounded-2xl p-5 text-center max-w-xs sm:max-w-sm animate-alert bg-red-950/90 shadow-2xl">
+                <div class="text-yellow-300 text-2xl sm:text-3xl font-black mb-1 animate-bounce">✈️ スマホを手前に倒せ！</div>
+                <div class="text-white text-xs sm:text-sm font-bold">速度120km/h・距離300m到達！</div>
+                <div class="text-[11px] text-red-200 mt-2 bg-red-900/60 p-2 rounded-lg">ゆっくり端末を手前に引くか、下の離陸ボタンを押してください</div>
+                <button id="takeoff-btn" class="mt-3 w-full py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-950 font-black rounded-xl text-sm shadow-lg active:scale-95 transition-transform">
+                    🛫 画面タップで離陸開始！
+                </button>
+            </div>
+        </div>
+
+        <!-- On-Screen Touch Controls (Fallback / Assist) -->
+        <div id="touch-controls" class="w-full pointer-events-auto flex justify-between items-end mb-2 px-2">
+            <!-- Left/Right Steering Buttons -->
+            <div class="flex gap-2">
+                <button id="btn-steer-left" class="control-btn w-14 h-14 rounded-2xl text-2xl font-black text-cyan-300 flex items-center justify-center shadow-lg active:bg-cyan-500/40">
+                    ◀
+                </button>
+                <button id="btn-steer-right" class="control-btn w-14 h-14 rounded-2xl text-2xl font-black text-cyan-300 flex items-center justify-center shadow-lg active:bg-cyan-500/40">
+                    ▶
+                </button>
+            </div>
+            
+            <!-- Pitch Up Assist Button -->
+            <div>
+                <button id="btn-pitch-up" class="control-btn px-4 h-14 rounded-2xl text-xs font-black text-amber-300 flex items-center justify-center gap-1 shadow-lg border-amber-400/40 active:bg-amber-500/40">
+                    <span>▲ 機首上げ (引く)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer Instrument Dashboard -->
+        <div class="w-full glass-panel rounded-2xl p-3 sm:p-4 grid grid-cols-3 items-center gap-2 border-t-2 border-cyan-500/40 pointer-events-auto">
+            
+            <!-- Left: Analog Clock & Digital Timer -->
+            <div class="flex flex-col items-center justify-center border-r border-white/10 pr-2">
+                <div class="relative w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-slate-900 border-2 border-slate-600 flex items-center justify-center shadow-inner">
+                    <canvas id="analog-clock" width="56" height="56" class="w-full h-full"></canvas>
+                    <div class="absolute w-1.5 h-1.5 bg-red-500 rounded-full z-10"></div>
+                </div>
+                <div class="mt-1 text-center">
+                    <span class="text-[9px] text-slate-400 block -mb-1">経過時間</span>
+                    <span id="digital-timer" class="digital-font text-xs sm:text-sm font-bold text-cyan-300">00:00.0</span>
+                </div>
+            </div>
+
+            <!-- Center: Airspeed Gauge (Knots) -->
+            <div class="flex flex-col items-center justify-center px-1">
+                <span class="text-[9px] sm:text-xs text-cyan-400 font-bold uppercase tracking-widest">AIRSPEED</span>
+                <div class="flex items-baseline gap-1 my-0.5">
+                    <span id="speed-knots" class="digital-font text-2xl sm:text-4xl font-black text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">0</span>
+                    <span class="text-xs sm:text-sm font-bold text-slate-300">KTS</span>
+                </div>
+                <div class="text-[10px] text-slate-400">時速 <span id="speed-kmh" class="text-white font-bold">0</span> km/h</div>
+            </div>
+
+            <!-- Right: Altitude Gauge (Feet) -->
+            <div class="flex flex-col items-center justify-center border-l border-white/10 pl-2">
+                <span class="text-[9px] sm:text-xs text-cyan-400 font-bold uppercase tracking-widest">ALTITUDE</span>
+                <div class="flex items-baseline gap-1 my-0.5">
+                    <span id="altitude-feet" class="digital-font text-2xl sm:text-4xl font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]">0</span>
+                    <span class="text-xs sm:text-sm font-bold text-slate-300">FT</span>
+                </div>
+                <div class="text-[10px] text-slate-400">距離 <span id="distance-meter" class="text-white font-bold">0</span> m</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Backdrop & Dialog System -->
+    <div id="modal-overlay" class="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        
+        <!-- Dialog Card -->
+        <div class="glass-panel w-full max-w-md rounded-3xl border border-cyan-500/30 overflow-hidden shadow-2xl flex flex-col justify-between max-h-[90vh]">
+            
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 p-4 sm:p-5 border-b border-white/10 text-center relative">
+                <div class="inline-block px-3 py-0.5 bg-cyan-500/20 text-cyan-300 text-[10px] font-bold rounded-full mb-1">
+                    江戸川区上空シミュレーター
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-amber-300">
+                    江戸川飛行隊
+                </h1>
+                <div id="modal-stage-subtitle" class="text-xs text-slate-300 mt-1 font-semibold">STAGE 1 : 街中特別滑走路 離陸ミッション</div>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div id="modal-body" class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-200">
+                <!-- Content Injected Dynamically -->
+            </div>
+
+            <!-- Footer & Auto Close Timer -->
+            <div class="p-4 bg-slate-950/80 border-t border-white/10 flex flex-col items-center gap-2">
+                <button id="modal-close-btn" class="w-full py-3 px-6 rounded-xl font-bold text-sm sm:text-base bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 active:scale-95 text-white shadow-lg shadow-cyan-500/30 transition-all flex items-center justify-center gap-2">
+                    <span>閉じる</span>
+                    <span id="close-timer-tag" class="text-xs bg-black/30 px-2 py-0.5 rounded-full font-normal">(3秒後に自動で閉じます)</span>
+                </button>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div id="modal-progress-bar" class="bg-cyan-400 h-full w-full transition-all duration-100 ease-linear"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API Sound Synthesizer
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.propellerNode = null;
+                this.propellerGain = null;
+                this.isPropellerPlaying = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        this.ctx = new AudioContext();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume().catch(() => {});
+                }
+            }
+
+            playBeep(isHigh = false) {
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(isHigh ? 880 : 440, this.ctx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + (isHigh ? 0.5 : 0.2));
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + (isHigh ? 0.5 : 0.2));
+                } catch(e) {}
+            }
+
+            startPropeller() {
+                try {
+                    this.init();
+                    if (!this.ctx || this.isPropellerPlaying) return;
+
+                    const bufferSize = this.ctx.sampleRate * 1;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    noise.loop = true;
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 180;
+
+                    this.propellerGain = this.ctx.createGain();
+                    this.propellerGain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+                    this.propellerGain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + 0.8);
+
+                    noise.connect(filter);
+                    filter.connect(this.propellerGain);
+                    this.propellerGain.connect(this.ctx.destination);
+
+                    noise.start();
+                    this.propellerNode = noise;
+                    this.isPropellerPlaying = true;
+                } catch(e) {}
+            }
+
+            updateEngineRPM(speedKmh) {
+                if (this.propellerGain && this.ctx) {
+                    const targetGain = Math.min(0.35, 0.12 + (speedKmh / 200) * 0.2);
+                    this.propellerGain.gain.setTargetAtTime(targetGain, this.ctx.currentTime, 0.1);
+                }
+            }
+
+            stopPropeller() {
+                if (this.propellerGain && this.ctx) {
+                    try {
+                        this.propellerGain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+                        setTimeout(() => {
+                            if (this.propellerNode) {
+                                try { this.propellerNode.stop(); } catch(e){}
+                                this.propellerNode = null;
+                            }
+                            this.isPropellerPlaying = false;
+                        }, 300);
+                    } catch(e) { this.isPropellerPlaying = false; }
+                }
+            }
+
+            playFanfare() {
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+                        gain.gain.setValueAtTime(0.15, this.ctx.currentTime + idx * 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.1 + 0.35);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(this.ctx.currentTime + idx * 0.1);
+                        osc.stop(this.ctx.currentTime + idx * 0.1 + 0.35);
+                    });
+                } catch(e) {}
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        // Game State Enum
+        const GameState = {
+            STAGE1_MODAL: 0,
+            STAGE1_COUNTDOWN: 1,
+            STAGE1_RUNNING: 2,
+            STAGE1_ALERT: 3,
+            STAGE1_FLYING: 4,
+            STAGE1_RESULT: 5,
+            STAGE2_MODAL: 6,
+            STAGE2_COUNTDOWN: 7,
+            STAGE2_APPROACH: 8,
+            STAGE2_BRAKING: 9,
+            STAGE2_RESULT: 10
+        };
+
+        let currentStageState = GameState.STAGE1_MODAL;
+        let gameTime = 0;
+        let timerInterval = null;
+        let modalAutoCloseTimer = null;
+        let countdownTimer = null;
+        let autoCloseCountdown = 3;
+
+        // Aircraft Telemetry
+        let cessnaPosition = { x: 0, y: 1.2, z: 0 };
+        let cessnaRotation = { pitch: 0, yaw: 0, roll: 0 };
+        let speedKmh = 0;
+        let distanceMeters = 0;
+        let altitudeFeet = 0;
+        let crosswindX = 0;
+
+        // Sensor Input (-1.0 to 1.0)
+        let gyroInput = { roll: 0, pitch: 0 };
+        let buttonSteer = 0;
+        let buttonPitch = 0;
+
+        // DOM Elements
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalBody = document.getElementById('modal-body');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const closeTimerTag = document.getElementById('close-timer-tag');
+        const modalProgressBar = document.getElementById('modal-progress-bar');
+        const modalStageSubtitle = document.getElementById('modal-stage-subtitle');
+        
+        const countdownDisplay = document.getElementById('countdown-display');
+        const pullBackAlert = document.getElementById('pull-back-alert');
+        const takeoffBtn = document.getElementById('takeoff-btn');
+        const permissionBtn = document.getElementById('permission-btn');
+        
+        const speedKnotsEl = document.getElementById('speed-knots');
+        const speedKmhEl = document.getElementById('speed-kmh');
+        const altitudeFeetEl = document.getElementById('altitude-feet');
+        const distanceMeterEl = document.getElementById('distance-meter');
+        const digitalTimerEl = document.getElementById('digital-timer');
+        const hudStageNameEl = document.getElementById('hud-stage-name');
+
+        function initSensors() {
+            // iOS DeviceOrientation Permission Handler
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                permissionBtn.classList.remove('hidden');
+                permissionBtn.addEventListener('click', () => {
+                    DeviceOrientationEvent.requestPermission().then(state => {
+                        if (state === 'granted') {
+                            permissionBtn.classList.add('hidden');
+                            document.getElementById('gyro-text').innerText = "センサー: 稼働中";
+                        }
+                    }).catch(console.error);
+                });
+            }
+
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.gamma !== null && e.beta !== null) {
+                    gyroInput.roll = Math.max(-1, Math.min(1, e.gamma / 25));
+                    gyroInput.pitch = Math.max(-1, Math.min(1, (e.beta - 35) / 30));
+                }
+            });
+
+            // Touch Drag Handling with Fallback Pointer capture
+            let isTouching = false;
+            let startX = 0, startY = 0;
+
+            window.addEventListener('pointerdown', (e) => {
+                audio.init();
+                if (e.target.closest('#modal-overlay') || e.target.closest('button')) return;
+                isTouching = true;
+                startX = e.clientX;
+                startY = e.clientY;
+            });
+
+            window.addEventListener('pointermove', (e) => {
+                if (!isTouching) return;
+                const dx = (e.clientX - startX) / (window.innerWidth * 0.25);
+                const dy = (e.clientY - startY) / (window.innerHeight * 0.25);
+                gyroInput.roll = Math.max(-1, Math.min(1, dx));
+                gyroInput.pitch = Math.max(-1, Math.min(1, dy));
+            });
+
+            const stopTouch = () => { isTouching = false; };
+            window.addEventListener('pointerup', stopTouch);
+            window.addEventListener('pointercancel', stopTouch);
+
+            // On-screen Steering Buttons
+            const btnLeft = document.getElementById('btn-steer-left');
+            const btnRight = document.getElementById('btn-steer-right');
+            const btnPitch = document.getElementById('btn-pitch-up');
+
+            const bindButton = (btn, onPress, onRelease) => {
+                btn.addEventListener('pointerdown', (e) => { e.preventDefault(); audio.init(); onPress(); });
+                btn.addEventListener('pointerup', (e) => { e.preventDefault(); onRelease(); });
+                btn.addEventListener('pointercancel', (e) => { e.preventDefault(); onRelease(); });
+            };
+
+            bindButton(btnLeft, () => { buttonSteer = -1.0; }, () => { buttonSteer = 0; });
+            bindButton(btnRight, () => { buttonSteer = 1.0; }, () => { buttonSteer = 0; });
+            bindButton(btnPitch, () => { buttonPitch = -1.0; }, () => { buttonPitch = 0; });
+
+            takeoffBtn.addEventListener('click', () => {
+                gyroInput.pitch = -0.8;
+                buttonPitch = -0.8;
+            });
+        }
+
+        let scene, camera, renderer;
+        let cessnaGroup;
+        let propellerMeshes = [];
+        let trafficCars = [];
+        let pedestrians = [];
+        let trafficLights = [];
+
+        function init3DWorld() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x60a5fa);
+            scene.fog = new THREE.FogExp2(0x93c5fd, 0.0018);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1500);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffaed, 0.85);
+            sunLight.position.set(100, 200, 80);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 1024;
+            sunLight.shadow.mapSize.height = 1024;
+            scene.add(sunLight);
+
+            // Construct Environment & Aircraft
+            buildEdogawaCity();
+            buildCessnaPlane();
+
+            window.addEventListener('resize', onWindowResize);
+
+            // WebGL Context Loss Recovery
+            renderer.domElement.addEventListener('webglcontextlost', (e) => {
+                e.preventDefault();
+                console.warn('WebGL context lost, recovering...');
+            }, false);
+            renderer.domElement.addEventListener('webglcontextrestored', () => {
+                console.log('WebGL context restored');
+            }, false);
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function buildEdogawaCity() {
+            // Main Runway Road
+            const roadGeo = new THREE.PlaneGeometry(24, 2000);
+            const roadMat = new THREE.MeshStandardMaterial({ color: 0x22252a, roughness: 0.8 });
+            const road = new THREE.Mesh(roadGeo, roadMat);
+            road.rotation.x = -Math.PI / 2;
+            road.position.z = 800;
+            road.receiveShadow = true;
+            scene.add(road);
+
+            // Center Stripes
+            const lineGeo = new THREE.PlaneGeometry(0.8, 10);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            for (let z = -100; z < 1700; z += 30) {
+                const line = new THREE.Mesh(lineGeo, lineMat);
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(0, 0.02, z);
+                scene.add(line);
+            }
+
+            // Sidewalks
+            const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x777777, roughness: 0.9 });
+            [-13.5, 13.5].forEach(x => {
+                const sidewalkGeo = new THREE.BoxGeometry(3, 0.3, 2000);
+                const sidewalk = new THREE.Mesh(sidewalkGeo, sidewalkMat);
+                sidewalk.position.set(x, 0.15, 800);
+                sidewalk.receiveShadow = true;
+                scene.add(sidewalk);
+            });
+
+            // Intersection at Z = 300m
+            buildIntersectionAndTraffic(300);
+
+            // Buildings (Optimized count for high performance)
+            const buildingColors = [0xe2e8f0, 0xc5d3e8, 0xfef3c7, 0xdcfce7];
+            for (let z = -50; z < 1650; z += 55) {
+                [-1, 1].forEach(side => {
+                    if (Math.abs(z - 300) < 40) return;
+
+                    const x = side * (24 + Math.random() * 10);
+                    const width = 16 + Math.random() * 6;
+                    const height = 15 + Math.random() * 25;
+                    const depth = 18 + Math.random() * 6;
+
+                    const bldgGeo = new THREE.BoxGeometry(width, height, depth);
+                    const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
+                    const bldgMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.6 });
+                    const building = new THREE.Mesh(bldgGeo, bldgMat);
+                    building.position.set(x, height / 2, z);
+                    building.castShadow = true;
+                    building.receiveShadow = true;
+                    scene.add(building);
+                });
+            }
+
+            // Fleeing Pedestrians
+            for (let i = 0; i < 15; i++) {
+                const pedGroup = new THREE.Group();
+                const bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 1.4);
+                const headGeo = new THREE.SphereGeometry(0.35);
+                const mat = new THREE.MeshStandardMaterial({ color: Math.floor(Math.random() * 0xffffff) });
+                
+                const body = new THREE.Mesh(bodyGeo, mat);
+                body.position.y = 0.7;
+                const head = new THREE.Mesh(headGeo, mat);
+                head.position.y = 1.6;
+                
+                pedGroup.add(body, head);
+                const side = Math.random() > 0.5 ? 1 : -1;
+                pedGroup.position.set(side * (13.5 + Math.random() * 2), 0.3, Math.random() * 600);
+                scene.add(pedGroup);
+                pedestrians.push({ mesh: pedGroup, speed: 0.12 + Math.random() * 0.1 });
+            }
+        }
+
+        function buildIntersectionAndTraffic(intersectionZ) {
+            const crossRoadGeo = new THREE.PlaneGeometry(250, 20);
+            const crossRoadMat = new THREE.MeshStandardMaterial({ color: 0x22252a });
+            const crossRoad = new THREE.Mesh(crossRoadGeo, crossRoadMat);
+            crossRoad.rotation.x = -Math.PI / 2;
+            crossRoad.position.set(0, 0.01, intersectionZ);
+            scene.add(crossRoad);
+
+            [-14, 14].forEach(x => {
+                const poleGeo = new THREE.CylinderGeometry(0.18, 0.18, 6);
+                const poleMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
+                const pole = new THREE.Mesh(poleGeo, poleMat);
+                pole.position.set(x, 3, intersectionZ - 12);
+                scene.add(pole);
+
+                const lightBoxGeo = new THREE.BoxGeometry(2.8, 1, 0.8);
+                const lightBoxMat = new THREE.MeshStandardMaterial({ color: 0x0f172a });
+                const lightBox = new THREE.Mesh(lightBoxGeo, lightBoxMat);
+                lightBox.position.set(x > 0 ? x - 1 : x + 1, 5.8, intersectionZ - 12);
+                scene.add(lightBox);
+
+                const bulbGeo = new THREE.SphereGeometry(0.35);
+                const bulbMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+                const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+                bulb.position.set(lightBox.position.x, 5.8, intersectionZ - 11.5);
+                scene.add(bulb);
+
+                trafficLights.push(bulbMat);
+            });
+
+            const carModels = [
+                { size: [2.2, 1.4, 4.2], color: 0xef4444 },
+                { size: [2.5, 2.2, 6.8], color: 0x2563eb },
+                { size: [2.6, 2.8, 9.5], color: 0xf59e0b }
+            ];
+
+            [-110, -70, 70, 110].forEach((posX, idx) => {
+                const spec = carModels[idx % carModels.length];
+                const carGeo = new THREE.BoxGeometry(spec.size[0], spec.size[1], spec.size[2]);
+                const carMat = new THREE.MeshStandardMaterial({ color: spec.color, roughness: 0.3 });
+                const carMesh = new THREE.Mesh(carGeo, carMat);
+                
+                const dir = posX < 0 ? 1 : -1;
+                carMesh.position.set(posX, spec.size[1] / 2, intersectionZ);
+                carMesh.rotation.y = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
+                carMesh.castShadow = true;
+                scene.add(carMesh);
+
+                trafficCars.push({ mesh: carMesh, direction: dir });
+            });
+        }
+
+        function buildCessnaPlane() {
+            cessnaGroup = new THREE.Group();
+            propellerMeshes = [];
+
+            const bodyGroup = new THREE.Group();
+
+            const bodyGeo = new THREE.CylinderGeometry(0.75, 0.45, 6.2, 12);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2, metalness: 0.1 });
+            const fuselage = new THREE.Mesh(bodyGeo, bodyMat);
+            fuselage.rotation.x = Math.PI / 2;
+            fuselage.position.z = 0;
+            fuselage.castShadow = true;
+            bodyGroup.add(fuselage);
+
+            const noseGeo = new THREE.ConeGeometry(0.75, 1.6, 12);
+            const noseMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 });
+            const nose = new THREE.Mesh(noseGeo, noseMat);
+            nose.rotation.x = Math.PI / 2;
+            nose.position.z = 3.9;
+            bodyGroup.add(nose);
+
+            const glassGeo = new THREE.SphereGeometry(0.7, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+            const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x0f172a, transparent: true, opacity: 0.8, roughness: 0.1, metalness: 0.9 });
+            const glass = new THREE.Mesh(glassGeo, glassMat);
+            glass.rotation.x = -Math.PI / 3;
+            glass.position.set(0, 0.5, 1.0);
+            glass.scale.set(0.85, 0.75, 1.7);
+            bodyGroup.add(glass);
+
+            const wingGeo = new THREE.BoxGeometry(11.8, 0.14, 1.8);
+            const wingMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+            const wings = new THREE.Mesh(wingGeo, wingMat);
+            wings.position.set(0, 0.2, 0.8);
+            wings.castShadow = true;
+            bodyGroup.add(wings);
+
+            const tailGeo = new THREE.BoxGeometry(0.12, 1.7, 1.4);
+            const tailMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 });
+            const tail = new THREE.Mesh(tailGeo, tailMat);
+            tail.position.set(0, 1.1, -2.5);
+            tail.rotation.x = -Math.PI / 6;
+            bodyGroup.add(tail);
+
+            const hTailGeo = new THREE.BoxGeometry(3.6, 0.1, 0.9);
+            const hTail = new THREE.Mesh(hTailGeo, wingMat);
+            hTail.position.set(0, 0.35, -2.7);
+            bodyGroup.add(hTail);
+
+            const nacelleMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.3 });
+            const propBladeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8 });
+            const spinnerMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.2 });
+
+            [-2.6, 2.6].forEach(xPos => {
+                const nacelleGeo = new THREE.CylinderGeometry(0.42, 0.38, 2.0, 10);
+                const nacelle = new THREE.Mesh(nacelleGeo, nacelleMat);
+                nacelle.rotation.x = Math.PI / 2;
+                nacelle.position.set(xPos, 0.2, 1.0);
+                nacelle.castShadow = true;
+                bodyGroup.add(nacelle);
+
+                const spinnerGeo = new THREE.ConeGeometry(0.4, 0.6, 10);
+                const spinner = new THREE.Mesh(spinnerGeo, spinnerMat);
+                spinner.rotation.x = Math.PI / 2;
+                spinner.position.set(xPos, 0.2, 2.1);
+                bodyGroup.add(spinner);
+
+                const propGroup = new THREE.Group();
+                propGroup.position.set(xPos, 0.2, 2.25);
+
+                for (let b = 0; b < 3; b++) {
+                    const bladeGeo = new THREE.BoxGeometry(0.1, 1.25, 0.03);
+                    const blade = new THREE.Mesh(bladeGeo, propBladeMat);
+                    blade.rotation.z = (b * Math.PI * 2) / 3;
+                    propGroup.add(blade);
+                }
+
+                bodyGroup.add(propGroup);
+                propellerMeshes.push(propGroup);
+            });
+
+            cessnaGroup.add(bodyGroup);
+            cessnaGroup.position.set(cessnaPosition.x, cessnaPosition.y, cessnaPosition.z);
+            scene.add(cessnaGroup);
+        }
+
+        function drawAnalogClock() {
+            const canvas = document.getElementById('analog-clock');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const radius = w / 2 - 2;
+
+            ctx.clearRect(0, 0, w, h);
+            
+            ctx.beginPath();
+            ctx.arc(w / 2, h / 2, radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            const now = new Date();
+            const seconds = now.getSeconds() + now.getMilliseconds() / 1000;
+            const angle = (seconds / 60) * Math.PI * 2 - Math.PI / 2;
+
+            ctx.beginPath();
+            ctx.moveTo(w / 2, h / 2);
+            ctx.lineTo(w / 2 + Math.cos(angle) * (radius - 4), h / 2 + Math.sin(angle) * (radius - 4));
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function showModal(titleSubtitle, bodyHTML, closeBtnText, autoCloseSecs, onCloseCallback) {
+            let closed = false;
+            modalStageSubtitle.innerText = titleSubtitle;
+            modalBody.innerHTML = bodyHTML;
+            modalCloseBtn.querySelector('span:first-child').innerText = closeBtnText;
+            
+            modalOverlay.classList.remove('hidden');
+            autoCloseCountdown = autoCloseSecs;
+            closeTimerTag.innerText = `(${autoCloseCountdown}秒後に自動で閉じます)`;
+            modalProgressBar.style.width = '100%';
+
+            if (modalAutoCloseTimer) clearInterval(modalAutoCloseTimer);
+
+            const startTime = Date.now();
+            const totalDuration = autoCloseSecs * 1000;
+
+            const doClose = () => {
+                if (closed) return;
+                closed = true;
+                if (modalAutoCloseTimer) clearInterval(modalAutoCloseTimer);
+                modalOverlay.classList.add('hidden');
+                if (onCloseCallback) onCloseCallback();
+            };
+
+            modalAutoCloseTimer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remainingRatio = Math.max(0, 1 - elapsed / totalDuration);
+                modalProgressBar.style.width = `${remainingRatio * 100}%`;
+                
+                const secsLeft = Math.ceil((totalDuration - elapsed) / 1000);
+                closeTimerTag.innerText = `(${Math.max(0, secsLeft)}秒後に自動で閉じます)`;
+
+                if (elapsed >= totalDuration) {
+                    doClose();
+                }
+            }, 50);
+
+            modalCloseBtn.onclick = () => {
+                doClose();
+            };
+        }
+
+        function startStage1() {
+            currentStageState = GameState.STAGE1_MODAL;
+            hudStageNameEl.innerText = "1: 離陸ステージ";
+
+            const instructionsHTML = `
+                <div class="space-y-3">
+                    <div class="p-3 bg-blue-950/60 rounded-xl border border-blue-500/30">
+                        <div class="font-bold text-cyan-300 text-sm mb-1">🛫 離陸ミッションルール</div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            江戸川区の道路を特別滑走路としてセスナ機を滑走させます。アクセルは自動で加速します。
+                        </p>
+                    </div>
+                    <ul class="text-xs space-y-2 text-slate-300 list-disc list-inside bg-slate-900/50 p-3 rounded-xl">
+                        <li><strong class="text-white">距離300m・時速120km</strong>で離陸可能！</li>
+                        <li>アラートが出たら<strong class="text-yellow-300">スマホを手前に倒すかボタンを押し</strong>離陸！</li>
+                        <li>画面左右の◀ ▶ボタンやタッチスライドでも操作可能です。</li>
+                    </ul>
+                </div>
+            `;
+
+            showModal("STAGE 1 : 街中特別滑走路 離陸ミッション", instructionsHTML, "閉じる", 3, () => {
+                triggerCountdown(() => {
+                    currentStageState = GameState.STAGE1_RUNNING;
+                    audio.startPropeller();
+                    startStopwatch();
+                });
+            });
+        }
+
+        function triggerCountdown(onComplete) {
+            currentStageState = GameState.STAGE1_COUNTDOWN;
+            countdownDisplay.classList.remove('hidden');
+            let count = 3;
+            
+            countdownDisplay.innerText = count;
+            audio.playBeep(false);
+
+            if (countdownTimer) clearInterval(countdownTimer);
+            countdownTimer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownDisplay.innerText = count;
+                    audio.playBeep(false);
+                } else if (count === 0) {
+                    countdownDisplay.innerText = "GO!";
+                    audio.playBeep(true);
+                } else {
+                    clearInterval(countdownTimer);
+                    countdownDisplay.classList.add('hidden');
+                    if (onComplete) onComplete();
+                }
+            }, 1000);
+        }
+
+        function startStopwatch() {
+            gameTime = 0;
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                gameTime += 0.1;
+                const mins = Math.floor(gameTime / 60).toString().padStart(2, '0');
+                const secs = (gameTime % 60).toFixed(1).padStart(4, '0');
+                digitalTimerEl.innerText = `${mins}:${secs}`;
+            }, 100);
+        }
+
+        function stopStopwatch() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function startStage2() {
+            currentStageState = GameState.STAGE2_MODAL;
+            hudStageNameEl.innerText = "2: 着陸ステージ";
+
+            cessnaPosition = { x: 0, y: 120, z: -400 };
+            cessnaRotation = { pitch: -0.1, yaw: 0, roll: 0 };
+            speedKmh = 120;
+            distanceMeters = 0;
+            crosswindX = (Math.random() > 0.5 ? 1 : -1) * (0.16 + Math.random() * 0.1);
+
+            const instructionsHTML = `
+                <div class="space-y-3">
+                    <div class="p-3 bg-indigo-950/60 rounded-xl border border-indigo-500/30">
+                        <div class="font-bold text-amber-300 text-sm mb-1">🛬 着陸ミッションルール</div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            上空から江戸川滑走路へ進入します。横風に耐えて滑走路中心をキープしてください！
+                        </p>
+                    </div>
+                    <ul class="text-xs space-y-2 text-slate-300 list-disc list-inside bg-slate-900/50 p-3 rounded-xl">
+                        <li><strong class="text-white">ジャイロ/スライド/左右ボタン</strong>で中心を維持。</li>
+                        <li>接地後は自動ブレーキにより<strong class="text-emerald-400">時速0kmで完全停止</strong>すれば成功！</li>
+                    </ul>
+                </div>
+            `;
+
+            showModal("STAGE 2 : 横風攻略 街中着陸ミッション", instructionsHTML, "閉じる", 3, () => {
+                triggerCountdown(() => {
+                    currentStageState = GameState.STAGE2_APPROACH;
+                    audio.startPropeller();
+                    startStopwatch();
+                });
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            try {
+                drawAnalogClock();
+
+                const effectiveRoll = buttonSteer !== 0 ? buttonSteer : gyroInput.roll;
+                const effectivePitch = buttonPitch !== 0 ? buttonPitch : gyroInput.pitch;
+
+                // Twin Propellers Rotation
+                if (propellerMeshes.length > 0 && (currentStageState === GameState.STAGE1_RUNNING || currentStageState === GameState.STAGE1_ALERT || currentStageState === GameState.STAGE1_FLYING || currentStageState === GameState.STAGE2_APPROACH)) {
+                    const spinSpeed = 0.4 + (speedKmh / 200) * 0.6;
+                    propellerMeshes.forEach(p => { p.rotation.z += spinSpeed; });
+                }
+
+                // STAGE 1 RUNNING
+                if (currentStageState === GameState.STAGE1_RUNNING || currentStageState === GameState.STAGE1_ALERT) {
+                    if (speedKmh < 140) speedKmh += 0.45;
+                    audio.updateEngineRPM(speedKmh);
+
+                    distanceMeters += (speedKmh / 3.6) * (1 / 60);
+                    cessnaPosition.z = distanceMeters;
+
+                    cessnaPosition.x += effectiveRoll * 0.15;
+                    cessnaRotation.roll = effectiveRoll * 0.25;
+                    cessnaRotation.yaw = -effectiveRoll * 0.1;
+
+                    if (distanceMeters > 220) {
+                        trafficLights.forEach(mat => mat.color.setHex(0xff0000));
+                        trafficCars.forEach(car => { car.mesh.position.x += car.direction * 0.35; });
+                    }
+
+                    if (distanceMeters >= 300 && speedKmh >= 120) {
+                        currentStageState = GameState.STAGE1_ALERT;
+                        pullBackAlert.classList.remove('hidden');
+
+                        if (effectivePitch < -0.3) {
+                            pullBackAlert.classList.add('hidden');
+                            currentStageState = GameState.STAGE1_FLYING;
+                            audio.playFanfare();
+                        }
+                    }
+                }
+
+                // STAGE 1 FLYING
+                if (currentStageState === GameState.STAGE1_FLYING) {
+                    speedKmh = Math.min(160, speedKmh + 0.3);
+                    distanceMeters += (speedKmh / 3.6) * (1 / 60);
+                    cessnaPosition.z = distanceMeters;
+
+                    cessnaPosition.y += 0.85;
+                    altitudeFeet = Math.floor((cessnaPosition.y - 1.2) * 3.28084);
+                    cessnaRotation.pitch = -0.22;
+
+                    if (altitudeFeet > 150) {
+                        stopStopwatch();
+                        currentStageState = GameState.STAGE1_RESULT;
+                        showStage1Results();
+                    }
+                }
+
+                // STAGE 2 APPROACH
+                if (currentStageState === GameState.STAGE2_APPROACH) {
+                    speedKmh = Math.max(100, speedKmh - 0.15);
+                    audio.updateEngineRPM(speedKmh);
+
+                    distanceMeters += (speedKmh / 3.6) * (1 / 60);
+                    cessnaPosition.z = -400 + distanceMeters;
+
+                    cessnaPosition.y = Math.max(1.2, 120 - (distanceMeters / 400) * 118.8);
+                    altitudeFeet = Math.floor((cessnaPosition.y - 1.2) * 3.28084);
+
+                    cessnaPosition.x += crosswindX + (effectiveRoll * 0.28);
+                    cessnaRotation.roll = effectiveRoll * 0.3;
+
+                    if (cessnaPosition.y <= 1.25 && distanceMeters >= 400) {
+                        currentStageState = GameState.STAGE2_BRAKING;
+                    }
+                }
+
+                // STAGE 2 BRAKING
+                if (currentStageState === GameState.STAGE2_BRAKING) {
+                    speedKmh = Math.max(0, speedKmh - 0.85);
+                    audio.updateEngineRPM(speedKmh);
+
+                    distanceMeters += (speedKmh / 3.6) * (1 / 60);
+                    cessnaPosition.z = distanceMeters - 400;
+                    cessnaPosition.y = 1.2;
+                    altitudeFeet = 0;
+
+                    cessnaRotation.pitch = 0;
+                    cessnaRotation.roll = 0;
+
+                    if (speedKmh === 0) {
+                        stopStopwatch();
+                        audio.stopPropeller();
+                        audio.playFanfare();
+                        currentStageState = GameState.STAGE2_RESULT;
+                        showStage2Results();
+                    }
+                }
+
+                // Update Camera & Transforms
+                if (cessnaGroup) {
+                    cessnaGroup.position.set(cessnaPosition.x, cessnaPosition.y, cessnaPosition.z);
+                    cessnaGroup.rotation.set(cessnaRotation.pitch, cessnaRotation.yaw, cessnaRotation.roll);
+
+                    const camOffset = new THREE.Vector3(0, 3.2, -10.5);
+                    camOffset.applyEuler(cessnaGroup.rotation);
+                    camera.position.copy(cessnaGroup.position).add(camOffset);
+                    camera.lookAt(cessnaGroup.position.x, cessnaGroup.position.y + 0.8, cessnaGroup.position.z + 8.0);
+                }
+
+                // Animate Pedestrians
+                pedestrians.forEach(p => {
+                    p.mesh.position.z += p.speed;
+                    if (p.mesh.position.z > 1600) p.mesh.position.z = 0;
+                });
+
+                // Update UI Gauges
+                const speedKnots = Math.round(speedKmh * 0.539957);
+                speedKnotsEl.innerText = speedKnots;
+                speedKmhEl.innerText = Math.round(speedKmh);
+                altitudeFeetEl.innerText = altitudeFeet;
+                distanceMeterEl.innerText = Math.max(0, Math.round(distanceMeters));
+
+                if (renderer && scene && camera) {
+                    renderer.render(scene, camera);
+                }
+            } catch(e) {
+                console.error("Render loop error caught gracefully:", e);
+            }
+        }
+
+        function showStage1Results() {
+            const finalDist = Math.round(distanceMeters);
+            const finalSpeed = Math.round(speedKmh);
+            const finalTime = gameTime.toFixed(1);
+
+            let score = "S";
+            let color = "text-yellow-400";
+            if (finalTime > 15) { score = "A"; color = "text-emerald-400"; }
+            if (finalTime > 20) { score = "B"; color = "text-cyan-400"; }
+
+            const resultsHTML = `
+                <div class="text-center py-2 space-y-4">
+                    <div class="inline-block px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/40 rounded-full text-emerald-300 font-bold text-xs">
+                        ミッションクリア！ 離陸成功
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 bg-slate-900/80 p-3 rounded-2xl border border-white/10 text-center">
+                        <div>
+                            <div class="text-[10px] text-slate-400">離陸距離</div>
+                            <div class="text-base sm:text-lg font-black text-white digital-font">${finalDist} m</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400">最高速度</div>
+                            <div class="text-base sm:text-lg font-black text-amber-400 digital-font">${finalSpeed} km/h</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400">離陸時間</div>
+                            <div class="text-base sm:text-lg font-black text-cyan-300 digital-font">${finalTime} 秒</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-slate-900 to-blue-950 p-4 rounded-2xl border border-cyan-500/30 flex items-center justify-around">
+                        <span class="text-xs sm:text-sm font-bold text-slate-300">操縦評価点</span>
+                        <span class="text-4xl sm:text-5xl font-black italic digital-font ${color} drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]">${score}</span>
+                    </div>
+                </div>
+            `;
+
+            showModal("STAGE 1 離陸結果発表", resultsHTML, "閉じる", 5, () => {
+                startStage2();
+            });
+        }
+
+        function showStage2Results() {
+            const deviation = Math.abs(cessnaPosition.x).toFixed(1);
+            const landingSpeed = 100;
+            const stopTime = gameTime.toFixed(1);
+
+            let score = "S";
+            let color = "text-yellow-400";
+            if (deviation > 2) { score = "A"; color = "text-emerald-400"; }
+            if (deviation > 4) { score = "B"; color = "text-cyan-400"; }
+
+            const resultsHTML = `
+                <div class="text-center py-2 space-y-4">
+                    <div class="inline-block px-4 py-1.5 bg-cyan-500/20 border border-cyan-500/40 rounded-full text-cyan-300 font-bold text-xs">
+                        全ミッションコンプリート！
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 bg-slate-900/80 p-3 rounded-2xl border border-white/10 text-center">
+                        <div>
+                            <div class="text-[10px] text-slate-400">着陸安定性</div>
+                            <div class="text-base sm:text-lg font-black text-white digital-font">ブレ ${deviation}m</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400">接地速度</div>
+                            <div class="text-base sm:text-lg font-black text-amber-400 digital-font">${landingSpeed} km/h</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400">停止時間</div>
+                            <div class="text-base sm:text-lg font-black text-cyan-300 digital-font">${stopTime} 秒</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-slate-900 to-indigo-950 p-4 rounded-2xl border border-amber-500/30 flex items-center justify-around">
+                        <span class="text-xs sm:text-sm font-bold text-slate-300">総合パイロット評価</span>
+                        <span class="text-4xl sm:text-5xl font-black italic digital-font ${color} drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]">${score}</span>
+                    </div>
+                </div>
+            `;
+
+            showModal("STAGE 2 着陸結果発表", resultsHTML, "閉じる", 5, () => {
+                cessnaPosition = { x: 0, y: 1.2, z: 0 };
+                cessnaRotation = { pitch: 0, yaw: 0, roll: 0 };
+                speedKmh = 0;
+                distanceMeters = 0;
+                altitudeFeet = 0;
+                startStage1();
+            });
+        }
+
+        window.addEventListener('load', () => {
+            init3DWorld();
+            initSensors();
+            animate();
+            startStage1();
+        });
+    </script>
+</body>
+</html>
