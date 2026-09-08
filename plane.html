@@ -381,9 +381,10 @@
 
             window.addEventListener('deviceorientation', (e) => {
                 if (e.gamma !== null && e.beta !== null) {
-                    // 左右・上下のジャイロセンサー傾き入力を反転
-                    gyroInput.roll = Math.max(-1, Math.min(1, -e.gamma / 25));
-                    gyroInput.pitch = Math.max(-1, Math.min(1, -(e.beta - 35) / 30));
+                    // 左右(roll): 右に傾ける(gamma>0) -> 正の値
+                    // 上下(pitch): スマホを手前に倒す/引き寄せる(beta>35) -> 正の値(機首上げ/離陸)
+                    gyroInput.roll = Math.max(-1, Math.min(1, e.gamma / 25));
+                    gyroInput.pitch = Math.max(-1, Math.min(1, (e.beta - 35) / 30));
                 }
             });
 
@@ -403,8 +404,9 @@
                 if (!isTouching) return;
                 const dx = (e.clientX - startX) / (window.innerWidth * 0.25);
                 const dy = (e.clientY - startY) / (window.innerHeight * 0.25);
-                gyroInput.roll = Math.max(-1, Math.min(1, -dx));
-                gyroInput.pitch = Math.max(-1, Math.min(1, -dy));
+                // ドラッグ操作: 右にドラッグ->右ステアリング, 下(手前)にドラッグ->機首上げ
+                gyroInput.roll = Math.max(-1, Math.min(1, dx));
+                gyroInput.pitch = Math.max(-1, Math.min(1, dy));
             });
 
             const stopTouch = () => { isTouching = false; };
