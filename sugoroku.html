@@ -926,14 +926,14 @@
         <h3 class="font-mincho text-lg font-bold text-amber-400 mt-1">はじめる前にお知らせ</h3>
       </div>
       <p class="text-xs text-slate-300 leading-relaxed">
-        「江戸川双六」は無料でお楽しみいただくため、<strong class="text-slate-100">広告</strong>を表示しています。
-        また、遊びやすさの改善のために <strong class="text-slate-100">Google アナリティクス</strong>で
+        「江戸川双六」は<strong class="text-slate-100">広告や収益を得ない非営利</strong>のファンメイド作品です。
+        遊びやすさの改善のために <strong class="text-slate-100">Google アナリティクス</strong>で
         アクセス状況（どの画面がよく使われたかなど）を測定させていただきたいです。
       </p>
       <ul class="text-[11px] text-slate-400 leading-relaxed bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-1">
         <li>・お名前・住所・電話番号などの個人情報は取得しません。</li>
         <li>・ニックネームやセーブデータは、お使いの端末の中だけに保存されます。</li>
-        <li>・「解析はオフ」を選んでもゲームはすべて遊べます（広告は表示されます）。</li>
+        <li>・「解析はオフ」を選んでもゲームはすべて遊べます。</li>
         <li>・設定はあとからメニューの「設定」で変更できます。</li>
       </ul>
       <div class="flex items-center justify-center gap-3 text-[11px]">
@@ -2675,7 +2675,7 @@
         this.autoMode = !this.autoMode;
         const btn = document.getElementById("auto-mode-btn");
         if (btn) {
-          btn.innerText = `オートモード: ${this.autoMode ? "ON" : "OFF"}`;
+          btn.textContent = `オートモード: ${this.autoMode ? "ON" : "OFF"}`;
           btn.classList.toggle("bg-amber-500", this.autoMode);
           btn.classList.toggle("text-slate-950", this.autoMode);
           btn.classList.toggle("border-amber-400", this.autoMode);
@@ -7393,7 +7393,11 @@
           // Only after the new board is fully built do we advance the turn.
           this.finishTurn();
           this.panToCurrentPlayer();
-          this.triggerPostGoalMiniGame(arrivedCategory);
+          try {
+            this.triggerPostGoalMiniGame(arrivedCategory);
+          } catch (mgErr) {
+            console.error("ゴール後ミニゲームの起動に失敗しました:", mgErr);
+          }
         } catch (e) {
           console.error("次の双六の盤面生成に失敗しました:", e);
           this.addLog("⚠️ 次の盤面生成に失敗しました。サイコロは一時停止しています。");
@@ -7411,9 +7415,20 @@
         };
         const gameKey = GOAL_MINIGAMES[category];
         if (!gameKey) return;
-        const player = this.players?.find(p => p.id === this.selectedCategoryWinnerIdx) || this.players?.[this.selectedCategoryWinnerIdx];
-        if (!player) return;
-        setTimeout(() => this.openRegionalMiniGame(gameKey, player), 400);
+        const player = this.players?.find(p => p.id === this.selectedCategoryWinnerIdx)
+          || this.players?.find(p => p.uid === this.myUid)
+          || this.players?.[0];
+        if (!player) {
+          console.warn("ゴール後ミニゲーム: プレーヤーが見つからず起動できませんでした", category, gameKey);
+          return;
+        }
+        setTimeout(() => {
+          try {
+            this.openRegionalMiniGame(gameKey, player);
+          } catch (e) {
+            console.error("ゴール後ミニゲームの起動処理でエラー:", e);
+          }
+        }, 400);
       },
 
       finishTurn() {
