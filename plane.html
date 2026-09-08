@@ -58,7 +58,7 @@
     <div id="canvas-container" class="absolute inset-0 w-full h-full z-0"></div>
 
     <!-- Flight HUD & Dashboard -->
-    <div id="game-hud" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-3 sm:p-5">
+    <div id="game-hud" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-3 sm:p-5" style="padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));">
         
         <!-- Top Status Banner -->
         <div class="w-full flex justify-between items-start">
@@ -100,55 +100,56 @@
         <div id="touch-controls" class="w-full pointer-events-auto flex justify-between items-end mb-2 px-2">
             <!-- Left/Right Steering Buttons -->
             <div class="flex gap-2">
-                <button id="btn-steer-left" class="control-btn w-14 h-14 rounded-2xl text-2xl font-black text-cyan-300 flex items-center justify-center shadow-lg active:bg-cyan-500/40">
+                <button id="btn-steer-left" class="control-btn w-12 h-12 sm:w-14 sm:h-14 rounded-2xl text-xl sm:text-2xl font-black text-cyan-300 flex items-center justify-center shadow-lg active:bg-cyan-500/40">
                     ◀
                 </button>
-                <button id="btn-steer-right" class="control-btn w-14 h-14 rounded-2xl text-2xl font-black text-cyan-300 flex items-center justify-center shadow-lg active:bg-cyan-500/40">
+                <button id="btn-steer-right" class="control-btn w-12 h-12 sm:w-14 sm:h-14 rounded-2xl text-xl sm:text-2xl font-black text-cyan-300 flex items-center justify-center shadow-lg active:bg-cyan-500/40">
                     ▶
                 </button>
             </div>
             
             <!-- Pitch Up Assist Button -->
             <div>
-                <button id="btn-pitch-up" class="control-btn px-4 h-14 rounded-2xl text-xs font-black text-amber-300 flex items-center justify-center gap-1 shadow-lg border-amber-400/40 active:bg-amber-500/40">
+                <button id="btn-pitch-up" class="control-btn px-3 sm:px-4 h-12 sm:h-14 rounded-2xl text-[11px] sm:text-xs font-black text-amber-300 flex items-center justify-center gap-1 shadow-lg border-amber-400/40 active:bg-amber-500/40">
                     <span>▲ 機首上げ (引く)</span>
                 </button>
             </div>
         </div>
 
-        <!-- Footer Instrument Dashboard -->
-        <div class="w-full glass-panel rounded-2xl p-3 sm:p-4 grid grid-cols-3 items-center gap-2 border-t-2 border-cyan-500/40 pointer-events-auto">
-            
-            <!-- Left: Analog Clock & Digital Timer -->
-            <div class="flex flex-col items-center justify-center border-r border-white/10 pr-2">
-                <div class="relative w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-slate-900 border-2 border-slate-600 flex items-center justify-center shadow-inner">
-                    <canvas id="analog-clock" width="56" height="56" class="w-full h-full"></canvas>
-                    <div class="absolute w-1.5 h-1.5 bg-red-500 rounded-full z-10"></div>
+        <!-- Footer Instrument Dashboard (Lifted up significantly with safe area) -->
+        <div class="w-full glass-panel rounded-2xl p-2.5 sm:p-4 border-t-2 border-cyan-500/40 pointer-events-auto shadow-2xl" style="margin-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));">
+            <div class="grid grid-cols-3 items-center gap-2">
+                <!-- Left: Analog Clock & Digital Timer -->
+                <div class="flex flex-col items-center justify-center border-r border-white/10 pr-1 sm:pr-2">
+                    <div class="relative w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-slate-900 border-2 border-slate-600 flex items-center justify-center shadow-inner">
+                        <canvas id="analog-clock" width="56" height="56" class="w-full h-full"></canvas>
+                        <div class="absolute w-1.5 h-1.5 bg-red-500 rounded-full z-10"></div>
+                    </div>
+                    <div class="mt-0.5 sm:mt-1 text-center">
+                        <span class="text-[8px] sm:text-[9px] text-slate-400 block -mb-0.5 sm:-mb-1">経過時間</span>
+                        <span id="digital-timer" class="digital-font text-[11px] sm:text-sm font-bold text-cyan-300">00:00.0</span>
+                    </div>
                 </div>
-                <div class="mt-1 text-center">
-                    <span class="text-[9px] text-slate-400 block -mb-1">経過時間</span>
-                    <span id="digital-timer" class="digital-font text-xs sm:text-sm font-bold text-cyan-300">00:00.0</span>
-                </div>
-            </div>
 
-            <!-- Center: Airspeed Gauge (Knots) -->
-            <div class="flex flex-col items-center justify-center px-1">
-                <span class="text-[9px] sm:text-xs text-cyan-400 font-bold uppercase tracking-widest">AIRSPEED</span>
-                <div class="flex items-baseline gap-1 my-0.5">
-                    <span id="speed-knots" class="digital-font text-2xl sm:text-4xl font-black text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">0</span>
-                    <span class="text-xs sm:text-sm font-bold text-slate-300">KTS</span>
+                <!-- Center: Airspeed Gauge (Knots) -->
+                <div class="flex flex-col items-center justify-center px-0.5 sm:px-1">
+                    <span class="text-[8px] sm:text-xs text-cyan-400 font-bold uppercase tracking-widest">AIRSPEED</span>
+                    <div class="flex items-baseline gap-0.5 sm:gap-1 my-0.5">
+                        <span id="speed-knots" class="digital-font text-xl sm:text-4xl font-black text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">0</span>
+                        <span class="text-[10px] sm:text-sm font-bold text-slate-300">KTS</span>
+                    </div>
+                    <div class="text-[9px] sm:text-[10px] text-slate-400">時速 <span id="speed-kmh" class="text-white font-bold">0</span> km/h</div>
                 </div>
-                <div class="text-[10px] text-slate-400">時速 <span id="speed-kmh" class="text-white font-bold">0</span> km/h</div>
-            </div>
 
-            <!-- Right: Altitude Gauge (Feet) -->
-            <div class="flex flex-col items-center justify-center border-l border-white/10 pl-2">
-                <span class="text-[9px] sm:text-xs text-cyan-400 font-bold uppercase tracking-widest">ALTITUDE</span>
-                <div class="flex items-baseline gap-1 my-0.5">
-                    <span id="altitude-feet" class="digital-font text-2xl sm:text-4xl font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]">0</span>
-                    <span class="text-xs sm:text-sm font-bold text-slate-300">FT</span>
+                <!-- Right: Altitude Gauge (Feet) -->
+                <div class="flex flex-col items-center justify-center border-l border-white/10 pl-1 sm:pl-2">
+                    <span class="text-[8px] sm:text-xs text-cyan-400 font-bold uppercase tracking-widest">ALTITUDE</span>
+                    <div class="flex items-baseline gap-0.5 sm:gap-1 my-0.5">
+                        <span id="altitude-feet" class="digital-font text-xl sm:text-4xl font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]">0</span>
+                        <span class="text-[10px] sm:text-sm font-bold text-slate-300">FT</span>
+                    </div>
+                    <div class="text-[9px] sm:text-[10px] text-slate-400">距離 <span id="distance-meter" class="text-white font-bold">0</span> m</div>
                 </div>
-                <div class="text-[10px] text-slate-400">距離 <span id="distance-meter" class="text-white font-bold">0</span> m</div>
             </div>
         </div>
     </div>
