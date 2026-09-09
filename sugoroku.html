@@ -76,6 +76,15 @@
       font-family: 'Shippori Mincho', serif;
     }
 
+    /* Android ChromeでrequestFullscreen()を使うと、画面最上部に「フルスクリーン解除スワイプ」用の
+       ジェスチャー領域がOS側で確保され、そこに重なるボタンのタップが奪われてしまうことがある。
+       フルスクリーン中だけヘッダーに上余白を足して、ボタン類をこの領域より下にずらす。 */
+    body.is-fullscreen-mode header[data-app="1"] {
+      padding-top: 26px;
+      height: auto;
+      min-height: 3.5rem;
+    }
+
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -2661,6 +2670,12 @@
             document.documentElement.requestFullscreen().catch(() => {});
           }
         } catch (e) {}
+        setTimeout(() => this._updateFullscreenClass(), 300);
+      },
+
+      _updateFullscreenClass() {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        document.body.classList.toggle('is-fullscreen-mode', isFs);
       },
 
       toggleBGM() {
@@ -9753,5 +9768,8 @@ window.__EDOGAWA_MINIGAME_B64 = {"bus":"PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9Imph
 window.__EDOGAWA_DECODE_MINIGAME=function(b){const bytes=Uint8Array.from(atob(b),c=>c.charCodeAt(0));return new TextDecoder().decode(bytes)};
 function decodeMiniGame(b){return window.__EDOGAWA_DECODE_MINIGAME(b)}
 window.addEventListener('message',e=>{const d=e.data||{},app=window.EdogawaSugoroku;if(!app)return;if(d.type==='EDOGAWA_AMIDA_RESULT'){app.finishGoalAmida(d.prize,d.prizeName);return;}if(d.type==='EDOGAWA_AMIDA_CLOSE'&&app.goalAmidaActive){app.finishGoalAmida();return;}if(d.type==='EDOGAWA_MINIGAME_RESULT')app.applyRegionalMiniGameResult(d);if(d.type==='EDOGAWA_MINIGAME_CLOSE')app.closeRegionalMiniGame()});
+document.addEventListener('fullscreenchange',()=>window.EdogawaSugoroku&&window.EdogawaSugoroku._updateFullscreenClass());
+document.addEventListener('webkitfullscreenchange',()=>window.EdogawaSugoroku&&window.EdogawaSugoroku._updateFullscreenClass());
+if(window.EdogawaSugoroku)window.EdogawaSugoroku._updateFullscreenClass();
 </script></body>
 </html>
