@@ -2667,8 +2667,8 @@
         const isMuted = sound.toggleMute();
         const icon = document.getElementById("bgm-icon");
         const label = document.getElementById("bgm-label");
-        if (icon) icon.innerText = isMuted ? "🔇" : "🎵";
-        if (label) label.innerText = isMuted ? "BGM OFF" : "BGM ON";
+        if (icon) icon.textContent = isMuted ? "🔇" : "🎵";
+        if (label) label.textContent = isMuted ? "BGM OFF" : "BGM ON";
       },
 
       toggleAutoMode() {
@@ -2811,7 +2811,7 @@
 
       updateRecruitmentUI(playersList, countdown) {
         const countBadge = document.getElementById("modal-participant-count");
-        if (countBadge) countBadge.innerText = `参加人数 ${playersList.length}名`;
+        if (countBadge) countBadge.textContent = `参加人数 ${playersList.length}名`;
 
         const listContainer = document.getElementById("modal-participant-list");
         if (listContainer) {
@@ -2824,7 +2824,7 @@
 
         const countdownBadge = document.getElementById("modal-countdown-badge");
         if (countdownBadge && typeof countdown === 'number') {
-          countdownBadge.innerText = `${countdown}秒`;
+          countdownBadge.textContent = `${countdown}秒`;
         }
       },
 
@@ -2865,7 +2865,7 @@
         this.countdownTimer = setInterval(async () => {
           this.countdownVal--;
           const countdownBadge = document.getElementById("modal-countdown-badge");
-          if (countdownBadge) countdownBadge.innerText = `${this.countdownVal}秒`;
+          if (countdownBadge) countdownBadge.textContent = `${this.countdownVal}秒`;
 
           // Sync countdown to Firestore (best-effort, never blocks the local timer)
           if (this.db && this.roomId) {
@@ -3058,7 +3058,7 @@
 
       updateGuestWaitingUI(playersList, countdown) {
         const countText = document.getElementById("guest-participant-count");
-        if (countText) countText.innerText = `参加人数 ${playersList.length}名`;
+        if (countText) countText.textContent = `参加人数 ${playersList.length}名`;
 
         const listContainer = document.getElementById("guest-participant-list");
         if (listContainer) {
@@ -3071,7 +3071,7 @@
 
         const secElem = document.getElementById("guest-countdown-seconds");
         if (secElem && typeof countdown === 'number') {
-          secElem.innerText = countdown;
+          secElem.textContent = countdown;
         }
       },
 
@@ -3371,7 +3371,7 @@
         const waitOverlay = document.getElementById("mp-goal-wait-overlay");
         if (waitOverlay) {
           if (!this.isHost && this.awaitingGoalSelection) {
-            document.getElementById("mp-goal-wait-text").innerText =
+            document.getElementById("mp-goal-wait-text").textContent =
               `🏆 ${this.awaitingGoalSelection.winnerName} さんがゴールしました！\nホストが次の目的地を選んでいます…`;
             waitOverlay.classList.remove("hidden");
           } else {
@@ -3502,11 +3502,11 @@
       },
 
       showEventModalReadOnly(title, desc, extra, options = {}) {
-        document.getElementById("event-modal-title").innerText = title;
-        document.getElementById("event-modal-desc").innerText = desc;
+        document.getElementById("event-modal-title").textContent = title;
+        document.getElementById("event-modal-desc").textContent = desc;
         const extraBox = document.getElementById("event-modal-extra");
         if (extra) {
-          extraBox.innerText = extra;
+          extraBox.textContent = extra;
           extraBox.classList.remove("hidden");
         } else {
           extraBox.classList.add("hidden");
@@ -3579,11 +3579,11 @@
         // 目的地・所持金・残りマス数を出す（ソロの保存がある時だけ）
         const info = this._soloSaveSummary(solo);
         if (destEl) {
-          destEl.innerText = info.dest || '';
+          destEl.textContent = info.dest || '';
           destEl.classList.toggle('hidden', !info.dest);
         }
         if (statsEl) {
-          statsEl.innerText = info.stats || '';
+          statsEl.textContent = info.stats || '';
           statsEl.classList.toggle('hidden', !info.stats);
         }
 
@@ -3595,10 +3595,10 @@
             const host = mp.isHost ? '自分' : (mp.hostName || 'ホスト');
             const esc = (v) => String(v).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
             rLabel.innerHTML = `前回の続き<br>（ホスト：${esc(host)}）`;
-            if (rEmoji) rEmoji.innerText = '💾';
+            if (rEmoji) rEmoji.textContent = '💾';
           } else {
             rLabel.innerHTML = '参加者募集<br>（QRコード発行）';
-            if (rEmoji) rEmoji.innerText = '👥';
+            if (rEmoji) rEmoji.textContent = '👥';
           }
         }
       },
@@ -3695,6 +3695,7 @@
           this.currentPlayerIdx = Number.isInteger(state.currentPlayerIdx) ? state.currentPlayerIdx : 0;
           this.turnCount = Number.isInteger(state.turnCount) ? state.turnCount : 0;
           this.currentDestination = state.currentDestination;
+          this.currentDestinationCategory = typeof state.currentDestinationCategory === 'string' ? state.currentDestinationCategory : "";
           this.roadNetworkNodes = state.roadNetworkNodes;
           this.goalNodeIdx = Number.isInteger(state.goalNodeIdx) ? state.goalNodeIdx : null;
           this.specialEventUsed = !!state.specialEventUsed;
@@ -3788,7 +3789,7 @@
       // 地図の左下に出す出典表記を、使っているタイルに合わせる
       _applyMapCredit() {
         const el = document.getElementById('map-credit-btn');
-        if (el) el.innerText = `${ACTIVE_BASEMAP.credit} ・出典`;
+        if (el) el.textContent = `${ACTIVE_BASEMAP.credit} ・出典`;
         const doc = document.getElementById('doc-basemap-credit');
         if (doc) {
           doc.innerHTML = `地図画像：<a href="${ACTIVE_BASEMAP.creditUrl}" target="_blank" rel="noopener">${ACTIVE_BASEMAP.credit}</a>`;
@@ -4349,8 +4350,8 @@
         if (!modal) return;
         this._facilityModalTarget = info;
 
-        document.getElementById('facility-modal-heading').innerText = opts.heading || '施設情報';
-        document.getElementById('facility-modal-title').innerText =
+        document.getElementById('facility-modal-heading').textContent = opts.heading || '施設情報';
+        document.getElementById('facility-modal-title').textContent =
           `${info.emoji ? info.emoji + ' ' : ''}${info.name}`;
 
         // 写真（無い時・読み込めなかった時は、写真の枠ごと表示しない）
@@ -4359,7 +4360,7 @@
         // 住所＋地図ボタン
         const addrRow = document.getElementById('facility-address-row');
         if (info.address) {
-          document.getElementById('facility-address').innerText = info.address;
+          document.getElementById('facility-address').textContent = info.address;
           addrRow.classList.remove('hidden');
         } else {
           addrRow.classList.add('hidden');
@@ -4369,7 +4370,7 @@
         const telRow = document.getElementById('facility-tel-row');
         const telLink = document.getElementById('facility-tel');
         if (info.tel) {
-          telLink.innerText = info.tel;
+          telLink.textContent = info.tel;
           telLink.href = `tel:${String(info.tel).replace(/[^0-9+]/g, '')}`;
           telRow.classList.remove('hidden');
         } else {
@@ -4379,10 +4380,10 @@
         // ホームページ（宿泊施設は楽天トラベルのページ）
         const homeBtn = document.getElementById('facility-home-btn');
         homeBtn.classList.toggle('hidden', !info.url);
-        homeBtn.innerText = info.fromRakuten ? '🏨 楽天トラベルで見る' : '🌐 ホームページを開く';
+        homeBtn.textContent = info.fromRakuten ? '🏨 楽天トラベルで見る' : '🌐 ホームページを開く';
 
         const note = document.getElementById('facility-note');
-        if (opts.note) { note.innerText = opts.note; note.classList.remove('hidden'); }
+        if (opts.note) { note.textContent = opts.note; note.classList.remove('hidden'); }
         else note.classList.add('hidden');
 
         // 評価・料金・アクセスなどの詳しい情報
@@ -4398,7 +4399,7 @@
         if (info.fromOpenData) credits.push('出典：江戸川区オープンデータ（CC BY 4.0）を加工して作成');
         if (info.fromRakuten) credits.push('Supported by 楽天ウェブサービス（楽天トラベル）');
         if (credits.length) {
-          credit.innerText = credits.join(' ／ ');
+          credit.textContent = credits.join(' ／ ');
           credit.classList.remove('hidden');
         } else {
           credit.classList.add('hidden');
@@ -4411,7 +4412,7 @@
           this.armModalAutoClose('facility', 'facility-close-btn',
             () => this.closeFacilityModal(), opts.autoCloseSec);
         } else if (btn) {
-          btn.innerText = '閉じる';
+          btn.textContent = '閉じる';
         }
 
         // 公共施設（公園・図書館・駅・区の施設など）は Wikipedia からも
@@ -4442,14 +4443,14 @@
           info.url = found.url;
           if (this._facilityModalTarget) this._facilityModalTarget.url = found.url;
           const homeBtn = document.getElementById('facility-home-btn');
-          if (homeBtn) { homeBtn.classList.remove('hidden'); homeBtn.innerText = '🌐 お店のページを開く'; }
+          if (homeBtn) { homeBtn.classList.remove('hidden'); homeBtn.textContent = '🌐 お店のページを開く'; }
         }
         if (found.tel && !info.tel) {
           info.tel = found.tel;
           const telRow = document.getElementById('facility-tel-row');
           const telLink = document.getElementById('facility-tel');
           if (telRow && telLink) {
-            telLink.innerText = found.tel;
+            telLink.textContent = found.tel;
             telLink.href = `tel:${String(found.tel).replace(/[^0-9+]/g, '')}`;
             telRow.classList.remove('hidden');
           }
@@ -4466,9 +4467,9 @@
         if (cpBtn) cpBtn.classList.toggle('hidden', !this._facilityCouponUrl);
         const credit = document.getElementById('facility-credit');
         if (credit) {
-          const t = credit.innerText || '';
+          const t = credit.textContent || '';
           if (!t.includes('ホットペッパー')) {
-            credit.innerText = [t, '写真・情報：ホットペッパーグルメ Webサービス'].filter(Boolean).join(' ／ ');
+            credit.textContent = [t, '写真・情報：ホットペッパーグルメ Webサービス'].filter(Boolean).join(' ／ ');
             credit.classList.remove('hidden');
           }
         }
@@ -4539,7 +4540,7 @@
         const extract = document.getElementById('facility-wiki-extract');
         const wikiBtn = document.getElementById('facility-wiki-btn');
         if (row) row.classList.add('hidden');
-        if (extract) { extract.classList.add('hidden'); extract.innerText = ''; }
+        if (extract) { extract.classList.add('hidden'); extract.textContent = ''; }
         if (wikiBtn) wikiBtn.classList.add('hidden');
         this._facilityWikiUrl = null;
         if (!info || !this._wikiAllowed(info)) return;
@@ -4552,7 +4553,7 @@
         let data = cache[q];
         if (data === undefined) {
           if (row) row.classList.remove('hidden');
-          if (status) { status.classList.remove('hidden'); status.innerText = '📖 Wikipediaで調べています…'; }
+          if (status) { status.classList.remove('hidden'); status.textContent = '📖 Wikipediaで調べています…'; }
           data = await this._fetchWikipedia(q);
           this._wikiCacheWrite(q, data || null);
         }
@@ -4590,7 +4591,7 @@
         if (credit) {
           const base = (target && target.fromOpenData)
             ? '出典：江戸川区オープンデータ（CC BY 4.0）を加工して作成' : '';
-          credit.innerText = [base, '文章・写真：Wikipedia（CC BY-SA 4.0）'].filter(Boolean).join(' ／ ');
+          credit.textContent = [base, '文章・写真：Wikipedia（CC BY-SA 4.0）'].filter(Boolean).join(' ／ ');
           credit.classList.remove('hidden');
         }
       },
@@ -4724,7 +4725,7 @@
         this.clearModalAutoClose('facility');
         document.getElementById('facility-modal')?.classList.add('hidden');
         const btn = document.getElementById('facility-close-btn');
-        if (btn) btn.innerText = '閉じる';
+        if (btn) btn.textContent = '閉じる';
         this._wikiSeq = (this._wikiSeq || 0) + 1;   // 進行中のWikipedia取得を無効化
         document.getElementById('facility-wiki-row')?.classList.add('hidden');
         document.getElementById('facility-wiki-btn')?.classList.add('hidden');
@@ -5227,8 +5228,8 @@
         this.roadNetworkNodes = nodes;
         this.goalNodeIdx = goalNodeIdx;
 
-        document.getElementById("current-destination-name").innerText = goalLoc.name;
-        document.getElementById("mobile-destination-name").innerText = goalLoc.name;
+        document.getElementById("current-destination-name").textContent = goalLoc.name;
+        document.getElementById("mobile-destination-name").textContent = goalLoc.name;
 
         // Draw road background as graph edges (each connection drawn once)
         const drawnEdges = new Set();
@@ -5600,11 +5601,11 @@
 
         if (player.id === this.currentPlayerIdx) {
           const badge = document.getElementById("active-player-remaining");
-          if (badge) badge.innerText = text;
+          if (badge) badge.textContent = text;
         }
 
         const card = document.querySelector(`[data-player-remaining="${player.id}"]`);
-        if (card) card.innerText = text;
+        if (card) card.textContent = text;
       },
 
       updateMarkerStacking() {
@@ -5620,39 +5621,39 @@
 
         this.updateMarkerStacking();
 
-        document.getElementById("game-turn-badge").innerText = `${this.turnCount} ターン`;
+        document.getElementById("game-turn-badge").textContent = `${this.turnCount} ターン`;
 
         const displayAvatar = cp.wheelchairTurns > 0 ? '🦽' : (cp.vehicle ? cp.vehicle.emoji : cp.avatar);
-        document.getElementById("active-player-avatar").innerText = displayAvatar;
+        document.getElementById("active-player-avatar").textContent = displayAvatar;
         document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md`;
-        document.getElementById("active-player-name").innerText = cp.name;
+        document.getElementById("active-player-name").textContent = cp.name;
         const activeMoneyEl = document.getElementById("active-player-money");
-        activeMoneyEl.innerText = this.formatMoney(cp.money);
+        activeMoneyEl.textContent = this.formatMoney(cp.money);
         // マイナスは赤字で表示
         activeMoneyEl.classList.toggle("text-rose-400", cp.money < 0);
         // ケガ（🦽）の間は乗り物は使えないので、乗り物カードは出さず🦽の案内にする
-        document.getElementById("active-player-vehicle").innerText =
+        document.getElementById("active-player-vehicle").textContent =
           cp.wheelchairTurns > 0
             ? `🦽 ケガ中（あと${cp.wheelchairTurns}回はサイコロの目が1）`
             : (cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '');
 
         const remainingBadge = document.getElementById("active-player-remaining");
-        if (remainingBadge) remainingBadge.innerText = this.remainingSquaresLabel(cp);
+        if (remainingBadge) remainingBadge.textContent = this.remainingSquaresLabel(cp);
 
         const badge = document.getElementById("active-player-status-badge");
         if (cp.skipTurn) {
           badge.className = "px-1.5 py-0.2 bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] rounded font-bold";
-          badge.innerText = "1回休み";
+          badge.textContent = "1回休み";
         } else if (cp.wheelchairTurns > 0) {
           badge.className = "px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] rounded font-bold";
-          badge.innerText = `ケガ (あと${cp.wheelchairTurns}回)`;
+          badge.textContent = `ケガ (あと${cp.wheelchairTurns}回)`;
         } else if (this.isPlayerOffline(cp)) {
           // 離脱した参加者の手番。ゲームは止めず、ホストが代理で自動進行する。
           badge.className = "px-1.5 py-0.2 bg-slate-600/30 text-slate-300 border border-slate-500/40 text-[10px] rounded font-bold";
-          badge.innerText = "離脱中（自動）";
+          badge.textContent = "離脱中（自動）";
         } else {
           badge.className = "px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] rounded font-bold";
-          badge.innerText = cp.isCpu ? "CPUの番" : "あなたの番";
+          badge.textContent = cp.isCpu ? "CPUの番" : "あなたの番";
         }
 
         // マルチプレイのホストだけ「保存して終了」ボタンを出す
@@ -5707,11 +5708,11 @@
         const rollBtnLabel = rollBtn.querySelector("span:last-child");
         if (rollBtnLabel) {
           if (canRollNow) {
-            rollBtnLabel.innerText = "サイコロを振る";
+            rollBtnLabel.textContent = "サイコロを振る";
           } else if (!this.isRolling) {
-            rollBtnLabel.innerText = `${cp.name} の番です`;
+            rollBtnLabel.textContent = `${cp.name} の番です`;
           } else {
-            rollBtnLabel.innerText = "サイコロを振る";
+            rollBtnLabel.textContent = "サイコロを振る";
           }
         }
 
@@ -6942,10 +6943,10 @@
         const numEl = document.getElementById(numId);
         if (indicator) indicator.classList.remove("hidden");
         let n = seconds;
-        if (numEl) numEl.innerText = n;
+        if (numEl) numEl.textContent = n;
         const timer = setInterval(() => {
           n--;
-          if (numEl) numEl.innerText = Math.max(n, 0);
+          if (numEl) numEl.textContent = Math.max(n, 0);
           if (n <= 0) {
             clearInterval(timer);
             if (indicator) indicator.classList.add("hidden");
@@ -7012,7 +7013,7 @@
         // 陣取り：ゴールした施設そのものが、この人の色になる（地図にも残る）
         if (this.currentDestination) this.claimTerritory(player, this.currentDestination);
 
-        document.getElementById("goal-winner-text").innerText =
+        document.getElementById("goal-winner-text").textContent =
           `${player.name} が ${this.currentDestination.name} に先着ゴール！` +
           `（陣地 ${this.territoryCount(player.id)}か所）`;
         document.getElementById("category-select-section").classList.remove("hidden");
@@ -7171,7 +7172,7 @@
           btn.classList.toggle('opacity-30', n === 0);
           btn.classList.toggle('pointer-events-none', n === 0);
           const sub = btn.querySelector('div > div:last-child');
-          if (sub && n === 0) sub.innerText = '候補なし';
+          if (sub && n === 0) sub.textContent = '候補なし';
         });
       },
 
@@ -7206,7 +7207,7 @@
           // ゴールした時点で先読みを始めているので、通常はここで待ち時間が発生しない。
           const pre = this._restaurantPrefetch;
           const usable = pre && pre.lat === fromLoc.lat && pre.lng === fromLoc.lng;
-          if (!usable) box.innerText = "近くのお店を検索中...";
+          if (!usable) box.textContent = "近くのお店を検索中...";
           const liveShops = usable ? await pre.promise : await this.fetchNearbyRestaurants(fromLoc);
           if (liveShops && liveShops.length > 0) {
             // 区のオープンデータの飲食店（位置が正確）も候補に混ぜる。
@@ -7280,7 +7281,7 @@
         const note = document.getElementById('roulette-anchor-note');
         if (note) {
           if (laggard && laggard !== winnerPlayer) {
-            note.innerText = `📍 ビリの ${laggard.name} さんの近くのエリアから抽選します`;
+            note.textContent = `📍 ビリの ${laggard.name} さんの近くのエリアから抽選します`;
             note.classList.remove('hidden');
           } else {
             note.classList.add('hidden');
@@ -7300,12 +7301,12 @@
 
         const timer = setInterval(() => {
           const item = options[counter % options.length];
-          box.innerText = `${item.name}`;
+          box.textContent = `${item.name}`;
           sound.playTone(600 + (counter % 5) * 50, 'sine', 0.05, 0.05);
           counter++;
           if (counter > 15) {
             clearInterval(timer);
-            box.innerText = `📍 ${selectedGoal.name} の位置を確認中...`;
+            box.textContent = `📍 ${selectedGoal.name} の位置を確認中...`;
             goalResolving.then(nextGoal => {
               // 測位の結果が「1着の現在地とほぼ同じ」または「江戸川区の外」だった場合の保険。
               // 候補の中から、区内かつ十分離れている場所に差し替える。
@@ -7334,7 +7335,7 @@
                   }
                 }
               }
-              box.innerText = `🎯 決定: ${nextGoal.name}`;
+              box.textContent = `🎯 決定: ${nextGoal.name}`;
               // どのカテゴリから選ばれたかを覚えておく（ゴール時の🍴判定に使う）
               this.nextDestinationCandidate = { ...nextGoal, category: catName };
               document.getElementById("roulette-confirm-btn").classList.remove("hidden");
@@ -7488,6 +7489,7 @@
           turnCount: this.turnCount,
           currentPlayerIdx: this.currentPlayerIdx,
           currentDestination: this.currentDestination,
+          currentDestinationCategory: this.currentDestinationCategory || "",
           coordinateDataVersion: 3,
           roadNetworkNodes: this.roadNetworkNodes,
           goalNodeIdx: this.goalNodeIdx,
@@ -7503,11 +7505,11 @@
       },
 
       showEventModal(title, desc, extra = null, options = {}) {
-        document.getElementById("event-modal-title").innerText = title;
-        document.getElementById("event-modal-desc").innerText = desc;
+        document.getElementById("event-modal-title").textContent = title;
+        document.getElementById("event-modal-desc").textContent = desc;
         const extraBox = document.getElementById("event-modal-extra");
         if (extra) {
-          extraBox.innerText = extra;
+          extraBox.textContent = extra;
           extraBox.classList.remove("hidden");
         } else {
           extraBox.classList.add("hidden");
@@ -7572,13 +7574,13 @@
         this.clearModalAutoClose(key);
         const btn = document.getElementById(buttonId);
         let count = seconds;
-        const paint = () => { if (btn) btn.innerText = `閉じる（自動進行：${count}秒）`; };
+        const paint = () => { if (btn) btn.textContent = `閉じる（自動進行：${count}秒）`; };
         paint();
         this._modalAutoCloseTimers[key] = setInterval(() => {
           count--;
           if (count > 0) { paint(); return; }
           this.clearModalAutoClose(key);
-          if (btn) btn.innerText = '閉じる';
+          if (btn) btn.textContent = '閉じる';
           if (typeof onClose === 'function') onClose();
         }, 1000);
       },
@@ -7639,7 +7641,7 @@
         const badge = document.getElementById('nearby-place-badge');
         const nameEl = document.getElementById('nearby-place-name');
         if (!badge || !nameEl) return;
-        nameEl.innerText = text;
+        nameEl.textContent = text;
         badge.classList.remove('hidden');
       },
 
@@ -7847,7 +7849,7 @@
         if (!list) return;
         const item = document.createElement("div");
         item.className = "bg-slate-950 p-2 rounded border border-slate-800/80";
-        item.innerText = msg;
+        item.textContent = msg;
         list.prepend(item);
       },
 
@@ -8150,22 +8152,22 @@
         const me = this._boatRaceLocalPlayer();
 
         const weather = document.getElementById('boatrace-weather-line');
-        if (weather) weather.innerText = st.weather.text;
+        if (weather) weather.textContent = st.weather.text;
 
         const moneyEl = document.getElementById('boatrace-my-money');
         if (moneyEl && me) {
-          moneyEl.innerText = this.formatMoney(me.money);
+          moneyEl.textContent = this.formatMoney(me.money);
           moneyEl.classList.toggle('text-rose-400', me.money < 0);
           moneyEl.classList.toggle('text-emerald-300', me.money >= 0);
         }
 
         const myBets = this._boatRaceMyBets();
         const cntEl = document.getElementById('boatrace-my-bet-count');
-        if (cntEl) cntEl.innerText = myBets.length;
+        if (cntEl) cntEl.textContent = myBets.length;
 
         const summary = document.getElementById('boatrace-my-bets-summary');
         if (summary) {
-          summary.innerText = myBets.length
+          summary.textContent = myBets.length
             ? `購入: ${myBets.map(b => `${b.pair} ¥${b.amount.toLocaleString()}`).join(' / ')}`
             : 'まだ舟券を購入していません';
         }
@@ -8174,7 +8176,7 @@
 
         const timer = document.getElementById('boatrace-timer');
         const left = Math.max(0, Math.ceil((st.deadline - Date.now()) / 1000));
-        if (timer) timer.innerText = left;
+        if (timer) timer.textContent = left;
         const closed = document.getElementById('boatrace-closed-overlay');
         if (closed) closed.classList.toggle('hidden', left > 0);
       },
@@ -8230,7 +8232,7 @@
         const me = this._boatRaceLocalPlayer();
         if (!me || !this.boatRaceState) return;
         if (!join) {
-          document.getElementById('boatrace-invite-desc').innerText = '今回は見送ります。レースの様子だけ見学しましょう。';
+          document.getElementById('boatrace-invite-desc').textContent = '今回は見送ります。レースの様子だけ見学しましょう。';
           return;
         }
         await this._submitBoatRaceAction({ type: 'join', amount: 1000 });
@@ -8243,9 +8245,9 @@
         if (this._boatRaceMyBets().length >= 3) { alert('購入は最大3点までです'); return; }
         this.boatRaceSelectedPair = pair;
         this.boatRaceSelectedAmount = 1000;
-        document.getElementById('boatrace-buy-pair').innerText = `${pair}（${this._boatIcon(Number(pair.split('-')[0]))}→${this._boatIcon(Number(pair.split('-')[1]))}） オッズ ${st.odds[pair]}倍`;
-        document.getElementById('boatrace-buy-money').innerText = this.formatMoney(me.money);
-        document.getElementById('boatrace-buy-amount-display').innerText = '¥1,000';
+        document.getElementById('boatrace-buy-pair').textContent = `${pair}（${this._boatIcon(Number(pair.split('-')[0]))}→${this._boatIcon(Number(pair.split('-')[1]))}） オッズ ${st.odds[pair]}倍`;
+        document.getElementById('boatrace-buy-money').textContent = this.formatMoney(me.money);
+        document.getElementById('boatrace-buy-amount-display').textContent = '¥1,000';
         this._updateBoatRaceBuyPayout();
         this._showBoatRaceScreen('boatrace-buy-screen');
       },
@@ -8256,13 +8258,13 @@
         if (!el || !st || !this.boatRaceSelectedPair) return;
         const odds = parseFloat(st.odds[this.boatRaceSelectedPair] || '1');
         const amt = this.boatRaceSelectedAmount || 0;
-        el.innerText = `的中したら 払戻 ¥${Math.floor(amt * odds).toLocaleString()}`;
+        el.textContent = `的中したら 払戻 ¥${Math.floor(amt * odds).toLocaleString()}`;
       },
 
       boatRaceSetBetAmount(amount) {
         this.boatRaceSelectedAmount = amount;
         const el = document.getElementById('boatrace-buy-amount-display');
-        if (el) el.innerText = `¥${amount.toLocaleString()}`;
+        if (el) el.textContent = `¥${amount.toLocaleString()}`;
         this._updateBoatRaceBuyPayout();
       },
 
@@ -8317,9 +8319,9 @@
         ];
         const phrase = templates[Math.floor(Math.random() * templates.length)];
 
-        document.getElementById('boatrace-yosao-text').innerText = phrase;
-        document.getElementById('boatrace-yosao-icon').innerText = emoji;
-        document.getElementById('boatrace-yosao-name').innerText = `${def.name}（￥100）`;
+        document.getElementById('boatrace-yosao-text').textContent = phrase;
+        document.getElementById('boatrace-yosao-icon').textContent = emoji;
+        document.getElementById('boatrace-yosao-name').textContent = `${def.name}（￥100）`;
         document.getElementById('boatrace-yosao-picker')?.classList.add('hidden');
         document.getElementById('boatrace-yosao-result')?.classList.remove('hidden');
 
@@ -8446,7 +8448,7 @@
         const st = this.boatRaceState;
         if (!st) return;
         const env = document.getElementById('boatrace-race-env');
-        if (env) env.innerText = st.weather.text;
+        if (env) env.textContent = st.weather.text;
         this._renderBoatRaceTrack();
         this._renderBoatRaceBetsSummary();
       },
@@ -8527,7 +8529,7 @@
             if (ratio < 1) allDone = false;
             else {
               const rankEl = document.getElementById(`br-rank-${boat}`);
-              if (rankEl && !rankEl.innerText) rankEl.innerText = `${rank + 1}着`;
+              if (rankEl && !rankEl.innerText) rankEl.textContent = `${rank + 1}着`;
             }
           });
           if (allDone) {
@@ -8629,7 +8631,7 @@
         }
         const orderEl = document.getElementById('boatrace-result-order');
         if (orderEl) {
-          orderEl.innerText = '着順: ' + st.rankResult.map((n, i) => `${i + 1}着 ${n}号艇${this._boatIcon(n)}`).join(' ／ ');
+          orderEl.textContent = '着順: ' + st.rankResult.map((n, i) => `${i + 1}着 ${n}号艇${this._boatIcon(n)}`).join(' ／ ');
         }
 
         const breakdown = document.getElementById('boatrace-result-breakdown');
@@ -8775,7 +8777,7 @@
         const info = document.getElementById('boatrace-continue-info');
         if (info) {
           const left = BOAT_RACE_CONTINUE_LIMIT - (cp.boatRaceContinueCount || 0) + 1;
-          info.innerText = `所持金 ${this.formatMoney(cp.money)}／連続で遊べるのは残り${Math.max(0, left)}回です`;
+          info.textContent = `所持金 ${this.formatMoney(cp.money)}／連続で遊べるのは残り${Math.max(0, left)}回です`;
         }
         this._boatRaceOfferOpen = true;
         document.getElementById('boatrace-continue-modal')?.classList.remove('hidden');
@@ -9016,7 +9018,7 @@
         this._restartMode = mode;
         const text = document.getElementById('restart-confirm-text');
         if (text) {
-          text.innerText = mode === 'multi'
+          text.textContent = mode === 'multi'
             ? '前回のマルチプレイの続きが保存されています。参加者を募集して新しく始めると、前回の続きは消えます。最初から遊びますか？'
             : '前回の「ひとりで遊ぶ」の続きが保存されています。最初から遊ぶと、前回の続きは消えます。最初から遊びますか？';
         }
@@ -9119,7 +9121,7 @@
         const d = document.getElementById('entry-limit-detail');
         const info = this.entryInfo || {};
         if (d) {
-          d.innerText = (info.limit)
+          d.textContent = (info.limit)
             ? `本日の上限：${Number(info.limit).toLocaleString()}人（日付が変わるとリセットされます）`
             : '';
         }
@@ -9128,9 +9130,9 @@
 
       async retryEntry() {
         const btn = document.querySelector('#entry-limit-modal button');
-        if (btn) { btn.disabled = true; btn.innerText = '確認中…'; }
+        if (btn) { btn.disabled = true; btn.textContent = '確認中…'; }
         const ok = await this.checkEntryAllowed();
-        if (btn) { btn.disabled = false; btn.innerText = 'もう一度ためす'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'もう一度ためす'; }
         if (ok) document.getElementById('entry-limit-modal')?.classList.add('hidden');
       },
 
@@ -9243,7 +9245,7 @@
       _paintSettingToggle(id, on) {
         const el = document.getElementById(id);
         if (!el) return;
-        el.innerText = on ? 'ON' : 'OFF';
+        el.textContent = on ? 'ON' : 'OFF';
         el.className = on
           ? 'px-2.5 py-1 rounded-full text-[11px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
           : 'px-2.5 py-1 rounded-full text-[11px] font-black bg-slate-800 text-slate-400 border border-slate-700';
@@ -9258,7 +9260,7 @@
         if (note) {
           const hasSolo = !!localStorage.getItem(SOLO_SAVE_KEY);
           const hasMp = !!localStorage.getItem(MP_SAVE_KEY);
-          note.innerText = (hasSolo || hasMp)
+          note.textContent = (hasSolo || hasMp)
             ? `保存中：${[hasSolo ? 'ひとりで遊ぶ' : null, hasMp ? 'マルチプレイ' : null].filter(Boolean).join('・')}`
             : '保存データはありません';
         }
@@ -9333,7 +9335,7 @@
         if (!doc) return;
         const titleEl = document.getElementById('doc-modal-title');
         const bodyEl = document.getElementById('doc-modal-body');
-        if (titleEl) titleEl.innerText = doc.title;
+        if (titleEl) titleEl.textContent = doc.title;
         if (bodyEl) { bodyEl.innerHTML = doc.body; bodyEl.scrollTop = 0; }
         if (key === 'terms') {
           const st = document.getElementById('doc-opendata-state');
@@ -9513,7 +9515,7 @@
         this.cancelAutoRoll();
         const text = document.getElementById('mp-saved-notice-text');
         if (text) {
-          text.innerText = `${savedGame.hostName || 'ホスト'}（ホスト）がゲームを保存して終了しました。\n（次回は「前回の続きから遊ぶ」からスタートできます）`;
+          text.textContent = `${savedGame.hostName || 'ホスト'}（ホスト）がゲームを保存して終了しました。\n（次回は「前回の続きから遊ぶ」からスタートできます）`;
         }
         document.getElementById('mp-saved-notice-modal')?.classList.remove('hidden');
       },
@@ -9564,7 +9566,7 @@
 
       _showHostAbsent(hostName) {
         const el = document.getElementById('host-absent-text');
-        if (el) el.innerText = `${hostName || 'ホスト'}（ホスト）が不在なのでゲームを開始できません`;
+        if (el) el.textContent = `${hostName || 'ホスト'}（ホスト）が不在なのでゲームを開始できません`;
         document.getElementById('host-check-overlay')?.classList.add('hidden');
         document.getElementById('guest-waiting-modal')?.classList.add('hidden');
         document.getElementById('lobby-screen')?.classList.remove('hidden');
@@ -9599,8 +9601,8 @@
         if (solo && mp) {
           const soloInfo = document.getElementById('resume-solo-info');
           const mpInfo = document.getElementById('resume-mp-info');
-          if (soloInfo) soloInfo.innerText = this._formatSaveInfo(solo);
-          if (mpInfo) mpInfo.innerText = `${mp.isHost ? 'ホストとして' : `${mp.hostName || 'ホスト'}の部屋`} ／ ${this._formatSaveInfo(mp)}`;
+          if (soloInfo) soloInfo.textContent = this._formatSaveInfo(solo);
+          if (mpInfo) mpInfo.textContent = `${mp.isHost ? 'ホストとして' : `${mp.hostName || 'ホスト'}の部屋`} ／ ${this._formatSaveInfo(mp)}`;
           document.getElementById('resume-choice-modal')?.classList.remove('hidden');
           return;
         }
