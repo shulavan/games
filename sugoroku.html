@@ -474,7 +474,12 @@
 
   <!-- LOBBY OVERLAY -->
   <div data-app="1" id="lobby-screen" class="absolute inset-0 z-50 bg-slate-950 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto">
-    <div class="pt-2 sm:pt-4">
+    <!-- トップページの背景：初回ゲーム開始地点（西葛西駅）を中心にした地図。施設アイコンは出さず、
+         地図のみを少しぼかして表示し、その上に読みやすさのための暗いオーバーレイを重ねる。 -->
+    <div id="lobby-map-bg" class="absolute inset-0 z-0" style="filter: blur(2.5px); transform: scale(1.05);"></div>
+    <div class="absolute inset-0 z-[1] bg-slate-950/70"></div>
+
+    <div class="relative z-10 pt-2 sm:pt-4">
       <div class="flex items-start justify-between gap-2 px-1">
         <!-- 江戸川区非公認ハンコ（丸に二重線＋左傾きでスタンプらしく） -->
         <div class="-rotate-6 select-none shrink-0" aria-hidden="true">
@@ -526,7 +531,7 @@
     </div>
 
     <!-- Action Buttons: ソロプレイ (左) / マルチプレイ募集 (右) -->
-    <div class="max-w-3xl w-full mx-auto mt-8 sm:mt-10 bg-slate-900/90 border border-slate-800 p-4 sm:p-6 rounded-2xl backdrop-blur-xl shadow-2xl">
+    <div class="relative z-10 max-w-3xl w-full mx-auto mt-8 sm:mt-10 bg-slate-900/90 border border-slate-800 p-4 sm:p-6 rounded-2xl backdrop-blur-xl shadow-2xl">
       <div class="grid grid-cols-2 gap-3 pt-1">
         <div class="flex flex-col gap-2">
           <button id="start-game-btn" onclick="EdogawaSugoroku.startGame()" class="w-full flex-1 bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3.5 px-2 rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition flex flex-col items-center justify-center gap-1 text-center leading-tight">
@@ -556,7 +561,7 @@
     </div>
 
     <!-- LINEで紹介（このゲーム自体をLINEで友だちに紹介する） -->
-    <div class="max-w-3xl w-full mx-auto mt-4 flex flex-col items-center gap-1.5">
+    <div class="relative z-10 max-w-3xl w-full mx-auto mt-4 flex flex-col items-center gap-1.5">
       <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full sm:w-auto sm:px-8 bg-[#06C755] hover:bg-[#05b34c] text-white font-black py-3 px-4 rounded-2xl shadow-lg shadow-[#06C755]/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
         <span class="text-lg">💬</span>
         <span class="text-sm">LINEで紹介</span>
@@ -564,7 +569,7 @@
       <p class="text-[10px] text-slate-500">友だちや家族に「江戸川双六」を教えてあげてください</p>
     </div>
 
-    <div class="text-center text-[11px] text-slate-500 pb-2 pt-3 leading-relaxed">
+    <div class="relative z-10 text-center text-[11px] text-slate-500 pb-2 pt-3 leading-relaxed">
       ©2026 江戸川双六 Produced by M.Tsuda<br>
       <span class="text-[10px] text-slate-600">
         <button onclick="EdogawaSugoroku.openDocModal('howto')" class="underline hover:text-slate-400">使い方</button>
@@ -649,38 +654,36 @@
   <!-- MAIN GAME UI FOOTER -->
   <footer data-app="1" class="absolute bottom-0 left-0 right-0 p-3 sm:p-4 z-20 flex flex-col gap-3">
 
-    <div class="flex items-center justify-between gap-3">
-      <div class="sticker-btn flex items-center gap-2.5 bg-slate-950 rounded-xl px-3 py-2 overflow-hidden">
+    <div class="relative flex items-center justify-between gap-3">
+      <div class="sticker-btn flex items-center gap-2.5 bg-slate-950 rounded-xl px-3 py-2">
         <div id="active-player-avatar" class="w-10 h-10 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-xl shrink-0 shadow-md">
           🧑‍🦱
         </div>
-        <div class="truncate flex flex-col leading-tight">
-          <span id="active-player-status-badge" class="text-[10px] font-bold text-emerald-400">
+        <div class="flex flex-col leading-tight">
+          <span id="active-player-status-badge" class="text-[10px] font-bold text-emerald-400 whitespace-nowrap">
             あなたの番です
           </span>
-          <span id="active-player-name" class="font-extrabold text-sm text-slate-100 truncate">プレイヤー1</span>
-          <span id="active-player-money" class="text-xs text-amber-400 font-extrabold">¥100,000</span>
-          <span id="active-player-vehicle" class="text-[10px] text-sky-300 font-bold empty:hidden"></span>
+          <span id="active-player-name" class="font-extrabold text-sm text-slate-100 whitespace-nowrap">プレイヤー1</span>
+          <span id="active-player-money" class="text-xs text-amber-400 font-extrabold whitespace-nowrap">¥100,000</span>
         </div>
       </div>
 
-      <div class="flex items-center gap-3 shrink-0">
-        <div class="dice-container cursor-pointer" onclick="EdogawaSugoroku.rollDice()">
-          <div id="dice-cube" class="dice-cube">
-            <div class="dice-face face-1">⚀</div>
-            <div class="dice-face face-2">⚁</div>
-            <div class="dice-face face-3">⚂</div>
-            <div class="dice-face face-4">⚃</div>
-            <div class="dice-face face-5">⚄</div>
-            <div class="dice-face face-6">⚅</div>
-          </div>
+      <!-- サイコロは常に画面中央に固定表示（左右の要素の幅に影響されない） -->
+      <div class="dice-container cursor-pointer absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10" onclick="EdogawaSugoroku.rollDice()">
+        <div id="dice-cube" class="dice-cube">
+          <div class="dice-face face-1">⚀</div>
+          <div class="dice-face face-2">⚁</div>
+          <div class="dice-face face-3">⚂</div>
+          <div class="dice-face face-4">⚃</div>
+          <div class="dice-face face-5">⚄</div>
+          <div class="dice-face face-6">⚅</div>
         </div>
-
-        <button id="roll-dice-btn" onclick="EdogawaSugoroku.rollDice()" class="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black px-4 py-3 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition flex items-center gap-1.5 text-sm">
-          <span>🎲</span>
-          <span>サイコロを振る</span>
-        </button>
       </div>
+
+      <button id="roll-dice-btn" onclick="EdogawaSugoroku.rollDice()" class="shrink-0 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:brightness-110 text-slate-950 font-black px-4 py-3 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition flex items-center gap-1.5 text-sm">
+        <span>🎲</span>
+        <span id="roll-dice-btn-label" class="leading-tight text-center">サイコロを振る</span>
+      </button>
     </div>
 
     <div id="players-card-container" class="grid grid-cols-4 gap-2 w-full pt-2 border-t border-slate-800/60"></div>
@@ -2565,6 +2568,7 @@
         this.loadUserSettings();
         this.initConsent();      // 初回だけ「同意して始める」を表示（同意後にGAを読み込む）
         this._watchAdBanner();   // 下部固定の広告に隠れないよう余白を確保
+        this.initLobbyMapBackground();
         this._initPwa();
         // 施設・目的地・文言などのゲームデータと、江戸川区オープンデータを /data/ から読み込む。
         this.gameDataPromise = this.loadGameData()
@@ -3783,6 +3787,30 @@
           return this.startGame({ force: true });
         } finally {
           this.resumeInProgress = false;
+        }
+      },
+
+      // トップページの背景用の地図。ゲーム本編の地図（this.map）とは別インスタンスで、
+      // 操作不可・施設アイコンなしの「見た目だけ」の背景として使う。
+      initLobbyMapBackground() {
+        const el = document.getElementById('lobby-map-bg');
+        if (!el || this.lobbyMap) return;
+        try {
+          this.lobbyMap = L.map(el, {
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            touchZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            tap: false
+          }).setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 16);
+          L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options }).addTo(this.lobbyMap);
+          setTimeout(() => { try { this.lobbyMap.invalidateSize(); } catch (e) {} }, 200);
+        } catch (e) {
+          console.error("ロビー背景地図の初期化に失敗:", e);
         }
       },
 
@@ -5658,14 +5686,15 @@
         document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md`;
         document.getElementById("active-player-name").textContent = cp.name;
         const activeMoneyEl = document.getElementById("active-player-money");
-        activeMoneyEl.textContent = this.formatMoney(cp.money);
+        activeMoneyEl.textContent = this.formatMoneyMan(cp.money);
         // マイナスは赤字で表示
         activeMoneyEl.classList.toggle("text-rose-400", cp.money < 0);
-        // ケガ（🦽）の間は乗り物は使えないので、乗り物カードは出さず🦽の案内にする
-        document.getElementById("active-player-vehicle").textContent =
+        // ケガ（🦽）の間は乗り物は使えないので、乗り物表示は出さず🦽の案内にする。
+        // このテキストは後で「サイコロを振る」ボタンの2行目として表示する。
+        this._activePlayerVehicleText =
           cp.wheelchairTurns > 0
             ? `🦽 ケガ中（あと${cp.wheelchairTurns}回はサイコロの目が1）`
-            : (cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍・次回1回限り)` : '');
+            : (cp.vehicle ? `乗物: ${cp.vehicle.emoji} (${cp.vehicle.mult}倍)` : '');
 
         const remainingBadge = document.getElementById("active-player-remaining");
         if (remainingBadge) remainingBadge.textContent = this.remainingSquaresLabel(cp);
@@ -5738,9 +5767,13 @@
         const rollBtnLabel = rollBtn.querySelector("span:last-child");
         if (rollBtnLabel) {
           if (canRollNow) {
-            rollBtnLabel.textContent = "サイコロを振る";
+            const vehicleText = this._activePlayerVehicleText || '';
+            rollBtnLabel.innerHTML = vehicleText
+              ? `サイコロを振る<br>${vehicleText}`
+              : 'サイコロを振る';
           } else if (!this.isRolling) {
-            rollBtnLabel.textContent = `${cp.name} の番です`;
+            const safeName = String(cp.name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            rollBtnLabel.innerHTML = `${safeName}<br>の番です`;
           } else {
             rollBtnLabel.textContent = "サイコロを振る";
           }
