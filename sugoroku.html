@@ -6467,6 +6467,16 @@
         this.miniGameActive = false;
         this.activeMiniGamePlayerId = null;
         if (logText) this.addLog(logText);
+
+        // ゴール直後の副賞ミニゲームから戻ってきた場合は、通常のターン継続処理ではなく
+        // あみだくじへ進む。
+        if (this._pendingGoalAmidaPlayer) {
+          const amidaPlayer = this._pendingGoalAmidaPlayer;
+          this._pendingGoalAmidaPlayer = null;
+          this.startGoalAmida(amidaPlayer);
+          return;
+        }
+
         // ★マスから戻るときは finishTurn() ではなく直接継続処理へ。
         // finishTurn() を再度呼ぶと、別の特別イベント抽選と競合するため。
         this.finishTurnContinue();
@@ -7106,8 +7116,39 @@
           this.syncGameStateToRoom();
         }
 
-        // ゴール後は必ず1回だけ江戸川あみだくじを遊び、その終了後に次の目的地へ進みます。
-        this.startGoalAmida(player);
+        // ゴール直後は、目的地のカテゴリに応じたミニゲームがあれば副賞として先に遊び、
+        // その後に必ず1回だけ江戸川あみだくじを遊んで、次の目的地へ進みます。
+        this.startPostGoalMiniGameThenAmida(player);
+      },
+
+      getGoalMiniGameKey(category) {
+        const GOAL_MINIGAMES = {
+          '宿泊施設': 'hotel',
+          '駅（バス停含む）': 'bus',
+          '公園': 'toilet',
+          '学校・神社仏閣': 'lunch'
+        };
+        return GOAL_MINIGAMES[category] || null;
+      },
+
+      startPostGoalMiniGameThenAmida(player) {
+        const gameKey = this.getGoalMiniGameKey(this.currentDestinationCategory);
+        if (!gameKey || !player) {
+          this.startGoalAmida(player);
+          return;
+        }
+        // ミニゲームが閉じたタイミングで、通常のターン継続処理ではなくあみだくじへ
+        // 進めるための目印。finishMiniGameTurn() 側で拾う。
+        this._pendingGoalAmidaPlayer = player;
+        setTimeout(() => {
+          try {
+            this.openRegionalMiniGame(gameKey, player);
+          } catch (e) {
+            console.error("ゴール後ミニゲームの起動処理でエラー:", e);
+            this._pendingGoalAmidaPlayer = null;
+            this.startGoalAmida(player);
+          }
+        }, 400);
       },
 
       // ゴールした瞬間に「近くの飲食店」APIを先読みしておく（ルーレットの待ち時間対策）。
@@ -7442,7 +7483,6 @@
             lat: this.currentDestination.lat,
             lng: this.currentDestination.lng
           };
-          const arrivedCategory = this.currentDestinationCategory;
 
           await this.setupBoard(currentStartLoc, nextGoal);
           this.currentDestinationCategory = this.selectedCategoryName;
@@ -7457,42 +7497,12 @@
           // Only after the new board is fully built do we advance the turn.
           this.finishTurn();
           this.panToCurrentPlayer();
-          try {
-            this.triggerPostGoalMiniGame(arrivedCategory);
-          } catch (mgErr) {
-            console.error("ゴール後ミニゲームの起動に失敗しました:", mgErr);
-          }
         } catch (e) {
           console.error("次の双六の盤面生成に失敗しました:", e);
           this.addLog("⚠️ 次の盤面生成に失敗しました。サイコロは一時停止しています。");
         } finally {
           this.legTransitionInProgress = false;
         }
-      },
-
-      triggerPostGoalMiniGame(category) {
-        const GOAL_MINIGAMES = {
-          '宿泊施設': 'hotel',
-          '駅（バス停含む）': 'bus',
-          '公園': 'toilet',
-          '学校・神社仏閣': 'lunch'
-        };
-        const gameKey = GOAL_MINIGAMES[category];
-        if (!gameKey) return;
-        const player = this.players?.find(p => p.id === this.selectedCategoryWinnerIdx)
-          || this.players?.find(p => p.uid === this.myUid)
-          || this.players?.[0];
-        if (!player) {
-          console.warn("ゴール後ミニゲーム: プレーヤーが見つからず起動できませんでした", category, gameKey);
-          return;
-        }
-        setTimeout(() => {
-          try {
-            this.openRegionalMiniGame(gameKey, player);
-          } catch (e) {
-            console.error("ゴール後ミニゲームの起動処理でエラー:", e);
-          }
-        }, 400);
       },
 
       finishTurn() {
