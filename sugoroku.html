@@ -76,13 +76,33 @@
       font-family: 'Shippori Mincho', serif;
     }
 
+    /* ヘッダー・フッターの帯を無くし、各ボタン/カードが地図に直接浮いているように見せるための
+       「ステッカー」風の二重ボーダー（内側に白2px、外側に黒2px）。 */
+    .sticker-btn {
+      border: 2px solid #fff !important;
+      box-shadow: 0 0 0 2px #000, 0 2px 8px rgba(0,0,0,0.4) !important;
+    }
+
     /* Android ChromeでrequestFullscreen()を使うと、画面最上部に「フルスクリーン解除スワイプ」用の
        ジェスチャー領域がOS側で確保され、そこに重なるボタンのタップが奪われてしまうことがある。
-       フルスクリーン中だけヘッダーに上余白を足して、ボタン類をこの領域より下にずらす。 */
-    body.is-fullscreen-mode header[data-app="1"] {
-      padding-top: 26px;
-      height: auto;
+       フルスクリーン中だけヘッダーに上余白を足して、ボタン類をこの領域より下にずらす。
+       ・JSのイベント検知（body.is-fullscreen-mode）に加えて、ブラウザが直接判定できる
+         :fullscreen 擬似クラスでも同じ余白を適用し、検知漏れ・タイミングのズレを防ぐ。
+       ・余白は端末により異なるジェスチャー領域の高さを見込み、やや広めに確保。
+       ・タップがOS側のジェスチャー判定に奪われないよう、ヘッダーには touch-action を明示。 */
+    body.is-fullscreen-mode header[data-app="1"],
+    :fullscreen header[data-app="1"],
+    :-webkit-full-screen header[data-app="1"] {
+      padding-top: 58px !important;
+      height: auto !important;
       min-height: 3.5rem;
+      touch-action: manipulation;
+    }
+
+    header[data-app="1"] button {
+      touch-action: manipulation;
+      position: relative;
+      z-index: 5;
     }
 
     ::-webkit-scrollbar {
@@ -557,40 +577,40 @@
   </div>
 
   <!-- MAIN HEADER -->
-  <header data-app="1" class="h-14 bg-slate-950/90 border-b border-slate-800/80 px-3 sm:px-4 flex items-center justify-between z-20 shrink-0 backdrop-blur-md">
+  <header data-app="1" class="absolute top-0 left-0 right-0 h-14 px-3 sm:px-4 flex items-center justify-between z-20">
     <div class="flex items-center gap-2">
-      <span id="game-turn-badge" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold rounded-md">
+      <span id="game-turn-badge" class="sticker-btn px-2 py-0.5 bg-slate-800 text-slate-100 text-[11px] font-bold rounded-md">
         1ターン
       </span>
-      <button id="auto-mode-btn" onclick="EdogawaSugoroku.toggleAutoMode()" class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 text-[11px] font-bold rounded-md active:scale-95 transition">
+      <button id="auto-mode-btn" onclick="EdogawaSugoroku.toggleAutoMode()" class="sticker-btn px-2 py-0.5 bg-slate-800 text-slate-100 text-[11px] font-bold rounded-md active:scale-95 transition">
         オートモード: OFF
       </button>
     </div>
 
     <!-- Active Target Badge -->
-    <div onclick="EdogawaSugoroku.panToDestination()" class="hidden sm:flex items-center gap-1.5 bg-slate-900 border border-slate-800 px-3 py-1 rounded-full text-xs cursor-pointer hover:border-amber-500 transition active:scale-95">
+    <div onclick="EdogawaSugoroku.panToDestination()" class="sticker-btn hidden sm:flex items-center gap-1.5 bg-slate-900 px-3 py-1 rounded-full text-xs cursor-pointer active:scale-95 transition">
       <span class="text-amber-400 font-bold">目的地:</span>
-      <span id="current-destination-name" class="text-slate-200 font-bold truncate max-w-[150px]">カラオケ酔処「ゆう」</span>
+      <span id="current-destination-name" class="text-slate-100 font-bold truncate max-w-[150px]">カラオケ酔処「ゆう」</span>
     </div>
 
     <!-- Quick Tools -->
     <div class="flex items-center gap-2">
-      <button id="bgm-toggle-btn" onclick="EdogawaSugoroku.toggleBGM()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-amber-400 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="BGM ON/OFF">
+      <button id="bgm-toggle-btn" onclick="EdogawaSugoroku.toggleBGM()" class="sticker-btn p-2 bg-slate-900 text-amber-400 active:scale-95 transition rounded-lg flex items-center gap-1 text-xs font-bold" title="BGM ON/OFF">
         <span id="bgm-icon">🎵</span> <span class="hidden sm:inline" id="bgm-label">BGM ON</span>
       </button>
-      <button onclick="EdogawaSugoroku.toggleFullscreen()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition" title="全画面モード">
+      <button onclick="EdogawaSugoroku.toggleFullscreen()" class="sticker-btn p-2 bg-slate-900 text-slate-100 active:scale-95 transition rounded-lg" title="全画面モード">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
       </button>
-      <button onclick="EdogawaSugoroku.openLogModal()" class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="ログ閲覧">
+      <button onclick="EdogawaSugoroku.openLogModal()" class="sticker-btn p-2 bg-slate-900 text-slate-100 active:scale-95 transition rounded-lg flex items-center gap-1 text-xs font-bold" title="ログ閲覧">
         <span>📜</span> <span class="hidden sm:inline">履歴</span>
       </button>
       <!-- マルチプレイのホストのみ表示：ゲームを保存して終了 -->
-      <button id="host-save-btn" onclick="EdogawaSugoroku.openHostSaveModal()" class="hidden p-2 bg-slate-900 hover:bg-slate-800 border border-amber-500/50 rounded-lg text-amber-300 active:scale-95 transition flex items-center gap-1 text-xs font-bold" title="ゲームを保存して終了">
+      <button id="host-save-btn" onclick="EdogawaSugoroku.openHostSaveModal()" class="sticker-btn hidden p-2 bg-slate-900 text-amber-300 active:scale-95 transition rounded-lg flex items-center gap-1 text-xs font-bold" title="ゲームを保存して終了">
         <span>💾</span> <span class="hidden sm:inline">保存終了</span>
       </button>
       <!-- メニュー（設定・使い方・利用規約・プライバシーポリシー・運営元） -->
       <button id="game-menu-btn" onclick="EdogawaSugoroku.openMenuModal()" title="メニュー" aria-label="メニュー"
-        class="p-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 active:scale-95 transition flex flex-col items-center justify-center gap-[3px]">
+        class="sticker-btn p-2 bg-slate-900 text-slate-100 active:scale-95 transition rounded-lg flex flex-col items-center justify-center gap-[3px]">
         <span class="block w-4 h-[2px] bg-current rounded"></span>
         <span class="block w-4 h-[2px] bg-current rounded"></span>
         <span class="block w-4 h-[2px] bg-current rounded"></span>
@@ -599,23 +619,23 @@
   </header>
 
   <!-- FULLSCREEN GOOGLE MAPS / LEAFLET CANVAS -->
-  <main data-app="1" class="flex-1 relative w-full overflow-hidden bg-slate-900">
+  <main data-app="1" class="absolute inset-0 w-full h-full overflow-hidden bg-slate-900 z-0">
     <div id="map" class="w-full h-full z-10"></div>
 
-    <div onclick="EdogawaSugoroku.panToDestination()" class="sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[180px] truncate cursor-pointer active:scale-95 transition">
+    <div onclick="EdogawaSugoroku.panToDestination()" class="sticker-btn sm:hidden absolute top-3 right-3 z-20 bg-slate-950/90 px-3 py-1 rounded-lg text-[11px] shadow-lg max-w-[180px] truncate cursor-pointer active:scale-95 transition">
       <span class="text-amber-400 font-bold">目的地:</span>
-      <span id="mobile-destination-name" class="text-slate-200 font-medium">カラオケ酔処「ゆう」</span>
+      <span id="mobile-destination-name" class="text-slate-100 font-medium">カラオケ酔処「ゆう」</span>
     </div>
 
     <!-- 現在いる場所の目安（サイコロ移動中は非表示。止まった時とスワイプ後に表示）
          ・近くに地図の施設アイコンがあれば「〇〇周辺」を即表示（通信なし）
          ・無い場合、自分の手番のときだけ「現在地を表示」ボタンを出し、押した時だけ調べる -->
-    <div id="nearby-place-badge" class="hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 border border-slate-800 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg max-w-[220px] truncate">
+    <div id="nearby-place-badge" class="sticker-btn hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 px-3 py-1 rounded-lg text-[11px] shadow-lg max-w-[220px] truncate">
       <span class="text-sky-300 font-bold">現在地:</span>
-      <span id="nearby-place-name" class="text-slate-200 font-medium">-</span>
+      <span id="nearby-place-name" class="text-slate-100 font-medium">-</span>
     </div>
     <button id="nearby-locate-btn" onclick="EdogawaSugoroku.locateNearbyNow()"
-      class="hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 border border-sky-700/70 px-3 py-1 rounded-lg backdrop-blur-md text-[11px] shadow-lg text-sky-300 font-bold active:scale-95 transition">
+      class="sticker-btn hidden absolute bottom-3 right-3 z-20 bg-slate-950/90 px-3 py-1 rounded-lg text-[11px] shadow-lg text-sky-300 font-bold active:scale-95 transition">
       📍 現在地を表示
     </button>
 
@@ -627,25 +647,20 @@
   </main>
 
   <!-- MAIN GAME UI FOOTER -->
-  <footer data-app="1" class="bg-slate-950/95 border-t border-slate-800/90 p-3 sm:p-4 z-20 shrink-0 backdrop-blur-md flex flex-col gap-3">
+  <footer data-app="1" class="absolute bottom-0 left-0 right-0 p-3 sm:p-4 z-20 flex flex-col gap-3">
 
     <div class="flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5 overflow-hidden">
+      <div class="sticker-btn flex items-center gap-2.5 bg-slate-950 rounded-xl px-3 py-2 overflow-hidden">
         <div id="active-player-avatar" class="w-10 h-10 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-xl shrink-0 shadow-md">
           🧑‍🦱
         </div>
-        <div class="truncate">
-          <div class="flex items-center gap-1.5">
-            <span id="active-player-name" class="font-extrabold text-sm text-slate-100 truncate">プレイヤー1</span>
-            <span id="active-player-status-badge" class="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] rounded font-bold">
-              あなたの番
-            </span>
-            <span id="active-player-remaining" class="px-1.5 py-0.2 bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[10px] rounded font-bold whitespace-nowrap">あと-マス</span>
-          </div>
-          <div class="text-xs text-amber-400 font-extrabold flex items-center gap-2">
-            <span class="leading-tight">所持金:<br><span id="active-player-money">¥100,000</span></span>
-            <span id="active-player-vehicle" class="text-xs"></span>
-          </div>
+        <div class="truncate flex flex-col leading-tight">
+          <span id="active-player-status-badge" class="text-[10px] font-bold text-emerald-400">
+            あなたの番です
+          </span>
+          <span id="active-player-name" class="font-extrabold text-sm text-slate-100 truncate">プレイヤー1</span>
+          <span id="active-player-money" class="text-xs text-amber-400 font-extrabold">¥100,000</span>
+          <span id="active-player-vehicle" class="text-[10px] text-sky-300 font-bold empty:hidden"></span>
         </div>
       </div>
 
@@ -5657,18 +5672,18 @@
 
         const badge = document.getElementById("active-player-status-badge");
         if (cp.skipTurn) {
-          badge.className = "px-1.5 py-0.2 bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] rounded font-bold";
+          badge.className = "text-[10px] font-bold text-red-400";
           badge.textContent = "1回休み";
         } else if (cp.wheelchairTurns > 0) {
-          badge.className = "px-1.5 py-0.2 bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] rounded font-bold";
+          badge.className = "text-[10px] font-bold text-amber-400";
           badge.textContent = `ケガ (あと${cp.wheelchairTurns}回)`;
         } else if (this.isPlayerOffline(cp)) {
           // 離脱した参加者の手番。ゲームは止めず、ホストが代理で自動進行する。
-          badge.className = "px-1.5 py-0.2 bg-slate-600/30 text-slate-300 border border-slate-500/40 text-[10px] rounded font-bold";
+          badge.className = "text-[10px] font-bold text-slate-300";
           badge.textContent = "離脱中（自動）";
         } else {
-          badge.className = "px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] rounded font-bold";
-          badge.textContent = cp.isCpu ? "CPUの番" : "あなたの番";
+          badge.className = "text-[10px] font-bold text-emerald-400";
+          badge.textContent = cp.isCpu ? "CPUの番です" : "あなたの番です";
         }
 
         // マルチプレイのホストだけ「保存して終了」ボタンを出す
