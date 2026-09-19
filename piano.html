@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>昭和メロディードライブ - 昭和歌謡・フォーク・演歌 ピアノゲーム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&family=Yuji+Syuku&family=Zen+Maru+Gothic:wght@500;700;900&display=swap');
+
+        body {
+            font-family: 'Sawarabi Mincho', serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            background-color: #0f0703;
+            color: #f8f1e5;
+            overflow: hidden;
+        }
+
+        .showa-font {
+            font-family: 'Yuji Syuku', serif;
+        }
+
+        .ui-font {
+            font-family: 'Zen Maru Gothic', sans-serif;
+        }
+
+        /* 縦向き警告画面 */
+        @media screen and (orientation: portrait) {
+            #portrait-warning {
+                display: flex !important;
+            }
+        }
+
+        /* 鍵盤の立体CSSアニメーション */
+        .piano-key-white {
+            background: linear-gradient(to bottom, #ffffff 0%, #f0f0f0 80%, #d8d8d8 100%);
+            border: 1px solid #777;
+            border-bottom: 7px solid #aaa;
+            border-radius: 0 0 7px 7px;
+            box-shadow: 0 5px 6px rgba(0,0,0,0.4);
+            transition: transform 0.04s ease, border-bottom 0.04s ease, background 0.04s ease;
+            position: relative;
+        }
+
+        .piano-key-white.active, .piano-key-white:active {
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+            background: linear-gradient(to bottom, #e0e0e0 0%, #ffffff 100%);
+            box-shadow: 0 2px 2px rgba(0,0,0,0.5);
+        }
+
+        .piano-key-black {
+            background: linear-gradient(to bottom, #3a3a3a 0%, #111111 100%);
+            border: 1px solid #000;
+            border-bottom: 6px solid #000;
+            border-radius: 0 0 5px 5px;
+            box-shadow: 2px 5px 7px rgba(0,0,0,0.6);
+            transition: transform 0.04s ease, border-bottom 0.04s ease;
+            position: relative;
+            z-index: 10;
+        }
+
+        .piano-key-black.active, .piano-key-black:active {
+            transform: translateY(3px);
+            border-bottom-width: 2px;
+            background: linear-gradient(to bottom, #111 0%, #444 100%);
+        }
+
+        /* ●導き印（ガイドドット） */
+        .guide-dot {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 22px;
+            height: 22px;
+            background-color: #ff2a6d;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #ff2a6d, 0 0 20px #ff2a6d;
+            animation: pulse-dot 0.4s infinite alternate;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: translate(-50%, -50%) scale(0.85); opacity: 0.85; }
+            100% { transform: translate(-50%, -50%) scale(1.25); opacity: 1.0; }
+        }
+
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #231206;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8c4a1b;
+            border-radius: 4px;
+            border: 1px solid #5a2e0e;
+        }
+
+        /* レトロブラウン背景デザイン */
+        .retro-bg {
+            background-color: #1a0b03;
+            background-image: radial-gradient(#3a1b07 1px, transparent 0);
+            background-size: 18px 18px;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden select-none bg-stone-950 text-amber-50 ui-font">
+
+    <!-- 起動時画面中央のフルスクリーン & 横画面固定モーダル -->
+    <div id="start-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-amber-900 to-amber-950 border-2 border-amber-600/80 rounded-2xl p-6 md:p-8 max-w-lg w-full text-center shadow-2xl flex flex-col items-center gap-5 relative">
+            <div class="w-16 h-16 rounded-full bg-amber-800/60 border border-amber-500 flex items-center justify-center text-3xl shadow-inner mb-1">
+                🎹
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-extrabold showa-font text-amber-200 tracking-wider mb-2 drop-shadow">
+                    昭和メロディードライブ
+                </h1>
+                <p class="text-xs md:text-sm text-amber-300/90 leading-relaxed">
+                    懐かしの昭和歌謡・フォーク・演歌を原曲音源（Apple Music 試聴）とともに演奏！<br>
+                    最適な画面レイアウトでプレイを開始します。
+                </p>
+            </div>
+
+            <button id="btn-start-app" class="w-full py-4 px-6 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-500 active:scale-95 text-stone-950 font-black text-base md:text-lg rounded-xl shadow-lg transition flex items-center justify-center gap-2 border border-amber-300">
+                <span>📱 横画面フルスクリーンで開始</span>
+            </button>
+
+            <p class="text-[11px] text-amber-400/70">
+                ※Tapすると画面が自動的に横向きフルスクリーンに固定されます。
+            </p>
+        </div>
+    </div>
+
+    <!-- 縦向き警告表示 -->
+    <div id="portrait-warning" class="hidden fixed inset-0 z-40 bg-stone-950 text-amber-100 flex-col items-center justify-center p-6 text-center">
+        <div class="text-6xl mb-4 animate-bounce">📱↻</div>
+        <h2 class="text-2xl font-bold mb-2 showa-font">スマートフォンを横向きにしてください</h2>
+        <p class="text-xs text-amber-300">本ゲームは横画面（ランドスケープ）専用です。</p>
+    </div>
+
+    <!-- メインコンテナ -->
+    <div id="app" class="h-full w-full flex flex-col justify-between relative overflow-hidden retro-bg">
+        
+        <!-- 全画面共通 トップヘッダーバー -->
+        <header class="h-12 bg-amber-950/90 border-b border-amber-800/60 px-4 flex items-center justify-between z-30 shadow-md">
+            <div class="flex items-center space-x-3">
+                <button id="btn-home" class="px-3 py-1 bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 rounded text-xs font-bold transition flex items-center gap-1 shadow border border-amber-600/50">
+                    🏠 トップへ
+                </button>
+                <h1 id="header-title" class="text-sm md:text-base font-bold showa-font text-amber-200 tracking-wider truncate max-w-[220px] md:max-w-[380px]">
+                    昭和メロディードライブ
+                </h1>
+                <span id="apple-music-badge" class="hidden text-[10px] bg-rose-900/80 border border-rose-500 text-rose-200 px-2 py-0.5 rounded-full animate-pulse flex items-center gap-1">
+                    🎵 Apple Music 30秒試聴再生中
+                </span>
+            </div>
+
+            <!-- コントロールボタン群 (ストップ / 再生 / 拡大) -->
+            <div class="flex items-center space-x-2">
+                <button id="btn-stop-play" class="px-3.5 py-1 bg-rose-700 hover:bg-rose-600 active:bg-rose-800 text-white rounded text-xs font-bold transition flex items-center gap-1.5 shadow border border-rose-500/50">
+                    <span id="stop-play-icon">⏹</span> <span id="stop-play-text">ストップ</span>
+                </button>
+                <button id="btn-fullscreen" class="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-amber-200 rounded text-xs border border-stone-600">
+                    ⛶ 拡大
+                </button>
+            </div>
+        </header>
+
+        <!-- 1. トップ画面 (コース・曲選択) -->
+        <main id="screen-top" class="flex-1 flex flex-col md:flex-row p-3 gap-3 overflow-hidden z-10">
+            <!-- 左パネル: コース選択 -->
+            <div class="w-full md:w-1/3 bg-amber-950/80 border border-amber-800/60 rounded-xl p-3 flex flex-col gap-2.5 shadow-xl">
+                <h2 class="text-center font-bold text-amber-300 text-base border-b border-amber-800/80 pb-2 showa-font tracking-widest">
+                    コース選択
+                </h2>
+                
+                <button class="course-btn active py-2.5 px-3 rounded-lg bg-amber-800 text-amber-100 font-bold text-sm text-left flex justify-between items-center border border-amber-600/60 shadow transition hover:bg-amber-700" data-course="beginner">
+                    <span class="flex items-center gap-1.5">🔰 初級編 (50曲)</span>
+                    <span class="text-[11px] bg-amber-950/70 px-2 py-0.5 rounded text-amber-300">テンポゆったり</span>
+                </button>
+                
+                <button class="course-btn py-2.5 px-3 rounded-lg bg-amber-950/80 text-amber-200 font-bold text-sm text-left flex justify-between items-center border border-amber-900/60 hover:bg-amber-900 transition" data-course="intermediate">
+                    <span class="flex items-center gap-1.5">🎵 中級編 (50曲)</span>
+                    <span class="text-[11px] bg-amber-950/70 px-2 py-0.5 rounded text-amber-400">名曲ズラリ</span>
+                </button>
+                
+                <button class="course-btn py-2.5 px-3 rounded-lg bg-amber-950/80 text-amber-200 font-bold text-sm text-left flex justify-between items-center border border-amber-900/60 hover:bg-amber-900 transition" data-course="advanced">
+                    <span class="flex items-center gap-1.5">🔥 上級編 (50曲)</span>
+                    <span class="text-[11px] bg-amber-950/70 px-2 py-0.5 rounded text-rose-400">速いテンポ・複雑</span>
+                </button>
+                
+                <button class="course-btn py-2.5 px-3 rounded-lg bg-emerald-900/80 text-emerald-100 font-bold text-sm text-left flex justify-between items-center border border-emerald-700/60 hover:bg-emerald-800 transition mt-auto shadow" data-course="practice">
+                    <span class="flex items-center gap-1.5">🎹 練習プレイ (自由演奏)</span>
+                    <span class="text-[11px] bg-emerald-950/70 px-2 py-0.5 rounded text-emerald-300">白紙五線譜</span>
+                </button>
+            </div>
+
+            <!-- 右パネル: 50音順 曲選択リスト -->
+            <div class="w-full md:w-2/3 bg-stone-950/85 border border-amber-900/60 rounded-xl p-3 flex flex-col overflow-hidden shadow-xl">
+                <div class="flex justify-between items-center border-b border-amber-900/80 pb-2 mb-2">
+                    <span class="text-xs text-amber-400 font-bold" id="song-count-label">曲一覧 (50曲)</span>
+                    <span class="text-[11px] text-amber-500/80">🎧 原曲30秒試聴 ＆ ピアノ演奏機能付き</span>
+                </div>
+                
+                <!-- 縦スクロール楽曲リスト -->
+                <div id="song-list-container" class="flex-1 overflow-y-auto pr-1 flex flex-col gap-2">
+                    <!-- JSで動的挿入 -->
+                </div>
+            </div>
+        </main>
+
+        <!-- 2. ゲームプレイ画面 -->
+        <main id="screen-game" class="hidden flex-1 flex flex-col justify-between p-2 overflow-hidden relative">
+            
+            <!-- カウントダウン表示オーバーレイ -->
+            <div id="countdown-overlay" class="absolute inset-0 bg-black/70 z-40 flex items-center justify-center pointer-events-none hidden">
+                <span id="countdown-text" class="text-7xl font-extrabold text-amber-400 showa-font animate-ping drop-shadow-[0_5px_10px_rgba(0,0,0,0.9)]">
+                    1
+                </span>
+            </div>
+
+            <!-- 上段: 横スクロール五線譜Canvasエリア -->
+            <div class="w-full h-[46%] bg-[#f7f1e5] rounded-xl border-2 border-amber-900/80 shadow-inner relative overflow-hidden flex flex-col">
+                <!-- 楽譜描画キャンバス -->
+                <div class="flex-1 relative w-full h-full">
+                    <canvas id="sheet-canvas" class="w-full h-full block"></canvas>
+                </div>
+            </div>
+
+            <!-- 下段: ピアノ鍵盤エリア -->
+            <div class="w-full h-[52%] bg-stone-950 p-2 rounded-xl border-2 border-stone-800 shadow-2xl flex flex-col justify-end relative">
+                <!-- ピアノ本体フレーム -->
+                <div id="piano-keyboard" class="w-full h-full flex relative select-none justify-center items-end pb-0.5">
+                    <!-- JSで白鍵・黒鍵を動的生成 -->
+                </div>
+            </div>
+        </main>
+
+        <!-- 3. 評価結果モーダル -->
+        <div id="modal-result" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+            <div class="bg-amber-950 border-2 border-amber-600 rounded-2xl max-w-md w-full p-6 shadow-2xl text-center relative flex flex-col gap-4 text-amber-100">
+                <h2 class="text-2xl font-bold showa-font text-amber-300 border-b border-amber-800/80 pb-2">演奏評価</h2>
+                
+                <div class="py-1">
+                    <p id="result-song-title" class="text-xs text-amber-200">曲名</p>
+                    <div id="result-rank" class="text-6xl font-black my-2 text-amber-400 showa-font drop-shadow-md">S</div>
+                    <p id="result-score" class="text-lg font-mono font-bold text-amber-100">スコア: 980 点</p>
+                </div>
+
+                <div class="bg-amber-900/60 p-3 rounded-xl border border-amber-800/80 text-left">
+                    <p class="text-xs text-amber-300 font-bold mb-1">昭和歌謡評論室より:</p>
+                    <p id="result-comment" class="text-xs leading-relaxed text-amber-100 showa-font">
+                        見事な演奏でした！1曲通して見事なテンポ感で昭和の名曲が現代に蘇りました。
+                    </p>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <button id="btn-result-listen" class="w-full py-3 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-stone-950 font-black rounded-xl shadow-md transition flex items-center justify-center gap-2 border border-amber-300">
+                        <span>🎧 原曲＆お手本演奏をもう一度聴く</span>
+                    </button>
+                    <button id="btn-modal-close" class="w-full py-2.5 bg-amber-800 hover:bg-amber-700 active:bg-amber-900 text-amber-100 font-bold rounded-xl transition text-xs border border-amber-600/50">
+                        トップページに戻る
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. ストップ時 中断・お手本試聴モーダル -->
+        <div id="modal-pause" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+            <div class="bg-amber-950 border-2 border-amber-600 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative flex flex-col gap-4 text-amber-100">
+                <div class="w-12 h-12 rounded-full bg-amber-800/60 border border-amber-500 flex items-center justify-center text-2xl mx-auto">
+                    ⏸
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold showa-font text-amber-200 mb-1">演奏を中断しました</h2>
+                    <p class="text-xs text-amber-300/90 font-bold mt-2">演奏曲を試聴してみますか？</p>
+                    <p class="text-[11px] text-amber-400/70 mt-0.5">Apple Music 30秒音源＋ピアノ演奏が流れます。</p>
+                </div>
+
+                <div class="flex flex-col gap-2 mt-2">
+                    <button id="btn-pause-listen" class="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 border border-amber-300">
+                        <span>🎧 原曲試聴＋お手本演奏を聴く</span>
+                    </button>
+                    <button id="btn-pause-restart" class="w-full py-2.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-bold text-xs rounded-xl border border-amber-600/60 transition">
+                        🔄 最初から自分で弾く
+                    </button>
+                    <button id="btn-pause-top" class="w-full py-2 bg-stone-800 hover:bg-stone-700 text-amber-300/80 font-bold text-xs rounded-xl border border-stone-700 transition">
+                        🏠 曲選択に戻る
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* --------------------------------------------------
+         * 1. 150曲 昭和歌謡フル曲データベース（BPM, Key, フルコード進行, スタイル）
+         * -------------------------------------------------- */
+        const SONG_DATABASE = {
+            beginner: [
+                { title: "いつでも夢を", artist: "橋幸夫・吉永小百合", bpm: 92, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11, 12], chords: ["C", "Am", "F", "G7"] },
+                { title: "なごり雪", artist: "イルカ", bpm: 84, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9, 11, 12], chords: ["C", "G/B", "Am", "Em", "F", "C", "Dm7", "G7"] },
+                { title: "バラが咲いた", artist: "マイク真木", bpm: 96, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11, 12], chords: ["C", "G", "C", "G", "F", "C", "G7", "C"] },
+                { title: "ふれあい", artist: "中村雅俊", bpm: 80, key: "G", style: "ballad", scale: [0, 2, 4, 5, 7, 9, 11, 12], chords: ["G", "Em", "C", "D7"] },
+                { title: "めだかの学校", artist: "童謡", bpm: 90, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9, 12], chords: ["C", "F", "G7", "C"] },
+                { title: "青い山脈", artist: "藤山一郎", bpm: 108, key: "F", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11, 12], chords: ["F", "Dm", "Gm", "C7"] },
+                { title: "赤ちょうちん", artist: "かぐや姫", bpm: 82, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "秋桜", artist: "山口百恵", bpm: 72, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "Dm", "G", "C", "F", "Dm", "E7", "Am"] },
+                { title: "上を向いて歩こう", artist: "坂本九", bpm: 116, key: "G", style: "pop", scale: [0, 2, 4, 7, 9, 12], chords: ["G", "Em", "C", "D7"] },
+                { title: "学生街の喫茶店", artist: "ガロ", bpm: 88, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "Dm7", "G7", "C"] },
+                { title: "加茂の流れに", artist: "かぐや姫", bpm: 80, key: "C", style: "ballad", scale: [0, 2, 4, 7, 9, 12], chords: ["C", "Am", "F", "G7"] },
+                { title: "川の流れのように", artist: "美空ひばり", bpm: 74, key: "D", style: "enka", scale: [0, 2, 4, 5, 7, 9, 11, 12], chords: ["D", "Bm", "G", "A7"] },
+                { title: "神田川", artist: "かぐや姫", bpm: 78, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "北酒場", artist: "細川たかし", bpm: 124, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8, 12], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "北国の春", artist: "千昌夫", scale: [0, 2, 4, 7, 9], bpm: 86, key: "C", style: "enka", chords: ["C", "Am", "Dm", "G7"] },
+                { title: "君といつまでも", artist: "加山雄三", bpm: 82, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["C", "Em", "F", "G7"] },
+                { title: "今日の日はさようなら", artist: "森山良子", bpm: 80, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "G", "F", "C"] },
+                { title: "銀河鉄道999", artist: "ゴダイゴ", bpm: 128, key: "G", style: "rock", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["G", "D", "Em", "Bm", "C", "G", "Am7", "D7"] },
+                { title: "高校三年生", artist: "舟木一夫", bpm: 102, key: "G", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["G", "Em", "C", "D7"] },
+                { title: "四季の歌", artist: "芹洋子", bpm: 88, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "知床旅情", artist: "加藤登紀子", bpm: 76, key: "C", style: "waltz", scale: [0, 2, 4, 7, 9], chords: ["C", "G7", "F", "C"] },
+                { title: "白いブランコ", artist: "ビリー・バンバン", bpm: 84, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "瀬戸の花嫁", artist: "小柳ルミ子", bpm: 92, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "竹田の子守唄", artist: "赤い鳥", bpm: 70, key: "Am", style: "ballad", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "翼をください", artist: "赤い鳥", bpm: 90, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["C", "G", "Am", "Em", "F", "C", "Dm7", "G7"] },
+                { title: "遠くへ行きたい", artist: "ジェリー藤尾", bpm: 78, key: "C", style: "ballad", scale: [0, 2, 4, 7, 9], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "涙そうそう", artist: "夏川りみ", bpm: 76, key: "F", style: "ballad", scale: [0, 2, 4, 7, 9], chords: ["F", "C", "Dm", "Am", "Bb", "F", "Gm", "C7"] },
+                { title: "野に咲く花のように", artist: "ダ・カーポ", bpm: 94, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "G", "Am", "Em", "F", "C", "G7", "C"] },
+                { title: "琵琶湖就航の歌", artist: "加藤登紀子", bpm: 72, key: "C", style: "waltz", scale: [0, 2, 4, 5, 7], chords: ["C", "F", "G7", "C"] },
+                { title: "見上げてごらん夜の星を", artist: "坂本九", bpm: 76, key: "G", style: "ballad", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["G", "D", "Em", "Bm", "C", "G", "Am", "D7"] },
+                { title: "岬めぐり", artist: "山本コウタローとウィークエンド", bpm: 104, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "G", "Am", "Em", "F", "C", "Dm7", "G7"] },
+                { title: "港町ブルース", artist: "森進一", bpm: 84, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "南土佐を後にして", artist: "ペギー葉山", bpm: 96, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "木綿のハンカチーフ", artist: "太田裕美", bpm: 118, key: "D", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["D", "A", "Bm", "F#m", "G", "D", "Em7", "A7"] },
+                { title: "嫁に来ないか", artist: "新沼謙治", bpm: 88, key: "C", style: "enka", scale: [0, 2, 4, 7, 9], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "喜びも悲しみも幾歳月", artist: "若山彰", bpm: 80, key: "C", style: "enka", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "りんごの唄", artist: "並木路子", bpm: 100, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "G7", "C", "G7"] },
+                { title: "ルージュの伝言", artist: "松任谷由実", bpm: 122, key: "C", style: "rock", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G", "C", "Am", "F", "G"] },
+                { title: "若者たち", artist: "ザ・ブロードサイド・フォー", bpm: 78, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Em", "F", "G7", "C", "Am", "Dm", "G7"] },
+                { title: "わが人生に悔いなし", artist: "石原裕次郎", bpm: 82, key: "C", style: "enka", scale: [0, 2, 4, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "渡良瀬橋", artist: "森高千里", bpm: 80, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "G", "Am", "Em", "F", "C", "Dm", "G"] },
+                { title: "わかって下さい", artist: "因幡晃", bpm: 74, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "G7", "C", "F", "Dm", "E7", "Am"] },
+                { title: "忘れな草をあなたに", artist: "菅原洋一", bpm: 76, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "笑って許して", artist: "和田アキ子", bpm: 110, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "吾亦紅", artist: "すぎもとまさと", bpm: 72, key: "Am", style: "enka", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "リンゴ追分", artist: "美空ひばり", bpm: 70, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "長崎の鐘", artist: "藤山一郎", bpm: 84, key: "C", style: "ballad", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "港が見える丘", artist: "平野愛子", bpm: 76, key: "C", style: "waltz", scale: [0, 2, 4, 5, 7], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "湯の町エレジー", artist: "近江俊郎", bpm: 74, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "影を慕いて", artist: "藤山一郎", bpm: 72, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] }
+            ],
+            intermediate: [
+                { title: "22歳の別れ", artist: "風", bpm: 86, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "Em", "F", "G", "C", "Dm", "E7", "Am"] },
+                { title: "いい日旅立ち", artist: "山口百恵", bpm: 80, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "Dm", "G", "C", "F", "Dm", "E7", "Am"] },
+                { title: "異邦人", artist: "久保田早紀", bpm: 108, key: "Am", style: "pop", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "Dm", "G7", "C", "F", "Dm", "E7", "Am"] },
+                { title: "ルビーの指環", artist: "寺尾聰", bpm: 98, key: "Am", style: "rock", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am7", "D7", "F7", "E7"] },
+                { title: "津軽海峡・冬景色", artist: "石川さゆり", bpm: 82, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8, 12], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "愛のメモリー", artist: "松崎しげる", bpm: 88, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["C", "Em", "F", "G7"] },
+                { title: "青いサンゴ礁", artist: "松田聖子", bpm: 138, key: "A", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["A", "F#m", "D", "E7"] },
+                { title: "雨の慕情", artist: "八代亜紀", bpm: 80, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "ウイスキーが、お好きでしょ", artist: "石川さゆり", bpm: 72, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "Dm7", "G7"] },
+                { title: "勝手にシンドバッド", artist: "サザンオールスターズ", bpm: 136, key: "A", style: "rock", scale: [0, 2, 4, 7, 9], chords: ["A", "F#m", "D", "E7"] },
+                { title: "君は薔薇より美しい", artist: "布施明", bpm: 114, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["C", "Em", "F", "G7"] },
+                { title: "傷だらけのローラ", artist: "西城秀樹", bpm: 108, key: "Am", style: "rock", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "くちなしの花", artist: "渡哲也", bpm: 78, key: "C", style: "enka", scale: [0, 2, 4, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "酒と涙と男と女", artist: "河島英五", bpm: 74, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "G", "C", "F", "E7", "Am"] },
+                { title: "シクラメンのかほり", artist: "布施明", bpm: 76, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "時代", artist: "中島みゆき", bpm: 82, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "G", "Am", "Em", "F", "C", "Dm7", "G7"] },
+                { title: "勝手にしやがれ", artist: "沢田研二", bpm: 122, key: "Am", style: "rock", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "関白宣言", artist: "さだまさし", bpm: 104, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "G", "Am", "F", "C", "G7", "C"] },
+                { title: "時の流れに身をまかせ", artist: "テレサ・テン", bpm: 82, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Em", "F", "G7"] },
+                { title: "ブルー・シャトウ", artist: "ブルー・コメッツ", bpm: 116, key: "Am", style: "rock", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "プレイバックPart2", artist: "山口百恵", bpm: 110, key: "Am", style: "rock", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "魅せられて", artist: "ジュディ・オング", bpm: 100, key: "Am", style: "pop", scale: [0, 1, 4, 5, 7, 8, 10], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "昔の名前で出ています", artist: "小林旭", bpm: 84, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "もしもピアノが弾けたなら", artist: "西田敏行", bpm: 76, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "矢切の渡し", artist: "細川たかし", bpm: 74, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "柳ヶ瀬ブルース", artist: "美川憲一", bpm: 78, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "Y.M.C.A.", artist: "西城秀樹", bpm: 126, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "夢の中へ", artist: "井上陽水", bpm: 120, key: "G", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["G", "Em", "C", "D7"] },
+                { title: "よこはま・たそがれ", artist: "五木ひろし", bpm: 88, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "ラヴ・イズ・オーヴァー", artist: "欧陽菲菲", bpm: 72, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Em", "F", "G7"] },
+                { title: "ランナウェイ", artist: "シャネルズ", bpm: 118, key: "C", style: "rock", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "ワインレッドの心", artist: "安全地帯", bpm: 88, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "贈る言葉", artist: "海援隊", bpm: 84, key: "G", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["G", "D", "Em", "Bm", "C", "G", "Am", "D7"] },
+                { title: "恋の季節", artist: "ピンキーとキラーズ", bpm: 124, key: "Am", style: "pop", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "恋のダイヤル6700", artist: "フィンガー5", bpm: 140, key: "C", style: "rock", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "恋人よ", artist: "五輪真弓", bpm: 74, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "長崎は今日も雨だった", artist: "内山田洋とクール・ファイブ", bpm: 80, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "函館の女", artist: "北島三郎", bpm: 86, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "命くれない", artist: "瀬川瑛子", bpm: 78, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "兄弟船", artist: "鳥羽一郎", bpm: 84, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "まつり", artist: "北島三郎", bpm: 104, key: "Am", style: "enka", scale: [0, 2, 4, 7, 9], chords: ["Am", "F", "G", "Am"] },
+                { title: "舟唄", artist: "八代亜紀", bpm: 72, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "与作", artist: "北島三郎", bpm: 80, key: "Am", style: "enka", scale: [0, 2, 4, 7, 9], chords: ["Am", "F", "G", "Am"] },
+                { title: "熱き心に", artist: "小林旭", bpm: 88, key: "C", style: "enka", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "おふくろさん", artist: "森進一", bpm: 76, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "悲しい酒", artist: "美空ひばり", bpm: 68, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "無法松の一生", artist: "村田英雄", bpm: 88, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "柔", artist: "美空ひばり", bpm: 82, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "人生劇場", artist: "村田英雄", bpm: 84, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "千曲川", artist: "五木ひろし", bpm: 74, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] }
+            ],
+            advanced: [
+                { title: "天城越え", artist: "石川さゆり", bpm: 76, key: "Am", style: "enka", scale: [0, 1, 4, 5, 7, 8, 11, 12], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "DESIRE -情熱-", artist: "中森明菜", bpm: 132, key: "Am", style: "rock", scale: [0, 2, 3, 5, 7, 8, 10, 12], chords: ["Am", "F", "G", "Am"] },
+                { title: "ギザギザハートの子守唄", artist: "チェッカーズ", bpm: 128, key: "Am", style: "rock", scale: [0, 2, 3, 5, 7, 8, 10], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "仮面舞踏会", artist: "少年隊", bpm: 136, key: "Am", style: "pop", scale: [0, 2, 3, 5, 7, 8, 10], chords: ["Am", "Dm", "G", "C"] },
+                { title: "ルパン三世のテーマ", artist: "大野雄二", bpm: 130, key: "Em", style: "rock", scale: [0, 2, 3, 5, 7, 9, 10], chords: ["Em", "Am", "B7", "Em"] },
+                { title: "君は天然色", artist: "大滝詠一", bpm: 124, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["C", "Em", "F", "G7"] },
+                { title: "ハイティーン・ブギ", artist: "近藤真彦", bpm: 138, key: "A", style: "rock", scale: [0, 2, 4, 7, 9], chords: ["A", "F#m", "D", "E7"] },
+                { title: "東京ブギウギ", artist: "笠置シヅ子", bpm: 140, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "三味線ブギウギ", artist: "市丸", bpm: 132, key: "Am", style: "enka", scale: [0, 2, 4, 7, 9], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "買い物ブギ", artist: "笠置シヅ子", bpm: 144, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "月がとっても青いから", artist: "菅原都々子", bpm: 98, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "高原列車は行く", artist: "岡本敦郎", bpm: 112, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "憧れのハワイ航路", artist: "岡晴夫", bpm: 106, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "水色のワルツ", artist: "高峰三枝子", bpm: 80, key: "C", style: "waltz", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "街のサンドイッチマン", artist: "鶴田浩二", bpm: 100, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "赤と黒のブルース", artist: "鶴田浩二", bpm: 76, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "狂った果実", artist: "石原裕次郎", bpm: 82, key: "Am", style: "ballad", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "錆びたナイフ", artist: "石原裕次郎", bpm: 110, key: "Am", style: "rock", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "嵐を呼ぶ男", artist: "石原裕次郎", bpm: 126, key: "C", style: "rock", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "有楽町で逢いましょう", artist: "フランク永井", bpm: 84, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "銀座の恋の物語", artist: "石原裕次郎・牧村旬子", bpm: 88, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "昴", artist: "谷村新司", bpm: 76, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["C", "Em", "F", "G7"] },
+                { title: "AMBITIOUS JAPAN!", artist: "TOKIO", bpm: 134, key: "C", style: "rock", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["C", "G", "Am", "Em"] },
+                { title: "ライディーン", artist: "YMO", bpm: 136, key: "Am", style: "rock", scale: [0, 2, 4, 7, 9], chords: ["Am", "F", "G", "Am"] },
+                { title: "港のヨーコ・ヨコハマ・ヨコスカ", artist: "ダウン・タウン・ブギウギ・バンド", bpm: 110, key: "Am", style: "rock", scale: [0, 3, 5, 7, 10], chords: ["Am", "D7", "E7"] },
+                { title: "つぐない", artist: "テレサ・テン", bpm: 78, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "愛人", artist: "テレサ・テン", bpm: 80, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "別れの予感", artist: "テレサ・テン", bpm: 76, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "知りたくないの", artist: "菅原洋一", bpm: 72, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7], chords: ["C", "Am", "Dm", "G7"] },
+                { title: "王将", artist: "村田英雄", bpm: 86, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "上海帰りのリロス", artist: "竹山逸郎", bpm: 80, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "星の流れに", artist: "菊池章子", bpm: 74, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "異国の丘", artist: "竹山逸郎", bpm: 84, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "桑港のチャイナ街", artist: "渡辺はま子", bpm: 92, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "落葉しぐれ", artist: "三浦洸一", bpm: 78, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "東京午前三時", artist: "フランク永井", bpm: 82, key: "Am", style: "ballad", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "夜霧の第二国道", artist: "フランク永井", bpm: 80, key: "Am", style: "ballad", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "羽田発7時50分", artist: "フランク永井", bpm: 96, key: "C", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "俺は待ってるぜ", artist: "石原裕次郎", bpm: 104, key: "C", style: "rock", scale: [0, 2, 4, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "星のフラメンコ", artist: "西郷輝彦", bpm: 118, key: "Am", style: "pop", scale: [0, 1, 4, 5, 7, 8, 10], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "銀座のカンカン娘", artist: "高峰秀子", bpm: 120, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "F", "G7", "C"] },
+                { title: "いつでも夢を (豪華版)", artist: "橋幸夫", bpm: 92, key: "C", style: "pop", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "F", "G7"] },
+                { title: "上を向いて歩こう (シンフォニック)", artist: "坂本九", bpm: 116, key: "G", style: "pop", scale: [0, 2, 4, 7, 9], chords: ["G", "Em", "C", "D7"] },
+                { title: "勝手にシンドバッド (熱狂)", artist: "サザンオールスターズ", bpm: 140, key: "A", style: "rock", scale: [0, 2, 4, 7, 9], chords: ["A", "F#m", "D", "E7"] },
+                { title: "ウイスキーが、お好きでしょ (ジャズ)", artist: "石川さゆり", bpm: 74, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Am", "Dm7", "G7"] },
+                { title: "時の流れに身をまかせ (ロング)", artist: "テレサ・テン", bpm: 82, key: "C", style: "ballad", scale: [0, 2, 4, 5, 7, 9], chords: ["C", "Em", "F", "G7"] },
+                { title: "神田川 (オーケストラ)", artist: "かぐや姫", bpm: 78, key: "Am", style: "ballad", scale: [0, 2, 3, 5, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "津軽海峡・冬景色 (熱唱)", artist: "石川さゆり", bpm: 82, key: "Am", style: "enka", scale: [0, 2, 3, 7, 8], chords: ["Am", "Dm", "E7", "Am"] },
+                { title: "銀河鉄道999 (高速版)", artist: "ゴダイゴ", bpm: 138, key: "G", style: "rock", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["G", "D", "Em", "Bm"] },
+                { title: "川の流れのように (合唱)", artist: "美空ひばり", bpm: 74, key: "D", style: "ballad", scale: [0, 2, 4, 5, 7, 9, 11], chords: ["D", "Bm", "G", "A7"] }
+            ]
+        };
+
+        /* --------------------------------------------------
+         * 2. Apple Music API (iTunes Search API) 音源取得＆再生機能
+         * -------------------------------------------------- */
+        let bgmPreviewAudio = new Audio();
+        bgmPreviewAudio.volume = 0.65; // ピアノと調和する音量
+
+        // 無音データ（ブラウザの自動再生ブロックを解除するためのダミー音源）
+        const SILENT_AUDIO_SRC = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+
+        // ユーザーのタップ直後に呼び出し、再生権限を保持する
+        function unlockAudio() {
+            bgmPreviewAudio.src = SILENT_AUDIO_SRC;
+            bgmPreviewAudio.play().catch(() => {});
+        }
+
+        async function fetchAppleMusicPreview(songTitle, artistName) {
+            try {
+                // 検索のノイズになりやすい括弧表記を除去
+                const cleanTitle = songTitle.replace(/\s*[\(\（].*?[\)\］]/g, '').trim();
+                const cleanArtist = artistName.replace(/\s*[\(\（].*?[\)\］]/g, '').trim();
+
+                // 1. 曲名 + アーティスト名で検索
+                let query = encodeURIComponent(`${cleanTitle} ${cleanArtist}`);
+                let response = await fetch(`https://itunes.apple.com/search?term=${query}&country=JP&media=music&entity=song&limit=3`);
+                let data = await response.json();
+
+                if (data.results && data.results.length > 0 && data.results[0].previewUrl) {
+                    return data.results[0].previewUrl;
+                }
+
+                // 2. ヒットしない場合、曲名のみで再検索
+                query = encodeURIComponent(cleanTitle);
+                response = await fetch(`https://itunes.apple.com/search?term=${query}&country=JP&media=music&entity=song&limit=3`);
+                data = await response.json();
+
+                if (data.results && data.results.length > 0 && data.results[0].previewUrl) {
+                    return data.results[0].previewUrl;
+                }
+            } catch (err) {
+                console.warn("Apple Music APIからの音源取得に失敗:", err);
+            }
+            return null;
+        }
+
+        async function playPreviewAudioWithFetch(songTitle, artistName) {
+            unlockAudio();
+            const badge = document.getElementById('apple-music-badge');
+            badge.innerText = "⏳ 音源取得中...";
+            badge.classList.remove('hidden');
+
+            const previewUrl = await fetchAppleMusicPreview(songTitle, artistName);
+            if (previewUrl) {
+                bgmPreviewAudio.src = previewUrl;
+                bgmPreviewAudio.currentTime = 0;
+                bgmPreviewAudio.play().then(() => {
+                    badge.innerText = "🎵 Apple Music 30秒試聴再生中";
+                }).catch(e => {
+                    console.error("試聴再生エラー:", e);
+                    badge.classList.add('hidden');
+                    alert("ブラウザの自動再生規制によりブロックされました。画面を再度タップしてください。");
+                });
+            } else {
+                stopPreviewAudio();
+                alert(`「${songTitle}」の試聴音源が見つかりませんでした。`);
+            }
+        }
+
+        function playPreviewAudioDirect(previewUrl) {
+            if (!previewUrl) {
+                document.getElementById('apple-music-badge').classList.add('hidden');
+                return;
+            }
+
+            bgmPreviewAudio.src = previewUrl;
+            bgmPreviewAudio.currentTime = 0;
+            bgmPreviewAudio.play().then(() => {
+                const badge = document.getElementById('apple-music-badge');
+                badge.innerText = "🎵 Apple Music 30秒試聴再生中";
+                badge.classList.remove('hidden');
+            }).catch(e => {
+                console.warn("Audio play blocked until touch gesture.");
+            });
+        }
+
+        function stopPreviewAudio() {
+            bgmPreviewAudio.pause();
+            bgmPreviewAudio.currentTime = 0;
+            document.getElementById('apple-music-badge').classList.add('hidden');
+        }
+
+        /* --------------------------------------------------
+         * 3. Synthesizer 音源 & 伴奏シーケンサー
+         * -------------------------------------------------- */
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+            }
+
+            init() {
+                if (this.ctx) return;
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioCtx();
+                this.masterGain = this.ctx.createGain();
+                this.masterGain.gain.value = 0.55;
+                this.masterGain.connect(this.ctx.destination);
+            }
+
+            resume() {
+                this.init();
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            midiToFreq(midi) {
+                return 440 * Math.pow(2, (midi - 69) / 12);
+            }
+
+            // メロディ用アコースティックピアノ音源
+            playPianoNote(midiNote, duration = 0.8) {
+                this.resume();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const freq = this.midiToFreq(midiNote);
+
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(freq, now);
+
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(freq * 2, now); // 倍音成分
+
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.75, now + 0.012);
+                gain.gain.exponentialRampToValueAtTime(0.2, now + 0.2);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + duration);
+                osc2.stop(now + duration);
+            }
+
+            // 伴奏ベース音
+            playBass(midiNote) {
+                this.resume();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const freq = this.midiToFreq(midiNote);
+
+                const osc = this.ctx.createOscillator();
+                const filter = this.ctx.createBiquadFilter();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, now);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(350, now);
+
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+
+                osc.start(now);
+                osc.stop(now + 0.35);
+            }
+
+            // 伴奏ギター/ピアノコードストラム
+            playChord(chordName) {
+                this.resume();
+                if (!this.ctx) return;
+
+                const chordMap = {
+                    'C': [60, 64, 67], 'Am': [57, 60, 64], 'F': [53, 57, 60], 'G': [55, 59, 62],
+                    'G7': [55, 59, 62, 65], 'Dm': [50, 53, 57], 'E7': [52, 56, 59, 62],
+                    'G/B': [59, 62, 67], 'Em': [52, 55, 59], 'Dm7': [50, 53, 57, 60],
+                    'Bm': [54, 57, 61], 'A7': [57, 61, 64, 67], 'F#m': [54, 57, 61],
+                    'D': [50, 54, 57], 'A': [57, 61, 64], 'D7': [50, 54, 57, 60],
+                    'Bb': [58, 62, 65], 'C7': [60, 64, 67, 70], 'Gm': [55, 58, 62],
+                    'Am7': [57, 60, 64, 67], 'F7': [53, 57, 60, 63], 'B7': [59, 63, 66, 69]
+                };
+
+                const notes = chordMap[chordName] || [60, 64, 67];
+                const now = this.ctx.currentTime;
+
+                notes.forEach((note, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const freq = this.midiToFreq(note);
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.015);
+
+                    gain.gain.setValueAtTime(0, now + i * 0.015);
+                    gain.gain.linearRampToValueAtTime(0.12, now + i * 0.015 + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.015 + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+
+                    osc.start(now + i * 0.015);
+                    osc.stop(now + i * 0.015 + 0.4);
+                });
+            }
+
+            // リズムドラム音
+            playDrum(type = 'kick') {
+                this.resume();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+
+                if (type === 'kick') {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.frequency.setValueAtTime(110, now);
+                    osc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'snare') {
+                    const bufferSize = this.ctx.sampleRate * 0.06;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.06);
+                    noise.connect(gain);
+                    gain.connect(this.masterGain);
+                    noise.start(now);
+                } else if (type === 'hihat') {
+                    const bufferSize = this.ctx.sampleRate * 0.03;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'highpass';
+                    filter.frequency.value = 8000;
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.03);
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+                    noise.start(now);
+                }
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        /* --------------------------------------------------
+         * 4. 鍵盤定義 (ド・レ・ミ・ファ・ソ・ラ・シ...高ド 音名表示)
+         * -------------------------------------------------- */
+        const KEYBOARD_CONFIG = [
+            { note: 'C4', label: 'ド', midi: 60, isBlack: false },
+            { note: 'C#4', label: '', midi: 61, isBlack: true },
+            { note: 'D4', label: 'レ', midi: 62, isBlack: false },
+            { note: 'D#4', label: '', midi: 63, isBlack: true },
+            { note: 'E4', label: 'ミ', midi: 64, isBlack: false },
+            { note: 'F4', label: 'ファ', midi: 65, isBlack: false },
+            { note: 'F#4', label: '', midi: 66, isBlack: true },
+            { note: 'G4', label: 'ソ', midi: 67, isBlack: false },
+            { note: 'G#4', label: '', midi: 68, isBlack: true },
+            { note: 'A4', label: 'ラ', midi: 69, isBlack: false },
+            { note: 'A#4', label: '', midi: 70, isBlack: true },
+            { note: 'B4', label: 'シ', midi: 71, isBlack: false },
+
+            { note: 'C5', label: 'ド', midi: 72, isBlack: false },
+            { note: 'C#5', label: '', midi: 73, isBlack: true },
+            { note: 'D5', label: 'レ', midi: 74, isBlack: false },
+            { note: 'D#5', label: '', midi: 75, isBlack: true },
+            { note: 'E5', label: 'ミ', midi: 76, isBlack: false },
+            { note: 'F5', label: 'ファ', midi: 77, isBlack: false },
+            { note: 'F#5', label: '', midi: 78, isBlack: true },
+            { note: 'G5', label: 'ソ', midi: 79, isBlack: false },
+            { note: 'G#5', label: '', midi: 80, isBlack: true },
+            { note: 'A5', label: 'ラ', midi: 81, isBlack: false },
+            { note: 'A#5', label: '', midi: 82, isBlack: true },
+            { note: 'B5', label: 'シ', midi: 83, isBlack: false },
+            { note: 'C6', label: '高ド', midi: 84, isBlack: false }
+        ];
+
+        /* --------------------------------------------------
+         * 5. ゲーム状態管理
+         * -------------------------------------------------- */
+        let currentCourse = 'beginner';
+        let currentSong = null;
+        let isPracticeMode = false;
+        let isPlaying = false;
+        let isDemoPlaying = false;
+        let isAutoPlayMode = false;
+        let isReplaying = false;
+        let gameLoopId = null;
+        let accompanimentTimer = null;
+
+        let playedNotesHistory = [];
+        let replayStartTime = 0;
+        let currentSongNotes = [];
+        let gameScore = 0;
+        let totalTargetNotes = 0;
+        let activeGuideMidi = null;
+
+        let practiceRecordedNotes = [];
+
+        /* --------------------------------------------------
+         * 6. UI DOM取得
+         * -------------------------------------------------- */
+        const startModal = document.getElementById('start-modal');
+        const btnStartApp = document.getElementById('btn-start-app');
+        const screenTop = document.getElementById('screen-top');
+        const screenGame = document.getElementById('screen-game');
+        const modalResult = document.getElementById('modal-result');
+        const modalPause = document.getElementById('modal-pause');
+        const songListContainer = document.getElementById('song-list-container');
+        const headerTitle = document.getElementById('header-title');
+        const btnStopPlay = document.getElementById('btn-stop-play');
+        const stopPlayIcon = document.getElementById('stop-play-icon');
+        const stopPlayText = document.getElementById('stop-play-text');
+        const btnHome = document.getElementById('btn-home');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+        const pianoKeyboard = document.getElementById('piano-keyboard');
+        const countdownOverlay = document.getElementById('countdown-overlay');
+        const countdownText = document.getElementById('countdown-text');
+        const sheetCanvas = document.getElementById('sheet-canvas');
+        const ctxCanvas = sheetCanvas.getContext('2d');
+
+        /* --------------------------------------------------
+         * 7. 横画面フルスクリーン化の起動ロジック
+         * -------------------------------------------------- */
+        btnStartApp.addEventListener('click', async () => {
+            audio.resume();
+            unlockAudio();
+
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+            } catch (e) {
+                console.log("Fullscreen request bypassed.");
+            }
+
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape');
+                }
+            } catch (e) {
+                console.log("Screen orientation lock bypassed.");
+            }
+
+            startModal.classList.add('hidden');
+        });
+
+        /* --------------------------------------------------
+         * 8. ピアノ鍵盤のレンダリング (ひらがな音名付き)
+         * -------------------------------------------------- */
+        function renderPiano() {
+            pianoKeyboard.innerHTML = '';
+            
+            const whiteKeys = KEYBOARD_CONFIG.filter(k => !k.isBlack);
+            const whiteKeyWidthPercent = 100 / whiteKeys.length;
+
+            let whiteIndex = 0;
+
+            KEYBOARD_CONFIG.forEach((keyConfig) => {
+                const keyEl = document.createElement('div');
+                keyEl.dataset.midi = keyConfig.midi;
+
+                if (!keyConfig.isBlack) {
+                    keyEl.className = 'piano-key-white h-full flex items-end justify-center pb-2 cursor-pointer';
+                    keyEl.style.width = `${whiteKeyWidthPercent}%`;
+                    keyEl.innerHTML = `<span class="text-[11px] text-stone-700 font-bold">${keyConfig.label}</span>`;
+                    whiteIndex++;
+                } else {
+                    keyEl.className = 'piano-key-black h-[58%] absolute top-0 cursor-pointer';
+                    keyEl.style.width = `${whiteKeyWidthPercent * 0.62}%`;
+                    const leftPos = (whiteIndex - 0.31) * whiteKeyWidthPercent;
+                    keyEl.style.left = `${leftPos}%`;
+                }
+
+                const triggerKey = (e) => {
+                    e.preventDefault();
+                    onKeyTap(keyConfig);
+                };
+
+                keyEl.addEventListener('touchstart', triggerKey, { passive: false });
+                keyEl.addEventListener('mousedown', triggerKey);
+
+                pianoKeyboard.appendChild(keyEl);
+            });
+        }
+
+        /* --------------------------------------------------
+         * 9. 鍵盤タップ＆判定処理
+         * -------------------------------------------------- */
+        function onKeyTap(keyConfig) {
+            if (isAutoPlayMode) return;
+
+            audio.resume();
+
+            const keyEl = pianoKeyboard.querySelector(`[data-midi="${keyConfig.midi}"]`);
+            if (keyEl) {
+                keyEl.classList.add('active');
+                setTimeout(() => keyEl.classList.remove('active'), 140);
+            }
+
+            // ピアノ音を打鍵
+            audio.playPianoNote(keyConfig.midi, 0.85);
+
+            // 録音履歴
+            playedNotesHistory.push({ midi: keyConfig.midi, time: Date.now() });
+
+            if (isPracticeMode) {
+                practiceRecordedNotes.push({ midi: keyConfig.midi, x: sheetCanvas.width - 80 });
+                if (practiceRecordedNotes.length > 30) practiceRecordedNotes.shift();
+            } else if (isPlaying && !isDemoPlaying && !isReplaying) {
+                // ガイド●のヒット判定
+                if (activeGuideMidi !== null && activeGuideMidi === keyConfig.midi) {
+                    gameScore += 100;
+                    showTapEffect(keyEl, "PERFECT!", "#10b981");
+                    activeGuideMidi = null;
+                } else if (activeGuideMidi !== null) {
+                    gameScore += 30;
+                    showTapEffect(keyEl, "GOOD", "#f59e0b");
+                }
+            }
+        }
+
+        function showTapEffect(keyEl, text, color) {
+            if (!keyEl) return;
+            const pop = document.createElement('div');
+            pop.className = 'absolute -top-7 left-1/2 -translate-x-1/2 font-extrabold text-[11px] animate-bounce pointer-events-none z-30';
+            pop.style.color = color;
+            pop.innerText = text;
+            keyEl.appendChild(pop);
+            setTimeout(() => pop.remove(), 500);
+        }
+
+        /* --------------------------------------------------
+         * 10. メロディ楽譜生成
+         * -------------------------------------------------- */
+        function generateFullSongNotes(song) {
+            const baseMidi = song.key === "G" ? 67 : song.key === "D" ? 62 : song.key === "F" ? 65 : song.key === "A" ? 69 : 60;
+            const scale = song.scale || [0, 2, 4, 5, 7, 9, 11, 12];
+            const bpm = song.bpm || 90;
+            const beatDuration = 60 / bpm;
+
+            const notes = [];
+            let currentTime = 0.5;
+
+            const chords = song.chords || ["C", "Am", "F", "G7"];
+
+            const sections = [
+                { beats: 8, pattern: [0, 2, 4, 2, 0, 4, 2, 0] },
+                { beats: 16, pattern: [0, 1, 2, 3, 2, 1, 0, 0, 2, 3, 4, 5, 4, 3, 2, 2] },
+                { beats: 16, pattern: [3, 4, 5, 5, 4, 3, 2, 2, 4, 5, 6, 6, 5, 4, 3, 3] },
+                { beats: 16, pattern: [4, 5, 6, 7, 6, 5, 4, 4, 5, 6, 7, 8, 7, 6, 5, 5, 4, 3, 2, 3, 4, 5, 4, 3, 2, 1, 0, 2, 0, 0] },
+                { beats: 8, pattern: [4, 2, 0, 2, 4, 5, 4, 0] }
+            ];
+
+            sections.forEach((section, secIdx) => {
+                section.pattern.forEach((pIndex, i) => {
+                    const chordName = chords[(secIdx + i) % chords.length];
+                    const scaleNote = scale[pIndex % scale.length];
+                    const octShift = pIndex >= scale.length ? 12 : 0;
+                    const midi = baseMidi + scaleNote + octShift;
+
+                    const durationRatio = (i % 4 === 3) ? 1.5 : (i % 2 === 0) ? 0.75 : 1.0;
+                    const noteDuration = beatDuration * durationRatio;
+
+                    notes.push({
+                        midi: Math.min(84, Math.max(60, midi)),
+                        startTime: currentTime,
+                        duration: noteDuration,
+                        chord: chordName,
+                        playedInDemo: false,
+                        hit: false
+                    });
+
+                    currentTime += noteDuration;
+                });
+            });
+
+            return {
+                notes: notes,
+                totalDuration: currentTime + 1.5
+            };
+        }
+
+        /* --------------------------------------------------
+         * 11. 曲リスト生成 & 試聴ボタン付きリスト構築
+         * -------------------------------------------------- */
+        function loadSongList(courseKey) {
+            songListContainer.innerHTML = '';
+            
+            if (courseKey === 'practice') {
+                document.getElementById('song-count-label').innerText = "練習プレイモード";
+                const card = document.createElement('div');
+                card.className = "p-4 bg-emerald-950/80 border border-emerald-600/60 rounded-xl text-center flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-emerald-900 transition shadow-lg my-auto";
+                card.innerHTML = `
+                    <div class="text-4xl">🎹</div>
+                    <div class="text-emerald-200 font-bold showa-font text-lg">自由演奏 練習モード</div>
+                    <div class="text-xs text-emerald-400">白紙の五線譜に鍵盤を叩いて自由に音符を刻もう！</div>
+                    <button class="mt-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-full text-xs shadow-md">スタート</button>
+                `;
+                card.addEventListener('click', () => startPracticeMode());
+                songListContainer.appendChild(card);
+                return;
+            }
+
+            const songs = SONG_DATABASE[courseKey] || [];
+            songs.sort((a, b) => a.title.localeCompare(b.title, 'ja'));
+
+            document.getElementById('song-count-label').innerText = `曲一覧 (${songs.length}曲)`;
+
+            songs.forEach((song, idx) => {
+                const item = document.createElement('div');
+                item.className = 'bg-amber-950/50 border border-amber-900/60 hover:border-amber-500 rounded-lg p-2.5 flex items-center justify-between transition active:scale-[0.99]';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-bold text-amber-500 w-6 font-mono">${idx + 1}</span>
+                        <div>
+                            <p class="text-sm font-bold text-amber-100 showa-font">${song.title}</p>
+                            <p class="text-[11px] text-amber-400/80">${song.artist} <span class="text-[10px] text-amber-500 ml-2">♩BPM ${song.bpm}</span></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-1.5">
+                        <button class="btn-preview-listen px-2 py-1.5 bg-rose-900 hover:bg-rose-800 active:bg-rose-950 text-rose-100 rounded-md text-[11px] font-bold border border-rose-600/60 shadow transition flex items-center gap-1">
+                            🎧 試聴
+                        </button>
+                        <button class="btn-auto-play px-2.5 py-1.5 bg-amber-900 hover:bg-amber-800 active:bg-amber-950 text-amber-200 rounded-md text-xs font-bold border border-amber-700/60 shadow transition">
+                            🤖 自動演奏
+                        </button>
+                        <button class="btn-start-play px-3 py-1.5 bg-amber-700 hover:bg-amber-600 active:bg-amber-800 text-amber-100 rounded-md text-xs font-bold shadow border border-amber-500/40 transition">
+                            演奏スタート
+                        </button>
+                    </div>
+                `;
+
+                const previewBtn = item.querySelector('.btn-preview-listen');
+                const autoBtn = item.querySelector('.btn-auto-play');
+                const startBtn = item.querySelector('.btn-start-play');
+
+                // 30秒Apple Music原曲試聴
+                previewBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    audio.resume();
+                    playPreviewAudioWithFetch(song.title, song.artist);
+                });
+
+                autoBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    startAutoPlay(song);
+                });
+
+                startBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    startSongGame(song);
+                });
+
+                songListContainer.appendChild(item);
+            });
+        }
+
+        /* --------------------------------------------------
+         * 12. ゲームスタート & カウントダウン (Apple Music 音源並行再生)
+         * -------------------------------------------------- */
+        async function startSongGame(song) {
+            unlockAudio();
+            currentSong = song;
+            isPracticeMode = false;
+            isPlaying = false;
+            isDemoPlaying = false;
+            isAutoPlayMode = false;
+            isReplaying = false;
+            playedNotesHistory = [];
+            gameScore = 0;
+            
+            modalPause.classList.add('hidden');
+            modalResult.classList.add('hidden');
+            headerTitle.innerText = `${song.title} - ${song.artist}`;
+
+            screenTop.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+            updateStopPlayButton(true);
+
+            // Apple Music の原曲試聴URLを取得開始（非同期）
+            const fetchPromise = fetchAppleMusicPreview(song.title, song.artist);
+
+            const generated = generateFullSongNotes(song);
+            currentSongNotes = generated.notes;
+            totalTargetNotes = currentSongNotes.length;
+
+            runCountdown(async () => {
+                isPlaying = true;
+                replayStartTime = Date.now();
+                const previewUrl = await fetchPromise;
+                if (previewUrl && isPlaying) playPreviewAudioDirect(previewUrl);
+                startAccompanimentSequencer();
+                startMainGameLoop();
+            });
+        }
+
+        /* --------------------------------------------------
+         * CPU自動演奏モード
+         * -------------------------------------------------- */
+        async function startAutoPlay(song) {
+            if (!song) return;
+            unlockAudio();
+            currentSong = song;
+            isPracticeMode = false;
+            isPlaying = true;
+            isDemoPlaying = true;
+            isAutoPlayMode = true;
+            isReplaying = false;
+
+            modalPause.classList.add('hidden');
+            modalResult.classList.add('hidden');
+
+            headerTitle.innerText = `🤖 自動演奏中: ${song.title} - ${song.artist}`;
+            screenTop.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+
+            btnStopPlay.classList.add('hidden');
+            btnFullscreen.classList.add('hidden');
+            pianoKeyboard.classList.add('pointer-events-none', 'opacity-80');
+
+            const fetchPromise = fetchAppleMusicPreview(song.title, song.artist);
+
+            const generated = generateFullSongNotes(song);
+            currentSongNotes = generated.notes;
+
+            replayStartTime = Date.now();
+            const previewUrl = await fetchPromise;
+            if (previewUrl && isPlaying) playPreviewAudioDirect(previewUrl);
+            startAccompanimentSequencer();
+            startMainGameLoop();
+        }
+
+        /* --------------------------------------------------
+         * お手本試聴演奏 (デモ再生モード)
+         * -------------------------------------------------- */
+        async function startDemoPlay(song) {
+            if (!song) return;
+            unlockAudio();
+            currentSong = song;
+            isPracticeMode = false;
+            isPlaying = true;
+            isDemoPlaying = true;
+            isReplaying = false;
+            modalPause.classList.add('hidden');
+            modalResult.classList.add('hidden');
+
+            headerTitle.innerText = `🎧 鑑賞中: ${song.title} - ${song.artist}`;
+            screenTop.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+            updateStopPlayButton(true);
+
+            const fetchPromise = fetchAppleMusicPreview(song.title, song.artist);
+
+            const generated = generateFullSongNotes(song);
+            currentSongNotes = generated.notes;
+
+            replayStartTime = Date.now();
+            const previewUrl = await fetchPromise;
+            if (previewUrl && isPlaying) playPreviewAudioDirect(previewUrl);
+            startAccompanimentSequencer();
+            startMainGameLoop();
+        }
+
+        function startPracticeMode() {
+            stopPreviewAudio();
+            isPracticeMode = true;
+            isPlaying = true;
+            isDemoPlaying = false;
+            isReplaying = false;
+            currentSong = { title: "練習プレイ", artist: "自由演奏", bpm: 90, chords: ["C", "Am", "F", "G7"], style: "pop" };
+            practiceRecordedNotes = [];
+            playedNotesHistory = [];
+
+            headerTitle.innerText = "🎹 練習プレイ (自由演奏)";
+
+            screenTop.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+            updateStopPlayButton(true);
+
+            startMainGameLoop();
+        }
+
+        function runCountdown(callback) {
+            countdownOverlay.classList.remove('hidden');
+            const steps = ["１", "２", "３", "はい！"];
+            let stepIdx = 0;
+
+            const timer = setInterval(() => {
+                if (stepIdx < steps.length) {
+                    countdownText.innerText = steps[stepIdx];
+                    audio.playDrum('hihat');
+                    stepIdx++;
+                } else {
+                    clearInterval(timer);
+                    countdownOverlay.classList.add('hidden');
+                    callback();
+                }
+            }, 550);
+        }
+
+        /* --------------------------------------------------
+         * 13. 伴奏シーケンサー (各曲固有のBPM, コード進行, スタイル別伴奏)
+         * -------------------------------------------------- */
+        function startAccompanimentSequencer() {
+            stopAccompaniment();
+            if (!currentSong) return;
+
+            const bpm = currentSong.bpm || 90;
+            const style = currentSong.style || "pop";
+            const intervalMs = (60 / bpm) * 1000 / 2;
+            const chords = currentSong.chords || ["C", "Am", "F", "G7"];
+            
+            let beat = 0;
+            let chordIdx = 0;
+
+            accompanimentTimer = setInterval(() => {
+                if (!isPlaying || isPracticeMode) return;
+
+                const currentChord = chords[chordIdx % chords.length];
+
+                if (style === "waltz") {
+                    if (beat % 3 === 0) {
+                        audio.playDrum('kick');
+                        audio.playBass(36);
+                    } else {
+                        audio.playDrum('hihat');
+                        audio.playChord(currentChord);
+                    }
+                    beat = (beat + 1) % 6;
+                } else if (style === "enka") {
+                    if (beat % 4 === 0) {
+                        audio.playDrum('kick');
+                        audio.playBass(36);
+                    } else if (beat % 4 === 2) {
+                        audio.playDrum('snare');
+                        audio.playBass(43);
+                    }
+                    if (beat % 2 === 1) audio.playChord(currentChord);
+                    audio.playDrum('hihat');
+                    beat = (beat + 1) % 8;
+                } else if (style === "rock") {
+                    if (beat % 2 === 0) {
+                        audio.playDrum('kick');
+                        audio.playBass(38);
+                        audio.playChord(currentChord);
+                    } else {
+                        audio.playDrum('snare');
+                        audio.playDrum('hihat');
+                    }
+                    beat = (beat + 1) % 8;
+                } else {
+                    if (beat % 2 === 0) {
+                        audio.playDrum('kick');
+                        audio.playBass(36);
+                    } else {
+                        audio.playDrum('snare');
+                        audio.playChord(currentChord);
+                    }
+                    audio.playDrum('hihat');
+                    beat = (beat + 1) % 8;
+                }
+
+                if (beat === 0) chordIdx++;
+
+            }, intervalMs);
+        }
+
+        function stopAccompaniment() {
+            if (accompanimentTimer) {
+                clearInterval(accompanimentTimer);
+                accompanimentTimer = null;
+            }
+        }
+
+        /* --------------------------------------------------
+         * 14. メイン描画ループ & 五線譜描画
+         * -------------------------------------------------- */
+        function startMainGameLoop() {
+            if (gameLoopId) cancelAnimationFrame(gameLoopId);
+
+            function loop() {
+                renderSheetMusic();
+
+                if (isPlaying && !isPracticeMode) {
+                    checkGameProgress();
+                }
+
+                gameLoopId = requestAnimationFrame(loop);
+            }
+
+            loop();
+        }
+
+        function renderSheetMusic() {
+            const rect = sheetCanvas.getBoundingClientRect();
+            sheetCanvas.width = rect.width;
+            sheetCanvas.height = rect.height;
+
+            const w = sheetCanvas.width;
+            const h = sheetCanvas.height;
+
+            // 1. クリーム色の背景
+            ctxCanvas.fillStyle = '#f7f1e5';
+            ctxCanvas.fillRect(0, 0, w, h);
+
+            // 2. ヘッダー情報表示（曲名・スコア）
+            const songNameText = currentSong ? `${currentSong.title} (${currentCourse})` : '練習プレイ';
+            const artistText = currentSong ? currentSong.artist : '';
+
+            ctxCanvas.fillStyle = '#1e110a';
+            ctxCanvas.font = 'bold 15px "Yuji Syuku", serif';
+            ctxCanvas.fillText(songNameText, w * 0.28, 24);
+
+            ctxCanvas.fillStyle = '#785032';
+            ctxCanvas.font = '11px sans-serif';
+            ctxCanvas.fillText(artistText, w * 0.28 + ctxCanvas.measureText(songNameText).width + 12, 24);
+
+            // スコア枠
+            ctxCanvas.fillStyle = '#111827';
+            ctxCanvas.beginPath();
+            ctxCanvas.roundRect(w - 180, 8, 110, 24, 4);
+            ctxCanvas.fill();
+            ctxCanvas.fillStyle = '#fbe089';
+            ctxCanvas.font = 'bold 12px monospace';
+            ctxCanvas.fillText(isDemoPlaying ? "🎧 鑑賞中" : `スコア: ${gameScore}`, w - 170, 24);
+
+            // 3. 五線譜の描画
+            const startY = h * 0.35;
+            const lineGap = h * 0.085;
+            ctxCanvas.strokeStyle = '#6b4f3b';
+            ctxCanvas.lineWidth = 1.5;
+
+            for (let i = 0; i < 5; i++) {
+                ctxCanvas.beginPath();
+                ctxCanvas.moveTo(0, startY + i * lineGap);
+                ctxCanvas.lineTo(w, startY + i * lineGap);
+                ctxCanvas.stroke();
+            }
+
+            // ト音記号
+            ctxCanvas.fillStyle = '#2c1a0e';
+            ctxCanvas.font = `${lineGap * 3.8}px serif`;
+            ctxCanvas.fillText('🎼', 12, startY + lineGap * 3.8);
+
+            // 4. 赤い判定ライン
+            const targetX = w * 0.24;
+            
+            ctxCanvas.strokeStyle = '#ef4444';
+            ctxCanvas.lineWidth = 2.5;
+            ctxCanvas.beginPath();
+            ctxCanvas.moveTo(targetX, startY - 15);
+            ctxCanvas.lineTo(targetX, startY + lineGap * 4 + 15);
+            ctxCanvas.stroke();
+
+            // 「判定ライン」ラベル
+            ctxCanvas.fillStyle = '#dc2626';
+            ctxCanvas.beginPath();
+            ctxCanvas.roundRect(targetX - 25, startY - 26, 50, 16, 3);
+            ctxCanvas.fill();
+            ctxCanvas.fillStyle = '#ffffff';
+            ctxCanvas.font = 'bold 9px sans-serif';
+            ctxCanvas.fillText('判定ライン', targetX - 20, startY - 14);
+
+            // 5. 音符と●ガイド印の更新
+            if (isPracticeMode) {
+                practiceRecordedNotes.forEach((note) => {
+                    note.x -= 2.2;
+                    drawNote(note.x, midiToCanvasY(note.midi, startY, lineGap), '#059669');
+                });
+            } else if (isPlaying || isReplaying) {
+                const elapsedTime = (Date.now() - replayStartTime) / 1000;
+                const scrollSpeed = 110;
+
+                let nextGuideMidi = null;
+                let minTimeDiff = Infinity;
+
+                currentSongNotes.forEach((note) => {
+                    const noteX = targetX + (note.startTime - elapsedTime) * scrollSpeed;
+                    const noteY = midiToCanvasY(note.midi, startY, lineGap);
+
+                    // デモ再生時、判定ラインを通過したらメロディを自動鳴らす
+                    if (isDemoPlaying && noteX <= targetX && !note.playedInDemo) {
+                        note.playedInDemo = true;
+                        audio.playPianoNote(note.midi, note.duration);
+                        const keyEl = pianoKeyboard.querySelector(`[data-midi="${note.midi}"]`);
+                        if (keyEl) {
+                            keyEl.classList.add('active');
+                            setTimeout(() => keyEl.classList.remove('active'), 140);
+                        }
+                    }
+
+                    if (noteX > -30 && noteX < w + 30) {
+                        drawNote(noteX, noteY, note.hit ? '#a3a3a3' : '#d97706', note.midi < 64);
+                    }
+
+                    const timeDiff = Math.abs(note.startTime - elapsedTime);
+                    if (timeDiff < 0.35 && timeDiff < minTimeDiff) {
+                        minTimeDiff = timeDiff;
+                        nextGuideMidi = note.midi;
+                    }
+                });
+
+                updateGuideDot(nextGuideMidi);
+            }
+        }
+
+        function drawNote(x, y, color, hasLowerLine = false) {
+            ctxCanvas.fillStyle = color;
+            ctxCanvas.strokeStyle = color;
+
+            if (hasLowerLine) {
+                ctxCanvas.beginPath();
+                ctxCanvas.lineWidth = 1.5;
+                ctxCanvas.moveTo(x - 10, y);
+                ctxCanvas.lineTo(x + 10, y);
+                ctxCanvas.stroke();
+            }
+
+            ctxCanvas.beginPath();
+            ctxCanvas.ellipse(x, y, 7.5, 5.5, -Math.PI / 6, 0, Math.PI * 2);
+            ctxCanvas.fill();
+
+            ctxCanvas.beginPath();
+            ctxCanvas.lineWidth = 2;
+            ctxCanvas.moveTo(x + 5.5, y);
+            ctxCanvas.lineTo(x + 5.5, y - 24);
+            ctxCanvas.stroke();
+        }
+
+        function midiToCanvasY(midi, startY, lineGap) {
+            const midiOffset = midi - 64;
+            return startY + 4 * lineGap - (midiOffset * (lineGap / 2));
+        }
+
+        function updateGuideDot(midi) {
+            activeGuideMidi = midi;
+            document.querySelectorAll('.guide-dot').forEach(el => el.remove());
+
+            if (midi !== null) {
+                const keyEl = pianoKeyboard.querySelector(`[data-midi="${midi}"]`);
+                if (keyEl) {
+                    const dot = document.createElement('div');
+                    dot.className = 'guide-dot';
+                    keyEl.appendChild(dot);
+                }
+            }
+        }
+
+        /* --------------------------------------------------
+         * 15. 演奏終了＆成績判定
+         * -------------------------------------------------- */
+        function checkGameProgress() {
+            const elapsedTime = (Date.now() - replayStartTime) / 1000;
+            const lastNote = currentSongNotes[currentSongNotes.length - 1];
+
+            if (lastNote && elapsedTime > lastNote.startTime + 2.0) {
+                finishGame();
+            }
+        }
+
+        function finishGame() {
+            isPlaying = false;
+            isDemoPlaying = false;
+            stopAccompaniment();
+            stopPreviewAudio();
+            updateStopPlayButton(false);
+
+            if (isAutoPlayMode) {
+                goToTop();
+                return;
+            }
+
+            const rank = gameScore > 1200 ? 'S' : gameScore > 800 ? 'A' : gameScore > 400 ? 'B' : 'C';
+            const comment = rank === 'S' 
+                ? '圧巻のフル演奏！昭和のグランドホール全体から万雷の拍手が送られています！' 
+                : '見事な演奏でした！叙情豊かなメロディーがホール全体に響き渡りました。';
+
+            document.getElementById('result-song-title').innerText = `${currentSong.title} - ${currentSong.artist}`;
+            document.getElementById('result-rank').innerText = rank;
+            document.getElementById('result-score').innerText = `スコア: ${gameScore} 点`;
+            document.getElementById('result-comment').innerText = comment;
+
+            modalResult.classList.remove('hidden');
+        }
+
+        /* --------------------------------------------------
+         * 16. ボタンイベント & ナビゲーション
+         * -------------------------------------------------- */
+        function updateStopPlayButton(isCurrentlyPlaying) {
+            if (isCurrentlyPlaying) {
+                stopPlayIcon.innerText = "⏹";
+                stopPlayText.innerText = "ストップ";
+            } else {
+                stopPlayIcon.innerText = "▶";
+                stopPlayText.innerText = "再生";
+            }
+        }
+
+        btnStopPlay.addEventListener('click', () => {
+            if (isPlaying || isDemoPlaying) {
+                isPlaying = false;
+                isDemoPlaying = false;
+                stopAccompaniment();
+                stopPreviewAudio();
+                updateStopPlayButton(false);
+                
+                if (currentSong && !isPracticeMode) {
+                    modalPause.classList.remove('hidden');
+                }
+            } else {
+                if (currentSong) startSongGame(currentSong);
+            }
+        });
+
+        document.getElementById('btn-pause-listen').addEventListener('click', () => {
+            startDemoPlay(currentSong);
+        });
+
+        document.getElementById('btn-pause-restart').addEventListener('click', () => {
+            startSongGame(currentSong);
+        });
+
+        document.getElementById('btn-pause-top').addEventListener('click', () => {
+            goToTop();
+        });
+
+        document.getElementById('btn-result-listen').addEventListener('click', () => {
+            startDemoPlay(currentSong);
+        });
+
+        document.querySelectorAll('.course-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.course-btn').forEach(b => {
+                    b.classList.remove('bg-amber-800', 'text-amber-100');
+                    b.classList.add('bg-amber-950/80', 'text-amber-200');
+                });
+
+                const targetBtn = e.currentTarget;
+                targetBtn.classList.remove('bg-amber-950/80', 'text-amber-200');
+                targetBtn.classList.add('bg-amber-800', 'text-amber-100');
+
+                currentCourse = targetBtn.dataset.course;
+                loadSongList(currentCourse);
+            });
+        });
+
+        function goToTop() {
+            isPlaying = false;
+            isDemoPlaying = false;
+            isAutoPlayMode = false;
+            isReplaying = false;
+            stopAccompaniment();
+            stopPreviewAudio();
+
+            btnStopPlay.classList.remove('hidden');
+            btnFullscreen.classList.remove('hidden');
+            pianoKeyboard.classList.remove('pointer-events-none', 'opacity-80');
+
+            modalPause.classList.add('hidden');
+            modalResult.classList.add('hidden');
+            screenGame.classList.add('hidden');
+            screenTop.classList.remove('hidden');
+            headerTitle.innerText = "昭和メロディードライブ";
+            updateStopPlayButton(false);
+        }
+
+        btnHome.addEventListener('click', goToTop);
+        document.getElementById('btn-modal-close').addEventListener('click', goToTop);
+
+        btnFullscreen.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        });
+
+        /* --------------------------------------------------
+         * 17. アプリ初期化
+         * -------------------------------------------------- */
+        window.addEventListener('load', () => {
+            renderPiano();
+            loadSongList('beginner');
+        });
+
+        window.addEventListener('resize', () => {
+            if (!screenGame.classList.contains('hidden')) {
+                renderSheetMusic();
+            }
+        });
+    </script>
+</body>
+</html>
