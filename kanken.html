@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>漢検手書きクイズ</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+​<style>
+body {
+font-family: 'Noto Sans JP', sans-serif;
+touch-action: manipulation;
+}
+​.kanji-canvas-container {
+position: relative;
+background-color: #ffffff;
+box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+​.grid-line-h, .grid-line-v {
+position: absolute;
+pointer-events: none;
+z-index: 1;
+}
+.grid-line-h {
+top: 50%;
+left: 0;
+right: 0;
+border-top: 2px dashed #cbd5e1;
+transform: translateY(-50%);
+}
+.grid-line-v {
+left: 50%;
+top: 0;
+bottom: 0;
+border-left: 2px dashed #cbd5e1;
+transform: translateX(-50%);
+}
+​@keyframes popIn {
+0% { transform: scale(0.2); opacity: 0; }
+70% { transform: scale(1.15); }
+100% { transform: scale(1); opacity: 1; }
+}
+.pop-in {
+animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+​.question-sentence {
+word-break: break-all;
+overflow-wrap: anywhere;
+line-break: loose;
+}
+​button:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+transform: none !important;
+}
+</style>
+</head>
+<body class="min-h-screen w-screen flex flex-col justify-between overflow-x-hidden text-slate-800 bg-slate-100">
+​<!-- ヘッダーエリア -->
+<header class="bg-indigo-700 text-white p-3 shadow-md flex justify-between items-center z-10 sticky top-0">
+<div class="flex items-center space-x-2">
+<span id="level-badge" class="bg-indigo-900 text-amber-300 text-xs font-bold px-2.5 py-1 rounded-full border border-amber-400">
+漢検２級
+</span>
+<span id="question-progress" class="text-sm font-semibold tracking-wider text-indigo-100">
+第 1 / 10 問
+</span>
+</div>
+<div class="flex items-center space-x-2">
+<button id="fullscreen-btn" onclick="toggleFullScreen()" class="bg-indigo-600 hover:bg-indigo-500 p-2 rounded-lg text-xs font-medium flex items-center transition active:scale-95" title="フルスクリーン切替">
+<svg id="fullscreen-icon" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+</svg>
+</button>
+<button id="sound-toggle-btn" onclick="toggleSound()" class="bg-indigo-600 hover:bg-indigo-500 p-2 rounded-lg text-xs font-medium flex items-center transition active:scale-95" title="音量切替">
+<span id="sound-icon">🔊</span>
+</button>
+</div>
+</header>
+​<!-- メインコンテンツ -->
+<main class="flex-1 flex flex-col items-center justify-center p-3 sm:p-4 max-w-md mx-auto w-full gap-3">
+<!-- 問題表示エリア -->
+<div class="w-full bg-white rounded-2xl p-4 shadow-sm border border-slate-200 text-center relative">
+<div class="flex justify-center items-center gap-2 mb-2">
+<span id="reading-type-badge" class="text-[11px] font-black px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0">
+【音読み】問題
+</span>
+<span id="instruction-text" class="text-xs text-slate-500 font-bold">下線カタカナ部分の漢字を書いてください</span>
+</div>
+<h1 id="question-text" class="question-sentence text-lg sm:text-xl font-black text-slate-800 leading-relaxed tracking-wide min-h-[3.5rem] flex items-center justify-center text-center">
+読み込み中...
+</h1>
+</div>
+​<!-- 正方形の手書き解答欄 -->
+<div class="w-full flex justify-center">
+<div id="canvas-container" class="kanji-canvas-container w-full max-w-[320px] aspect-square rounded-2xl border-4 border-slate-700 overflow-hidden relative bg-white">
+<div class="grid-line-h"></div>
+<div class="grid-line-v"></div>
+​<canvas id="handwriting-canvas" width="400" height="400" class="w-full h-full relative z-10 touch-none cursor-crosshair"></canvas>
+​<div id="feedback-overlay" class="hidden absolute inset-0 z-20 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none p-4">
+<div id="feedback-symbol" class="text-7xl sm:text-8xl font-black pop-in"></div>
+<div id="correct-answer-display" class="mt-2 text-lg sm:text-xl font-extrabold text-slate-800 hidden text-center"></div>
+</div>
+</div>
+</div>
+​<!-- 操作ボタン群 -->
+<div class="w-full max-w-[320px] flex justify-between space-x-2">
+<button id="undo-btn" onclick="undoStroke()" class="flex-1 bg-slate-200 hover:bg-slate-300 active:bg-slate-400 text-slate-700 py-3 rounded-xl font-bold text-xs sm:text-sm transition shadow active:scale-95 flex items-center justify-center gap-1">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+一画消す
+</button>
+<button id="clear-btn" onclick="clearCanvas()" class="flex-1 bg-rose-100 hover:bg-rose-200 active:bg-rose-300 text-rose-700 py-3 rounded-xl font-bold text-xs sm:text-sm transition shadow active:scale-95 flex items-center justify-center gap-1">
+<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+全消去
+</button>
+<button id="submit-btn" onclick="evaluateAnswer()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white py-3 rounded-xl font-black text-xs sm:text-sm transition shadow-md active:scale-95 flex items-center justify-center gap-1">
+判定する
+</button>
+</div>
+</main>
+​<!-- 起動時モード選択モーダル -->
+<div id="start-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4">
+<div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl text-center border border-slate-100 pop-in">
+<div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl font-black shadow-inner">
+漢
+</div>
+<h2 class="text-2xl font-black text-slate-800 mb-1">漢検 手書きクイズ</h2>
+<p class="text-xs text-slate-500 mb-6 font-bold">Web JSON連携・音訓交互出題版</p>
+​<div id="loading-error-msg" class="hidden text-xs text-red-600 bg-red-50 border border-red-200 p-3 rounded-xl mb-4 text-left">
+JSONデータの読み込みに失敗しました。URLまたはローカルの kanken.json をご確認ください。
+</div>
+​<div class="space-y-3 mb-6 text-left">
+<label class="flex items-center p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl cursor-pointer transition hover:bg-indigo-50/50 has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/80">
+<input type="radio" name="level-select" value="2" checked class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
+<div class="ml-3">
+<span class="block font-black text-slate-800 text-base">漢検 ２級</span>
+<span class="block text-xs text-slate-500 font-medium">常用漢字・音訓交互出題（全10問）</span>
+</div>
+</label>
+<label class="flex items-center p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl cursor-pointer transition hover:bg-indigo-50/50 has-[:checked]:border-indigo-600 has-[:checked]:bg-indigo-50/80">
+<input type="radio" name="level-select" value="1" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
+<div class="ml-3">
+<span class="block font-black text-slate-800 text-base">漢検 １級</span>
+<span class="block text-xs text-slate-500 font-medium">難関漢字・音訓交互出題（全10問）</span>
+</div>
+</label>
+</div>
+​<button id="start-game-btn" onclick="startGame()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-800 text-white py-4 rounded-2xl font-black text-lg shadow-lg hover:brightness-110 active:scale-95 transition">
+ゲームスタート
+</button>
+</div>
+</div>
+​<!-- 結果表示モーダル -->
+<div id="result-modal" class="hidden fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+<div class="bg-white rounded-3xl p-5 w-full max-w-lg shadow-2xl text-center border border-slate-100 flex flex-col max-h-[92vh]">
+<h2 class="text-xl font-black text-slate-800 mb-1">採点結果発表</h2>
+<div id="final-score-display" class="text-3xl font-black text-indigo-600 my-1">
+0 <span class="text-base text-slate-600">/ 100 点</span>
+</div>
+​<div class="flex-1 overflow-y-auto my-3 border border-slate-200 rounded-2xl bg-white shadow-inner">
+<table class="w-full text-left border-collapse text-xs sm:text-sm">
+<thead class="sticky top-0 bg-slate-100 text-slate-600 font-bold border-b border-slate-200 z-10">
+<tr>
+<th class="py-2.5 px-2 text-center w-10">問</th>
+<th class="py-2.5 px-2 text-center w-24">判定</th>
+<th class="py-2.5 px-3">解答（漢字・熟語）</th>
+<th class="py-2.5 px-2 text-center w-20">種別</th>
+</tr>
+</thead>
+<tbody id="result-table-body" class="divide-y divide-slate-100">
+</tbody>
+</table>
+</div>
+​<div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden my-2">
+<div id="auto-close-progress" class="bg-indigo-600 h-full w-full transition-all duration-1000 ease-linear"></div>
+</div>
+​<div class="flex items-center justify-between gap-2 mb-3">
+<span class="text-xs text-slate-500 font-bold"><span id="countdown-num">10</span> 秒後に初期画面へ</span>
+<button onclick="pauseCountdown()" id="pause-btn" class="text-xs px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold">
+一時停止
+</button>
+</div>
+​<button onclick="restartGame()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-2xl font-black text-sm transition shadow active:scale-95">
+もう一度遊ぶ
+</button>
+</div>
+</div>
+​<!-- メインプログラム（JavaScript） -->
+<script>
+const PRIMARY_JSON_URL = 'https://shulavan.github.io/data/kanken.json';
+const FALLBACK_JSON_URL = 'kanken.json';
+​const audio = {
+ctx: null,
+enabled: true,
+​init() {
+if (!this.ctx) {
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+if (AudioCtx) this.ctx = new AudioCtx();
+}
+if (this.ctx && this.ctx.state === 'suspended') {
+this.ctx.resume().catch(() => {});
+}
+},
+​playTone(freq, duration, type = 'sine', delay = 0) {
+if (!this.enabled) return;
+try {
+this.init();
+if (!this.ctx) return;
+const osc = this.ctx.createOscillator();
+const gain = this.ctx.createGain();
+​osc.type = type;
+osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+​gain.gain.setValueAtTime(0.15, this.ctx.currentTime + delay);
+gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+​osc.connect(gain);
+gain.connect(this.ctx.destination);
+​osc.start(this.ctx.currentTime + delay);
+osc.stop(this.ctx.currentTime + delay + duration);
+} catch (e) {
+console.warn("Audio error:", e);
+}
+},
+​playPinpon() {
+this.playTone(660, 0.25, 'sine', 0);
+this.playTone(880, 0.35, 'sine', 0.15);
+},
+​playBubboo() {
+this.playTone(150, 0.2, 'sawtooth', 0);
+this.playTone(140, 0.3, 'sawtooth', 0.15);
+},
+​playDeden() {
+this.playTone(440, 0.15, 'triangle', 0);
+}
+};
+​let quizBank = null;
+let currentLevel = "2";
+let currentQuestionIndex = 0;
+let questions = [];
+let userResults = [];
+let strokeData = [];
+let currentStroke = [[], [], []];
+let strokeStartTime = 0;
+let autoSubmitTimer = null;
+let isEvaluating = false;
+let resultCountdownInterval = null;
+let isPaused = false;
+​const canvas = document.getElementById('handwriting-canvas');
+const ctx = canvas.getContext('2d');
+​// 指定URLのJSONデータをフェッチし、失敗した場合はローカルにフォールバックする
+async function loadQuizBankJSON() {
+if (quizBank) return true;
+try {
+const response = await fetch(PRIMARY_JSON_URL);
+if (!response.ok) throw new Error(Primary fetch failed: ${response.status});
+quizBank = await response.json();
+document.getElementById('loading-error-msg').classList.add('hidden');
+return true;
+} catch (primaryErr) {
+console.warn("Primary JSON fetch error, trying fallback:", primaryErr);
+try {
+const fallbackResponse = await fetch(FALLBACK_JSON_URL);
+if (!fallbackResponse.ok) throw new Error(Fallback fetch failed: ${fallbackResponse.status});
+quizBank = await fallbackResponse.json();
+document.getElementById('loading-error-msg').classList.add('hidden');
+return true;
+} catch (fallbackErr) {
+console.error("JSON fetch completely failed:", fallbackErr);
+document.getElementById('loading-error-msg').classList.remove('hidden');
+return false;
+}
+}
+}
+​// 音読み・訓読みを【交互】に選び、必ず全10問を生成するロジック（例文被り防止つき）
+function generateGameQuestions(level) {
+const rawSentences = (quizBank && quizBank[level]) ? quizBank[level] : [];
+​const onyomiPool = [];
+const kunyomiPool = [];
+​rawSentences.forEach((sentenceObj, sentenceIdx) => {
+if (!sentenceObj.words) return;
+sentenceObj.words.forEach(wordObj => {
+if (!wordObj.kanjis) return;
+wordObj.kanjis.forEach(kanjiObj => {
+const item = {
+sentenceIndex: sentenceIdx,
+fullSentence: sentenceObj.sentence,
+wordText: wordObj.word,
+wordReading: wordObj.reading,
+targetChar: kanjiObj.char,
+targetReading: kanjiObj.reading,
+type: kanjiObj.type
+};
+​if (kanjiObj.type === '音読み') {
+onyomiPool.push(item);
+} else if (kanjiObj.type === '訓読み') {
+kunyomiPool.push(item);
+}
+});
+});
+});
+​const shuffle = (array) => {
+for (let i = array.length - 1; i > 0; i--) {
+const j = Math.floor(Math.random() * (i + 1));
+[array[i], array[j]] = [array[j], array[i]];
+}
+};
+​shuffle(onyomiPool);
+shuffle(kunyomiPool);
+​const usedSentenceIndices = new Set();
+const usedCharSet = new Set();
+const selectedOnyomi = [];
+const selectedKunyomi = [];
+​for (const item of onyomiPool) {
+if (selectedOnyomi.length >= 5) break;
+if (!usedSentenceIndices.has(item.sentenceIndex) && !usedCharSet.has(item.targetChar)) {
+usedSentenceIndices.add(item.sentenceIndex);
+usedCharSet.add(item.targetChar);
+selectedOnyomi.push(item);
+}
+}
+if (selectedOnyomi.length < 5) {
+for (const item of onyomiPool) {
+if (selectedOnyomi.length >= 5) break;
+if (!usedCharSet.has(item.targetChar)) {
+usedCharSet.add(item.targetChar);
+selectedOnyomi.push(item);
+}
+}
+}
+​for (const item of kunyomiPool) {
+if (selectedKunyomi.length >= 5) break;
+if (!usedSentenceIndices.has(item.sentenceIndex) && !usedCharSet.has(item.targetChar)) {
+usedSentenceIndices.add(item.sentenceIndex);
+usedCharSet.add(item.targetChar);
+selectedKunyomi.push(item);
+}
+}
+if (selectedKunyomi.length < 5) {
+for (const item of kunyomiPool) {
+if (selectedKunyomi.length >= 5) break;
+if (!usedCharSet.has(item.targetChar)) {
+usedCharSet.add(item.targetChar);
+selectedKunyomi.push(item);
+}
+}
+}
+​const interleaved = [];
+const maxLen = Math.max(selectedOnyomi.length, selectedKunyomi.length);
+​for (let i = 0; i < maxLen; i++) {
+if (i < selectedOnyomi.length) interleaved.push(selectedOnyomi[i]);
+if (i < selectedKunyomi.length) interleaved.push(selectedKunyomi[i]);
+}
+​return interleaved.slice(0, 10).map(item => {
+const formattedSentence = replaceTargetKanjiWithReading(
+item.fullSentence,
+item.wordText,
+item.targetChar,
+item.targetReading
+);
+return { ...item, displaySentence: formattedSentence };
+});
+}
+​function replaceTargetKanjiWithReading(sentence, wordText, targetChar, targetReading) {
+const wordIdx = sentence.indexOf(wordText);
+if (wordIdx !== -1) {
+const charInWordIdx = wordText.indexOf(targetChar);
+if (charInWordIdx !== -1) {
+const globalIdx = wordIdx + charInWordIdx;
+const before = sentence.slice(0, globalIdx);
+const after = sentence.slice(globalIdx + targetChar.length);
+const highlight = <span class="text-indigo-600 font-black underline underline-offset-4 decoration-indigo-500 decoration-4">${targetReading}</span>;
+return before + highlight + after;
+}
+}
+return sentence.replace(
+targetChar,
+<span class="text-indigo-600 font-black underline underline-offset-4 decoration-indigo-500 decoration-4">${targetReading}</span>
+);
+}
+​function setUIBusy(busy) {
+isEvaluating = busy;
+document.getElementById('submit-btn').disabled = busy;
+document.getElementById('clear-btn').disabled = busy;
+document.getElementById('undo-btn').disabled = busy;
+}
+​function initCanvas() {
+ctx.lineWidth = 10;
+ctx.lineCap = 'round';
+ctx.lineJoin = 'round';
+ctx.strokeStyle = '#0f172a';
+}
+​function clearCanvas() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+strokeData = [];
+currentStroke = [[], [], []];
+if (autoSubmitTimer) clearTimeout(autoSubmitTimer);
+}
+​function undoStroke() {
+if (isEvaluating || strokeData.length === 0) return;
+if (autoSubmitTimer) clearTimeout(autoSubmitTimer);
+strokeData.pop();
+currentStroke = [[], [], []];
+redrawCanvas();
+}
+​function redrawCanvas() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+strokeData.forEach(stroke => {
+const xs = stroke[0];
+const ys = stroke[1];
+if (!xs || xs.length === 0) return;
+​ctx.beginPath();
+ctx.moveTo(xs[0], ys[0]);
+for (let i = 1; i < xs.length; i++) {
+ctx.lineTo(xs[i], ys[i]);
+}
+ctx.stroke();
+});
+}
+​function getCanvasCoords(e) {
+const rect = canvas.getBoundingClientRect();
+const scaleX = canvas.width / rect.width;
+const scaleY = canvas.height / rect.height;
+const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+​return {
+x: Math.round((clientX - rect.left) * scaleX),
+y: Math.round((clientY - rect.top) * scaleY)
+};
+}
+​function startDrawing(e) {
+if (isEvaluating) return;
+e.preventDefault();
+if (autoSubmitTimer) clearTimeout(autoSubmitTimer);
+​const { x, y } = getCanvasCoords(e);
+strokeStartTime = Date.now();
+currentStroke = [[x], [y], [0]];
+​ctx.beginPath();
+ctx.moveTo(x, y);
+}
+​function draw(e) {
+if (isEvaluating || currentStroke[0].length === 0) return;
+e.preventDefault();
+​const { x, y } = getCanvasCoords(e);
+const timeOffset = Date.now() - strokeStartTime;
+​currentStroke[0].push(x);
+currentStroke[1].push(y);
+currentStroke[2].push(timeOffset);
+​ctx.lineTo(x, y);
+ctx.stroke();
+}
+​function stopDrawing(e) {
+if (isEvaluating || currentStroke[0].length === 0) return;
+​strokeData.push(currentStroke);
+currentStroke = [[], [], []];
+​autoSubmitTimer = setTimeout(() => {
+if (strokeData.length > 0 && !isEvaluating) {
+evaluateAnswer();
+}
+}, 1800);
+}
+​canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseleave', stopDrawing);
+​canvas.addEventListener('touchstart', startDrawing, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', stopDrawing);
+​async function evaluateAnswer() {
+if (isEvaluating || strokeData.length === 0) return;
+setUIBusy(true);
+if (autoSubmitTimer) clearTimeout(autoSubmitTimer);
+​const currentQ = questions[currentQuestionIndex];
+const targetChar = currentQ.targetChar;
+​try {
+const payload = {
+options: 'enable_homework_open_search',
+requests: [{
+writing_guide: { writing_area_width: 400, writing_area_height: 400 },
+ink: strokeData,
+language: 'ja'
+}]
+};
+​const response = await fetch('https://inputtools.google.com/request?itc=ja-t-i0-handwrit&app=autodraw', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(payload)
+});
+​const data = await response.json();
+let isCorrect = false;
+​if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1]) {
+const candidates = data[1][0][1];
+isCorrect = candidates.slice(0, 20).includes(targetChar);
+}
+​showFeedback(isCorrect, targetChar);
+​} catch (err) {
+console.error("文字認識エラー:", err);
+showFeedback(false, targetChar);
+}
+}
+​function showFeedback(isCorrect, targetChar) {
+const overlay = document.getElementById('feedback-overlay');
+const symbol = document.getElementById('feedback-symbol');
+const answerDisplay = document.getElementById('correct-answer-display');
+​userResults.push({
+question: questions[currentQuestionIndex],
+isCorrect: isCorrect
+});
+​overlay.classList.remove('hidden');
+​if (isCorrect) {
+symbol.textContent = '◯';
+symbol.className = 'text-7xl sm:text-8xl font-black text-red-500 pop-in';
+answerDisplay.classList.add('hidden');
+audio.playPinpon();
+} else {
+symbol.textContent = '✕';
+symbol.className = 'text-7xl sm:text-8xl font-black text-blue-600 pop-in';
+answerDisplay.textContent = 正解：${targetChar};
+answerDisplay.classList.remove('hidden');
+audio.playBubboo();
+}
+​setTimeout(() => {
+overlay.classList.add('hidden');
+currentQuestionIndex++;
+if (currentQuestionIndex < questions.length) {
+loadQuestion();
+} else {
+showResults();
+}
+}, 1400);
+}
+​async function startGame() {
+try {
+// 1. ユーザーのタップ/クリックイベントの直下で即座にフルスクリーン化を呼び出す（User Activation保持）
+requestFullScreen();
+​// 2. その後に非同期のJSON読み込み処理を実行する
+const isLoaded = await loadQuizBankJSON();
+if (!isLoaded) return;
+​const levelInput = document.querySelector('input[name="level-select"]:checked');
+currentLevel = levelInput ? levelInput.value : "2";
+​audio.init();
+​document.getElementById('start-modal').classList.add('hidden');
+document.getElementById('level-badge').textContent = 漢検 ${currentLevel === '1' ? '１' : '２'}級;
+​questions = generateGameQuestions(currentLevel);
+currentQuestionIndex = 0;
+userResults = [];
+​initCanvas();
+loadQuestion();
+} catch (err) {
+console.error("Game start error:", err);
+}
+}
+​function loadQuestion() {
+setUIBusy(false);
+clearCanvas();
+​document.getElementById('question-progress').textContent = 第 ${currentQuestionIndex + 1} / ${questions.length} 問;
+​const currentQ = questions[currentQuestionIndex];
+​const badgeEl = document.getElementById('reading-type-badge');
+const instructionEl = document.getElementById('instruction-text');
+​// 問題種別に応じてバッジカラーと右側の補助説明文を動的に切り替える
+if (currentQ.type === '音読み') {
+badgeEl.textContent = '【音読み】問題';
+badgeEl.className = 'text-[11px] font-black px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0';
+if (instructionEl) instructionEl.textContent = '下線カタカナ部分の漢字を書いてください';
+} else {
+badgeEl.textContent = '【訓読み】問題';
+badgeEl.className = 'text-[11px] font-black px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200 shrink-0';
+if (instructionEl) instructionEl.textContent = '下線ひらがな部分の漢字を書いてください';
+}
+​document.getElementById('question-text').innerHTML = currentQ.displaySentence;
+audio.playDeden();
+}
+​function showResults() {
+const resultModal = document.getElementById('result-modal');
+const tbody = document.getElementById('result-table-body');
+tbody.innerHTML = '';
+​let correctCount = 0;
+​userResults.forEach((res, index) => {
+if (res.isCorrect) correctCount++;
+​const tr = document.createElement('tr');
+tr.className = res.isCorrect ? 'bg-red-50/40 hover:bg-red-50/70 transition' : 'bg-slate-50/50 hover:bg-slate-100/70 transition';
+​const qTypeBadge = res.question.type === '音読み'
+? '<span class="text-[10px] px-2 py-0.5 rounded font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">音読み</span>'
+: '<span class="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-100 text-amber-800 border border-amber-200">訓読み</span>';
+​const statusBadge = res.isCorrect
+? '<span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-black bg-red-100 text-red-600 border border-red-200">◯ 正解</span>'
+: '<span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-black bg-slate-200 text-slate-600 border border-slate-300">✕ 不正解</span>';
+​tr.innerHTML = <td class="py-2.5 px-2 text-center text-slate-400 font-bold">${index + 1}</td> <td class="py-2.5 px-2 text-center">${statusBadge}</td> <td class="py-2.5 px-3 font-bold text-slate-800"> <span class="text-indigo-900 text-base font-black mr-1.5">${res.question.targetChar}</span> <span class="text-xs text-slate-600 font-medium">(${res.question.wordText} - ${res.question.wordReading})</span> </td> <td class="py-2.5 px-2 text-center">${qTypeBadge}</td>;
+tbody.appendChild(tr);
+});
+​const score = correctCount * 10;
+document.getElementById('final-score-display').innerHTML = ${score} <span class="text-base text-slate-600">/ 100 点</span>;
+​resultModal.classList.remove('hidden');
+​let countdown = 10;
+isPaused = false;
+const countdownEl = document.getElementById('countdown-num');
+const progressEl = document.getElementById('auto-close-progress');
+const pauseBtn = document.getElementById('pause-btn');
+​countdownEl.textContent = countdown;
+progressEl.style.width = '100%';
+pauseBtn.textContent = '一時停止';
+​if (resultCountdownInterval) clearInterval(resultCountdownInterval);
+​resultCountdownInterval = setInterval(() => {
+if (isPaused) return;
+countdown--;
+if (countdown >= 0) {
+countdownEl.textContent = countdown;
+progressEl.style.width = ${(countdown / 10) * 100}%;
+}
+if (countdown <= 0) {
+clearInterval(resultCountdownInterval);
+restartGame();
+}
+}, 1000);
+}
+​function pauseCountdown() {
+isPaused = !isPaused;
+const pauseBtn = document.getElementById('pause-btn');
+pauseBtn.textContent = isPaused ? '再開' : '一時停止';
+}
+​function restartGame() {
+if (resultCountdownInterval) clearInterval(resultCountdownInterval);
+document.getElementById('result-modal').classList.add('hidden');
+document.getElementById('start-modal').classList.remove('hidden');
+}
+​function requestFullScreen() {
+try {
+const elem = document.documentElement;
+if (elem.requestFullscreen) {
+elem.requestFullscreen().catch(() => {});
+} else if (elem.webkitRequestFullscreen) {
+elem.webkitRequestFullscreen();
+} else if (elem.msRequestFullscreen) {
+elem.msRequestFullscreen();
+}
+} catch (err) {
+console.log("Fullscreen not available:", err);
+}
+}
+​function toggleFullScreen() {
+if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+requestFullScreen();
+} else {
+if (document.exitFullscreen) {
+document.exitFullscreen();
+} else if (document.webkitExitFullscreen) {
+document.webkitExitFullscreen();
+}
+}
+}
+​function toggleSound() {
+audio.enabled = !audio.enabled;
+document.getElementById('sound-icon').textContent = audio.enabled ? '🔊' : '🔇';
+}
+​window.addEventListener('load', () => {
+initCanvas();
+loadQuizBankJSON();
+});
+</script>
+</body>
+</html>
