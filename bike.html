@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
-    <title>3D出前ライダー - リアル日本の街並み配達ゲーム</title>
+    <title>江戸川出前ライダー - 3D配達アクションゲーム</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js r128 -->
@@ -192,6 +192,14 @@
                 <span id="steer-hint-text" class="text-[10px] text-gray-300 font-medium mt-1"><i class="fa-solid fa-mobile-screen-button"></i> スマホを左右に傾けて操縦</span>
             </div>
 
+            <!-- Arcade-style speedometer (参考画像に合わせた下部中央メーター) -->
+            <div id="hud-speedometer" class="mb-2 min-w-[150px] px-4 py-1.5 rounded-2xl bg-gray-950/80 border border-gray-600/70 shadow-xl text-center">
+                <div class="flex items-end justify-center gap-2 leading-none">
+                    <span id="hud-speed" class="text-3xl sm:text-4xl font-black font-mono text-white tracking-wider">000</span>
+                    <span class="text-[10px] text-gray-400 font-bold mb-1">km/h</span>
+                </div>
+            </div>
+
             <!-- Bottom Controls -->
             <div class="flex justify-between items-center w-full px-4 mb-2">
                 <!-- Brake Button (Bottom Left) -->
@@ -220,7 +228,7 @@
         <div class="max-w-md w-full bg-gray-900 border border-gray-800 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden max-h-[94vh] overflow-y-auto">
             <div class="text-3xl sm:text-4xl mb-1">🛵💨</div>
             <h1 class="text-lg sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 mb-2">
-                日本の街並み 3D出前ライダー
+                江戸川出前ライダー
             </h1>
 
             <div class="flex items-center justify-between w-full mb-1.5">
@@ -297,7 +305,7 @@
 
     <script>
 // ============================================================================
-// 3D出前ライダー - Game State & Constants
+// 江戸川出前ライダー - Game State & Constants
 // ============================================================================
 const state = {
     isPlaying: false,
@@ -2315,10 +2323,10 @@ function buildScooter() {
     scooterVisual.add(plate);
 
     // --- ライダー（配達員） ---
-    const riderMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.55 });
-    const vestMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.6 });
+    const riderMat = new THREE.MeshStandardMaterial({ color: 0x23272f, roughness: 0.58 });
+    const vestMat = new THREE.MeshStandardMaterial({ color: 0xf3f4f6, roughness: 0.72 });
     const skinMat = MAT.skin;
-    const helmetMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.25, metalness: 0.15 });
+    const helmetMat = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.25, metalness: 0.35 });
 
     const hip = new THREE.Vector3(0, 0.97, -0.42);
     const shoulder = new THREE.Vector3(0, 1.40, -0.16);
@@ -2364,7 +2372,7 @@ function buildScooter() {
 function buildSky() {
     const skyTex = createSkyTexture();
     scene.background = skyTex;
-    scene.fog = new THREE.FogExp2(0xaecde6, 0.0026);
+    scene.fog = new THREE.FogExp2(0xb9d5e8, 0.00215);
 }
 
 function initScene() {
@@ -2382,7 +2390,7 @@ function initScene() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 1.18;
     container.appendChild(renderer.domElement);
 
     const hemiLight = new THREE.HemisphereLight(0xbfe0f5, 0x3a3327, 0.65);
@@ -2768,6 +2776,12 @@ function generateStageCity(stageNum) {
                 createTree(tp.x, tp.z);
             }
 
+            // 幹線道路の見通しと都市感を出すアクセント樹木
+            if (i % 2 === 0) {
+                const palmPosA = point.clone().lerp(segEnd, 0.5).addScaledVector(sideA, roadHalfWidth + 2.8);
+                createPalmTree(palmPosA.x, palmPosA.z, 0.9 + (i % 3) * 0.06);
+            }
+
             if (i < numTurns) {
                 createCrosswalk(segEnd.x, segEnd.z, alongIsZ ? roadHalfWidth * 2 : 6, alongIsZ ? 6 : roadHalfWidth * 2, alongIsZ);
                 const lightPos = segEnd.clone().addScaledVector(forward, 9).addScaledVector(left, roadHalfWidth + 5);
@@ -2912,6 +2926,39 @@ function buildStageObstacles(info) {
     });
 }
 
+// 参考画像のような街路樹（ヤシ）を軽量なローポリ形状で生成
+function createPalmTree(x, z, scale = 1) {
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
+
+    const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.10 * scale, 0.16 * scale, 2.8 * scale, 8),
+        new THREE.MeshStandardMaterial({ color: 0x8a6b42, roughness: 0.9 })
+    );
+    trunk.position.y = 1.4 * scale;
+    trunk.rotation.z = 0.04;
+    trunk.castShadow = true;
+    group.add(trunk);
+
+    const crown = new THREE.Group();
+    crown.position.y = 2.75 * scale;
+    for (let i = 0; i < 7; i++) {
+        const leaf = new THREE.Mesh(
+            new THREE.ConeGeometry(0.06 * scale, 1.25 * scale, 5),
+            new THREE.MeshStandardMaterial({ color: 0x3f8f45, roughness: 0.8 })
+        );
+        const a = (i / 7) * Math.PI * 2;
+        leaf.position.set(Math.cos(a) * 0.35 * scale, 0, Math.sin(a) * 0.35 * scale);
+        leaf.rotation.z = Math.PI / 2.7;
+        leaf.rotation.y = -a;
+        leaf.castShadow = true;
+        crown.add(leaf);
+    }
+    group.add(crown);
+    scene.add(group);
+    return group;
+}
+
 // 当たり判定を持たない背景演出（歩道上の通行人・沿道の駐車車両）
 function buildBackgroundLife() {
     backgroundActors = [];
@@ -2935,6 +2982,14 @@ function buildBackgroundLife() {
                 speed: 0.03 + Math.random() * 0.015
             });
         }
+    }
+
+    // 広い幹線道路らしさを出す街路樹
+    for (const [x, z, sc] of [
+        [-17.7, 166, 0.95], [8.1, 154, 0.9], [-17.5, 104, 0.82], [8.0, 82, 0.86],
+        [-92.0, -35, 0.88], [-67.3, -96, 0.82], [-92.0, -168, 0.95], [-67.3, -214, 0.88]
+    ]) {
+        createPalmTree(x, z, sc);
     }
 
     const strollDefs = [
@@ -3677,7 +3732,7 @@ function resetToStage1() {
         scooterGroup.rotation.set(0, 0, 0);
     }
     if (camera) {
-        const camOffset = new THREE.Vector3(0, 3.2, 7.0);
+        const camOffset = new THREE.Vector3(0, 3.6, 7.2);
         camera.position.copy(startPoint.clone().add(camOffset));
         camera.lookAt(startPoint.clone().add(new THREE.Vector3(0, 1.2, 0)));
     }
@@ -3718,7 +3773,7 @@ function resetGame() {
         scooterGroup.rotation.set(0, 0, 0);
     }
     if (camera) {
-        const camOffset = new THREE.Vector3(0, 3.2, 7.0);
+        const camOffset = new THREE.Vector3(0, 3.6, 7.2);
         camera.position.copy(startPoint.clone().add(camOffset));
         camera.lookAt(startPoint.clone().add(new THREE.Vector3(0, 1.2, 0)));
     }
@@ -4239,6 +4294,10 @@ function updateHUD() {
     const diffEl = document.getElementById('difficulty-val');
     if (diffEl) diffEl.innerText = String(difficultyLevel + 1);
 
+    const currentKmh = speedToKmh(state.speed);
+    const speedEl = document.getElementById('hud-speed');
+    if (speedEl) speedEl.innerText = String(currentKmh).padStart(3, '0');
+
     const dist = Math.floor(scooterGroup.position.distanceTo(goalPoint));
     const distEl = document.getElementById('dist-val');
     if (distEl) distEl.innerText = `${isNaN(dist) ? 0 : dist}m`;
@@ -4289,12 +4348,12 @@ function updateHUD() {
 function updateCamera() {
     if (!scooterGroup || !camera) return;
     const rot = state.scooterRot || 0;
-    const camOffset = new THREE.Vector3(0, 3.2, 7.0).applyAxisAngle(new THREE.Vector3(0, 1, 0), rot);
+    const camOffset = new THREE.Vector3(0, 3.6, 7.2).applyAxisAngle(new THREE.Vector3(0, 1, 0), rot);
     const targetCamPos = scooterGroup.position.clone().add(camOffset);
 
     camera.position.lerp(targetCamPos, 0.12);
 
-    const lookAtTarget = scooterGroup.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+    const lookAtTarget = scooterGroup.position.clone().add(new THREE.Vector3(0, 1.05, 0));
     camera.lookAt(lookAtTarget);
 }
 
