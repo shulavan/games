@@ -1714,9 +1714,6 @@
       url: 'https://iboywxukmqevlwyszbff.supabase.co',
       publishableKey: 'sb_publishable_OYHGr5kwFfedoA2mH0oN3A_56Uv3Bfr'
     };
-    // Supabase Auth の Custom OAuth/OIDC Provider として設定したLINE。
-    // Dashboardで identifier=custom:line を作成し、手動IDリンクを有効化して使用します。
-    const SUPABASE_LINE_PROVIDER = 'custom:line';
     // 📌 行ったところ専用コードは別の通常scriptで実行されるため、
     // このIIFE内constを直接参照できない問題を避けるためwindowへ公開します。
     window.EDOGAWA_SUPABASE_CONFIG = SUPABASE_CONFIG;
@@ -10415,8 +10412,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     injectUi(); const settingsEdit=!!this._settingsEditMode; const title=document.getElementById('edo-setup-title'); if(title) title.textContent=settingsEdit?'アカウント設定':'ユーザ設定'; this._settingsEditMode=false; const p=this.getUserProfile(); this._setupMode=mode; this._lineProfile=lineProfile;
     const modal=document.getElementById('edogawa-user-setup'), name=document.getElementById('edo-setup-name'), lineNote=document.getElementById('edo-line-default'), grid=document.getElementById('edo-emoji-choice'), icon=document.getElementById('edo-setup-icon');
     const lineName=lineProfile?.name||p.lineName||p.nickname; const linePic=lineProfile?.picture||p.linePictureUrl;
-    // アカウント設定から再編集する場合は、現在のニックネームを維持します。
-    name.value=settingsEdit ? cleanNickname(p.nickname) : (mode==='line' ? cleanNickname(lineName||'プレイヤー1') : cleanNickname(p.nickname));
+    name.value=mode==='line' ? cleanNickname(lineName||'プレイヤー1') : cleanNickname(p.nickname);
     if(mode==='line' && linePic){ icon.innerHTML=`<img src="${esc(linePic)}" class="w-20 h-20 rounded-full object-cover mx-auto" referrerpolicy="no-referrer">`; lineNote?.classList.remove('hidden'); }
     else { icon.textContent=p.avatarType==='emoji'?p.avatarValue:avDefault; lineNote?.classList.add('hidden'); }
     const selected = mode==='line' && linePic ? `line:${linePic}` : `emoji:${p.avatarType==='emoji'?p.avatarValue:avDefault}`;
@@ -10431,8 +10427,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         lineBtn.disabled=linked;
         lineBtn.textContent=linked?'✅ LINE認証済み':'🟩 LINEで認証する';
         if(lineStatus) lineStatus.textContent=linked?(p.lineName?`認証済み：${p.lineName}`:'LINEアカウントと連携済み'):'LINEアカウントと連携すると、この端末のアカウントにLINE認証を紐づけます。';
-        lineBtn.onclick=()=>{ if(!lineBtn.disabled) this.startLineAccountLink(); };
-        if(settingsEdit) this.refreshLineAccountLinkState();
+        lineBtn.onclick=()=>{ if(!lineBtn.disabled) this.startLineOAuth(true); };
       }
     }
     modal?.classList.add('show');
@@ -10458,71 +10453,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if(l&&!l._bound){l._bound=true;l.onclick=()=>app.startLineOAuth();}
   };
 
-  // v31: account-settings LINE linking / already-linked disabled button
-  // Supabase Auth の Custom OAuth/OIDC Provider 経由で、現在の匿名ユーザーへLINE identityをリンクします。
-  app._lineIdentityInfo=async function(){
-    if(!isSupabaseConfigured()) return {configured:false,linked:false,identities:[]};
-    const ok=await ensureSupabase(); if(!ok) return {configured:true,linked:false,identities:[],error:this.visitedSupabaseError?.message||'Supabase認証を初期化できません。'};
-    const {data,error}=await this.visitedSupabase.auth.getUserIdentities();
-    if(error) return {configured:true,linked:false,identities:[],error:error.message||'LINE連携状態を確認できません。'};
-    const identities=Array.isArray(data?.identities)?data.identities:[];
-    const linked=identities.some(x=>x?.provider===SUPABASE_LINE_PROVIDER);
-    return {configured:true,linked,identities};
-  };
-  app.refreshLineAccountLinkState=async function(){
-    const box=document.getElementById('edo-line-account-link'),btn=document.getElementById('edo-line-account-btn'),status=document.getElementById('edo-line-account-status');
-    if(!box||!btn||!document.getElementById('edogawa-user-setup')?.classList.contains('show')) return;
-    box.classList.remove('hidden'); btn.disabled=true; btn.textContent='確認中…';
-    const p=this.getUserProfile();
-    const localLinked=p.authProvider==='line'&&!!p.lineUserId;
-    const info=await this._lineIdentityInfo();
-    const linked=localLinked||!!info.linked;
-    if(linked){
-      btn.disabled=true; btn.textContent='✅ LINE認証済み';
-      if(status) status.textContent=p.lineName?`認証済み：${p.lineName}`:'LINEアカウントと連携済み';
-      return;
-    }
-    if(info.error){
-      btn.disabled=false; btn.textContent='🟩 LINEで認証する';
-      if(status) status.textContent=`LINE連携状態を確認できません：${info.error}`;
-      return;
-    }
-    btn.disabled=false; btn.textContent='🟩 LINEで認証する';
-    if(status) status.textContent='LINEアカウントをこの江戸川双六アカウントに連携します。';
-  };
-  app.startLineAccountLink=async function(){
-    const btn=document.getElementById('edo-line-account-btn'),status=document.getElementById('edo-line-account-status');
-    const p=this.getUserProfile();
-    if(p.authProvider==='line'&&p.lineUserId){this.refreshLineAccountLinkState();return;}
-    if(!isSupabaseConfigured()){if(status)status.textContent='Supabase設定が未完了です。';return;}
-    try{
-      if(btn){btn.disabled=true;btn.textContent='LINE認証へ移動…';}
-      const ok=await ensureSupabase(); if(!ok)throw new Error(this.visitedSupabaseError?.message||'Supabase認証を開始できません。');
-      const current=await this._lineIdentityInfo();
-      if(current.linked){this.refreshLineAccountLinkState();return;}
-      const {data,error}=await this.visitedSupabase.auth.linkIdentity({provider:SUPABASE_LINE_PROVIDER,options:{redirectTo:location.href,scopes:'openid profile'}});
-      if(error)throw error;
-      if(data?.url)location.href=data.url; else throw new Error('LINE認証URLを取得できませんでした。');
-    }catch(e){
-      console.error('LINE identity link failed:',e);
-      if(status) status.textContent=`LINE認証を開始できませんでした：${e?.message||'不明なエラー'}`;
-      if(btn){btn.disabled=false;btn.textContent='🟩 LINEで認証する';}
-    }
-  };
-  app.syncLineIdentityAfterOAuth=async function(){
-    try{
-      if(!this.visitedSupabase) return false;
-      const {data,error}=await this.visitedSupabase.auth.getUserIdentities(); if(error) return false;
-      const identities=Array.isArray(data?.identities)?data.identities:[];
-      const line=identities.find(x=>x?.provider===SUPABASE_LINE_PROVIDER);
-      if(!line)return false;
-      const idata=line.identity_data||{};
-      const userId=idata.sub||idata.user_id||line.provider_id||''; const name=idata.name||idata.full_name||this.getUserProfile().lineName||''; const picture=idata.picture||idata.avatar_url||this.getUserProfile().linePictureUrl||null;
-      const p=this.getUserProfile();p.authProvider='line';p.lineUserId=userId||p.lineUserId;p.lineName=name||p.lineName;p.linePictureUrl=picture||p.linePictureUrl;
-      this.saveUserProfile(); this._refreshAccountPanel?.(); return true;
-    }catch(e){console.warn('LINE identity sync failed:',e);return false;}
-  };
-  // ---------------- Legacy direct LINE OAuth scaffold (initial-login screen) ----------------
+  // ---------------- LINE OAuth 2.0 + PKCE ----------------
   function b64url(bytes){let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
   function rand(n=32){const a=new Uint8Array(n);crypto.getRandomValues(a);return b64url(a);}
   async function sha256(s){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return new Uint8Array(d);}
@@ -10551,7 +10482,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if(!savedState||savedState!==state||!verifier){sessionStorage.removeItem('edogawa_line_link_mode_v1');if(msg)msg.textContent='LINEログインの確認に失敗しました。もう一度お試しください。';return true;}
     if(!LINE_CFG.tokenEndpoint){if(msg)msg.textContent='認証コード交換APIが設定されていません。';return true;}
     try{
-      const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier,nonce:sessionStorage.getItem(OAUTH_NONCE_KEY)||''});
+      const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier});
       const r=await fetch(LINE_CFG.tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,credentials:'include'});if(!r.ok)throw new Error('token '+r.status);
       const data=await r.json();
       // Prefer trusted server-returned profile; backend should validate the ID token / access token with LINE.
@@ -10857,7 +10788,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         app.visitedSupabaseUser=data?.user||null;
       }
       if(!app.visitedSupabaseUser) throw new Error('Supabase匿名認証ユーザーを取得できませんでした。');
-      await app.syncLineIdentityAfterOAuth?.();
       return true;
     }catch(e){
       app.visitedSupabaseError=e;
@@ -11342,5 +11272,74 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     #resume-save-btn > span:first-child{margin-bottom:4px;}
   }
 </style>
+
+<!-- v32: 公共施設ゴール後「江戸川区新庁舎 かくれんぼ」起動修正 -->
+<script>
+(function(){
+  'use strict';
+  const app=window.EdogawaSugoroku;
+  if(!app) return;
+
+  const normalizeCategory=(v)=>String(v||'')
+    .replace(/\s+/g,'')
+    .replace(/[　]/g,'');
+  const isPublicFacilityCategory=(v)=>{
+    const c=normalizeCategory(v);
+    return c==='公共・スポーツ施設' || c==='公共施設' || c.includes('公共・スポーツ施設') || c.includes('公共施設');
+  };
+
+  // 既存のカテゴリ判定を残しつつ、「公共施設」の表記揺れを確実に hide へ接続。
+  const oldGetGoalMiniGameKey=typeof app.getGoalMiniGameKey==='function'
+    ? app.getGoalMiniGameKey.bind(app) : null;
+  app.getGoalMiniGameKey=function(category){
+    if(isPublicFacilityCategory(category)) return 'hide';
+    return oldGetGoalMiniGameKey ? oldGetGoalMiniGameKey(category) : null;
+  };
+
+  // ゴール直後の入口も直接ガードする。
+  // これにより currentDestinationCategory の表記揺れや既存ラッパーの順序に依存しない。
+  const oldStartPostGoal=typeof app.startPostGoalMiniGameThenAmida==='function'
+    ? app.startPostGoalMiniGameThenAmida.bind(app) : null;
+  app.startPostGoalMiniGameThenAmida=function(player){
+    if(!player){ if(typeof this.startGoalAmida==='function') this.startGoalAmida(player); return; }
+    const cat=this.currentDestinationCategory;
+    if(isPublicFacilityCategory(cat)){
+      this._pendingGoalAmidaPlayer=player;
+      this.miniGameActive=true;
+      this.activeMiniGamePlayerId=player.id;
+      setTimeout(()=>{
+        try{
+          const b64=window.__EDOGAWA_NEW_MINIGAMES_B64?.hide || window.__EDOGAWA_MINIGAME_B64?.hide;
+          if(!b64) throw new Error('hide mini-game data is missing');
+          this.openRegionalMiniGame('hide',player);
+        }catch(e){
+          console.error('[v32 public facility mini-game launch]',e);
+          this._pendingGoalAmidaPlayer=null;
+          this.miniGameActive=false;
+          this.activeMiniGamePlayerId=null;
+          if(typeof this.startGoalAmida==='function') this.startGoalAmida(player);
+        }
+      },250);
+      return;
+    }
+    return oldStartPostGoal ? oldStartPostGoal(player) : this.startGoalAmida(player);
+  };
+
+  window.__EDOGAWA_PUBLIC_FACILITY_MINIGAME_DIAGNOSTICS=function(){
+    const cat=app.currentDestinationCategory;
+    const b64=window.__EDOGAWA_NEW_MINIGAMES_B64?.hide || window.__EDOGAWA_MINIGAME_B64?.hide || '';
+    return {
+      category:cat,
+      normalizedCategory:normalizeCategory(cat),
+      isPublicFacility:isPublicFacilityCategory(cat),
+      hideDataPresent:!!b64,
+      hideDataBytes: b64 ? b64.length : 0,
+      openRegionalMiniGame:typeof app.openRegionalMiniGame==='function',
+      startPostGoalMiniGameThenAmida:typeof app.startPostGoalMiniGameThenAmida==='function'
+    };
+  };
+})();
+</script>
+
 </body>
 </html>
