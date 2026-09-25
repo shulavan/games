@@ -664,7 +664,7 @@
             あなたの番です
           </span>
           <span id="active-player-name" class="font-extrabold text-sm text-slate-100 whitespace-nowrap">プレイヤー1</span>
-          <span id="active-player-money" class="text-xs text-amber-400 font-extrabold whitespace-nowrap">¥100,000</span>
+          <span id="active-player-money" class="text-xs text-amber-400 font-extrabold whitespace-nowrap">¥1,000,000</span>
         </div>
       </div>
 
@@ -1323,11 +1323,10 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    window.FirebaseLib = {
-      initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, runTransaction
-    };
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, runTransaction, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        window.FirebaseLib = {
+      initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, runTransaction, collection,
+          };
   </script>
 
   <!-- MODAL: 江戸川競艇（黄マスの強制移動から発生するミニゲーム。sugoroku.htmlのUIに合わせて再構築） -->
@@ -1696,14 +1695,37 @@
     // 初回起動時に一度だけ「アプリとしてインストール」の案内を出すための記録
     const INSTALL_HINT_KEY = "edogawa_sugoroku_install_hint_v1";
     const CONSENT_KEY = "edogawa_sugoroku_consent";
+    // アカウント・初期設定・進行状況
+    const TERMS_CONSENT_KEY = "edogawa_sugoroku_terms_v1";
+    const USER_PROFILE_KEY = "edogawa_sugoroku_profile_v1";
+    const INITIAL_MONEY = 1000000;
+    const PROFILE_VERSION = 1;
+    // LINE Login v2.1 / OAuth 2.0 + PKCE.
+    // client_secret はHTMLへ埋め込まず、tokenEndpoint のバックエンドで安全に管理します。
+    // 📌 行ったところ専用 Supabase（Firebaseは既存マルチプレイ用として継続）
+    // Supabase Dashboard → Project Settings → API の URL / Publishable key を設定してください。
+    // service_role key は絶対にHTMLへ入れないでください。
+    const SUPABASE_CONFIG = {
+      url: 'https://iboywxukmqevlwyszbff.supabase.co',
+      publishableKey: 'sb_publishable_OYHGr5kwFfedoA2mH0oN3A_56Uv3Bfr'
+    };
+    const SUPABASE_VISITED_TABLE = 'visited_entries';
+    const SUPABASE_VISITED_BUCKET = 'visited-pins';
+
+    const LINE_OAUTH_CONFIG = {
+      channelId: "",
+      redirectUri: "",       // 空欄なら現在ページURL（クエリ/ハッシュを除く）
+      tokenEndpoint: "",     // 例: /api/line/token （同一生成元推奨）
+      revokeEndpoint: ""     // 任意：ログアウト時のトークン失効API
+    };
     // Wikipediaで調べた結果の保存先（同じ施設で何度も通信しないため）
     const WIKI_CACHE_KEY = "edogawa_sugoroku_wiki_v1";
     const GA_MEASUREMENT_ID = "G-LFEX859EVC";
     // 利用規約などの改定日（表示用）
     const DOC_UPDATED = "2026年8月26日";
     // 🚁/✈️を配る条件（残りマス数のしきい値）。ゴール1回につき、それぞれ1人だけ・早い者勝ち。
-    const FLIGHT_HELI_MIN_SQUARES = 100;   // 🚁ヘリコプター
-    const FLIGHT_PLANE_MIN_SQUARES = 150;  // ✈️飛行機
+    const FLIGHT_HELI_MIN_SQUARES = 200;   // 🚁ヘリコプター（残り200マス以上）
+    const FLIGHT_PLANE_MIN_SQUARES = 200;  // ✈️飛行機（残り200マス以上）
     // 競艇実況の読み上げ速度（1.0が標準）。場面によって喋り方を切り替える。
     // 舟券購入中と結果発表は落ち着いた喋り、レースが始まったら実況らしい早口にする。
     const BOAT_RACE_SPEECH_RATE_CALM = 1.15;   // 舟券購入中・結果発表
@@ -1896,12 +1918,13 @@
             <li>ゲームの途中セーブ（ひとり用・マルチプレイ用に各1件）</li>
             <li>音・読み上げなどの設定</li>
             <li>地名検索の結果の一時保存（同じ場所を何度も問い合わせないため）</li>
+            <li>「📌 行ったところ」機能を使った場合の訪問位置・写真・訪問日・メモ（Supabase に共有保存）</li>
             <li>アクセス解析への同意／不同意の選択</li>
             <li>Wikipediaで調べた施設の説明、楽天トラベルの宿泊施設一覧の一時保存（通信を減らすため）</li>
           </ul>
 
           <h4>マルチプレイで送信される情報</h4>
-          <p>マルチプレイで遊ぶ場合のみ、参加者どうしでゲームを同期するため、Google の Firebase（Cloud Firestore／匿名認証）にニックネーム・キャラクター・コマの位置・持ち金・サイコロの結果などのゲーム進行情報を送信します。匿名認証のため、あなたの Google アカウントなどとは結び付きません。この情報はゲームの進行のみに使用します。</p>
+          <p>ゲーム内の「📌 行ったところ」機能を使う場合、Supabase（Postgres／Storage／匿名認証）に、投稿した位置（緯度・経度）、写真、訪問日、メモ、投稿者を識別する匿名IDなどを保存します。これらは江戸川双六の参加者全員に地図上で共有され、投稿者本人のみ編集できます。匿名認証のため、ログイン無しで遊ぶ場合も Google アカウントなどとは直接結び付きません。</p>
 
           <h4>外部サービスへの通信</h4>
           <p>地図の表示や目的地の検索のため、次の外部サービスに通信します。その際、表示している地図の範囲や検索する地名などが各サービスに送信され、各サービス側で通信記録（IPアドレスを含む）が記録される場合があります。詳しくは各サービスの規約をご確認ください。</p>
@@ -1911,13 +1934,14 @@
             <li>OSRM（道路経路の取得）</li>
             <li>ホットペッパーグルメ Webサービス（飲食店の写真・ジャンル・予算・営業時間などの詳細。Google Apps Script 経由で取得）</li>
             <li>楽天ウェブサービス／楽天トラベル（宿泊施設の写真・評価点・クチコミ件数など。あらかじめ取得したデータを読み込みます）</li>
-            <li>Firebase（マルチプレイ時のみ）</li>
+            <li>Firebase（マルチプレイの通信）</li>
+            <li>Supabase（「📌 行ったところ」の共有保存）</li>
             <li>ウィキペディア日本語版（施設の写真・説明）</li>
             <li>Google アナリティクス（同意がある場合のみ）</li>
           </ul>
 
           <h4>位置情報について</h4>
-          <p>本ゲームは、端末のGPSなどの位置情報を取得しません。ゲーム内の「現在地」は、地図上のコマの位置を表しているだけで、実際にいる場所ではありません。</p>
+          <p>本ゲームは通常時にGPS位置情報を取得しません。「📌 行ったところ」を記録するためにユーザーがボタンを押した時だけ、ブラウザの位置情報機能を使用します。取得した位置は江戸川区内かを判定し、投稿した場合はその位置を写真・訪問日・メモと一緒に参加者間で共有します。位置情報の利用には端末・ブラウザの許可が必要で、HTTPS などの安全なコンテキストでのみ利用できます。</p>
 
           <h4>アクセス解析について</h4>
           <p>本ゲームは、遊びやすさの改善のために Google アナリティクス（GA4）を利用します。
@@ -2480,6 +2504,7 @@
 
       // Firebase & Room Multiplayer Props
       db: null,
+      storage: null,
       auth: null,
       appId: typeof __app_id !== 'undefined' ? __app_id : 'edogawa-sugoroku-default',
       roomId: null,
@@ -2660,6 +2685,7 @@
           console.warn("Firebase未設定のため、複数端末でのリアルタイム参加同期は無効です（QR表示自体はローカルで動作します）。");
           this.myUid = this.myUid || ('user_' + Math.random().toString(36).substring(2, 8));
           this.db = null;
+          this.storage = null;
           this.firebaseReady = false;
           return;
         }
@@ -2677,11 +2703,13 @@
           }
           this.myUid = cred.user.uid;
           this.db = db;
+          this.storage = null;
           this.firebaseReady = true;
         } catch(e) {
           console.warn("Firebase Init Fallback Mode:", e);
           this.myUid = this.myUid || ('user_' + Math.random().toString(36).substring(2, 8));
           this.db = null;
+          this.storage = null;
           this.firebaseReady = false;
         }
       },
@@ -2779,10 +2807,11 @@
         this.roomId = 'room_' + Math.floor(100000 + Math.random() * 900000);
         this.countdownVal = 30;
 
-        const pName = document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
+        const account = (typeof this._roomAccount === 'function') ? this._roomAccount() : {};
+        const pName = account.nickname || document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
         localStorage.setItem("edogawa_sugoroku_nickname", pName);
         const initialPlayers = [
-          { uid: this.myUid, name: pName, avatar: this.selectedAvatar, isHost: true }
+          { uid: this.myUid, name: pName, avatar: account.avatar || this.selectedAvatar, isHost: true, isCpu: false, ...account }
         ];
         this.recruitmentPlayers = initialPlayers;
 
@@ -2854,7 +2883,7 @@
         if (listContainer) {
           listContainer.innerHTML = playersList.map(p => `
             <div class="w-8 h-8 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-sm shadow">
-              ${p.avatar}
+              ${this.avatarHtml ? this.avatarHtml(p.avatar) : p.avatar}
             </div>
           `).join("");
         }
@@ -3060,10 +3089,11 @@
               if (latestPlayers.some(p => p.uid === this.myUid)) return { data: latest, added: false };
               if (latestPlayers.length >= 4) throw new Error('ROOM_FULL');
 
-              const myGuestName = this.myGuestNickname || `ゲスト ${latestPlayers.length + 1}`;
+              const roomAccount = (typeof this._roomAccount === 'function') ? this._roomAccount() : {};
+              const myGuestName = this.myGuestNickname || roomAccount.nickname || `ゲスト ${latestPlayers.length + 1}`;
               const availableAvatars = AVATAR_LIST.filter(a => !latestPlayers.some(p => p.avatar === a));
-              const myAvatar = availableAvatars[0] || '🧑';
-              latestPlayers.push({ uid: this.myUid, name: myGuestName, avatar: myAvatar, isCpu: false });
+              const myAvatar = roomAccount.avatar || availableAvatars[0] || '🧑';
+              latestPlayers.push({ uid: this.myUid, name: myGuestName, avatar: myAvatar, isCpu: false, ...roomAccount });
               tx.update(roomRef, { players: latestPlayers });
               return { data: { ...latest, players: latestPlayers }, added: true };
             });
@@ -3113,7 +3143,7 @@
         if (listContainer) {
           listContainer.innerHTML = playersList.map(p => `
             <div class="w-8 h-8 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-sm shadow">
-              ${p.avatar}
+              ${this.avatarHtml ? this.avatarHtml(p.avatar) : p.avatar}
             </div>
           `).join("");
         }
@@ -3185,13 +3215,22 @@
           name: p.name,
           avatar: p.avatar,
           color: PLAYER_COLORS[idx % PLAYER_COLORS.length],
-          money: 100000,
+          money: Number.isFinite(p.money) ? p.money : INITIAL_MONEY,
           pos: 0,
           vehicle: null,
           skipTurn: false,
           wheelchairTurns: 0,
           forcedMoveCount: 0,
-          isCpu: p.isCpu || false
+          isCpu: p.isCpu || false,
+          goals: Number.isFinite(p.goals) ? p.goals : 0,
+          movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
+          stats: {
+            intelligence: Number.isFinite(p.stats?.intelligence) ? p.stats.intelligence : 100,
+            wealth: Number.isFinite(p.stats?.wealth) ? p.stats.wealth : 100,
+            stamina: Number.isFinite(p.stats?.stamina) ? p.stats.stamina : 100,
+            luck: Number.isFinite(p.stats?.luck) ? p.stats.luck : 100
+          },
+          properties: Array.isArray(p.properties) ? p.properties : []
         }));
 
         document.getElementById("lobby-screen").classList.add("hidden");
@@ -3250,7 +3289,11 @@
             forcedMoveCount: p.forcedMoveCount || 0,
             rocketBoost: !!p.rocketBoost,
             boatRaceContinue: !!p.boatRaceContinue,
-            boatRaceContinueCount: p.boatRaceContinueCount || 0
+            boatRaceContinueCount: p.boatRaceContinueCount || 0,
+            goals: Number.isFinite(p.goals) ? p.goals : 0,
+            movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
+            stats: p.stats || {intelligence:100,wealth:100,stamina:100,luck:100},
+            properties: Array.isArray(p.properties) ? p.properties : []
           })),
           pendingRoll: null,
           awaitingGoalSelection: this.awaitingGoalSelection || null,
@@ -3476,15 +3519,34 @@
         }
       },
 
-      // ゲスト側：現在反映済みのバージョンをFirestoreに書き込む（ベストエフォート）。
+      // ゲスト側：現在反映済みのバージョンをFirestoreへACKする。
+      // 同一versionの重複書込みを捨て、短時間に複数versionが届いた場合は最新だけを送る。
       async _sendGuestAck(version) {
         if (!this.db || !this.roomId || !this.myUid) return;
+        const next = Number(version) || 0;
         this.guestAcks = this.guestAcks || {};
-        this.guestAcks[this.myUid] = version;
-        try {
-          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          await window.FirebaseLib.updateDoc(roomRef, { [`guestAcks.${this.myUid}`]: version });
-        } catch (e) { /* best-effort */ }
+        this.guestAcks[this.myUid] = Math.max(Number(this.guestAcks[this.myUid] || 0), next);
+        if (next <= Number(this._lastGuestAckSent || 0)) return;
+        this._pendingGuestAck = Math.max(Number(this._pendingGuestAck || 0), next);
+        if (this._guestAckInFlight) return this._guestAckInFlight;
+
+        this._guestAckInFlight = (async () => {
+          try {
+            while (this._pendingGuestAck) {
+              const ackVersion = this._pendingGuestAck;
+              this._pendingGuestAck = 0;
+              if (ackVersion <= Number(this._lastGuestAckSent || 0)) continue;
+              const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
+              try {
+                await window.FirebaseLib.updateDoc(roomRef, { [`guestAcks.${this.myUid}`]: ackVersion });
+                this._lastGuestAckSent = ackVersion;
+              } catch (e) { /* best-effort; next snapshot may retry */ }
+            }
+          } finally {
+            this._guestAckInFlight = null;
+          }
+        })();
+        return this._guestAckInFlight;
       },
 
       // ホスト側：ゴール後の次の盤面生成や、全員参加のミニゲーム開始など「みんなが揃って
@@ -3716,16 +3778,18 @@
         // 「ひとりで遊ぶ」は新規ゲーム。既存の途中セーブは明示的に新規開始した時だけ置き換える。
         try { localStorage.removeItem(SOLO_SAVE_KEY); } catch (_) {}
 
-        const pName = document.getElementById("player-name-input")?.value || "プレイヤー1";
+        const account = (typeof this.getUserProfile === 'function') ? this.getUserProfile() : null;
+        const pName = account?.nickname || document.getElementById("player-name-input")?.value || "プレイヤー1";
         localStorage.setItem("edogawa_sugoroku_nickname", pName);
         const shuffledCpuNames = [...CPU_NAME_POOL].sort(() => Math.random() - 0.5);
         const shuffledCpuAvatars = [...CPU_AVATAR_POOL].sort(() => Math.random() - 0.5);
 
         this.players = [
-          { id: 0, name: pName, avatar: this.selectedAvatar, color: PLAYER_COLORS[0], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: false },
-          { id: 1, name: shuffledCpuNames[0], avatar: shuffledCpuAvatars[0], color: PLAYER_COLORS[1], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
-          { id: 2, name: shuffledCpuNames[1], avatar: shuffledCpuAvatars[1], color: PLAYER_COLORS[2], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true },
-          { id: 3, name: shuffledCpuNames[2], avatar: shuffledCpuAvatars[2], color: PLAYER_COLORS[3], money: 100000, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true }
+          { id: 0, name: pName, avatar: (account?.avatarValue || this.selectedAvatar), color: PLAYER_COLORS[0], money: Number.isFinite(account?.money) ? account.money : INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: false,
+            goals: Number.isFinite(account?.goals) ? account.goals : 0, movedSquares: Number.isFinite(account?.movedSquares) ? account.movedSquares : 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100, ...(account?.stats || {})}, properties: Array.isArray(account?.properties) ? account.properties : [] },
+          { id: 1, name: shuffledCpuNames[0], avatar: shuffledCpuAvatars[0], color: PLAYER_COLORS[1], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] },
+          { id: 2, name: shuffledCpuNames[1], avatar: shuffledCpuAvatars[1], color: PLAYER_COLORS[2], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] },
+          { id: 3, name: shuffledCpuNames[2], avatar: shuffledCpuAvatars[2], color: PLAYER_COLORS[3], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] }
         ];
 
         document.getElementById("lobby-screen").classList.add("hidden");
@@ -3784,7 +3848,7 @@
             p.id = Number.isInteger(p.id) ? p.id : i;
             p.isCpu = i !== 0 ? true : !!p.isCpu;
             p.avatar = p.avatar || (i === 0 ? this.selectedAvatar : "🧑");
-            p.money = Number.isFinite(p.money) ? p.money : 100000;
+            p.money = Number.isFinite(p.money) ? p.money : INITIAL_MONEY;
             p.path = this.normalizePathIndices(p.path || []);
             p.pathIndex = Number.isInteger(p.pathIndex) ? p.pathIndex : 0;
             p.currentNodeIdx = Number.isInteger(p.currentNodeIdx) ? p.currentNodeIdx : (p.path[p.pathIndex] ?? 0);
@@ -5877,6 +5941,12 @@
       },
 
       rollDice() {
+        // プレーヤー枠から表示したステータスを、サイコロを振った瞬間に閉じる。
+        const statusPanel = document.getElementById('edogawa-player-status');
+        if (statusPanel) {
+          statusPanel.style.display = 'none';
+          statusPanel.innerHTML = '';
+        }
         if (this.isRolling) return;
         // ミニゲーム／競艇の最中にサイコロ処理が滑り込むと、ターンが二重進行して
         // 「イベントが延々と連打される」状態になる。入口で確実に弾く。
@@ -6025,6 +6095,12 @@
           if (cp.wheelchairTurns > 0) {
             rawRoll = 1;
             cp.wheelchairTurns--;
+          }
+
+          // 6が出たときだけ、そのサイコロを振った本人の体力を+1。
+          // HUDで監視すると次プレーヤーに誤付与される可能性があるため、確定直後に処理する。
+          if (rawRoll === 6) {
+            this.adjustPlayerStat?.(cp, 'stamina', 1);
           }
 
           if (!isRemoteTurn && cube) cube.style.transform = DICE_ROTATIONS[rawRoll];
@@ -6319,7 +6395,11 @@
         // outcome from green squares for the rest of this leg.
         const FORCED_MOVE_LIMIT = 2;
         const forcedMoveLimitReached = player.forcedMoveCount >= FORCED_MOVE_LIMIT;
-        const roll = forcedMoveLimitReached ? (0.48 + Math.random() * 0.52) : Math.random();
+        // 乗り物の基本取得率52%を、体力(100=基準)に比例して±し、特別イベントの枠は維持する。
+        const staminaForVehicle = Math.max(1, Math.min(200, Math.round(player.stats?.stamina ?? 100)));
+        const vehicleChance = Math.max(0.01, Math.min(0.72, 0.52 * (staminaForVehicle / 100)));
+        const vehicleThreshold = 1 - vehicleChance;
+        const roll = forcedMoveLimitReached ? (vehicleThreshold + Math.random() * (1 - vehicleThreshold)) : Math.random();
 
         // 江戸川競艇／新左近川親水公園カヌー：緑▲の特別イベント。
         // 発生したときは「競艇→カヌー→競艇→カヌー…」と必ず交互。
@@ -6393,7 +6473,7 @@
           return;
         }
 
-        if (roll < 0.48) {
+        if (roll < vehicleThreshold) {
           player.forcedMoveCount++;
           let nearest = HOSPITALS[0];
           let minDist = Infinity;
@@ -7122,6 +7202,7 @@
         // ビリ＝盤上で最も遅れている人（ゴールまでの残りマスが最も多い人）。
         // ゴールした本人（＝1着）は必ず対象外。残りマスが同じ場合は所持金の少ない人。
         const lastPlace = this.findLastPlacePlayer(player);
+        if (lastPlace && lastPlace.id !== player.id) this.adjustPlayerStat(lastPlace, 'luck', -10);
         const penalty = 50000;
         const penaltyEl = document.getElementById("goal-penalty-text");
         if (lastPlace) {
@@ -9611,7 +9692,9 @@
           coordinateDataVersion: 3,
           players: this.players.map(p => ({
             id: p.id, uid: p.uid || null, name: p.name, avatar: p.avatar, isCpu: !!p.isCpu,
-            money: p.money, path: p.path || [], pathIndex: p.pathIndex || 0,
+            money: p.money, goals: Number.isFinite(p.goals) ? p.goals : 0, movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
+            stats: p.stats || {intelligence:100,wealth:100,stamina:100,luck:100}, properties: Array.isArray(p.properties) ? p.properties : [],
+            path: p.path || [], pathIndex: p.pathIndex || 0,
             currentNodeIdx: p.currentNodeIdx, vehicle: p.vehicle || null,
             skipTurn: !!p.skipTurn, skipTurnType: p.skipTurnType || null, skipTurnReason: p.skipTurnReason || null,
             wheelchairTurns: p.wheelchairTurns || 0, forcedMoveCount: p.forcedMoveCount || 0,
@@ -9829,7 +9912,11 @@
           uid: (savedHostUid && p.uid === savedHostUid) ? (this.myUid || p.uid) : p.uid,
           name: p.name, avatar: p.avatar || '🧑',
           color: PLAYER_COLORS[i % PLAYER_COLORS.length],
-          money: Number.isFinite(p.money) ? p.money : 100000,
+          money: Number.isFinite(p.money) ? p.money : INITIAL_MONEY,
+          goals: Number.isFinite(p.goals) ? p.goals : 0,
+          movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
+          stats: { intelligence: Number.isFinite(p.stats?.intelligence) ? p.stats.intelligence : 100, wealth: Number.isFinite(p.stats?.wealth) ? p.stats.wealth : 100, stamina: Number.isFinite(p.stats?.stamina) ? p.stats.stamina : 100, luck: Number.isFinite(p.stats?.luck) ? p.stats.luck : 100 },
+          properties: Array.isArray(p.properties) ? p.properties : [],
           path: this.normalizePathIndices(p.path || []),
           pathIndex: Number.isInteger(p.pathIndex) ? p.pathIndex : 0,
           currentNodeIdx: Number.isInteger(p.currentNodeIdx) ? p.currentNodeIdx : 0,
@@ -9866,7 +9953,7 @@
         if (this.db && window.FirebaseLib) {
           try {
             const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            const roster = this.players.map(p => ({ uid: p.uid, name: p.name, avatar: p.avatar, isCpu: !!p.isCpu }));
+            const roster = this.players.map(p => ({ uid: p.uid, name: p.name, avatar: p.avatar, isCpu: !!p.isCpu, money: p.money, goals: p.goals || 0, movedSquares: p.movedSquares || 0, stats: p.stats || {intelligence:100,wealth:100,stamina:100,luck:100}, properties: Array.isArray(p.properties) ? p.properties : [] }));
             await window.FirebaseLib.setDoc(ref, {
               roomId: this.roomId,
               hostUid: this.myUid,
@@ -10012,5 +10099,733 @@ app._integratedMiniResultTimer=null;app._integratedMiniResultInterval=null;
 document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getElementById('integrated-mini-result')?.classList.contains('hidden')){try{window.EdogawaSugoroku.closeIntegratedMiniGameResult(false);}catch(_){} }});
 })();
 </script>
+
+<script>
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku;
+  if (!app) return;
+
+  // ============================================================
+  // v17: Account / onboarding / stats / property / player status
+  // ============================================================
+  const PROFILE_KEY = (typeof USER_PROFILE_KEY !== 'undefined') ? USER_PROFILE_KEY : 'edogawa_sugoroku_profile_v1';
+  const TERMS_KEY = (typeof TERMS_CONSENT_KEY !== 'undefined') ? TERMS_CONSENT_KEY : 'edogawa_sugoroku_terms_v1';
+  const INITIAL = (typeof INITIAL_MONEY !== 'undefined') ? INITIAL_MONEY : 1000000;
+  const PROFILE_VER = (typeof PROFILE_VERSION !== 'undefined') ? PROFILE_VERSION : 1;
+  const LINE_CFG = (typeof LINE_OAUTH_CONFIG !== 'undefined') ? LINE_OAUTH_CONFIG : {channelId:'',redirectUri:'',tokenEndpoint:'',revokeEndpoint:''};
+  const LINE_AUTHORIZE = 'https://access.line.me/oauth2/v2.1/authorize';
+  const LINE_SCOPES = 'profile openid';
+  const OAUTH_STATE_KEY='edogawa_line_oauth_state_v1';
+  const OAUTH_VERIFIER_KEY='edogawa_line_oauth_verifier_v1';
+  const OAUTH_NONCE_KEY='edogawa_line_oauth_nonce_v1';
+  const OAUTH_ACCESS_KEY='edogawa_line_access_v1';
+
+  const avDefault = '🧑‍🦱';
+  const statsDefault = {intelligence:100,wealth:100,stamina:100,luck:100};
+  const emojiPool = (Array.isArray(app.selectedAvatar) ? app.selectedAvatar : null);
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const validNum = (v, fallback=0) => Number.isFinite(Number(v)) ? Number(v) : fallback;
+  function clampStat(v){ return Math.max(1, Math.min(200, Math.round(validNum(v,100)))); }
+  function cleanNickname(v, fallback='プレイヤー1'){
+    const t=String(v??'').trim().slice(0,6);
+    return t || fallback;
+  }
+  function defaultProfile(){
+    return {version:PROFILE_VER,authProvider:'guest',lineUserId:null,linePictureUrl:null,nickname:'プレイヤー1',avatarType:'emoji',avatarValue:avDefault,money:INITIAL,movedSquares:0,goals:0,stats:{...statsDefault},properties:[]};
+  }
+  function normalizeProfile(raw){
+    const d=defaultProfile(), p=raw&&typeof raw==='object'?raw:{};
+    const stats=p.stats&&typeof p.stats==='object'?p.stats:{};
+    return {...d,...p,
+      version:PROFILE_VER,
+      authProvider:p.authProvider==='line'?'line':'guest',
+      nickname:cleanNickname(p.nickname, p.authProvider==='line'&&p.lineName?cleanNickname(p.lineName):d.nickname),
+      avatarType:p.avatarType==='line'?'line':'emoji',
+      avatarValue:p.avatarValue || (p.avatarType==='line'?p.linePictureUrl:d.avatarValue),
+      money:Math.max(0,validNum(p.money,INITIAL)), movedSquares:Math.max(0,Math.floor(validNum(p.movedSquares,0))), goals:Math.max(0,Math.floor(validNum(p.goals,0))),
+      stats:{intelligence:clampStat(stats.intelligence),wealth:clampStat(stats.wealth),stamina:clampStat(stats.stamina),luck:clampStat(stats.luck)},
+      properties:Array.isArray(p.properties)?p.properties.map(x=>({name:String(x.name||''),category:String(x.category||''),price:Math.max(0,Math.floor(validNum(x.price,0))),lat:validNum(x.lat,0),lng:validNum(x.lng,0),purchasedAt:validNum(x.purchasedAt,Date.now())})).filter(x=>x.name&&x.price>0):[]
+    };
+  }
+  app.getUserProfile=function(){
+    if(this._userProfile) return this._userProfile;
+    try{ this._userProfile=normalizeProfile(JSON.parse(localStorage.getItem(PROFILE_KEY)||'null')); }catch(e){ this._userProfile=defaultProfile(); }
+    return this._userProfile;
+  };
+  app.saveUserProfile=function(){
+    const p=normalizeProfile(this._userProfile||defaultProfile()); this._userProfile=p;
+    try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }catch(e){ console.warn('プロフィール保存失敗',e); }
+    this._refreshAccountPanel?.();
+  };
+  app._syncProfileFromPlayer=function(player){
+    if(!player || player.isCpu) return;
+    if(this.isMultiplayer && player.uid && this.myUid && player.uid!==this.myUid) return;
+    const p=this.getUserProfile();
+    p.nickname=cleanNickname(player.name,p.nickname); p.avatarValue=player.avatar || p.avatarValue;
+    if(/^https:\/\//.test(String(player.avatar||''))) { p.avatarType='line'; p.linePictureUrl=player.avatar; }
+    p.money=Math.max(0,validNum(player.money,p.money));
+    p.movedSquares=Math.max(0,Math.floor(validNum(player.movedSquares,p.movedSquares)));
+    p.goals=Math.max(0,Math.floor(validNum(player.goals,p.goals)));
+    p.stats={...(player.stats||p.stats)}; p.properties=Array.isArray(player.properties)?player.properties:p.properties;
+    this.saveUserProfile();
+  };
+  app.scheduleProfilePersist=function(player){
+    clearTimeout(this._profilePersistTimer);
+    this._profilePersistTimer=setTimeout(()=>this._syncProfileFromPlayer(player),250);
+  };
+
+  // Avatar helpers
+  app._isImageAvatar=function(v){return /^https:\/\//i.test(String(v||''));};
+  app.avatarHtml=function(v, cls='w-9 h-9 rounded-full object-cover'){ const x=String(v||''); return this._isImageAvatar(x)?`<img src="${esc(x)}" alt="LINE" class="${cls}" referrerpolicy="no-referrer">`:esc(x||avDefault); };
+
+  // Stats UI / Dragon Quest style 3s bubble.
+  app.showStatChanges=function(player, changes){
+    if(!player || !changes || !changes.length) return;
+    let t=this._statToastTimer; clearTimeout(t);
+    const parts=changes.filter(x=>x.actual!==0).map(x=>`${x.label}が${Math.abs(x.actual)}${x.actual>0?'増えた':'減った'}`);
+    if(!parts.length) return;
+    const el=document.getElementById('edogawa-stat-toast'); if(!el) return;
+    el.innerHTML=`<span class="text-lg mr-1">💬</span><strong>${esc(player.name)}</strong>は${parts.join('、')}！`;
+    el.classList.remove('hidden'); el.classList.remove('opacity-0'); el.classList.add('opacity-100');
+    this._statToastTimer=setTimeout(()=>{el.classList.add('opacity-0');setTimeout(()=>el.classList.add('hidden'),250);},3000);
+  };
+  app.adjustPlayerStat=function(player,key,delta,showToast=true){
+    if(!player) return 0; player.stats=player.stats||{...statsDefault};
+    const labels={intelligence:'知力',wealth:'財力',stamina:'体力',luck:'運'};
+    const before=clampStat(player.stats[key]); const after=clampStat(before+Number(delta||0)); const actual=after-before;
+    player.stats[key]=after;
+    if(showToast&&actual!==0)this.showStatChanges(player,[{label:labels[key]||key,actual}]);
+    this.scheduleProfilePersist(player); return actual;
+  };
+  app.awardMiniGameStats=function(player){
+    if(!player) return;
+    const changes=['intelligence','wealth','stamina','luck'].map(key=>({key,delta:3+Math.floor(Math.random()*5)}));
+    const labels={intelligence:'知力',wealth:'財力',stamina:'体力',luck:'運'};
+    const actuals=changes.map(x=>({label:labels[x.key],actual:this.adjustPlayerStat(player,x.key,x.delta,false)}));
+    this.showStatChanges(player,actuals);
+  };
+
+  // Profile / account panel UI
+  function injectUi(){
+    if(document.getElementById('edogawa-v17-style')) return;
+    const style=document.createElement('style');style.id='edogawa-v17-style';style.textContent=`
+      #edogawa-auth-screen{position:fixed;inset:0;z-index:110;background:rgba(2,6,23,.26);display:none;flex-direction:column;justify-content:space-between;overflow:hidden}
+      #edogawa-auth-screen.show{display:flex}
+      #edogawa-auth-header{height:64px;display:flex;align-items:center;justify-content:center;padding:12px;pointer-events:none}
+      #edogawa-auth-header h1{margin:0;font-family:serif;font-weight:900;font-size:clamp(25px,7vw,48px);letter-spacing:.12em;color:#fbbf24;text-shadow:0 2px 10px rgba(0,0,0,.85)}
+      #edogawa-auth-main{flex:1;display:flex;align-items:center;justify-content:center;padding:16px}
+      #edogawa-auth-card{width:min(390px,92vw);padding:24px;border-radius:24px;background:rgba(15,23,42,.82);border:1px solid rgba(245,158,11,.38);box-shadow:0 24px 80px rgba(0,0,0,.45);backdrop-filter:blur(14px);text-align:center}
+      .edo-auth-btn{width:100%;padding:15px 16px;border-radius:16px;font-weight:900;font-size:15px;transition:.15s;margin-top:10px}
+      .edo-auth-btn:active{transform:scale(.98)}
+      #edogawa-auth-footer{padding:12px;text-align:center;color:rgba(226,232,240,.72);font-size:10px;text-shadow:0 1px 4px #000}
+      #edogawa-user-setup{position:fixed;inset:0;z-index:120;background:rgba(2,6,23,.86);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:14px}
+      #edogawa-user-setup.show{display:flex}
+      #edogawa-user-setup .box{width:min(440px,94vw);max-height:92vh;overflow:auto;background:#0f172a;border:1px solid rgba(245,158,11,.4);border-radius:24px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+      .edo-emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.edo-emoji-btn{aspect-ratio:1;border-radius:12px;border:1px solid #334155;background:#020617;font-size:25px}.edo-emoji-btn.sel{border-color:#fbbf24;background:rgba(245,158,11,.16);box-shadow:0 0 0 2px rgba(245,158,11,.18)}
+      #edogawa-account-panel{position:relative;z-index:10;max-width:760px;width:100%;margin:auto;background:rgba(15,23,42,.9);border:1px solid #1e293b;padding:14px 16px;border-radius:22px;backdrop-filter:blur(16px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+      .edo-account-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}.edo-stat{background:rgba(2,6,23,.62);border:1px solid #1e293b;border-radius:12px;padding:8px;text-align:center}.edo-stat b{display:block;color:#fbbf24;font-size:13px}.edo-stat span{font-size:10px;color:#94a3b8}
+      #edogawa-stat-toast{position:fixed;left:50%;top:62px;transform:translateX(-50%);z-index:140;background:rgba(15,23,42,.96);border:1px solid rgba(245,158,11,.55);color:#fff;border-radius:14px;padding:9px 14px;max-width:90vw;box-shadow:0 12px 30px rgba(0,0,0,.4);font-size:12px;transition:opacity .25s;white-space:normal;text-align:center}
+      #edogawa-player-status{position:fixed;right:10px;top:60px;z-index:45;width:min(250px,65vw);background:rgba(15,23,42,.94);border:1px solid rgba(56,189,248,.45);border-radius:16px;padding:12px;box-shadow:0 14px 36px rgba(0,0,0,.4);backdrop-filter:blur(10px);display:none}.edo-prop-list{max-height:120px;overflow:auto}
+      #edogawa-property-modal{position:fixed;inset:0;z-index:125;background:rgba(2,6,23,.84);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:14px}.edo-prop-box{width:min(400px,94vw);background:#0f172a;border:1px solid rgba(245,158,11,.42);border-radius:22px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+    `;document.head.appendChild(style);
+
+    const body=document.body;
+    const auth=document.createElement('div');auth.id='edogawa-auth-screen';auth.innerHTML=`
+      <div id="edogawa-auth-header"><h1>江戸川双六</h1></div>
+      <div id="edogawa-auth-main"><div id="edogawa-auth-card">
+        <div class="text-4xl mb-2">🎲</div><div class="text-sm text-slate-200 font-bold mb-4">江戸川区を舞台にしたリアルマップ双六</div>
+        <button id="edogawa-guest-login" class="edo-auth-btn bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950">ログイン無しで遊ぶ</button>
+        <button id="edogawa-line-login" class="edo-auth-btn bg-[#06C755] text-white">LINEでログインする</button>
+        <div id="edogawa-line-message" class="text-[10px] text-slate-400 mt-3 leading-relaxed"></div>
+      </div></div>
+      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda</div>`;
+    body.appendChild(auth);
+
+    const setup=document.createElement('div');setup.id='edogawa-user-setup';setup.innerHTML=`<div class="box">
+      <div class="text-center mb-4"><div id="edo-setup-icon" class="text-5xl mb-2">🧑‍🦱</div><h2 class="text-xl font-black text-amber-400">ユーザ設定</h2><p id="edo-setup-desc" class="text-xs text-slate-400 mt-1">ゲームで使う名前とキャラクターを設定してください。</p></div>
+      <label class="block text-xs font-bold text-slate-300 mb-2">ニックネーム（6文字まで）</label>
+      <input id="edo-setup-name" maxlength="6" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-amber-300 font-black" />
+      <div id="edo-line-default" class="hidden mt-2 text-[10px] text-emerald-300">LINEの名前・プロフィール画像を初期値として使用します。</div>
+      <label class="block text-xs font-bold text-slate-300 mt-5 mb-2">絵文字アイコン</label>
+      <div id="edo-emoji-choice" class="edo-emoji-grid"></div>
+      <div class="mt-5 flex gap-2"><button id="edo-setup-cancel" class="hidden flex-1 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">戻る</button><button id="edo-setup-save" class="flex-1 bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">設定を保存して遊ぶ</button></div>
+    </div>`;body.appendChild(setup);
+
+    const toast=document.createElement('div');toast.id='edogawa-stat-toast';toast.className='hidden opacity-0';body.appendChild(toast);
+    const ps=document.createElement('div');ps.id='edogawa-player-status';body.appendChild(ps);
+
+    const pm=document.createElement('div');pm.id='edogawa-property-modal';pm.innerHTML=`<div class="edo-prop-box text-center">
+      <div class="text-4xl mb-2">🏠</div><h3 class="text-lg font-black text-amber-400">この施設を購入しますか？</h3><div id="edo-prop-name" class="text-xl font-black text-white mt-2"></div><div id="edo-prop-price" class="text-2xl font-black text-emerald-300 mt-2"></div>
+      <p class="text-xs text-slate-400 mt-2">所有すると毎ターン、購入額の1%が収入になります。</p><div class="grid grid-cols-2 gap-2 mt-5"><button id="edo-prop-skip" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">見送る</button><button id="edo-prop-buy" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">購入する</button></div>
+    </div>`;body.appendChild(pm);
+
+    const oldPanel=document.getElementById('player-name-input')?.closest('.max-w-3xl');
+    if(oldPanel) oldPanel.style.display='none';
+    if(oldPanel){
+      const account=document.createElement('div');account.id='edogawa-account-panel';
+      oldPanel.parentElement.insertBefore(account,oldPanel);
+    }
+    // Hide the original nickname input permanently; account panel replaces it.
+    document.getElementById('player-name-input')?.setAttribute('aria-hidden','true');
+  }
+
+  app._refreshAccountPanel=function(){
+    const panel=document.getElementById('edogawa-account-panel'); if(!panel)return;
+    const p=this.getUserProfile(); const s=p.stats||statsDefault; const showProp=Number(p.money)>10000000;
+    const av=p.avatarType==='line'?this.avatarHtml(p.avatarValue,'w-12 h-12 rounded-full object-cover'):esc(p.avatarValue||avDefault);
+    panel.innerHTML=`<div class="flex items-center justify-between gap-3"><div class="flex items-center gap-3 min-w-0"><div class="w-12 h-12 rounded-full bg-slate-950 border border-amber-500/40 flex items-center justify-center text-2xl overflow-hidden">${av}</div><div class="min-w-0"><div class="text-base sm:text-lg font-black text-white truncate">${esc(p.nickname)} <span class="text-amber-400 text-sm">（${p.goals}ゴール）</span></div><div class="text-xs text-amber-300 font-black">所持金：¥${Math.floor(p.money).toLocaleString('ja-JP')}</div></div></div><button onclick="EdogawaSugoroku.openUserSetupModal()" class="shrink-0 bg-slate-800 border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold text-slate-200">アカウント設定</button></div>
+      <div class="text-xs text-slate-300 mt-3">移動マス：<b class="text-white">${p.movedSquares.toLocaleString('ja-JP')}</b>マス　／　ゴール回数：<b class="text-white">${p.goals}</b>回</div>
+      <div class="edo-account-grid mt-2"><div class="edo-stat"><b>${s.intelligence}</b><span>知力</span></div><div class="edo-stat"><b>${s.wealth}</b><span>財力</span></div><div class="edo-stat"><b>${s.stamina}</b><span>体力</span></div></div>
+      <div class="edo-account-grid mt-2"><div class="edo-stat"><b>${s.luck}</b><span>運</span></div>${showProp?`<div class="edo-stat"><b>${p.properties.length}</b><span>不動産取得数</span></div>`:''}</div>`;
+  };
+
+  // ---------------- Initial onboarding ----------------
+  app._hasTermsConsent=function(){try{return localStorage.getItem(TERMS_KEY)==='granted';}catch(e){return false;}};
+  app._showAuthScreen=function(){injectUi();document.getElementById('edogawa-auth-screen')?.classList.add('show');document.body.classList.add('edo-auth-active');this._refreshAccountPanel();setTimeout(()=>this._rewriteConsentModal(),0);};
+  app._hideAuthScreen=function(){document.getElementById('edogawa-auth-screen')?.classList.remove('show');document.body.classList.remove('edo-auth-active');};
+  app._rewriteConsentModal=function(){
+    const m=document.getElementById('consent-modal'); if(!m)return;
+    const box=m.firstElementChild; if(!box)return;
+    box.innerHTML=`<div class="text-center mb-3"><div class="text-3xl">🎲</div><h2 class="font-mincho text-lg font-bold text-amber-400 mt-1">江戸川双六 利用規約</h2></div><div class="text-xs text-slate-300 leading-relaxed max-h-[42vh] overflow-y-auto bg-slate-950/60 rounded-xl p-3 border border-slate-800"><p>このゲームは江戸川区の実際の地図・施設情報を利用した個人制作ゲームです。ゲームを利用することで、利用規約・プライバシーポリシー・出典表示に同意するものとします。</p><p class="mt-2">LINEログインを利用する場合は、LINEから提供されるユーザーID、表示名、プロフィール画像をログイン・初期設定に使用します。</p><p class="mt-2">詳細は「利用規約」「プライバシーポリシー」を確認してください。</p></div><div class="grid grid-cols-2 gap-2 mt-4"><button onclick="EdogawaSugoroku.openDocModal('terms')" class="bg-slate-800 border border-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-bold">利用規約</button><button onclick="EdogawaSugoroku.openDocModal('privacy')" class="bg-slate-800 border border-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-bold">プライバシー</button></div><button onclick="EdogawaSugoroku.acceptConsent(true)" class="w-full mt-3 bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">同意する</button>`;
+  };
+  const originalAccept=app.acceptConsent?.bind(app);
+  app.initConsent=function(){
+    injectUi(); this._rewriteConsentModal();
+    if(!this._hasTermsConsent()){
+      document.getElementById('consent-modal')?.classList.remove('hidden');
+      return;
+    }
+    document.getElementById('consent-modal')?.classList.add('hidden');
+    const prof=this.getUserProfile();
+    if(!localStorage.getItem(PROFILE_KEY)) this._showAuthScreen(); else this._enterLobbyAfterAuth();
+  };
+  app.acceptConsent=function(){
+    try{localStorage.setItem(TERMS_KEY,'granted');}catch(e){}
+    document.getElementById('consent-modal')?.classList.add('hidden');
+    this._showAuthScreen();
+  };
+  app._enterLobbyAfterAuth=function(){
+    this._hideAuthScreen(); document.getElementById('lobby-screen')?.classList.remove('hidden');
+    this._applyProfileToLobby(); this._refreshAccountPanel(); this.checkSaveData?.();
+    // Continue pending QR-room join after onboarding.
+    const room=this.pendingJoinRoomId || new URLSearchParams(location.search).get('room');
+    if(room && !this._joinStartedAfterAuth){ this._joinStartedAfterAuth=true; this.pendingJoinRoomId=room; setTimeout(()=>this.joinRoomAsGuest?.(room),250); }
+  };
+
+  app._applyProfileToLobby=function(){
+    const p=this.getUserProfile();
+    const input=document.getElementById('player-name-input'); if(input) input.value=p.nickname;
+    this.selectedAvatar=p.avatarType==='line'?p.avatarValue:(p.avatarValue||avDefault);
+    document.getElementById('character-grid')?.classList.add('hidden');
+  };
+  app.openUserSetupModal=function(){ this._openSetup(this.getUserProfile().authProvider==='line'? 'line' : 'guest'); };
+  app._openSetup=function(mode, lineProfile=null){
+    injectUi(); const p=this.getUserProfile(); this._setupMode=mode; this._lineProfile=lineProfile;
+    const modal=document.getElementById('edogawa-user-setup'), name=document.getElementById('edo-setup-name'), lineNote=document.getElementById('edo-line-default'), grid=document.getElementById('edo-emoji-choice'), icon=document.getElementById('edo-setup-icon');
+    const lineName=lineProfile?.name||p.lineName||p.nickname; const linePic=lineProfile?.picture||p.linePictureUrl;
+    name.value=mode==='line' ? cleanNickname(lineName||'プレイヤー1') : cleanNickname(p.nickname);
+    if(mode==='line' && linePic){ icon.innerHTML=`<img src="${esc(linePic)}" class="w-20 h-20 rounded-full object-cover mx-auto" referrerpolicy="no-referrer">`; lineNote?.classList.remove('hidden'); }
+    else { icon.textContent=p.avatarType==='emoji'?p.avatarValue:avDefault; lineNote?.classList.add('hidden'); }
+    const selected = mode==='line' && linePic ? `line:${linePic}` : `emoji:${p.avatarType==='emoji'?p.avatarValue:avDefault}`;
+    this._setupSelected=selected;
+    grid.innerHTML = (this._setupMode==='line' && linePic ? `<button type="button" class="edo-emoji-btn sel" title="LINEプロフィール画像" data-avatar="line:${esc(linePic)}"><img src="${esc(linePic)}" class="w-full h-full rounded-xl object-cover" referrerpolicy="no-referrer"></button>`:'') + (['🧑‍🦱','👨‍🦰','👩‍🦰','🧑‍🦳','👴','👵','🐶','🐱','🐻','🐼','🦊','🐰','🐯','🦁','🐨','🐵','🐔','🐧'].map(e=>`<button type="button" class="edo-emoji-btn ${selected===`emoji:${e}`?'sel':''}" data-avatar="emoji:${e}">${e}</button>`).join(''));
+    grid.querySelectorAll('.edo-emoji-btn').forEach(b=>b.onclick=()=>{this._setupSelected=b.dataset.avatar;grid.querySelectorAll('.edo-emoji-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+    modal?.classList.add('show');
+  };
+  document.getElementById('edo-setup-save')?.addEventListener('click',()=>{
+    const p=app.getUserProfile(); const name=cleanNickname(document.getElementById('edo-setup-name')?.value,p.nickname);
+    let avType='emoji', avValue='🧑‍🦱';
+    if(app._setupMode==='line' && app._lineProfile?.picture){avType='line';avValue=app._lineProfile.picture;p.linePictureUrl=app._lineProfile.picture;p.lineName=app._lineProfile.name;p.lineUserId=app._lineProfile.userId;p.authProvider='line';}
+    else if(String(app._setupSelected||'').startsWith('emoji:')) avValue=String(app._setupSelected).slice(6);
+    else if(String(app._setupSelected||'').startsWith('line:')){avType='line';avValue=String(app._setupSelected).slice(5);}
+    p.nickname=name;p.avatarType=avType;p.avatarValue=avValue;
+    // Login only supplies defaults; existing progress is never reset when editing.
+    app.saveUserProfile(); app._applyProfileToLobby(); document.getElementById('edogawa-user-setup')?.classList.remove('show'); app._enterLobbyAfterAuth();
+  });
+
+  // If setup buttons are injected after listener registration, rebind immediately after DOM creation.
+  const bindSetup=()=>{const b=document.getElementById('edo-setup-save');if(b&&!b._bound){b._bound=true;b.onclick=()=>{const p=app.getUserProfile(),n=cleanNickname(document.getElementById('edo-setup-name')?.value,p.nickname);let at='emoji',av='🧑‍🦱';if(app._setupMode==='line'&&app._lineProfile?.picture){at='line';av=app._lineProfile.picture;p.lineUserId=app._lineProfile.userId;p.lineName=app._lineProfile.name;p.linePictureUrl=app._lineProfile.picture;p.authProvider='line';}else if(String(app._setupSelected||'').startsWith('emoji:'))av=String(app._setupSelected).slice(6);p.nickname=n;p.avatarType=at;p.avatarValue=av;app.saveUserProfile();app._applyProfileToLobby();document.getElementById('edogawa-user-setup')?.classList.remove('show');app._enterLobbyAfterAuth();};}}; 
+
+  // Guest/cache login
+  const bindAuth=()=>{
+    const g=document.getElementById('edogawa-guest-login'),l=document.getElementById('edogawa-line-login');
+    if(g&&!g._bound){g._bound=true;g.onclick=()=>{const p=app.getUserProfile();p.authProvider='guest';p.lineUserId=null;p.linePictureUrl=null;p.avatarType='emoji';if(!p.avatarValue||/^https:\/\//.test(p.avatarValue))p.avatarValue=avDefault;app.saveUserProfile();app._openSetup('guest');};}
+    if(l&&!l._bound){l._bound=true;l.onclick=()=>app.startLineOAuth();}
+  };
+
+  // ---------------- LINE OAuth 2.0 + PKCE ----------------
+  function b64url(bytes){let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+  function rand(n=32){const a=new Uint8Array(n);crypto.getRandomValues(a);return b64url(a);}
+  async function sha256(s){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return new Uint8Array(d);}
+  app._lineRedirectUri=function(){return LINE_CFG.redirectUri||(`${location.origin}${location.pathname}`);};
+  app.startLineOAuth=async function(){
+    const msg=document.getElementById('edogawa-line-message');
+    if(!LINE_CFG.channelId || !LINE_CFG.tokenEndpoint){if(msg)msg.textContent='LINEログイン設定が未完了です。LINE DevelopersのChannel IDと、認証コードを交換する安全なサーバーAPI（tokenEndpoint）を設定してください。';return;}
+    try{
+      const state=rand(24),nonce=rand(24),verifier=rand(48),challenge=b64url(await sha256(verifier));
+      sessionStorage.setItem(OAUTH_STATE_KEY,state);sessionStorage.setItem(OAUTH_VERIFIER_KEY,verifier);sessionStorage.setItem(OAUTH_NONCE_KEY,nonce);
+      const u=new URL(LINE_AUTHORIZE);u.searchParams.set('response_type','code');u.searchParams.set('client_id',LINE_CFG.channelId);u.searchParams.set('redirect_uri',app._lineRedirectUri());u.searchParams.set('state',state);u.searchParams.set('scope',LINE_SCOPES);u.searchParams.set('nonce',nonce);u.searchParams.set('code_challenge',challenge);u.searchParams.set('code_challenge_method','S256');
+      location.href=u.toString();
+    }catch(e){if(msg)msg.textContent='LINEログインを開始できませんでした。';}
+  };
+  app._handleLineCallback=async function(){
+    const q=new URLSearchParams(location.search), code=q.get('code'), state=q.get('state'), err=q.get('error'); if(!code&&!err)return false;
+    const msg=document.getElementById('edogawa-line-message');
+    if(err){if(msg)msg.textContent=`LINEログインがキャンセルされました。${q.get('error_description')||''}`;return true;}
+    const savedState=sessionStorage.getItem(OAUTH_STATE_KEY), verifier=sessionStorage.getItem(OAUTH_VERIFIER_KEY);
+    if(!savedState||savedState!==state||!verifier){if(msg)msg.textContent='LINEログインの確認に失敗しました。もう一度お試しください。';return true;}
+    if(!LINE_CFG.tokenEndpoint){if(msg)msg.textContent='認証コード交換APIが設定されていません。';return true;}
+    try{
+      const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier});
+      const r=await fetch(LINE_CFG.tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,credentials:'include'});if(!r.ok)throw new Error('token '+r.status);
+      const data=await r.json();
+      // Prefer trusted server-returned profile; backend should validate the ID token / access token with LINE.
+      const profile=data.profile || data.user || {};
+      const userId=profile.userId||profile.sub||data.userId;const name=profile.displayName||profile.name||data.displayName||data.name;const picture=profile.pictureUrl||profile.picture||data.pictureUrl||data.picture;
+      if(!userId || !name){throw new Error('profile missing');}
+      const p=app.getUserProfile();p.authProvider='line';p.lineUserId=userId;p.lineName=name;p.linePictureUrl=picture||null;
+      try{sessionStorage.setItem(OAUTH_ACCESS_KEY, data.access_token||'');}catch(e){}
+      sessionStorage.removeItem(OAUTH_STATE_KEY);sessionStorage.removeItem(OAUTH_VERIFIER_KEY);sessionStorage.removeItem(OAUTH_NONCE_KEY);
+      history.replaceState({},document.title,location.pathname);
+      app._lineCallbackProfile={userId,name,picture};app._openSetup('line',app._lineCallbackProfile);return true;
+    }catch(e){if(msg)msg.textContent='LINEログインの認証に失敗しました。設定（Channel ID / tokenEndpoint / Redirect URI）を確認してください。';return true;}
+  };
+  app.clearAllAccountData=async function(){
+    const access=sessionStorage.getItem(OAUTH_ACCESS_KEY);
+    if(access && LINE_CFG.revokeEndpoint){try{await fetch(LINE_CFG.revokeEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({access_token:access})});}catch(e){}}
+    try{localStorage.removeItem(PROFILE_KEY);localStorage.removeItem('edogawa_sugoroku_nickname');sessionStorage.removeItem(OAUTH_ACCESS_KEY);sessionStorage.removeItem(OAUTH_STATE_KEY);sessionStorage.removeItem(OAUTH_VERIFIER_KEY);sessionStorage.removeItem(OAUTH_NONCE_KEY);}catch(e){}
+    if(this._userProfile)this._userProfile=null;
+    this._showAuthScreen();
+  };
+
+  // Settings: replace clear-save behavior with full account/OAuth reset.
+  const oldClear=app.settingsClearSaves?.bind(app);
+  app.settingsClearSaves=function(){
+    clearTimeout(this._profilePersistTimer);
+    try{localStorage.removeItem(SOLO_SAVE_KEY);localStorage.removeItem(MP_SAVE_KEY);}catch(e){}
+    this.clearAllAccountData();
+  };
+
+  // Existing nickname check should never create the old standalone nickname modal.
+  app.checkNickname=function(){ this._applyProfileToLobby(); };
+
+  // ---------------- Property purchase + per-turn 1% income ----------------
+  app.propertyEligibleCategory=function(category){
+    const m={'飲食店':[10000000,50000000],'スーパー（薬屋含む）':[50000000,100000000],'宿泊施設':[100000000,300000000],'病院':[100000000,300000000]};return m[category]||null;
+  };
+  app.propertyPrice=function(category){const r=this.propertyEligibleCategory(category);if(!r)return 0;return Math.round((r[0]+Math.random()*(r[1]-r[0]))/100000)*100000;};
+  app.hasProperty=function(player,name){return Array.isArray(player?.properties)&&player.properties.some(x=>x.name===name);};
+  app.getPropertyOffer=function(player){
+    if(!player||player.isCpu&&false)return null; const cat=this.currentDestinationCategory||this.nextDestinationCandidate?.category; const range=this.propertyEligibleCategory(cat); if(!range||this.hasProperty(player,this.currentDestination?.name||''))return null;
+    const price=this.propertyPrice(cat); if(validNum(player.money,0)<price)return null;
+    const dest=this.currentDestination||{};return {name:dest.name,category:cat,price,lat:validNum(dest.lat,0),lng:validNum(dest.lng,0)};
+  };
+  app._openPropertyOfferForGoal=function(player,continueFn){
+    const offer=this.getPropertyOffer(player); if(!offer){continueFn();return;}
+    if(player.isCpu){player.money-=offer.price;player.properties=player.properties||[];player.properties.push({...offer,purchasedAt:Date.now()});this.addLog(`🏠 ${player.name} が ${offer.name} を¥${offer.price.toLocaleString()}で購入！`);this.updateHUD();this.scheduleProfilePersist(player);continueFn();return;}
+    this._pendingPropertyOffer={player,offer,continueFn};const m=document.getElementById('edogawa-property-modal');document.getElementById('edo-prop-name').textContent=offer.name;document.getElementById('edo-prop-price').textContent=`¥${offer.price.toLocaleString('ja-JP')}`;m.classList.add('show');
+  };
+  document.getElementById('edo-prop-skip')?.addEventListener('click',()=>{const x=app._pendingPropertyOffer;app._pendingPropertyOffer=null;document.getElementById('edogawa-property-modal')?.classList.remove('show');x?.continueFn?.();});
+  document.getElementById('edo-prop-buy')?.addEventListener('click',()=>{const x=app._pendingPropertyOffer;app._pendingPropertyOffer=null;document.getElementById('edogawa-property-modal')?.classList.remove('show');if(x?.player&&x.offer&&validNum(x.player.money,0)>=x.offer.price){x.player.money-=x.offer.price;x.player.properties=x.player.properties||[];x.player.properties.push({...x.offer,purchasedAt:Date.now()});app.addLog(`🏠 ${x.player.name} が ${x.offer.name} を¥${x.offer.price.toLocaleString()}で購入！`);app.updateHUD();app.scheduleProfilePersist(x.player);}x?.continueFn?.();});
+  const origPost=app.startPostGoalMiniGameThenAmida?.bind(app);
+  app.startPostGoalMiniGameThenAmida=function(player){
+    const cont=()=>origPost?origPost(player):this.startGoalAmida(player);
+    this._openPropertyOfferForGoal(player,cont);
+  };
+
+  app.applyPropertyIncome=function(){
+    if(!this.players) return; const notices=[];
+    this.players.forEach(p=>{if(!Array.isArray(p.properties)||!p.properties.length)return;let gain=0;p.properties.forEach(prop=>gain+=Math.floor(validNum(prop.price,0)*0.01));if(gain>0){p.money=(Number(p.money)||0)+gain;notices.push({player:p,gain});}});
+    notices.forEach(x=>this.addLog(`🏠 ${x.player.name}：不動産収入 ＋¥${x.gain.toLocaleString()}（毎ターン1%）`));
+    const me=notices.find(x=>!x.player.isCpu && (!this.myUid||x.player.uid===this.myUid)); if(me)this.showStatChanges?.(me.player,[]);
+    notices.forEach(x=>this.scheduleProfilePersist(x.player));
+    this.updateHUD?.();
+  };
+  const origFinishTurn=app.finishTurn?.bind(app);
+  app.finishTurn=function(...args){const wasSettled=this.turnSettled;const r=origFinishTurn?origFinishTurn(...args):undefined;if(!wasSettled)this.applyPropertyIncome();return r;};
+
+  // ---------------- Probability modifiers ----------------
+  app.getBoardStatReferencePlayer=function(){
+    if(!this.players?.length)return null;
+    if(this.isMultiplayer)return this.players.find(p=>p.uid===this.myUid)||this.players.find(p=>p.uid===this.hostUidForSave)||this.players[0];
+    return this.players.find(p=>!p.isCpu)||this.players[0];
+  };
+  // The board is shared in multiplayer, so board-wide square counts use the host/local board owner stat.
+  const origBuildRoad=app.buildRoadNetwork?.bind(app);
+  app._calcSquareProbabilities=function(){
+    const p=this.getBoardStatReferencePlayer();const intelligence=clampStat(p?.stats?.intelligence||100), wealth=clampStat(p?.stats?.wealth||100);
+    const star=Math.max(0.02,Math.min(0.10,0.05*(intelligence/100))); const green=0.25; const pool=1-star-green; const blue=Math.max(0.05,Math.min(pool-0.05,pool*0.5*(wealth/100))); const red=Math.max(0.01,pool-blue); return {star,green,blue,red};
+  };
+  // Patch the spot-type randomizer by intercepting Math.random only inside generate-like code is unsafe;
+  // instead expose a helper consumed by a small post-generation rebalance below.
+  app._rebalanceBoardSquareTypes=function(){
+    const nodes=this.roadNetworkNodes||[]; if(!nodes.length)return;
+    const prob=this._calcSquareProbabilities();
+    const candidates=nodes.filter((n,i)=>i!==0&&i!==this.goalNodeIdx&&n.type && ['red','blue','green','star'].includes(n.type));
+    if(!candidates.length)return;
+    // Keep the board size, but adjust the mix to the desired ratios. This works for shared multiplayer boards too.
+    const counts={red:0,blue:0,green:0,star:0};candidates.forEach(n=>counts[n.type]++);
+    const total=candidates.length; const desired={star:Math.round(total*prob.star),green:Math.round(total*prob.green),blue:Math.round(total*prob.blue),red:0}; desired.red=Math.max(0,total-desired.star-desired.green-desired.blue);
+    const pool=[];Object.keys(counts).forEach(k=>{for(let i=0;i<Math.max(0,counts[k]-desired[k]);i++)pool.push(k);});
+    const deficits=[];Object.keys(desired).forEach(k=>{for(let i=0;i<Math.max(0,desired[k]-counts[k]);i++)deficits.push(k);});
+    // deterministic shuffle, then mutate only as many as needed.
+    for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+    for(let i=0;i<Math.min(pool.length,deficits.length);i++){
+      const from=pool[i], to=deficits[i]; const n=candidates.find(x=>x.type===from && !x.__v17Moved); if(n){n.type=to;n.__v17Moved=true;}
+    }
+    candidates.forEach(n=>delete n.__v17Moved);
+  };
+  const origSetupBoard=app.setupBoard?.bind(app);
+  app.setupBoard=async function(...args){
+    const r=origSetupBoard?await origSetupBoard(...args):undefined;
+    if(!this.isMultiplayer || this.isHost){
+      this._rebalanceBoardSquareTypes();
+      this.renderBoardVisuals?.(this.roadNetworkNodes,this.findNearestNodeIdx2(this.roadNetworkNodes,args[0]),this.goalNodeIdx,this.currentDestination);
+      if(this.isMultiplayer&&this.isHost)this.syncGameStateToRoom?.();
+    }
+    return r;
+  };
+
+  // Vehicle probability is applied directly inside resolveGreenEvent above.
+
+  // Police / hospital stat penalties and boat/canoe luck bonuses.
+  const origTeleport=app.teleportPlayer?.bind(app);
+  app.teleportPlayer=async function(player,targetLoc){
+    const name=String(targetLoc?.name||'');
+    const res=origTeleport?await origTeleport(player,targetLoc):undefined;
+    if(/警察|交番/.test(name)) this.adjustPlayerStat(player,'intelligence',-(1+Math.floor(Math.random()*3)));
+    if(/病院|クリニック|診療所/.test(name)) this.adjustPlayerStat(player,'stamina',-(1+Math.floor(Math.random()*3)));
+    return res;
+  };
+  const origBoat=app.startBoatRaceEvent?.bind(app); if(origBoat){app.startBoatRaceEvent=async function(...a){const p=a[0];this.adjustPlayerStat(p,'luck',10);return origBoat(...a);};}
+  const origCanoe=app.startCanoeGame?.bind(app); if(origCanoe){app.startCanoeGame=async function(...a){const p=a[0];this.adjustPlayerStat(p,'luck',10);return origCanoe(...a);};}
+
+  // Blue/red stat changes: wrap landOnSpot around its final processing by examining current node before original.
+  const origLand=app.landOnSpot?.bind(app); if(origLand){
+    app.landOnSpot=function(player,...a){
+      const node=this.roadNetworkNodes?.[player?.currentNodeIdx];
+      const before=node?.type;
+      const r=origLand(player,...a);
+      if(before==='blue')this.adjustPlayerStat(player,'wealth',1+Math.floor(Math.random()*3));
+      else if(before==='red')this.adjustPlayerStat(player,'wealth',-(1+Math.floor(Math.random()*3)));
+      return r;
+    };
+  }
+
+  // Mini-game stats: new games + regional games. Award once when the first result for the game arrives.
+  const oldIntegrated=app.applyIntegratedMiniGameResult?.bind(app);if(oldIntegrated){app.applyIntegratedMiniGameResult=function(data){const st=this.regionalMiniGame;const first=st&&!st.statsAwarded;const r=oldIntegrated(data);if(first&&st&&st.statsAwarded!==true){st.statsAwarded=true;const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));if(p)this.awardMiniGameStats(p);}return r;};}
+  const oldRegional=app.applyRegionalMiniGameResult?.bind(app);if(oldRegional){app.applyRegionalMiniGameResult=function(data){const st=this.regionalMiniGame;const first=st&&!st.statsAwarded;const r=oldRegional(data);if(first&&st&&!st.statsAwarded){st.statsAwarded=true;if(st.game==='canoe'&&Array.isArray(data.results)){data.results.forEach(x=>{const p=this.players?.find(q=>Number(q.id)===Number(x.id));if(p)this.awardMiniGameStats(p);});}else{const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));if(p)this.awardMiniGameStats(p);}}return r;};}
+  const oldAnswer=app.answerQuiz?.bind(app);if(oldAnswer){app.answerQuiz=function(...a){const p=this.players?.find(x=>Number(x.id)===Number(this.activeQuizPlayerId));const r=oldAnswer(...a);if(p){const key=`${this.turnCount}:${this.currentPlayerIdx}:${this.activeQuizPlayerId}`;if(this._quizStatsAwardedKey!==key){this._quizStatsAwardedKey=key;this.awardMiniGameStats(p);}}return r;};}
+  const oldFinishBoat=app.finishBoatRaceGame?.bind(app);if(oldFinishBoat){app.finishBoatRaceGame=async function(...a){const participants=Array.isArray(this.players)?this.players.slice():[];participants.forEach(x=>this.awardMiniGameStats?.(x));return oldFinishBoat(...a);};}
+
+  // Player status panel and free camera jump.
+  app.panToPlayer=function(idx){
+    const p=this.players?.[idx]; if(!p)return; const n=this.roadNetworkNodes?.[p.currentNodeIdx];
+    if(n&&this.map)this.map.flyTo([n.lat,n.lng],19,{duration:.45});
+    const ps=document.getElementById('edogawa-player-status'); if(ps){const s=p.stats||statsDefault;const prop=p.properties||[];ps.innerHTML=`<div class="flex items-center gap-2 mb-2"><div class="w-9 h-9 rounded-full bg-slate-950 border border-sky-500/40 flex items-center justify-center text-lg overflow-hidden">${this.avatarHtml(p.avatar)}</div><div class="font-black text-white text-sm">${esc(p.name)}</div></div><div class="text-xs text-amber-300 font-black">所持金 ¥${validNum(p.money,0).toLocaleString('ja-JP')}</div><div class="grid grid-cols-2 gap-1 mt-2"><div class="bg-slate-950/70 rounded-lg p-1.5 text-center text-[11px]">知力 <b>${clampStat(s.intelligence)}</b></div><div class="bg-slate-950/70 rounded-lg p-1.5 text-center text-[11px]">財力 <b>${clampStat(s.wealth)}</b></div><div class="bg-slate-950/70 rounded-lg p-1.5 text-center text-[11px]">体力 <b>${clampStat(s.stamina)}</b></div><div class="bg-slate-950/70 rounded-lg p-1.5 text-center text-[11px]">運 <b>${clampStat(s.luck)}</b></div></div><div class="text-[10px] text-slate-400 mt-2">移動 ${validNum(p.movedSquares,0).toLocaleString('ja-JP')}マス　ゴール ${validNum(p.goals,0)}回</div>${validNum(p.money,0)>10000000?`<div class="text-[10px] text-slate-400 mt-1">不動産 ${prop.length}件</div>`:''}`;ps.style.display='block';}
+  };
+
+  // Replace player-card avatar content with LINE image if needed and keep cards tappable at any time.
+  const oldUpdateHUD=app.updateHUD?.bind(app); if(oldUpdateHUD){app.updateHUD=function(...a){const r=oldUpdateHUD(...a);const p=this.players?.find(x=>!x.isCpu&&(!this.myUid||x.uid===this.myUid))||this.players?.[0];if(p){this.scheduleProfilePersist(p);this._refreshAccountPanel();}return r;};}
+
+  // Force avatar image into player cards after original render.
+  const refreshCards=()=>{
+    const container=document.getElementById('players-card-container');if(!container)return;
+    const imgs=container.querySelectorAll('[data-edogawa-avatar-url]'); imgs.forEach(el=>{el.innerHTML=app.avatarHtml(el.getAttribute('data-edogawa-avatar-url'));});
+  };
+  const oldCreateIcon=app.createPlayerIcon?.bind(app); if(oldCreateIcon){app.createPlayerIcon=function(...a){return oldCreateIcon(...a);};}
+
+  // ------------------------------------------------------------------
+  // Initialization gate: patch init consent flow before DOMContentLoaded.
+  // ------------------------------------------------------------------
+  injectUi();bindAuth();bindSetup();
+  const originalLoadSettings=app.loadUserSettings?.bind(app); app.loadUserSettings=function(...a){const r=originalLoadSettings?originalLoadSettings(...a):undefined;this._userProfile=normalizeProfile((()=>{try{return JSON.parse(localStorage.getItem(PROFILE_KEY)||'null')}catch(e){return null}})());this._applyProfileToLobby();return r;};
+  // Rebind setup and auth after dynamically injected DOM exists.
+  setTimeout(()=>{bindAuth();bindSetup();},50);
+
+  // Keep current original analytics preference independent from initial terms consent.
+  // We only replace the first-launch gate; existing analytics toggle remains available in settings.
+
+  // Account/profile data should be included in room recruitment and guest joins.
+  app._roomAccount=function(){const p=this.getUserProfile();return {money:p.money,goals:p.goals,movedSquares:p.movedSquares,stats:p.stats,properties:p.properties,authProvider:p.authProvider,lineUserId:p.lineUserId,avatar:p.avatarValue};};
+  const oldOpenRecruit=app.openRecruitmentModal?.bind(app); if(oldOpenRecruit){app.openRecruitmentModal=async function(...a){const r=await oldOpenRecruit(...a);if(this.recruitmentPlayers?.[0])Object.assign(this.recruitmentPlayers[0],this._roomAccount());return r;};}
+  const oldForce=app.forceStartMultiplayer?.bind(app); if(oldForce){app.forceStartMultiplayer=async function(...a){const p=this.recruitmentPlayers?.find(x=>x.uid===this.myUid);if(p)Object.assign(p,this._roomAccount());return oldForce(...a);};}
+  const oldConfirmGuest=app.confirmGuestNickname?.bind(app); if(oldConfirmGuest){app.confirmGuestNickname=function(...a){const p=this.getUserProfile();p.nickname=cleanNickname(document.getElementById('guest-nickname-input')?.value,p.nickname);this.saveUserProfile();return oldConfirmGuest(...a);};}
+
+  // Persist stats/money whenever HUD updates; current player cards become status jump targets.
+  // Replace the old canActNow gate in panToPlayer (already done above).
+
+  // Terms + callback flow on page startup.
+  document.addEventListener('DOMContentLoaded', async ()=>{
+    injectUi();bindAuth();bindSetup();
+    const handled=await app._handleLineCallback();
+    if(handled) { app._hideAuthScreen(); return; }
+    if(!app._hasTermsConsent()) { app._rewriteConsentModal(); document.getElementById('consent-modal')?.classList.remove('hidden'); return; }
+    if(!localStorage.getItem(PROFILE_KEY)) app._showAuthScreen(); else app._enterLobbyAfterAuth();
+    app._refreshAccountPanel();
+  }, {once:true});
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku;
+  if(!app || app.__v21VisitedPinReady) return;
+  app.__v21VisitedPinReady = true;
+
+  const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+  const PHOTO_MAX_EDGE = 1600;
+  const PHOTO_QUALITY = 0.82;
+  const CLUSTER_METERS = 20;
+  const ACCURACY_WARN_METERS = 50;
+  const VISITED_TABLE = (typeof SUPABASE_VISITED_TABLE !== 'undefined') ? SUPABASE_VISITED_TABLE : 'visited_entries';
+  const VISITED_BUCKET = (typeof SUPABASE_VISITED_BUCKET !== 'undefined') ? SUPABASE_VISITED_BUCKET : 'visited-pins';
+  const SUPA_CFG = (typeof SUPABASE_CONFIG !== 'undefined') ? SUPABASE_CONFIG : {url:'',publishableKey:''};
+  const TODAY = () => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo'}).format(new Date());
+  const esc = (v) => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const num = (v,d=0) => Number.isFinite(Number(v)) ? Number(v) : d;
+
+  const style=document.createElement('style');
+  style.id='edogawa-v21-visited-pin-style';
+  style.textContent=`
+    #visited-pin-tool{position:fixed;left:10px;top:64px;z-index:38;background:rgba(15,23,42,.94);border:1px solid rgba(245,158,11,.55);color:#fbbf24;border-radius:14px;padding:9px 11px;font-size:12px;font-weight:900;box-shadow:0 10px 26px rgba(0,0,0,.34);backdrop-filter:blur(10px);cursor:pointer}
+    #visited-pin-tool:active{transform:scale(.97)}
+    #visited-pin-tool:disabled{opacity:.6;cursor:wait}
+    #visited-pin-modal,#visited-pin-list-modal,#visited-pin-detail-modal{position:fixed;inset:0;z-index:132;background:rgba(2,6,23,.84);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:14px}
+    .visited-pin-box{width:min(430px,95vw);max-height:92vh;overflow:auto;background:#0f172a;border:1px solid rgba(245,158,11,.42);border-radius:22px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+    .visited-photo-preview{width:100%;max-height:240px;object-fit:cover;border-radius:14px;border:1px solid #334155;background:#020617}
+    .visited-thumb{width:68px;height:68px;object-fit:cover;border-radius:12px;background:#020617;border:1px solid #334155;flex:none}
+    .visited-pin-list-item{display:flex;align-items:center;gap:10px;text-align:left;background:rgba(2,6,23,.62);border:1px solid #1e293b;padding:9px;border-radius:14px;cursor:pointer}
+    .visited-pin-list-item:active{transform:scale(.99)}
+    .visited-marker-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+    .visited-marker-emoji{font-size:30px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+    .visited-marker-count{position:absolute;right:-9px;top:-5px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:#0f172a;border:1px solid #fbbf24;color:#fbbf24;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center}
+    .visited-edit-label{display:inline-block;padding:2px 6px;border-radius:999px;background:rgba(16,185,129,.12);color:#6ee7b7;border:1px solid rgba(16,185,129,.35);font-size:9px;font-weight:900}
+  `;
+  document.head.appendChild(style);
+
+  app.visitedEntries=[];
+  app.visitedPinMarkers=[];
+  app.visitedEntriesUnsubscribe=null;
+  app.visitedPinDraft=null;
+  app.visitedPinsReady=false;
+  app.visitedSupabase=null;
+  app.visitedSupabaseUser=null;
+
+  const isSupabaseConfigured=()=>!!(SUPA_CFG?.url && SUPA_CFG?.publishableKey && window.supabase?.createClient);
+  const isMine=(entry)=>!!app.visitedSupabaseUser?.id && entry?.ownerUid===app.visitedSupabaseUser.id;
+
+  async function ensureSupabase(){
+    if(app.visitedSupabase && app.visitedSupabaseUser) return true;
+    if(!isSupabaseConfigured()) return false;
+    try{
+      if(!app.visitedSupabase) app.visitedSupabase=window.supabase.createClient(SUPA_CFG.url,SUPA_CFG.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+      const {data:{session}={},error:sessionError}=await app.visitedSupabase.auth.getSession();
+      if(sessionError) throw sessionError;
+      if(session?.user) app.visitedSupabaseUser=session.user;
+      else{
+        const {data,error}=await app.visitedSupabase.auth.signInAnonymously({options:{data:{firebase_uid:app.myUid||null}}});
+        if(error) throw error;
+        app.visitedSupabaseUser=data?.user||null;
+      }
+      if(!app.visitedSupabaseUser) throw new Error('Supabase匿名認証ユーザーを取得できませんでした。');
+      return true;
+    }catch(e){
+      console.warn('Supabase 行ったところ 初期化失敗:',e);
+      return false;
+    }
+  }
+
+  const distanceM=(a,b)=>{
+    const R=6371000,p1=num(a.lat)*Math.PI/180,p2=num(b.lat)*Math.PI/180;
+    const dp=(num(b.lat)-num(a.lat))*Math.PI/180,dl=(num(b.lng)-num(a.lng))*Math.PI/180;
+    const h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+    return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));
+  };
+  const canCluster=(group,e)=>group.every(x=>distanceM(x,e)<=CLUSTER_METERS);
+  function makeGroups(entries){
+    const left=entries.slice().sort((a,b)=>num(a.createdAt)-num(b.createdAt));
+    const groups=[];
+    while(left.length){
+      const seed=left.shift(),group=[seed];
+      for(let i=left.length-1;i>=0;i--) if(canCluster(group,left[i])) group.push(left.splice(i,1)[0]);
+      let lat=0,lng=0; group.forEach(e=>{lat+=num(e.lat);lng+=num(e.lng);});
+      groups.push({entries:group,lat:lat/group.length,lng:lng/group.length});
+    }
+    return groups;
+  }
+  const markerIcon=(count)=>L.divIcon({className:'',html:`<div class="visited-marker-wrap"><span class="visited-marker-emoji">📌</span>${count>1?`<span class="visited-marker-count">${count}</span>`:''}</div>`,iconSize:[34,34],iconAnchor:[17,30]});
+  const clearMarkers=()=>{(app.visitedPinMarkers||[]).forEach(m=>{try{app.map?.removeLayer(m);}catch(_){}});app.visitedPinMarkers=[];};
+
+  app.refreshVisitedPinMarkers=function(){
+    if(!this.map || typeof L==='undefined') return;
+    clearMarkers();
+    makeGroups(Array.isArray(this.visitedEntries)?this.visitedEntries:[]).forEach(group=>{
+      const marker=L.marker([group.lat,group.lng],{icon:markerIcon(group.entries.length),zIndexOffset:1500,keyboard:true,title:`行ったところ ${group.entries.length}件`}).addTo(this.map);
+      marker.on('click',()=>group.entries.length===1?this.openVisitedEntryDetail(group.entries[0]):this.openVisitedPinList(group.entries,group));
+      this.visitedPinMarkers.push(marker);
+    });
+  };
+
+  async function compressImage(file){
+    if(!(file instanceof File)) return null;
+    if(file.size>MAX_PHOTO_BYTES) throw new Error('写真は5MB以下を選択してください。');
+    const data=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=()=>reject(new Error('写真の読み込みに失敗しました。'));fr.readAsDataURL(file);});
+    const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('写真を画像として読み込めませんでした。'));i.src=data;});
+    const scale=Math.min(1,PHOTO_MAX_EDGE/Math.max(img.width,img.height));
+    const w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const ctx=c.getContext('2d',{alpha:false}); if(!ctx) throw new Error('写真の圧縮機能を利用できません。');
+    ctx.drawImage(img,0,0,w,h);
+    const blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',PHOTO_QUALITY));
+    if(!blob) throw new Error('写真の圧縮に失敗しました。');
+    return blob;
+  }
+  const ensureModal=(id,html)=>{let el=document.getElementById(id);if(!el){el=document.createElement('div');el.id=id;el.innerHTML=html;document.body.appendChild(el);}return el;};
+  const show=el=>{if(el)el.style.display='flex';};
+  const hide=el=>{if(el)el.style.display='none';};
+  const formModal=ensureModal('visited-pin-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 id="visited-pin-form-title" class="font-black text-amber-400 text-lg">📌 行ったところを記録</h3><button id="visited-pin-form-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-form-location" class="text-[11px] text-slate-400 bg-slate-950/60 rounded-xl p-2 mb-3"></div><label class="block text-xs font-bold text-slate-300 mb-2">日付</label><input id="visited-pin-date" type="date" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100"><label class="block text-xs font-bold text-slate-300 mt-4 mb-2">写真（1枚）</label><input id="visited-pin-photo" type="file" accept="image/*" capture="environment" class="w-full text-xs text-slate-300"><div id="visited-pin-photo-preview-wrap" class="hidden mt-2"><img id="visited-pin-photo-preview" class="visited-photo-preview" alt="写真プレビュー"></div><label class="block text-xs font-bold text-slate-300 mt-4 mb-2">メモ</label><textarea id="visited-pin-note" maxlength="500" rows="5" placeholder="行った場所の思い出やメモ（500文字まで）" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 resize-none"></textarea><div id="visited-pin-form-status" class="hidden text-xs mt-3 rounded-xl p-2"></div><div class="grid grid-cols-2 gap-2 mt-4"><button id="visited-pin-form-cancel" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">キャンセル</button><button id="visited-pin-form-save" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">保存する</button></div></div>`);
+  const listModal=ensureModal('visited-pin-list-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><div><h3 class="font-black text-amber-400 text-lg">📌 この場所の記録</h3><div id="visited-pin-list-location" class="text-[10px] text-slate-500 mt-1"></div></div><button id="visited-pin-list-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-list" class="space-y-2"></div></div>`);
+  const detailModal=ensureModal('visited-pin-detail-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 class="font-black text-amber-400 text-lg">📌 記録詳細</h3><button id="visited-pin-detail-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-detail-body"></div></div>`);
+  let pendingPhoto=null;
+  const photoUrlCache=new Map();
+  const photoUrlExpiryMs=50*60*1000;
+  const setStatus=(msg,kind='info')=>{const el=document.getElementById('visited-pin-form-status');if(!el)return;el.textContent=msg;el.className='text-xs mt-3 rounded-xl p-2 '+(kind==='error'?'bg-rose-950/60 border border-rose-800/70 text-rose-200':kind==='ok'?'bg-emerald-950/60 border border-emerald-800/70 text-emerald-200':'bg-sky-950/60 border border-sky-800/70 text-sky-200');};
+
+  async function getSignedPhotoUrl(entry){
+    if(!entry?.photoPath || !(await ensureSupabase())) return null;
+    const cached=photoUrlCache.get(entry.photoPath),now=Date.now();
+    if(cached && cached.expiresAt>now) return cached.url;
+    const {data,error}=await app.visitedSupabase.storage.from(VISITED_BUCKET).createSignedUrl(entry.photoPath,3600);
+    if(error) throw error;
+    const url=data?.signedUrl||null;
+    if(url) photoUrlCache.set(entry.photoPath,{url,expiresAt:now+photoUrlExpiryMs});
+    return url;
+  }
+
+  async function subscribeEntries(){
+    if(app.visitedEntriesUnsubscribe)return;
+    if(!(await ensureSupabase())) return;
+    const load=async()=>{
+      const {data,error}=await app.visitedSupabase.from(VISITED_TABLE).select('id,owner_uid,firebase_uid,owner_name,lat,lng,accuracy_meters,visit_date,note,photo_path,created_at,updated_at').order('created_at',{ascending:true});
+      if(error) throw error;
+      app.visitedEntries=(data||[]).map(e=>({
+        id:e.id, ownerUid:e.owner_uid, firebaseUid:e.firebase_uid||null, ownerName:e.owner_name||'プレーヤー',
+        lat:num(e.lat), lng:num(e.lng), accuracyMeters:num(e.accuracy_meters), visitDate:e.visit_date||'', note:e.note||'',
+        photoPath:e.photo_path||null, createdAt:e.created_at?Date.parse(e.created_at):Date.now(), updatedAt:e.updated_at?Date.parse(e.updated_at):Date.now()
+      })).filter(e=>e.ownerUid&&isInsideEdogawaWard(e.lat,e.lng));
+      app.refreshVisitedPinMarkers();
+    };
+    try{
+      await load();
+      const channel=app.visitedSupabase.channel('visited-pins-live').on('postgres_changes',{event:'*',schema:'public',table:VISITED_TABLE},()=>load().catch(e=>console.warn('行ったところ再読込失敗:',e))).subscribe();
+      app.visitedEntriesUnsubscribe=()=>{try{app.visitedSupabase.removeChannel(channel);}catch(_){};app.visitedEntriesUnsubscribe=null;};
+      app.visitedPinsReady=true;
+    }catch(e){
+      console.warn('Supabase 行ったところ共有取得失敗:',e);
+      app.visitedPinsReady=false;
+    }
+  }
+
+  async function startRecord(){
+    if(!isSupabaseConfigured()){alert('「📌 行ったところ」はSupabase設定後に利用できます。HTMLのSUPABASE_CONFIG（URL / Publishable key）を設定してください。');return;}
+    if(!navigator.geolocation){alert('この端末・ブラウザでは位置情報を取得できません。');return;}
+    if(!app.map){alert('地図の準備中です。少し待ってからお試しください。');return;}
+    const btn=document.getElementById('visited-pin-tool');if(btn){btn.disabled=true;btn.textContent='📍 位置取得中…';}
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const lat=num(pos.coords.latitude),lng=num(pos.coords.longitude),acc=num(pos.coords.accuracy,9999);
+      try{
+        if(!isInsideEdogawaWard(lat,lng)){alert('現在地は江戸川区外のため、📌を記録できません。');return;}
+        app.map.flyTo([lat,lng],19,{duration:.55});app.visitedPinDraft={lat,lng,accuracy:acc};pendingPhoto=null;
+        document.getElementById('visited-pin-form-title').textContent='📌 行ったところを記録';
+        document.getElementById('visited-pin-form-location').textContent=`江戸川区内 ／ 位置精度 約${Math.round(acc)}m`;
+        document.getElementById('visited-pin-date').value=TODAY();document.getElementById('visited-pin-note').value='';document.getElementById('visited-pin-photo').value='';document.getElementById('visited-pin-photo-preview-wrap').classList.add('hidden');
+        if(acc>ACCURACY_WARN_METERS)setStatus(`位置精度が約${Math.round(acc)}mです。20m以内のまとめ判定はGPS誤差のため別扱いになる場合があります。`);else setStatus('写真・日付・メモを入力して保存してください。');
+        show(formModal);
+      }finally{if(btn){btn.disabled=false;btn.textContent='📌 行ったところ';}}
+    },err=>{if(btn){btn.disabled=false;btn.textContent='📌 行ったところ';}alert(err?.code===1?'位置情報の利用が許可されていません。ブラウザの位置情報設定を確認してください。':'位置情報を取得できませんでした。もう一度お試しください。');},{enableHighAccuracy:true,maximumAge:0,timeout:12000});
+  }
+
+  async function saveEntry(){
+    const draft=app.visitedPinDraft;if(!draft)return;
+    const date=document.getElementById('visited-pin-date').value||TODAY(),note=document.getElementById('visited-pin-note').value.trim(),file=document.getElementById('visited-pin-photo').files?.[0]||null;
+    if(!note&&!file&&!pendingPhoto?.existingPath){setStatus('写真またはメモのどちらかを入力してください。','error');return;}
+    const btn=document.getElementById('visited-pin-form-save');btn.disabled=true;btn.textContent='保存中…';
+    try{
+      if(!(await ensureSupabase())) throw new Error('共有保存のためのSupabase接続が利用できません。Supabaseの匿名認証とSUPABASE_CONFIGを確認してください。');
+      if(!isInsideEdogawaWard(num(draft.lat),num(draft.lng))) throw new Error('江戸川区外の位置は保存できません。');
+      const id=draft.editId||crypto.randomUUID(),existing=app.visitedEntries.find(x=>x.id===id)||null;
+      if(existing && !isMine(existing)) throw new Error('他人の投稿は編集できません。');
+      let photoPath=pendingPhoto?.existingPath||existing?.photoPath||null;
+      if(file){
+        const blob=await compressImage(file);
+        photoPath=`${app.visitedSupabaseUser.id}/${id}.jpg`;
+        const {error:uploadError}=await app.visitedSupabase.storage.from(VISITED_BUCKET).upload(photoPath,blob,{contentType:'image/jpeg',cacheControl:'31536000',upsert:true});
+        if(uploadError) throw uploadError;
+        photoUrlCache.delete(photoPath);
+      }
+      const ownerName=(app.players?.find(p=>p.uid===app.myUid)?.name||app.getUserProfile?.().nickname||app.visitedSupabaseUser.user_metadata?.display_name||'プレーヤー').slice(0,6);
+      const payload={owner_uid:app.visitedSupabaseUser.id,firebase_uid:app.myUid||null,owner_name:ownerName,lat:num(draft.lat),lng:num(draft.lng),accuracy_meters:Math.round(num(draft.accuracy)),visit_date:date,note:note.slice(0,500),photo_path:photoPath||null,updated_at:new Date().toISOString()};
+      if(existing){
+        const {error}=await app.visitedSupabase.from(VISITED_TABLE).update(payload).eq('id',id).eq('owner_uid',app.visitedSupabaseUser.id);
+        if(error) throw error;
+      }else{
+        payload.id=id; const {error}=await app.visitedSupabase.from(VISITED_TABLE).insert(payload); if(error) throw error;
+      }
+      hide(formModal);app.visitedPinDraft=null;pendingPhoto=null;
+    }catch(e){console.error(e);setStatus(e?.message||'保存に失敗しました。','error');}
+    finally{btn.disabled=false;btn.textContent='保存する';}
+  }
+
+  app.openVisitedEntryForm=async function(entry){
+    if(!entry || !isMine(entry)){alert('他人の📌は編集できません。');return;}
+    if(!(await ensureSupabase())){alert('Supabase接続を確認してください。');return;}
+    app.visitedPinDraft={lat:num(entry.lat),lng:num(entry.lng),accuracy:num(entry.accuracyMeters),editId:entry.id};pendingPhoto={existingPath:entry.photoPath||null};
+    document.getElementById('visited-pin-form-title').textContent='📌 記録を編集';document.getElementById('visited-pin-form-location').textContent=`江戸川区内 ／ 投稿者：${entry.ownerName||'プレーヤー'}`;document.getElementById('visited-pin-date').value=entry.visitDate||TODAY();document.getElementById('visited-pin-note').value=entry.note||'';document.getElementById('visited-pin-photo').value='';
+    const wrap=document.getElementById('visited-pin-photo-preview-wrap'),img=document.getElementById('visited-pin-photo-preview');
+    try{const url=await getSignedPhotoUrl(entry);if(url){img.src=url;wrap.classList.remove('hidden');}else wrap.classList.add('hidden');}catch(_){wrap.classList.add('hidden');}
+    setStatus('写真を選び直せば差し替えできます。選ばなければ現在の写真を保持します。');show(formModal);
+  };
+
+  app.openVisitedEntryDetail=async function(entry){
+    const mine=isMine(entry),body=document.getElementById('visited-pin-detail-body');
+    body.innerHTML='<div class="text-center py-8 text-slate-400 text-sm">読み込み中…</div>';show(detailModal);
+    let photo='';
+    try{const url=await getSignedPhotoUrl(entry);if(url)photo=`<img src="${esc(url)}" class="visited-photo-preview" alt="訪問写真">`;}catch(e){console.warn('写真表示URLの取得失敗:',e);}
+    body.innerHTML=`${photo}<div class="mt-3 flex items-center justify-between gap-2"><div class="text-xs text-slate-400">${esc(entry.visitDate||'日付未設定')}</div>${mine?'<span class="visited-edit-label">自分の投稿</span>':''}</div><div class="text-sm font-black text-white mt-1">${esc(entry.ownerName||'プレーヤー')}</div><div class="mt-3 bg-slate-950/70 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">${esc(entry.note||'メモなし')}</div>${mine?'<button id="visited-pin-detail-edit" class="w-full mt-4 bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">編集する</button>':''}<div class="text-[10px] text-slate-500 mt-3">📍 記録地点：江戸川区内（投稿者のGPS位置）</div>`;
+    document.getElementById('visited-pin-detail-edit')?.addEventListener('click',()=>{hide(detailModal);app.openVisitedEntryForm(entry);});
+  };
+
+  app.openVisitedPinList=async function(entries,group){
+    document.getElementById('visited-pin-list-location').textContent=`📍 ${num(group?.lat).toFixed(6)}, ${num(group?.lng).toFixed(6)} ／ ${entries.length}件`;
+    const list=document.getElementById('visited-pin-list');list.innerHTML='<div class="text-center py-8 text-slate-400 text-sm">写真を読み込み中…</div>';show(listModal);
+    const rows=await Promise.all(entries.slice().sort((a,b)=>String(b.visitDate||'').localeCompare(String(a.visitDate||''))).map(async e=>{
+      const mine=isMine(e);let thumb=e.photoPath?null:null;
+      try{thumb=await getSignedPhotoUrl(e);}catch(_){thumb=null;}
+      const img=thumb?`<img class="visited-thumb" src="${esc(thumb)}" alt="">`:'<div class="visited-thumb flex items-center justify-center text-2xl">📝</div>';
+      return `<button type="button" class="visited-pin-list-item w-full" data-visited-id="${esc(e.id)}">${img}<span class="min-w-0 flex-1"><span class="flex items-center gap-2"><b class="text-sm text-slate-100 truncate">${esc(e.ownerName||'プレーヤー')}</b>${mine?'<span class="visited-edit-label">自分</span>':''}</span><span class="block text-[11px] text-slate-400 mt-1">${esc(e.visitDate||'日付未設定')}</span><span class="block text-[11px] text-slate-300 mt-1 truncate">${esc(e.note||'メモなし')}</span></span><span class="text-slate-500">›</span></button>`;
+    }));
+    list.innerHTML=rows.join('');
+    list.querySelectorAll('[data-visited-id]').forEach(btn=>btn.addEventListener('click',()=>{const e=entries.find(x=>x.id===btn.getAttribute('data-visited-id'));if(e){hide(listModal);app.openVisitedEntryDetail(e);}}));
+  };
+
+  function attachUI(){
+    if(app.__v21VisitedUiAttached)return;app.__v21VisitedUiAttached=true;
+    const btn=document.createElement('button');btn.id='visited-pin-tool';btn.type='button';btn.textContent='📌 行ったところ';btn.addEventListener('click',startRecord);document.body.appendChild(btn);
+    const fileEl=document.getElementById('visited-pin-photo');
+    fileEl.addEventListener('change',e=>{const f=e.target.files?.[0],wrap=document.getElementById('visited-pin-photo-preview-wrap'),img=document.getElementById('visited-pin-photo-preview');if(!f){if(pendingPhoto?.existingPath){getSignedPhotoUrl({photoPath:pendingPhoto.existingPath}).then(url=>{if(url){img.src=url;wrap.classList.remove('hidden');}}).catch(()=>{});}else wrap.classList.add('hidden');return;}const url=URL.createObjectURL(f);img.src=url;wrap.classList.remove('hidden');img.onload=()=>URL.revokeObjectURL(url);});
+    document.getElementById('visited-pin-form-save').addEventListener('click',saveEntry);document.getElementById('visited-pin-form-cancel').addEventListener('click',()=>{hide(formModal);app.visitedPinDraft=null;pendingPhoto=null;});document.getElementById('visited-pin-form-close').addEventListener('click',()=>{hide(formModal);app.visitedPinDraft=null;pendingPhoto=null;});document.getElementById('visited-pin-list-close').addEventListener('click',()=>hide(listModal));document.getElementById('visited-pin-detail-close').addEventListener('click',()=>hide(detailModal));
+  }
+
+  const oldInitMap=app.initMap?.bind(app);
+  if(oldInitMap)app.initMap=function(...args){const r=oldInitMap(...args);setTimeout(()=>{attachUI();subscribeEntries().catch(()=>{});},250);return r;};
+  setTimeout(()=>{attachUI();if(app.map){subscribeEntries().catch(()=>{});app.refreshVisitedPinMarkers();}},900);
+})();
+</script>
+
 </body>
 </html>
