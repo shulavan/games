@@ -2204,7 +2204,7 @@
       "駅（バス停含む）": []
     };
 
-    const AVATAR_LIST = ["🧑‍🦱", "👩", "👨‍🦰", "👩‍🦰", "🧑‍🦳", "👩‍🦳", "🧔", "👳‍♂️", "👧", "🧔‍♀️"];
+    const AVATAR_LIST = ["👩","👨","🧑","👧","👦","🧒","👶","👵","👴","🧓","👩‍🦰","👨‍🦰","🧑‍🦰","👩‍🦱","👨‍🦱","🧑‍🦱","👩‍🦲","👨‍🦲","👩‍🦳","👨‍🦳","🧑‍🦳","👱‍♀️","👱‍♂️","👱","👳‍♀️","👳‍♂️","👳","🧔","🧔‍♂️","🧔‍♀️"];
     const PLAYER_COLORS = [
       { bg: "bg-emerald-500", border: "border-emerald-400", stroke: "#10b981", name: "エメラルド" },
       { bg: "bg-purple-500", border: "border-purple-400", stroke: "#a855f7", name: "パープル" },
@@ -3849,6 +3849,19 @@
           this.goaledPlaces = Array.isArray(state.goaledPlaces) ? state.goaledPlaces : [];
           this.territory = (state.territory && typeof state.territory === 'object') ? state.territory : {};
           this.players = state.players;
+
+          // 「前回の続き」はゲーム途中の古いプレーヤー情報を保持している場合があるため、
+          // 現在のアカウント設定のニックネーム・アイコンを人間プレーヤーへ優先反映する。
+          // 所持金・ステータス・進行位置などのゲーム進行値は保存データをそのまま使用する。
+          try{
+            const account=(typeof this.getUserProfile==='function') ? this.getUserProfile() : null;
+            const human=this.players.find(x=>x && x.isCpu===false) || this.players[0];
+            if(account && human){
+              human.name=account.nickname;
+              human.avatar=account.avatarValue || human.avatar;
+              localStorage.setItem('edogawa_sugoroku_nickname', account.nickname);
+            }
+          }catch(profileSyncErr){ console.warn('続きへのアカウント情報反映に失敗', profileSyncErr); }
 
           // 念のため各プレイヤーの保存値を正規化。既存のセーブデータを壊さず、
           // 新しいプロパティだけ安全な初期値を補完する。
@@ -10168,7 +10181,28 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   };
   app.saveUserProfile=function(){
     const p=normalizeProfile(this._userProfile||defaultProfile()); this._userProfile=p;
-    try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }catch(e){ console.warn('プロフィール保存失敗',e); }
+    try{
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+      // アカウント設定を変更したら「前回の続きから遊ぶ」の保存データにも
+      // ニックネーム・アイコンを即時反映する（ゲーム進行値は変更しない）。
+      localStorage.setItem('edogawa_sugoroku_nickname', p.nickname);
+      const raw=localStorage.getItem(SOLO_SAVE_KEY);
+      if(raw){
+        try{
+          const st=JSON.parse(raw);
+          if(st && Array.isArray(st.players)){
+            const human=st.players.find(x=>x && x.isCpu===false) || st.players[0];
+            if(human){ human.name=p.nickname; human.avatar=p.avatarValue; }
+            localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(st));
+          }
+        }catch(saveErr){ console.warn('ソロ保存へのアカウント情報反映に失敗',saveErr); }
+      }
+    }catch(e){ console.warn('プロフィール保存失敗',e); }
+    // 現在ゲーム中なら、画面上の人間プレーヤーにも即時反映する。
+    try{
+      const live=this.players?.find(x=>x && !x.isCpu && (!this.myUid || !x.uid || x.uid===this.myUid));
+      if(live){ live.name=p.nickname; live.avatar=p.avatarValue; }
+    }catch(e){}
     this._refreshAccountPanel?.();
   };
   app._syncProfileFromPlayer=function(player){
@@ -10241,7 +10275,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       .edo-account-top{display:flex;align-items:flex-start;gap:14px;min-height:205px}.edo-account-avatar-wrap{width:38%;min-width:180px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.edo-account-avatar-button{appearance:none;border:0;background:transparent;padding:0;cursor:pointer;display:block;width:min(221px,100%);border-radius:22px}.edo-account-avatar-button:active{transform:scale(.985)}.edo-account-avatar{width:100%;aspect-ratio:1/1;border-radius:20px;background:rgba(2,6,23,.72);border:2px solid rgba(245,158,11,.62);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:109px;box-shadow:inset 0 0 22px rgba(0,0,0,.35)}.edo-account-name{width:100%;margin-top:7px;text-align:center;font-weight:900;font-size:20px;line-height:1.05;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 3px rgba(0,0,0,.8)}.edo-goal-num{color:#fbbf24;font-size:24px;font-weight:1000;letter-spacing:.02em}.edo-goal-word{font-size:.62em;font-weight:800;letter-spacing:.02em}
       .edo-account-main{flex:1;min-width:0;display:flex;flex-direction:column;padding-top:0}.edo-account-main-head{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-height:34px;border-bottom:1px solid rgba(226,232,240,.22);padding-bottom:5px}.edo-account-goals{white-space:nowrap;display:flex;align-items:baseline;gap:3px}.edo-account-territory{white-space:nowrap;color:#e2e8f0;font-size:15px;font-weight:900}.edo-account-stats{display:flex;flex-direction:column;align-items:center;gap:1px;margin-top:6px;width:100%}.edo-stat{display:flex;align-items:baseline;justify-content:center;gap:5px;width:fit-content;min-width:100px;padding:3px 2px;color:#f8fafc;font-weight:900;font-size:18px;line-height:1.08;text-shadow:0 2px 2px rgba(0,0,0,.78);border-bottom:1px solid rgba(148,163,184,.10)}.edo-stat:last-child{border-bottom:0}.edo-stat span{font-size:18px;color:#f1f5f9;font-weight:900;min-width:2.8em;text-align:right}.edo-stat b{font-size:27px;min-width:58px;text-align:left;color:#f8fafc;font-weight:1000}.edo-account-money{display:flex;align-items:baseline;justify-content:center;flex-wrap:nowrap;gap:8px;margin-top:9px;padding:9px 2px 6px;border-top:2px solid rgba(226,232,240,.22);white-space:nowrap;text-align:center}.edo-account-money-label{font-size:19px;font-weight:1000;color:#f8fafc;white-space:nowrap;text-shadow:0 2px 2px rgba(0,0,0,.75)}.edo-account-money-value{min-width:0;text-align:left;font-size:29px;line-height:1;font-weight:1000;color:#f8fafc;letter-spacing:.01em;white-space:nowrap;text-shadow:0 2px 3px rgba(0,0,0,.85)}.edo-account-property-inline{font-size:18px;font-weight:900;color:#e2e8f0;white-space:nowrap}.edo-account-footer{display:none}.edo-account-panel-compact{padding-bottom:10px}
       @media(max-width:560px){#edogawa-account-panel{padding:10px 10px 12px;margin-top:14px}.edo-account-top{gap:8px;min-height:165px}.edo-account-avatar-wrap{width:38%;min-width:145px}.edo-account-avatar-button{width:168px}.edo-account-avatar{width:168px;font-size:88px}.edo-account-name{font-size:14px}.edo-goal-num{font-size:20px}.edo-account-main-head{gap:6px}.edo-account-goals{gap:2px}.edo-account-territory{font-size:11px}.edo-stat{font-size:14px;padding:2px;gap:4px;min-width:84px}.edo-stat span{font-size:14px;min-width:2.8em}.edo-stat b{font-size:22px;min-width:46px}.edo-account-money{margin-top:7px;padding-top:7px;gap:5px}.edo-account-money-label{font-size:14px}.edo-account-money-value{font-size:21px}.edo-account-property-inline{font-size:12px}}
-      #edogawa-stat-toast{position:fixed;left:50%;top:62px;transform:translateX(-50%);z-index:140;background:rgba(15,23,42,.96);border:1px solid rgba(245,158,11,.55);color:#fff;border-radius:14px;padding:9px 14px;max-width:90vw;box-shadow:0 12px 30px rgba(0,0,0,.4);font-size:12px;transition:opacity .25s;white-space:normal;text-align:center}
+      #edogawa-stat-toast{position:fixed;left:50%;top:62px;transform:translateX(-50%);z-index:140;background:rgba(15,23,42,.96);border:1px solid rgba(245,158,11,.55);color:#fff;border-radius:14px;padding:9px 16px;width:min(720px,92vw);min-width:min(280px,92vw);box-sizing:border-box;box-shadow:0 12px 30px rgba(0,0,0,.4);font-size:13px;line-height:1.25;transition:opacity .25s;white-space:nowrap;text-align:left;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none}#edogawa-stat-toast::-webkit-scrollbar{display:none}
       #edogawa-player-status{position:fixed;right:10px;top:60px;z-index:45;width:min(250px,65vw);background:rgba(15,23,42,.94);border:1px solid rgba(56,189,248,.45);border-radius:16px;padding:12px;box-shadow:0 14px 36px rgba(0,0,0,.4);backdrop-filter:blur(10px);display:none}.edo-prop-list{max-height:120px;overflow:auto}
       #edogawa-property-modal{position:fixed;inset:0;z-index:125;background:rgba(2,6,23,.84);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:14px}.edo-prop-box{width:min(400px,94vw);background:#0f172a;border:1px solid rgba(245,158,11,.42);border-radius:22px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
     `;document.head.appendChild(style);
@@ -10374,7 +10408,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     else { icon.textContent=p.avatarType==='emoji'?p.avatarValue:avDefault; lineNote?.classList.add('hidden'); }
     const selected = mode==='line' && linePic ? `line:${linePic}` : `emoji:${p.avatarType==='emoji'?p.avatarValue:avDefault}`;
     this._setupSelected=selected;
-    grid.innerHTML = (this._setupMode==='line' && linePic ? `<button type="button" class="edo-emoji-btn sel" title="LINEプロフィール画像" data-avatar="line:${esc(linePic)}"><img src="${esc(linePic)}" class="w-full h-full rounded-xl object-cover" referrerpolicy="no-referrer"></button>`:'') + (['🧑‍🦱','👨‍🦰','👩‍🦰','🧑‍🦳','👴','👵','🐶','🐱','🐻','🐼','🦊','🐰','🐯','🦁','🐨','🐵','🐔','🐧'].map(e=>`<button type="button" class="edo-emoji-btn ${selected===`emoji:${e}`?'sel':''}" data-avatar="emoji:${e}">${e}</button>`).join(''));
+    grid.innerHTML = (this._setupMode==='line' && linePic ? `<button type="button" class="edo-emoji-btn sel" title="LINEプロフィール画像" data-avatar="line:${esc(linePic)}"><img src="${esc(linePic)}" class="w-full h-full rounded-xl object-cover" referrerpolicy="no-referrer"></button>`:'') + AVATAR_LIST.map(e=>`<button type="button" class="edo-emoji-btn ${selected===`emoji:${e}`?'sel':''}" data-avatar="emoji:${e}">${e}</button>`).join('');
     grid.querySelectorAll('.edo-emoji-btn').forEach(b=>b.onclick=()=>{this._setupSelected=b.dataset.avatar;grid.querySelectorAll('.edo-emoji-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
     modal?.classList.add('show');
   };
@@ -11164,5 +11198,26 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   if(oldRefresh){app.refreshVisitedLobbyCount=async function(...args){const r=await oldRefresh(...args);try{if(r!==null&&r!==undefined)updateVisitedToolLabel(r);else if(app.visitedEntryCount!==undefined)updateVisitedToolLabel(app.visitedEntryCount);}catch(_){}return r;};}
 })();
 </script>
+
+<style id="edogawa-v27-ui-style">
+  /* v27: top-page account panel refinements */
+  #edogawa-account-panel .edo-account-top{gap:12px;}
+  #edogawa-account-panel .edo-account-avatar-wrap{padding-right:12px;box-sizing:border-box;}
+  #edogawa-account-panel .edo-account-avatar-button{width:90%;max-width:199px;margin:0 auto;}
+  #edogawa-account-panel .edo-account-avatar{width:100%;font-size:98px;margin-top:0;}
+  #edogawa-account-panel .edo-account-name{width:90%;max-width:199px;margin-left:auto;margin-right:auto;text-align:center;}
+  #edogawa-account-panel .edo-account-main-head{justify-content:center !important;}
+  #edogawa-account-panel .edo-account-goals{width:100%;justify-content:center;}
+  #edogawa-account-panel .edo-stat{gap:2em;}
+  #resume-save-btn > span:first-child{font-size:36px !important;line-height:1 !important;}
+  @media(max-width:560px){
+    #edogawa-account-panel .edo-account-top{gap:8px;}
+    #edogawa-account-panel .edo-account-avatar-wrap{padding-right:10px;}
+    #edogawa-account-panel .edo-account-avatar-button{width:90%;max-width:151px;}
+    #edogawa-account-panel .edo-account-avatar{width:100%;font-size:79px;}
+    #edogawa-account-panel .edo-account-name{width:90%;max-width:151px;}
+    #edogawa-account-panel .edo-stat{gap:2em;}
+  }
+</style>
 </body>
 </html>
