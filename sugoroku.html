@@ -10232,10 +10232,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       #edogawa-user-setup.show{display:flex}
       #edogawa-user-setup .box{width:min(440px,94vw);max-height:92vh;overflow:auto;background:#0f172a;border:1px solid rgba(245,158,11,.4);border-radius:24px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
       .edo-emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.edo-emoji-btn{aspect-ratio:1;border-radius:12px;border:1px solid #334155;background:#020617;font-size:25px}.edo-emoji-btn.sel{border-color:#fbbf24;background:rgba(245,158,11,.16);box-shadow:0 0 0 2px rgba(245,158,11,.18)}
-      #edogawa-account-panel{position:relative;z-index:10;max-width:760px;width:100%;margin:auto;background:linear-gradient(180deg,rgba(7,10,18,.95),rgba(15,23,42,.92));border:2px solid rgba(226,232,240,.84);padding:12px 14px 14px;border-radius:22px;backdrop-filter:blur(12px);box-shadow:0 18px 48px rgba(0,0,0,.48);color:#fff}
-      .edo-account-top{display:flex;align-items:stretch;gap:14px;min-height:205px}.edo-account-avatar-wrap{width:38%;min-width:155px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:2px 0 0}.edo-account-avatar{width:min(170px,100%);aspect-ratio:1/1;border-radius:20px;background:rgba(2,6,23,.72);border:2px solid rgba(245,158,11,.62);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:84px;box-shadow:inset 0 0 22px rgba(0,0,0,.35)}.edo-account-name{width:100%;margin-top:8px;text-align:center;font-weight:900;font-size:20px;line-height:1.05;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 3px rgba(0,0,0,.8)}.edo-goal-num{color:#fbbf24;font-size:24px;font-weight:1000;letter-spacing:.02em}.edo-goal-word{font-size:.62em;font-weight:800;letter-spacing:.02em}
-      .edo-account-main{flex:1;min-width:0;display:flex;flex-direction:column;padding-top:1px}.edo-account-main-head{display:flex;align-items:center;justify-content:flex-end;min-height:34px;border-bottom:1px solid rgba(226,232,240,.22);padding-bottom:5px}.edo-account-settings{border:1px solid rgba(148,163,184,.52);background:rgba(30,41,59,.86);color:#f8fafc;border-radius:11px;padding:7px 11px;font-size:11px;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,.28);white-space:nowrap}.edo-account-stats{display:grid;grid-template-columns:1fr;gap:1px;margin-top:6px}.edo-stat{display:flex;align-items:center;justify-content:space-between;padding:3px 2px;color:#f8fafc;font-weight:900;font-size:18px;line-height:1.08;text-shadow:0 2px 2px rgba(0,0,0,.78);border-bottom:1px solid rgba(148,163,184,.10)}.edo-stat:last-child{border-bottom:0}.edo-stat span{font-size:18px;color:#f1f5f9;font-weight:900}.edo-stat b{font-size:27px;min-width:58px;text-align:right;color:#f8fafc;font-weight:1000}.edo-account-subline{margin-top:auto;padding-top:5px;color:#cbd5e1;font-size:10px;font-weight:800;text-align:right}.edo-account-money{display:flex;align-items:center;gap:10px;margin-top:9px;padding:8px 2px 7px;border-top:2px solid rgba(226,232,240,.22)}.edo-account-money-label{font-size:19px;font-weight:1000;color:#f8fafc;white-space:nowrap;text-shadow:0 2px 2px rgba(0,0,0,.75)}.edo-account-money-value{flex:1;min-width:0;text-align:right;font-size:29px;line-height:1;font-weight:1000;color:#f8fafc;letter-spacing:.01em;white-space:nowrap;text-shadow:0 2px 3px rgba(0,0,0,.85)}.edo-account-property{display:flex;align-items:center;justify-content:space-between;margin-top:1px;padding:7px 2px 2px;color:#f8fafc;font-weight:1000;font-size:19px;line-height:1;text-shadow:0 2px 2px rgba(0,0,0,.75)}.edo-account-property-value{font-size:27px;color:#f8fafc}.edo-account-footer{margin-top:4px;font-size:9px;color:#94a3b8;text-align:center}.edo-account-panel-compact{padding-bottom:10px}
-      @media(max-width:560px){#edogawa-account-panel{padding:10px 10px 12px}.edo-account-top{gap:8px;min-height:165px}.edo-account-avatar-wrap{width:34%;min-width:108px}.edo-account-avatar{width:108px;font-size:58px}.edo-account-name{font-size:14px}.edo-goal-num{font-size:18px}.edo-account-settings{font-size:10px;padding:6px 8px}.edo-stat{font-size:14px;padding:2px}.edo-stat span{font-size:14px}.edo-stat b{font-size:22px}.edo-account-money{margin-top:7px;padding-top:7px}.edo-account-money-label{font-size:15px}.edo-account-money-value{font-size:21px}.edo-account-property{font-size:15px}.edo-account-property-value{font-size:21px}}
+      #edogawa-account-panel{position:relative;z-index:10;max-width:760px;width:100%;margin:18px auto 0;background:linear-gradient(180deg,rgba(7,10,18,.95),rgba(15,23,42,.92));border:2px solid rgba(226,232,240,.84);padding:12px 14px 14px;border-radius:22px;backdrop-filter:blur(12px);box-shadow:0 18px 48px rgba(0,0,0,.48);color:#fff}
+      .edo-account-top{display:flex;align-items:flex-start;gap:14px;min-height:205px}.edo-account-avatar-wrap{width:38%;min-width:180px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.edo-account-avatar{width:min(221px,100%);aspect-ratio:1/1;border-radius:20px;background:rgba(2,6,23,.72);border:2px solid rgba(245,158,11,.62);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:109px;box-shadow:inset 0 0 22px rgba(0,0,0,.35)}.edo-account-name{width:100%;margin-top:7px;text-align:center;font-weight:900;font-size:20px;line-height:1.05;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 3px rgba(0,0,0,.8)}.edo-goal-num{color:#fbbf24;font-size:24px;font-weight:1000;letter-spacing:.02em}.edo-goal-word{font-size:.62em;font-weight:800;letter-spacing:.02em}
+      .edo-account-main{flex:1;min-width:0;display:flex;flex-direction:column;padding-top:0}.edo-account-main-head{display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:34px;border-bottom:1px solid rgba(226,232,240,.22);padding-bottom:5px}.edo-account-goals{white-space:nowrap;display:flex;align-items:baseline;gap:3px}.edo-account-settings{border:1px solid rgba(148,163,184,.52);background:rgba(30,41,59,.86);color:#f8fafc;border-radius:11px;padding:7px 11px;font-size:11px;font-weight:900;box-shadow:0 4px 12px rgba(0,0,0,.28);white-space:nowrap}.edo-account-stats{display:grid;grid-template-columns:1fr;gap:1px;margin-top:6px}.edo-stat{display:flex;align-items:baseline;justify-content:flex-start;gap:8px;padding:3px 2px;color:#f8fafc;font-weight:900;font-size:18px;line-height:1.08;text-shadow:0 2px 2px rgba(0,0,0,.78);border-bottom:1px solid rgba(148,163,184,.10)}.edo-stat:last-child{border-bottom:0}.edo-stat span{font-size:18px;color:#f1f5f9;font-weight:900;min-width:2.8em}.edo-stat b{font-size:27px;min-width:58px;text-align:left;color:#f8fafc;font-weight:1000}.edo-account-money{display:flex;align-items:baseline;flex-wrap:nowrap;gap:8px;margin-top:9px;padding:9px 2px 6px;border-top:2px solid rgba(226,232,240,.22);white-space:nowrap}.edo-account-money-label{font-size:19px;font-weight:1000;color:#f8fafc;white-space:nowrap;text-shadow:0 2px 2px rgba(0,0,0,.75)}.edo-account-money-value{min-width:0;text-align:left;font-size:29px;line-height:1;font-weight:1000;color:#f8fafc;letter-spacing:.01em;white-space:nowrap;text-shadow:0 2px 3px rgba(0,0,0,.85)}.edo-account-property-inline{font-size:18px;font-weight:900;color:#e2e8f0;white-space:nowrap}.edo-account-footer{display:none}.edo-account-panel-compact{padding-bottom:10px}
+      @media(max-width:560px){#edogawa-account-panel{padding:10px 10px 12px;margin-top:14px}.edo-account-top{gap:8px;min-height:165px}.edo-account-avatar-wrap{width:38%;min-width:145px}.edo-account-avatar{width:140px;font-size:75px}.edo-account-name{font-size:14px}.edo-goal-num{font-size:20px}.edo-account-main-head{gap:7px}.edo-account-goals{gap:2px}.edo-account-settings{font-size:10px;padding:6px 8px}.edo-stat{font-size:14px;padding:2px;gap:5px}.edo-stat span{font-size:14px;min-width:2.8em}.edo-stat b{font-size:22px;min-width:46px}.edo-account-money{margin-top:7px;padding-top:7px;gap:5px}.edo-account-money-label{font-size:14px}.edo-account-money-value{font-size:21px}.edo-account-property-inline{font-size:12px}}
       #edogawa-stat-toast{position:fixed;left:50%;top:62px;transform:translateX(-50%);z-index:140;background:rgba(15,23,42,.96);border:1px solid rgba(245,158,11,.55);color:#fff;border-radius:14px;padding:9px 14px;max-width:90vw;box-shadow:0 12px 30px rgba(0,0,0,.4);font-size:12px;transition:opacity .25s;white-space:normal;text-align:center}
       #edogawa-player-status{position:fixed;right:10px;top:60px;z-index:45;width:min(250px,65vw);background:rgba(15,23,42,.94);border:1px solid rgba(56,189,248,.45);border-radius:16px;padding:12px;box-shadow:0 14px 36px rgba(0,0,0,.4);backdrop-filter:blur(10px);display:none}.edo-prop-list{max-height:120px;overflow:auto}
       #edogawa-property-modal{position:fixed;inset:0;z-index:125;background:rgba(2,6,23,.84);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:14px}.edo-prop-box{width:min(400px,94vw);background:#0f172a;border:1px solid rgba(245,158,11,.42);border-radius:22px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
@@ -10289,16 +10289,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const p=this.getUserProfile(); const s=p.stats||statsDefault; const showProp=Number(p.money)>10000000;
     const av=p.avatarType==='line'?this.avatarHtml(p.avatarValue,'w-full h-full object-cover'):esc(p.avatarValue||avDefault);
     const safeMoney=Math.floor(Number(p.money)||0).toLocaleString('ja-JP');
-    const safeMoved=Math.floor(Number(p.movedSquares)||0).toLocaleString('ja-JP');
-    const safeGoals=Math.floor(Number(p.goals)||0);
+    const safeGoals=Math.floor(Number(p.goals)||0).toLocaleString('ja-JP');
+    const propCount=Array.isArray(p.properties)?p.properties.length:0;
     panel.innerHTML=`
       <div class="edo-account-top">
         <div class="edo-account-avatar-wrap">
           <div class="edo-account-avatar">${av}</div>
-          <div class="edo-account-name">${esc(p.nickname)} <span class="edo-goal-num">${safeGoals}</span><span class="edo-goal-word">ゴール</span></div>
+          <div class="edo-account-name">${esc(p.nickname)}</div>
         </div>
         <div class="edo-account-main">
           <div class="edo-account-main-head">
+            <div class="edo-account-goals"><span class="edo-goal-num">${safeGoals}</span><span class="edo-goal-word">ゴール</span></div>
             <button type="button" onclick="EdogawaSugoroku.openUserSetupModal()" class="edo-account-settings">⚙ アカウント設定</button>
           </div>
           <div class="edo-account-stats">
@@ -10307,12 +10308,13 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
             <div class="edo-stat"><span>体力</span><b>${clampStat(s.stamina)}</b></div>
             <div class="edo-stat"><span>運</span><b>${clampStat(s.luck)}</b></div>
           </div>
-          <div class="edo-account-subline">移動 ${safeMoved}マス</div>
         </div>
       </div>
-      <div class="edo-account-money"><span class="edo-account-money-label">所持金</span><span class="edo-account-money-value">¥${safeMoney}</span></div>
-      ${showProp?`<div class="edo-account-property"><span>不動産</span><span class="edo-account-property-value">${Array.isArray(p.properties)?p.properties.length:0}件</span></div>`:''}
-      <div class="edo-account-footer">${showProp?'所持金1,000万円超で不動産を表示':''}</div>`;
+      <div class="edo-account-money">
+        <span class="edo-account-money-label">所持金</span>
+        <span class="edo-account-money-value">￥${safeMoney}</span>
+        ${showProp?`<span class="edo-account-property-inline">(不動産 ${propCount}件)</span>`:''}
+      </div>`;
   };
 
   // ---------------- Initial onboarding ----------------
@@ -10757,23 +10759,38 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   };
 
   async function compressImage(file){
-    if(!(file instanceof File)) return null;
+    if(!file) return null;
     if(file.size>MAX_PHOTO_BYTES) throw new Error('写真は5MB以下を選択してください。');
-    const data=await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=()=>reject(new Error('写真の読み込みに失敗しました。'));fr.readAsDataURL(file);});
-    const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('写真を画像として読み込めませんでした。'));i.src=data;});
-    const scale=Math.min(1,PHOTO_MAX_EDGE/Math.max(img.width,img.height));
-    const w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
-    const c=document.createElement('canvas');c.width=w;c.height=h;
-    const ctx=c.getContext('2d',{alpha:false}); if(!ctx) throw new Error('写真の圧縮機能を利用できません。');
-    ctx.drawImage(img,0,0,w,h);
-    const blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',PHOTO_QUALITY));
-    if(!blob) throw new Error('写真の圧縮に失敗しました。');
-    return blob;
+    const isImage=file.type?file.type.startsWith('image/'):true;
+    if(!isImage) throw new Error('画像ファイルを選択してください。');
+    let imgBitmap=null, imgEl=null, objectUrl=null;
+    try{
+      if('createImageBitmap' in window){
+        try{imgBitmap=await createImageBitmap(file,{imageOrientation:'from-image'});}catch(_){imgBitmap=null;}
+      }
+      if(!imgBitmap){
+        objectUrl=URL.createObjectURL(file);
+        imgEl=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(new Error('写真を画像として読み込めませんでした。'));i.src=objectUrl;});
+      }
+      const srcW=imgBitmap?.width||imgEl?.naturalWidth||imgEl?.width||0,srcH=imgBitmap?.height||imgEl?.naturalHeight||imgEl?.height||0;
+      if(!srcW||!srcH) throw new Error('写真を画像として読み込めませんでした。');
+      const scale=Math.min(1,PHOTO_MAX_EDGE/Math.max(srcW,srcH));
+      const w=Math.max(1,Math.round(srcW*scale)),h=Math.max(1,Math.round(srcH*scale));
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      const ctx=c.getContext('2d',{alpha:false}); if(!ctx) throw new Error('写真の圧縮機能を利用できません。');
+      if(imgBitmap) ctx.drawImage(imgBitmap,0,0,w,h); else ctx.drawImage(imgEl,0,0,w,h);
+      const blob=await new Promise(resolve=>c.toBlob(resolve,'image/jpeg',PHOTO_QUALITY));
+      if(!blob) throw new Error('写真の圧縮に失敗しました。');
+      return blob;
+    }finally{
+      try{imgBitmap?.close?.();}catch(_){ }
+      if(objectUrl) URL.revokeObjectURL(objectUrl);
+    }
   }
   const ensureModal=(id,html)=>{let el=document.getElementById(id);if(!el){el=document.createElement('div');el.id=id;el.innerHTML=html;document.body.appendChild(el);}return el;};
   const show=el=>{if(el)el.style.display='flex';};
   const hide=el=>{if(el)el.style.display='none';};
-  const formModal=ensureModal('visited-pin-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 id="visited-pin-form-title" class="font-black text-amber-400 text-lg">📌 行ったところを記録</h3><button id="visited-pin-form-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-form-location" class="text-[11px] text-slate-400 bg-slate-950/60 rounded-xl p-2 mb-3"></div><div class="visited-date-row mb-4"><span class="text-xs font-bold text-slate-300 shrink-0">日付</span><button id="visited-pin-date-btn" type="button" class="visited-date-btn">2026/09/25</button><input id="visited-pin-date" type="date" class="sr-only" tabindex="-1" aria-hidden="true"></div><div class="text-xs font-bold text-slate-300 mb-2">写真</div><div class="visited-photo-actions"><button id="visited-pin-camera-btn" type="button" class="visited-photo-action-btn">📷 カメラ</button><button id="visited-pin-gallery-btn" type="button" class="visited-photo-action-btn">🖼️ 画像</button></div><input id="visited-pin-photo-camera" type="file" accept="image/*" capture="environment" class="hidden"><input id="visited-pin-photo-gallery" type="file" accept="image/*" class="hidden"><div id="visited-pin-photo-label" class="text-[10px] text-slate-500 mt-2 text-center">写真を追加できます（1枚）</div><div id="visited-pin-photo-preview-wrap" class="hidden mt-2"><img id="visited-pin-photo-preview" class="visited-photo-preview" alt="写真プレビュー"></div><label class="block text-xs font-bold text-slate-300 mt-4 mb-2">メモ</label><textarea id="visited-pin-note" maxlength="500" rows="5" placeholder="行った場所の思い出やメモ（500文字まで）" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 resize-none"></textarea><div id="visited-pin-form-status" class="hidden text-xs mt-3 rounded-xl p-2"></div><div class="grid grid-cols-2 gap-2 mt-4"><button id="visited-pin-form-cancel" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">キャンセル</button><button id="visited-pin-form-save" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">保存する</button></div></div>`);
+  const formModal=ensureModal('visited-pin-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 id="visited-pin-form-title" class="font-black text-amber-400 text-lg">📌 行ったところを記録</h3><button id="visited-pin-form-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-form-location" class="text-[11px] text-slate-400 bg-slate-950/60 rounded-xl p-2 mb-3"></div><div class="visited-date-row mb-4"><span class="text-xs font-bold text-slate-300 shrink-0">日付</span><button id="visited-pin-date-btn" type="button" class="visited-date-btn">2026/09/25</button><input id="visited-pin-date" type="date" class="sr-only" tabindex="-1" aria-hidden="true"></div><div class="text-xs font-bold text-slate-300 mb-2">写真</div><div class="visited-photo-actions"><button id="visited-pin-camera-btn" type="button" class="visited-photo-action-btn">📷 カメラ</button><button id="visited-pin-gallery-btn" type="button" class="visited-photo-action-btn">🖼️ 画像</button></div><input id="visited-pin-photo-camera" type="file" accept="image/*" capture="environment" class="hidden"><input id="visited-pin-photo-gallery" type="file" accept="image/*" class="hidden"><div id="visited-pin-photo-label" class="text-[10px] text-slate-500 mt-2 text-center">写真を追加できます（1枚）</div><div id="visited-pin-photo-preview-wrap" class="hidden mt-2"><img id="visited-pin-photo-preview" class="visited-photo-preview" alt="写真プレビュー"></div><label class="block text-xs font-bold text-slate-300 mt-4 mb-2">メモ</label><textarea id="visited-pin-note" maxlength="500" rows="5" placeholder="行った場所の思い出やメモ（500文字まで）" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 resize-none"></textarea><div id="visited-pin-form-status" class="hidden text-xs mt-3 rounded-xl p-2"></div><div class="grid grid-cols-3 gap-2 mt-4"><button id="visited-pin-form-cancel" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">キャンセル</button><button id="visited-pin-form-delete" class="hidden bg-rose-950/70 border border-rose-700/70 text-rose-200 font-bold py-3 rounded-xl">削除</button><button id="visited-pin-form-save" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">保存する</button></div></div>`);
   const listModal=ensureModal('visited-pin-list-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><div><h3 class="font-black text-amber-400 text-lg">📌 この場所の記録</h3><div id="visited-pin-list-location" class="text-[10px] text-slate-500 mt-1"></div></div><button id="visited-pin-list-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-list" class="space-y-2"></div></div>`);
   const detailModal=ensureModal('visited-pin-detail-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 class="font-black text-amber-400 text-lg">📌 記録詳細</h3><button id="visited-pin-detail-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-detail-body"></div></div>`);
   let pendingPhoto=null;
@@ -10803,7 +10820,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         lat:num(e.lat), lng:num(e.lng), accuracyMeters:num(e.accuracy_meters), visitDate:e.visit_date||'', note:e.note||'',
         photoPath:e.photo_path||null, createdAt:e.created_at?Date.parse(e.created_at):Date.now(), updatedAt:e.updated_at?Date.parse(e.updated_at):Date.now()
       })).filter(e=>e.ownerUid&&isInsideEdogawaWard(e.lat,e.lng));
-      app.refreshVisitedPinMarkers();
+      app.refreshVisitedPinMarkers(); updateVisitedToolLabel();
     };
     try{
       await load();
@@ -10864,6 +10881,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const dateEl=document.getElementById('visited-pin-date'),dateBtn=document.getElementById('visited-pin-date-btn'),today=TODAY();
     if(dateEl)dateEl.value=today;if(dateBtn)dateBtn.textContent=today.replace(/-/g,'/');
     document.getElementById('visited-pin-form-title').textContent='📌 行ったところを記録';
+    document.getElementById('visited-pin-form-delete')?.classList.add('hidden');
     const d=app.visitedPinDraft||{},acc=num(d.accuracy,0);
     document.getElementById('visited-pin-form-location').textContent=acc?`江戸川区内 ／ 位置精度 約${Math.round(acc)}m`:'江戸川区内 ／ 地図で選択した場所';
     document.getElementById('visited-pin-note').value='';
@@ -10871,6 +10889,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     document.getElementById('visited-pin-photo-preview-wrap').classList.add('hidden');document.getElementById('visited-pin-photo-label').textContent='写真を追加できます（1枚）';
     pendingPhoto=null;pendingSelectedFile=null;setStatus('写真・日付・メモを入力して保存してください。');show(formModal);
   }
+  function updateVisitedToolLabel(){const btn=document.getElementById('visited-pin-tool');if(!btn)return;const count=Array.isArray(app.visitedEntries)?app.visitedEntries.length:0;btn.textContent=`📌投稿${count.toLocaleString('ja-JP')}件`;}
   app.startVisitedPinRecord=function(){startRecord();};
   function startRecord(){
     if(!(isSupabaseConfigured())){alert('「📌 行ったところ」はSupabase設定後に利用できます。HTMLのSUPABASE_CONFIG（URL / Publishable key）を設定してください。');return;}
@@ -10883,8 +10902,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         if(!isInsideEdogawaWard(lat,lng)){alert('現在地は江戸川区外のため、📌を記録できません。');return;}
         app.visitedPickMode=false;clearVisitedPickHint();app.map.flyTo([lat,lng],19,{duration:.55});app.visitedPinDraft={lat,lng,accuracy:acc};
         setTimeout(()=>openLocationConfirm(lat,lng,acc),650);
-      }finally{if(btn){btn.disabled=false;btn.textContent='📌 行ったところ';}}
-    },err=>{if(btn){btn.disabled=false;btn.textContent='📌 行ったところ';}alert(err?.code===1?'位置情報の利用が許可されていません。ブラウザの位置情報設定を確認してください。':'位置情報を取得できませんでした。もう一度お試しください。');},{enableHighAccuracy:true,maximumAge:0,timeout:12000});
+      }finally{if(btn){btn.disabled=false;updateVisitedToolLabel();}}
+    },err=>{if(btn){btn.disabled=false;updateVisitedToolLabel();}alert(err?.code===1?'位置情報の利用が許可されていません。ブラウザの位置情報設定を確認してください。':'位置情報を取得できませんでした。もう一度お試しください。');},{enableHighAccuracy:true,maximumAge:0,timeout:12000});
   }
 
   function prepareSelectedPhoto(file){
@@ -10924,16 +10943,31 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       }else{
         payload.id=id; const {error}=await app.visitedSupabase.from(VISITED_TABLE).insert(payload); if(error) throw error;
       }
-      hide(formModal);clearVisitedDraftMarker();clearVisitedPickHint();app.visitedPickMode=false;app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;app.refreshVisitedLobbyCount?.();
+      hide(formModal);clearVisitedDraftMarker();clearVisitedPickHint();app.visitedPickMode=false;app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;updateVisitedToolLabel();app.refreshVisitedLobbyCount?.();
     }catch(e){console.error(e);setStatus(e?.message||'保存に失敗しました。','error');}
     finally{btn.disabled=false;btn.textContent='保存する';}
+  }
+
+  async function deleteVisitedEntry(entry){
+    if(!entry || !isMine(entry)) throw new Error('他人の📌は削除できません。');
+    if(!(await ensureSupabase())) throw new Error('Supabase接続を確認してください。');
+    if(!confirm('この投稿を削除しますか？\n写真とメモも削除されます。')) return false;
+    if(entry.id){
+      const {error}=await app.visitedSupabase.from(VISITED_TABLE).delete().eq('id',entry.id).eq('owner_uid',app.visitedSupabaseUser.id);
+      if(error) throw error;
+    }
+    if(entry.photoPath){
+      try{const {error}=await app.visitedSupabase.storage.from(VISITED_BUCKET).remove([entry.photoPath]);if(error) console.warn('写真ファイル削除失敗:',error);}catch(e){console.warn('写真ファイル削除失敗:',e);}
+      photoUrlCache.delete(entry.photoPath);
+    }
+    return true;
   }
 
   app.openVisitedEntryForm=async function(entry){
     if(!entry || !isMine(entry)){alert('他人の📌は編集できません。');return;}
     if(!(await ensureSupabase())){alert('Supabase接続を確認してください。');return;}
     app.visitedPinDraft={lat:num(entry.lat),lng:num(entry.lng),accuracy:num(entry.accuracyMeters),editId:entry.id};pendingPhoto={existingPath:entry.photoPath||null};pendingSelectedFile=null;
-    document.getElementById('visited-pin-form-title').textContent='📌 記録を編集';document.getElementById('visited-pin-form-location').textContent=`江戸川区内 ／ 投稿者：${entry.ownerName||'プレーヤー'}`;document.getElementById('visited-pin-date').value=entry.visitDate||TODAY();document.getElementById('visited-pin-date-btn').textContent=(entry.visitDate||TODAY()).replace(/-/g,'/');document.getElementById('visited-pin-note').value=entry.note||'';document.getElementById('visited-pin-photo-camera').value='';document.getElementById('visited-pin-photo-gallery').value='';document.getElementById('visited-pin-photo-label').textContent=entry.photoPath?'現在の写真を表示中':'写真を追加できます（1枚）';
+    document.getElementById('visited-pin-form-title').textContent='📌 記録を編集';document.getElementById('visited-pin-form-delete')?.classList.remove('hidden');document.getElementById('visited-pin-form-location').textContent=`江戸川区内 ／ 投稿者：${entry.ownerName||'プレーヤー'}`;document.getElementById('visited-pin-date').value=entry.visitDate||TODAY();document.getElementById('visited-pin-date-btn').textContent=(entry.visitDate||TODAY()).replace(/-/g,'/');document.getElementById('visited-pin-note').value=entry.note||'';document.getElementById('visited-pin-photo-camera').value='';document.getElementById('visited-pin-photo-gallery').value='';document.getElementById('visited-pin-photo-label').textContent=entry.photoPath?'現在の写真を表示中':'写真を追加できます（1枚）';
     const wrap=document.getElementById('visited-pin-photo-preview-wrap'),img=document.getElementById('visited-pin-photo-preview');
     try{const url=await getSignedPhotoUrl(entry);if(url){img.src=url;wrap.classList.remove('hidden');}else wrap.classList.add('hidden');}catch(_){wrap.classList.add('hidden');}
     setStatus('写真を選び直せば差し替えできます。選ばなければ現在の写真を保持します。');show(formModal);
@@ -11004,8 +11038,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     document.getElementById('visited-pin-photo-camera')?.addEventListener('change',e=>{const f=e.target.files?.[0]||null;if(f)prepareSelectedPhoto(f);});
     document.getElementById('visited-pin-photo-gallery')?.addEventListener('change',e=>{const f=e.target.files?.[0]||null;if(f)prepareSelectedPhoto(f);});
     document.getElementById('visited-pin-form-save').addEventListener('click',saveEntry);
-    document.getElementById('visited-pin-form-cancel').addEventListener('click',()=>{hide(formModal);app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;app.visitedPickMode=false;clearVisitedDraftMarker();clearVisitedPickHint();});
-    document.getElementById('visited-pin-form-close').addEventListener('click',()=>{hide(formModal);app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;app.visitedPickMode=false;clearVisitedDraftMarker();clearVisitedPickHint();});
+    document.getElementById('visited-pin-form-delete')?.addEventListener('click',async()=>{const d=app.visitedPinDraft;if(!d?.editId)return;const entry=app.visitedEntries.find(x=>x.id===d.editId);const del=document.getElementById('visited-pin-form-delete');if(!entry)return;try{del.disabled=true;del.textContent='削除中…';if(await deleteVisitedEntry(entry)){hide(formModal);clearVisitedDraftMarker();clearVisitedPickHint();app.visitedPickMode=false;app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;app.visitedEntries=Array.isArray(app.visitedEntries)?app.visitedEntries.filter(x=>x.id!==entry.id):[];app.refreshVisitedPinMarkers();updateVisitedToolLabel();app.refreshVisitedLobbyCount?.();}}catch(e){console.error(e);setStatus(e?.message||'削除に失敗しました。','error');}finally{del.disabled=false;del.textContent='削除';}});
+    document.getElementById('visited-pin-form-cancel').addEventListener('click',()=>{const d=app.visitedPinDraft;if(d?.editId){hide(formModal);app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;clearVisitedDraftMarker();clearVisitedPickHint();app.visitedPickMode=false;return;}hide(formModal);pendingPhoto=null;pendingSelectedFile=null;clearVisitedDraftMarker();clearVisitedPickHint();app.visitedPinDraft=null;enableVisitedMapPick();});
+    document.getElementById('visited-pin-form-close').addEventListener('click',()=>{const d=app.visitedPinDraft;if(d?.editId){hide(formModal);app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;app.visitedPickMode=false;clearVisitedDraftMarker();clearVisitedPickHint();return;}hide(formModal);pendingPhoto=null;pendingSelectedFile=null;clearVisitedDraftMarker();clearVisitedPickHint();app.visitedPinDraft=null;enableVisitedMapPick();});
     document.getElementById('visited-pin-list-close').addEventListener('click',()=>hide(listModal));document.getElementById('visited-pin-detail-close').addEventListener('click',()=>hide(detailModal));
   }
 
@@ -11015,5 +11050,81 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 })();
 </script>
 
+<style id="edogawa-v25-ui-style">
+  /* v25: top-page spacing */
+  #lobby-screen > .relative.z-10.pt-2.sm\:pt-4 > h1{margin-top:0.65rem !important;}
+  #edogawa-lobby-visited{display:none !important;}
+  #lobby-visited-pin-top{border:0 !important;background:transparent !important;box-shadow:none !important;color:#ef4444 !important;font-size:1.65rem;line-height:1;padding:0 !important;width:40px;height:40px;display:flex;align-items:center;justify-content:center;}
+  #lobby-visited-pin-top:active{transform:scale(.94);}
+  /* v25: visited-only navigation */
+  #visited-only-back-btn,#visited-only-own-menu-btn{display:none;}
+  body.edo-visited-only #game-menu-btn{display:none !important;}
+  body.edo-visited-only #visited-only-back-btn,body.edo-visited-only #visited-only-own-menu-btn{display:flex;position:fixed;top:10px;z-index:70;width:42px;height:42px;align-items:center;justify-content:center;border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.42);font-weight:900;}
+  body.edo-visited-only #visited-only-back-btn{left:10px;background:#09090b;border:1px solid #7f1d1d;color:#fecaca;font-size:21px;}
+  body.edo-visited-only #visited-only-own-menu-btn{right:10px;background:#09090b;border:2px solid #dc2626;color:#ef4444;flex-direction:column;gap:4px;}
+  body.edo-visited-only #visited-only-own-menu-btn span{display:block;width:20px;height:2px;background:#ef4444;border-radius:2px;}
+  body.edo-visited-only #visited-roll-stack{right:12px;bottom:14px;}
+  body.edo-visited-only #visited-pin-tool{background:#09090b;border:1px solid #7f1d1d;color:#fecaca;border-radius:12px;font-size:13px;padding:10px 13px;box-shadow:0 10px 26px rgba(0,0,0,.45);}
+  #visited-own-list-modal .visited-pin-box{width:min(460px,95vw);}
+</style>
+
+
+<script>
+(function(){
+  'use strict';
+  const app=window.EdogawaSugoroku;
+  if(!app) return;
+  // v25 navigation / own-post list / top-page pin button
+  function ensureNav(){
+    if(!document.getElementById('visited-only-back-btn')){
+      const back=document.createElement('button'); back.id='visited-only-back-btn'; back.type='button'; back.title='トップページへ戻る'; back.setAttribute('aria-label','トップページへ戻る'); back.textContent='↩️';
+      back.onclick=()=>app.closeVisitedOnlyMode?.(); document.body.appendChild(back);
+    }
+    if(!document.getElementById('visited-only-own-menu-btn')){
+      const b=document.createElement('button'); b.id='visited-only-own-menu-btn'; b.type='button'; b.title='自分の投稿一覧'; b.setAttribute('aria-label','自分の投稿一覧');
+      b.innerHTML='<span></span><span></span><span></span>'; b.onclick=()=>app.openVisitedOwnList?.(); document.body.appendChild(b);
+    }
+    if(!document.getElementById('visited-own-list-modal')){
+      const m=document.createElement('div'); m.id='visited-own-list-modal'; m.className='fixed inset-0 z-[133] bg-slate-950/84 backdrop-blur-[9px] hidden items-center justify-center p-3 sm:p-4';
+      m.innerHTML='<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><div><h3 class="font-black text-red-400 text-lg">📌 自分の投稿一覧</h3><div class="text-[10px] text-slate-500 mt-1">過去に投稿したすべての記録</div></div><button id="visited-own-list-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-own-list-body" class="space-y-2"></div></div>';
+      document.body.appendChild(m);
+      m.querySelector('#visited-own-list-close')?.addEventListener('click',()=>m.classList.add('hidden'));
+    }
+  }
+  function setTopPinButton(){
+    const pwa=document.getElementById('pwa-install-btn'); if(!pwa)return;
+    let b=document.getElementById('lobby-visited-pin-top');
+    if(!b){b=document.createElement('button');b.id='lobby-visited-pin-top';b.type='button';b.title='📌 行ったところ';b.setAttribute('aria-label','📌 行ったところ');b.textContent='📌';b.onclick=()=>app.openVisitedOnlyMode?.();pwa.parentElement.insertBefore(b,pwa);}
+  }
+  app.openVisitedOwnList=async function(){
+    if(!app._visitedOnlyMode)return;
+    ensureNav(); const modal=document.getElementById('visited-own-list-modal'),body=document.getElementById('visited-own-list-body');
+    if(!modal||!body)return;
+    if(!(await (async()=>{try{
+      if(app.visitedSupabase&&app.visitedSupabaseUser)return true;
+      return !!(await app.checkVisitedSupabase?.()).ok;
+    }catch(_){return false;}})())){alert('Supabase接続を確認してください。');return;}
+    const uid=app.visitedSupabaseUser?.id; if(!uid)return;
+    body.innerHTML='<div class="text-center py-10 text-slate-400 text-sm">読み込み中…</div>'; modal.classList.remove('hidden'); modal.classList.add('flex');
+    try{
+      const {data,error}=await app.visitedSupabase.from('visited_entries').select('id,owner_uid,firebase_uid,owner_name,lat,lng,accuracy_meters,visit_date,note,photo_path,created_at,updated_at').eq('owner_uid',uid).order('created_at',{ascending:false});
+      if(error)throw error;
+      const entries=(data||[]).map(e=>({id:e.id,ownerUid:e.owner_uid,firebaseUid:e.firebase_uid||null,ownerName:e.owner_name||'プレーヤー',lat:Number(e.lat),lng:Number(e.lng),accuracyMeters:Number(e.accuracy_meters||0),visitDate:e.visit_date||'',note:e.note||'',photoPath:e.photo_path||null,createdAt:e.created_at?Date.parse(e.created_at):Date.now(),updatedAt:e.updated_at?Date.parse(e.updated_at):Date.now()}));
+      if(!entries.length){body.innerHTML='<div class="text-center py-10 text-slate-400 text-sm">まだ投稿がありません。</div>';return;}
+      const rows=await Promise.all(entries.map(async e=>{let thumb=null;try{thumb=await (async()=>{if(!e.photoPath)return null;const {data,error}=await app.visitedSupabase.storage.from('visited-pins').createSignedUrl(e.photoPath,3600);if(error)throw error;return data?.signedUrl||null;})();}catch(_){thumb=null;}const img=thumb?`<img class="visited-thumb" src="${String(thumb).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" alt="">`:'<div class="visited-thumb flex items-center justify-center text-2xl">📌</div>';return `<button type="button" class="visited-pin-list-item w-full" data-own-visited-id="${e.id}">${img}<span class="min-w-0 flex-1"><b class="text-sm text-slate-100 truncate block">${String(e.visitDate||'日付未設定')}</b><span class="block text-[11px] text-slate-300 mt-1 truncate">${String(e.note||'メモなし').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span></span><span class="text-slate-500">›</span></button>`;}));
+      body.innerHTML=rows.join(''); body.querySelectorAll('[data-own-visited-id]').forEach(btn=>btn.addEventListener('click',()=>{const e=entries.find(x=>x.id===btn.getAttribute('data-own-visited-id'));if(e){modal.classList.add('hidden');modal.classList.remove('flex');app.openVisitedEntryDetail(e);}}));
+    }catch(e){console.error(e);body.innerHTML=`<div class="text-center py-10 text-rose-200 text-sm">投稿一覧を取得できませんでした。<br><span class="text-xs text-slate-400">${String(e?.message||'').replace(/</g,'&lt;')}</span></div>`;}
+  };
+  // Wrap close to ensure dedicated controls disappear/refresh correctly.
+  const oldOpen=app.openVisitedOnlyMode?.bind(app);
+  if(oldOpen){app.openVisitedOnlyMode=async function(...args){const r=await oldOpen(...args);if(this._visitedOnlyMode){document.getElementById('visited-only-back-btn')?.style.setProperty('display','flex');document.getElementById('visited-only-own-menu-btn')?.style.setProperty('display','flex');document.getElementById('game-menu-btn')?.style.setProperty('display','none','important');document.getElementById('visited-only-exit-btn')?.remove();}return r;};}
+  const oldClose=app.closeVisitedOnlyMode?.bind(app);
+  if(oldClose){app.closeVisitedOnlyMode=function(...args){document.getElementById('visited-own-list-modal')?.classList.add('hidden');const r=oldClose(...args);document.getElementById('visited-only-back-btn')?.style.setProperty('display','none');document.getElementById('visited-only-own-menu-btn')?.style.setProperty('display','none');return r;};}
+  setTopPinButton(); ensureNav();
+  // refresh footer label on any future UI init.
+  const oldRefresh=app.refreshVisitedLobbyCount?.bind(app);
+  if(oldRefresh){app.refreshVisitedLobbyCount=async function(...args){const r=await oldRefresh(...args);try{const btn=document.getElementById('visited-pin-tool');if(btn&&!btn.disabled){const n=Array.isArray(app.visitedEntries)?app.visitedEntries.length:0;btn.textContent=`📌投稿${n.toLocaleString('ja-JP')}件`;}}catch(_){}return r;};}
+})();
+</script>
 </body>
 </html>
