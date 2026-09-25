@@ -1714,6 +1714,9 @@
       url: 'https://iboywxukmqevlwyszbff.supabase.co',
       publishableKey: 'sb_publishable_OYHGr5kwFfedoA2mH0oN3A_56Uv3Bfr'
     };
+    // Supabase Auth の Custom OAuth/OIDC Provider として設定したLINE。
+    // Dashboardで identifier=custom:line を作成し、手動IDリンクを有効化して使用します。
+    const SUPABASE_LINE_PROVIDER = 'custom:line';
     // 📌 行ったところ専用コードは別の通常scriptで実行されるため、
     // このIIFE内constを直接参照できない問題を避けるためwindowへ公開します。
     window.EDOGAWA_SUPABASE_CONFIG = SUPABASE_CONFIG;
@@ -10271,6 +10274,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       #edogawa-user-setup.show{display:flex}
       #edogawa-user-setup .box{width:min(440px,94vw);max-height:92vh;overflow:auto;background:#0f172a;border:1px solid rgba(245,158,11,.4);border-radius:24px;padding:20px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
       .edo-emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.edo-emoji-btn{aspect-ratio:1;border-radius:12px;border:1px solid #334155;background:#020617;font-size:25px}.edo-emoji-btn.sel{border-color:#fbbf24;background:rgba(245,158,11,.16);box-shadow:0 0 0 2px rgba(245,158,11,.18)}
+      #edo-line-account-link{margin-top:14px;padding-top:14px;border-top:1px solid rgba(226,232,240,.14)}
+      #edo-line-account-link .line-link-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 12px;border-radius:13px;font-weight:900;border:1px solid rgba(6,199,85,.55);background:rgba(6,199,85,.16);color:#d1fae5;transition:.15s}
+      #edo-line-account-link .line-link-btn:active:not(:disabled){transform:scale(.985)}
+      #edo-line-account-link .line-link-btn:disabled{background:rgba(100,116,139,.28);border-color:rgba(148,163,184,.3);color:#94a3b8;cursor:not-allowed;filter:grayscale(1)}
+      #edo-line-account-status{font-size:11px;line-height:1.35;color:#94a3b8;text-align:center;margin-top:7px}
       #edogawa-account-panel{position:relative;z-index:10;max-width:760px;width:100%;margin:1.35rem auto 0;background:linear-gradient(180deg,rgba(7,10,18,.95),rgba(15,23,42,.92));border:2px solid rgba(226,232,240,.84);padding:12px 14px 14px;border-radius:22px;backdrop-filter:blur(12px);box-shadow:0 18px 48px rgba(0,0,0,.48);color:#fff}
       .edo-account-top{display:flex;align-items:flex-start;gap:14px;min-height:205px}.edo-account-avatar-wrap{width:38%;min-width:180px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.edo-account-avatar-button{appearance:none;border:0;background:transparent;padding:0;cursor:pointer;display:block;width:min(221px,100%);border-radius:22px}.edo-account-avatar-button:active{transform:scale(.985)}.edo-account-avatar{width:100%;aspect-ratio:1/1;border-radius:20px;background:rgba(2,6,23,.72);border:2px solid rgba(245,158,11,.62);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:109px;box-shadow:inset 0 0 22px rgba(0,0,0,.35)}.edo-account-name{width:100%;margin-top:7px;text-align:center;font-weight:900;font-size:20px;line-height:1.05;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 3px rgba(0,0,0,.8)}.edo-goal-num{color:#fbbf24;font-size:24px;font-weight:1000;letter-spacing:.02em}.edo-goal-word{font-size:.62em;font-weight:800;letter-spacing:.02em}
       .edo-account-main{flex:1;min-width:0;display:flex;flex-direction:column;padding-top:0}.edo-account-main-head{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-height:34px;border-bottom:1px solid rgba(226,232,240,.22);padding-bottom:5px}.edo-account-goals{white-space:nowrap;display:flex;align-items:baseline;gap:3px}.edo-account-territory{white-space:nowrap;color:#e2e8f0;font-size:15px;font-weight:900}.edo-account-stats{display:flex;flex-direction:column;align-items:center;gap:1px;margin-top:6px;width:100%}.edo-stat{display:flex;align-items:baseline;justify-content:center;gap:5px;width:fit-content;min-width:100px;padding:3px 2px;color:#f8fafc;font-weight:900;font-size:18px;line-height:1.08;text-shadow:0 2px 2px rgba(0,0,0,.78);border-bottom:1px solid rgba(148,163,184,.10)}.edo-stat:last-child{border-bottom:0}.edo-stat span{font-size:18px;color:#f1f5f9;font-weight:900;min-width:2.8em;text-align:right}.edo-stat b{font-size:27px;min-width:58px;text-align:left;color:#f8fafc;font-weight:1000}.edo-account-money{display:flex;align-items:baseline;justify-content:center;flex-wrap:nowrap;gap:8px;margin-top:9px;padding:9px 2px 6px;border-top:2px solid rgba(226,232,240,.22);white-space:nowrap;text-align:center}.edo-account-money-label{font-size:19px;font-weight:1000;color:#f8fafc;white-space:nowrap;text-shadow:0 2px 2px rgba(0,0,0,.75)}.edo-account-money-value{min-width:0;text-align:left;font-size:29px;line-height:1;font-weight:1000;color:#f8fafc;letter-spacing:.01em;white-space:nowrap;text-shadow:0 2px 3px rgba(0,0,0,.85)}.edo-account-property-inline{font-size:18px;font-weight:900;color:#e2e8f0;white-space:nowrap}.edo-account-footer{display:none}.edo-account-panel-compact{padding-bottom:10px}
@@ -10299,6 +10307,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       <div id="edo-line-default" class="hidden mt-2 text-[10px] text-emerald-300">LINEの名前・プロフィール画像を初期値として使用します。</div>
       <label class="block text-xs font-bold text-slate-300 mt-5 mb-2">絵文字アイコン</label>
       <div id="edo-emoji-choice" class="edo-emoji-grid"></div>
+      <div id="edo-line-account-link" class="hidden">
+        <button id="edo-line-account-btn" type="button" class="line-link-btn">🟩 LINEで認証する</button>
+        <div id="edo-line-account-status"></div>
+      </div>
       <div class="mt-5 flex gap-2"><button id="edo-setup-cancel" class="hidden flex-1 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">戻る</button><button id="edo-setup-save" class="flex-1 bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">設定を保存して遊ぶ</button></div>
     </div>`;body.appendChild(setup);
 
@@ -10400,16 +10412,29 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   };
   app.openUserSetupModal=function(){ this._settingsEditMode=true; this._openSetup(this.getUserProfile().authProvider==='line'? 'line' : 'guest'); };
   app._openSetup=function(mode, lineProfile=null){
-    injectUi(); const title=document.getElementById('edo-setup-title'); if(title) title.textContent=this._settingsEditMode?'アカウント設定':'ユーザ設定'; this._settingsEditMode=false; const p=this.getUserProfile(); this._setupMode=mode; this._lineProfile=lineProfile;
+    injectUi(); const settingsEdit=!!this._settingsEditMode; const title=document.getElementById('edo-setup-title'); if(title) title.textContent=settingsEdit?'アカウント設定':'ユーザ設定'; this._settingsEditMode=false; const p=this.getUserProfile(); this._setupMode=mode; this._lineProfile=lineProfile;
     const modal=document.getElementById('edogawa-user-setup'), name=document.getElementById('edo-setup-name'), lineNote=document.getElementById('edo-line-default'), grid=document.getElementById('edo-emoji-choice'), icon=document.getElementById('edo-setup-icon');
     const lineName=lineProfile?.name||p.lineName||p.nickname; const linePic=lineProfile?.picture||p.linePictureUrl;
-    name.value=mode==='line' ? cleanNickname(lineName||'プレイヤー1') : cleanNickname(p.nickname);
+    // アカウント設定から再編集する場合は、現在のニックネームを維持します。
+    name.value=settingsEdit ? cleanNickname(p.nickname) : (mode==='line' ? cleanNickname(lineName||'プレイヤー1') : cleanNickname(p.nickname));
     if(mode==='line' && linePic){ icon.innerHTML=`<img src="${esc(linePic)}" class="w-20 h-20 rounded-full object-cover mx-auto" referrerpolicy="no-referrer">`; lineNote?.classList.remove('hidden'); }
     else { icon.textContent=p.avatarType==='emoji'?p.avatarValue:avDefault; lineNote?.classList.add('hidden'); }
     const selected = mode==='line' && linePic ? `line:${linePic}` : `emoji:${p.avatarType==='emoji'?p.avatarValue:avDefault}`;
     this._setupSelected=selected;
     grid.innerHTML = (this._setupMode==='line' && linePic ? `<button type="button" class="edo-emoji-btn sel" title="LINEプロフィール画像" data-avatar="line:${esc(linePic)}"><img src="${esc(linePic)}" class="w-full h-full rounded-xl object-cover" referrerpolicy="no-referrer"></button>`:'') + AVATAR_LIST.map(e=>`<button type="button" class="edo-emoji-btn ${selected===`emoji:${e}`?'sel':''}" data-avatar="emoji:${e}">${e}</button>`).join('');
     grid.querySelectorAll('.edo-emoji-btn').forEach(b=>b.onclick=()=>{this._setupSelected=b.dataset.avatar;grid.querySelectorAll('.edo-emoji-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+    const lineBox=document.getElementById('edo-line-account-link'); const lineBtn=document.getElementById('edo-line-account-btn'); const lineStatus=document.getElementById('edo-line-account-status');
+    if(lineBox){
+      lineBox.classList.toggle('hidden',!settingsEdit);
+      if(settingsEdit && lineBtn){
+        const linked=p.authProvider==='line' && !!p.lineUserId;
+        lineBtn.disabled=linked;
+        lineBtn.textContent=linked?'✅ LINE認証済み':'🟩 LINEで認証する';
+        if(lineStatus) lineStatus.textContent=linked?(p.lineName?`認証済み：${p.lineName}`:'LINEアカウントと連携済み'):'LINEアカウントと連携すると、この端末のアカウントにLINE認証を紐づけます。';
+        lineBtn.onclick=()=>{ if(!lineBtn.disabled) this.startLineAccountLink(); };
+        if(settingsEdit) this.refreshLineAccountLinkState();
+      }
+    }
     modal?.classList.add('show');
   };
   document.getElementById('edo-setup-save')?.addEventListener('click',()=>{
@@ -10433,17 +10458,87 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if(l&&!l._bound){l._bound=true;l.onclick=()=>app.startLineOAuth();}
   };
 
-  // ---------------- LINE OAuth 2.0 + PKCE ----------------
+  // v31: account-settings LINE linking / already-linked disabled button
+  // Supabase Auth の Custom OAuth/OIDC Provider 経由で、現在の匿名ユーザーへLINE identityをリンクします。
+  app._lineIdentityInfo=async function(){
+    if(!isSupabaseConfigured()) return {configured:false,linked:false,identities:[]};
+    const ok=await ensureSupabase(); if(!ok) return {configured:true,linked:false,identities:[],error:this.visitedSupabaseError?.message||'Supabase認証を初期化できません。'};
+    const {data,error}=await this.visitedSupabase.auth.getUserIdentities();
+    if(error) return {configured:true,linked:false,identities:[],error:error.message||'LINE連携状態を確認できません。'};
+    const identities=Array.isArray(data?.identities)?data.identities:[];
+    const linked=identities.some(x=>x?.provider===SUPABASE_LINE_PROVIDER);
+    return {configured:true,linked,identities};
+  };
+  app.refreshLineAccountLinkState=async function(){
+    const box=document.getElementById('edo-line-account-link'),btn=document.getElementById('edo-line-account-btn'),status=document.getElementById('edo-line-account-status');
+    if(!box||!btn||!document.getElementById('edogawa-user-setup')?.classList.contains('show')) return;
+    box.classList.remove('hidden'); btn.disabled=true; btn.textContent='確認中…';
+    const p=this.getUserProfile();
+    const localLinked=p.authProvider==='line'&&!!p.lineUserId;
+    const info=await this._lineIdentityInfo();
+    const linked=localLinked||!!info.linked;
+    if(linked){
+      btn.disabled=true; btn.textContent='✅ LINE認証済み';
+      if(status) status.textContent=p.lineName?`認証済み：${p.lineName}`:'LINEアカウントと連携済み';
+      return;
+    }
+    if(info.error){
+      btn.disabled=false; btn.textContent='🟩 LINEで認証する';
+      if(status) status.textContent=`LINE連携状態を確認できません：${info.error}`;
+      return;
+    }
+    btn.disabled=false; btn.textContent='🟩 LINEで認証する';
+    if(status) status.textContent='LINEアカウントをこの江戸川双六アカウントに連携します。';
+  };
+  app.startLineAccountLink=async function(){
+    const btn=document.getElementById('edo-line-account-btn'),status=document.getElementById('edo-line-account-status');
+    const p=this.getUserProfile();
+    if(p.authProvider==='line'&&p.lineUserId){this.refreshLineAccountLinkState();return;}
+    if(!isSupabaseConfigured()){if(status)status.textContent='Supabase設定が未完了です。';return;}
+    try{
+      if(btn){btn.disabled=true;btn.textContent='LINE認証へ移動…';}
+      const ok=await ensureSupabase(); if(!ok)throw new Error(this.visitedSupabaseError?.message||'Supabase認証を開始できません。');
+      const current=await this._lineIdentityInfo();
+      if(current.linked){this.refreshLineAccountLinkState();return;}
+      const {data,error}=await this.visitedSupabase.auth.linkIdentity({provider:SUPABASE_LINE_PROVIDER,options:{redirectTo:location.href,scopes:'openid profile'}});
+      if(error)throw error;
+      if(data?.url)location.href=data.url; else throw new Error('LINE認証URLを取得できませんでした。');
+    }catch(e){
+      console.error('LINE identity link failed:',e);
+      if(status) status.textContent=`LINE認証を開始できませんでした：${e?.message||'不明なエラー'}`;
+      if(btn){btn.disabled=false;btn.textContent='🟩 LINEで認証する';}
+    }
+  };
+  app.syncLineIdentityAfterOAuth=async function(){
+    try{
+      if(!this.visitedSupabase) return false;
+      const {data,error}=await this.visitedSupabase.auth.getUserIdentities(); if(error) return false;
+      const identities=Array.isArray(data?.identities)?data.identities:[];
+      const line=identities.find(x=>x?.provider===SUPABASE_LINE_PROVIDER);
+      if(!line)return false;
+      const idata=line.identity_data||{};
+      const userId=idata.sub||idata.user_id||line.provider_id||''; const name=idata.name||idata.full_name||this.getUserProfile().lineName||''; const picture=idata.picture||idata.avatar_url||this.getUserProfile().linePictureUrl||null;
+      const p=this.getUserProfile();p.authProvider='line';p.lineUserId=userId||p.lineUserId;p.lineName=name||p.lineName;p.linePictureUrl=picture||p.linePictureUrl;
+      this.saveUserProfile(); this._refreshAccountPanel?.(); return true;
+    }catch(e){console.warn('LINE identity sync failed:',e);return false;}
+  };
+  // ---------------- Legacy direct LINE OAuth scaffold (initial-login screen) ----------------
   function b64url(bytes){let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
   function rand(n=32){const a=new Uint8Array(n);crypto.getRandomValues(a);return b64url(a);}
   async function sha256(s){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return new Uint8Array(d);}
   app._lineRedirectUri=function(){return LINE_CFG.redirectUri||(`${location.origin}${location.pathname}`);};
-  app.startLineOAuth=async function(){
+  app.startLineOAuth=async function(fromAccountSettings=false){
     const msg=document.getElementById('edogawa-line-message');
+    const current=this.getUserProfile();
+    if(fromAccountSettings && current.authProvider==='line' && current.lineUserId){
+      this._openSetup(current.avatarType==='line'?'line':'guest');
+      return;
+    }
     if(!LINE_CFG.channelId || !LINE_CFG.tokenEndpoint){if(msg)msg.textContent='LINEログイン設定が未完了です。LINE DevelopersのChannel IDと、認証コードを交換する安全なサーバーAPI（tokenEndpoint）を設定してください。';return;}
     try{
       const state=rand(24),nonce=rand(24),verifier=rand(48),challenge=b64url(await sha256(verifier));
       sessionStorage.setItem(OAUTH_STATE_KEY,state);sessionStorage.setItem(OAUTH_VERIFIER_KEY,verifier);sessionStorage.setItem(OAUTH_NONCE_KEY,nonce);
+      sessionStorage.setItem('edogawa_line_link_mode_v1',fromAccountSettings?'1':'0');
       const u=new URL(LINE_AUTHORIZE);u.searchParams.set('response_type','code');u.searchParams.set('client_id',LINE_CFG.channelId);u.searchParams.set('redirect_uri',app._lineRedirectUri());u.searchParams.set('state',state);u.searchParams.set('scope',LINE_SCOPES);u.searchParams.set('nonce',nonce);u.searchParams.set('code_challenge',challenge);u.searchParams.set('code_challenge_method','S256');
       location.href=u.toString();
     }catch(e){if(msg)msg.textContent='LINEログインを開始できませんでした。';}
@@ -10451,22 +10546,32 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   app._handleLineCallback=async function(){
     const q=new URLSearchParams(location.search), code=q.get('code'), state=q.get('state'), err=q.get('error'); if(!code&&!err)return false;
     const msg=document.getElementById('edogawa-line-message');
-    if(err){if(msg)msg.textContent=`LINEログインがキャンセルされました。${q.get('error_description')||''}`;return true;}
+    if(err){sessionStorage.removeItem('edogawa_line_link_mode_v1');if(msg)msg.textContent=`LINEログインがキャンセルされました。${q.get('error_description')||''}`;return true;}
     const savedState=sessionStorage.getItem(OAUTH_STATE_KEY), verifier=sessionStorage.getItem(OAUTH_VERIFIER_KEY);
-    if(!savedState||savedState!==state||!verifier){if(msg)msg.textContent='LINEログインの確認に失敗しました。もう一度お試しください。';return true;}
+    if(!savedState||savedState!==state||!verifier){sessionStorage.removeItem('edogawa_line_link_mode_v1');if(msg)msg.textContent='LINEログインの確認に失敗しました。もう一度お試しください。';return true;}
     if(!LINE_CFG.tokenEndpoint){if(msg)msg.textContent='認証コード交換APIが設定されていません。';return true;}
     try{
-      const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier});
+      const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier,nonce:sessionStorage.getItem(OAUTH_NONCE_KEY)||''});
       const r=await fetch(LINE_CFG.tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,credentials:'include'});if(!r.ok)throw new Error('token '+r.status);
       const data=await r.json();
       // Prefer trusted server-returned profile; backend should validate the ID token / access token with LINE.
       const profile=data.profile || data.user || {};
       const userId=profile.userId||profile.sub||data.userId;const name=profile.displayName||profile.name||data.displayName||data.name;const picture=profile.pictureUrl||profile.picture||data.pictureUrl||data.picture;
       if(!userId || !name){throw new Error('profile missing');}
+      const linking=sessionStorage.getItem('edogawa_line_link_mode_v1')==='1';
       const p=app.getUserProfile();p.authProvider='line';p.lineUserId=userId;p.lineName=name;p.linePictureUrl=picture||null;
+      // アカウント設定からの連携では、現在のニックネーム・絵文字・ゲーム進行は維持し、LINE認証情報だけ紐づけます。
       try{sessionStorage.setItem(OAUTH_ACCESS_KEY, data.access_token||'');}catch(e){}
-      sessionStorage.removeItem(OAUTH_STATE_KEY);sessionStorage.removeItem(OAUTH_VERIFIER_KEY);sessionStorage.removeItem(OAUTH_NONCE_KEY);
+      sessionStorage.removeItem(OAUTH_STATE_KEY);sessionStorage.removeItem(OAUTH_VERIFIER_KEY);sessionStorage.removeItem(OAUTH_NONCE_KEY);sessionStorage.removeItem('edogawa_line_link_mode_v1');sessionStorage.removeItem('edogawa_line_link_mode_v1');
       history.replaceState({},document.title,location.pathname);
+      if(linking){
+        app.saveUserProfile();
+        document.getElementById('edogawa-user-setup')?.classList.remove('show');
+        app._applyProfileToLobby(); app._refreshAccountPanel();
+        const status=document.getElementById('edogawa-line-account-status'); if(status) status.textContent='LINE認証が完了しました。';
+        try{alert('LINE認証が完了しました。');}catch(e){}
+        return true;
+      }
       app._lineCallbackProfile={userId,name,picture};app._openSetup('line',app._lineCallbackProfile);return true;
     }catch(e){if(msg)msg.textContent='LINEログインの認証に失敗しました。設定（Channel ID / tokenEndpoint / Redirect URI）を確認してください。';return true;}
   };
@@ -10752,6 +10857,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         app.visitedSupabaseUser=data?.user||null;
       }
       if(!app.visitedSupabaseUser) throw new Error('Supabase匿名認証ユーザーを取得できませんでした。');
+      await app.syncLineIdentityAfterOAuth?.();
       return true;
     }catch(e){
       app.visitedSupabaseError=e;
