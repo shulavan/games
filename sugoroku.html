@@ -47,6 +47,17 @@
 
 
   <!-- Tailwind CSS -->
+  <!-- 共通の小道具。ゲーム本体のスクリプトからも、あとから足したスクリプトからも
+       使えるように、いちばん最初にグローバルとして用意しておきます。
+       （以前は後ろのスクリプトの中だけで宣言していたため、ゴール処理で
+         「validNum is not defined」が起きてゴール後の処理が全部止まっていました） -->
+  <script id="edogawa-global-helpers">
+    window.validNum = function(v, fallback){
+      fallback = (fallback===undefined) ? 0 : fallback;
+      var n = Number(v);
+      return Number.isFinite(n) ? n : fallback;
+    };
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- Google Fonts: Shippori Mincho & Inter -->
@@ -12216,6 +12227,26 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     };
   }
 
+  // ── ゴール処理そのものを守る ──
+  // ゴール処理の途中で例外が出ると、ミニゲームもあみだくじも目的地の更新も
+  // すべて動かないまま盤面が止まります（実際 validNum の参照エラーで
+  // 止まっていました）。何が起きても続きへ進めるようにします。
+  const origGoalReach=app.handleGoalReach?.bind(app);
+  if(origGoalReach){
+    app.handleGoalReach=function(player){
+      app._miniLog('goal-reach',{player:player&&player.name,cat:this.currentDestinationCategory});
+      try{
+        return origGoalReach(player);
+      }catch(e){
+        console.error('[v43] ゴール処理でエラー:',e);
+        app._miniLog('goal-reach-error',{msg:String(e&&e.message||e)});
+        try{this.addLog?.('⚠️ ゴール処理でエラーが出ましたが、続きへ進めます。');}catch(_){}
+        try{ this.startPostGoalMiniGameThenAmida(player); }
+        catch(e2){ try{this.startGoalAmida(player);}catch(e3){try{this.continueAfterGoalAmida(player);}catch(e4){}} }
+      }
+    };
+  }
+
   // ── ゴール後あみだくじ：無反応でも必ず終わらせる ──
   const AMIDA_MS=35000;
   let amidaTimer=null;
@@ -12312,26 +12343,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   'use strict';
   const app=window.EdogawaSugoroku; if(!app) return;
   const LAST_LINE='ではまた次回、お会いしましょう。';
-  const HARD_CAP_S=15;
+  const HARD_MS=25000;          // 最後の安全弁
 
   app._boatOutroToken=0;
+  app._boatOutroSpeaking=false;
+  app._boatOutroPendingClose=null;
 
-  // 締めの実況の途中で閉じられたら、それ以降のセリフは流さない。
-  const origSpeak=app._speakBoatRace?.bind(app);
-  if(origSpeak){
-    app._speakBoatRace=function(text,rate,onDone){
-      const token=app._boatOutroToken;
-      return origSpeak(text,rate,function(){
-        if(app._boatOutroToken!==token)return;          // すでに閉じている
-        if(typeof onDone==='function'){try{onDone();}catch(e){console.error('[v44]',e);}}
-        if(text===LAST_LINE)app._onBoatOutroFinished&&app._onBoatOutroFinished(token);
-      });
-    };
-  }
-
-  // 締めを言い終えたら、少し間を置いて閉じる。
-  app._onBoatOutroFinished=function(token){
+  function endOutro(token){
     if(app._boatOutroToken!==token)return;
+    app._boatOutroSpeaking=false;
+    clearTimeout(app._boatOutroHardTimer);
+    const pending=app._boatOutroPendingClose;
+    app._boatOutroPendingClose=null;
+    // 自動クローズの時間が先に来ていたら、喋り終わったいま閉じる。
+    if(pending){ setTimeout(()=>{ if(app._boatOutroToken===token){ try{pending();}catch(e){console.error('[v44]',e);} } },400); return; }
+    // まだカウントダウン中なら、余韻を置いてから閉じる。
     clearTimeout(app._boatOutroCloseTimer);
     app._boatOutroCloseTimer=setTimeout(()=>{
       if(app._boatOutroToken!==token)return;
@@ -12339,31 +12365,66 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       if(screen&&!screen.classList.contains('hidden')){
         try{app.closeBoatRaceEvent();}catch(e){console.error('[v44]',e);}
       }
-    },700);
-  };
+    },900);
+  }
+
+  // 締めの実況の途中で閉じられたら、それ以降のセリフは流さない。
+  const origSpeak=app._speakBoatRace?.bind(app);
+  if(origSpeak){
+    app._speakBoatRace=function(text,rate,onDone){
+      const token=app._boatOutroToken;
+      return origSpeak(text,rate,function(){
+        if(app._boatOutroToken!==token)return;            // すでに閉じている
+        if(typeof onDone==='function'){try{onDone();}catch(e){console.error('[v44]',e);}}
+        if(text===LAST_LINE) endOutro(token);
+      });
+    };
+  }
 
   const origOutro=app._speakBoatRaceOutro?.bind(app);
   if(origOutro){
     app._speakBoatRaceOutro=function(){
       app._boatOutroToken++;
+      const token=app._boatOutroToken;
+      app._boatOutroSpeaking=true;
+      app._boatOutroPendingClose=null;
       clearTimeout(app._boatOutroCloseTimer);
+      clearTimeout(app._boatOutroHardTimer);
+      // 読み終わりの合図が来ない端末でも、必ず先へ進める。
+      app._boatOutroHardTimer=setTimeout(()=>endOutro(token),HARD_MS);
       return origOutro();
     };
   }
 
-  // 自動クローズの上限を広げる（以前は10秒で頭打ちだった）。
-  app._boatRaceOutroSeconds=function(outroMs){
-    if(!outroMs)return HARD_CAP_S;
-    return Math.max(5,Math.min(HARD_CAP_S,Math.ceil((outroMs+1500)/1000)));
-  };
+  // 自動クローズが先に来ても、まだ喋っている間は閉じない（語尾が切れる原因）。
+  const origArm=app.armModalAutoClose?.bind(app);
+  if(origArm){
+    app.armModalAutoClose=function(key,buttonId,onClose,seconds){
+      if(key!=='boatrace') return origArm(key,buttonId,onClose,seconds);
+      const token=app._boatOutroToken;
+      const guarded=function(){
+        if(app._boatOutroSpeaking && app._boatOutroToken===token){
+          app._boatOutroPendingClose=onClose;                 // 喋り終わってから閉じる
+          const btn=document.getElementById(buttonId);
+          if(btn) btn.textContent='閉じる';
+          return;
+        }
+        try{onClose();}catch(e){console.error('[v44]',e);}
+      };
+      return origArm(key,buttonId,guarded,seconds);
+    };
+  }
 
   const origClose=app.closeBoatRaceEvent?.bind(app);
   if(origClose){
     app.closeBoatRaceEvent=async function(...a){
-      app._boatOutroToken++;                             // 以降の読み上げを打ち切る
+      app._boatOutroToken++;                                  // 以降の読み上げを打ち切る
+      app._boatOutroSpeaking=false;
+      app._boatOutroPendingClose=null;
       clearTimeout(app._boatOutroCloseTimer);
+      clearTimeout(app._boatOutroHardTimer);
       const r=await origClose(...a);
-      // cancel() が onend を誘発して喋り出すブラウザがあるため、念のためもう一度止める。
+      // cancel() が「読み終わり」を誘発して喋り出すブラウザがあるため、念のためもう一度止める。
       setTimeout(()=>{try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}},60);
       setTimeout(()=>{try{window.speechSynthesis&&window.speechSynthesis.cancel();}catch(e){}},400);
       return r;
@@ -12371,8 +12432,54 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   }
 
   window.__EDOGAWA_V44_DIAGNOSTICS=()=>({
-    capSeconds:HARD_CAP_S, wrapped:{speak:!!origSpeak,outro:!!origOutro,close:!!origClose}
+    speaking:app._boatOutroSpeaking, token:app._boatOutroToken, hardMs:HARD_MS,
+    wrapped:{speak:!!origSpeak,outro:!!origOutro,arm:!!origArm,close:!!origClose}
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v47: CPUがカヌー大会を起こしたときも、人間プレイヤーが参加できるようにする
+     ----------------------------------------------------------------------------
+     左近川カヌーは江戸川競艇と同じく全員参加のレースです。
+     これまでは「きっかけを作ったプレーヤー」を操作役にしていたため、
+     CPUが起こした場合はCPUの自動プレイ（結果モーダルだけ）になっていました。
+     きっかけがCPUでも、操作役はこの端末の人間プレイヤーに差し替えます。
+     ターンの進行は currentPlayerIdx で管理されているので、順番は変わりません。
+     ============================================================================ -->
+<script id="edogawa-v47-canoe-join">
+(function(){
+  'use strict';
+  const app=window.EdogawaSugoroku; if(!app) return;
+  const ALL_JOIN=new Set(['canoe']);       // 全員参加のミニゲーム
+
+  function localHuman(){
+    const ps=app.players||[];
+    return ps.find(x=>x && !x.isCpu && (!app.myUid || x.uid===app.myUid))
+        || ps.find(x=>x && !x.isCpu)
+        || null;
+  }
+
+  const origOpen=app.openRegionalMiniGame?.bind(app);
+  if(origOpen){
+    app.openRegionalMiniGame=function(game,p){
+      if(ALL_JOIN.has(game) && p && p.isCpu && !this.autoMode){
+        const me=localHuman();
+        if(me && me.id!==p.id){
+          this._allJoinTriggeredBy=p;
+          app._miniLog?.('canoe-join',{trigger:p.name,driver:me.name});
+          try{ this.addLog?.(`🚣 ${p.name} のカヌー大会に ${me.name} も参加します！`); }catch(e){}
+          return origOpen(game,me);
+        }
+      }
+      this._allJoinTriggeredBy=null;
+      return origOpen(game,p);
+    };
+  }
+
+  window.__EDOGAWA_V47_DIAGNOSTICS=()=>({allJoin:[...ALL_JOIN],wrapped:!!origOpen});
 })();
 </script>
 
