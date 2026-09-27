@@ -641,12 +641,15 @@
   <!-- MAIN HEADER -->
   <header data-app="1" class="absolute top-0 left-0 right-0 px-3 sm:px-4 pt-2 flex flex-col gap-2 z-20">
 
-    <!-- 1段目：左に地図の出典、右に目的地 -->
-    <div class="flex items-start justify-between gap-2">
-      <button id="map-credit-btn" onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
-        class="edo-map-credit">
-        地理院タイル ・出典
-      </button>
+    <!-- 地図の出典。段の高さを取らないよう、ヘッダー左上に浮かせて置きます。
+         （段として置くと、その下のボタン列が1段ぶん押し下げられてしまうため） -->
+    <button id="map-credit-btn" onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
+      class="edo-map-credit">
+      地理院タイル ・出典
+    </button>
+
+    <!-- 1段目：目的地（右揃え） -->
+    <div class="flex items-start justify-end gap-2">
       <div id="game-destination-badge-slot" class="flex-1 flex justify-end min-w-0">
         <div id="game-destination-badge" onclick="EdogawaSugoroku.panToDestination()" class="sticker-btn hidden sm:flex items-center gap-1.5 bg-slate-900 px-3 py-1 rounded-full text-xs cursor-pointer active:scale-95 transition">
       <span class="text-amber-400 font-bold">目的地:</span>
@@ -10959,7 +10962,13 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const msg=document.getElementById('edogawa-line-message');
     const current=this.getUserProfile();
     if(fromAccountSettings && current.authProvider==='line' && current.lineUserId){
-      this._openSetup(current.avatarType==='line'?'line':'guest');
+      // すでに連携済みなら、保存してあるLINEの名前と写真を引き継いだ状態で設定画面を開く。
+      // （絵文字に変えていた人が、あとからLINEの写真に戻せるようにするため）
+      this._openSetup('line', {
+        userId: current.lineUserId,
+        name: current.lineName || current.nickname,
+        picture: current.linePictureUrl || null
+      });
       return;
     }
     if(!LINE_CFG.channelId || !LINE_CFG.tokenEndpoint){if(msg)msg.textContent='LINEログイン設定が未完了です。LINE DevelopersのChannel IDと、認証コードを交換する安全なサーバーAPI（tokenEndpoint）を設定してください。';return;}
@@ -10994,15 +11003,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       try{sessionStorage.setItem(OAUTH_ACCESS_KEY, data.access_token||'');}catch(e){}
       oauthStore.remove(OAUTH_STATE_KEY);oauthStore.remove(OAUTH_VERIFIER_KEY);oauthStore.remove(OAUTH_NONCE_KEY);oauthStore.remove('edogawa_line_link_mode_v1');
       history.replaceState({},document.title,location.pathname);
-      if(linking){
-        app.saveUserProfile();
-        document.getElementById('edogawa-user-setup')?.classList.remove('show');
-        app._applyProfileToLobby(); app._refreshAccountPanel();
-        const status=document.getElementById('edogawa-line-account-status'); if(status) status.textContent='LINE認証が完了しました。';
-        try{alert('LINE認証が完了しました。');}catch(e){}
-        return true;
-      }
-      app._lineCallbackProfile={userId,name,picture};app._openSetup('line',app._lineCallbackProfile);return true;
+      // アカウント設定からの連携でも、初回ログインでも、
+      // LINEの表示名とプロフィール画像を引き継いだ状態で設定画面を開きます。
+      // （そのまま保存すればLINEの名前と写真が双六のニックネーム・アイコンになり、
+      //   絵文字に変えたい場合はその場で選び直せます）
+      app.saveUserProfile();
+      app._lineCallbackProfile={userId,name,picture};
+      app._openSetup('line',app._lineCallbackProfile);
+      const status=document.getElementById('edo-line-account-status');
+      if(status) status.textContent = linking
+        ? 'LINE認証が完了しました。LINEの名前と写真を引き継いでいます。'
+        : 'LINEの名前と写真を引き継ぎました。';
+      app._applyProfileToLobby?.(); app._refreshAccountPanel?.();
+      return true;
     }catch(e){
       console.error('[LINE]',e);
       if(msg)msg.textContent='LINEログインの認証に失敗しました（'+String(e&&e.message||e).slice(0,60)+'）。'+
@@ -12354,16 +12367,25 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
        ・BGM        … 全ゲーム共通で sound.playBGM('mini')（v39 の miniBGM）
      ============================================================================ -->
 <style id="edogawa-map-credit-css">
-  /* 地図の出典表記。目立たせる必要はないので、枠なし・小さめの文字で
-     ヘッダー1段目の左上にそっと置きます。（目的地は同じ段の右側） */
+  /* 地図の出典表記。
+     ヘッダーの左上に浮かせて置きます（段としては数えないので、
+     下のボタン列の位置は出典を入れる前と同じままです）。
+     目立たせる必要はないので枠なし・小さめの文字にしています。 */
   #map-credit-btn.edo-map-credit{
-    position:static; flex:0 0 auto; align-self:flex-start;
+    position:absolute; top:4px; left:12px; z-index:6;
     margin:0; padding:0; border:0; background:transparent; box-shadow:none;
     font-size:7px; line-height:1.2; font-weight:600; letter-spacing:.01em;
     color:#64748b; text-align:left; white-space:nowrap;
     text-shadow:0 0 3px rgba(255,255,255,.85);
   }
   #map-credit-btn.edo-map-credit:active{ opacity:.6; }
+  /* 目的地バッジは右揃え。Tailwindのユーティリティに頼らず明示しておきます。 */
+  #game-destination-badge-slot{ display:flex; justify-content:flex-end; min-width:0; flex:1 1 auto; }
+  #game-destination-badge:not(.hidden){ display:inline-flex; align-items:center; }
+  /* フルスクリーン中はヘッダー自体が下がるので、出典もその内側に収める */
+  body.is-fullscreen-mode #map-credit-btn.edo-map-credit,
+  :fullscreen #map-credit-btn.edo-map-credit,
+  :-webkit-full-screen #map-credit-btn.edo-map-credit{ top:50px; }
 </style>
 <style id="edogawa-v41-common-modal-css">
   #edo-mini-common{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;
