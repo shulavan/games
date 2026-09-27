@@ -67,6 +67,11 @@
   
   <!-- Leaflet CSS & JS for Map Rendering -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- ベクター地図の切り替えを早くするため、使うサーバーへ先に接続しておきます -->
+  <link rel="preconnect" href="https://maps.gsi.go.jp" crossorigin>
+  <link rel="preconnect" href="https://cyberjapandata.gsi.go.jp" crossorigin>
+  <link rel="dns-prefetch" href="https://maps.gsi.go.jp">
+  <link rel="dns-prefetch" href="https://cyberjapandata.gsi.go.jp">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- 地理院ベクトルタイル用。Leaflet のままベクター地図を描くための組み合わせです。
        読み込めなかった場合は、これまでどおりラスタータイルで動きます。 -->
@@ -1765,17 +1770,28 @@
       return _webglOk;
     }
 
-    // 地図の文字の大きさを整える（0なら文字レイヤーを隠す）
+    // 地図の文字の出し方を整える。
+    //  ・大きさを GSI_VECTOR_LABEL_SIZE にそろえる（0なら文字を消す）
+    //  ・ベクトルタイルはズーム16までのデータなので、注記レイヤーの多くは
+    //    「ズーム17以上では非表示」になっています。そのままだとゲームの
+    //    ズーム19で駅名や施設名が消えてしまうため、上限を伸ばします。
+    //    （低ズーム専用の広域注記まで出さないよう、上限14以上の層だけ伸ばします）
+    let _labelLayerInfo = [];
     function applyGsiLabelSize(mlMap) {
       let n = 0;
+      _labelLayerInfo = [];
       try {
         const layers = (mlMap.getStyle() || {}).layers || [];
         for (const layer of layers) {
           if (layer.type !== 'symbol') continue;
           n++;
+          const minz = (layer.minzoom === undefined) ? 0 : layer.minzoom;
+          const maxz = (layer.maxzoom === undefined) ? 24 : layer.maxzoom;
+          _labelLayerInfo.push({ id: layer.id, src: layer['source-layer'] || '', min: minz, max: maxz });
           try {
-            if (!GSI_VECTOR_LABEL_SIZE) mlMap.setLayoutProperty(layer.id, 'visibility', 'none');
-            else mlMap.setLayoutProperty(layer.id, 'text-size', GSI_VECTOR_LABEL_SIZE);
+            if (!GSI_VECTOR_LABEL_SIZE) { mlMap.setLayoutProperty(layer.id, 'visibility', 'none'); continue; }
+            mlMap.setLayoutProperty(layer.id, 'text-size', GSI_VECTOR_LABEL_SIZE);
+            if (maxz >= 14 && maxz < 24) mlMap.setLayerZoomRange(layer.id, minz, 24);
           } catch (e) {}
         }
       } catch (e) {}
@@ -1788,7 +1804,8 @@
       maplibre: typeof window.maplibregl,
       binding: !!(window.L && L.maplibreGL),
       main: (window.EdogawaSugoroku && EdogawaSugoroku.map && EdogawaSugoroku.map.__gsiStatus) || null,
-      lobby: (window.EdogawaSugoroku && EdogawaSugoroku.lobbyMap && EdogawaSugoroku.lobbyMap.__gsiStatus) || null
+      lobby: (window.EdogawaSugoroku && EdogawaSugoroku.lobbyMap && EdogawaSugoroku.lobbyMap.__gsiStatus) || null,
+      labelLayers: _labelLayerInfo
     });
 
     // ── 地図の自己診断 ───────────────────────────────────────────
@@ -1848,6 +1865,17 @@
       showMapDiagPanel(rows);
       return rows.map(r => r[0] + '：' + r[1]).join('\n');
     };
+
+    // アプリを開いた時点で、ベクター地図のスタイルを取りにいって端末に覚えさせます。
+    // こうしておくと、あとで地図を出すときの「ラスター→ベクター」の切り替えが速くなります。
+    (function warmUpVectorStyle() {
+      try {
+        const urls = [];
+        if (USE_GSI_VECTOR) urls.push(GSI_VECTOR_STYLE_URL);
+        if (USE_OPENFREEMAP_FALLBACK) urls.push(OFM_STYLE_URL);
+        urls.forEach(u => { try { fetch(u, { cache: 'force-cache', mode: 'cors' }).catch(() => {}); } catch (e) {} });
+      } catch (e) {}
+    })();
 
     // 地図の状態は、コンソールを開かなくても分かるようにゲーム内ログにも出します。
     let _mapNoteDone = false;
@@ -1935,7 +1963,14 @@
           });
           ml.on('sourcedata', (e) => { if (e && e.isSourceLoaded) sourceLoaded = true; });
           ml.once('load', () => { labels = applyGsiLabelSize(ml); try { ml.resize(); } catch (e) {} });
-          ml.on('idle', () => { if (!settled && sourceLoaded) win(labels); });
+          const ready = () => {
+            if (settled) return;
+            let tilesOk = sourceLoaded;
+            try { if (!tilesOk && typeof ml.areTilesLoaded === 'function') tilesOk = ml.areTilesLoaded(); } catch (e) {}
+            if (tilesOk) win(labels);
+          };
+          ml.on('idle', ready);
+          ml.on('render', ready);
           map.on('resize', () => { try { ml.resize(); } catch (e) {} });
         } catch (e) {
           fail(String((e && e.message) || e));
@@ -10833,7 +10868,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if(!LINE_CFG.tokenEndpoint){if(msg)msg.textContent='認証コード交換APIが設定されていません。';return true;}
     try{
       const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier});
-      const r=await fetch(LINE_CFG.tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,credentials:'include'});if(!r.ok)throw new Error('token '+r.status);
+      // credentials:'include' だと「Access-Control-Allow-Origin: *」を返すAPI
+      // （Google Apps Scriptなど）とCORSが成立しません。Cookieは使わないので送りません。
+      const r=await fetch(LINE_CFG.tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,credentials:'omit'});if(!r.ok)throw new Error('token '+r.status);
       const data=await r.json();
       // Prefer trusted server-returned profile; backend should validate the ID token / access token with LINE.
       const profile=data.profile || data.user || {};
