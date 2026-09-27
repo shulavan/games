@@ -1746,6 +1746,11 @@
     const GSI_VECTOR_LABEL_SIZE = 10;
     const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
     const GSI_VECTOR_READY_MS = 12000;   // これだけ待って描けなければあきらめる
+    // 地理院ベクトルが使えなかった場合の予備。キー不要・回数制限なしの無料サービスです。
+    // 使いたくない場合は false にしてください（その場合はラスターに戻ります）。
+    const USE_OPENFREEMAP_FALLBACK = true;
+    const OFM_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
+    const OFM_CREDIT = 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap';
 
     const ACTIVE_BASEMAP = CARTO_API_KEY ? BASEMAPS.carto : BASEMAPS.gsi;
 
@@ -1786,6 +1791,64 @@
       lobby: (window.EdogawaSugoroku && EdogawaSugoroku.lobbyMap && EdogawaSugoroku.lobbyMap.__gsiStatus) || null
     });
 
+    // ── 地図の自己診断 ───────────────────────────────────────────
+    // ベクター地図が出ない原因は端末側でしか分からないため、
+    // 失敗したときに「どの通信がどう失敗したか」を画面に出します。
+    // 原因が分かったら SHOW_MAP_DIAG = false にしてください。
+    const SHOW_MAP_DIAG = true;
+    const GSI_VECTOR_TILE_PROBE = 'https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7275/3221.pbf';
+    const GSI_GLYPH_PROBE = 'https://maps.gsi.go.jp/xyz/noto-jp/NotoSansJP-Regular/0-255.pbf';
+
+    async function probe(url) {
+      const t0 = Date.now();
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        return (r.ok ? 'OK ' : 'NG ') + r.status + ' (' + (Date.now() - t0) + 'ms)';
+      } catch (e) {
+        return 'NG ' + String((e && e.message) || e).slice(0, 60);
+      }
+    }
+
+    async function collectMapDiag(reason) {
+      const rows = [];
+      rows.push(['理由', reason || '-']);
+      rows.push(['ページ', location.protocol + '//' + location.host]);
+      rows.push(['ServiceWorker', navigator.serviceWorker && navigator.serviceWorker.controller ? '動作中' : 'なし']);
+      rows.push(['WebGL', hasWebGL() ? '使える' : '使えない']);
+      rows.push(['maplibre-gl', typeof window.maplibregl === 'undefined' ? '読み込めず' : '読み込み済']);
+      rows.push(['Leaflet連携', (window.L && L.maplibreGL) ? '読み込み済' : '読み込めず']);
+      rows.push(['スタイル取得', await probe(GSI_VECTOR_STYLE_URL)]);
+      rows.push(['ベクトルタイル', await probe(GSI_VECTOR_TILE_PROBE)]);
+      rows.push(['文字フォント', await probe(GSI_GLYPH_PROBE)]);
+      return rows;
+    }
+
+    function showMapDiagPanel(rows) {
+      try {
+        if (document.getElementById('edo-map-diag')) return;
+        const box = document.createElement('div');
+        box.id = 'edo-map-diag';
+        box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483600;' +
+          'background:rgba(2,6,23,.96);border:1px solid #fb7185;border-radius:14px;padding:12px 14px;' +
+          'color:#e2e8f0;font-size:12px;line-height:1.7;box-shadow:0 12px 36px rgba(0,0,0,.6);' +
+          'font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-height:70vh;overflow:auto';
+        box.innerHTML =
+          '<div style="font-weight:900;color:#fb7185;margin-bottom:6px">🗺️ 地図の自己診断（開発用）</div>' +
+          rows.map(r => '<div><span style="color:#94a3b8">' + r[0] + '：</span>' +
+                        String(r[1]).replace(/[<>]/g, '') + '</div>').join('') +
+          '<button id="edo-map-diag-close" style="margin-top:10px;width:100%;background:#1e293b;color:#e2e8f0;' +
+          'border:1px solid #475569;border-radius:10px;padding:9px;font-weight:800">閉じる</button>';
+        document.body.appendChild(box);
+        document.getElementById('edo-map-diag-close').onclick = () => box.remove();
+      } catch (e) {}
+    }
+
+    window.__EDOGAWA_MAP_DIAG = async () => {
+      const rows = await collectMapDiag('手動実行');
+      showMapDiagPanel(rows);
+      return rows.map(r => r[0] + '：' + r[1]).join('\n');
+    };
+
     // 地図の状態は、コンソールを開かなくても分かるようにゲーム内ログにも出します。
     let _mapNoteDone = false;
     function noteMapStatus(text) {
@@ -1795,59 +1858,93 @@
       }, 1200);
     }
 
-    // 地図に基盤地図を敷く。ベクターが描けた時だけラスターを外します。
+    // 地図に基盤地図を敷く。
+    // ベクターの候補を上から順に試し、「本当に描けた」ものを採用します。
+    // どれも描けなければ、最初に敷いたラスターのまま遊べます（地図は消えません）。
     function addBasemapTo(map) {
       if (!map) return;
       const raster = L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options });
       raster.addTo(map);
       map.__gsiStatus = 'raster';
 
-      if (!USE_GSI_VECTOR) { map.__gsiStatus = 'raster(設定でOFF)'; return; }
-      if (!window.maplibregl || !window.L || !L.maplibreGL) { map.__gsiStatus = 'raster(ライブラリ無し)'; return; }
-      if (!hasWebGL()) { map.__gsiStatus = 'raster(WebGL非対応)'; return; }
+      const candidates = [];
+      if (USE_GSI_VECTOR) candidates.push({ name: '地理院ベクトル', style: GSI_VECTOR_STYLE_URL, credit: ACTIVE_BASEMAP.credit });
+      if (USE_OPENFREEMAP_FALLBACK) candidates.push({ name: 'OpenFreeMap', style: OFM_STYLE_URL, credit: OFM_CREDIT });
+      if (!candidates.length) { map.__gsiStatus = 'raster(設定でOFF)'; return; }
 
-      let gl = null, settled = false, timer = null;
-      const giveUp = (why) => {
-        if (settled) return; settled = true;
-        clearTimeout(timer);
-        console.warn('[地図] 地理院ベクトルを使えないため通常の地図で表示します:', why);
-        try { if (gl) map.removeLayer(gl); } catch (e) {}
+      if (!window.maplibregl || !window.L || !L.maplibreGL) {
+        map.__gsiStatus = 'raster(ライブラリ無し)';
+        if (SHOW_MAP_DIAG && !window.__edoMapDiagShown) { window.__edoMapDiagShown = true;
+          collectMapDiag('ライブラリ無し').then(showMapDiagPanel).catch(() => {}); }
+        return;
+      }
+      if (!hasWebGL()) {
+        map.__gsiStatus = 'raster(WebGL非対応)';
+        if (SHOW_MAP_DIAG && !window.__edoMapDiagShown) { window.__edoMapDiagShown = true;
+          collectMapDiag('WebGL非対応').then(showMapDiagPanel).catch(() => {}); }
+        return;
+      }
+
+      const reasons = [];
+      let done = false;
+
+      const allFailed = () => {
+        if (done) return; done = true;
+        const why = reasons.join(' / ');
+        console.warn('[地図] ベクター地図を使えないため通常の地図で表示します:', why);
         map.__gsiStatus = 'raster(' + why + ')';
         noteMapStatus('通常の地図で表示しています（' + why + '）');
-      };
-      const succeed = (labels) => {
-        if (settled) return; settled = true;
-        clearTimeout(timer);
-        try { map.removeLayer(raster); } catch (e) {}
-        map.__gsiStatus = 'vector(文字' + (GSI_VECTOR_LABEL_SIZE || 'なし') + '/' + labels + '層)';
-        noteMapStatus('地理院ベクトル地図に切り替えました（文字' +
-          (GSI_VECTOR_LABEL_SIZE ? GSI_VECTOR_LABEL_SIZE + 'px' : 'なし') + '）');
+        if (SHOW_MAP_DIAG && !window.__edoMapDiagShown) { window.__edoMapDiagShown = true;
+          collectMapDiag(why).then(showMapDiagPanel).catch(() => {}); }
       };
 
-      try {
-        // スタイルは「URLのまま」渡します。中身を取ってきて渡すと、
-        // スタイル内の相対パス（絵記号や文字フォント）が解決できず真っ白になります。
-        gl = L.maplibreGL({ style: GSI_VECTOR_STYLE_URL, attribution: ACTIVE_BASEMAP.credit });
-        gl.addTo(map);
-        const ml = gl.getMaplibreMap();
-        timer = setTimeout(() => giveUp('時間切れ'), GSI_VECTOR_READY_MS);
+      const tryNext = (i) => {
+        if (done) return;
+        if (i >= candidates.length) { allFailed(); return; }
+        const cand = candidates[i];
+        let gl = null, settled = false, timer = null;
 
-        let labels = 0, sourceLoaded = false;
-        ml.on('error', (e) => {
-          const msg = (e && e.error && e.error.message) || '';
-          // タイル1枚の失敗などは無視。スタイル自体が読めない時だけあきらめる。
-          if (/style|Style|Failed to fetch|NetworkError/.test(msg)) giveUp('スタイル取得失敗');
-        });
-        ml.on('sourcedata', (e) => { if (e && e.isSourceLoaded) sourceLoaded = true; });
-        ml.once('load', () => { labels = applyGsiLabelSize(ml); try { ml.resize(); } catch (e) {} });
-        ml.on('idle', () => { if (!settled && sourceLoaded) succeed(labels); });
+        const fail = (why) => {
+          if (settled || done) return; settled = true;
+          clearTimeout(timer);
+          reasons.push(cand.name + ':' + why);
+          try { if (gl) map.removeLayer(gl); } catch (e) {}
+          tryNext(i + 1);
+        };
+        const win = (labels) => {
+          if (settled || done) return; settled = true; done = true;
+          clearTimeout(timer);
+          try { map.removeLayer(raster); } catch (e) {}
+          map.__gsiStatus = 'vector:' + cand.name + '(文字' + (GSI_VECTOR_LABEL_SIZE || 'なし') + '/' + labels + '層)';
+          noteMapStatus(cand.name + 'に切り替えました（文字' +
+            (GSI_VECTOR_LABEL_SIZE ? GSI_VECTOR_LABEL_SIZE + 'px' : 'なし') + '）');
+        };
 
-        // 表示枠の大きさが変わった時に、ベクター側にも伝える
-        map.on('resize', () => { try { ml.resize(); } catch (e) {} });
-      } catch (e) {
-        giveUp(String((e && e.message) || e));
-      }
+        try {
+          // スタイルは「URLのまま」渡します。中身を取ってきて渡すと、
+          // スタイル内の相対パス（絵記号や文字フォント）が解決できず真っ白になります。
+          gl = L.maplibreGL({ style: cand.style, attribution: cand.credit });
+          gl.addTo(map);
+          const ml = gl.getMaplibreMap();
+          timer = setTimeout(() => fail('時間切れ'), GSI_VECTOR_READY_MS);
+
+          let labels = 0, sourceLoaded = false;
+          ml.on('error', (e) => {
+            const msg = (e && e.error && e.error.message) || '';
+            if (/style|Style|Failed to fetch|NetworkError|CORS/i.test(msg)) fail('取得失敗');
+          });
+          ml.on('sourcedata', (e) => { if (e && e.isSourceLoaded) sourceLoaded = true; });
+          ml.once('load', () => { labels = applyGsiLabelSize(ml); try { ml.resize(); } catch (e) {} });
+          ml.on('idle', () => { if (!settled && sourceLoaded) win(labels); });
+          map.on('resize', () => { try { ml.resize(); } catch (e) {} });
+        } catch (e) {
+          fail(String((e && e.message) || e));
+        }
+      };
+
+      tryNext(0);
     }
+
     // 「📍現在地を表示」で調べた地名を端末に保存しておくキー
     const NEARBY_CACHE_KEY = "edogawa_sugoroku_nearby_v1";
 
