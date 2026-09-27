@@ -55,7 +55,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v57 (2026-09-27)';
+    window.__EDOGAWA_VERSION = 'v58 (2026-09-27)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1145,7 +1145,7 @@
       <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full flex items-center gap-3 bg-[#06C755]/15 hover:bg-[#06C755]/25 border border-[#06C755]/40 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
         <span class="text-xl">💬</span><span class="text-sm font-bold text-[#06C755]">LINEで紹介</span>
       </button>
-      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v57 (2026-09-27)</span></p>
+      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v58 (2026-09-27)</span></p>
     </div>
   </div>
 
@@ -10784,7 +10784,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         <button id="edogawa-line-login" class="edo-auth-btn bg-[#06C755] text-white">LINEでログインする</button>
         <div id="edogawa-line-message" class="text-[10px] text-slate-400 mt-3 leading-relaxed"></div>
       </div></div>
-      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v57 (2026-09-27)</span></div>`;
+      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v58 (2026-09-27)</span></div>`;
     body.appendChild(auth);
 
     const setup=document.createElement('div');setup.id='edogawa-user-setup';setup.innerHTML=`<div class="box">
@@ -10993,18 +10993,45 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const msg=document.getElementById('edogawa-line-message');
     if(err){oauthStore.remove('edogawa_line_link_mode_v1');if(msg)msg.textContent=`LINEログインがキャンセルされました。${q.get('error_description')||''}`;return true;}
     const savedState=oauthStore.get(OAUTH_STATE_KEY), verifier=oauthStore.get(OAUTH_VERIFIER_KEY);
-    if(!savedState||savedState!==state||!verifier){oauthStore.remove('edogawa_line_link_mode_v1');if(msg)msg.textContent='LINEログインの確認に失敗しました。もう一度お試しください。';return true;}
-    if(!LINE_CFG.tokenEndpoint){if(msg)msg.textContent='認証コード交換APIが設定されていません。';return true;}
+    if(!savedState||savedState!==state||!verifier){oauthStore.remove('edogawa_line_link_mode_v1');const t1='LINEログインの確認に失敗しました。もう一度お試しください。';if(msg)msg.textContent=t1;app._lineLog?.('state不一致',{保存済み有:!!savedState,一致:savedState===state,verifier有:!!verifier});app._lineError?.(t1);return true;}
+    if(!LINE_CFG.tokenEndpoint){const t2='認証コード交換API（GAS）が設定されていません。';if(msg)msg.textContent=t2;app._lineError?.(t2);return true;}
     try{
       const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier});
       // credentials:'include' だと「Access-Control-Allow-Origin: *」を返すAPI
       // （Google Apps Scriptなど）とCORSが成立しません。Cookieは使わないので送りません。
       const r=await fetch(LINE_CFG.tokenEndpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,credentials:'omit'});if(!r.ok)throw new Error('token '+r.status);
       const data=await r.json();
-      // Prefer trusted server-returned profile; backend should validate the ID token / access token with LINE.
+      if(data && data.error){throw new Error('API: '+String(data.error_description||data.detail||data.error).slice(0,80));}
+      // ① サーバー（GAS）が profile を返してくれた場合はそれを使います。
       const profile=data.profile || data.user || {};
-      const userId=profile.userId||profile.sub||data.userId;const name=profile.displayName||profile.name||data.displayName||data.name;const picture=profile.pictureUrl||profile.picture||data.pictureUrl||data.picture;
-      if(!userId || !name){throw new Error('profile missing');}
+      let userId=profile.userId||profile.sub||data.userId;
+      let name=profile.displayName||profile.name||data.displayName||data.name;
+      let picture=profile.pictureUrl||profile.picture||data.pictureUrl||data.picture;
+      // ② profile が無い場合は id_token（JWT）から取り出します。scope に openid があるので
+      //    name / picture / sub が入っています。ここは通信不要です。
+      if((!userId||!name) && data.id_token){
+        try{
+          const part=String(data.id_token).split('.')[1];
+          const json=decodeURIComponent(atob(part.replace(/-/g,'+').replace(/_/g,'/'))
+            .split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+          const cl=JSON.parse(json);
+          userId=userId||cl.sub; name=name||cl.name; picture=picture||cl.picture;
+          app._lineLog?.('id_tokenから取得',{userId有:!!cl.sub,name:cl.name||null,picture有:!!cl.picture});
+        }catch(e){ app._lineLog?.('id_token解析失敗', String(e&&e.message||e)); }
+      }
+      // ③ それでも足りなければ、アクセストークンでLINEのプロフィールAPIを直接叩きます。
+      //    このAPIはブラウザから呼べて（CORS対応）、シークレットも不要です。
+      if((!userId||!name) && data.access_token){
+        try{
+          const pr=await fetch('https://api.line.me/v2/profile',{headers:{Authorization:'Bearer '+data.access_token}});
+          if(pr.ok){const pj=await pr.json();userId=userId||pj.userId;name=name||pj.displayName;picture=picture||pj.pictureUrl;}
+          app._lineLog?.('プロフィールAPI',{status:pr.status,name:name||null});
+        }catch(e){ app._lineLog?.('プロフィールAPI失敗', String(e&&e.message||e)); }
+      }
+      if(!userId || !name){
+        throw new Error('profile missing（サーバーの応答: '+Object.keys(data||{}).join(',').slice(0,60)+'）');
+      }
+      app._lineLog?.('プロフィール確定',{name:name,picture有:!!picture});
       const linking=oauthStore.get('edogawa_line_link_mode_v1')==='1';
       const p=app.getUserProfile();p.authProvider='line';p.lineUserId=userId;p.lineName=name;p.linePictureUrl=picture||null;
       // アカウント設定からの連携では、現在のニックネーム・絵文字・ゲーム進行は維持し、LINE認証情報だけ紐づけます。
@@ -11027,8 +11054,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       return true;
     }catch(e){
       console.error('[LINE]',e);
-      if(msg)msg.textContent='LINEログインの認証に失敗しました（'+String(e&&e.message||e).slice(0,60)+'）。'+
-        'LINE Developers のコールバックURLに次のURLが登録されているか確認してください：'+app._lineRedirectUri();
+      app._lineLog?.('失敗', String(e&&e.message||e).slice(0,120));
+      const txt='LINEログインの認証に失敗しました（'+String(e&&e.message||e).slice(0,90)+'）。';
+      if(msg)msg.textContent=txt+'LINE Developers のコールバックURLに次のURLが登録されているか確認してください：'+app._lineRedirectUri();
+      app._lineError?.(txt);
       return true;}
   };
   app.clearAllAccountData=async function(){
@@ -12381,7 +12410,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
      下のボタン列の位置は出典を入れる前と同じままです）。
      目立たせる必要はないので枠なし・小さめの文字にしています。 */
   #map-credit-btn.edo-map-credit{
-    position:fixed; top:0; left:4px; z-index:30;
+    position:fixed; top:10px; left:8px; z-index:30;
     margin:0; padding:0; border:0; background:transparent; box-shadow:none;
     font-size:7px; line-height:1.2; font-weight:600; letter-spacing:.01em;
     color:#64748b; text-align:left; white-space:nowrap;
@@ -12941,6 +12970,178 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 </script>
 
 <!-- 出典表記をヘッダーへ移したため、フッター高さの計測は不要になりました -->
+
+
+<!-- ============================================================================
+     v58: LINEログインの自己診断
+     ----------------------------------------------------------------------------
+     LINEの不具合が何度も再現するのに、こちらでは原因が見えない状態が続いたため、
+     認証の各段階を記録して画面に出す仕組みを入れました。
+     記録は localStorage に残すので、LINEの画面へ飛んで戻ってきても消えません。
+     原因が分かったら SHOW_LINE_DIAG を false にしてください。
+     ============================================================================ -->
+<script id="edogawa-v58-line-diagnostics">
+(function(){
+  'use strict';
+  const app=window.EdogawaSugoroku; if(!app) return;
+  const SHOW_LINE_DIAG = true;
+  const LOG_KEY = 'edogawa_line_diag_v1';
+
+  const readLog = () => { try{ return JSON.parse(localStorage.getItem(LOG_KEY)||'[]'); }catch(e){ return []; } };
+  const writeLog = (rows) => { try{ localStorage.setItem(LOG_KEY, JSON.stringify(rows.slice(-40))); }catch(e){} };
+  const t = () => new Date().toTimeString().slice(0,8);
+  function L(tag, data){
+    const rows = readLog();
+    rows.push({ t: t(), tag: String(tag), data: data===undefined?null:data });
+    writeLog(rows);
+    try{ console.log('[LINE診断]', tag, data||''); }catch(e){}
+  }
+  app._lineLog = L;
+  window.__EDOGAWA_LINE_LOG = () => readLog();
+  window.__EDOGAWA_LINE_LOG_TEXT = () =>
+    readLog().map(r => r.t+' '+r.tag+(r.data!=null?' '+JSON.stringify(r.data):'')).join('\n');
+  window.__EDOGAWA_LINE_LOG_CLEAR = () => { try{ localStorage.removeItem(LOG_KEY); }catch(e){} return 'cleared'; };
+
+  // ── 認証の開始を記録 ──
+  const origStart = app.startLineOAuth?.bind(app);
+  if (origStart) {
+    app.startLineOAuth = async function(fromAccountSettings){
+      try{
+        const cfg = (typeof LINE_OAUTH_CONFIG!=='undefined') ? LINE_OAUTH_CONFIG : {};
+        const p = this.getUserProfile ? this.getUserProfile() : {};
+        L('開始', {
+          設定から: !!fromAccountSettings,
+          channelId有: !!cfg.channelId,
+          tokenEndpoint有: !!cfg.tokenEndpoint,
+          いまの連携: p.authProvider || null,
+          リダイレクトURI: (typeof this._lineRedirectUri==='function') ? this._lineRedirectUri() : null
+        });
+      }catch(e){ L('開始-記録失敗', String(e && e.message || e)); }
+      return origStart(fromAccountSettings);
+    };
+  }
+
+  // ── 戻ってきた時の処理を記録 ──
+  const origCb = app._handleLineCallback?.bind(app);
+  if (origCb) {
+    app._handleLineCallback = async function(){
+      let q;
+      try{ q = new URLSearchParams(location.search); }catch(e){ q = null; }
+      const code = q && q.get('code'), st = q && q.get('state'), er = q && q.get('error');
+      if (!code && !er) return origCb();           // LINEから戻ってきていない通常の起動
+
+      L('戻り', { code有: !!code, state有: !!st, error: er || null,
+                  errorDetail: (q && q.get('error_description')) || null });
+
+      // トークン交換の通信結果を拾うため、この処理の間だけ fetch を見張る
+      const cfg = (typeof LINE_OAUTH_CONFIG!=='undefined') ? LINE_OAUTH_CONFIG : {};
+      const origFetch = window.fetch;
+      window.fetch = async function(input, init){
+        const url = (typeof input==='string') ? input : (input && input.url) || '';
+        const watch = cfg.tokenEndpoint && url.indexOf(cfg.tokenEndpoint) === 0;
+        try{
+          const res = await origFetch.apply(this, arguments);
+          if (watch) {
+            let shape = null;
+            try{
+              const copy = res.clone();
+              const txt = await copy.text();
+              let j = null; try{ j = JSON.parse(txt); }catch(e){}
+              shape = j ? {
+                キー: Object.keys(j).slice(0,8),
+                access_token有: !!j.access_token,
+                profile有: !!(j.profile || j.user),
+                userId有: !!((j.profile||j.user||{}).userId || j.userId),
+                displayName: ((j.profile||j.user||{}).displayName || j.displayName || null),
+                pictureUrl有: !!((j.profile||j.user||{}).pictureUrl || j.pictureUrl),
+                error: j.error || null,
+                detail: j.detail ? String(j.detail).slice(0,140) : null
+              } : { 本文: txt.slice(0,160) };
+            }catch(e){ shape = { 解析失敗: String(e && e.message || e) }; }
+            L('トークン交換', { status: res.status, ok: res.ok, 応答: shape });
+          }
+          return res;
+        }catch(e){
+          if (watch) L('トークン交換-通信失敗', String(e && e.message || e));
+          throw e;
+        }
+      };
+
+      let r;
+      try{
+        r = await origCb();
+      } finally {
+        window.fetch = origFetch;
+      }
+
+      try{
+        const p = this.getUserProfile ? this.getUserProfile() : {};
+        L('反映後', {
+          ニックネーム: p.nickname || null,
+          アイコン種別: p.avatarType || null,
+          アイコン値: String(p.avatarValue||'').slice(0,60),
+          連携: p.authProvider || null,
+          LINE名: p.lineName || null
+        });
+      }catch(e){}
+
+      if (SHOW_LINE_DIAG) setTimeout(showPanel, 900);
+      return r;
+    };
+  }
+
+  // どの画面から認証を始めても、エラーが必ず目に入るようにします。
+  app._lineError = function(text){
+    try{
+      const st=document.getElementById('edo-line-account-status');
+      if(st){ st.textContent=text; st.style.color='#f87171'; }
+      let n=document.getElementById('edo-line-toast');
+      if(!n){ n=document.createElement('div'); n.id='edo-line-toast';
+        n.style.cssText='position:fixed;left:10px;right:10px;bottom:16px;z-index:2147483601;'+
+          'background:#7f1d1d;color:#fff;border-radius:12px;padding:12px 14px;font-size:12px;'+
+          'line-height:1.6;box-shadow:0 10px 30px rgba(0,0,0,.5)';
+        n.onclick=()=>n.remove(); document.body.appendChild(n); }
+      n.textContent='🟩 '+text+'（タップで閉じる）';
+    }catch(e){}
+  };
+
+  function showPanel(){
+    try{
+      if (document.getElementById('edo-line-diag')) return;
+      const rows = readLog();
+      if (!rows.length) return;
+      const box = document.createElement('div');
+      box.id = 'edo-line-diag';
+      box.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:2147483600;' +
+        'background:rgba(2,6,23,.97);border:1px solid #34d399;border-radius:14px;padding:12px 14px;' +
+        'color:#e2e8f0;font-size:11px;line-height:1.65;box-shadow:0 12px 36px rgba(0,0,0,.6);' +
+        'font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-height:80vh;overflow:auto';
+      const esc = (v) => String(v).replace(/[<>]/g,'');
+      box.innerHTML =
+        '<div style="font-weight:900;color:#34d399;margin-bottom:6px">🟩 LINEログインの記録（開発用）</div>' +
+        rows.map(r => '<div style="margin-bottom:3px"><span style="color:#94a3b8">' + esc(r.t) + '</span> ' +
+          '<b>' + esc(r.tag) + '</b>' +
+          (r.data!=null ? '<div style="color:#cbd5e1;padding-left:8px">' +
+            esc(JSON.stringify(r.data)) + '</div>' : '') + '</div>').join('') +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">' +
+        '<button id="edo-line-diag-copy" style="background:#1e293b;color:#e2e8f0;border:1px solid #475569;' +
+        'border-radius:10px;padding:9px;font-weight:800">記録をコピー</button>' +
+        '<button id="edo-line-diag-close" style="background:#1e293b;color:#e2e8f0;border:1px solid #475569;' +
+        'border-radius:10px;padding:9px;font-weight:800">閉じる</button></div>';
+      document.body.appendChild(box);
+      document.getElementById('edo-line-diag-close').onclick = () => box.remove();
+      document.getElementById('edo-line-diag-copy').onclick = () => {
+        const btn = document.getElementById('edo-line-diag-copy');
+        try{ navigator.clipboard.writeText(window.__EDOGAWA_LINE_LOG_TEXT()); btn.textContent='コピーしました'; }
+        catch(e){ btn.textContent='コピーできませんでした'; }
+      };
+    }catch(e){}
+  }
+  app._showLineDiag = showPanel;
+  window.__EDOGAWA_LINE_DIAG = showPanel;
+})();
+</script>
+
 <script id="edogawa-v39-footer">
 
 (function(){
