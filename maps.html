@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>地図の文字サイズ検証</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+  :root{--bg:#0b1220;--panel:#111c31;--line:#28374f;--text:#e8eefc;--dim:#93a4c0;
+        --accent:#fbbf24;--ok:#34d399;--warn:#fb7185;}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;}
+  header{padding:18px 16px 12px;border-bottom:1px solid var(--line)}
+  h1{margin:0 0 6px;font-size:20px;font-weight:900}
+  header p{margin:0;font-size:13px;line-height:1.75;color:var(--dim)}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px;
+    border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+  .bar button{background:#1b2942;color:var(--text);border:1px solid var(--line);
+    border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer}
+  .bar button:hover{border-color:var(--accent);color:var(--accent)}
+  .bar label{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:7px}
+  .bar input[type=range]{width:130px}
+  .bar span{font-size:12px;color:var(--dim)}
+  .grid{display:grid;gap:14px;padding:14px 16px 40px;
+    grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .card h2{margin:0;padding:11px 14px 9px;font-size:15px;font-weight:900;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tag{font-size:10px;font-weight:900;padding:3px 8px;border-radius:999px}
+  .tag.now{background:rgba(251,191,36,.16);color:var(--accent);border:1px solid rgba(251,191,36,.45)}
+  .tag.ok{background:rgba(52,211,153,.14);color:var(--ok);border:1px solid rgba(52,211,153,.4)}
+  .map{height:340px;background:#0f1a2c;position:relative}
+  .note{padding:10px 14px 13px;font-size:12px;line-height:1.75;color:var(--dim);border-top:1px solid var(--line)}
+  .note b{color:var(--text)}
+  .err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    padding:16px;text-align:center;font-size:12px;color:var(--warn);background:rgba(2,6,23,.85);z-index:500}
+  .own-label{background:rgba(15,23,42,.92);border:1px solid rgba(251,191,36,.55);color:#fbbf24;
+    font-size:11px;font-weight:900;padding:2px 7px;border-radius:999px;white-space:nowrap;
+    box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  .leaflet-container{background:#0f1a2c}
+  .leaflet-div-icon{background:none;border:none}
+  footer{padding:0 16px 40px;font-size:12px;line-height:1.85;color:var(--dim)}
+  footer h3{color:var(--text);font-size:14px;margin:18px 0 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>地図の文字サイズ検証｜西葛西駅</h1>
+  <p>「西葛西駅」の文字を小さくする／消す方法を4通り並べました。どれか1つを動かすと全部が追従します。<br>
+     下のスライダーで、ベクター地図の文字サイズをその場で変えられます。</p>
+</header>
+
+<div class="bar">
+  <button onclick="go(35.66563,139.85897,17)">西葛西駅 z17</button>
+  <button onclick="go(35.66563,139.85897,18)">z18</button>
+  <button onclick="go(35.66563,139.85897,19)">z19（ゲームと同じ）</button>
+  <button onclick="go(35.68639,139.86694,18)">船堀タワー</button>
+  <label>文字サイズ <input type="range" id="ts" min="6" max="20" value="10" oninput="setTextSize(+this.value)">
+    <b id="tsv">10</b>px</label>
+  <span id="pos"></span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  <h3>この4つの違い</h3>
+  <b>A</b> はいまの方式です。地理院のラスタータイルは文字が画像に焼き込まれているので、
+  文字だけ小さくすることはできません。<br>
+  <b>B</b> は同じラスタータイルのまま、1段細かいタイルを取り寄せて半分の大きさで敷く方法です。
+  ライブラリの追加も申請も不要で、<b>文字が約半分</b>になります。そのぶんタイルの取得数は4倍になります。<br>
+  <b>C・D</b> は地理院のベクトルタイルです。文字サイズを数値で指定でき、文字を全部消すこともできます。<br>
+  <b>D</b> が「文字を消して、必要な名前だけ自分で重ねる」案です。地図はきれいな背景に徹して、
+  双六の施設アイコンとゴール旗だけが目立ちます。地図上の小さな金色のラベルが自前で置いたものです。
+
+  <h3>注意点</h3>
+  ・地理院ベクトルタイルはズーム16までのデータです（17以上は引き伸ばし表示）。
+  ゲームはズーム19まで寄るので、z19ボタンで実際の見え方を確認してください。<br>
+  ・ベクター地図はWebGLで描くため、古い端末では負荷が上がります。<br>
+  ・地理院ベクトルタイルは「提供実験」の位置づけです（利用規約は地理院コンテンツ利用規約に従う）。
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+<script>
+const START=[35.66563,139.85897], ZOOM=17;
+const GSI_VECTOR_STYLE='https://maps.gsi.go.jp/vector/data/std.json';
+const GSI_ATTR='地理院タイル（国土地理院）';
+
+const maps=[]; const glLayers=[]; let syncing=false;
+
+function shell(id,title,tag,tagText,note){
+  const el=document.createElement('div');
+  el.className='card';
+  el.innerHTML=`<h2>${title}<span class="tag ${tag}">${tagText}</span></h2>
+    <div class="map" id="m-${id}"></div><div class="note">${note}</div>`;
+  document.getElementById('grid').appendChild(el);
+  return document.getElementById('m-'+id);
+}
+function fail(id,msg){
+  const host=document.getElementById('m-'+id);
+  if(!host||host.querySelector('.err'))return;
+  const d=document.createElement('div'); d.className='err';
+  d.textContent='この地図を表示できませんでした：'+msg;
+  host.appendChild(d);
+}
+function mk(id){
+  const m=L.map('m-'+id,{zoomControl:false}).setView(START,ZOOM);
+  L.control.zoom({position:'topright'}).addTo(m);
+  m.on('move zoom',()=>{
+    if(syncing)return; syncing=true;
+    const c=m.getCenter(), z=m.getZoom();
+    maps.forEach(x=>{ if(x!==m) x.setView(c,z,{animate:false}); });
+    document.getElementById('pos').textContent=`ズーム ${z}`;
+    syncing=false;
+  });
+  maps.push(m); return m;
+}
+
+// ── A：いまの方式（ラスター・文字そのまま） ───────────────
+shell('a','A 地理院ラスター 標準','now','いまの方式',
+  '文字が画像に焼き込まれているため、<b>文字だけ小さくすることはできません</b>。');
+try{
+  const m=mk('a');
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',
+    {maxZoom:19,maxNativeZoom:18,attribution:GSI_ATTR}).addTo(m);
+}catch(e){fail('a',e.message)}
+
+// ── B：ラスターのまま、1段細かいタイルを半分の大きさで敷く ──
+shell('b','B 地理院ラスター 標準（文字 約1/2）','ok','追加ライブラリ不要',
+  '1段細かいタイルを取り寄せて半分の大きさで敷きます。<b>URLの指定を変えるだけ</b>で、'+
+  '文字が約半分・道や建物は細かくなります。タイルの取得数は4倍になります。');
+try{
+  const m=mk('b');
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',
+    {maxZoom:19,maxNativeZoom:18,attribution:GSI_ATTR,
+     tileSize:128, zoomOffset:1}).addTo(m);
+}catch(e){fail('b',e.message)}
+
+// ── C / D：地理院ベクトルタイル ─────────────────────────
+shell('c','C 地理院ベクトル（文字サイズ指定）','ok','文字を自由に',
+  'ベクトルタイルなので<b>文字サイズを数値で指定</b>できます。上のスライダーで変えてみてください。');
+shell('d','D 地理院ベクトル（文字なし＋自前ラベル）','ok','おすすめ',
+  '地図の文字を<b>全部消して</b>、必要な名前だけ自分で重ねる方式。'+
+  '地図は背景に徹するので、双六のアイコンとゴール旗がいちばん目立ちます。'+
+  '金色の小さなラベルが自前で置いたものです。');
+
+function addVector(id,{hideLabels}){
+  let map;
+  try{ map=mk(id); }catch(e){ fail(id,e.message); return; }
+  if(!L.maplibreGL){ fail(id,'maplibre-gl-leaflet を読み込めませんでした'); return; }
+  fetch(GSI_VECTOR_STYLE)
+    .then(r=>{ if(!r.ok) throw new Error('スタイルの取得に失敗 HTTP '+r.status); return r.json(); })
+    .then(style=>{
+      style.layers=(style.layers||[]).filter(l=>{
+        if(l.type!=='symbol') return true;
+        if(hideLabels) return false;                 // 文字レイヤーを全部外す
+        l.layout=l.layout||{};
+        l.layout['text-size']=+document.getElementById('ts').value;
+        return true;
+      });
+      const gl=L.maplibreGL({style,attribution:GSI_ATTR}).addTo(map);
+      glLayers.push({gl,hideLabels});
+      if(hideLabels) addOwnLabels(map);
+    })
+    .catch(e=>fail(id,e.message));
+}
+
+// 「自前で重ねる」デモ用のラベル
+function addOwnLabels(map){
+  const pts=[
+    [35.66563,139.85897,'🚉 西葛西駅'],
+    [35.66390,139.85980,'🏪 スーパー'],
+    [35.66700,139.85780,'🏥 クリニック'],
+    [35.66480,139.86150,'🛝 保育園']
+  ];
+  pts.forEach(([lat,lng,text])=>{
+    L.marker([lat,lng],{icon:L.divIcon({className:'',
+      html:`<div class="own-label">${text}</div>`,iconSize:[0,0],iconAnchor:[0,0]})}).addTo(map);
+  });
+}
+
+addVector('c',{hideLabels:false});
+addVector('d',{hideLabels:true});
+
+function setTextSize(v){
+  document.getElementById('tsv').textContent=v;
+  glLayers.forEach(({gl,hideLabels})=>{
+    if(hideLabels)return;
+    try{
+      const m=gl.getMaplibreMap();
+      m.getStyle().layers.forEach(l=>{
+        if(l.type==='symbol') { try{ m.setLayoutProperty(l.id,'text-size',v); }catch(e){} }
+      });
+    }catch(e){}
+  });
+}
+
+function go(lat,lng,z){
+  syncing=true; maps.forEach(m=>m.setView([lat,lng],z,{animate:false})); syncing=false;
+  document.getElementById('pos').textContent=`ズーム ${z}`;
+}
+document.getElementById('pos').textContent=`ズーム ${ZOOM}`;
+</script>
+</body>
+</html>
