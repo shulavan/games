@@ -156,6 +156,17 @@
       border: 2px solid rgba(255,255,255,.85);
     }
     .facility-poi { position: relative; }
+    /* 施設名のラベル（アイコンの真下） */
+    .facility-poi-wrap { position: relative; width: 78px; height: 78px; }
+    .facility-poi-label {
+      position: absolute; left: 50%; top: 78px; transform: translateX(-50%);
+      white-space: nowrap; pointer-events: none;
+      font-size: 10px; line-height: 1.25; font-weight: 800; letter-spacing: .01em;
+      color: #0f172a; background: rgba(255,255,255,.92);
+      border: 1px solid rgba(100,116,139,.45); border-radius: 6px;
+      padding: 1px 5px; box-shadow: 0 1px 4px rgba(0,0,0,.28);
+    }
+    @media (max-width: 380px) { .facility-poi-label { font-size: 9px; } }
 
     /* 画面下に固定表示される広告の高さぶんだけ、下に余白を作る（サイコロが隠れないように） */
     :root { --ad-reserve: 0px; --ad-slot-h: 0px; }
@@ -628,7 +639,24 @@
   </div>
 
   <!-- MAIN HEADER -->
-  <header data-app="1" class="absolute top-0 left-0 right-0 h-14 px-3 sm:px-4 flex items-center justify-between z-20">
+  <header data-app="1" class="absolute top-0 left-0 right-0 px-3 sm:px-4 pt-2 flex flex-col gap-2 z-20">
+
+    <!-- 1段目：左に地図の出典、右に目的地 -->
+    <div class="flex items-start justify-between gap-2">
+      <button id="map-credit-btn" onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
+        class="sticker-btn edo-map-credit flex items-center bg-white text-slate-600 px-3 py-1 rounded-full text-xs font-bold active:scale-95 transition">
+        地理院タイル ・出典
+      </button>
+      <div id="game-destination-badge-slot" class="flex-1 flex justify-end min-w-0">
+        <div id="game-destination-badge" onclick="EdogawaSugoroku.panToDestination()" class="sticker-btn hidden sm:flex items-center gap-1.5 bg-slate-900 px-3 py-1 rounded-full text-xs cursor-pointer active:scale-95 transition">
+      <span class="text-amber-400 font-bold">目的地:</span>
+      <span id="current-destination-name" class="text-slate-100 font-bold truncate max-w-[150px]">カラオケ酔処「ゆう」</span>
+    </div>
+      </div>
+    </div>
+
+    <!-- 2段目：ターン数・オートモード／BGM・全画面・メニュー -->
+    <div class="flex items-center justify-between gap-2">
     <div id="game-header-left" class="flex items-center gap-2">
       <span id="game-turn-badge" class="sticker-btn px-2 py-0.5 bg-slate-800 text-slate-100 text-[11px] font-bold rounded-md">
         1ターン
@@ -638,12 +666,7 @@
       </button>
     </div>
 
-    <!-- Active Target Badge -->
-    <div id="game-destination-badge" onclick="EdogawaSugoroku.panToDestination()" class="sticker-btn hidden sm:flex items-center gap-1.5 bg-slate-900 px-3 py-1 rounded-full text-xs cursor-pointer active:scale-95 transition">
-      <span class="text-amber-400 font-bold">目的地:</span>
-      <span id="current-destination-name" class="text-slate-100 font-bold truncate max-w-[150px]">カラオケ酔処「ゆう」</span>
-    </div>
-
+    <!-- 目的地バッジは1段目へ移動しました（下のスクリプトで差し込みます） -->
     <!-- Quick Tools -->
     <div id="game-header-tools" class="flex items-center gap-2">
       <button id="bgm-toggle-btn" onclick="EdogawaSugoroku.toggleBGM()" class="sticker-btn p-2 bg-slate-900 text-amber-400 active:scale-95 transition rounded-lg flex items-center gap-1 text-xs font-bold" title="BGM ON/OFF">
@@ -663,6 +686,7 @@
         <span class="block w-4 h-[2px] bg-current rounded"></span>
         <span class="block w-4 h-[2px] bg-current rounded"></span>
       </button>
+    </div>
     </div>
   </header>
 
@@ -687,11 +711,7 @@
       📍 現在地を表示
     </button>
 
-    <!-- 地図の出典表記（タップで利用規約の「出典・クレジット」を開く） -->
-    <button id="map-credit-btn" onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
-      class="edo-map-credit px-1.5 py-[2px] rounded bg-slate-950/85 text-[9px] leading-tight text-slate-300 hover:text-white active:scale-95 transition">
-      地理院タイル ・出典
-    </button>
+    <!-- 地図の出典表記はヘッダー左上へ移しました -->
   </main>
 
   <!-- MAIN GAME UI FOOTER -->
@@ -1747,6 +1767,14 @@
     // 下に敷いたラスターは絶対に外しません。描けなければラスターのまま遊べます。
     //   USE_GSI_VECTOR        : false にすると、はじめからラスターだけを使います。
     //   GSI_VECTOR_LABEL_SIZE : 地図の文字の大きさ(px)。0 で地図の文字を全部消します。
+    // 施設アイコンの下に名前を出すかどうか。
+    //   FACILITY_LABELS_ENABLED : false にすると名前を出しません。
+    //   FACILITY_LABEL_SKIP     : 名前を出さない種類（絵文字で指定）。
+    //   FACILITY_LABEL_MAX_CHARS: これより長い名前は「…」で省略します。
+    const FACILITY_LABELS_ENABLED = true;
+    const FACILITY_LABEL_SKIP = new Set(['🍽', '🛏️', '🚏']);
+    const FACILITY_LABEL_MAX_CHARS = 9;
+
     const USE_GSI_VECTOR = true;
     const GSI_VECTOR_LABEL_SIZE = 10;
     const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
@@ -4322,6 +4350,27 @@
         return `${emoji}|${loc.name}|${loc.lat.toFixed(5)},${loc.lng.toFixed(5)}`;
       },
 
+      // 名前ラベルを出す施設かどうか。
+      // 飲食店・宿泊施設・バス停は数が多く画面が埋まるので、初期設定では出しません。
+      // FACILITY_LABEL_SKIP から絵文字を消せば、その種類も名前が出ます。
+      _facilityLabelHtml(loc, emoji) {
+        try {
+          if (!FACILITY_LABELS_ENABLED) return '';
+          if (FACILITY_LABEL_SKIP.has(emoji)) return '';
+          let name = String((loc && loc.name) || '').trim();
+          if (!name) return '';
+          // 「〇〇（△△）」の括弧書きは長くなるので落とす
+          name = name.replace(/[（(][^）)]*[）)]\s*$/, '').trim();
+          if (!name) return '';
+          if ([...name].length > FACILITY_LABEL_MAX_CHARS) {
+            name = [...name].slice(0, FACILITY_LABEL_MAX_CHARS).join('') + '…';
+          }
+          const safe = name.replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+          return `<span class="facility-poi-label">${safe}</span>`;
+        } catch (e) { return ''; }
+      },
+
       _createFacilityMarker(loc, emoji) {
         // 陣取りで塗られている施設は、そのプレイヤーの色で表示する
         const owner = this.territoryOwnerOf(loc);
@@ -4330,9 +4379,13 @@
           ? ` style="border-color:${color};background:${this._rgba(color, 0.42)}"`
           : '';
         const dot = color ? `<span class="owner-dot" style="background:${color}"></span>` : '';
+        // 施設名をアイコンの下に小さく出す。
+        // 地図（地理院ベクトル）は道路名しか出ないため、駅や公共施設の名前が
+        // 分からず「いまどこを進んでいるか」が掴みにくい、というご指摘への対応です。
+        const label = this._facilityLabelHtml(loc, emoji);
         const icon = L.divIcon({
           className: 'facility-poi-icon',
-          html: `<div class="facility-poi${color ? ' owned' : ''}"${style}>${emoji}${dot}</div>`,
+          html: `<div class="facility-poi-wrap"><div class="facility-poi${color ? ' owned' : ''}"${style}>${emoji}${dot}</div>${label}</div>`,
           iconSize: [78, 78],
           iconAnchor: [39, 39]
         });
@@ -12266,15 +12319,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
        ・BGM        … 全ゲーム共通で sound.playBGM('mini')（v39 の miniBGM）
      ============================================================================ -->
 <style id="edogawa-map-credit-css">
-  /* 出典表記が下のプレーヤー枠に隠れていたので、フッターの上へ出します。
-     --edo-footer-h はフッターの高さで、実際の高さに合わせて自動更新します。 */
+  /* 地図の出典表記。ヘッダー1段目の左、目的地バッジと同じ大きさ・同じ段に置きます。
+     色は目的地バッジの反転（白背景・グレー文字）。 */
   #map-credit-btn.edo-map-credit{
-    position:absolute; left:6px; z-index:60;
-    bottom:calc(var(--edo-footer-h, 150px) + 6px);
-    white-space:nowrap; pointer-events:auto;
-    border:1px solid rgba(148,163,184,.35);
-    box-shadow:0 2px 8px rgba(0,0,0,.45);
+    position:static; white-space:nowrap; flex:0 0 auto;
+    border:1px solid rgba(148,163,184,.55);
+    box-shadow:0 2px 8px rgba(0,0,0,.35);
   }
+  #map-credit-btn.edo-map-credit:hover{ color:#0f172a; }
 </style>
 <style id="edogawa-v41-common-modal-css">
   #edo-mini-common{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;
@@ -12822,35 +12874,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 })();
 </script>
 
-<script id="edogawa-map-credit-position">
-(function(){
-  'use strict';
-  // 地図の出典表記が下のプレーヤー枠に隠れていたので、
-  // フッターの実際の高さを測って、その上に出るようにします。
-  function update(){
-    try{
-      const footer=document.querySelector('footer[data-app="1"]');
-      if(!footer)return;
-      const h=Math.round(footer.getBoundingClientRect().height)||0;
-      if(h>0) document.documentElement.style.setProperty('--edo-footer-h', h+'px');
-    }catch(e){}
-  }
-  const start=()=>{
-    update();
-    try{
-      const footer=document.querySelector('footer[data-app="1"]');
-      if(footer && window.ResizeObserver) new ResizeObserver(update).observe(footer);
-    }catch(e){}
-    window.addEventListener('resize', update, {passive:true});
-    window.addEventListener('orientationchange', ()=>setTimeout(update,300), {passive:true});
-    // フッターの中身（人数や乗り物表示）が変わって高さが変わることがあるので、
-    // しばらくの間は定期的に測り直します。
-    let n=0; const t=setInterval(()=>{update(); if(++n>20) clearInterval(t);}, 500);
-  };
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start);
-  else start();
-})();
-</script>
+<!-- 出典表記をヘッダーへ移したため、フッター高さの計測は不要になりました -->
 <script id="edogawa-v39-footer">
 
 (function(){
