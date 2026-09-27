@@ -68,6 +68,11 @@
   <!-- Leaflet CSS & JS for Map Rendering -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- 地理院ベクトルタイル用。Leaflet のままベクター地図を描くための組み合わせです。
+       読み込めなかった場合は、これまでどおりラスタータイルで動きます。 -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
   
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -1727,7 +1732,57 @@
         creditUrl: 'https://carto.com/attributions'
       }
     };
+    // ── 地理院ベクトルタイル ─────────────────────────────────────
+    // ラスタータイル（画像）は文字が焼き込まれていて大きさを変えられず、
+    // さらにゲームはズーム19で表示するのに地理院のラスターはズーム18までのため、
+    // タイルが2倍に引き伸ばされて文字も2倍の大きさになっていました。
+    // ベクトルタイルなら文字の大きさを自由に決められ、どのズームでもぼやけません。
+    //   GSI_VECTOR_LABEL_SIZE : 地図の文字の大きさ（px）。0 にすると地図の文字を全部消します。
+    //   USE_GSI_VECTOR        : false にすると、これまでどおりのラスタータイルに戻ります。
+    const USE_GSI_VECTOR = true;
+    const GSI_VECTOR_LABEL_SIZE = 10;
+    const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
+
     const ACTIVE_BASEMAP = CARTO_API_KEY ? BASEMAPS.carto : BASEMAPS.gsi;
+
+    // ベクター地図のスタイルは通信で取りにいくので、まずラスターを敷いて
+    // 地図が真っ白にならないようにし、用意できたら上から差し替えます。
+    let _gsiVectorStylePromise = null;
+    function loadGsiVectorStyle() {
+      if (_gsiVectorStylePromise) return _gsiVectorStylePromise;
+      _gsiVectorStylePromise = fetch(GSI_VECTOR_STYLE_URL, { cache: 'force-cache' })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(style => {
+          style.layers = (style.layers || []).filter(layer => {
+            if (layer.type !== 'symbol') return true;
+            if (!GSI_VECTOR_LABEL_SIZE) return false;      // 0 なら文字レイヤーごと外す
+            layer.layout = layer.layout || {};
+            layer.layout['text-size'] = GSI_VECTOR_LABEL_SIZE;
+            return true;
+          });
+          return style;
+        });
+      return _gsiVectorStylePromise;
+    }
+
+    // 地図に基盤地図を敷く。ベクターが使えない環境ではラスターのまま。
+    function addBasemapTo(map) {
+      if (!map) return;
+      const raster = L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options });
+      raster.addTo(map);
+      if (!USE_GSI_VECTOR || !window.L || !L.maplibreGL || !window.maplibregl) return;
+      loadGsiVectorStyle()
+        .then(style => {
+          const gl = L.maplibreGL({ style, attribution: ACTIVE_BASEMAP.credit });
+          gl.addTo(map);
+          map.__gsiVectorLayer = gl;
+          // ベクターが描けてからラスターを外す（切り替えの一瞬も白くしない）
+          setTimeout(() => { try { map.removeLayer(raster); } catch (e) {} }, 600);
+        })
+        .catch(e => {
+          console.warn('地理院ベクトルタイルを読み込めなかったため、通常の地図で表示します:', e);
+        });
+    }
     // 「📍現在地を表示」で調べた地名を端末に保存しておくキー
     const NEARBY_CACHE_KEY = "edogawa_sugoroku_nearby_v1";
 
@@ -3987,7 +4042,7 @@
             keyboard: false,
             tap: false
           }).setView([EDOGAWA_START.lat, EDOGAWA_START.lng], 16);
-          L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options }).addTo(this.lobbyMap);
+          addBasemapTo(this.lobbyMap);
           setTimeout(() => { try { this.lobbyMap.invalidateSize(); } catch (e) {} }, 200);
         } catch (e) {
           console.error("ロビー背景地図の初期化に失敗:", e);
@@ -4018,7 +4073,7 @@
           this.map.on('moveend', () => this.scheduleFacilityMarkerRefresh(120));
           this.map.on('zoomend', () => this.scheduleFacilityMarkerRefresh(120));
 
-          L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options }).addTo(this.map);
+          addBasemapTo(this.map);
           this._applyMapCredit();
         }
         this.renderFacilityMarkers();
