@@ -644,7 +644,7 @@
     <!-- 1段目：左に地図の出典、右に目的地 -->
     <div class="flex items-start justify-between gap-2">
       <button id="map-credit-btn" onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
-        class="sticker-btn edo-map-credit flex items-center bg-white text-slate-600 px-3 py-1 rounded-full text-xs font-bold active:scale-95 transition">
+        class="edo-map-credit">
         地理院タイル ・出典
       </button>
       <div id="game-destination-badge-slot" class="flex-1 flex justify-end min-w-0">
@@ -10580,6 +10580,41 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   const LINE_CFG = (typeof LINE_OAUTH_CONFIG !== 'undefined') ? LINE_OAUTH_CONFIG : {channelId:'',redirectUri:'',tokenEndpoint:'',revokeEndpoint:''};
   const LINE_AUTHORIZE = 'https://access.line.me/oauth2/v2.1/authorize';
   const LINE_SCOPES = 'profile openid';
+  // LINEログインの一時データ（state / code_verifier / nonce）の置き場所。
+  // 以前は sessionStorage に入れていましたが、スマホでは LINE の認証画面から
+  // 戻ってくるときに別のタブ・別の枠で開き直されることがあり、
+  // sessionStorage が空のまま戻ってきて「確認に失敗しました」になっていました。
+  // localStorage に、10分で切れる形で置きます（使ったらすぐ消します）。
+  const OAUTH_TTL_MS = 10 * 60 * 1000;
+  const oauthStore = {
+    set(key, value){
+      const rec = JSON.stringify({ v: String(value), t: Date.now() });
+      try { localStorage.setItem(key, rec); } catch (e) {}
+      try { sessionStorage.setItem(key, rec); } catch (e) {}
+    },
+    get(key){
+      const read = (store) => {
+        try {
+          const raw = store.getItem(key);
+          if (!raw) return null;
+          if (raw.charAt(0) !== '{') return raw;          // 旧形式もそのまま読む
+          const rec = JSON.parse(raw);
+          if (!rec || typeof rec.v !== 'string') return null;
+          if (Date.now() - (rec.t || 0) > OAUTH_TTL_MS) return null;
+          return rec.v;
+        } catch (e) { return null; }
+      };
+      let v = null;
+      try { v = read(localStorage); } catch (e) {}
+      if (v == null) { try { v = read(sessionStorage); } catch (e) {} }
+      return v;
+    },
+    remove(key){
+      try { localStorage.removeItem(key); } catch (e) {}
+      try { sessionStorage.removeItem(key); } catch (e) {}
+    }
+  };
+
   const OAUTH_STATE_KEY='edogawa_line_oauth_state_v1';
   const OAUTH_VERIFIER_KEY='edogawa_line_oauth_verifier_v1';
   const OAUTH_NONCE_KEY='edogawa_line_oauth_nonce_v1';
@@ -10930,8 +10965,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if(!LINE_CFG.channelId || !LINE_CFG.tokenEndpoint){if(msg)msg.textContent='LINEログイン設定が未完了です。LINE DevelopersのChannel IDと、認証コードを交換する安全なサーバーAPI（tokenEndpoint）を設定してください。';return;}
     try{
       const state=rand(24),nonce=rand(24),verifier=rand(48),challenge=b64url(await sha256(verifier));
-      sessionStorage.setItem(OAUTH_STATE_KEY,state);sessionStorage.setItem(OAUTH_VERIFIER_KEY,verifier);sessionStorage.setItem(OAUTH_NONCE_KEY,nonce);
-      sessionStorage.setItem('edogawa_line_link_mode_v1',fromAccountSettings?'1':'0');
+      oauthStore.set(OAUTH_STATE_KEY,state);oauthStore.set(OAUTH_VERIFIER_KEY,verifier);oauthStore.set(OAUTH_NONCE_KEY,nonce);
+      oauthStore.set('edogawa_line_link_mode_v1',fromAccountSettings?'1':'0');
       const u=new URL(LINE_AUTHORIZE);u.searchParams.set('response_type','code');u.searchParams.set('client_id',LINE_CFG.channelId);u.searchParams.set('redirect_uri',app._lineRedirectUri());u.searchParams.set('state',state);u.searchParams.set('scope',LINE_SCOPES);u.searchParams.set('nonce',nonce);u.searchParams.set('code_challenge',challenge);u.searchParams.set('code_challenge_method','S256');
       location.href=u.toString();
     }catch(e){if(msg)msg.textContent='LINEログインを開始できませんでした。';}
@@ -10939,9 +10974,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   app._handleLineCallback=async function(){
     const q=new URLSearchParams(location.search), code=q.get('code'), state=q.get('state'), err=q.get('error'); if(!code&&!err)return false;
     const msg=document.getElementById('edogawa-line-message');
-    if(err){sessionStorage.removeItem('edogawa_line_link_mode_v1');if(msg)msg.textContent=`LINEログインがキャンセルされました。${q.get('error_description')||''}`;return true;}
-    const savedState=sessionStorage.getItem(OAUTH_STATE_KEY), verifier=sessionStorage.getItem(OAUTH_VERIFIER_KEY);
-    if(!savedState||savedState!==state||!verifier){sessionStorage.removeItem('edogawa_line_link_mode_v1');if(msg)msg.textContent='LINEログインの確認に失敗しました。もう一度お試しください。';return true;}
+    if(err){oauthStore.remove('edogawa_line_link_mode_v1');if(msg)msg.textContent=`LINEログインがキャンセルされました。${q.get('error_description')||''}`;return true;}
+    const savedState=oauthStore.get(OAUTH_STATE_KEY), verifier=oauthStore.get(OAUTH_VERIFIER_KEY);
+    if(!savedState||savedState!==state||!verifier){oauthStore.remove('edogawa_line_link_mode_v1');if(msg)msg.textContent='LINEログインの確認に失敗しました。もう一度お試しください。';return true;}
     if(!LINE_CFG.tokenEndpoint){if(msg)msg.textContent='認証コード交換APIが設定されていません。';return true;}
     try{
       const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier});
@@ -10953,11 +10988,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       const profile=data.profile || data.user || {};
       const userId=profile.userId||profile.sub||data.userId;const name=profile.displayName||profile.name||data.displayName||data.name;const picture=profile.pictureUrl||profile.picture||data.pictureUrl||data.picture;
       if(!userId || !name){throw new Error('profile missing');}
-      const linking=sessionStorage.getItem('edogawa_line_link_mode_v1')==='1';
+      const linking=oauthStore.get('edogawa_line_link_mode_v1')==='1';
       const p=app.getUserProfile();p.authProvider='line';p.lineUserId=userId;p.lineName=name;p.linePictureUrl=picture||null;
       // アカウント設定からの連携では、現在のニックネーム・絵文字・ゲーム進行は維持し、LINE認証情報だけ紐づけます。
       try{sessionStorage.setItem(OAUTH_ACCESS_KEY, data.access_token||'');}catch(e){}
-      sessionStorage.removeItem(OAUTH_STATE_KEY);sessionStorage.removeItem(OAUTH_VERIFIER_KEY);sessionStorage.removeItem(OAUTH_NONCE_KEY);sessionStorage.removeItem('edogawa_line_link_mode_v1');sessionStorage.removeItem('edogawa_line_link_mode_v1');
+      oauthStore.remove(OAUTH_STATE_KEY);oauthStore.remove(OAUTH_VERIFIER_KEY);oauthStore.remove(OAUTH_NONCE_KEY);oauthStore.remove('edogawa_line_link_mode_v1');
       history.replaceState({},document.title,location.pathname);
       if(linking){
         app.saveUserProfile();
@@ -12319,14 +12354,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
        ・BGM        … 全ゲーム共通で sound.playBGM('mini')（v39 の miniBGM）
      ============================================================================ -->
 <style id="edogawa-map-credit-css">
-  /* 地図の出典表記。ヘッダー1段目の左、目的地バッジと同じ大きさ・同じ段に置きます。
-     色は目的地バッジの反転（白背景・グレー文字）。 */
+  /* 地図の出典表記。目立たせる必要はないので、枠なし・小さめの文字で
+     ヘッダー1段目の左上にそっと置きます。（目的地は同じ段の右側） */
   #map-credit-btn.edo-map-credit{
-    position:static; white-space:nowrap; flex:0 0 auto;
-    border:1px solid rgba(148,163,184,.55);
-    box-shadow:0 2px 8px rgba(0,0,0,.35);
+    position:static; flex:0 0 auto; align-self:flex-start;
+    margin:0; padding:0; border:0; background:transparent; box-shadow:none;
+    font-size:7px; line-height:1.2; font-weight:600; letter-spacing:.01em;
+    color:#64748b; text-align:left; white-space:nowrap;
+    text-shadow:0 0 3px rgba(255,255,255,.85);
   }
-  #map-credit-btn.edo-map-credit:hover{ color:#0f172a; }
+  #map-credit-btn.edo-map-credit:active{ opacity:.6; }
 </style>
 <style id="edogawa-v41-common-modal-css">
   #edo-mini-common{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;
