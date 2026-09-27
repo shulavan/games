@@ -12247,10 +12247,38 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     };
   }
 
-  // ── ゴール後あみだくじ：無反応でも必ず終わらせる ──
-  const AMIDA_MS=35000;
+  // ── 見張りタイマー ────────────────────────────────────────────
+  // 【v47での反省】35秒/60秒で一律に打ち切る作りにしたところ、
+  // あみだくじを選んで歩いている最中に発火し、「選んだ瞬間に閉じる」
+  // 不具合になっていました。遊んでいる間は絶対に割り込まないよう、
+  //   ・子の画面が出ているか
+  //   ・子から連絡が来ているか
+  //   ・画面を触っているか
+  // を「生きている合図」として数え、合図が長く途絶えた時だけ復帰させます。
+  const AMIDA_LOAD_MS  = 25000;   // 子の画面がこの時間出てこなければ異常
+  const IDLE_MS        = 120000;  // 合図が2分間途絶えたら異常
+  let lastActivity = Date.now();
+  const touch = () => { lastActivity = Date.now(); };
+  ['pointerdown','touchstart','keydown','click'].forEach(t =>
+    window.addEventListener(t, touch, {passive:true, capture:true}));
+  window.addEventListener('message', (e) => {
+    const t = (e.data && e.data.type) || '';
+    if (typeof t === 'string' && t.indexOf('EDOGAWA_') === 0) touch();
+  });
+
+  function amidaChildAlive(){
+    try{
+      const f = document.getElementById('goal-amida-frame');
+      if (!f) return false;
+      if (f.offsetWidth < 40 || f.offsetHeight < 40) return false;
+      const d = f.contentDocument;
+      if (!d || !d.body) return false;
+      return (d.body.innerText || '').trim().length > 0 || d.querySelectorAll('canvas,button').length > 0;
+    }catch(e){ return false; }
+  }
+
   let amidaTimer=null;
-  const clearAmida=()=>{ if(amidaTimer){clearTimeout(amidaTimer);amidaTimer=null;} };
+  const clearAmida=()=>{ if(amidaTimer){clearInterval(amidaTimer);amidaTimer=null;} };
 
   const origAmida=app.startGoalAmida?.bind(app);
   if(origAmida){
@@ -12259,13 +12287,22 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       const r=origAmida(player);
       clearAmida();
       if(this.goalAmidaActive){
-        amidaTimer=setTimeout(()=>{
-          amidaTimer=null;
-          if(!app.goalAmidaActive)return;
-          app._miniLog('amida-timeout',{});
-          try{app.addLog?.('⚠️ あみだくじの応答がないため、自動で終了しました。');}catch(e){}
-          try{app.finishGoalAmida();}catch(e){console.error('[v43]',e);}
-        },AMIDA_MS);
+        touch();
+        const startedAt=Date.now();
+        let everAlive=false;
+        amidaTimer=setInterval(()=>{
+          if(!app.goalAmidaActive){clearAmida();return;}
+          if(amidaChildAlive()){ everAlive=true; touch(); return; }   // 遊べている間は何もしない
+          const waited=Date.now()-startedAt;
+          const idle=Date.now()-lastActivity;
+          // 画面が一度も出ないまま25秒、または合図が2分途絶えた時だけ復帰させる
+          if((!everAlive && waited>AMIDA_LOAD_MS) || idle>IDLE_MS){
+            clearAmida();
+            app._miniLog('amida-timeout',{everAlive,waited,idle});
+            try{app.addLog?.('⚠️ あみだくじの応答がないため、自動で終了しました。');}catch(e){}
+            try{app.finishGoalAmida();}catch(e){console.error('[v43]',e);}
+          }
+        },1000);
       }
       return r;
     };
@@ -12289,38 +12326,47 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     };
   }
 
-  // ── ゴール全体の見張り：目的地が変わらないまま止まったら復帰させる ──
-  const GOAL_MS=60000;
+  // ── ゴール全体の見張り ──
+  // ミニゲームもあみだくじも「人が遊ぶ時間」があるので、時間では切りません。
+  // 何も動いていない（ミニゲームもあみだも無い）のに先へ進んでいない、
+  // という本当に止まった状態だけを拾います。
   let goalTimer=null;
+  const clearGoal=()=>{ if(goalTimer){clearInterval(goalTimer);goalTimer=null;} };
   const origPostGoal=app.startPostGoalMiniGameThenAmida?.bind(app);
   if(origPostGoal){
     app.startPostGoalMiniGameThenAmida=function(player){
       app._miniLog('goal-sequence',{player:player&&player.name,dest:this.currentDestination&&this.currentDestination.name,
                                     cat:this.currentDestinationCategory});
-      if(goalTimer)clearTimeout(goalTimer);
-      goalTimer=setTimeout(()=>{
-        goalTimer=null;
-        if(!app.goalAmidaActive && !app.miniGameActive && !app.regionalMiniGame)return; // すでに正常終了
-        app._miniLog('goal-timeout',{amida:!!app.goalAmidaActive,mini:!!app.miniGameActive});
-        try{app.addLog?.('⚠️ ゴール処理が進まなかったため、自動で先へ進めました。');}catch(e){}
-        try{ if(app.regionalMiniGame) app.closeRegionalMiniGame(); }catch(e){}
-        try{ if(app.goalAmidaActive) app.finishGoalAmida(); }catch(e){}
-        try{ if(!app.goalAmidaActive) app.continueAfterGoalAmida(player); }catch(e){}
-      },GOAL_MS);
+      touch(); clearGoal();
+      const startedAt=Date.now();
+      goalTimer=setInterval(()=>{
+        const busy = !!app.goalAmidaActive || !!app.regionalMiniGame || !!app.miniGameActive;
+        if(busy){ touch(); return; }                       // 遊んでいる最中は触らない
+        const goalModal=document.getElementById('goal-modal');
+        if(goalModal && !goalModal.classList.contains('hidden')){ clearGoal(); return; }  // 目的地選択まで進んだ
+        const waited=Date.now()-startedAt, idle=Date.now()-lastActivity;
+        if(waited>30000 && idle>30000){
+          clearGoal();
+          app._miniLog('goal-timeout',{waited,idle});
+          try{app.addLog?.('⚠️ ゴール処理が進まなかったため、自動で先へ進めました。');}catch(e){}
+          try{ app.continueAfterGoalAmida(player); }catch(e){console.error('[v43]',e);}
+        }
+      },1000);
       return origPostGoal(player);
     };
   }
   const origContinue=app.continueAfterGoalAmida?.bind(app);
   if(origContinue){
     app.continueAfterGoalAmida=function(player){
-      if(goalTimer){clearTimeout(goalTimer);goalTimer=null;}
+      clearGoal();
       app._miniLog('goal-continue',{player:player&&player.name});
       return origContinue(player);
     };
   }
 
   window.__EDOGAWA_V43_DIAGNOSTICS=()=>({
-    amidaWatchdogMs:AMIDA_MS, goalWatchdogMs:GOAL_MS, logSize:LOG.length,
+    amidaLoadMs:AMIDA_LOAD_MS, idleMs:IDLE_MS, logSize:LOG.length,
+    secondsSinceActivity:Math.round((Date.now()-lastActivity)/1000),
     wrapped:{open:!!origOpen,amida:!!origAmida,goal:!!origPostGoal,cont:!!origContinue}
   });
 })();
