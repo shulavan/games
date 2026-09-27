@@ -51,6 +51,19 @@
        使えるように、いちばん最初にグローバルとして用意しておきます。
        （以前は後ろのスクリプトの中だけで宣言していたため、ゴール処理で
          「validNum is not defined」が起きてゴール後の処理が全部止まっていました） -->
+  <script id="edogawa-version">
+    // どのビルドが動いているかを画面で確認できるようにしておきます。
+    // （スマホはキャッシュで古いHTMLが残ることがあり、
+    //   「直したはずなのに直っていない」の切り分けに使います）
+    window.__EDOGAWA_VERSION = 'v57 (2026-09-27)';
+    document.addEventListener('DOMContentLoaded', function(){
+      try{
+        document.querySelectorAll('.edo-version-label').forEach(function(el){
+          el.textContent = window.__EDOGAWA_VERSION;
+        });
+      }catch(e){}
+    });
+  </script>
   <script id="edogawa-global-helpers">
     window.validNum = function(v, fallback){
       fallback = (fallback===undefined) ? 0 : fallback;
@@ -1132,7 +1145,7 @@
       <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full flex items-center gap-3 bg-[#06C755]/15 hover:bg-[#06C755]/25 border border-[#06C755]/40 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
         <span class="text-xl">💬</span><span class="text-sm font-bold text-[#06C755]">LINEで紹介</span>
       </button>
-      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda</p>
+      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v57 (2026-09-27)</span></p>
     </div>
   </div>
 
@@ -10771,7 +10784,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         <button id="edogawa-line-login" class="edo-auth-btn bg-[#06C755] text-white">LINEでログインする</button>
         <div id="edogawa-line-message" class="text-[10px] text-slate-400 mt-3 leading-relaxed"></div>
       </div></div>
-      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda</div>`;
+      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v57 (2026-09-27)</span></div>`;
     body.appendChild(auth);
 
     const setup=document.createElement('div');setup.id='edogawa-user-setup';setup.innerHTML=`<div class="box">
@@ -10924,8 +10937,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       lineBox.classList.toggle('hidden',!settingsEdit);
       if(settingsEdit && lineBtn){
         const linked=p.authProvider==='line' && !!p.lineUserId;
-        lineBtn.disabled=linked;
-        lineBtn.textContent=linked?'✅ LINE認証済み':'🟩 LINEで認証する';
+        // 【重要】以前はここで linked のときボタンを無効にしていました。
+        // そのため一度連携すると二度とLINEの名前・写真を取り込み直せず、
+        // 「押しても何も変わらない」状態になっていました。常に押せるようにします。
+        lineBtn.disabled=false;
+        lineBtn.textContent=linked?'🟩 LINEの名前と写真を取り込む':'🟩 LINEで認証する';
         if(lineStatus) lineStatus.textContent=linked?(p.lineName?`認証済み：${p.lineName}`:'LINEアカウントと連携済み'):'LINEアカウントと連携すると、この端末のアカウントにLINE認証を紐づけます。';
         lineBtn.onclick=()=>{ if(!lineBtn.disabled) this.startLineOAuth(true); };
       }
@@ -10961,16 +10977,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   app.startLineOAuth=async function(fromAccountSettings=false){
     const msg=document.getElementById('edogawa-line-message');
     const current=this.getUserProfile();
-    if(fromAccountSettings && current.authProvider==='line' && current.lineUserId){
-      // すでに連携済みなら、保存してあるLINEの名前と写真を引き継いだ状態で設定画面を開く。
-      // （絵文字に変えていた人が、あとからLINEの写真に戻せるようにするため）
-      this._openSetup('line', {
-        userId: current.lineUserId,
-        name: current.lineName || current.nickname,
-        picture: current.linePictureUrl || null
-      });
-      return;
-    }
+    // すでに連携済みでも、押されたら認証をやり直して最新の名前・写真を取り直します。
+    // （LINE側で表示名や写真を変えた場合にも追従できるようにするため）
     if(!LINE_CFG.channelId || !LINE_CFG.tokenEndpoint){if(msg)msg.textContent='LINEログイン設定が未完了です。LINE DevelopersのChannel IDと、認証コードを交換する安全なサーバーAPI（tokenEndpoint）を設定してください。';return;}
     try{
       const state=rand(24),nonce=rand(24),verifier=rand(48),challenge=b64url(await sha256(verifier));
@@ -11003,10 +11011,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       try{sessionStorage.setItem(OAUTH_ACCESS_KEY, data.access_token||'');}catch(e){}
       oauthStore.remove(OAUTH_STATE_KEY);oauthStore.remove(OAUTH_VERIFIER_KEY);oauthStore.remove(OAUTH_NONCE_KEY);oauthStore.remove('edogawa_line_link_mode_v1');
       history.replaceState({},document.title,location.pathname);
-      // アカウント設定からの連携でも、初回ログインでも、
-      // LINEの表示名とプロフィール画像を引き継いだ状態で設定画面を開きます。
-      // （そのまま保存すればLINEの名前と写真が双六のニックネーム・アイコンになり、
-      //   絵文字に変えたい場合はその場で選び直せます）
+      // LINEの表示名とプロフィール画像を、その場で双六のニックネーム・アイコンに反映します。
+      // （設定画面を開いて「保存」を押させる方式だと、閉じられた時に何も変わらないため、
+      //   まず反映してから、変更したい人のために設定画面も開く、という順番にしました）
+      p.nickname = cleanNickname(name || p.nickname);
+      if (picture) { p.avatarType = 'line'; p.avatarValue = picture; }
       app.saveUserProfile();
       app._lineCallbackProfile={userId,name,picture};
       app._openSetup('line',app._lineCallbackProfile);
@@ -12372,7 +12381,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
      下のボタン列の位置は出典を入れる前と同じままです）。
      目立たせる必要はないので枠なし・小さめの文字にしています。 */
   #map-credit-btn.edo-map-credit{
-    position:absolute; top:4px; left:12px; z-index:6;
+    position:fixed; top:0; left:4px; z-index:30;
     margin:0; padding:0; border:0; background:transparent; box-shadow:none;
     font-size:7px; line-height:1.2; font-weight:600; letter-spacing:.01em;
     color:#64748b; text-align:left; white-space:nowrap;
@@ -12383,9 +12392,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   #game-destination-badge-slot{ display:flex; justify-content:flex-end; min-width:0; flex:1 1 auto; }
   #game-destination-badge:not(.hidden){ display:inline-flex; align-items:center; }
   /* フルスクリーン中はヘッダー自体が下がるので、出典もその内側に収める */
-  body.is-fullscreen-mode #map-credit-btn.edo-map-credit,
-  :fullscreen #map-credit-btn.edo-map-credit,
-  :-webkit-full-screen #map-credit-btn.edo-map-credit{ top:50px; }
+  /* フルスクリーン中も画面の最上部のままにします（枠も背景も無いので邪魔になりません） */
 </style>
 <style id="edogawa-v41-common-modal-css">
   #edo-mini-common{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;
