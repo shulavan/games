@@ -689,7 +689,7 @@
 
     <!-- 地図の出典表記（タップで利用規約の「出典・クレジット」を開く） -->
     <button id="map-credit-btn" onclick="EdogawaSugoroku.openDocModal('terms')" title="出典・クレジット"
-      class="absolute bottom-1 left-1 z-20 px-1.5 py-[1px] rounded bg-slate-950/70 text-[8px] leading-tight text-slate-400 hover:text-slate-200 active:scale-95 transition">
+      class="edo-map-credit px-1.5 py-[2px] rounded bg-slate-950/85 text-[9px] leading-tight text-slate-300 hover:text-white active:scale-95 transition">
       地理院タイル ・出典
     </button>
   </main>
@@ -1961,16 +1961,19 @@
             const msg = (e && e.error && e.error.message) || '';
             if (/style|Style|Failed to fetch|NetworkError|CORS/i.test(msg)) fail('取得失敗');
           });
-          ml.on('sourcedata', (e) => { if (e && e.isSourceLoaded) sourceLoaded = true; });
-          ml.once('load', () => { labels = applyGsiLabelSize(ml); try { ml.resize(); } catch (e) {} });
-          const ready = () => {
-            if (settled) return;
-            let tilesOk = sourceLoaded;
-            try { if (!tilesOk && typeof ml.areTilesLoaded === 'function') tilesOk = ml.areTilesLoaded(); } catch (e) {}
-            if (tilesOk) win(labels);
-          };
-          ml.on('idle', ready);
-          ml.on('render', ready);
+          ml.on('sourcedata', (e) => {
+            // metadata（スタイル情報）ではなく、実際のタイルが届いた時だけ数えます。
+            if (e && e.isSourceLoaded && e.sourceDataType !== 'metadata') sourceLoaded = true;
+          });
+          ml.once('load', () => { styleLoaded = true; labels = applyGsiLabelSize(ml); try { ml.resize(); } catch (e) {} });
+          // 【v51での反省】areTilesLoaded() は「読み込み待ちのタイルが無い」時に
+          // true を返すため、まだ1枚も要求していない開始直後にも true になります。
+          // これを合図にしてしまい、何も描けていない状態でラスターを外して
+          // 地図が真っ白になっていました。
+          // 合図は「スタイルが読めた」＋「タイルの中身が届いた」＋「描き終わった」
+          // の3つがそろった時だけにします。
+          let styleLoaded = false;
+          ml.on('idle', () => { if (!settled && styleLoaded && sourceLoaded) win(labels); });
           map.on('resize', () => { try { ml.resize(); } catch (e) {} });
         } catch (e) {
           fail(String((e && e.message) || e));
@@ -2009,9 +2012,10 @@
     window.EDOGAWA_SUPABASE_VISITED_BUCKET = 'visited-pins';
 
     const LINE_OAUTH_CONFIG = {
-      channelId: "",
+      channelId: "2011743772",
       redirectUri: "",       // 空欄なら現在ページURL（クエリ/ハッシュを除く）
-      tokenEndpoint: "",     // 例: /api/line/token （同一生成元推奨）
+      // 認証コードをトークンに交換するサーバーAPI（Google Apps Script）
+      tokenEndpoint: "https://script.google.com/macros/s/AKfycbz1HOwDq_8bQDqElwAEnpv0-aAgXl5UvCKs3AIk7GJNYvWWBHP6CyC1WzUOrw9Tc25xOg/exec",
       revokeEndpoint: ""     // 任意：ログアウト時のトークン失効API
     };
     // Wikipediaで調べた結果の保存先（同じ施設で何度も通信しないため）
@@ -12237,6 +12241,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
                         無反応でもターンが止まりません（フリーズ対策）。
        ・BGM        … 全ゲーム共通で sound.playBGM('mini')（v39 の miniBGM）
      ============================================================================ -->
+<style id="edogawa-map-credit-css">
+  /* 出典表記が下のプレーヤー枠に隠れていたので、フッターの上へ出します。
+     --edo-footer-h はフッターの高さで、実際の高さに合わせて自動更新します。 */
+  #map-credit-btn.edo-map-credit{
+    position:absolute; left:6px; z-index:60;
+    bottom:calc(var(--edo-footer-h, 150px) + 6px);
+    white-space:nowrap; pointer-events:auto;
+    border:1px solid rgba(148,163,184,.35);
+    box-shadow:0 2px 8px rgba(0,0,0,.45);
+  }
+</style>
 <style id="edogawa-v41-common-modal-css">
   #edo-mini-common{position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;
     padding:18px;background:rgba(2,6,23,.92);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
@@ -12783,6 +12798,35 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 })();
 </script>
 
+<script id="edogawa-map-credit-position">
+(function(){
+  'use strict';
+  // 地図の出典表記が下のプレーヤー枠に隠れていたので、
+  // フッターの実際の高さを測って、その上に出るようにします。
+  function update(){
+    try{
+      const footer=document.querySelector('footer[data-app="1"]');
+      if(!footer)return;
+      const h=Math.round(footer.getBoundingClientRect().height)||0;
+      if(h>0) document.documentElement.style.setProperty('--edo-footer-h', h+'px');
+    }catch(e){}
+  }
+  const start=()=>{
+    update();
+    try{
+      const footer=document.querySelector('footer[data-app="1"]');
+      if(footer && window.ResizeObserver) new ResizeObserver(update).observe(footer);
+    }catch(e){}
+    window.addEventListener('resize', update, {passive:true});
+    window.addEventListener('orientationchange', ()=>setTimeout(update,300), {passive:true});
+    // フッターの中身（人数や乗り物表示）が変わって高さが変わることがあるので、
+    // しばらくの間は定期的に測り直します。
+    let n=0; const t=setInterval(()=>{update(); if(++n>20) clearInterval(t);}, 500);
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
 <script id="edogawa-v39-footer">
 
 (function(){
