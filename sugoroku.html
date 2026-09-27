@@ -72,7 +72,7 @@
        読み込めなかった場合は、これまでどおりラスタータイルで動きます。 -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
   
   <!-- Canvas Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -1735,53 +1735,118 @@
     // ── 地理院ベクトルタイル ─────────────────────────────────────
     // ラスタータイル（画像）は文字が焼き込まれていて大きさを変えられず、
     // さらにゲームはズーム19で表示するのに地理院のラスターはズーム18までのため、
-    // タイルが2倍に引き伸ばされて文字も2倍の大きさになっていました。
+    // タイルが2倍に引き伸ばされて文字も2倍になっていました。
     // ベクトルタイルなら文字の大きさを自由に決められ、どのズームでもぼやけません。
-    //   GSI_VECTOR_LABEL_SIZE : 地図の文字の大きさ（px）。0 にすると地図の文字を全部消します。
-    //   USE_GSI_VECTOR        : false にすると、これまでどおりのラスタータイルに戻ります。
+    //
+    // 【大事な方針】ベクターが「本当に描けた」と確認できるまで、
+    // 下に敷いたラスターは絶対に外しません。描けなければラスターのまま遊べます。
+    //   USE_GSI_VECTOR        : false にすると、はじめからラスターだけを使います。
+    //   GSI_VECTOR_LABEL_SIZE : 地図の文字の大きさ(px)。0 で地図の文字を全部消します。
     const USE_GSI_VECTOR = true;
     const GSI_VECTOR_LABEL_SIZE = 10;
     const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
+    const GSI_VECTOR_READY_MS = 12000;   // これだけ待って描けなければあきらめる
 
     const ACTIVE_BASEMAP = CARTO_API_KEY ? BASEMAPS.carto : BASEMAPS.gsi;
 
-    // ベクター地図のスタイルは通信で取りにいくので、まずラスターを敷いて
-    // 地図が真っ白にならないようにし、用意できたら上から差し替えます。
-    let _gsiVectorStylePromise = null;
-    function loadGsiVectorStyle() {
-      if (_gsiVectorStylePromise) return _gsiVectorStylePromise;
-      _gsiVectorStylePromise = fetch(GSI_VECTOR_STYLE_URL, { cache: 'force-cache' })
-        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(style => {
-          style.layers = (style.layers || []).filter(layer => {
-            if (layer.type !== 'symbol') return true;
-            if (!GSI_VECTOR_LABEL_SIZE) return false;      // 0 なら文字レイヤーごと外す
-            layer.layout = layer.layout || {};
-            layer.layout['text-size'] = GSI_VECTOR_LABEL_SIZE;
-            return true;
-          });
-          return style;
-        });
-      return _gsiVectorStylePromise;
+    // 端末がWebGLを使えるか（使えない端末ではベクターを最初から試しません）
+    let _webglOk = null;
+    function hasWebGL() {
+      if (_webglOk !== null) return _webglOk;
+      try {
+        const c = document.createElement('canvas');
+        _webglOk = !!(c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl'));
+      } catch (e) { _webglOk = false; }
+      return _webglOk;
     }
 
-    // 地図に基盤地図を敷く。ベクターが使えない環境ではラスターのまま。
+    // 地図の文字の大きさを整える（0なら文字レイヤーを隠す）
+    function applyGsiLabelSize(mlMap) {
+      let n = 0;
+      try {
+        const layers = (mlMap.getStyle() || {}).layers || [];
+        for (const layer of layers) {
+          if (layer.type !== 'symbol') continue;
+          n++;
+          try {
+            if (!GSI_VECTOR_LABEL_SIZE) mlMap.setLayoutProperty(layer.id, 'visibility', 'none');
+            else mlMap.setLayoutProperty(layer.id, 'text-size', GSI_VECTOR_LABEL_SIZE);
+          } catch (e) {}
+        }
+      } catch (e) {}
+      return n;
+    }
+
+    window.__EDOGAWA_MAP_STATUS = () => ({
+      useVector: USE_GSI_VECTOR, labelSize: GSI_VECTOR_LABEL_SIZE,
+      webgl: hasWebGL(),
+      maplibre: typeof window.maplibregl,
+      binding: !!(window.L && L.maplibreGL),
+      main: (window.EdogawaSugoroku && EdogawaSugoroku.map && EdogawaSugoroku.map.__gsiStatus) || null,
+      lobby: (window.EdogawaSugoroku && EdogawaSugoroku.lobbyMap && EdogawaSugoroku.lobbyMap.__gsiStatus) || null
+    });
+
+    // 地図の状態は、コンソールを開かなくても分かるようにゲーム内ログにも出します。
+    let _mapNoteDone = false;
+    function noteMapStatus(text) {
+      if (_mapNoteDone) return; _mapNoteDone = true;
+      setTimeout(() => {
+        try { window.EdogawaSugoroku && EdogawaSugoroku.addLog && EdogawaSugoroku.addLog('🗺️ ' + text); } catch (e) {}
+      }, 1200);
+    }
+
+    // 地図に基盤地図を敷く。ベクターが描けた時だけラスターを外します。
     function addBasemapTo(map) {
       if (!map) return;
       const raster = L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options });
       raster.addTo(map);
-      if (!USE_GSI_VECTOR || !window.L || !L.maplibreGL || !window.maplibregl) return;
-      loadGsiVectorStyle()
-        .then(style => {
-          const gl = L.maplibreGL({ style, attribution: ACTIVE_BASEMAP.credit });
-          gl.addTo(map);
-          map.__gsiVectorLayer = gl;
-          // ベクターが描けてからラスターを外す（切り替えの一瞬も白くしない）
-          setTimeout(() => { try { map.removeLayer(raster); } catch (e) {} }, 600);
-        })
-        .catch(e => {
-          console.warn('地理院ベクトルタイルを読み込めなかったため、通常の地図で表示します:', e);
+      map.__gsiStatus = 'raster';
+
+      if (!USE_GSI_VECTOR) { map.__gsiStatus = 'raster(設定でOFF)'; return; }
+      if (!window.maplibregl || !window.L || !L.maplibreGL) { map.__gsiStatus = 'raster(ライブラリ無し)'; return; }
+      if (!hasWebGL()) { map.__gsiStatus = 'raster(WebGL非対応)'; return; }
+
+      let gl = null, settled = false, timer = null;
+      const giveUp = (why) => {
+        if (settled) return; settled = true;
+        clearTimeout(timer);
+        console.warn('[地図] 地理院ベクトルを使えないため通常の地図で表示します:', why);
+        try { if (gl) map.removeLayer(gl); } catch (e) {}
+        map.__gsiStatus = 'raster(' + why + ')';
+        noteMapStatus('通常の地図で表示しています（' + why + '）');
+      };
+      const succeed = (labels) => {
+        if (settled) return; settled = true;
+        clearTimeout(timer);
+        try { map.removeLayer(raster); } catch (e) {}
+        map.__gsiStatus = 'vector(文字' + (GSI_VECTOR_LABEL_SIZE || 'なし') + '/' + labels + '層)';
+        noteMapStatus('地理院ベクトル地図に切り替えました（文字' +
+          (GSI_VECTOR_LABEL_SIZE ? GSI_VECTOR_LABEL_SIZE + 'px' : 'なし') + '）');
+      };
+
+      try {
+        // スタイルは「URLのまま」渡します。中身を取ってきて渡すと、
+        // スタイル内の相対パス（絵記号や文字フォント）が解決できず真っ白になります。
+        gl = L.maplibreGL({ style: GSI_VECTOR_STYLE_URL, attribution: ACTIVE_BASEMAP.credit });
+        gl.addTo(map);
+        const ml = gl.getMaplibreMap();
+        timer = setTimeout(() => giveUp('時間切れ'), GSI_VECTOR_READY_MS);
+
+        let labels = 0, sourceLoaded = false;
+        ml.on('error', (e) => {
+          const msg = (e && e.error && e.error.message) || '';
+          // タイル1枚の失敗などは無視。スタイル自体が読めない時だけあきらめる。
+          if (/style|Style|Failed to fetch|NetworkError/.test(msg)) giveUp('スタイル取得失敗');
         });
+        ml.on('sourcedata', (e) => { if (e && e.isSourceLoaded) sourceLoaded = true; });
+        ml.once('load', () => { labels = applyGsiLabelSize(ml); try { ml.resize(); } catch (e) {} });
+        ml.on('idle', () => { if (!settled && sourceLoaded) succeed(labels); });
+
+        // 表示枠の大きさが変わった時に、ベクター側にも伝える
+        map.on('resize', () => { try { ml.resize(); } catch (e) {} });
+      } catch (e) {
+        giveUp(String((e && e.message) || e));
+      }
     }
     // 「📍現在地を表示」で調べた地名を端末に保存しておくキー
     const NEARBY_CACHE_KEY = "edogawa_sugoroku_nearby_v1";
