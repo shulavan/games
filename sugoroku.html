@@ -55,7 +55,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v65 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v66 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1109,9 +1109,7 @@
         </button>
         <p id="facility-credit" class="hidden text-[11px] text-slate-500 leading-snug"></p>
         <button id="facility-close-btn" onclick="EdogawaSugoroku.closeFacilityModal()"
-          class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
-          閉じる
-        </button>
+          class="hidden" aria-hidden="true"></button>
       </div>
     </div>
   </div>
@@ -1187,9 +1185,7 @@
             <span id="settings-clear-note" class="text-[11px] text-slate-500">「前回の続きから遊ぶ」の保存を削除します（消すと「ひとりで遊ぶ」から新しく始められます）</span></span>
         </button>
       </div>
-      <button onclick="EdogawaSugoroku.closeSettingsModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
-        閉じる
-      </button>
+      <button onclick="EdogawaSugoroku.closeSettingsModal()" class="hidden" aria-hidden="true"></button>
     </div>
   </div>
 
@@ -1203,9 +1199,7 @@
       </div>
       <div id="doc-modal-body" class="doc-body flex-1 overflow-y-auto px-4 py-3"></div>
       <div class="p-3 pt-2 border-t border-slate-800">
-        <button onclick="EdogawaSugoroku.closeDocModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-2.5 rounded-xl transition">
-          閉じる
-        </button>
+        <button onclick="EdogawaSugoroku.closeDocModal()" class="hidden" aria-hidden="true"></button>
       </div>
     </div>
   </div>
@@ -1856,7 +1850,7 @@
     // ベクター地図が出ない原因は端末側でしか分からないため、
     // 失敗したときに「どの通信がどう失敗したか」を画面に出します。
     // 原因が分かったら SHOW_MAP_DIAG = false にしてください。
-    const SHOW_MAP_DIAG = true;
+    const SHOW_MAP_DIAG = false;   // 開発用の自己診断（__EDOGAWA_MAP_DIAG() で手動表示できます）
     const GSI_VECTOR_TILE_PROBE = 'https://cyberjapandata.gsi.go.jp/xyz/experimental_bvmap/13/7275/3221.pbf';
     const GSI_GLYPH_PROBE = 'https://maps.gsi.go.jp/xyz/noto-jp/NotoSansJP-Regular/0-255.pbf';
 
@@ -10802,7 +10796,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         <div id="edo-line-account-status"></div>
         <div id="edo-line-callback-hint" class="hidden"></div>
       </div>
-      <div class="mt-5 flex gap-2"><button id="edo-setup-cancel" class="hidden flex-1 bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">戻る</button><button id="edo-setup-save" class="flex-1 bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">設定を保存して遊ぶ</button></div>
+      <div class="mt-5 flex gap-2"><button id="edo-setup-cancel" class="flex-1 bg-slate-800 border border-slate-700 text-slate-300 font-bold py-3 rounded-xl active:scale-95 transition">キャンセル</button><button id="edo-setup-save" class="flex-1 bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl active:scale-95 transition">💾 保存</button></div>
     </div>`;body.appendChild(setup);
 
     const toast=document.createElement('div');toast.id='edogawa-stat-toast';toast.className='hidden opacity-0';body.appendChild(toast);
@@ -10929,7 +10923,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         lineBtn.classList.toggle('hidden', linked);
         lineBtn.style.display = linked ? 'none' : '';
         lineBtn.textContent='🟩 LINEで認証する';
-        if(lineStatus) lineStatus.textContent=linked?(p.lineName?`認証済み：${p.lineName}`:'LINEアカウントと連携済み'):'LINEアカウントと連携すると、この端末のアカウントにLINE認証を紐づけます。';
+        if(lineStatus) lineStatus.textContent=linked?(p.lineName?`LINE認証済み：${p.lineName}`:'LINEアカウントと連携済み'):'LINEアカウントと連携すると、この端末のアカウントにLINE認証を紐づけます。';
         lineBtn.onclick=()=>{ if(!lineBtn.disabled) this.startLineOAuth(true); };
       }
     }
@@ -11675,7 +11669,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   async function deleteVisitedEntry(entry){
     if(!entry || !isMine(entry)) throw new Error('他人の📌は削除できません。');
     if(!(await ensureSupabase())) throw new Error('Supabase接続を確認してください。');
-    if(!confirm('この投稿を削除しますか？\n写真とメモも削除されます。')) return false;
+    if(!(await (app.showConfirm ? app.showConfirm('この投稿を削除しますか？','写真とメモも削除されます。',{ok:'削除する',danger:true}) : Promise.resolve(confirm('この投稿を削除しますか？'))))) return false;
     if(entry.id){
       const {error}=await app.visitedSupabase.from(VISITED_TABLE).delete().eq('id',entry.id).eq('owner_uid',app.visitedSupabaseUser.id);
       if(error) throw error;
@@ -13863,6 +13857,254 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   .edo-mc-review-cell .c{font-size:15px;font-weight:900;color:#f8fafc}
   .edo-mc-review-cell .w{font-size:10px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
+
+
+
+<!-- ============================================================================
+     v66: モーダルのデザイン統一／ブラウザのダイアログ廃止／CPUの開始モーダル省略
+     ============================================================================ -->
+<style id="edogawa-v66-css">
+  /* 背景はすべて同じ「ゲームの背景が透けて見える」デザインにそろえる */
+  #facility-modal, #menu-modal, #settings-modal, #doc-modal, #log-modal,
+  #pwa-install-modal, #mp-save-modal, #mp-saved-notice-modal, #resume-choice-modal,
+  #host-absent-modal, #restart-confirm-modal, #entry-limit-modal, #consent-modal,
+  #nickname-modal, #host-recruitment-modal, #guest-waiting-modal, #goal-modal,
+  #event-modal, #boatrace-modal, #boatrace-continue-modal, #quiz-modal, #kingyo-modal,
+  #rocket-gift-modal, #edogawa-property-modal {
+    background-color: rgba(2,6,23,.80) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+  #edogawa-user-setup { background: rgba(2,6,23,.80) !important; backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important; }
+  #edogawa-auth-screen { background: rgba(2,6,23,.34) !important; }
+
+  /* 共通の「✕」ボタン（施設詳細と同じ見た目） */
+  .edo-x-btn{ width:32px; height:32px; flex:0 0 auto; border-radius:8px;
+    background:#1e293b; border:1px solid #334155; color:#cbd5e1;
+    font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center;
+    transition:.15s; cursor:pointer; padding:0 }
+  .edo-x-btn:active{ transform:scale(.95) }
+
+  /* プレイヤーのステータス枠：見出し行に✕を置く */
+  #edogawa-player-status .edo-status-head{ display:flex; align-items:center; justify-content:space-between; gap:8px }
+
+  /* ゲーム内のお知らせ・確認枠（ブラウザのダイアログの代わり） */
+  #edo-notice{ position:fixed; inset:0; z-index:2147483300; display:none;
+    align-items:center; justify-content:center; padding:16px;
+    background:rgba(2,6,23,.80); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px) }
+  #edo-notice.show{ display:flex }
+  .edo-notice-box{ width:min(360px,94vw); background:#0f172a; border:1px solid rgba(245,158,11,.42);
+    border-radius:20px; padding:18px; box-shadow:0 24px 70px rgba(0,0,0,.6);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif }
+  .edo-notice-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px }
+  .edo-notice-title{ font-size:15px; font-weight:900; color:#fbbf24; line-height:1.4 }
+  .edo-notice-body{ font-size:13px; color:#cbd5e1; line-height:1.75; white-space:pre-wrap; word-break:break-word }
+  .edo-notice-actions{ display:flex; gap:8px; margin-top:16px }
+  .edo-notice-actions button{ flex:1; padding:12px; border-radius:13px; font-weight:900; font-size:14px; border:0;
+    transition:.15s }
+  .edo-notice-actions button:active{ transform:scale(.96) }
+  #edo-notice-ok{ background:linear-gradient(#f59e0b,#d97706); color:#0f172a }
+  #edo-notice-ok.danger{ background:linear-gradient(#f43f5e,#be123c); color:#fff }
+  #edo-notice-cancel{ background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
+</style>
+<script id="edogawa-v66-ui">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ============================================================
+  // ① ゲーム内のお知らせ／確認枠（ブラウザのダイアログの置き換え）
+  // ============================================================
+  let noticeQueue = [], noticeOpen = false;
+
+  function ensureNotice(){
+    let el = document.getElementById('edo-notice');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'edo-notice';
+    el.innerHTML = `<div class="edo-notice-box" role="dialog" aria-modal="true">
+      <div class="edo-notice-head">
+        <div class="edo-notice-title" id="edo-notice-title"></div>
+        <button type="button" class="edo-x-btn" id="edo-notice-x" aria-label="閉じる">×</button>
+      </div>
+      <div class="edo-notice-body" id="edo-notice-body"></div>
+      <div class="edo-notice-actions">
+        <button type="button" id="edo-notice-cancel">キャンセル</button>
+        <button type="button" id="edo-notice-ok">OK</button>
+      </div>
+    </div>`;
+    document.body.appendChild(el);
+    // 枠外タップで閉じる
+    el.addEventListener('click', (ev) => { if (ev.target === el) finish(false); });
+    el.querySelector('#edo-notice-x').onclick = () => finish(false);
+    el.querySelector('#edo-notice-cancel').onclick = () => finish(false);
+    el.querySelector('#edo-notice-ok').onclick = () => finish(true);
+    return el;
+  }
+  let currentResolve = null;
+  function finish(ok){
+    const el = document.getElementById('edo-notice');
+    if (el) el.classList.remove('show');
+    noticeOpen = false;
+    const r = currentResolve; currentResolve = null;
+    if (r) r(ok);
+    setTimeout(pump, 120);
+  }
+  function pump(){
+    if (noticeOpen || !noticeQueue.length) return;
+    const job = noticeQueue.shift();
+    noticeOpen = true; currentResolve = job.resolve;
+    const el = ensureNotice();
+    el.querySelector('#edo-notice-title').textContent = job.title || 'お知らせ';
+    el.querySelector('#edo-notice-body').textContent = job.body || '';
+    const ok = el.querySelector('#edo-notice-ok');
+    const cancel = el.querySelector('#edo-notice-cancel');
+    ok.textContent = job.okText || 'OK';
+    ok.classList.toggle('danger', !!job.danger);
+    cancel.style.display = job.confirm ? '' : 'none';
+    cancel.textContent = job.cancelText || 'キャンセル';
+    el.classList.add('show');
+  }
+  app.showNotice = function(title, body, opt){
+    const o = opt || {};
+    return new Promise(resolve => {
+      noticeQueue.push({title, body, okText:o.ok, cancelText:o.cancel, danger:o.danger, confirm:false, resolve});
+      pump();
+    });
+  };
+  app.showConfirm = function(title, body, opt){
+    const o = opt || {};
+    return new Promise(resolve => {
+      noticeQueue.push({title, body, okText:o.ok||'OK', cancelText:o.cancel, danger:o.danger, confirm:true, resolve});
+      pump();
+    });
+  };
+
+  // ブラウザの alert をゲーム内の枠に置き換える。
+  // （「shulavan.github.io の内容」という素っ気ない表示をやめるため）
+  const origAlert = window.alert ? window.alert.bind(window) : null;
+  window.alert = function(msg){
+    try{
+      const text = String(msg == null ? '' : msg);
+      // 1行目を見出し、残りを本文にする
+      const nl = text.indexOf('\n');
+      if (nl > 0 && nl < 30) app.showNotice(text.slice(0, nl), text.slice(nl + 1));
+      else app.showNotice('お知らせ', text);
+    }catch(e){ if (origAlert) origAlert(msg); }
+  };
+  window.__EDOGAWA_NATIVE_ALERT = origAlert;
+
+  // ============================================================
+  // ② 枠外タップで閉じる＋「閉じる」ボタンをなくす
+  // ============================================================
+  const MENU_MODALS = {
+    'facility-modal':  () => app.closeFacilityModal?.(),
+    'menu-modal':      () => app.closeMenuModal?.(),
+    'settings-modal':  () => app.closeSettingsModal?.(),
+    'doc-modal':       () => app.closeDocModal?.(),
+    'log-modal':       () => app.closeLogModal?.(),
+    'pwa-install-modal': null,
+    'mp-saved-notice-modal': null,
+    'edogawa-property-modal': null
+  };
+  function bindOutsideClose(){
+    Object.keys(MENU_MODALS).forEach(id => {
+      const el = document.getElementById(id);
+      if (!el || el._edoOutside) return;
+      el._edoOutside = true;
+      el.addEventListener('click', (ev) => {
+        if (ev.target !== el) return;               // 枠の中は無視
+        const fn = MENU_MODALS[id];
+        if (fn) { try{ fn(); return; }catch(e){} }
+        el.classList.add('hidden');
+      });
+    });
+  }
+
+  // ============================================================
+  // ③ プレイヤーのステータス枠に「✕」を付ける
+  // ============================================================
+  app.closePlayerStatus = function(){
+    const ps = document.getElementById('edogawa-player-status');
+    if (ps) ps.style.display = 'none';
+  };
+  function decorateStatus(){
+    const ps = document.getElementById('edogawa-player-status');
+    if (!ps || !ps.firstElementChild) return;
+    if (ps.querySelector('.edo-x-btn')) return;
+    const head = ps.firstElementChild;              // アイコン＋名前の行
+    head.classList.add('edo-status-head');
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;gap:8px;min-width:0;flex:1';
+    while (head.firstChild) wrap.appendChild(head.firstChild);
+    head.appendChild(wrap);
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'edo-x-btn'; x.setAttribute('aria-label','閉じる');
+    x.textContent = '×';
+    x.onclick = (ev) => { ev.stopPropagation(); app.closePlayerStatus(); };
+    head.appendChild(x);
+  }
+  // ステータス枠は毎回作り直されるので、表示のたびに付け直す
+  const psObserverStart = () => {
+    const ps = document.getElementById('edogawa-player-status');
+    if (!ps) return;
+    decorateStatus();
+    new MutationObserver(() => decorateStatus()).observe(ps, {childList:true, subtree:false});
+  };
+
+  // ============================================================
+  // ④ CPUのミニゲームでは開始モーダルを出さない
+  //    （江戸川競艇・左近川カヌー・江戸川クイズ・あみだくじは対象外）
+  // ============================================================
+  const KEEP_START_FOR = new Set(['canoe']);
+  const origStartShow = app._miniCommonStartShow?.bind(app);
+  if (origStartShow) {
+    app._miniCommonStartShow = function(game, player){
+      if (player && player.isCpu && !KEEP_START_FOR.has(game)) return;   // 結果だけ出す
+      return origStartShow(game, player);
+    };
+  }
+
+  // ⑤ 「キャンセル」＝保存せずに閉じる
+  function bindSetupCancel(){
+    const b = document.getElementById('edo-setup-cancel');
+    if (!b || b._edoBound) return;
+    b._edoBound = true;
+    b.classList.remove('hidden');
+    b.onclick = () => {
+      document.getElementById('edogawa-user-setup')?.classList.remove('show');
+      let has = false;
+      try{ has = !!localStorage.getItem('edogawa_sugoroku_profile_v1'); }catch(e){}
+      if (has) app._enterLobbyAfterAuth?.();
+      else app._showAuthScreen?.();
+    };
+  }
+  const origOpenSetupUi = app._openSetup?.bind(app);
+  if (origOpenSetupUi) {
+    app._openSetup = function(mode, lineProfile){
+      const r = origOpenSetupUi(mode, lineProfile);
+      try{ bindSetupCancel(); }catch(e){}
+      return r;
+    };
+  }
+
+  function init(){
+    bindOutsideClose();
+    bindSetupCancel();
+    psObserverStart();
+    setInterval(bindOutsideClose, 2000);   // あとから作られる枠にも付ける
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
+
+  window.__EDOGAWA_V66_DIAGNOSTICS = () => ({
+    notice: typeof app.showNotice, confirm: typeof app.showConfirm,
+    startWrapped: !!origStartShow
+  });
+})();
+</script>
 
 <script id="edogawa-v39-footer">
 
