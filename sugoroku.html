@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v74 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v75 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -14556,7 +14556,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
   const ST = {
     '西葛西':      {lat:35.666783, lng:139.859337},
-    '葛西':        {lat:35.665276, lng:139.872561},
+    '葛西':        {lat:35.663605, lng:139.871672},
     '東大島':      {lat:35.690158, lng:139.847513},
     '船堀':        {lat:35.683706, lng:139.864220},
     '一之江':      {lat:35.685987, lng:139.883000},
@@ -14564,7 +14564,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     '篠崎':        {lat:35.706092, lng:139.904128},
     '平井':        {lat:35.708278, lng:139.842294},
     '新小岩':      {lat:35.716792, lng:139.857629},
-    '小岩':        {lat:35.734929, lng:139.881792},
+    '小岩':        {lat:35.734444, lng:139.881111},
     '京成小岩':    {lat:35.741941, lng:139.883590},
     '江戸川':      {lat:35.739949, lng:139.895783},
     '葛西臨海公園':{lat:35.644054, lng:139.861928}
@@ -14912,12 +14912,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{
         app._drawMetro7();
         const after = app.metro7OpenStations().length;
-        if (after > before){
-          const n = app.metro7OpenStations()[after-1];
-          app.addLog && app.addLog(`🚧 メトロセブン（構想）：${n}駅まで開通しました（全${M7.stations.length}駅中${after}駅）`);
-          app.showNotice && app.showNotice('🚧 メトロセブン 開通',
-            `${n}駅まで線路が伸びました。\n開通した駅どうしなら乗車できます。\n\n（全長 約${M7.totalKm}km／${M7.openTurns}ターンで全線開通）`);
-        }
+        // 開通のお知らせは v75 側（区間の表記）でまとめて出します
+
       }catch(e){}
       return r;
     };
@@ -14967,7 +14963,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }).join('');
       if(!rows && !isM7) return;
       groups += `<div class="edo-rail-group">
-        <div class="edo-rail-gname"><span class="edo-rail-chip" style="background:${L.color}"></span>${esc(L.name)}${L.plan?'<span class="edo-m7-badge">構想</span>':''}</div>
+        <div class="edo-rail-gname"><span class="edo-rail-chip" style="background:${L.color}"></span>${esc(String(L.name).replace('（構想）',''))}${L.plan?'<span class="edo-m7-badge">構想</span>':''}</div>
         ${rows || '<div class="edo-rail-sub">まだ先の区間が開通していません。</div>'}
         ${isM7 ? `<div class="edo-rail-open">🚧 開通 ${Math.round(app.metro7Progress()*100)}%（${app.metro7OpenStations().length}/${LINES.metro7.stations.length}駅）</div>` : ''}
       </div>`;
@@ -15151,6 +15147,361 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     ボーナス: '運転評価点 × ¥100（最大 ¥10,000）',
     読み込み先: 'minigames.html?game=train&line=…&from=…&to=…'
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v75: 駅を経由するルート／メトロセブンの線形と延伸時期
+     ============================================================================ -->
+<script id="edogawa-v75">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
+  if(!LINES || !ST) return;
+
+  function km(a,b){
+    const R=6371, p1=a.lat*Math.PI/180, p2=b.lat*Math.PI/180;
+    const dp=(b.lat-a.lat)*Math.PI/180, dl=(b.lng-a.lng)*Math.PI/180;
+    const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+    return 2*R*Math.asin(Math.sqrt(x));
+  }
+
+  // ============================================================
+  // ① 駅の位置を1か所にそろえる
+  //    施設マーカー（🚉）の座標を、国土地理院で確認した駅の座標に合わせます。
+  //    データファイルが古いままでも、線と駅がずれません。
+  // ============================================================
+  // ── 駅の位置を、あとから端末側で直せるようにしておきます ──
+  //    地図で正しい場所を長押し（__EDOGAWA_PICK）して出た座標を
+  //    __EDOGAWA_STATION_FIX('葛西', 35.6636, 139.8717) と入れると保存され、
+  //    次回からその位置になります。__EDOGAWA_STATION_FIX() で今の一覧が見られます。
+  const ST_FIX_KEY = 'edogawa_station_fix_v1';
+  try{
+    const saved = JSON.parse(localStorage.getItem(ST_FIX_KEY) || '{}');
+    Object.keys(saved).forEach(n=>{
+      if (ST[n] && typeof saved[n].lat === 'number' && typeof saved[n].lng === 'number'){
+        ST[n].lat = saved[n].lat; ST[n].lng = saved[n].lng;
+      }
+    });
+  }catch(e){}
+  window.__EDOGAWA_STATION_FIX = function(name, lat, lng){
+    if (name === undefined) return JSON.parse(JSON.stringify(ST));
+    if (!ST[name]) return '「'+name+'」という駅はありません：' + Object.keys(ST).join('、');
+    let saved={}; try{ saved=JSON.parse(localStorage.getItem(ST_FIX_KEY)||'{}'); }catch(e){}
+    if (lat === null){ delete saved[name]; }
+    else {
+      if (typeof lat !== 'number' || typeof lng !== 'number') return '数字で lat, lng を入れてください';
+      saved[name] = {lat:lat, lng:lng}; ST[name].lat = lat; ST[name].lng = lng;
+    }
+    try{ localStorage.setItem(ST_FIX_KEY, JSON.stringify(saved)); }catch(e){}
+    try{ localStorage.removeItem('edogawa_metro7_shape_v1'); }catch(e){}
+    try{ app.snapAllStations(); app._drawRail && app._drawRail(); }catch(e){}
+    return (lat===null ? name+'駅をもとの位置に戻しました' : name+'駅を '+lat+', '+lng+' にしました')
+      + '（画面を読み込み直すと地図全体に反映されます）';
+  };
+
+  // 駅の正しい座標に合わせます。
+  app.snapStationLoc = function(loc){
+    try{
+      if (!loc || typeof loc.name !== 'string') return loc;
+      const base = loc.name.replace(/[（(].*$/, '').replace(/駅$/, '').trim();
+      const s = ST[base];
+      if (!s) return loc;
+      if (Math.abs(s.lat - loc.lat) < 1e-6 && Math.abs(s.lng - loc.lng) < 1e-6) return loc;
+      loc.lat = s.lat; loc.lng = s.lng;   // 同じ物を直すので、他の参照にも反映されます
+      return loc;
+    }catch(e){ return loc; }
+  };
+  // 読み込んだデータ全体の駅をそろえます（地図・目的地・マスすべてで同じ位置になります）
+  app.snapAllStations = function(){
+    let n = 0;
+    try{
+      // getAllFacilityObjects は施設データそのもの（同じ物）を返すので、
+      // ここで直せば地図・目的地・マスのどれから見ても同じ位置になります。
+      (app.getAllFacilityObjects() || []).forEach(x => {
+        if (!x || typeof x.name !== 'string' || !/駅$/.test(x.name)) return;
+        const before = x.lat + ',' + x.lng;
+        app.snapStationLoc(x);
+        if (before !== x.lat + ',' + x.lng) n++;
+      });
+    }catch(e){}
+    return n;
+  };
+  const origLoadData = app.loadGameData ? app.loadGameData.bind(app) : null;
+  if (origLoadData) {
+    app.loadGameData = async function(){
+      const r = await origLoadData();
+      try{ app.snapAllStations(); }catch(e){}
+      return r;
+    };
+  }
+  const origMarker = app._createFacilityMarker ? app._createFacilityMarker.bind(app) : null;
+  if (origMarker) {
+    app._createFacilityMarker = function(loc, emoji){
+      try{ app.snapStationLoc(loc); }catch(e){}
+      return origMarker(loc, emoji);
+    };
+  }
+
+  // ============================================================
+  // ② メトロセブンの線形（道路沿いのカーブ）
+  //    OSRM（すでにこのゲームが使っている道路ルート検索）で、
+  //    駅と駅のあいだを実際の道なりにつなぎます。
+  //    一度取れたら端末に保存して、次からは通信しません。
+  // ============================================================
+  const M7 = LINES.metro7;
+  const SHAPE_KEY = 'edogawa_metro7_shape_v1';
+  // 一之江→鹿骨は、都営新宿線沿い→新中川→明和橋→明和橋通り→椿通り→
+  // 鹿骨区民館通り、という道筋になるよう明和橋を経由地に指定します。
+  const VIA = { '一之江→鹿骨': [{lat:35.689199, lng:139.887795}] };   // 明和橋
+
+  let SHAPE = null;      // [{lat,lng}...]
+  let SHAPE_CUM = [];    // 各点までの累計km
+  let ST_INDEX = [];     // 各駅が SHAPE の何番目か
+
+  function straightShape(){
+    const pts=[], idx=[];
+    M7.stations.forEach((n,i)=>{ idx.push(pts.length); pts.push({lat:ST[n].lat, lng:ST[n].lng}); });
+    return {pts, idx};
+  }
+  function setShape(pts, idx){
+    SHAPE = pts; ST_INDEX = idx;
+    SHAPE_CUM = [0];
+    for(let i=1;i<pts.length;i++) SHAPE_CUM.push(SHAPE_CUM[i-1] + km(pts[i-1], pts[i]));
+    M7.totalKm = Math.round(SHAPE_CUM[SHAPE_CUM.length-1]*100)/100;
+  }
+  (function init(){
+    let cached=null;
+    try{ const raw=localStorage.getItem(SHAPE_KEY); if(raw){ const r=JSON.parse(raw);
+      if(r && Array.isArray(r.pts) && Array.isArray(r.idx) && r.pts.length>=2) cached=r; } }catch(e){}
+    if(cached) setShape(cached.pts, cached.idx);
+    else { const s=straightShape(); setShape(s.pts, s.idx); }
+  })();
+
+  app.metro7BuildShape = async function(force){
+    if (!force && SHAPE && SHAPE.length > M7.stations.length) return SHAPE;   // 取得ずみ
+    try{
+      const pts=[], idx=[];
+      for(let i=0;i<M7.stations.length-1;i++){
+        const a=ST[M7.stations[i]], b=ST[M7.stations[i+1]];
+        const key=M7.stations[i]+'→'+M7.stations[i+1];
+        const wp=[a].concat(VIA[key]||[]).concat([b]);
+        const coords=wp.map(p=>p.lng+','+p.lat).join(';');
+        const url='https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson';
+        let leg=null;
+        try{
+          const r=await fetch(url,{cache:'force-cache'});
+          if(r.ok){ const j=await r.json();
+            const c=j&&j.routes&&j.routes[0]&&j.routes[0].geometry&&j.routes[0].geometry.coordinates;
+            if(Array.isArray(c)&&c.length>=2) leg=c.map(x=>({lat:x[1], lng:x[0]})); }
+        }catch(e){}
+        if(!leg) leg=[{lat:a.lat,lng:a.lng},{lat:b.lat,lng:b.lng}];
+        // 駅そのものの座標で始点・終点を固定します（道路の端に寄らないように）
+        leg[0]={lat:a.lat,lng:a.lng}; leg[leg.length-1]={lat:b.lat,lng:b.lng};
+        if(i===0){ idx.push(0); pts.push(leg[0]); }
+        for(let k=1;k<leg.length;k++) pts.push(leg[k]);
+        idx.push(pts.length-1);
+      }
+      // 明らかに遠回りな結果（道路検索が別の道を返した時）は採用しません
+      let road=0; for(let i=1;i<pts.length;i++) road+=km(pts[i-1], pts[i]);
+      let direct=0; for(let i=0;i<M7.stations.length-1;i++) direct+=km(ST[M7.stations[i]], ST[M7.stations[i+1]]);
+      if(pts.length>M7.stations.length && road < direct*1.8){
+        setShape(pts, idx);
+        try{ localStorage.setItem(SHAPE_KEY, JSON.stringify({pts:pts.map(p=>({lat:+p.lat.toFixed(6),lng:+p.lng.toFixed(6)})), idx:idx, t:Date.now()})); }catch(e){}
+        app._drawMetro7 && app._drawMetro7();
+      }
+    }catch(e){ console.error('[v75]', e); }
+    return SHAPE;
+  };
+  // 起動して少ししてから、裏で線形を取りにいきます
+  setTimeout(()=>{ app.metro7BuildShape(); }, 4000);
+
+  // ============================================================
+  // ③ 延伸は50ターンから。それまでは地図に出しません。
+  // ============================================================
+  M7.openStartTurn = 50;    // ここから工事が始まります
+  M7.openSpanTurns = 50;    // ここから何ターンかけて全線開通するか（50→100）
+
+  app.metro7Progress = function(){
+    const t = Math.max(0, Number(app.turnCount)||0);
+    if (t < M7.openStartTurn) return 0;
+    return Math.max(0, Math.min(1, (t - M7.openStartTurn) / M7.openSpanTurns));
+  };
+  app.metro7Started = function(){ return (Number(app.turnCount)||0) >= M7.openStartTurn; };
+  app.metro7OpenKm = function(){ return (SHAPE_CUM[SHAPE_CUM.length-1]||0) * app.metro7Progress(); };
+  app.metro7OpenStations = function(){
+    const open = app.metro7OpenKm();
+    if (!app.metro7Started()) return [];
+    return M7.stations.filter((n,i)=> (SHAPE_CUM[ST_INDEX[i]]||0) <= open + 1e-9);
+  };
+  app.metro7Tip = function(){
+    const open=app.metro7OpenKm();
+    if(!app.metro7Started() || open<=0) return null;
+    for(let i=1;i<SHAPE_CUM.length;i++){
+      if(open<=SHAPE_CUM[i]){
+        const seg=SHAPE_CUM[i]-SHAPE_CUM[i-1];
+        const r=seg>0?(open-SHAPE_CUM[i-1])/seg:0;
+        const a=SHAPE[i-1], b=SHAPE[i];
+        return {lat:a.lat+(b.lat-a.lat)*r, lng:a.lng+(b.lng-a.lng)*r};
+      }
+    }
+    return SHAPE[SHAPE.length-1];
+  };
+  app.metro7Path = function(){
+    const open=app.metro7OpenKm();
+    if(!app.metro7Started() || open<=0) return [];
+    const pts=[[SHAPE[0].lat, SHAPE[0].lng]];
+    for(let i=1;i<SHAPE.length;i++){
+      if(SHAPE_CUM[i]<=open) pts.push([SHAPE[i].lat, SHAPE[i].lng]);
+      else { const t=app.metro7Tip(); if(t) pts.push([t.lat,t.lng]); break; }
+    }
+    return pts;
+  };
+  app.metro7FullPath = function(){ return SHAPE.map(p=>[p.lat,p.lng]); };
+
+  // ── 描き直し（50ターン前は何も出さない） ──
+  function drawM7(map){
+    if(!map || !window.L) return;
+    try{
+      if(Array.isArray(map.__m7Layers)) map.__m7Layers.forEach(l=>{ try{map.removeLayer(l);}catch(e){} });
+      map.__m7Layers=[];
+      if(!app.railEnabled || !app.railEnabled()) return;
+      if(!app.metro7Started()) return;                    // 50ターンまでは非表示
+      const add=(l)=>{ if(!l) return null; l.addTo(map); map.__m7Layers.push(l); return l; };
+      // これから通る区間（うっすら点線）
+      add(window.L.polyline(app.metro7FullPath(),{color:M7.color,weight:2,opacity:.25,
+        dashArray:'2 8',interactive:false}));
+      const path=app.metro7Path();
+      if(path.length>=2){
+        add(window.L.polyline(path,{color:'#3b0764',weight:9,opacity:.5,lineCap:'round',interactive:false}));
+        add(window.L.polyline(path,{color:M7.color,weight:4.5,opacity:.95,
+          dashArray:'10 6',lineCap:'butt',interactive:false}));
+      }
+      const openNames=app.metro7OpenStations();
+      M7.stations.forEach(n=>{
+        if(openNames.indexOf(n)<0) return;
+        const s=ST[n];
+        if(window.L.marker && window.L.divIcon)
+          add(window.L.marker([s.lat,s.lng],{icon:window.L.divIcon({className:'',
+            html:'<div class="edo-m7-st'+(s.plan?' plan':'')+'"></div>',
+            iconSize:[16,16],iconAnchor:[8,8]}),interactive:false}));
+      });
+      const tip=app.metro7Tip();
+      if(tip && app.metro7Progress()<1 && window.L.marker && window.L.divIcon)
+        add(window.L.marker([tip.lat,tip.lng],{icon:window.L.divIcon({className:'',
+          html:'<div class="edo-m7-tip">🚧</div>',iconSize:[26,26],iconAnchor:[13,13]}),interactive:false}));
+      map.__m7Layers=map.__m7Layers.filter(Boolean);
+    }catch(e){ console.error('[v75]', e); }
+  }
+  app._drawMetro7 = function(){ drawM7(app.map); drawM7(app.lobbyMap); };
+  app._drawMetro7On = drawM7;
+
+  // ── 開通のお知らせ（区間で伝えます） ──
+  const origFinish = app.finishTurnContinue ? app.finishTurnContinue.bind(app) : null;
+  if (origFinish) {
+    app.metro7AnnounceOpen = function(before){
+      const after = app.metro7OpenStations();
+      if (after.length <= (before||[]).length) return null;
+      const to = after[after.length-1];
+      const from = after.length>=2 ? after[after.length-2] : M7.stations[0];
+      const text = `メトロセブン：${from}駅から${to}駅までの区間が開通しました`;
+      app.addLog && app.addLog('🚧 ' + text);
+      app.showNotice && app.showNotice('🚧 メトロセブン 開通',
+        `${text}。\n開通した駅どうしなら乗車できます。\n\n（全長 約${M7.totalKm}km／${M7.openStartTurn}ターンから${M7.openSpanTurns}ターンかけて全線開通）`);
+      return text;
+    };
+    app.finishTurnContinue = function(){
+      const before = app.metro7OpenStations();
+      let r, err = null;
+      try{ r = origFinish(); }catch(e){ err = e; }
+      try{ app._drawMetro7(); app.metro7AnnounceOpen(before); }catch(e){}
+      if (err) throw err;
+      return r;
+    };
+  }
+
+  // ============================================================
+  // ④ 目的地までのルートを、電車のほうが近ければ駅経由にします
+  // ============================================================
+  const RAIL_COST = 0.22;      // 電車は歩きの約1/4.5の負担として扱います
+  const MAX_WALK_TO_ST = 1.6;  // 駅まで歩く距離の上限(km)
+  const GAIN = 0.85;           // これより短くならないと駅経由にしません
+
+  app.planRailRoute = function(start, goal){
+    if(!start || !goal) return null;
+    const direct = km(start, goal);
+    if (direct < 1.2) return null;                 // 近すぎるときは素直に歩く
+    let best=null;
+    Object.keys(LINES).forEach(k=>{
+      const L=LINES[k];
+      let names=L.stations;
+      if(k==='metro7'){ const open=app.metro7OpenStations(); names=names.filter(n=>open.indexOf(n)>=0); }
+      if(names.length<2) return;
+      names.forEach(a=>{
+        names.forEach(b=>{
+          if(a===b) return;
+          const wa=km(start, ST[a]); if(wa>MAX_WALK_TO_ST) return;
+          const wb=km(ST[b], goal);  if(wb>MAX_WALK_TO_ST) return;
+          const ride=km(ST[a], ST[b]);
+          const cost=wa + ride*RAIL_COST + wb;
+          if(cost < direct*GAIN && (!best || cost<best.cost))
+            best={line:k, a:a, b:b, cost:cost, direct:direct, walkA:wa, ride:ride, walkB:wb};
+        });
+      });
+    });
+    return best;
+  };
+
+  async function osrmVia(points){
+    const coords=points.map(p=>p.lng+','+p.lat).join(';');
+    const url='https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson';
+    for(let i=0;i<2;i++){
+      try{
+        const r=await fetch(url,{cache:'no-store'});
+        if(r.ok){
+          const j=await r.json();
+          const c=j&&j.routes&&j.routes[0]&&j.routes[0].geometry&&j.routes[0].geometry.coordinates;
+          if(Array.isArray(c)&&c.length>=2) return c.map(x=>({lat:x[1], lng:x[0]}));
+        }
+      }catch(e){}
+      await new Promise(res=>setTimeout(res,300));
+    }
+    return null;
+  }
+
+  const origOSRM = app.fetchStreetRouteOSRM ? app.fetchStreetRouteOSRM.bind(app) : null;
+  if (origOSRM) {
+    app.fetchStreetRouteOSRM = async function(start, goal){
+      try{
+        const plan = app.planRailRoute(start, goal);
+        if (plan){
+          const p = await osrmVia([start, ST[plan.a], ST[plan.b], goal]);
+          if (p && p.length>1){
+            app.__railVia = plan;
+            try{ app.addLog && app.addLog(
+              `🚃 ${LINES[plan.line].name} ${plan.a}駅〜${plan.b}駅を通るルートになりました（電車を使うと近道です）`); }catch(e){}
+            return p;
+          }
+        }
+      }catch(e){ console.error('[v75]', e); }
+      app.__railVia = null;
+      return origOSRM(start, goal);
+    };
+  }
+
+  window.__EDOGAWA_METRO7_INFO = () => ({
+    駅: M7.stations, 全長km: M7.totalKm,
+    開通開始ターン: M7.openStartTurn, 全線開通ターン: M7.openStartTurn + M7.openSpanTurns,
+    いまのターン: app.turnCount, 開通率: Math.round(app.metro7Progress()*100)+'%',
+    開通km: Math.round(app.metro7OpenKm()*100)/100,
+    開通した駅: app.metro7OpenStations(),
+    線形の点数: SHAPE ? SHAPE.length : 0,
+    道なりになっているか: SHAPE ? (SHAPE.length > M7.stations.length) : false
+  });
+  window.__EDOGAWA_RAILROUTE_INFO = (a,b) => app.planRailRoute(a,b);
 })();
 </script>
 
