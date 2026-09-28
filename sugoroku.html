@@ -55,7 +55,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v63 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v64 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1145,7 +1145,7 @@
       <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full flex items-center gap-3 bg-[#06C755]/15 hover:bg-[#06C755]/25 border border-[#06C755]/40 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
         <span class="text-xl">💬</span><span class="text-sm font-bold text-[#06C755]">LINEで紹介</span>
       </button>
-      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v63 (2026-09-28)</span></p>
+      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda</p>
     </div>
   </div>
 
@@ -2314,6 +2314,7 @@
         body: `
           <h4>本ゲームについて</h4>
           <p><strong>江戸川双六</strong>（Edogawa Sugoroku）</p>
+          <p>バージョン ${(typeof window!=='undefined' && window.__EDOGAWA_VERSION) || ''}</p>
           <p>江戸川区の街をもっと楽しく知ってもらいたい、という思いから個人で制作した非公式のゲームです。</p>
 
           <h4>制作・運営</h4>
@@ -4027,7 +4028,7 @@
 
         const avatarEl = document.getElementById("event-modal-avatar");
         if (options.avatar) {
-          avatarEl.textContent = options.avatar;
+          avatarEl.innerHTML = this.avatarMarkup ? this.avatarMarkup(options.avatar,'w-full h-full object-cover rounded-full') : options.avatar;
           avatarEl.classList.remove("hidden");
         } else {
           avatarEl.classList.add("hidden");
@@ -6077,8 +6078,8 @@
           <div class="relative player-token" style="width: 220px; height: 64px;">
             ${bubbleHtml}
             ${countdownHtml}
-            <div class="absolute w-16 h-16 rounded-full ${player.color.bg} border-4 border-white shadow-2xl flex items-center justify-center text-3xl ring-2 ring-slate-950" style="right: 0; top: 0;">
-              ${displayAvatar}
+            <div class="absolute w-16 h-16 rounded-full ${player.color.bg} border-4 border-white shadow-2xl flex items-center justify-center text-3xl ring-2 ring-slate-950 overflow-hidden" style="right: 0; top: 0;">
+              ${this.avatarMarkup ? this.avatarMarkup(displayAvatar,'w-full h-full object-cover') : displayAvatar}
             </div>
           </div>
         `;
@@ -6198,8 +6199,8 @@
         document.getElementById("game-turn-badge").textContent = `${this.turnCount} ターン`;
 
         const displayAvatar = cp.wheelchairTurns > 0 ? '🦽' : (cp.vehicle ? cp.vehicle.emoji : cp.avatar);
-        document.getElementById("active-player-avatar").textContent = displayAvatar;
-        document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md`;
+        document.getElementById("active-player-avatar").innerHTML = this.avatarMarkup ? this.avatarMarkup(displayAvatar,'w-full h-full object-cover rounded-full') : displayAvatar;
+        document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md overflow-hidden`;
         document.getElementById("active-player-name").textContent = cp.name;
         const activeMoneyEl = document.getElementById("active-player-money");
         activeMoneyEl.textContent = this.formatMoneyMan(cp.money);
@@ -6246,7 +6247,7 @@
           return `
             <div onclick="EdogawaSugoroku.panToPlayer(${idx})" class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} ${offline ? 'opacity-40 grayscale' : ''} border p-2 rounded-xl flex flex-col justify-between transition cursor-pointer active:scale-95 relative">
               <div class="flex items-center justify-between">
-                <span class="text-sm">${cardAvatar}</span>
+                <span class="text-sm inline-flex items-center justify-center w-6 h-6 rounded-full overflow-hidden shrink-0">${this.avatarMarkup ? this.avatarMarkup(cardAvatar,'w-full h-full object-cover') : cardAvatar}</span>
                 <span class="text-[9px] font-bold px-1 rounded ${p.color.bg} text-slate-950">${idx+1}P</span>
               </div>
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
@@ -7316,7 +7317,7 @@
         const chosenEl = document.getElementById('quiz-result-chosen');
         if (chosenEl) chosenEl.textContent = `${player.isCpu ? `${player.name} の回答` : 'あなたの回答'}: ${chosenText ?? '－'}`;
         const playerEl = document.getElementById('quiz-result-player');
-        if (playerEl) playerEl.textContent = `${player.avatar || ''} ${player.name} の挑戦`;
+        if (playerEl) playerEl.textContent = `${this.avatarPlain ? this.avatarPlain(player.avatar) : (player.avatar||'')} ${player.name} の挑戦`;
         document.getElementById('quiz-result-text').textContent = correct ? '正解！' : '不正解！';
         document.getElementById('quiz-result-text').className = `text-base font-black ${correct ? 'text-red-400' : 'text-blue-400'}`;
         document.getElementById('quiz-result-money').textContent = correct ? '賞金 ＋¥50,000' : '賞金なし';
@@ -7403,7 +7404,7 @@
           this.continueAfterGoalAmida(player); return;
         }
         const send=()=>frame.contentWindow?.postMessage({
-          type:'EDOGAWA_SET_PLAYER_AVATAR', avatar:player.avatar||'🧑‍🦱', playerName:player.name
+          type:'EDOGAWA_SET_PLAYER_AVATAR', avatar:(this.avatarPlain?this.avatarPlain(player.avatar):(player.avatar||'🧑‍🦱')), playerName:player.name
         },'*');
         frame.onload=()=>{
           send();
@@ -7516,9 +7517,9 @@
         overlay.classList.remove('hidden');
         document.getElementById('regional-mini-close')?.classList.add('hidden');
         const auto=!!((this.autoMode&&player.uid===this.myUid)||this.isPlayerOffline(player));
-        const send=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:player.avatar},'*');
-        const sendPlayer=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:player.avatar},'*');
-        const sendCanoePlayers=()=>{if(game==='canoe'){const myRealPlayer=(this.players||[]).find(p=>p.uid===this.myUid)||player;frame.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:myRealPlayer.id,players:(this.players||[]).map(p=>({id:p.id,name:p.name,avatar:p.avatar||'🚣‍♂️',isCpu:!!p.isCpu,money:Number(p.money)||0}))},'*')}};
+        const send=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):player.avatar)},'*');
+        const sendPlayer=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):player.avatar)},'*');
+        const sendCanoePlayers=()=>{if(game==='canoe'){const myRealPlayer=(this.players||[]).find(p=>p.uid===this.myUid)||player;frame.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:myRealPlayer.id,players:(this.players||[]).map(p=>({id:p.id,name:p.name,avatar:(app.avatarPlain?app.avatarPlain(p.avatar):(p.avatar||'🚣‍♂️')),isCpu:!!p.isCpu,money:Number(p.money)||0}))},'*')}};
         frame.onload=()=>{send();sendPlayer();sendCanoePlayers();if(auto)setTimeout(()=>frame.contentWindow?.postMessage({type:'EDOGAWA_AUTO_START',auto:true},'*'),350)};
         setTimeout(()=>{send();sendPlayer();sendCanoePlayers();},400);
       },
@@ -8229,7 +8230,7 @@
         const activePlayer = this.players[this.currentPlayerIdx];
         const avatarEl = document.getElementById("event-modal-avatar");
         if (activePlayer) {
-          avatarEl.textContent = activePlayer.avatar;
+          avatarEl.innerHTML = this.avatarMarkup ? this.avatarMarkup(activePlayer.avatar,'w-full h-full object-cover rounded-full') : activePlayer.avatar;
           avatarEl.classList.remove("hidden");
         } else {
           avatarEl.classList.add("hidden");
@@ -9207,7 +9208,7 @@
                 return `<div class="br-bet-cell ${hit ? 'hit' : ''}">${b.pair}<br>¥${b.amount.toLocaleString()}</div>`;
               }).join('')
             : '<div class="br-bet-cell" style="opacity:.45">投票なし</div>';
-          const label = `${p.avatar || ''}${isMe ? '自分' : p.name}`;
+          const label = `${this.avatarPlain ? this.avatarPlain(p.avatar) : (p.avatar||'')}${isMe ? '自分' : p.name}`;
           return `<div class="br-bet-col"><div class="br-bet-head" style="${isMe ? 'background:rgba(245,158,11,.35);color:#fff;' : ''}">${label}</div><div class="br-bet-body">${cells}</div></div>`;
         }).join('');
       },
@@ -9386,7 +9387,7 @@
             const isHit = bets.some(b => b.pair === winningPair);
             return `<div class="relative border-b border-slate-800 overflow-hidden ${isHit ? 'pr-9' : ''}">
               ${isHit ? '<span class="br-hit-stamp">🎯</span>' : ''}
-              <b>${p.avatar || ''} ${p.name}</b>${isHit ? '<span class="text-amber-300 font-black"> 的中</span>' : ''}
+              <b>${this.avatarPlain ? this.avatarPlain(p.avatar) : (p.avatar||'')} ${p.name}</b>${isHit ? '<span class="text-amber-300 font-black"> 的中</span>' : ''}
               <span class="text-slate-400"> ${betText}</span><br>
               <span class="text-[13px]">投票¥${pay.spent.toLocaleString()}／払戻¥${pay.payout.toLocaleString()}／収支 ${diffText}</span>
             </div>`;
@@ -9406,7 +9407,7 @@
               ? `<span class="text-rose-400 font-black">＋¥${total.toLocaleString()}</span>`
               : `<span class="text-sky-400 font-black">-￥${Math.abs(total).toLocaleString()}</span>`;
             mineEl.innerHTML = `
-              <div class="text-amber-300 font-bold">${me.avatar || ''} ${me.name} の収支</div>
+              <div class="text-amber-300 font-bold">${this.avatarPlain ? this.avatarPlain(me.avatar) : (me.avatar||'')} ${me.name} の収支</div>
               <div>元持ち金 ${this.formatMoney(before)} ／ 賭け金 ¥${pay.spent.toLocaleString()}</div>
               <div>払戻金 ¥${pay.payout.toLocaleString()} ／ 参加費込みの増減 ${totalText}</div>
               <div class="${me.money < 0 ? 'text-rose-400' : 'text-emerald-300'} font-black">現在持ち金 ${this.formatMoney(me.money)}</div>`;
@@ -10526,7 +10527,7 @@ Object.assign(window.__EDOGAWA_MINIGAME_B64,window.__EDOGAWA_STAR_MINIGAMES_B64)
    document.getElementById('regional-mini-close')?.classList.add('hidden');
    const b64=window.__EDOGAWA_NEW_MINIGAMES_B64[game];if(!b64)return this.finishMiniGameTurn(player,'ミニゲームデータがありません。');
    let html='';try{html=new TextDecoder().decode(Uint8Array.from(atob(b64),c=>c.charCodeAt(0)));}catch(e){return this.finishMiniGameTurn(player,'ミニゲームの読み込みに失敗しました。');}
-   const sendInit=()=>{const st=this.regionalMiniGame;if(!st||st.game!==game||st.playerId!==player.id)return;if(loading)loading.style.display='none';try{frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:player.avatar||'🙂'},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:player.avatar||'🙂'},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_AUTO_START',auto:true,cpu:false},'*');}catch(e){}};
+   const sendInit=()=>{const st=this.regionalMiniGame;if(!st||st.game!==game||st.playerId!==player.id)return;if(loading)loading.style.display='none';try{frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):(player.avatar||'🙂'))},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):(player.avatar||'🙂'))},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_AUTO_START',auto:true,cpu:false},'*');}catch(e){}};
    frame.onload=sendInit;frame.style.display='block';overlay.classList.remove('hidden');frame.srcdoc=html;setTimeout(()=>{if(!this.regionalMiniGame||this.regionalMiniGame.game!==game)return;try{const bodyText=frame.contentDocument?.body?.innerText||'';const hasBody=!!frame.contentDocument?.body;if(!hasBody){const label=document.getElementById('regional-mini-loading');if(label)label.querySelector('div div:last-child').textContent='ミニゲーム画面を読み込めませんでした。再試行してください。';}}catch(e){}},4500);setTimeout(sendInit,1200);setTimeout(()=>{if(frame.contentDocument&&frame.contentDocument.readyState!=='loading')sendInit();},250);
  };
  app.startIntegratedCpuMiniGame=function(game,p){this.miniGameActive=true;this.activeMiniGamePlayerId=p.id;this.regionalMiniGame={game,playerId:p.id,done:false,integrated:true,cpuResultOnly:true};let score=0,delta=0,success=true,detail='';if(game==='delivery'){score=50+Math.floor(Math.random()*51);delta=score*100;detail=`ステージ1クリア：評価点 ${score}点 × ¥100`;}else if(game==='hide'){success=true;delta=10000;detail='区長を発見！クリア賞金 ¥10,000';}else{score=30+Math.floor(Math.random()*71);delta=score*100;detail=`採点 ${score}点 × ¥100`;}this.applyIntegratedMiniGameResult({type:'EDOGAWA_MINIGAME_RESULT',game,score,delta,prize:delta,success,detail});};
@@ -10784,11 +10785,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         <div class="edo-auth-guest-wrap"><a id="edogawa-guest-login" role="button" tabindex="0" class="edo-auth-guest-link">ログイン無しで遊ぶ</a></div>
         <div id="edogawa-line-message" class="text-[10px] text-slate-400 mt-3 leading-relaxed"></div>
       </div></div>
-      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v63 (2026-09-28)</span></div>`;
+      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda</div>`;
     body.appendChild(auth);
 
     const setup=document.createElement('div');setup.id='edogawa-user-setup';setup.innerHTML=`<div class="box">
-      <div class="text-center mb-4"><h2 id="edo-setup-title" class="text-xl font-black text-amber-400">ユーザ設定</h2><p id="edo-setup-desc" class="text-xs text-slate-400 mt-1">ゲームで使う名前とキャラクターを設定してください。</p></div>
+      <div class="text-center mb-4"><h2 id="edo-setup-title" class="text-xl font-black text-amber-400">アカウント情報</h2><p id="edo-setup-desc" class="text-xs text-slate-400 mt-1">ゲームで使う名前とキャラクターを設定してください。</p></div>
       <div class="edo-nick-row">
         <label for="edo-setup-name" class="edo-nick-label">ニックネーム<span>（6文字まで）</span></label>
         <input id="edo-setup-name" maxlength="6" class="edo-nick-input bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-amber-300 font-black" />
@@ -10902,7 +10903,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   };
   app.openUserSetupModal=function(){ this._settingsEditMode=true; this._openSetup(this.getUserProfile().authProvider==='line'? 'line' : 'guest'); };
   app._openSetup=function(mode, lineProfile=null){
-    injectUi(); const settingsEdit=!!this._settingsEditMode; const title=document.getElementById('edo-setup-title'); if(title) title.textContent=settingsEdit?'アカウント設定':'ユーザ設定'; this._settingsEditMode=false; const p=this.getUserProfile(); this._setupMode=mode; this._lineProfile=lineProfile;
+    injectUi(); const settingsEdit=!!this._settingsEditMode; const title=document.getElementById('edo-setup-title'); if(title) title.textContent='アカウント情報'; this._settingsEditMode=false; const p=this.getUserProfile(); this._setupMode=mode; this._lineProfile=lineProfile;
     const modal=document.getElementById('edogawa-user-setup'), name=document.getElementById('edo-setup-name'), lineNote=document.getElementById('edo-line-default'), grid=document.getElementById('edo-emoji-choice'), icon=document.getElementById('edo-setup-icon');
     const lineName=lineProfile?.name||p.lineName||p.nickname; const linePic=lineProfile?.picture||p.linePictureUrl;
     name.value=mode==='line' ? cleanNickname(lineName||'プレイヤー1') : cleanNickname(p.nickname);
@@ -10915,25 +10916,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     grid.innerHTML = (this._setupMode==='line' && linePic ? `<button type="button" class="edo-emoji-btn sel" title="LINEプロフィール画像" data-avatar="line:${esc(linePic)}"><img src="${esc(linePic)}" class="w-full h-full rounded-xl object-cover" referrerpolicy="no-referrer"></button>`:'') + AVATAR_LIST.map(e=>`<button type="button" class="edo-emoji-btn ${selected===`emoji:${e}`?'sel':''}" data-avatar="emoji:${e}">${e}</button>`).join('');
     grid.querySelectorAll('.edo-emoji-btn').forEach(b=>b.onclick=()=>{this._setupSelected=b.dataset.avatar;grid.querySelectorAll('.edo-emoji-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
     const lineBox=document.getElementById('edo-line-account-link'); const lineBtn=document.getElementById('edo-line-account-btn'); const lineStatus=document.getElementById('edo-line-account-status');
-    // LINE Developers に登録すべきコールバックURLを、その場でコピーできるように出す。
-    // ここが1文字でも違うと「400 Invalid redirect_uri value」になります。
-    try{
-      const hint=document.getElementById('edo-line-callback-hint');
-      if(hint){
-        const uri=this._lineRedirectUri();
-        hint.innerHTML='<b>LINE Developers に登録するコールバックURL</b>'+
-          'このURLを「LINEログイン設定 → コールバックURL」に、既存のURLと改行で分けて追加してください。'+
-          '<code id="edo-line-callback-uri"></code>'+
-          '<button type="button" id="edo-line-callback-copy">このURLをコピー</button>';
-        hint.querySelector('#edo-line-callback-uri').textContent=uri;
-        hint.classList.remove('hidden');
-        const btn=hint.querySelector('#edo-line-callback-copy');
-        if(btn) btn.onclick=()=>{
-          try{ navigator.clipboard.writeText(uri); btn.textContent='コピーしました'; }
-          catch(e){ btn.textContent='長押しで選択してコピーしてください'; }
-        };
-      }
-    }catch(e){}
+    try{ document.getElementById('edo-line-callback-hint')?.classList.add('hidden'); }catch(e){}
     if(lineBox){
       lineBox.classList.toggle('hidden',!settingsEdit);
       if(settingsEdit && lineBtn){
@@ -10995,8 +10978,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const msg=document.getElementById('edogawa-line-message');
     if(err){oauthStore.remove('edogawa_line_link_mode_v1');if(msg)msg.textContent=`LINEログインがキャンセルされました。${q.get('error_description')||''}`;return true;}
     const savedState=oauthStore.get(OAUTH_STATE_KEY), verifier=oauthStore.get(OAUTH_VERIFIER_KEY);
-    if(!savedState||savedState!==state||!verifier){oauthStore.remove('edogawa_line_link_mode_v1');const t1='LINEログインの確認に失敗しました。もう一度お試しください。';if(msg)msg.textContent=t1;app._lineLog?.('state不一致',{保存済み有:!!savedState,一致:savedState===state,verifier有:!!verifier});app._lineError?.(t1);return true;}
-    if(!LINE_CFG.tokenEndpoint){const t2='認証コード交換API（GAS）が設定されていません。';if(msg)msg.textContent=t2;app._lineError?.(t2);return true;}
+    if(!savedState||savedState!==state||!verifier){oauthStore.remove('edogawa_line_link_mode_v1');const t1='LINEログインの確認に失敗しました。もう一度お試しください。';if(msg)msg.textContent=t1;app._lineLog?.('state不一致',{保存済み有:!!savedState,一致:savedState===state,verifier有:!!verifier});app._lineJustAuthed=false;app._showLineWaiting?.(false);app._lineError?.(t1);try{history.replaceState({},document.title,location.pathname);}catch(e){}if(!app._isLineLinked?.())app._showAuthScreen?.();return true;}
+    if(!LINE_CFG.tokenEndpoint){const t2='認証コード交換API（GAS）が設定されていません。';if(msg)msg.textContent=t2;app._lineJustAuthed=false;app._showLineWaiting?.(false);app._lineError?.(t2);try{history.replaceState({},document.title,location.pathname);}catch(e){}if(!app._isLineLinked?.())app._showAuthScreen?.();return true;}
     try{
       const body=new URLSearchParams({grant_type:'authorization_code',code,redirect_uri:app._lineRedirectUri(),client_id:LINE_CFG.channelId,code_verifier:verifier});
       // credentials:'include' だと「Access-Control-Allow-Origin: *」を返すAPI
@@ -11061,7 +11044,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       app._lineLog?.('失敗', String(e&&e.message||e).slice(0,120));
       const txt='LINEログインの認証に失敗しました（'+String(e&&e.message||e).slice(0,90)+'）。';
       if(msg)msg.textContent=txt+'LINE Developers のコールバックURLに次のURLが登録されているか確認してください：'+app._lineRedirectUri();
+      app._lineJustAuthed=false; app._lineCallbackProfile=null;
+      app._showLineWaiting?.(false);
       app._lineError?.(txt);
+      try{ history.replaceState({},document.title,location.pathname); }catch(e){}
+      if(!app._isLineLinked?.()) app._showAuthScreen?.();
       return true;}
   };
   app.clearAllAccountData=async function(){
@@ -11252,6 +11239,34 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   // LINEから戻ると必ずページが再読み込みされます（OAuthの仕様）。
   // そのときに「ログイン無しで遊ぶ／LINEでログインする」の選択画面が
   // 出てしまわないよう、認証済みなら認証画面自体を飛ばします。
+  // LINEから戻ってきたことは、ページが読み込まれた瞬間にURLで分かります。
+  // トークン交換（1〜2秒）を待つ間に選択画面が出てしまうと、
+  // もう一度「LINEでログインする」を押してしまうので、最初から抑制します。
+  try{
+    const _q = new URLSearchParams(location.search);
+    if (_q.has('code') && !_q.has('error')) app._lineJustAuthed = true;
+  }catch(e){}
+  app._showLineWaiting = function(on){
+    let el = document.getElementById('edo-line-waiting');
+    if (on) {
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'edo-line-waiting';
+        el.style.cssText = 'position:fixed;inset:0;z-index:2147483400;background:#0b1220;' +
+          'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;' +
+          'color:#e2e8f0;font-weight:800;font-size:14px;font-family:-apple-system,BlinkMacSystemFont,sans-serif';
+        el.innerHTML = '<div style="font-size:40px">🎲</div>' +
+          '<div style="color:#06C755">LINEの情報を取得しています…</div>' +
+          '<div style="font-size:11px;color:#94a3b8">そのままお待ちください</div>';
+        document.body.appendChild(el);
+      }
+    } else if (el) el.remove();
+  };
+  if (app._lineJustAuthed) {
+    const _go = () => app._showLineWaiting(true);
+    if (document.body) _go(); else document.addEventListener('DOMContentLoaded', _go, {once:true});
+  }
+
   const _origShowAuthScreen = app._showAuthScreen.bind(app);
   const _setupIsOpen = () => !!document.getElementById('edogawa-user-setup')?.classList.contains('show');
   app._isLineLinked = function(){
@@ -11265,15 +11280,18 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   app._showAuthScreen = function(){
     if (app._lineJustAuthed || this._isLineLinked()) {
       this._hideAuthScreen();
-      if (_setupIsOpen()) return;
-      if (app._lineJustAuthed) this._openSetup('line', app._lineCallbackProfile || null);
-      else this._enterLobbyAfterAuth();
+      if (_setupIsOpen()) { app._showLineWaiting(false); return; }
+      if (app._lineCallbackProfile) { app._showLineWaiting(false); this._openSetup('line', app._lineCallbackProfile); return; }
+      if (app._lineJustAuthed) { app._showLineWaiting(true); return; }   // 取得中
+      this._enterLobbyAfterAuth();
       return;
     }
     return _origShowAuthScreen();
   };
   const _origEnterLobby = app._enterLobbyAfterAuth.bind(app);
-  app._enterLobbyAfterAuth = function(){ app._lineJustAuthed = false; return _origEnterLobby(); };
+  app._enterLobbyAfterAuth = function(){ app._lineJustAuthed = false; app._showLineWaiting?.(false); return _origEnterLobby(); };
+  const _origOpenSetupWait = app._openSetup.bind(app);
+  app._openSetup = function(mode, lineProfile){ app._showLineWaiting?.(false); return _origOpenSetupWait(mode, lineProfile); };
 
   // Terms + callback flow on page startup.
   document.addEventListener('DOMContentLoaded', async ()=>{
@@ -11282,6 +11300,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if(handled) { app._hideAuthScreen();
       for(let i=1;i<=8;i++) setTimeout(()=>app._hideAuthScreen(), i*250);
       return; }
+    app._showLineWaiting?.(false);
     if(!app._hasTermsConsent()) { app._rewriteConsentModal(); document.getElementById('consent-modal')?.classList.remove('hidden'); return; }
     if(!localStorage.getItem(PROFILE_KEY)) app._showAuthScreen(); else app._enterLobbyAfterAuth();
     app._refreshAccountPanel();
@@ -12293,9 +12312,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     },100);
   }
   function sendPlayer(game,p,frame){
-    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:moneyN(p.money),playerName:p.name,avatar:p.avatar},'*')}catch(e){}
-    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:p.name,avatar:p.avatar},'*')}catch(e){}
-    if(game==='canoe')try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:p.id,players:(app.players||[]).map(x=>({id:x.id,name:x.name,avatar:x.avatar||'🚣‍♂️',isCpu:!!x.isCpu,money:moneyN(x.money)}))},'*')}catch(e){}
+    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:moneyN(p.money),playerName:p.name,avatar:(app.avatarPlain?app.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
+    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:p.name,avatar:(app.avatarPlain?app.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
+    if(game==='canoe')try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:p.id,players:(app.players||[]).map(x=>({id:x.id,name:x.name,avatar:(app.avatarPlain?app.avatarPlain(x.avatar):(x.avatar||'🚣‍♂️')),isCpu:!!x.isCpu,money:moneyN(x.money)}))},'*')}catch(e){}
   }
   function loadChild(game,p,html){
     const overlay=document.getElementById('regional-mini-overlay'),frame=document.getElementById('regional-mini-frame'),title=document.getElementById('regional-mini-title');
@@ -13017,7 +13036,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 (function(){
   'use strict';
   const app=window.EdogawaSugoroku; if(!app) return;
-  const SHOW_LINE_DIAG = true;
+  const SHOW_LINE_DIAG = false;   // 原因が解決したので既定で非表示（__EDOGAWA_LINE_DIAG() で手動表示可）
   const LOG_KEY = 'edogawa_line_diag_v1';
 
   const readLog = () => { try{ return JSON.parse(localStorage.getItem(LOG_KEY)||'[]'); }catch(e){ return []; } };
@@ -13200,6 +13219,29 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
+  // 盤面・HUD・カードなど、どこでも画像アイコンを画像として描くための共通ヘルパー。
+  // 以前はここが無かったため、LINEのアイコンURLがそのまま文字として出て画面が崩れていました。
+  app.avatarPlain = function(v){
+    const x = String(v ?? '');
+    if (!x) return AV_FALLBACK;
+    if (/^(https?:|data:|photo:)/i.test(x)) return AV_FALLBACK;   // 文字にできないものは絵文字に
+    return x;
+  };
+  app.avatarMarkup = function(v, cls){
+    const x = String(v ?? '');
+    if (!x) return esc(AV_FALLBACK);
+    if (x === PHOTO_MARK) {
+      const src = app.getAvatarPhoto();
+      return src ? `<img src="${esc(src)}" alt="" class="${esc(cls||'w-full h-full object-cover')}">`
+                 : esc(AV_FALLBACK);
+    }
+    if (/^(https?:|data:)/i.test(x)) {
+      return `<img src="${esc(x)}" alt="" class="${esc(cls||'w-full h-full object-cover')}" referrerpolicy="no-referrer" ` +
+             `onerror="this.replaceWith(document.createTextNode('${AV_FALLBACK}'))">`;
+    }
+    return esc(x);
+  };
+
   app.getAvatarPhoto = function(){
     try{ return localStorage.getItem(PHOTO_KEY) || null; }catch(e){ return null; }
   };
@@ -13261,12 +13303,24 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       #edo-crop-ok{background:linear-gradient(#f59e0b,#d97706);color:#0f172a}
       #edo-crop-cancel{background:#1e293b;color:#e2e8f0;border:1px solid #475569}
       #edo-crop-error{color:#f87171;font-size:11px;margin-top:9px;min-height:1em;line-height:1.5}
-      .edo-photo-row{display:flex;gap:8px;margin-top:10px}
-      .edo-photo-row button{flex:1;padding:11px 8px;border-radius:12px;font-weight:800;font-size:12px;
+      .edo-photo-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+      #edo-photo-pick{padding:11px 14px;border-radius:12px;font-weight:800;font-size:12px;
         border:1px solid #475569;background:#1e293b;color:#e2e8f0}
+      #edo-photo-del{padding:10px 14px;border-radius:12px;font-size:17px;line-height:1;
+        border:1px solid #7f1d1d;background:#450a0a;color:#fecaca;margin-left:auto}
       .edo-photo-row button:active{opacity:.75}
+      #edo-photo-del.hidden{display:none}
       .edo-emoji-btn.edo-photo-btn{padding:0;overflow:hidden}
       .edo-emoji-btn.edo-photo-btn img{width:100%;height:100%;object-fit:cover;border-radius:11px;display:block}
+      /* 長押しでの複数選択 */
+      #edo-emoji-choice.edo-picking .edo-emoji-btn{position:relative}
+      #edo-emoji-choice.edo-picking .edo-emoji-btn.edo-checked{outline:2px solid #f87171;outline-offset:-2px}
+      .edo-emoji-btn .edo-check{position:absolute;right:2px;top:2px;width:17px;height:17px;border-radius:50%;
+        background:#ef4444;color:#fff;font-size:11px;line-height:17px;text-align:center;font-weight:900;display:none}
+      #edo-emoji-choice.edo-picking .edo-emoji-btn.edo-checked .edo-check{display:block}
+      #edo-pick-hint{display:none;margin-top:8px;font-size:11px;color:#fca5a5;text-align:center;line-height:1.6}
+      #edo-emoji-choice.edo-picking ~ #edo-pick-hint{display:block}
+      .edo-emoji-btn{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
     `;
     document.head.appendChild(st);
 
@@ -13400,11 +13454,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     input.click();
   };
 
-  // ---- 設定画面に「写真を使う」を足す ----
+  // ---- 設定画面：写真ボタンと、長押しでの複数選択削除 ----
+  const HIDDEN_KEY = 'edogawa_hidden_emoji_v1';
+  const hiddenEmoji = () => { try{ return JSON.parse(localStorage.getItem(HIDDEN_KEY)||'[]'); }catch(e){ return []; } };
+  const setHiddenEmoji = (a) => { try{ localStorage.setItem(HIDDEN_KEY, JSON.stringify(a)); }catch(e){} };
+  let picking = false;
+  let longPressAt = 0;   // 長押し直後のクリックで選択が消えないようにするため
+
   const origOpenSetup = app._openSetup.bind(app);
   app._openSetup = function(mode, lineProfile){
     const r = origOpenSetup(mode, lineProfile);
-    try{ decorateSetup(); }catch(e){}
+    try{ picking = false; decorateSetup(); }catch(e){}
     return r;
   };
 
@@ -13415,20 +13475,73 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     grid.querySelector('.edo-photo-btn')?.classList.add('sel');
   }
 
+  function setPicking(on){
+    const grid = document.getElementById('edo-emoji-choice'); if(!grid) return;
+    picking = !!on;
+    grid.classList.toggle('edo-picking', picking);
+    if(!picking) grid.querySelectorAll('.edo-emoji-btn').forEach(b=>b.classList.remove('edo-checked'));
+    updateTrash();
+  }
+  function checkedButtons(){
+    const grid = document.getElementById('edo-emoji-choice');
+    return grid ? [...grid.querySelectorAll('.edo-emoji-btn.edo-checked')] : [];
+  }
+  function updateTrash(){
+    const del = document.getElementById('edo-photo-del');
+    if (del) del.classList.toggle('hidden', !(picking && checkedButtons().length));
+  }
+
+  // 長押し（550ms）で選択モードに入ります
+  function armLongPress(btn){
+    if (btn._lp) return; btn._lp = true;
+    let timer = null, moved = false, sx = 0, sy = 0;
+    const start = (e) => {
+      moved = false;
+      sx = (e.touches ? e.touches[0].clientX : e.clientX);
+      sy = (e.touches ? e.touches[0].clientY : e.clientY);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (moved) return;
+        longPressAt = Date.now(); btn._lpFired = true;
+        if (!picking) setPicking(true);
+        btn.classList.add('edo-checked'); updateTrash();
+        try{ navigator.vibrate && navigator.vibrate(12); }catch(e){}
+      }, 550);
+    };
+    const move = (e) => {
+      const x=(e.touches?e.touches[0].clientX:e.clientX), y=(e.touches?e.touches[0].clientY:e.clientY);
+      if (Math.abs(x-sx)>8 || Math.abs(y-sy)>8) { moved = true; clearTimeout(timer); }
+    };
+    const end = () => clearTimeout(timer);
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointermove', move);
+    btn.addEventListener('pointerup', end);
+    btn.addEventListener('pointercancel', end);
+    btn.addEventListener('pointerleave', end);
+    btn.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
   function decorateSetup(){
     injectCropUi();
     const grid = document.getElementById('edo-emoji-choice'); if(!grid) return;
     const photo = app.getAvatarPhoto();
     const p = app.getUserProfile();
 
-    // 保存済みの写真を、絵文字の先頭に選択肢として並べます
-    if (photo) {
+    // 削除された絵文字は一覧から外します
+    const hidden = new Set(hiddenEmoji());
+    grid.querySelectorAll('.edo-emoji-btn').forEach(b=>{
+      const d = String(b.dataset.avatar||'');
+      if (d.startsWith('emoji:') && hidden.has(d.slice(6))) b.remove();
+    });
+
+    // 保存済みの写真を先頭に
+    if (photo && !grid.querySelector('.edo-photo-btn')) {
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'edo-emoji-btn edo-photo-btn' + (p.avatarType === 'photo' ? ' sel' : '');
+      b.className = 'edo-emoji-btn edo-photo-btn';
       b.title = '自分の写真';
+      b.dataset.avatar = PHOTO_MARK;
       b.innerHTML = `<img src="${esc(photo)}" alt="自分の写真">`;
-      b.onclick = () => selectPhotoButton();
       grid.insertBefore(b, grid.firstChild);
       if (p.avatarType === 'photo' && app._setupMode !== 'line') {
         grid.querySelectorAll('.edo-emoji-btn').forEach(x=>x.classList.remove('sel'));
@@ -13436,42 +13549,107 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       }
     }
 
-    // 「写真を使う」「写真を削除」
-    if (!document.getElementById('edo-photo-row')) {
-      const row = document.createElement('div');
+    // 選択・長押しの取り付け（☑マークも足します）
+    grid.querySelectorAll('.edo-emoji-btn').forEach(b=>{
+      if (!b.querySelector('.edo-check')) {
+        const c=document.createElement('span'); c.className='edo-check'; c.textContent='✓'; b.appendChild(c);
+      }
+      armLongPress(b);
+      if (!b._pickBound) {
+        b._pickBound = true;
+        b.addEventListener('click', (ev)=>{
+          // 長押しで選択した直後は、指を離したときのタップ（同じボタン）だけ無視します
+          if (b._lpFired) { b._lpFired = false; ev.preventDefault(); ev.stopImmediatePropagation(); return; }
+          if (!picking) {
+            if (b.classList.contains('edo-photo-btn')) { ev.stopImmediatePropagation(); selectPhotoButton(); }
+            return;
+          }
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          b.classList.toggle('edo-checked');
+          if (!checkedButtons().length) setPicking(false); else updateTrash();
+        }, true);
+      }
+    });
+
+    // ボタン行
+    let row = document.getElementById('edo-photo-row');
+    if (!row) {
+      row = document.createElement('div');
       row.id = 'edo-photo-row'; row.className = 'edo-photo-row';
-      row.innerHTML = `<button type="button" id="edo-photo-pick">📷 写真からアイコンを作る</button>` +
-                      `<button type="button" id="edo-photo-del" class="hidden">🗑 写真を削除</button>`;
+      row.innerHTML = `<button type="button" id="edo-photo-pick">🖼️ 写真からアイコン作成</button>` +
+                      `<button type="button" id="edo-photo-del" class="hidden" title="選んだアイコンを削除">🗑️</button>`;
       grid.parentNode.insertBefore(row, grid.nextSibling);
+      const hint = document.createElement('div');
+      hint.id = 'edo-pick-hint'; hint.textContent = '削除するアイコンを選んで 🗑️ を押してください（もう一度押すと選択解除）';
+      grid.parentNode.insertBefore(hint, grid.nextSibling);
       row.querySelector('#edo-photo-pick').onclick = () => {
+        setPicking(false);
         app._pickAvatarPhoto(() => { refreshPhotoUi(); selectPhotoButton(); });
       };
       row.querySelector('#edo-photo-del').onclick = () => {
-        app.clearAvatarPhoto();
+        const sel = checkedButtons(); if (!sel.length) return;
+        const hid = new Set(hiddenEmoji());
+        let removedPhoto = false;
+        sel.forEach(b=>{
+          const d = String(b.dataset.avatar||'');
+          if (d === PHOTO_MARK) { app.clearAvatarPhoto(); removedPhoto = true; }
+          else if (d.startsWith('emoji:')) hid.add(d.slice(6));
+          b.remove();
+        });
+        setHiddenEmoji([...hid]);
         const pp = app.getUserProfile();
-        if (pp.avatarType === 'photo') { pp.avatarType='emoji'; pp.avatarValue=AV_FALLBACK; app.saveUserProfile(); }
-        app._setupSelected = 'emoji:' + AV_FALLBACK;
-        refreshPhotoUi();
-        app._applyProfileToLobby?.(); app._refreshAccountPanel?.();
+        const stillThere = document.querySelector(
+          '.edo-emoji-btn[data-avatar="'+String(app._setupSelected||'').replace(/"/g,'')+'"]');
+        if ((removedPhoto && pp.avatarType === 'photo') || !stillThere) {
+          const first = document.querySelector('#edo-emoji-choice .edo-emoji-btn');
+          app._setupSelected = first ? first.dataset.avatar : ('emoji:' + AV_FALLBACK);
+          document.querySelectorAll('#edo-emoji-choice .edo-emoji-btn').forEach(x=>x.classList.remove('sel'));
+          first && first.classList.add('sel');
+          if (removedPhoto && pp.avatarType === 'photo') {
+            pp.avatarType='emoji'; pp.avatarValue=AV_FALLBACK; app.saveUserProfile();
+            app._applyProfileToLobby?.(); app._refreshAccountPanel?.();
+          }
+        }
+        setPicking(false);
       };
     }
+    // 選択モードの外をタップしたら解除
+    const modal = document.getElementById('edogawa-user-setup');
+    if (modal && !modal._pickOut) {
+      modal._pickOut = true;
+      modal.addEventListener('click', (ev)=>{
+        if (!picking) return;
+        if (Date.now() - longPressAt < 400) return;
+        if (ev.target.closest('#edo-emoji-choice') || ev.target.closest('#edo-photo-del')) return;
+        setPicking(false);
+      });
+    }
+    setPicking(false);
     refreshPhotoUi();
   }
 
   function refreshPhotoUi(){
     const grid = document.getElementById('edo-emoji-choice'); if(!grid) return;
     const photo = app.getAvatarPhoto();
-    const del = document.getElementById('edo-photo-del');
-    if (del) del.classList.toggle('hidden', !photo);
     let b = grid.querySelector('.edo-photo-btn');
     if (photo && !b) {
       b = document.createElement('button');
       b.type='button'; b.className='edo-emoji-btn edo-photo-btn'; b.title='自分の写真';
-      b.onclick = () => selectPhotoButton();
+      b.dataset.avatar = PHOTO_MARK;
+      const c=document.createElement('span'); c.className='edo-check'; c.textContent='✓';
       grid.insertBefore(b, grid.firstChild);
+      b.appendChild(c); armLongPress(b);
+      b.addEventListener('click',(ev)=>{
+        if (b._lpFired) { b._lpFired = false; ev.preventDefault(); ev.stopImmediatePropagation(); return; }
+        if(!picking){ ev.stopImmediatePropagation(); selectPhotoButton(); } }, true);
     }
-    if (photo && b) b.innerHTML = `<img src="${esc(photo)}" alt="自分の写真">`;
+    if (photo && b) {
+      const c = b.querySelector('.edo-check');
+      b.innerHTML = `<img src="${esc(photo)}" alt="自分の写真">`;
+      if (c) b.appendChild(c); else { const n=document.createElement('span'); n.className='edo-check'; n.textContent='✓'; b.appendChild(n); }
+    }
     if (!photo && b) b.remove();
+    updateTrash();
   }
 
   // ---- 保存：既存の保存処理が走ったあとに、写真を選んでいた場合だけ上書きします ----
