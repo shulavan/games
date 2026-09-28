@@ -55,7 +55,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v58 (2026-09-27)';
+    window.__EDOGAWA_VERSION = 'v59 (2026-09-27)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1145,7 +1145,7 @@
       <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full flex items-center gap-3 bg-[#06C755]/15 hover:bg-[#06C755]/25 border border-[#06C755]/40 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
         <span class="text-xl">💬</span><span class="text-sm font-bold text-[#06C755]">LINEで紹介</span>
       </button>
-      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v58 (2026-09-27)</span></p>
+      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v59 (2026-09-27)</span></p>
     </div>
   </div>
 
@@ -2059,7 +2059,7 @@
       channelId: "2011743772",
       redirectUri: "",       // 空欄なら現在ページURL（クエリ/ハッシュを除く）
       // 認証コードをトークンに交換するサーバーAPI（Google Apps Script）
-      tokenEndpoint: "https://script.google.com/macros/s/AKfycbyUAW9f-Ilv-0bnx12p1qZwL0rV9PNK5niw4-SCAKAUL1-BpFush_ehdf30PnmVlAnHXg/exec",
+      tokenEndpoint: "https://script.google.com/macros/s/AKfycbz1HOwDq_8bQDqElwAEnpv0-aAgXl5UvCKs3AIk7GJNYvWWBHP6CyC1WzUOrw9Tc25xOg/exec",
       revokeEndpoint: ""     // 任意：ログアウト時のトークン失効API
     };
     // Wikipediaで調べた結果の保存先（同じ施設で何度も通信しないため）
@@ -10784,7 +10784,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         <button id="edogawa-line-login" class="edo-auth-btn bg-[#06C755] text-white">LINEでログインする</button>
         <div id="edogawa-line-message" class="text-[10px] text-slate-400 mt-3 leading-relaxed"></div>
       </div></div>
-      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v58 (2026-09-27)</span></div>`;
+      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v59 (2026-09-27)</span></div>`;
     body.appendChild(auth);
 
     const setup=document.createElement('div');setup.id='edogawa-user-setup';setup.innerHTML=`<div class="box">
@@ -13048,7 +13048,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
               const txt = await copy.text();
               let j = null; try{ j = JSON.parse(txt); }catch(e){}
               shape = j ? {
-                キー: Object.keys(j).slice(0,8),
+                GAS版: j._ver || '(なし＝旧コードが動いています)',
+                キー: Object.keys(j).slice(0,10),
                 access_token有: !!j.access_token,
                 profile有: !!(j.profile || j.user),
                 userId有: !!((j.profile||j.user||{}).userId || j.userId),
