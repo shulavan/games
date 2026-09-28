@@ -51,11 +51,63 @@
        使えるように、いちばん最初にグローバルとして用意しておきます。
        （以前は後ろのスクリプトの中だけで宣言していたため、ゴール処理で
          「validNum is not defined」が起きてゴール後の処理が全部止まっていました） -->
+  <!-- 地図のスタイル定義を、アプリを開いた瞬間に先読みして端末に保存します。
+       （この1ファイルの取得に68秒かかることがあり、ベクター地図に
+         切り替わらない原因になっていました。タイル自体は画面に映る範囲
+         だけを都度読むので、読み込み量の問題ではありません） -->
+  <script id="edogawa-style-prefetch">
+  (function(){
+    window.__EDO_STYLE_CACHE = window.__EDO_STYLE_CACHE || {};
+    const KEY = 'edogawa_style_cache_v1';
+    const TTL = 7*24*60*60*1000;         // 1週間で取り直す
+    const URLS = ['https://maps.gsi.go.jp/vector/data/std.json'];
+    function absolutize(style, base){
+      try{
+        const b = new URL(base, location.href);
+        ['sprite','glyphs'].forEach(k=>{
+          if (typeof style[k] === 'string' && !/^(https?:)?\/\//.test(style[k]))
+            style[k] = new URL(style[k], b).toString();
+        });
+        if (style.sources) Object.keys(style.sources).forEach(k=>{
+          const src = style.sources[k];
+          if (typeof src.url === 'string' && !/^(https?:)?\/\//.test(src.url))
+            src.url = new URL(src.url, b).toString();
+          if (Array.isArray(src.tiles)) src.tiles = src.tiles.map(t =>
+            /^(https?:)?\/\//.test(t) ? t : new URL(t, b).toString());
+        });
+      }catch(e){}
+      return style;
+    }
+    // 端末に残っていれば即座に使う
+    try{
+      const raw = localStorage.getItem(KEY);
+      if (raw){
+        const rec = JSON.parse(raw);
+        if (rec && rec.d && (Date.now() - (rec.t||0)) < TTL)
+          Object.keys(rec.d).forEach(u => { window.__EDO_STYLE_CACHE[u] = rec.d[u]; });
+      }
+    }catch(e){}
+    // 裏で最新を取り直す
+    URLS.forEach(u=>{
+      try{
+        fetch(u, {cache:'force-cache'}).then(r => r.ok ? r.json() : null).then(j=>{
+          if (!j) return;
+          const st = absolutize(j, u);
+          window.__EDO_STYLE_CACHE[u] = st;
+          try{
+            const text = JSON.stringify({t:Date.now(), d:{[u]:st}});
+            if (text.length < 2000000) localStorage.setItem(KEY, text);
+          }catch(e){}
+        }).catch(()=>{});
+      }catch(e){}
+    });
+  })();
+  </script>
   <script id="edogawa-version">
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v66 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v67 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1788,7 +1840,7 @@
     const USE_GSI_VECTOR = true;
     const GSI_VECTOR_LABEL_SIZE = 10;
     const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
-    const GSI_VECTOR_READY_MS = 12000;   // これだけ待って描けなければあきらめる
+    const GSI_VECTOR_READY_MS = 18000;   // これだけ待って描けなければあきらめる
     // 地理院ベクトルが使えなかった場合の予備。キー不要・回数制限なしの無料サービスです。
     // 使いたくない場合は false にしてください（その場合はラスターに戻ります）。
     const USE_OPENFREEMAP_FALLBACK = true;
@@ -1989,7 +2041,15 @@
         try {
           // スタイルは「URLのまま」渡します。中身を取ってきて渡すと、
           // スタイル内の相対パス（絵記号や文字フォント）が解決できず真っ白になります。
-          gl = L.maplibreGL({ style: cand.style, attribution: cand.credit });
+          // 先読みして端末に保存したスタイルがあればそれを使います（取得待ちゼロ）。
+          const cachedStyle = (window.__EDO_STYLE_CACHE || {})[cand.style];
+          gl = L.maplibreGL({
+            style: cachedStyle || cand.style,
+            attribution: cand.credit,
+            // 漢字・ひらがな・カタカナは端末のフォントで描きます。
+            // 地図側の文字フォント（glyphs）が404でも日本語が出るようになります。
+            localIdeographFontFamily: "'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',sans-serif"
+          });
           gl.addTo(map);
           const ml = gl.getMaplibreMap();
           timer = setTimeout(() => fail('時間切れ'), GSI_VECTOR_READY_MS);
@@ -14103,6 +14163,52 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     notice: typeof app.showNotice, confirm: typeof app.showConfirm,
     startWrapped: !!origStartShow
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v67: ステータス枠の枠外タップ／モーダル背景の黒透過をなくす
+     ============================================================================ -->
+<style id="edogawa-v67-css">
+  /* 枠の外側は黒透過をやめ、ゲームの画面をそのまま見せる */
+  #facility-modal, #menu-modal, #settings-modal, #doc-modal, #log-modal,
+  #pwa-install-modal, #mp-save-modal, #mp-saved-notice-modal, #resume-choice-modal,
+  #host-absent-modal, #restart-confirm-modal, #entry-limit-modal, #consent-modal,
+  #nickname-modal, #host-recruitment-modal, #guest-waiting-modal, #goal-modal,
+  #event-modal, #boatrace-modal, #boatrace-continue-modal, #quiz-modal, #kingyo-modal,
+  #rocket-gift-modal, #edogawa-property-modal, #edogawa-user-setup, #edo-notice {
+    background-color: transparent !important;
+    background-image: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  #edogawa-auth-screen { background: transparent !important; }
+  /* 枠そのものは背面が透けないよう、しっかり不透明にする */
+  #facility-modal > div, #menu-modal > div, #settings-modal > div, #doc-modal > div,
+  #log-modal > div, #pwa-install-modal > div, #restart-confirm-modal > div,
+  #consent-modal > div, #goal-modal > div, #event-modal > div,
+  #edogawa-user-setup > .box, .edo-notice-box, .edo-mc-box {
+    box-shadow: 0 18px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.35) !important;
+  }
+</style>
+<script id="edogawa-v67-ui">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ステータス枠は、枠の外をタップしたら閉じる
+  document.addEventListener('pointerdown', function(ev){
+    const ps = document.getElementById('edogawa-player-status');
+    if (!ps || getComputedStyle(ps).display === 'none') return;
+    if (ev.target.closest && ev.target.closest('#edogawa-player-status')) return;
+    // プレイヤーカードをタップしたときは、別の人の表示に切り替わるので閉じない
+    if (ev.target.closest && ev.target.closest('#players-card-container')) return;
+    app.closePlayerStatus ? app.closePlayerStatus() : (ps.style.display = 'none');
+  }, true);
+
+  window.__EDOGAWA_V67_DIAGNOSTICS = () => ({ ok:true });
 })();
 </script>
 
