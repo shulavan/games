@@ -55,7 +55,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v61 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v63 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1145,7 +1145,7 @@
       <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full flex items-center gap-3 bg-[#06C755]/15 hover:bg-[#06C755]/25 border border-[#06C755]/40 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
         <span class="text-xl">💬</span><span class="text-sm font-bold text-[#06C755]">LINEで紹介</span>
       </button>
-      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v61 (2026-09-28)</span></p>
+      <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda　<span class="edo-version-label">v63 (2026-09-28)</span></p>
     </div>
   </div>
 
@@ -10657,7 +10657,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       version:PROFILE_VER,
       authProvider:p.authProvider==='line'?'line':'guest',
       nickname:cleanNickname(p.nickname, p.authProvider==='line'&&p.lineName?cleanNickname(p.lineName):d.nickname),
-      avatarType:p.avatarType==='line'?'line':'emoji',
+      avatarType:p.avatarType==='line'?'line':(p.avatarType==='photo'?'photo':'emoji'),
       avatarValue:p.avatarValue || (p.avatarType==='line'?p.linePictureUrl:d.avatarValue),
       money:Math.max(0,validNum(p.money,INITIAL)), movedSquares:Math.max(0,Math.floor(validNum(p.movedSquares,0))), goals:Math.max(0,Math.floor(validNum(p.goals,0))), territoryCount:Math.max(0,Math.floor(validNum(p.territoryCount,0))),
       stats:{intelligence:clampStat(stats.intelligence),wealth:clampStat(stats.wealth),stamina:clampStat(stats.stamina),luck:clampStat(stats.luck)},
@@ -10754,7 +10754,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       #edogawa-auth-header h1{margin:0;font-family:serif;font-weight:900;font-size:clamp(25px,7vw,48px);letter-spacing:.12em;color:#fbbf24;text-shadow:0 2px 10px rgba(0,0,0,.85)}
       #edogawa-auth-main{flex:1;display:flex;align-items:center;justify-content:center;padding:16px}
       #edogawa-auth-card{width:min(390px,92vw);padding:24px;border-radius:24px;background:rgba(15,23,42,.82);border:1px solid rgba(245,158,11,.38);box-shadow:0 24px 80px rgba(0,0,0,.45);backdrop-filter:blur(14px);text-align:center}
-      .edo-auth-btn{width:100%;padding:15px 16px;border-radius:16px;font-weight:900;font-size:15px;transition:.15s;margin-top:10px}
+      .edo-auth-btn{width:100%;padding:15px 16px;border-radius:16px;font-weight:900;font-size:15px;transition:.15s;margin-top:10px}.edo-auth-guest-wrap{margin-top:14px;text-align:center}.edo-auth-guest-link{display:inline-block;color:#cbd5e1;font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 10px;border-radius:8px;transition:.15s}.edo-auth-guest-link:hover,.edo-auth-guest-link:focus{color:#fbbf24;outline:none}.edo-auth-guest-link:active{opacity:.7}
       .edo-auth-btn:active{transform:scale(.98)}
       #edogawa-auth-footer{padding:12px;text-align:center;color:rgba(226,232,240,.72);font-size:10px;text-shadow:0 1px 4px #000}
       #edogawa-user-setup{position:fixed;inset:0;z-index:120;background:rgba(2,6,23,.86);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:14px}
@@ -10780,11 +10780,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       <div id="edogawa-auth-header"><h1>江戸川双六</h1></div>
       <div id="edogawa-auth-main"><div id="edogawa-auth-card">
         <div class="text-4xl mb-2">🎲</div><div class="text-sm text-slate-200 font-bold mb-4">江戸川区を舞台にしたリアルマップ双六</div>
-        <button id="edogawa-guest-login" class="edo-auth-btn bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950">ログイン無しで遊ぶ</button>
         <button id="edogawa-line-login" class="edo-auth-btn bg-[#06C755] text-white">LINEでログインする</button>
+        <div class="edo-auth-guest-wrap"><a id="edogawa-guest-login" role="button" tabindex="0" class="edo-auth-guest-link">ログイン無しで遊ぶ</a></div>
         <div id="edogawa-line-message" class="text-[10px] text-slate-400 mt-3 leading-relaxed"></div>
       </div></div>
-      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v61 (2026-09-28)</span></div>`;
+      <div id="edogawa-auth-footer">©2026 江戸川双六 Produced by M.Tsuda<br><span class="edo-version-label" style="opacity:.6">v63 (2026-09-28)</span></div>`;
     body.appendChild(auth);
 
     const setup=document.createElement('div');setup.id='edogawa-user-setup';setup.innerHTML=`<div class="box">
@@ -10828,7 +10828,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   app._refreshAccountPanel=function(){
     const panel=document.getElementById('edogawa-account-panel'); if(!panel)return;
     const p=this.getUserProfile(); const s=p.stats||statsDefault; const showProp=Number(p.money)>10000000;
-    const av=p.avatarType==='line'?this.avatarHtml(p.avatarValue,'w-full h-full object-cover'):esc(p.avatarValue||avDefault);
+    const av=(p.avatarType==='line'||p.avatarType==='photo')?this.avatarHtml(p.avatarValue,'w-full h-full object-cover'):esc(p.avatarValue||avDefault);
     const safeMoney=Math.floor(Number(p.money)||0).toLocaleString('ja-JP');
     const safeGoals=Math.floor(Number(p.goals)||0).toLocaleString('ja-JP');
     const currentPlayer=this.players?.find(x=>x && !x.isCpu && (!this.myUid || x.uid===this.myUid)) || this.players?.find(x=>x && !x.isCpu) || null;
@@ -10908,6 +10908,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     name.value=mode==='line' ? cleanNickname(lineName||'プレイヤー1') : cleanNickname(p.nickname);
     // タイトル上のアイコン表示は廃止したため、要素が無い前提で扱う。
     if(mode==='line' && linePic){ if(icon) icon.innerHTML=`<img src="${esc(linePic)}" class="w-20 h-20 rounded-full object-cover mx-auto" referrerpolicy="no-referrer">`; lineNote?.classList.remove('hidden'); }
+    else if(p.avatarType==='photo' && app.getAvatarPhoto?.()){ if(icon) icon.innerHTML=`<img src="${esc(app.getAvatarPhoto())}" class="w-20 h-20 rounded-full object-cover mx-auto">`; lineNote?.classList.add('hidden'); }
     else { if(icon) icon.textContent=p.avatarType==='emoji'?p.avatarValue:avDefault; lineNote?.classList.add('hidden'); }
     const selected = mode==='line' && linePic ? `line:${linePic}` : `emoji:${p.avatarType==='emoji'?p.avatarValue:avDefault}`;
     this._setupSelected=selected;
@@ -10967,6 +10968,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const g=document.getElementById('edogawa-guest-login'),l=document.getElementById('edogawa-line-login');
     if(g&&!g._bound){g._bound=true;g.onclick=()=>{const p=app.getUserProfile();p.authProvider='guest';p.lineUserId=null;p.linePictureUrl=null;p.avatarType='emoji';if(!p.avatarValue||/^https:\/\//.test(p.avatarValue))p.avatarValue=avDefault;app.saveUserProfile();app._openSetup('guest');};}
     if(l&&!l._bound){l._bound=true;l.onclick=()=>app.startLineOAuth();}
+    if(g&&!g._keybound){g._keybound=true;g.addEventListener('keydown',(ev)=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();g.click();}});}
   };
 
   // ---------------- LINE OAuth 2.0 + PKCE ----------------
@@ -11045,6 +11047,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       if (picture) { p.avatarType = 'line'; p.avatarValue = picture; }
       app.saveUserProfile();
       app._lineCallbackProfile={userId,name,picture};
+      app._lineJustAuthed=true;
+      app._hideAuthScreen?.();
       app._openSetup('line',app._lineCallbackProfile);
       const status=document.getElementById('edo-line-account-status');
       if(status) status.textContent = linking
@@ -11244,11 +11248,40 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   // Persist stats/money whenever HUD updates; current player cards become status jump targets.
   // Replace the old canActNow gate in panToPlayer (already done above).
 
+  // ---------------- v62: LINE認証後は認証画面を出さない ----------------
+  // LINEから戻ると必ずページが再読み込みされます（OAuthの仕様）。
+  // そのときに「ログイン無しで遊ぶ／LINEでログインする」の選択画面が
+  // 出てしまわないよう、認証済みなら認証画面自体を飛ばします。
+  const _origShowAuthScreen = app._showAuthScreen.bind(app);
+  const _setupIsOpen = () => !!document.getElementById('edogawa-user-setup')?.classList.contains('show');
+  app._isLineLinked = function(){
+    try{
+      const raw = localStorage.getItem(PROFILE_KEY);
+      if(!raw) return false;
+      const p = JSON.parse(raw);
+      return !!(p && p.authProvider === 'line' && p.lineUserId);
+    }catch(e){ return false; }
+  };
+  app._showAuthScreen = function(){
+    if (app._lineJustAuthed || this._isLineLinked()) {
+      this._hideAuthScreen();
+      if (_setupIsOpen()) return;
+      if (app._lineJustAuthed) this._openSetup('line', app._lineCallbackProfile || null);
+      else this._enterLobbyAfterAuth();
+      return;
+    }
+    return _origShowAuthScreen();
+  };
+  const _origEnterLobby = app._enterLobbyAfterAuth.bind(app);
+  app._enterLobbyAfterAuth = function(){ app._lineJustAuthed = false; return _origEnterLobby(); };
+
   // Terms + callback flow on page startup.
   document.addEventListener('DOMContentLoaded', async ()=>{
     injectUi();bindAuth();bindSetup();
     const handled=await app._handleLineCallback();
-    if(handled) { app._hideAuthScreen(); return; }
+    if(handled) { app._hideAuthScreen();
+      for(let i=1;i<=8;i++) setTimeout(()=>app._hideAuthScreen(), i*250);
+      return; }
     if(!app._hasTermsConsent()) { app._rewriteConsentModal(); document.getElementById('consent-modal')?.classList.remove('hidden'); return; }
     if(!localStorage.getItem(PROFILE_KEY)) app._showAuthScreen(); else app._enterLobbyAfterAuth();
     app._refreshAccountPanel();
@@ -13140,6 +13173,320 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   }
   app._showLineDiag = showPanel;
   window.__EDOGAWA_LINE_DIAG = showPanel;
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v63: アイコンに自分の写真を使えるようにする（端末内だけ・完全無料）
+     ----------------------------------------------------------------------------
+     ・写真はブラウザの中だけで正方形に切り抜き・縮小します
+     ・サーバーへは一切送りません（通信も費用も発生しません）
+     ・保存先はこの端末のブラウザです（別端末には引き継がれません）
+     ・対戦相手の画面では、これまでどおり絵文字が表示されます
+     ============================================================================ -->
+<script id="edogawa-v63-photo-avatar">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  const PHOTO_KEY   = 'edogawa_avatar_photo_v1';
+  const PHOTO_MARK  = 'photo:local';   // プロフィールにはこの短い印だけを保存します
+  const OUT_SIZE    = 256;             // 書き出しサイズ（正方形）
+  const VIEW        = 260;             // 切り抜き画面の一辺
+  const AV_FALLBACK = '🧑‍🦱';
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  app.getAvatarPhoto = function(){
+    try{ return localStorage.getItem(PHOTO_KEY) || null; }catch(e){ return null; }
+  };
+  app.setAvatarPhoto = function(dataUrl){
+    try{ localStorage.setItem(PHOTO_KEY, dataUrl); return true; }
+    catch(e){ return false; }
+  };
+  app.clearAvatarPhoto = function(){ try{ localStorage.removeItem(PHOTO_KEY); }catch(e){} };
+  app.isPhotoAvatar = v => String(v||'') === PHOTO_MARK;
+
+  // ---- 表示側：印を見つけたら、この端末に保存した写真に差し替えます ----
+  const origIsImage = app._isImageAvatar.bind(app);
+  app._isImageAvatar = function(v){
+    if (app.isPhotoAvatar(v)) return !!app.getAvatarPhoto();
+    return origIsImage(v);
+  };
+  const origAvatarHtml = app.avatarHtml.bind(app);
+  app.avatarHtml = function(v, cls){
+    if (app.isPhotoAvatar(v)) {
+      const src = app.getAvatarPhoto();
+      // 他の端末（対戦相手）には写真が無いので、絵文字にフォールバックします
+      if (!src) return esc(AV_FALLBACK);
+      return `<img src="${esc(src)}" alt="アイコン" class="${esc(cls||'w-9 h-9 rounded-full object-cover')}">`;
+    }
+    return origAvatarHtml(v, cls);
+  };
+
+  // アカウントパネル・ロビーの表示も印に対応させます
+  const origRefreshPanel = app._refreshAccountPanel?.bind(app);
+  const origApplyLobby   = app._applyProfileToLobby?.bind(app);
+  if (origApplyLobby) {
+    app._applyProfileToLobby = function(){
+      const r = origApplyLobby();
+      const p = this.getUserProfile();
+      if (p.avatarType === 'photo') this.selectedAvatar = PHOTO_MARK;
+      return r;
+    };
+  }
+
+  // ---- 切り抜き画面 ----
+  function injectCropUi(){
+    if (document.getElementById('edo-photo-crop')) return;
+    const st = document.createElement('style');
+    st.textContent = `
+      #edo-photo-crop{position:fixed;inset:0;z-index:2147483500;background:rgba(2,6,23,.92);
+        backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:16px}
+      #edo-photo-crop.show{display:flex}
+      .edo-crop-box{width:min(340px,94vw);background:#0f172a;border:1px solid rgba(245,158,11,.42);
+        border-radius:22px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.6);text-align:center}
+      .edo-crop-title{font-weight:900;color:#fbbf24;font-size:16px;margin-bottom:4px}
+      .edo-crop-hint{font-size:11px;color:#94a3b8;margin-bottom:12px;line-height:1.6}
+      #edo-crop-canvas{width:${VIEW}px;height:${VIEW}px;max-width:100%;aspect-ratio:1;
+        border-radius:20px;background:#020617;touch-action:none;cursor:grab;display:block;margin:0 auto}
+      #edo-crop-canvas:active{cursor:grabbing}
+      .edo-crop-zoom{display:flex;align-items:center;gap:10px;margin:14px 2px 4px;color:#cbd5e1;font-size:12px;font-weight:700}
+      .edo-crop-zoom input{flex:1;accent-color:#f59e0b}
+      .edo-crop-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+      .edo-crop-actions button{padding:12px;border-radius:13px;font-weight:900;font-size:14px;border:0}
+      #edo-crop-ok{background:linear-gradient(#f59e0b,#d97706);color:#0f172a}
+      #edo-crop-cancel{background:#1e293b;color:#e2e8f0;border:1px solid #475569}
+      #edo-crop-error{color:#f87171;font-size:11px;margin-top:9px;min-height:1em;line-height:1.5}
+      .edo-photo-row{display:flex;gap:8px;margin-top:10px}
+      .edo-photo-row button{flex:1;padding:11px 8px;border-radius:12px;font-weight:800;font-size:12px;
+        border:1px solid #475569;background:#1e293b;color:#e2e8f0}
+      .edo-photo-row button:active{opacity:.75}
+      .edo-emoji-btn.edo-photo-btn{padding:0;overflow:hidden}
+      .edo-emoji-btn.edo-photo-btn img{width:100%;height:100%;object-fit:cover;border-radius:11px;display:block}
+    `;
+    document.head.appendChild(st);
+
+    const ov = document.createElement('div');
+    ov.id = 'edo-photo-crop';
+    ov.innerHTML = `<div class="edo-crop-box">
+      <div class="edo-crop-title">アイコンの切り抜き</div>
+      <div class="edo-crop-hint">指でドラッグして位置を、スライダーで大きさを調整できます。<br>正方形に切り抜かれます。</div>
+      <canvas id="edo-crop-canvas" width="${VIEW}" height="${VIEW}"></canvas>
+      <div class="edo-crop-zoom"><span>大きさ</span><input id="edo-crop-zoom" type="range" min="100" max="300" value="100"></div>
+      <div id="edo-crop-error"></div>
+      <div class="edo-crop-actions">
+        <button type="button" id="edo-crop-cancel">やめる</button>
+        <button type="button" id="edo-crop-ok">この範囲にする</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+  }
+
+  let cropState = null;
+
+  function openCrop(img, onDone){
+    injectCropUi();
+    const ov = document.getElementById('edo-photo-crop');
+    const cv = document.getElementById('edo-crop-canvas');
+    const zoom = document.getElementById('edo-crop-zoom');
+    const err = document.getElementById('edo-crop-error');
+    const ctx = cv.getContext('2d');
+    err.textContent = '';
+    zoom.value = 100;
+
+    const base = VIEW / Math.min(img.width, img.height);
+    cropState = { img, base, scale: 1, ox: 0, oy: 0 };
+
+    function clamp(){
+      const w = img.width * base * cropState.scale;
+      const h = img.height * base * cropState.scale;
+      const mx = Math.max(0, (w - VIEW) / 2);
+      const my = Math.max(0, (h - VIEW) / 2);
+      cropState.ox = Math.max(-mx, Math.min(mx, cropState.ox));
+      cropState.oy = Math.max(-my, Math.min(my, cropState.oy));
+    }
+    function draw(){
+      clamp();
+      const w = img.width * base * cropState.scale;
+      const h = img.height * base * cropState.scale;
+      ctx.clearRect(0,0,VIEW,VIEW);
+      ctx.fillStyle = '#020617'; ctx.fillRect(0,0,VIEW,VIEW);
+      ctx.drawImage(img, (VIEW - w)/2 + cropState.ox, (VIEW - h)/2 + cropState.oy, w, h);
+    }
+    draw();
+
+    // ドラッグ（1本指）とピンチ（2本指）
+    const pts = new Map(); let startDist = 0, startScale = 1, last = null;
+    cv.onpointerdown = (e)=>{ cv.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(pts.size===1) last={x:e.clientX,y:e.clientY};
+      if(pts.size===2){ const a=[...pts.values()]; startDist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); startScale=cropState.scale; } };
+    cv.onpointermove = (e)=>{
+      if(!pts.has(e.pointerId)) return;
+      pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(pts.size===2){
+        const a=[...pts.values()]; const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+        if(startDist>0){ cropState.scale=Math.max(1,Math.min(3,startScale*(d/startDist)));
+          zoom.value=Math.round(cropState.scale*100); draw(); }
+        return;
+      }
+      if(last){ const r=cv.getBoundingClientRect(); const k=VIEW/r.width;
+        cropState.ox += (e.clientX-last.x)*k; cropState.oy += (e.clientY-last.y)*k;
+        last={x:e.clientX,y:e.clientY}; draw(); }
+    };
+    const up = (e)=>{ pts.delete(e.pointerId); if(pts.size===0) last=null; if(pts.size<2) startDist=0; };
+    cv.onpointerup = up; cv.onpointercancel = up;
+    zoom.oninput = ()=>{ cropState.scale = Number(zoom.value)/100; draw(); };
+
+    document.getElementById('edo-crop-cancel').onclick = ()=>{ ov.classList.remove('show'); cropState=null; };
+    document.getElementById('edo-crop-ok').onclick = ()=>{
+      try{
+        const out = document.createElement('canvas');
+        out.width = OUT_SIZE; out.height = OUT_SIZE;
+        const o = out.getContext('2d');
+        o.fillStyle = '#020617'; o.fillRect(0,0,OUT_SIZE,OUT_SIZE);
+        const k = OUT_SIZE / VIEW;
+        const w = img.width * base * cropState.scale * k;
+        const h = img.height * base * cropState.scale * k;
+        o.drawImage(img, (OUT_SIZE-w)/2 + cropState.ox*k, (OUT_SIZE-h)/2 + cropState.oy*k, w, h);
+        let url = out.toDataURL('image/jpeg', 0.85);
+        if (url.length > 400000) url = out.toDataURL('image/jpeg', 0.7);
+        if (!app.setAvatarPhoto(url)) {
+          err.textContent = '端末の保存容量がいっぱいで保存できませんでした。ブラウザの保存データを整理してからお試しください。';
+          return;
+        }
+        ov.classList.remove('show'); cropState = null;
+        onDone && onDone(url);
+      }catch(e){
+        err.textContent = '画像を保存できませんでした（' + String(e && e.message || e).slice(0,50) + '）';
+      }
+    };
+    ov.classList.add('show');
+  }
+
+  app._pickAvatarPhoto = function(onDone){
+    let input = document.getElementById('edo-photo-input');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file'; input.accept = 'image/*'; input.id = 'edo-photo-input';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+    }
+    input.value = '';
+    input.onchange = async () => {
+      const f = input.files && input.files[0]; if (!f) return;
+      if (!/^image\//.test(f.type)) { alert('画像ファイルを選んでください。'); return; }
+      try{
+        let img;
+        // createImageBitmap なら写真の向き（Exif）も正しく扱えます
+        if (window.createImageBitmap) {
+          try { img = await createImageBitmap(f, { imageOrientation: 'from-image' }); }
+          catch(e){ img = null; }
+        }
+        if (!img) {
+          img = await new Promise((res, rej) => {
+            const i = new Image(); const u = URL.createObjectURL(f);
+            i.onload = () => { URL.revokeObjectURL(u); res(i); };
+            i.onerror = () => { URL.revokeObjectURL(u); rej(new Error('読み込み失敗')); };
+            i.src = u;
+          });
+        }
+        openCrop(img, onDone);
+      }catch(e){ alert('画像を読み込めませんでした。別の写真でお試しください。'); }
+    };
+    input.click();
+  };
+
+  // ---- 設定画面に「写真を使う」を足す ----
+  const origOpenSetup = app._openSetup.bind(app);
+  app._openSetup = function(mode, lineProfile){
+    const r = origOpenSetup(mode, lineProfile);
+    try{ decorateSetup(); }catch(e){}
+    return r;
+  };
+
+  function selectPhotoButton(){
+    const grid = document.getElementById('edo-emoji-choice'); if(!grid) return;
+    app._setupSelected = PHOTO_MARK;
+    grid.querySelectorAll('.edo-emoji-btn').forEach(x=>x.classList.remove('sel'));
+    grid.querySelector('.edo-photo-btn')?.classList.add('sel');
+  }
+
+  function decorateSetup(){
+    injectCropUi();
+    const grid = document.getElementById('edo-emoji-choice'); if(!grid) return;
+    const photo = app.getAvatarPhoto();
+    const p = app.getUserProfile();
+
+    // 保存済みの写真を、絵文字の先頭に選択肢として並べます
+    if (photo) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'edo-emoji-btn edo-photo-btn' + (p.avatarType === 'photo' ? ' sel' : '');
+      b.title = '自分の写真';
+      b.innerHTML = `<img src="${esc(photo)}" alt="自分の写真">`;
+      b.onclick = () => selectPhotoButton();
+      grid.insertBefore(b, grid.firstChild);
+      if (p.avatarType === 'photo' && app._setupMode !== 'line') {
+        grid.querySelectorAll('.edo-emoji-btn').forEach(x=>x.classList.remove('sel'));
+        b.classList.add('sel'); app._setupSelected = PHOTO_MARK;
+      }
+    }
+
+    // 「写真を使う」「写真を削除」
+    if (!document.getElementById('edo-photo-row')) {
+      const row = document.createElement('div');
+      row.id = 'edo-photo-row'; row.className = 'edo-photo-row';
+      row.innerHTML = `<button type="button" id="edo-photo-pick">📷 写真からアイコンを作る</button>` +
+                      `<button type="button" id="edo-photo-del" class="hidden">🗑 写真を削除</button>`;
+      grid.parentNode.insertBefore(row, grid.nextSibling);
+      row.querySelector('#edo-photo-pick').onclick = () => {
+        app._pickAvatarPhoto(() => { refreshPhotoUi(); selectPhotoButton(); });
+      };
+      row.querySelector('#edo-photo-del').onclick = () => {
+        app.clearAvatarPhoto();
+        const pp = app.getUserProfile();
+        if (pp.avatarType === 'photo') { pp.avatarType='emoji'; pp.avatarValue=AV_FALLBACK; app.saveUserProfile(); }
+        app._setupSelected = 'emoji:' + AV_FALLBACK;
+        refreshPhotoUi();
+        app._applyProfileToLobby?.(); app._refreshAccountPanel?.();
+      };
+    }
+    refreshPhotoUi();
+  }
+
+  function refreshPhotoUi(){
+    const grid = document.getElementById('edo-emoji-choice'); if(!grid) return;
+    const photo = app.getAvatarPhoto();
+    const del = document.getElementById('edo-photo-del');
+    if (del) del.classList.toggle('hidden', !photo);
+    let b = grid.querySelector('.edo-photo-btn');
+    if (photo && !b) {
+      b = document.createElement('button');
+      b.type='button'; b.className='edo-emoji-btn edo-photo-btn'; b.title='自分の写真';
+      b.onclick = () => selectPhotoButton();
+      grid.insertBefore(b, grid.firstChild);
+    }
+    if (photo && b) b.innerHTML = `<img src="${esc(photo)}" alt="自分の写真">`;
+    if (!photo && b) b.remove();
+  }
+
+  // ---- 保存：既存の保存処理が走ったあとに、写真を選んでいた場合だけ上書きします ----
+  document.addEventListener('click', (ev) => {
+    if (!ev.target || !ev.target.closest || !ev.target.closest('#edo-setup-save')) return;
+    if (!app.isPhotoAvatar(app._setupSelected)) return;
+    if (!app.getAvatarPhoto()) return;
+    const p = app.getUserProfile();
+    p.avatarType = 'photo';
+    p.avatarValue = PHOTO_MARK;
+    app.saveUserProfile();
+    app._applyProfileToLobby?.();
+    app._refreshAccountPanel?.();
+  });
+
 })();
 </script>
 
