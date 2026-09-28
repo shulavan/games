@@ -55,7 +55,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v64 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v65 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -7517,9 +7517,9 @@
         overlay.classList.remove('hidden');
         document.getElementById('regional-mini-close')?.classList.add('hidden');
         const auto=!!((this.autoMode&&player.uid===this.myUid)||this.isPlayerOffline(player));
-        const send=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):player.avatar)},'*');
-        const sendPlayer=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):player.avatar)},'*');
-        const sendCanoePlayers=()=>{if(game==='canoe'){const myRealPlayer=(this.players||[]).find(p=>p.uid===this.myUid)||player;frame.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:myRealPlayer.id,players:(this.players||[]).map(p=>({id:p.id,name:p.name,avatar:(app.avatarPlain?app.avatarPlain(p.avatar):(p.avatar||'🚣‍♂️')),isCpu:!!p.isCpu,money:Number(p.money)||0}))},'*')}};
+        const send=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(player.avatar):player.avatar)},'*');
+        const sendPlayer=()=>frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(player.avatar):player.avatar)},'*');
+        const sendCanoePlayers=()=>{if(game==='canoe'){const myRealPlayer=(this.players||[]).find(p=>p.uid===this.myUid)||player;frame.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:myRealPlayer.id,players:(this.players||[]).map(p=>({id:p.id,name:p.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(p.avatar):(p.avatar||'🚣‍♂️')),isCpu:!!p.isCpu,money:Number(p.money)||0}))},'*')}};
         frame.onload=()=>{send();sendPlayer();sendCanoePlayers();if(auto)setTimeout(()=>frame.contentWindow?.postMessage({type:'EDOGAWA_AUTO_START',auto:true},'*'),350)};
         setTimeout(()=>{send();sendPlayer();sendCanoePlayers();},400);
       },
@@ -10527,7 +10527,7 @@ Object.assign(window.__EDOGAWA_MINIGAME_B64,window.__EDOGAWA_STAR_MINIGAMES_B64)
    document.getElementById('regional-mini-close')?.classList.add('hidden');
    const b64=window.__EDOGAWA_NEW_MINIGAMES_B64[game];if(!b64)return this.finishMiniGameTurn(player,'ミニゲームデータがありません。');
    let html='';try{html=new TextDecoder().decode(Uint8Array.from(atob(b64),c=>c.charCodeAt(0)));}catch(e){return this.finishMiniGameTurn(player,'ミニゲームの読み込みに失敗しました。');}
-   const sendInit=()=>{const st=this.regionalMiniGame;if(!st||st.game!==game||st.playerId!==player.id)return;if(loading)loading.style.display='none';try{frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):(player.avatar||'🙂'))},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:(app.avatarPlain?app.avatarPlain(player.avatar):(player.avatar||'🙂'))},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_AUTO_START',auto:true,cpu:false},'*');}catch(e){}};
+   const sendInit=()=>{const st=this.regionalMiniGame;if(!st||st.game!==game||st.playerId!==player.id)return;if(loading)loading.style.display='none';try{frame.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:player.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(player.avatar):(player.avatar||'🙂'))},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:Number(player.money)||0,playerName:player.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(player.avatar):(player.avatar||'🙂'))},'*');frame.contentWindow?.postMessage({type:'EDOGAWA_AUTO_START',auto:true,cpu:false},'*');}catch(e){}};
    frame.onload=sendInit;frame.style.display='block';overlay.classList.remove('hidden');frame.srcdoc=html;setTimeout(()=>{if(!this.regionalMiniGame||this.regionalMiniGame.game!==game)return;try{const bodyText=frame.contentDocument?.body?.innerText||'';const hasBody=!!frame.contentDocument?.body;if(!hasBody){const label=document.getElementById('regional-mini-loading');if(label)label.querySelector('div div:last-child').textContent='ミニゲーム画面を読み込めませんでした。再試行してください。';}}catch(e){}},4500);setTimeout(sendInit,1200);setTimeout(()=>{if(frame.contentDocument&&frame.contentDocument.readyState!=='loading')sendInit();},250);
  };
  app.startIntegratedCpuMiniGame=function(game,p){this.miniGameActive=true;this.activeMiniGamePlayerId=p.id;this.regionalMiniGame={game,playerId:p.id,done:false,integrated:true,cpuResultOnly:true};let score=0,delta=0,success=true,detail='';if(game==='delivery'){score=50+Math.floor(Math.random()*51);delta=score*100;detail=`ステージ1クリア：評価点 ${score}点 × ¥100`;}else if(game==='hide'){success=true;delta=10000;detail='区長を発見！クリア賞金 ¥10,000';}else{score=30+Math.floor(Math.random()*71);delta=score*100;detail=`採点 ${score}点 × ¥100`;}this.applyIntegratedMiniGameResult({type:'EDOGAWA_MINIGAME_RESULT',game,score,delta,prize:delta,success,detail});};
@@ -10925,7 +10925,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         // そのため一度連携すると二度とLINEの名前・写真を取り込み直せず、
         // 「押しても何も変わらない」状態になっていました。常に押せるようにします。
         lineBtn.disabled=false;
-        lineBtn.textContent=linked?'🟩 LINEの名前と写真を取り込む':'🟩 LINEで認証する';
+        // 連携済みの人にはボタンを出しません（押しても名前と写真は毎回同じため）。
+        lineBtn.classList.toggle('hidden', linked);
+        lineBtn.style.display = linked ? 'none' : '';
+        lineBtn.textContent='🟩 LINEで認証する';
         if(lineStatus) lineStatus.textContent=linked?(p.lineName?`認証済み：${p.lineName}`:'LINEアカウントと連携済み'):'LINEアカウントと連携すると、この端末のアカウントにLINE認証を紐づけます。';
         lineBtn.onclick=()=>{ if(!lineBtn.disabled) this.startLineOAuth(true); };
       }
@@ -10935,16 +10938,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   document.getElementById('edo-setup-save')?.addEventListener('click',()=>{
     const p=app.getUserProfile(); const name=cleanNickname(document.getElementById('edo-setup-name')?.value,p.nickname);
     let avType='emoji', avValue='🧑‍🦱';
-    if(app._setupMode==='line' && app._lineProfile?.picture){avType='line';avValue=app._lineProfile.picture;p.linePictureUrl=app._lineProfile.picture;p.lineName=app._lineProfile.name;p.lineUserId=app._lineProfile.userId;p.authProvider='line';}
-    else if(String(app._setupSelected||'').startsWith('emoji:')) avValue=String(app._setupSelected).slice(6);
-    else if(String(app._setupSelected||'').startsWith('line:')){avType='line';avValue=String(app._setupSelected).slice(5);}
+    const sel=String(app._setupSelected||'');
+    if(app._setupMode==='line' && app._lineProfile?.picture){p.linePictureUrl=app._lineProfile.picture;p.lineName=app._lineProfile.name;p.lineUserId=app._lineProfile.userId;p.authProvider='line';}
+    if(sel.startsWith('emoji:')) avValue=sel.slice(6);
+    else if(sel.startsWith('line:')){avType='line';avValue=sel.slice(5);p.authProvider='line';}
+    else if(sel==='photo:local' && app.getAvatarPhoto && app.getAvatarPhoto()){avType='photo';avValue='photo:local';}
+    else if(app._setupMode==='line' && app._lineProfile?.picture){avType='line';avValue=app._lineProfile.picture;}
     p.nickname=name;p.avatarType=avType;p.avatarValue=avValue;
     // Login only supplies defaults; existing progress is never reset when editing.
     app.saveUserProfile(); app._applyProfileToLobby(); document.getElementById('edogawa-user-setup')?.classList.remove('show'); app._enterLobbyAfterAuth();
   });
 
   // If setup buttons are injected after listener registration, rebind immediately after DOM creation.
-  const bindSetup=()=>{const b=document.getElementById('edo-setup-save');if(b&&!b._bound){b._bound=true;b.onclick=()=>{const p=app.getUserProfile(),n=cleanNickname(document.getElementById('edo-setup-name')?.value,p.nickname);let at='emoji',av='🧑‍🦱';if(app._setupMode==='line'&&app._lineProfile?.picture){at='line';av=app._lineProfile.picture;p.lineUserId=app._lineProfile.userId;p.lineName=app._lineProfile.name;p.linePictureUrl=app._lineProfile.picture;p.authProvider='line';}else if(String(app._setupSelected||'').startsWith('emoji:'))av=String(app._setupSelected).slice(6);p.nickname=n;p.avatarType=at;p.avatarValue=av;app.saveUserProfile();app._applyProfileToLobby();document.getElementById('edogawa-user-setup')?.classList.remove('show');app._enterLobbyAfterAuth();};}}; 
+  const bindSetup=()=>{const b=document.getElementById('edo-setup-save');if(b&&!b._bound){b._bound=true;b.onclick=()=>{const p=app.getUserProfile(),n=cleanNickname(document.getElementById('edo-setup-name')?.value,p.nickname);let at='emoji',av='🧑‍🦱';const selNow=String(app._setupSelected||'');if(selNow.startsWith('emoji:')){av=selNow.slice(6);}else if(selNow.startsWith('line:')){at='line';av=selNow.slice(5);p.authProvider='line';}else if(selNow==='photo:local'&&app.getAvatarPhoto&&app.getAvatarPhoto()){at='photo';av='photo:local';}else if(app._setupMode==='line'&&app._lineProfile?.picture){at='line';av=app._lineProfile.picture;}if(app._setupMode==='line'&&app._lineProfile?.picture){p.lineUserId=app._lineProfile.userId;p.lineName=app._lineProfile.name;p.linePictureUrl=app._lineProfile.picture;p.authProvider='line';}p.nickname=n;p.avatarType=at;p.avatarValue=av;app.saveUserProfile();app._applyProfileToLobby();document.getElementById('edogawa-user-setup')?.classList.remove('show');app._enterLobbyAfterAuth();};}}; 
 
   // Guest/cache login
   const bindAuth=()=>{
@@ -12312,9 +12318,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     },100);
   }
   function sendPlayer(game,p,frame){
-    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:moneyN(p.money),playerName:p.name,avatar:(app.avatarPlain?app.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
-    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:p.name,avatar:(app.avatarPlain?app.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
-    if(game==='canoe')try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:p.id,players:(app.players||[]).map(x=>({id:x.id,name:x.name,avatar:(app.avatarPlain?app.avatarPlain(x.avatar):(x.avatar||'🚣‍♂️')),isCpu:!!x.isCpu,money:moneyN(x.money)}))},'*')}catch(e){}
+    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:moneyN(p.money),playerName:p.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
+    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:p.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
+    if(game==='canoe')try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:p.id,players:(app.players||[]).map(x=>({id:x.id,name:x.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(x.avatar):(x.avatar||'🚣‍♂️')),isCpu:!!x.isCpu,money:moneyN(x.money)}))},'*')}catch(e){}
   }
   function loadChild(game,p,html){
     const overlay=document.getElementById('regional-mini-overlay'),frame=document.getElementById('regional-mini-frame'),title=document.getElementById('regional-mini-title');
@@ -13667,6 +13673,196 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 
 })();
 </script>
+
+
+
+<!-- ============================================================================
+     v65: 競艇の2レース目／締めの実況／ミニゲームの結果モーダル統合
+     ============================================================================ -->
+<script id="edogawa-v65-fixes">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ============================================================
+  // ① 2レース目のボートがゴール地点から始まる
+  //    コースの中身は作り直していましたが、横スクロール位置と
+  //    前のレースのアニメーションタイマーが残っていました。
+  // ============================================================
+  const origTrack = app._renderBoatRaceTrack?.bind(app);
+  if (origTrack) {
+    app._renderBoatRaceTrack = function(){
+      // 前のレースのアニメーションが動いていたら必ず止める
+      try{ clearInterval(app.boatRaceAnimTimer); app.boatRaceAnimTimer = null; }catch(e){}
+      const r = origTrack();
+      try{
+        // 横スクロールをスタート地点へ戻す（ここが残っていてゴール地点が映っていました）
+        const vp = document.getElementById('boatrace-race-viewport');
+        if (vp) { vp.scrollLeft = 0; }
+        // 念のため、各艇の位置と着順表示も明示的に初期化
+        for (let n = 1; n <= 5; n++) {
+          const el = document.getElementById('br-boat-' + n);
+          if (el) el.style.left = '6%';
+          const rk = document.getElementById('br-rank-' + n);
+          if (rk) rk.textContent = '';
+        }
+      }catch(e){ console.error('[v65]', e); }
+      return r;
+    };
+  }
+  // レース開始時にも確実に初期化
+  const origStartRace = app._startBoatRaceRace?.bind(app);
+  if (origStartRace) {
+    app._startBoatRaceRace = async function(){
+      try{ clearInterval(app.boatRaceAnimTimer); app.boatRaceAnimTimer = null; }catch(e){}
+      const vp = document.getElementById('boatrace-race-viewport');
+      if (vp) vp.scrollLeft = 0;
+      return origStartRace();
+    };
+  }
+
+  // ============================================================
+  // ② 締めの実況が5秒で切れる
+  //    読み終わりの合図（onend）が来ない端末があるため、
+  //    「実際にまだ喋っているか」も見て、終わるまで閉じないようにします。
+  // ============================================================
+  const SPEAK_WAIT_MAX_MS = 20000;
+  function speaking(){
+    try{ const s = window.speechSynthesis; return !!(s && (s.speaking || s.pending)); }
+    catch(e){ return false; }
+  }
+  const origArm2 = app.armModalAutoClose?.bind(app);
+  if (origArm2) {
+    app.armModalAutoClose = function(key, buttonId, onClose, seconds){
+      if (key !== 'boatrace') return origArm2(key, buttonId, onClose, seconds);
+      const token = app._boatOutroToken;
+      const guarded = function(){
+        const btn = document.getElementById(buttonId);
+        const t0 = Date.now();
+        const tryClose = () => {
+          if (app._boatOutroToken !== token) return;            // 手動で閉じられた
+          const busy = (app._boatOutroSpeaking === true) || speaking();
+          if (busy && Date.now() - t0 < SPEAK_WAIT_MAX_MS) {
+            if (btn) btn.textContent = '閉じる';
+            setTimeout(tryClose, 250);
+            return;
+          }
+          // 言い終わったので、少し余韻を置いて閉じる
+          setTimeout(() => {
+            if (app._boatOutroToken !== token) return;
+            try{ onClose(); }catch(e){ console.error('[v65]', e); }
+          }, 350);
+        };
+        tryClose();
+      };
+      return origArm2(key, buttonId, guarded, seconds);
+    };
+  }
+
+  // ============================================================
+  // ③ 結果モーダルと所持金加算モーダルを1つにまとめる
+  //    ・「けっか はっぴょう」の共通モーダルだけを出します
+  //    ・漢字テストは答え合わせの内容もこのモーダルに載せます
+  //    ・5秒で自動的に閉じます
+  // ============================================================
+
+  // 子ページ（iframe）から答え合わせの内容を取り出す
+  function readKankenReview(){
+    try{
+      const f = document.getElementById('regional-mini-frame');
+      const d = f && f.contentDocument; if (!d) return null;
+      const body = d.getElementById('result-table-body'); if (!body) return null;
+      const rows = [...body.querySelectorAll('tr')].map((tr, i) => {
+        const tds = tr.querySelectorAll('td');
+        const ok = /◯/.test(tr.textContent || '');
+        const ch = tds[2] ? (tds[2].querySelector('span')?.textContent || '').trim() : '';
+        const word = tds[2] ? ((tds[2].textContent || '').match(/\(([^)]*)\)/) || [,''])[1] : '';
+        return { no: i + 1, ok, ch, word };
+      }).filter(r => r.ch);
+      const scoreEl = d.getElementById('final-score-display');
+      return rows.length ? { rows, score: scoreEl ? (scoreEl.textContent || '').trim() : '' } : null;
+    }catch(e){ return null; }
+  }
+
+  // 共通モーダルに答え合わせを差し込む
+  const origResultShow = app._miniCommonResultShow?.bind(app);
+  if (origResultShow) {
+    app._miniCommonResultShow = function(opt){
+      const r = origResultShow(opt);
+      try{
+        const rv = app._pendingMiniReview; app._pendingMiniReview = null;
+        if (!rv || !rv.rows || !rv.rows.length) return r;
+        const box = document.querySelector('#edo-mini-common .edo-mc-box');
+        const detail = box && box.querySelector('.edo-mc-detail');
+        if (!box) return r;
+        const wrap = document.createElement('div');
+        wrap.className = 'edo-mc-review';
+        wrap.innerHTML =
+          '<div class="edo-mc-review-head">答え合わせ' +
+          (rv.score ? ' <span>' + esc(rv.score) + '</span>' : '') + '</div>' +
+          '<div class="edo-mc-review-grid">' +
+          rv.rows.map(x =>
+            '<div class="edo-mc-review-cell' + (x.ok ? ' ok' : '') + '">' +
+            '<span class="n">' + x.no + '</span>' +
+            '<span class="m">' + (x.ok ? '◯' : '✕') + '</span>' +
+            '<span class="c">' + esc(x.ch) + '</span>' +
+            '<span class="w">' + esc(x.word) + '</span></div>').join('') +
+          '</div>';
+        if (detail && detail.nextSibling) box.insertBefore(wrap, detail.nextSibling);
+        else box.insertBefore(wrap, box.lastElementChild);
+      }catch(e){ console.error('[v65]', e); }
+      return r;
+    };
+  }
+
+  // 統合ゲームの「所持金加算モーダル」は出さない（共通モーダルに一本化）
+  const origApplyInt = app.applyIntegratedMiniGameResult?.bind(app);
+  if (origApplyInt) {
+    app.applyIntegratedMiniGameResult = function(data){
+      const st = this.regionalMiniGame;
+      if (st && st.game === 'kanken' && !st.done) app._pendingMiniReview = readKankenReview();
+      const r = origApplyInt(data);
+      try{
+        const panel = document.getElementById('integrated-mini-result');
+        if (panel) panel.classList.add('hidden');
+      }catch(e){}
+      return r;
+    };
+  }
+  // 万一どこかで表示されても、すぐに隠す
+  (function(){
+    const panel = () => document.getElementById('integrated-mini-result');
+    const mo = new MutationObserver(() => {
+      const el = panel();
+      if (el && !el.classList.contains('hidden')) el.classList.add('hidden');
+    });
+    const start = () => { const el = panel(); if (el) mo.observe(el, {attributes:true, attributeFilter:['class']}); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
+    else start();
+  })();
+
+  window.__EDOGAWA_V65_DIAGNOSTICS = () => ({
+    track: !!origTrack, arm: !!origArm2, resultShow: !!origResultShow, applyInt: !!origApplyInt
+  });
+})();
+</script>
+<style id="edogawa-v65-css">
+  .edo-mc-review{margin:10px 0 4px;text-align:left}
+  .edo-mc-review-head{font-size:11px;font-weight:900;color:#fbbf24;margin-bottom:6px}
+  .edo-mc-review-head span{color:#e2e8f0;font-weight:800}
+  .edo-mc-review-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
+  .edo-mc-review-cell{display:flex;align-items:baseline;gap:5px;background:rgba(2,6,23,.55);
+    border:1px solid rgba(148,163,184,.22);border-radius:8px;padding:4px 6px;font-size:11px;
+    color:#cbd5e1;min-width:0}
+  .edo-mc-review-cell.ok{border-color:rgba(52,211,153,.45)}
+  .edo-mc-review-cell .n{color:#64748b;font-size:10px;min-width:1.2em}
+  .edo-mc-review-cell .m{font-weight:900}
+  .edo-mc-review-cell.ok .m{color:#34d399}
+  .edo-mc-review-cell:not(.ok) .m{color:#94a3b8}
+  .edo-mc-review-cell .c{font-size:15px;font-weight:900;color:#f8fafc}
+  .edo-mc-review-cell .w{font-size:10px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
 
 <script id="edogawa-v39-footer">
 
