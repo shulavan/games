@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v76 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v77 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -15181,6 +15181,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //    __EDOGAWA_STATION_FIX('葛西', 35.6636, 139.8717) と入れると保存され、
   //    次回からその位置になります。__EDOGAWA_STATION_FIX() で今の一覧が見られます。
   const ST_FIX_KEY = 'edogawa_station_fix_v1';
+  // もとの座標を覚えておきます（「もとに戻す」で必ず戻せるように）
+  const ST_ORIG = {};
+  Object.keys(ST).forEach(n=>{ ST_ORIG[n] = {lat:ST[n].lat, lng:ST[n].lng}; });
+  app.stationOriginal = function(n){ const o=ST_ORIG[n]; return o?{lat:o.lat,lng:o.lng}:null; };
   try{
     const saved = JSON.parse(localStorage.getItem(ST_FIX_KEY) || '{}');
     Object.keys(saved).forEach(n=>{
@@ -15189,11 +15193,19 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }
     });
   }catch(e){}
+  app.stationFixes = function(){
+    try{ return JSON.parse(localStorage.getItem(ST_FIX_KEY) || '{}') || {}; }catch(e){ return {}; }
+  };
+  app.setStationFix = function(name, lat, lng){ return window.__EDOGAWA_STATION_FIX(name, lat, lng); };
   window.__EDOGAWA_STATION_FIX = function(name, lat, lng){
     if (name === undefined) return JSON.parse(JSON.stringify(ST));
     if (!ST[name]) return '「'+name+'」という駅はありません：' + Object.keys(ST).join('、');
     let saved={}; try{ saved=JSON.parse(localStorage.getItem(ST_FIX_KEY)||'{}'); }catch(e){}
-    if (lat === null){ delete saved[name]; }
+    if (lat === null){
+      delete saved[name];
+      const o = ST_ORIG[name];
+      if (o){ ST[name].lat = o.lat; ST[name].lng = o.lng; }   // もとの座標に戻します
+    }
     else {
       if (typeof lat !== 'number' || typeof lng !== 'number') return '数字で lat, lng を入れてください';
       saved[name] = {lat:lat, lng:lng}; ST[name].lat = lat; ST[name].lng = lng;
@@ -15435,7 +15447,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   app.planRailRoute = function(start, goal){
     if(!start || !goal) return null;
     const direct = km(start, goal);
-    if (direct < 1.2) return null;                 // 近すぎるときは素直に歩く
+    // 隣り合う駅どうしは約1.2kmです。ここを1.2kmにしていたため、
+    // 葛西→西葛西（1.18km）が電車の対象から外れていました。
+    if (direct < 0.8) return null;                 // 近すぎるときは素直に歩く
     let best=null;
     Object.keys(LINES).forEach(k=>{
       const L=LINES[k];
@@ -15476,16 +15490,46 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 
   const origOSRM = app.fetchStreetRouteOSRM ? app.fetchStreetRouteOSRM.bind(app) : null;
   if (origOSRM) {
+    // 駅と駅のあいだは「線路の上」を通します。
+    // （以前は道路ルートに駅を経由地として足していたため、
+    //   線路を通らず道路を大回りしていました）
     app.fetchStreetRouteOSRM = async function(start, goal){
       try{
         const plan = app.planRailRoute(start, goal);
         if (plan){
-          const p = await osrmVia([start, ST[plan.a], ST[plan.b], goal]);
-          if (p && p.length>1){
+          const A = ST[plan.a], B = ST[plan.b];
+          const out = [];
+          const push = (arr) => {
+            (arr||[]).forEach(p=>{
+              const last = out[out.length-1];
+              if (last && Math.abs(last.lat-p.lat)<1e-7 && Math.abs(last.lng-p.lng)<1e-7) return;
+              out.push({lat:p.lat, lng:p.lng});
+            });
+          };
+          // ① 出発地 → 乗る駅（歩き：道路のルート）
+          if (km(start, A) > 0.06){
+            const w1 = await osrmVia([start, A]);
+            push(w1 || [start, A]);
+          } else {
+            push([start, A]);
+          }
+          // ② 乗る駅 → 降りる駅（線路の上）
+          let rail = null;
+          try{ rail = app.railPathBetween && app.railPathBetween(plan.line, plan.a, plan.b); }catch(e){}
+          if (!rail || rail.length<2) rail = [[A.lat,A.lng],[B.lat,B.lng]];
+          push(rail.map(q=>({lat:q[0], lng:q[1]})));
+          // ③ 降りる駅 → 目的地（歩き：道路のルート）
+          if (km(B, goal) > 0.06){
+            const w2 = await osrmVia([B, goal]);
+            push(w2 || [B, goal]);
+          } else {
+            push([B, goal]);
+          }
+          if (out.length > 2){
             app.__railVia = plan;
             try{ app.addLog && app.addLog(
-              `🚃 ${LINES[plan.line].name} ${plan.a}駅〜${plan.b}駅を通るルートになりました（電車を使うと近道です）`); }catch(e){}
-            return p;
+              `🚃 ${LINES[plan.line].name} ${plan.a}駅〜${plan.b}駅の線路を通るルートになりました（電車を使うと近道です）`); }catch(e){}
+            return out;
           }
         }
       }catch(e){ console.error('[v75]', e); }
@@ -15539,12 +15583,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const ADJ   = new Map();     // key -> [key,...]
   let segCount = 0;
   let SHAPES = {};             // 路線キー -> [[lat,lng],...]
+  let SHAPE_IDX = {};          // 路線キー -> 各駅が SHAPES の何番目か
+  let RAW = {};                // "路線:A→B" -> 線路そのものの形（駅の座標を足す前）
   const INFO = { 線路の線分: 0, 形になった路線: [], 直線のままの路線: [], 読み取り: 'まだ', ソースレイヤー: [] };
 
   try{
     const c = JSON.parse(localStorage.getItem(KEY) || 'null');
     if (c && c.t && (Date.now()-c.t) < MAX_AGE && c.shapes){
-      SHAPES = c.shapes; INFO.読み取り = '保存ずみを使用';
+      SHAPES = c.shapes; SHAPE_IDX = c.idx || {}; INFO.読み取り = '保存ずみを使用';
       INFO.形になった路線 = Object.keys(SHAPES);
     }
   }catch(e){}
@@ -15651,39 +15697,115 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
   function round(pts){ return pts.map(p=>[+p[0].toFixed(5), +p[1].toFixed(5)]); }
 
+  // 点 p から線 pts への最寄り点（距離kmと座標）
+  function nearestOnPath(p, pts){
+    let best=null;
+    for(let i=1;i<pts.length;i++){
+      const a=pts[i-1], b=pts[i];
+      const ay=(b[0]-a[0]), ax=(b[1]-a[1])*Math.cos(a[0]*Math.PI/180);
+      const py=(p[0]-a[0]), px=(p[1]-a[1])*Math.cos(a[0]*Math.PI/180);
+      const len2=ax*ax+ay*ay;
+      let t = len2>0 ? (px*ax+py*ay)/len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      const q=[a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t];
+      const d=km(p,q);
+      if(!best || d<best.d) best={d:d, pt:q};
+    }
+    return best;
+  }
+
+  // ① 線路そのものの形を集める
+  function traceAll(){
+    RAW={};
+    let ok=0;
+    Object.keys(LINES).forEach(k=>{
+      if(k==='metro7') return;
+      const L=LINES[k]; if(!L || L.stations.length<2) return;
+      for(let i=0;i<L.stations.length-1;i++){
+        const a=L.stations[i], b=L.stations[i+1];
+        if(!ST[a]||!ST[b]) continue;
+        const seg = pathBetween(P(ST[a]), P(ST[b]));
+        if(seg && seg.length>2){ RAW[k+':'+a+'→'+b]=simplify(seg,8); ok++; }
+      }
+    });
+    return ok;
+  }
+
+  // ② 駅を線路の中心に載せます（ずれていた駅を自動で直します）
+  const SNAP_MAX_KM = 0.2, SNAP_MIN_KM = 0.005;
+  function snapStationsToTrack(){
+    const fixed = (app.stationFixes && app.stationFixes()) || {};
+    const moved = [];
+    Object.keys(LINES).forEach(k=>{
+      if(k==='metro7') return;
+      const L=LINES[k]; if(!L) return;
+      L.stations.forEach(n=>{
+        if(!ST[n] || fixed[n]) return;            // 手で直した駅は動かしません
+        let best=null;
+        Object.keys(RAW).forEach(key=>{
+          if(key.indexOf(k+':')!==0) return;
+          const r=nearestOnPath(P(ST[n]), RAW[key]);
+          if(r && (!best || r.d<best.d)) best=r;
+        });
+        if(best && best.d>SNAP_MIN_KM && best.d<SNAP_MAX_KM){
+          moved.push({駅:n, 動いたm:Math.round(best.d*1000)});
+          ST[n].lat=+best.pt[0].toFixed(6); ST[n].lng=+best.pt[1].toFixed(6);
+        }
+      });
+    });
+    if(moved.length){
+      try{ app.snapAllStations && app.snapAllStations(); }catch(e){}
+      try{ app.refreshFacilityMarkers && app.refreshFacilityMarkers(); }catch(e){}
+    }
+    INFO.線路に載せた駅 = moved;
+    return moved.length;
+  }
+  app.railSnapStations = snapStationsToTrack;
+
   function buildShapes(){
     const made=[], straight=[];
+    traceAll();
+    snapStationsToTrack();
+    SHAPES={}; SHAPE_IDX={};
     Object.keys(LINES).forEach(k=>{
       if(k==='metro7') return;                 // 構想路線は道路沿い（v75）で描いています
       const L=LINES[k];
       if(!L || L.stations.length<2) return;
-      let pts=[], ok=0;
+      let pts=[], idx=[], ok=0;
       for(let i=0;i<L.stations.length-1;i++){
         const A=ST[L.stations[i]], B=ST[L.stations[i+1]];
         if(!A||!B) continue;
-        const seg = pathBetween(P(A), P(B));
-        if(seg && seg.length>2){
-          ok++;
-          const body = simplify(seg, 8);
-          if(!pts.length) pts.push(P(A));
-          body.forEach(p=>pts.push(p));
-          pts.push(P(B));
-        }else{
-          if(!pts.length) pts.push(P(A));
-          pts.push(P(B));
-        }
+        if(!pts.length){ pts.push(P(A)); idx.push(0); }
+        const body = RAW[k+':'+L.stations[i]+'→'+L.stations[i+1]];
+        if(body && body.length>2){ ok++; body.forEach(p=>pts.push(p)); }
+        pts.push(P(B)); idx.push(pts.length-1);
       }
-      if(ok>0){ SHAPES[k]=round(pts); made.push(L.name); }
+      if(ok>0){ SHAPES[k]=round(pts); SHAPE_IDX[k]=idx; made.push(L.name); }
       else straight.push(L.name);
     });
     INFO.形になった路線=made; INFO.直線のままの路線=straight;
     if(made.length){
       INFO.読み取り='ベクター地図から取得';
-      try{ localStorage.setItem(KEY, JSON.stringify({t:Date.now(), shapes:SHAPES})); }catch(e){}
+      try{ localStorage.setItem(KEY, JSON.stringify({t:Date.now(), shapes:SHAPES, idx:SHAPE_IDX})); }catch(e){}
     }
     return made.length;
   }
   app.railBuildShapes = buildShapes;
+
+  // ③ 2駅のあいだの「線路の形」を返します（ルート作りに使います）
+  app.railPathBetween = function(lineKey, a, b){
+    const L=LINES[lineKey]; if(!L) return null;
+    const ia=L.stations.indexOf(a), ib=L.stations.indexOf(b);
+    if(ia<0||ib<0||ia===ib) return null;
+    const pts=SHAPES[lineKey], idx=SHAPE_IDX[lineKey];
+    if(!pts||!idx||idx.length!==L.stations.length){
+      return [[ST[a].lat,ST[a].lng],[ST[b].lat,ST[b].lng]];
+    }
+    const lo=Math.min(ia,ib), hi=Math.max(ia,ib);
+    let out=pts.slice(idx[lo], idx[hi]+1).map(p=>[p[0],p[1]]);
+    if(ia>ib) out.reverse();
+    return out.length>1 ? out : [[ST[a].lat,ST[a].lng],[ST[b].lat,ST[b].lng]];
+  };
 
   // ── 描画（縞々の線路らしい見た目） ─────────────────────
   function shapeOf(k){
@@ -15741,13 +15863,255 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
   window.__EDOGAWA_RAILSHAPE_RESET = function(){
     try{ localStorage.removeItem(KEY); }catch(e){}
-    SHAPES={}; NODES.clear(); ADJ.clear(); segCount=0; tries=0;
+    SHAPES={}; SHAPE_IDX={}; RAW={}; NODES.clear(); ADJ.clear(); segCount=0; tries=0;
     INFO.読み取り='取り直し中'; INFO.形になった路線=[];
     try{ clearInterval(iv); }catch(e){}
     iv = setInterval(tick, 2000);
     app._drawRail();
     return '線路の形を捨てました。地図を少し動かすと、もう一度読み取ります。';
   };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v77: 「駅と線路の調整」画面（スマホだけで直せるようにしました）
+     ----------------------------------------------------------------------------
+     駅の座標がずれていると、駅アイコンも線路も目的地ルートも全部ずれます。
+     開発者コンソールが使えないスマホでも、地図をタップして駅の位置を
+     直せるようにしました。読み取りの状態もこの画面で確認できます。
+     ============================================================================ -->
+<style id="edogawa-v77-style">
+  #edo-railset-modal, #edo-stfix-modal{ position:fixed; inset:0; z-index:2147483260; display:none;
+    align-items:center; justify-content:center; padding:14px }
+  #edo-railset-modal.show, #edo-stfix-modal.show{ display:flex }
+  .edo-set-box{ width:min(400px,95vw); max-height:88vh; overflow-y:auto;
+    background:#0f172a; border:1px solid rgba(56,189,248,.5); border-radius:20px;
+    padding:15px; box-shadow:0 20px 56px rgba(0,0,0,.6);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif }
+  .edo-set-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px }
+  .edo-set-title{ font-size:18px; font-weight:900; color:#f8fafc }
+  .edo-set-x{ width:32px; height:32px; flex:0 0 auto; border-radius:11px;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0; font-size:16px; font-weight:900 }
+  .edo-set-card{ margin-top:11px; background:rgba(2,6,23,.65); border:1px solid #1e293b;
+    border-radius:13px; padding:11px 12px }
+  .edo-set-k{ font-size:10px; color:#64748b; font-weight:900 }
+  .edo-set-v{ font-size:12px; color:#e2e8f0; font-weight:700; line-height:1.7; word-break:break-all }
+  .edo-set-row{ display:flex; align-items:center; justify-content:space-between; gap:9px;
+    background:rgba(2,6,23,.65); border:1px solid #1e293b; border-radius:12px;
+    padding:9px 11px; margin-top:6px }
+  .edo-set-nm{ font-size:13px; font-weight:900; color:#f1f5f9 }
+  .edo-set-tag{ font-size:9px; font-weight:900; padding:2px 7px; border-radius:99px; margin-left:6px }
+  .edo-set-tag.man{ background:rgba(56,189,248,.18); color:#7dd3fc; border:1px solid rgba(56,189,248,.45) }
+  .edo-set-tag.auto{ background:rgba(34,197,94,.16); color:#86efac; border:1px solid rgba(34,197,94,.4) }
+  .edo-set-co{ font-size:9px; color:#64748b; display:block; margin-top:2px }
+  .edo-set-btn{ flex:0 0 auto; padding:8px 11px; border-radius:11px; font-size:11px; font-weight:900;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
+  .edo-set-btn.go{ background:#0284c7; border-color:#38bdf8; color:#fff }
+  .edo-set-btn:active{ transform:scale(.97) }
+  .edo-set-wide{ width:100%; margin-top:9px; padding:11px; border-radius:12px; font-size:13px; font-weight:900;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
+  .edo-set-note{ margin-top:9px; font-size:10px; color:#64748b; line-height:1.7 }
+  .edo-set-ta{ width:100%; height:130px; margin-top:8px; background:#020617; color:#cbd5e1;
+    border:1px solid #1e293b; border-radius:11px; padding:9px; font-size:10px; font-family:ui-monospace,monospace }
+  .edo-stfix-box{ width:min(440px,96vw); height:min(86vh,720px); display:flex; flex-direction:column;
+    background:#0f172a; border:1px solid rgba(56,189,248,.5); border-radius:20px; overflow:hidden;
+    box-shadow:0 20px 56px rgba(0,0,0,.6); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif }
+  .edo-stfix-top{ padding:11px 13px; display:flex; align-items:flex-start; justify-content:space-between; gap:9px }
+  .edo-stfix-map{ flex:1 1 auto; min-height:0 }
+  .edo-stfix-bot{ padding:10px 12px 12px; display:flex; gap:8px }
+  .edo-stfix-bot button{ flex:1 1 0; padding:12px 6px; border-radius:12px; font-size:13px; font-weight:900;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
+  .edo-stfix-bot button.save{ background:#0284c7; border-color:#38bdf8; color:#fff }
+  .edo-stfix-pin{ width:22px; height:22px; border-radius:50%; background:#f43f5e;
+    border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.6) }
+</style>
+<script id="edogawa-v77">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
+  if(!LINES || !ST || !window.L) return;
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function box(id, cls){
+    let el=document.getElementById(id);
+    if(!el){ el=document.createElement('div'); el.id=id; document.body.appendChild(el); }
+    return el;
+  }
+  function close(id){ const el=document.getElementById(id); if(el){ el.classList.remove('show'); el.innerHTML=''; } }
+
+  // どの路線の駅かをまとめます
+  function linesOf(name){
+    return Object.keys(LINES).filter(k=>LINES[k] && LINES[k].stations.indexOf(name)>=0)
+      .map(k=>LINES[k].name.replace('（構想）',''));
+  }
+
+  // ── 調整画面 ────────────────────────────────────────────
+  app.openRailSetup = function(){
+    const el = box('edo-railset-modal');
+    const info = (window.__EDOGAWA_RAILSHAPE_INFO ? window.__EDOGAWA_RAILSHAPE_INFO() : {}) || {};
+    const fixes = (app.stationFixes && app.stationFixes()) || {};
+    const autoList = info.線路に載せた駅 || [];
+    const autoMap = {}; autoList.forEach(x=>autoMap[x.駅]=x.動いたm);
+
+    const rows = Object.keys(ST).map(n=>{
+      const s=ST[n];
+      const tag = fixes[n] ? '<span class="edo-set-tag man">手で調整</span>'
+                : (autoMap[n]!=null ? '<span class="edo-set-tag auto">線路に自動で載せた</span>' : '');
+      return `<div class="edo-set-row">
+        <span style="min-width:0">
+          <span class="edo-set-nm">${esc(n)}駅</span>${tag}
+          <span class="edo-set-co">${esc(linesOf(n).join('・'))}<br>${s.lat.toFixed(6)}, ${s.lng.toFixed(6)}</span>
+        </span>
+        <button type="button" class="edo-set-btn go" data-st="${esc(n)}">地図で直す</button>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `<div class="edo-set-box">
+      <div class="edo-set-head">
+        <div>
+          <div class="edo-set-title">🛠 駅と線路の調整</div>
+          <div class="edo-set-k" style="margin-top:3px">駅の位置がずれていると、駅アイコンも線路も目的地ルートもずれます</div>
+        </div>
+        <button type="button" class="edo-set-x" data-x="1">✕</button>
+      </div>
+
+      <div class="edo-set-card">
+        <div class="edo-set-k">線路の読み取り</div>
+        <div class="edo-set-v">${esc(info.読み取り||'まだ')}</div>
+        <div class="edo-set-k" style="margin-top:7px">読み取った線路</div>
+        <div class="edo-set-v">${Number(info.線路の線分||0)} 本の線分${
+          (info.ソースレイヤー&&info.ソースレイヤー.length)?'　（'+esc(info.ソースレイヤー.join('、'))+'）':''}</div>
+        <div class="edo-set-k" style="margin-top:7px">線路の形になった路線</div>
+        <div class="edo-set-v">${esc((info.形になった路線||[]).join('、')||'まだありません')}</div>
+        <div class="edo-set-k" style="margin-top:7px">直線のままの路線</div>
+        <div class="edo-set-v">${esc((info.直線のままの路線||[]).join('、')||'なし')}</div>
+        <div class="edo-set-k" style="margin-top:7px">自動で線路に載せた駅</div>
+        <div class="edo-set-v">${autoList.length ? esc(autoList.map(x=>x.駅+'（'+x.動いたm+'m）').join('、')) : 'なし'}</div>
+      </div>
+      <button type="button" class="edo-set-wide" data-reload="1">🔄 線路をもう一度読み取る</button>
+      <div class="edo-set-note">地図を「ベクター」で表示しているときだけ線路を読み取れます。
+        地下の区間（篠崎など）は地図に線路が無いため、直線のままになります。</div>
+
+      <div class="edo-set-title" style="font-size:14px;margin-top:14px">駅の位置</div>
+      ${rows}
+      <button type="button" class="edo-set-wide" data-export="1">📋 調整した内容を見る（開発者に送る用）</button>
+      <div id="edo-set-export"></div>
+    </div>`;
+    el.classList.add('show');
+
+    el.onclick = (ev)=>{
+      if(ev.target===el){ close('edo-railset-modal'); return; }
+      const t = ev.target.closest('button'); if(!t) return;
+      if(t.dataset.x){ close('edo-railset-modal'); return; }
+      if(t.dataset.reload){
+        t.textContent='🔄 読み取り中…';
+        try{ window.__EDOGAWA_RAILSHAPE_RESET && window.__EDOGAWA_RAILSHAPE_RESET(); }catch(e){}
+        setTimeout(()=>{ try{ app.railCollectShapes && app.railCollectShapes();
+          app.railBuildShapes && app.railBuildShapes(); app._drawRail && app._drawRail(); }catch(e){}
+          app.openRailSetup(); }, 2500);
+        return;
+      }
+      if(t.dataset.export){
+        const out = { 手で直した駅: (app.stationFixes&&app.stationFixes())||{}, いまの全駅: {} };
+        Object.keys(ST).forEach(n=>{ out.いまの全駅[n]={lat:+ST[n].lat.toFixed(6), lng:+ST[n].lng.toFixed(6)}; });
+        const host=document.getElementById('edo-set-export');
+        host.innerHTML = `<textarea class="edo-set-ta" readonly>${esc(JSON.stringify(out,null,1))}</textarea>
+          <div class="edo-set-note">この文字をコピー、または画面を撮って送ってください。次のバージョンに取り込みます。</div>`;
+        try{ host.querySelector('textarea').select(); }catch(e){}
+        return;
+      }
+      if(t.dataset.st){ app.openStationFix(t.dataset.st); }
+    };
+  };
+
+  // ── 地図で駅の位置を直す ─────────────────────────────────
+  app.openStationFix = function(name){
+    const s = ST[name]; if(!s) return;
+    const el = box('edo-stfix-modal');
+    let picked = {lat:s.lat, lng:s.lng};
+    el.innerHTML = `<div class="edo-stfix-box">
+      <div class="edo-stfix-top">
+        <div>
+          <div class="edo-set-title" style="font-size:16px">📍 ${esc(name)}駅の正しい位置</div>
+          <div class="edo-set-k" style="margin-top:3px">地図の線路の上をタップしてください</div>
+          <div class="edo-set-v" id="edo-stfix-co" style="font-size:11px;margin-top:3px">${picked.lat.toFixed(6)}, ${picked.lng.toFixed(6)}</div>
+        </div>
+        <button type="button" class="edo-set-x" data-x="1">✕</button>
+      </div>
+      <div class="edo-stfix-map" id="edo-stfix-map"></div>
+      <div class="edo-stfix-bot">
+        <button type="button" data-cancel="1">やめる</button>
+        <button type="button" data-reset="1">もとに戻す</button>
+        <button type="button" class="save" data-save="1">💾 ここにする</button>
+      </div>
+    </div>`;
+    el.classList.add('show');
+
+    let map=null, pin=null;
+    setTimeout(()=>{
+      try{
+        map = window.L.map('edo-stfix-map', {zoomControl:true, attributionControl:true})
+                .setView([s.lat, s.lng], 17);
+        window.L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',
+          {maxZoom:18, attribution:'地理院タイル（国土地理院）'}).addTo(map);
+        // 今の路線も薄く重ねて、どれだけずれているか見えるようにします
+        try{ app._drawRailOn && app._drawRailOn(map); }catch(e){}
+        const icon = window.L.divIcon({className:'', html:'<div class="edo-stfix-pin"></div>',
+          iconSize:[22,22], iconAnchor:[11,11]});
+        pin = window.L.marker([s.lat, s.lng], {icon:icon, draggable:true}).addTo(map);
+        const set=(ll)=>{ picked={lat:+ll.lat.toFixed(6), lng:+ll.lng.toFixed(6)};
+          const co=document.getElementById('edo-stfix-co');
+          if(co) co.textContent = picked.lat.toFixed(6)+', '+picked.lng.toFixed(6); };
+        map.on('click', e=>{ pin.setLatLng(e.latlng); set(e.latlng); });
+        pin.on('dragend', ()=> set(pin.getLatLng()));
+        setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} }, 200);
+      }catch(e){ console.error('[v77]', e); }
+    }, 60);
+
+    el.onclick = (ev)=>{
+      const t = ev.target.closest('button'); if(!t) return;
+      if(t.dataset.x || t.dataset.cancel){ try{map&&map.remove();}catch(e){} close('edo-stfix-modal'); return; }
+      if(t.dataset.reset){
+        try{ app.setStationFix && app.setStationFix(name, null); }catch(e){}
+        try{map&&map.remove();}catch(e){} close('edo-stfix-modal');
+        app.openRailSetup();
+        return;
+      }
+      if(t.dataset.save){
+        try{ app.setStationFix && app.setStationFix(name, picked.lat, picked.lng); }catch(e){}
+        try{ app.snapAllStations && app.snapAllStations(); }catch(e){}
+        try{ app.railBuildShapes && app.railBuildShapes(); }catch(e){}
+        try{ app._drawRail && app._drawRail(); }catch(e){}
+        try{map&&map.remove();}catch(e){} close('edo-stfix-modal');
+        app.openRailSetup();
+      }
+    };
+  };
+
+  // ── 設定メニューに入口を足します ─────────────────────────
+  function addEntry(){
+    const anchor = document.getElementById('settings-rail-state');
+    const btn = anchor && anchor.closest('button');
+    if(!btn || document.getElementById('edo-railset-entry')) return true;
+    const b = document.createElement('button');
+    b.id = 'edo-railset-entry';
+    b.type = 'button';
+    b.className = btn.className;
+    b.innerHTML = `<span class="text-left"><span class="text-sm font-bold text-slate-100">🛠 駅と線路の調整</span><br>
+      <span class="text-[10px] text-slate-500">駅の位置がずれているときは、ここで直せます</span></span>
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-black bg-sky-500/20 text-sky-300 border border-sky-500/40">開く</span>`;
+    b.onclick = ()=>{ try{ app.closeSettingsModal && app.closeSettingsModal(); }catch(e){} app.openRailSetup(); };
+    btn.parentNode.insertBefore(b, btn.nextSibling);
+    return true;
+  }
+  let n=0;
+  const iv=setInterval(()=>{ n++; if(addEntry() || n>60) clearInterval(iv); }, 500);
+  addEntry();
+
+  window.__EDOGAWA_RAILSETUP = ()=>{ app.openRailSetup(); return '「駅と線路の調整」を開きました'; };
 })();
 </script>
 
