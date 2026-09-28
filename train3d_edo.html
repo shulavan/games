@@ -1,0 +1,2494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>東京メトロ東西線 3Dリアル電車シミュレーター (西葛西 ⇔ 葛西)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js 3D Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        .font-digits {
+            font-family: 'Orbitron', monospace;
+        }
+        /* Translucent Glass Panel UI */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 18px rgba(0, 160, 233, 0.65);
+        }
+        .glow-red {
+            box-shadow: 0 0 18px rgba(239, 68, 68, 0.75);
+        }
+        .glow-gold {
+            box-shadow: 0 0 18px rgba(245, 158, 11, 0.75);
+        }
+
+        /* Mascon Pivoting Lever Arm */
+        .mascon-arm-container {
+            transform-origin: center center;
+            transition: transform 0.12s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+
+        /* Pulse & Bounce Animations */
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .animate-pulse-fast {
+            animation: pulse-fast 0.5s infinite;
+        }
+
+        /* Responsive Safety Padding for Mobile Notch/Home Bar */
+        .safe-bottom-padding {
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
+    
+        /* Footer refinements: keep every hint bubble fully inside the phone viewport. */
+        .hint-bubble {
+            position: fixed !important;
+            display: block;
+            width: max-content;
+            max-width: calc(100vw - 20px) !important;
+            min-width: 72px;
+            min-height: 28px;
+            padding: 5px 10px !important;
+            white-space: normal;
+            text-align: center;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+            word-break: keep-all;
+            z-index: 200 !important;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+        .hint-bubble.hidden { display: none !important; }
+        .door-status-window {
+            position: relative;
+            width: 88px;
+            height: 46px;
+            flex: 0 0 88px;
+            border-radius: 5px;
+            background: #0f172a;
+            border: 2px solid #94a3b8;
+            box-shadow: inset 0 0 0 1px #475569, 0 2px 7px rgba(0,0,0,.45);
+            overflow: hidden;
+        }
+        .door-window-frame {
+            position: absolute; left: 4px; top: 4px; bottom: 4px; width: 50px;
+            border: 2px solid #64748b;
+            background: linear-gradient(90deg,#94a3b8 0 47%,#1e293b 47% 53%,#cbd5e1 53% 100%);
+            overflow: hidden;
+        }
+        .door-window-panel {
+            position: absolute; top: 0; bottom: 0; width: 47%;
+            background: linear-gradient(135deg,#e5e7eb,#9ca3af 48%,#f8fafc);
+            border: 1px solid #64748b;
+            transition: transform .22s ease;
+        }
+        .door-window-left { left: 0; transform: translateX(-1px); }
+        .door-window-right { right: 0; transform: translateX(1px); }
+        .door-window-gap { position:absolute; left:47%; right:47%; top:0; bottom:0; background:#020617; opacity:.9; }
+        .door-status-window.is-open .door-window-left { transform: translateX(-75%); }
+        .door-status-window.is-open .door-window-right { transform: translateX(75%); }
+        .door-status-window.is-closed .door-window-gap { opacity:.12; }
+        .door-window-caption {
+            position:absolute; left:57px; right:2px; top:7px; bottom:4px;
+            display:flex; align-items:center; justify-content:center;
+            text-align:center; color:#fff; font-size:8px; font-weight:900; line-height:10px; white-space:pre-line;
+        }
+        .door-status-window.is-open .door-window-caption { color:#fecaca; }
+        .door-status-window.is-closed .door-window-caption { color:#bbf7d0; }
+        #btn-accel,#btn-brake{width:64px;height:64px;}
+        #btn-cut{width:60px;height:60px;}
+        .atc-advice-blink { animation: atc-advice-blink .5s steps(1,end) infinite; }
+        .atc-arrow-blink { animation: atc-arrow-blink .5s steps(1,end) infinite; }
+        @keyframes atc-advice-blink { 0%,49%{opacity:1;} 50%,100%{opacity:.12;} }
+        @keyframes atc-arrow-blink { 0%,49%{opacity:1;transform:translateX(0);} 50%,100%{opacity:.12;transform:translateX(-3px);} }
+        .atc-advice-note { display:none; position:absolute; left:50%; top:100%; transform:translateX(-50%); margin-top:3px; white-space:nowrap; font-size:7px; line-height:1; font-weight:900; color:#fde68a; text-shadow:0 1px 2px #000; z-index:30; }
+        .atc-advice-note.active { display:block; }
+        .atc-speed-arrow { display:none; position:absolute; right:-17px; top:38px; font-size:15px; line-height:1; z-index:40; }
+        .atc-speed-arrow.active { display:block; }
+
+        /* 中間地点 自動視点切替表示 */
+        #midpoint-camera-overlay {
+            position:absolute;
+            top:92px;
+            left:50%;
+            transform:translateX(-50%);
+            z-index:45;
+            display:none;
+            min-width:155px;
+            text-align:center;
+            padding:7px 16px 8px;
+            border-radius:999px;
+            background:rgba(15,23,42,.92);
+            border:2px solid rgba(56,189,248,.9);
+            box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 16px rgba(14,165,233,.22);
+            color:#fff;
+            pointer-events:none;
+        }
+        #midpoint-camera-overlay.show { display:block; animation:midpointPulse 1.2s ease-in-out infinite; }
+        #midpoint-camera-title { font-size:16px; font-weight:900; line-height:1.05; letter-spacing:.08em; }
+        #midpoint-camera-sub { margin-top:2px; font-size:9px; font-weight:800; color:#7dd3fc; }
+        @keyframes midpointPulse { 0%,100%{opacity:.84;transform:translateX(-50%) scale(1);} 50%{opacity:1;transform:translateX(-50%) scale(1.035);} }
+        @media (min-width:640px){#btn-accel,#btn-brake{width:68px;height:68px;}#btn-cut{width:64px;height:64px;}}
+</style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden flex flex-col justify-between select-none">
+
+    <!-- FULLSCREEN 3D CANVAS CONTAINER -->
+    <div id="canvas-container" class="absolute inset-0 z-0 w-full h-full bg-sky-400"></div>
+
+    <!-- COCKPIT WINDSHIELD OVERLAY FRAME (Driver Camera Frame) -->
+    <div id="cockpit-frame" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between transition-opacity duration-300">
+        <!-- Top Window Frame Shadow -->
+        <div class="w-full h-8 sm:h-12 bg-gradient-to-b from-gray-950/90 to-transparent"></div>
+        <!-- Pillar Frames -->
+        <div class="flex justify-between flex-1 pointer-events-none">
+            <div class="w-4 sm:w-10 h-full bg-gradient-to-r from-gray-950 via-gray-900/70 to-transparent border-r border-gray-800/30"></div>
+            <div class="w-4 sm:w-10 h-full bg-gradient-to-l from-gray-950 via-gray-900/70 to-transparent border-l border-gray-800/30"></div>
+        </div>
+        <!-- Bottom Dashboard Sill -->
+        <div class="w-full h-8 sm:h-12 bg-gradient-to-t from-gray-950 via-gray-900/90 to-transparent border-t border-gray-800/40"></div>
+    </div>
+
+    <!-- HEADER LAYOUT (Gauges & Status Display Bar) -->
+    <header class="absolute top-2 left-2 right-2 z-30 flex flex-col gap-1.5 pointer-events-none max-w-2xl mx-auto">
+        
+        <!-- LINE 1: Full-Width Title Header -->
+        <div class="glass-panel px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center justify-between border-sky-400/30">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#00A0E9] flex items-center justify-center font-black text-white text-xs sm:text-sm shadow border border-white/50">T</div>
+                <h1 id="header-stage-title" class="text-xs sm:text-base font-black text-white tracking-wide">
+                    東京メトロ東西線 西葛西 ➔ 葛西
+                </h1>
+            </div>
+            <div class="text-[9px] sm:text-xs font-bold text-sky-300 bg-sky-950/80 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-sky-500/40">
+                15000系 1.2km 高架リアル区間
+            </div>
+        </div>
+
+        <!-- LINE 2: Stop position left / required time right -->
+        <div class="glass-panel px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl flex items-center justify-between gap-3">
+            <div class="flex items-center gap-1.5 min-w-0"><span class="text-[9px] sm:text-[10px] text-gray-400 font-bold">停車位置まで</span><span id="hud-distance" class="text-lg sm:text-2xl font-black font-digits text-yellow-400">1130.0</span><span class="text-[9px] text-gray-400">m</span></div>
+            <div class="flex items-center gap-1.5 min-w-0 text-right"><span class="text-[9px] sm:text-[10px] text-gray-400 font-bold">所要時間</span><div class="text-xs sm:text-sm font-black font-digits text-sky-300"><span id="hud-timer">00:00</span> <span class="text-gray-500">/</span> <span id="hud-target-time" class="text-gray-400">01:30</span></div></div>
+        </div>
+    </header>
+
+    <!-- OVER-SPEED ATC WARNING ALERT -->
+    <div id="atc-warning" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 z-40 bg-red-600/95 text-white font-black px-5 py-1.5 rounded-full border-2 border-yellow-300 animate-pulse-fast glow-red flex items-center gap-2 text-xs shadow-2xl">
+        <svg class="w-4 h-4 fill-current text-yellow-300" viewBox="0 0 20 20"><path d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/></svg>
+        <span>ATC速度超過！ 自動非常ブレーキ作動</span>
+        <span id="atc-warning-advice" class="hidden text-yellow-200 font-black">ATC速度制限を守りましょう</span>
+    </div>
+
+    <!-- PREMATURE STOP GUIDANCE ALERT -->
+    <div id="short-stop-alert" class="hidden absolute top-24 left-1/2 transform -translate-x-1/2 z-40 bg-amber-500/95 text-gray-950 font-black px-5 py-2 rounded-2xl border-2 border-amber-300 shadow-2xl animate-bounce flex items-center gap-2 text-xs">
+        <svg class="w-5 h-5 fill-current text-gray-950" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+        <span id="short-stop-msg">⚠️ 駅の手前で停止しました！加速[▲]してホーム中央へ進んでください</span>
+    </div>
+
+    <!-- MIDPOINT AUTO CAMERA TOUR -->
+    <div id="midpoint-camera-overlay" aria-live="polite">
+        <div id="midpoint-camera-title">中間地点</div>
+        <div id="midpoint-camera-sub">🎥 視点切替　自動表示</div>
+    </div>
+
+    <!-- FOOTER CONTROLS -->
+    <footer id="bottom-controls" class="absolute bottom-2 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex flex-col items-center justify-end gap-2 safe-bottom-padding pointer-events-none w-[96%] max-w-md sm:max-w-lg">
+        
+        <!-- 1. ACTION BUTTONS GRID -->
+        <div class="glass-panel p-1.5 rounded-xl pointer-events-auto flex items-center justify-between gap-1.5 border-sky-400/30 shadow-2xl w-full">
+            
+            <!-- Left Group: Horn & Door Buttons -->
+            <div class="flex items-center gap-2 min-w-0">
+                <!-- Horn Button with Bubble -->
+                <div class="relative">
+                    <div id="bubble-horn" class="hint-bubble hidden absolute -top-9 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-gray-950 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-full border border-yellow-500 shadow-lg animate-bounce z-50 pointer-events-none">
+                        🗨️ 鳴らして
+                    </div>
+                    <button id="btn-horn" onclick="playHorn()" class="h-10 sm:h-11 px-3 sm:px-4 rounded-lg bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-extrabold text-[10px] sm:text-xs flex items-center justify-center gap-1 border border-amber-400 shadow transition">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        <span>警笛</span>
+                    </button>
+                </div>
+
+                <!-- Door State Button + 3D Door Status Window -->
+                <div class="relative flex items-center gap-1.5">
+                    <div id="bubble-door" class="hint-bubble hidden absolute -top-9 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-gray-950 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-full border border-yellow-500 shadow-lg animate-bounce z-50 pointer-events-none">
+                        🗨️ 閉めて
+                    </div>
+                    <button id="btn-door" onclick="toggleDoors()" class="h-10 sm:h-11 px-2.5 sm:px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-extrabold text-[10px] sm:text-xs flex items-center justify-center gap-1 border border-indigo-400 shadow transition shrink-0">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1-.9 2-2-2V5c0-1.1.9-2 2-2zm-9 14H5V5h5v12zm9 0h-5V5h5v12z"/></svg>
+                        <span id="btn-door-text">扉状態</span>
+                    </button>
+                    <div id="door-light" class="door-status-window" aria-label="扉状態の3D表示">
+                        <div class="door-window-frame">
+                            <div class="door-window-panel door-window-left"></div>
+                            <div class="door-window-panel door-window-right"></div>
+                            <div class="door-window-gap"></div>
+                        </div>
+                        <div class="door-window-caption" id="door-state-caption">開いて
+ます</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Group: Camera View Switch Button -->
+            <div class="relative">
+                <div id="bubble-camera" class="hint-bubble hidden absolute -top-9 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-gray-950 font-black text-[10px] sm:text-xs px-2.5 py-1 rounded-full border border-yellow-500 shadow-lg animate-bounce z-50 pointer-events-none">
+                    🗨️ 目視確認
+                </div>
+                <button id="btn-camera" onclick="cycleCameraView()" aria-label="視点切替" class="h-10 sm:h-11 w-11 sm:w-12 rounded-lg bg-white hover:bg-gray-100 active:scale-95 text-gray-900 font-extrabold text-base sm:text-lg flex items-center justify-center border border-gray-300 shadow transition">
+                    <span id="camera-btn-text">🎥</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. MASTER CONTROLLER CONSOLE -->
+        <div class="glass-panel p-2 rounded-xl pointer-events-auto flex items-center gap-2 border-sky-400/30 shadow-2xl w-full">
+            
+            <!-- Speed + ATC: directly left of the master controller -->
+            <div class="speed-atc-box flex flex-col items-center justify-center flex-shrink-0 rounded-lg border border-sky-400/50 bg-slate-950/85 px-1.5 py-2 h-24 sm:h-26 w-[72px] sm:w-[88px]">
+                <div class="text-[8px] sm:text-[9px] text-gray-300 font-black leading-none">速度(ATC制限)</div>
+                <div class="flex items-baseline gap-0.5 leading-none mt-1"><span id="hud-speed" class="text-xl sm:text-2xl font-black font-digits text-white tracking-wider">00</span><span class="text-[7px] text-gray-400">km/h</span></div>
+                <div class="relative mt-1.5 px-1.5 py-0.5 rounded border border-emerald-500/70 bg-emerald-950/90 flex items-baseline gap-0.5">
+                    <span class="text-[7px] sm:text-[8px] text-emerald-400 font-bold">ATC</span><span id="hud-atc-limit" class="text-[10px] sm:text-xs font-black font-digits text-emerald-300">75</span><span class="text-[6px] text-emerald-500">km/h</span>
+                    <span id="atc-speed-arrow" class="atc-speed-arrow">👈️</span>
+                </div>
+                <div id="atc-advice-note" class="atc-advice-note">ATC速度制限を守りましょう</div>
+            </div>
+
+            <!-- Slot Master Controller -->
+            <div class="relative w-22 h-24 sm:w-26 sm:h-26 bg-gradient-to-b from-gray-900 via-gray-950 to-black rounded-xl border-2 border-gray-600 shadow-2xl flex items-center justify-between px-1.5 sm:px-2.5 overflow-hidden cursor-pointer flex-shrink-0" onclick="cycleNotchClick(event)" title="クリックで加速/減速切り替え">
+                
+                <!-- Left Notch Scale -->
+                <div class="flex flex-col justify-between h-full py-1 text-[7.5px] sm:text-[8.5px] font-black font-digits z-10 select-none">
+                    <span class="text-sky-400">P5</span>
+                    <span class="text-sky-400">P3</span>
+                    <span class="text-sky-400">P1</span>
+                    <span class="text-yellow-400 font-bold">N</span>
+                    <span class="text-red-400">B1</span>
+                    <span class="text-red-400">B5</span>
+                    <span class="text-red-500 font-bold">EB</span>
+                </div>
+
+                <!-- Center Vertical Guide Slot & Slider Track -->
+                <div class="relative flex-1 h-full flex items-center justify-center">
+                    <div class="w-2 h-16 sm:h-18 bg-gray-950 rounded-full border border-gray-700 shadow-inner relative flex justify-center items-center">
+                        <div class="w-1 h-full bg-slate-800"></div>
+                        <div class="absolute w-3.5 h-1 bg-yellow-400/80 rounded-full shadow-sm"></div>
+                    </div>
+
+                    <!-- Vertical Moving T-Bar Lever Handle Assembly -->
+                    <div id="mascon-lever-arm" class="absolute mascon-arm-container flex flex-col items-center justify-center z-20 pointer-events-none" style="transform: translateY(0px);">
+                        <div class="relative w-10 h-4 sm:w-12 sm:h-4.5 bg-gradient-to-b from-gray-500 via-gray-700 to-black rounded-md border-2 border-gray-300 shadow-2xl flex items-center justify-center">
+                            <div class="w-7 h-1.5 bg-gradient-to-r from-gray-400 via-gray-100 to-gray-500 rounded border border-gray-600"></div>
+                        </div>
+                        <div class="w-2 h-3 bg-gradient-to-r from-gray-500 via-gray-200 to-gray-700 border-x border-gray-400 shadow-md"></div>
+                    </div>
+                </div>
+
+                <!-- Right Notch Visual Bars -->
+                <div class="flex flex-col justify-between h-full py-2 z-10">
+                    <div class="w-1.5 h-1 bg-sky-400 rounded-sm"></div>
+                    <div class="w-1.5 h-1 bg-sky-400 rounded-sm"></div>
+                    <div class="w-1.5 h-1 bg-sky-400 rounded-sm"></div>
+                    <div class="w-2 h-1 bg-yellow-400 rounded-sm"></div>
+                    <div class="w-1.5 h-1 bg-red-400 rounded-sm"></div>
+                    <div class="w-1.5 h-1 bg-red-400 rounded-sm"></div>
+                    <div class="w-2 h-1 bg-red-600 rounded-sm animate-pulse-fast"></div>
+                </div>
+            </div>
+
+            <!-- Lever Adjustment Circular Buttons, ATC Gauge & Notch Display -->
+            <div class="flex-1 flex flex-col justify-between h-24 sm:h-26 gap-1 min-w-[140px]">
+                
+                <!-- Top Row: Notch Badge + Relocated ATC Speed Limit Display + Emergency EB Button -->
+                <div class="flex items-center justify-between gap-1">
+                    <div id="notch-badge-display" class="px-2 py-0.5 rounded-md bg-yellow-500 text-gray-950 font-black text-[10px] sm:text-xs font-digits glow-gold border border-yellow-200">
+                        N (切)
+                    </div><button onclick="setNotch(-9)" class="px-2.5 py-1 rounded-lg bg-red-700 hover:bg-red-600 active:scale-95 text-white font-extrabold text-[10px] sm:text-xs border border-red-400 shadow glow-red transition flex items-center gap-0.5">
+                        <svg class="w-3 h-3 fill-current text-yellow-300" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        <span>非常EB</span>
+                    </button>
+                </div>
+
+                <!-- Bottom Row: Horizontal Circular Control Buttons (Accel / Cut / Brake) -->
+                <div class="flex items-center justify-around gap-1 my-auto">
+                    <!-- Acceleration Circle Button -->
+                    <div class="relative">
+                        <div id="bubble-accel" class="hint-bubble hidden absolute -top-9 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-gray-950 font-black text-[10px] px-2 py-1 rounded-full border border-yellow-500 shadow-lg animate-bounce z-50 pointer-events-none">
+                            🗨️ 加速して
+                        </div>
+                        <button id="btn-accel" onclick="adjustNotch(1)" class="rounded-full bg-slate-800 hover:bg-slate-700 active:scale-95 text-sky-400 font-black text-[11px] sm:text-xs border-2 border-sky-500/60 flex flex-col items-center justify-center shadow transition">
+                            <span class="leading-none">▲</span>
+                            <span class="text-[9px] scale-90 leading-none">加速</span>
+                        </button>
+                    </div>
+
+                    <!-- Cut (N) Circle Button -->
+                    <button id="btn-cut" onclick="setNotch(0)" class="rounded-full bg-yellow-600/30 hover:bg-yellow-600/50 active:scale-95 text-yellow-300 font-bold text-[10px] sm:text-xs border-2 border-yellow-500/60 flex items-center justify-center shadow transition">
+                        <span>切</span>
+                    </button>
+
+                    <!-- Brake Circle Button -->
+                    <div class="relative">
+                        <div id="bubble-brake" class="hint-bubble hidden absolute -top-9 left-1/2 transform -translate-x-1/2 bg-yellow-300 text-gray-950 font-black text-[10px] px-2 py-1 rounded-full border border-yellow-500 shadow-lg animate-bounce z-50 pointer-events-none">
+                            🗨️ 減速して
+                        </div>
+                        <button id="btn-brake" onclick="adjustNotch(-1)" class="rounded-full bg-slate-800 hover:bg-slate-700 active:scale-95 text-red-400 font-black text-[11px] sm:text-xs border-2 border-red-500/60 flex flex-col items-center justify-center shadow transition">
+                            <span class="leading-none">▼</span>
+                            <span class="text-[9px] scale-90 leading-none">減速</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. FOOTER BOTTOM SPACER FRAME -->
+        <div class="w-full h-7 sm:h-10 pointer-events-none flex-shrink-0"></div>
+
+    </footer>
+
+    <!-- START MODAL DIALOG -->
+    <div id="start-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div class="glass-panel p-5 sm:p-8 rounded-3xl max-w-lg w-full border border-sky-400/40 shadow-2xl text-center">
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#00A0E9] mx-auto mb-3 flex items-center justify-center text-2xl sm:text-3xl font-black text-white glow-cyan border border-white/50">
+                <span id="edo-line-code">T</span>
+            </div>
+            <h1 class="text-lg sm:text-2xl font-black text-white mb-1"><span id="edo-line-name">東京メトロ東西線</span> 3Dリアルシミュレーター</h1>
+            <p class="text-sky-300 font-bold text-xs sm:text-sm mb-4"><span id="edo-train-name">15000系</span><span id="edo-section"></span></p>
+
+            <div class="text-left bg-slate-900/90 p-3.5 rounded-2xl text-xs text-gray-300 space-y-2 mb-6 border border-slate-700">
+                <p class="font-bold text-yellow-400 border-b border-gray-700 pb-1">【操作マニュアル】</p>
+                <p>• <strong>マスコン操作:</strong> [▲加速 / ▼減速] ボタン、またはキーボード [W/S] Key</p>
+                <p>• <strong>非常ブレーキ:</strong> [非常EBボタン] または [スペースキー]</p>
+                <p>• <strong>ドア・警笛・視点:</strong> 画面下の各ボタン または [D] / [H] / [C] キー</p>
+                <p class="text-sky-300 text-[11px]">※ 残り160m付近で減速ヒントが表示されます。駅の手前で止まった場合は再度加速してホームへお進みください。</p>
+            </div>
+
+            <label class="flex items-center justify-center gap-2 mb-4 cursor-pointer select-none text-sm font-bold text-white">
+                <input id="tutorial-hints-toggle" type="checkbox" checked onchange="setTutorialHintsEnabled(this.checked)" class="w-5 h-5 accent-sky-500">
+                <span>チュートリアルヒントを表示する</span>
+            </label>
+
+            <button onclick="startGame()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-black text-base tracking-wider shadow-lg transform transition active:scale-95 border border-sky-300 glow-cyan">
+                <span id="edo-start-label">運転開始</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- RESULT MODAL DIALOG -->
+    <div id="result-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+        <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-lg w-full border border-sky-400/50 shadow-2xl text-center">
+            <div id="result-badge" class="inline-block px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 font-bold text-xs mb-2 border border-sky-500/30">
+                STAGE 1 到着評定
+            </div>
+            <h2 id="result-title" class="text-xl sm:text-2xl font-black text-white mb-1">運転評価レポート</h2>
+            
+            <div class="my-3 flex justify-center items-baseline">
+                <span class="text-xs font-bold text-gray-400 mr-2">スコア:</span>
+                <span id="modal-score" class="text-4xl sm:text-5xl font-black font-digits text-yellow-400 glow-gold">92</span>
+                <span id="modal-max-score" class="text-base font-bold text-gray-400 ml-1">/ 100点</span>
+            </div>
+            <div class="text-[10px] text-gray-400 font-bold mb-3">基礎点50点 ＋ 運転評価の加算点（最大50点）</div>
+
+            <div class="bg-slate-900/90 rounded-2xl p-4 text-xs space-y-2 mb-6 border border-slate-700 text-left">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">① 停止位置精度:</span>
+                    <span id="metric-stop" class="font-digits font-bold text-sky-400">誤差 +0.12m (+15点)</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">② 定時到着精度:</span>
+                    <span id="metric-time" class="font-digits font-bold text-sky-400">誤差 1.2秒 (+12点)</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">③ ATC 制限遵守:</span>
+                    <span id="metric-speed" class="font-digits font-bold text-emerald-400">超過なし (+10点)</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">④ 乗降安全操作:</span>
+                    <span id="metric-door" class="font-digits font-bold text-emerald-400">正常完了 (+8点)</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">⑤ 乗り心地 (急ブレーキ):</span>
+                    <span id="metric-comfort" class="font-digits font-bold text-emerald-400">良好 (+5点)</span>
+                </div>
+            </div>
+
+            <div id="rank-container" class="hidden mb-6 py-3 bg-gradient-to-r from-purple-900/50 via-indigo-900/50 to-purple-900/50 rounded-2xl border border-indigo-500/40">
+                <div class="text-[10px] text-indigo-300 font-bold uppercase">総合評価ランク</div>
+                <div id="final-rank-text" class="text-5xl font-black font-digits text-yellow-300 glow-gold">RANK S</div>
+                <div id="final-rank-desc" class="text-xs text-gray-300 mt-1">プロ運転士レベルの完璧な運転技術です！</div>
+            </div>
+
+            <button id="modal-next-btn" onclick="nextStageOrReset()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-base tracking-wider shadow-lg transform transition active:scale-95 border border-emerald-300">
+                復路スタート (葛西 ➔ 西葛西)
+            </button>
+        </div>
+    </div>
+
+    <!-- AUDIO ENGINE SCRIPT -->
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.isInit = false;
+                this.motorOsc1 = null;
+                this.motorOsc2 = null;
+                this.motorGain = null;
+                this.frictionNoise = null;
+                this.frictionFilter = null;
+                this.frictionGain = null;
+            }
+
+            init() {
+                if (this.isInit) return;
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                    this.isInit = true;
+
+                    // Motor Sound
+                    this.motorOsc1 = this.ctx.createOscillator();
+                    this.motorOsc2 = this.ctx.createOscillator();
+                    this.motorGain = this.ctx.createGain();
+
+                    this.motorOsc1.type = 'sawtooth';
+                    this.motorOsc2.type = 'triangle';
+                    this.motorGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    this.motorOsc1.connect(this.motorGain);
+                    this.motorOsc2.connect(this.motorGain);
+                    this.motorGain.connect(this.ctx.destination);
+
+                    this.motorOsc1.start();
+                    this.motorOsc2.start();
+
+                    // Brake Noise
+                    const bufferSize = this.ctx.sampleRate * 2;
+                    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        output[i] = Math.random() * 2 - 1;
+                    }
+
+                    this.frictionNoise = this.ctx.createBufferSource();
+                    this.frictionNoise.buffer = noiseBuffer;
+                    this.frictionNoise.loop = true;
+
+                    this.frictionFilter = this.ctx.createBiquadFilter();
+                    this.frictionFilter.type = 'bandpass';
+                    this.frictionFilter.frequency.setValueAtTime(2200, this.ctx.currentTime);
+                    this.frictionFilter.Q.setValueAtTime(5, this.ctx.currentTime);
+
+                    this.frictionGain = this.ctx.createGain();
+                    this.frictionGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+                    this.frictionNoise.connect(this.frictionFilter);
+                    this.frictionFilter.connect(this.frictionGain);
+                    this.frictionGain.connect(this.ctx.destination);
+                    this.frictionNoise.start();
+                } catch (e) {
+                    console.warn("AudioContext init failed:", e);
+                }
+            }
+
+            updateTrainSound(speedKmh, notch) {
+                if (!this.isInit || !this.ctx) return;
+
+                let baseFreq = 120 + speedKmh * 12;
+                if (notch > 0) baseFreq += notch * 15;
+                
+                if (speedKmh < 0.5) {
+                    this.motorGain.gain.setTargetAtTime(notch > 0 ? 0.08 : 0, this.ctx.currentTime, 0.05);
+                } else {
+                    const vol = (notch !== 0) ? Math.min(0.12, 0.03 + Math.abs(notch) * 0.012) : 0.01;
+                    this.motorGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
+                }
+
+                this.motorOsc1.frequency.setTargetAtTime(baseFreq, this.ctx.currentTime, 0.1);
+                this.motorOsc2.frequency.setTargetAtTime(baseFreq * 1.35, this.ctx.currentTime, 0.1);
+
+                if (speedKmh > 0.5 && speedKmh < 18 && notch < 0) {
+                    const screechVol = (18 - speedKmh) / 18 * 0.06;
+                    this.frictionGain.gain.setTargetAtTime(screechVol, this.ctx.currentTime, 0.1);
+                } else {
+                    this.frictionGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+                }
+            }
+
+            playDoorChime() {
+                if (!this.isInit || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const playTone = (freq, time, duration) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + time);
+                    gain.gain.setValueAtTime(0.12, now + time);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + time + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + time);
+                    osc.stop(now + time + duration);
+                };
+                playTone(523.25, 0.0, 0.35);
+                playTone(392.00, 0.4, 0.45);
+            }
+
+            playATCBeep() {
+                if (!this.isInit || !this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(1080, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            }
+
+            playHorn() {
+                if (!this.isInit || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc1.type = 'sawtooth';
+                osc2.type = 'sine';
+                osc1.frequency.setValueAtTime(310, now);
+                osc2.frequency.setValueAtTime(370, now);
+
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc1.start(now);
+                osc2.start(now);
+                osc1.stop(now + 1.15);
+                osc2.stop(now + 1.15);
+            }
+        }
+
+        const soundEngine = new SoundEngine();
+    </script>
+
+    <!-- 3D WORLD & GAME LOGIC SCRIPT -->
+    <script>
+        const STATE = {
+            BOARDING: 'boarding',
+            DRIVING: 'driving',
+            FINISHED: 'finished'
+        };
+
+        let scene, camera, renderer;
+        let trainGroup, cabViewCamera, frontExtCamera, sideCamera;
+        let cameraMode = 0; // 0: Cockpit, 1: Front Exterior, 2: Side
+        let cameraYawOffset = 0;
+        let cameraYawTarget = 0;
+        let lastHintLayoutAt = 0;
+        let swipeStartX = null;
+        let swipeStartY = null;
+        let stationSideOccluders = [];
+
+        // Dynamic Destination Display Texture Canvas References
+        let destCanvasFront = null, destTexFront = null;
+        let destCanvasRear = null, destTexRear = null;
+
+        // Tutorial Guide Step state
+        let tutorialStep = 0;
+        let gameStarted = false;
+        let tutorialHintsEnabled = true;
+        let tutorialBubbleTimer = null;
+        let tutorialBubbleKey = null;
+
+
+        // ============================================================
+        // 江戸川双六：路線データ（ここを増やせば路線を追加できます）
+        //   band     車体の帯の色
+        //   accent   前面などの差し色
+        //   atc      ATCの速度上限(km/h)
+        //   cars     編成の両数
+        //   code     駅ナンバリングの記号
+        // 駅の座標は国土地理院の地名検索APIで確認した値です。
+        // ============================================================
+        const TRAIN_ROUTES = {
+          tozai: { line:'東京メトロ東西線', train:'15000系', band:0x19bce9, accent:0x19bce9,
+            atc:75, cars:4, code:'T', type:'各駅停車', sky:0x38bdf8,
+            stations:{ '西葛西':{n:'T15',lat:35.666783,lng:139.859337},
+                       '葛西':{n:'T16',lat:35.665276,lng:139.872561} } },
+          shinjuku: { line:'都営地下鉄新宿線', train:'10-300形', band:0x6cbb5a, accent:0x6cbb5a,
+            atc:75, cars:4, code:'S', type:'各駅停車', sky:0x7fb8e6,
+            stations:{ '東大島':{n:'S15',lat:35.690158,lng:139.847513},
+                       '船堀':{n:'S16',lat:35.683706,lng:139.864220},
+                       '一之江':{n:'S17',lat:35.685987,lng:139.883000},
+                       '瑞江':{n:'S18',lat:35.693371,lng:139.897809},
+                       '篠崎':{n:'S19',lat:35.706092,lng:139.904128} } },
+          sobu: { line:'JR中央・総武線各駅停車', train:'E231系500番台', band:0xffd400, accent:0xffd400,
+            atc:90, cars:4, code:'JB', type:'各駅停車', sky:0x8ec9f0,
+            stations:{ '平井':{n:'JB24',lat:35.708278,lng:139.842294},
+                       '新小岩':{n:'JB25',lat:35.716792,lng:139.857629},
+                       '小岩':{n:'JB26',lat:35.734929,lng:139.881792} } },
+          keiyo: { line:'JR京葉線', train:'E233系5000番台', band:0xc9252c, accent:0xc9252c,
+            atc:95, cars:4, code:'JE', type:'各駅停車', sky:0x8ec9f0,
+            stations:{ '葛西臨海公園':{n:'JE05',lat:35.644054,lng:139.861928} } },
+          keisei: { line:'京成本線', train:'3000形', band:0xf05a28, accent:0x0057a8,
+            atc:85, cars:4, code:'KS', type:'普通', sky:0x8ec9f0,
+            stations:{ '京成小岩':{n:'KS11',lat:35.741941,lng:139.883590},
+                       '江戸川':{n:'KS12',lat:35.739949,lng:139.895783} } },
+          // 構想路線。実在しないので、車両も架空の新型です。
+          metro7: { line:'メトロセブン（構想）', train:'E7000系', band:0xff2d95, accent:0xfbbf24,
+            atc:100, cars:4, code:'M7', type:'快速', sky:0x6b5bd6, plan:true,
+            stations:{ '葛西臨海公園':{n:'M701',lat:35.644054,lng:139.861928},
+                       '葛西':{n:'M702',lat:35.665276,lng:139.872561},
+                       '一之江':{n:'M703',lat:35.685987,lng:139.883000},
+                       '鹿骨':{n:'M704',lat:35.708809,lng:139.887589},
+                       '小岩':{n:'M705',lat:35.734929,lng:139.881792} } }
+        };
+        const EDO_QP = new URLSearchParams(location.search);
+        const EDO_LINE = TRAIN_ROUTES[EDO_QP.get('line')] ? EDO_QP.get('line') : 'tozai';
+        const ROUTE = TRAIN_ROUTES[EDO_LINE];
+        const EDO_NAMES = Object.keys(ROUTE.stations);
+        let EDO_FROM = EDO_QP.get('from'); if(!ROUTE.stations[EDO_FROM]) EDO_FROM = EDO_NAMES[0];
+        let EDO_TO   = EDO_QP.get('to');   if(!ROUTE.stations[EDO_TO] || EDO_TO===EDO_FROM)
+          EDO_TO = EDO_NAMES.find(n=>n!==EDO_FROM) || EDO_NAMES[0];
+        function edoKm(a,b){
+          const R=6371, p1=a.lat*Math.PI/180, p2=b.lat*Math.PI/180;
+          const dp=(b.lat-a.lat)*Math.PI/180, dl=(b.lng-a.lng)*Math.PI/180;
+          const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+          return 2*R*Math.asin(Math.sqrt(x));
+        }
+        // 実距離が長い区間は、運転が間延びしないよう最大1500mに縮めて再現します。
+        const EDO_REAL_M = Math.round(edoKm(ROUTE.stations[EDO_FROM], ROUTE.stations[EDO_TO])*1100);
+        const EDO_SIM_M  = Math.max(600, Math.min(1500, EDO_REAL_M));
+        const EDO_SHORTENED = EDO_SIM_M < EDO_REAL_M;
+        const EDO_TITLE = ROUTE.line + ' ' + EDO_FROM + ' ➔ ' + EDO_TO;
+
+        const NISHI_KASAI_Z = 60;                 // 出発駅
+        const KASAI_Z = 60 + EDO_SIM_M;           // 到着駅
+        // 3Dの世界の広さ。区間の長さに合わせて伸ばします。
+        // （以前は1.2km固定だったため、長い区間では終盤で線路や高架が
+        //   途切れて消えていました）
+        const WORLD_Z0 = NISHI_KASAI_Z - 260;
+        const WORLD_Z1 = KASAI_Z + 260;
+        const WORLD_LEN = WORLD_Z1 - WORLD_Z0;
+        const WORLD_MID = (WORLD_Z0 + WORLD_Z1) / 2;
+
+        // Midpoint automatic camera tour
+        let stageStartZ = NISHI_KASAI_Z;
+        let stageMidpointZ = (NISHI_KASAI_Z + KASAI_Z) / 2;
+        let stageMidpointTriggered = false;
+        let midpointTourActive = false;
+        let midpointTourTimers = [];
+        let midpointReturnCameraMode = 0;
+        let midpointReturnYawOffset = 0;
+        let midpointReturnYawTarget = 0;
+        const FRONT_DEFAULT_ANGLE = Math.PI / 18; // 10°
+        const TRACK_X_LEFT = -2.8;
+        const TRACK_X_RIGHT = 2.8;
+
+        // Global Game States
+        let currentStage = 1;
+        let gameState = STATE.BOARDING;
+        let speedKmh = 0;
+        let accelMss = 0;
+        let currentNotch = 0;
+        let doorsOpen = true;
+        let speedLimitViolations = 0;
+        let emergencyBrakeCount = 0;
+        let elapsedTimeSec = 0;
+        let stageStartTime = Date.now();
+        let direction = 1;
+        let trainZ = NISHI_KASAI_Z;
+        let targetStopZ = KASAI_Z;
+        let atcSpeedLimit = 75;   // 起動時に路線の値で上書きします
+        let stage1ScoreData = null;
+        let stage2ScoreData = null;
+        let atcAdviceUntil = 0;
+        let atcAdviceTimer = null;
+        let atcOverspeedActive = false;
+        let atcEmergencyBrakeActive = false;
+
+        // 停車位置判定
+        // stop lineを少し越えただけでは終了せず、列車1両分程度を越えたところで強制終了。
+        const STOP_SHORT_TOLERANCE_M = 15.0;
+        const STOP_OVERRUN_TOLERANCE_M = 25.0;
+        const STOP_FORCE_OVERRUN_M = 25.0;
+        let atcGuidance45Shown = false;
+        let atcGuidance25Shown = false;
+        let atcEarly25Shown = false;
+        const stationNPCs = [];
+
+        // 3D Scene Initialization
+        function show3DError(message) {
+            let box = document.getElementById('three-error-overlay');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'three-error-overlay';
+                box.style.cssText = 'position:fixed;left:12px;right:12px;top:50%;transform:translateY(-50%);z-index:9999;background:rgba(15,23,42,.96);color:#fff;padding:18px;border:2px solid #ef4444;border-radius:14px;font-family:sans-serif;font-weight:700;line-height:1.6;text-align:center;';
+                document.body.appendChild(box);
+            }
+            box.textContent = message;
+        }
+
+        function init3DWorld() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(ROUTE.sky || 0x38bdf8);
+            scene.fog = new THREE.FogExp2(0x93c5fd, 0.0008);
+
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth || window.innerWidth;
+            const height = container.clientHeight || window.innerHeight;
+            const aspect = width / height;
+
+            try {
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "default" });
+            } catch (err) {
+                show3DError("この端末ではWebGLを起動できません。\n" + (err && err.message ? err.message : err));
+                throw err;
+            }
+            renderer.setClearColor(0x7dd3fc, 1);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(width, height);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            cabViewCamera = new THREE.PerspectiveCamera(65, aspect, 0.1, 1000);
+            frontExtCamera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
+            sideCamera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
+            camera = cabViewCamera;
+
+            // Lighting setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.90);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.4);
+            sunLight.position.set(60, 140, 60);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 768;
+            sunLight.shadow.mapSize.height = 768;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 500;
+            scene.add(sunLight);
+
+            // Ground plane
+            const groundGeo = new THREE.PlaneGeometry(1000, WORLD_LEN + 400);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x7b8085, roughness: 0.92, metalness: 0.02 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.set(0, -0.1, WORLD_MID);
+            scene.add(ground);
+
+            // Viaduct Concrete Base structure (高架構造物)
+            const viaductMat = new THREE.MeshStandardMaterial({ color: 0x9aa0a5, roughness: 0.72, metalness: 0.04 });
+            const viaductDeck = new THREE.Mesh(new THREE.BoxGeometry(11, 1.2, WORLD_LEN), viaductMat);
+            viaductDeck.position.set(0, 1.2, WORLD_MID);
+            scene.add(viaductDeck);
+
+            // Concrete Soundproof Side Walls (遮音壁)
+            [-5.6, 5.6].forEach(x => {
+                const wall = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.8, WORLD_LEN), viaductMat);
+                wall.position.set(x, 2.5, WORLD_MID);
+                scene.add(wall);
+
+                // Upper translucent soundproof barrier
+                const barrierMat = new THREE.MeshPhysicalMaterial({ color: 0xbfdbfe, opacity: 0.6, transparent: true, roughness: 0.2 });
+                const upperBarrier = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.9, WORLD_LEN), barrierMat);
+                upperBarrier.position.set(x, 3.8, WORLD_MID);
+                scene.add(upperBarrier);
+            });
+
+            // Viaduct Support Pillars
+            for (let z = WORLD_Z0 + 100; z <= WORLD_Z1 - 100; z += 22) {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(3.8, 8.5, 2.6), viaductMat);
+                pillar.position.set(0, -2.8, z);
+                scene.add(pillar);
+            }
+
+            // Steel Rails & Sleepers (PC枕木)
+            const railMat = new THREE.MeshStandardMaterial({ color: 0x3b4146, metalness: 0.9, roughness: 0.22 });
+            const sleeperMat = new THREE.MeshStandardMaterial({ color: 0x73787c, roughness: 0.86 });
+
+            [-2.8, 2.8].forEach(trackX => {
+                [-0.535, 0.535].forEach(railOffset => {
+                    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, WORLD_LEN), railMat);
+                    rail.position.set(trackX + railOffset, 1.88, WORLD_MID);
+                    scene.add(rail);
+                });
+
+                const sleeperGeo = new THREE.BoxGeometry(1.8, 0.1, 0.22);
+                const sleeperCount = Math.ceil(WORLD_LEN) + 4;
+                const sleeperInstanced = new THREE.InstancedMesh(sleeperGeo, sleeperMat, sleeperCount);
+                const dummy = new THREE.Object3D();
+                let idx = 0;
+                for (let z = WORLD_Z0; z <= WORLD_Z1 && idx < sleeperCount; z += 1.0) {
+                    dummy.position.set(trackX, 1.8, z);
+                    dummy.updateMatrix();
+                    sleeperInstanced.setMatrixAt(idx++, dummy.matrix);
+                }
+                sleeperInstanced.count = idx;
+                sleeperInstanced.instanceMatrix.needsUpdate = true;
+                scene.add(sleeperInstanced);
+            });
+
+            // Realistic ballast beds between and beside the rails
+            const ballastMat = new THREE.MeshStandardMaterial({ color: 0x6f7376, roughness: 0.96 });
+            [-2.8, 2.8].forEach(trackX => {
+                const ballast = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.22, WORLD_LEN), ballastMat);
+                ballast.position.set(trackX, 1.69, WORLD_MID);
+                scene.add(ballast);
+            });
+
+            // Overhead Catenary Poles & Wires (架線柱 & 架線)
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0x94a3b8 });
+
+            for (let z = WORLD_Z0 + 50; z <= WORLD_Z1 - 50; z += 40) {
+                const poleGroup = new THREE.Group();
+                const leftCol = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 7.5), poleMat);
+                leftCol.position.set(-6.2, 5.0, 0);
+                const rightCol = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 7.5), poleMat);
+                rightCol.position.set(6.2, 5.0, 0);
+                const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(12.8, 0.18, 0.18), poleMat);
+                crossBeam.position.set(0, 8.2, 0);
+
+                poleGroup.add(leftCol, rightCol, crossBeam);
+                poleGroup.position.z = z;
+                scene.add(poleGroup);
+            }
+
+            [-2.8, 2.8].forEach(trackX => {
+                const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, WORLD_LEN), wireMat);
+                wire.rotation.x = Math.PI / 2;
+                wire.position.set(trackX, 7.2, WORLD_MID);
+                scene.add(wire);
+            });
+
+            // Create Stations & Advanced Scenery
+            createStation(EDO_FROM, NISHI_KASAI_Z, ROUTE.stations[EDO_FROM].n);
+            createStation(EDO_TO, KASAI_Z, ROUTE.stations[EDO_TO].n);
+
+            // Create 15000 Series Train Model
+            createTrainModel();
+
+            // First render must be possible before the heavier city mesh generation runs.
+            // This prevents a long synchronous scenery build from appearing as a black/frozen screen.
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    try {
+                        createCityScenery();
+                    } catch (err) {
+                        console.error("City scenery initialization error:", err);
+                        show3DError("街並み生成でエラーが発生しました。3D本体は継続します。");
+                    }
+                }, 0);
+            });
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createPlatformNPCs(stationZ) {
+            const skinTones=[0xf1c7a6,0xd9a27f,0xf3c9aa,0xc98f6d];
+            const suitColors=[0x1f2937,0x26364a,0x374151,0x111827];
+            const dressColors=[0x4f46e5,0x0f766e,0x9f1239,0x7c3aed,0x334155];
+            const bagColors=[0x111827,0x78350f,0x1e3a8a,0x374151];
+            function makeHuman(type,idx,x,z,facing){
+                const g=new THREE.Group();
+                const d=g.userData={type,phase:Math.random()*Math.PI*2,speed:.22+Math.random()*.32,dir:Math.random()<.5?-1:1,homeZ:z,targetYaw:facing,nextTurn:performance.now()+1800+Math.random()*5000,walk:false};
+                g.name='platformNPC'; g.position.set(x,2.10,z); g.rotation.y=facing;
+                const skin=new THREE.MeshStandardMaterial({color:skinTones[idx%skinTones.length],roughness:.84});
+                const hair=new THREE.MeshStandardMaterial({color:type==='kid'?0x3b2418:0x292524,roughness:.9});
+                const suit=new THREE.MeshStandardMaterial({color:suitColors[idx%suitColors.length],roughness:.58});
+                const dress=new THREE.MeshStandardMaterial({color:dressColors[idx%dressColors.length],roughness:.65});
+                const shoe=new THREE.MeshStandardMaterial({color:0x171717,roughness:.72});
+                const bag=new THREE.MeshStandardMaterial({color:bagColors[idx%bagColors.length],roughness:.6});
+                const white=new THREE.MeshStandardMaterial({color:0xf8fafc,roughness:.55});
+                const scale=type==='kid'?.68:1;
+                const clothing=(type==='business'||type==='traveler')?suit:(type==='ol'||type==='housewife'?dress:suit);
+                const torso=new THREE.Mesh(new THREE.CylinderGeometry(.27*scale,.32*scale,.78*scale,8),clothing); torso.scale.z=.72; torso.position.y=.70*scale; g.add(torso);
+                const neck=new THREE.Mesh(new THREE.CylinderGeometry(.055*scale,.055*scale,.10*scale,8),skin); neck.position.y=1.17*scale; g.add(neck);
+                const head=new THREE.Mesh(new THREE.SphereGeometry(.185*scale,14,12),skin); head.position.y=1.38*scale; g.add(head);
+                const hairCap=new THREE.Mesh(new THREE.SphereGeometry(.19*scale,14,10,0,Math.PI*2,0,Math.PI*.62),hair); hairCap.position.y=1.43*scale; g.add(hairCap);
+                const armGeo=new THREE.CylinderGeometry(.055*scale,.07*scale,.54*scale,8);
+                const leftArm=new THREE.Mesh(armGeo,clothing); leftArm.position.set(-.30*scale,.76*scale,0); leftArm.rotation.z=-.12; g.add(leftArm);
+                const rightArm=new THREE.Mesh(armGeo,clothing); rightArm.position.set(.30*scale,.76*scale,0); rightArm.rotation.z=.12; g.add(rightArm);
+                const legMat=(type==='business'||type==='traveler'||type==='kid')?suit:new THREE.MeshStandardMaterial({color:0x475569,roughness:.72});
+                const legGeo=new THREE.CylinderGeometry(.065*scale,.075*scale,.58*scale,8);
+                const leftLeg=new THREE.Mesh(legGeo,legMat); leftLeg.position.set(-.12*scale,.25*scale,0); g.add(leftLeg);
+                const rightLeg=new THREE.Mesh(legGeo,legMat); rightLeg.position.set(.12*scale,.25*scale,0); g.add(rightLeg);
+                const leftShoe=new THREE.Mesh(new THREE.BoxGeometry(.16*scale,.075*scale,.28*scale),shoe); leftShoe.position.set(-.12*scale,.01*scale,.05); g.add(leftShoe);
+                const rightShoe=leftShoe.clone(); rightShoe.position.x=.12*scale; g.add(rightShoe);
+                d.limbs=[leftArm,rightArm,leftLeg,rightLeg];
+                if(type==='business'){
+                    const shirt=new THREE.Mesh(new THREE.BoxGeometry(.19*scale,.24*scale,.02),white); shirt.position.set(0,.84*scale,.22*scale); g.add(shirt);
+                    const tie=new THREE.Mesh(new THREE.BoxGeometry(.045*scale,.25*scale,.025),new THREE.MeshStandardMaterial({color:0x0b4ea2,roughness:.55})); tie.position.set(0,.78*scale,.24*scale); g.add(tie);
+                    const brief=new THREE.Mesh(new THREE.BoxGeometry(.24*scale,.30*scale,.08),bag); brief.position.set(.36*scale,.54*scale,.07); g.add(brief);
+                } else if(type==='ol') {
+                    const blouse=new THREE.Mesh(new THREE.BoxGeometry(.24*scale,.22*scale,.02),white); blouse.position.set(0,.84*scale,.22*scale); g.add(blouse);
+                    const handbag=new THREE.Mesh(new THREE.BoxGeometry(.23*scale,.20*scale,.13),bag); handbag.position.set(.37*scale,.52*scale,.05); g.add(handbag);
+                } else if(type==='housewife') {
+                    const tote=new THREE.Mesh(new THREE.BoxGeometry(.28*scale,.34*scale,.16),bag); tote.position.set(.38*scale,.51*scale,.03); g.add(tote);
+                } else if(type==='traveler') {
+                    const shirt=new THREE.Mesh(new THREE.BoxGeometry(.21*scale,.24*scale,.02),white); shirt.position.set(0,.84*scale,.22*scale); g.add(shirt);
+                    const suitcase=new THREE.Mesh(new THREE.BoxGeometry(.22*scale,.38*scale,.16),bag); suitcase.position.set(.46*scale,.25*scale,.06); g.add(suitcase);
+                    const handle=new THREE.Mesh(new THREE.CylinderGeometry(.018*scale,.018*scale,.28*scale,6),new THREE.MeshStandardMaterial({color:0x9ca3af,metalness:.8,roughness:.25})); handle.position.set(.46*scale,.57*scale,.06); g.add(handle);
+                } else if(type==='kid') {
+                    const schoolColors=[0xdc2626,0x2563eb,0x16a34a];
+                    const randBag=new THREE.Mesh(new THREE.BoxGeometry(.28*scale,.30*scale,.12),new THREE.MeshStandardMaterial({color:schoolColors[idx%3],roughness:.62})); randBag.position.set(0,.65*scale,-.16*scale); g.add(randBag);
+                    const strapL=new THREE.Mesh(new THREE.BoxGeometry(.03*scale,.42*scale,.025),bag); strapL.position.set(-.11*scale,.76*scale,.16*scale); strapL.rotation.z=-.12; g.add(strapL);
+                    const strapR=strapL.clone(); strapR.position.x=.11*scale; strapR.rotation.z=.12; g.add(strapR);
+                }
+                g.traverse(o=>o.userData.npc=true);
+                return g;
+            }
+            function addNPC(type,side,offset,idx,facing){
+                const x=side*(6.35+(idx%3)*.20);
+                const npc=makeHuman(type,idx,x,stationZ+offset,facing);
+                scene.add(npc); stationNPCs.push(npc);
+            }
+            const left=[['business',-78],['ol',-60],['business',-43],['housewife',-20],['housewife',-15],['traveler',4],['kid',10],['kid',16],['business',39],['ol',61],['business',79]];
+            const right=[['business',-80],['traveler',-59],['ol',-40],['housewife',-18],['housewife',-12],['business',8],['kid',25],['kid',30],['ol',48],['business',67],['traveler',82]];
+            left.forEach((v,i)=>addNPC(v[0],-1,v[1],i,Math.PI/2));
+            right.forEach((v,i)=>addNPC(v[0],1,v[1],i,-Math.PI/2));
+        }
+        function updatePlatformNPCs(delta,now){
+            for(const npc of stationNPCs){
+                if(!npc||!npc.parent) continue;
+                const d=npc.userData;
+                d.phase+=delta*(d.walk?7:2.2);
+                npc.position.y=2.10+Math.sin(d.phase)*.008*(d.walk?1:.35);
+                if(d.walk){
+                    const step=Math.sin(d.phase)*.16;
+                    if(d.limbs){ d.limbs[0].rotation.x=step; d.limbs[1].rotation.x=-step; d.limbs[2].rotation.x=-step*.75; d.limbs[3].rotation.x=step*.75; }
+                    const next=npc.position.z+d.dir*d.speed*delta;
+                    if(next<d.homeZ-9||next>d.homeZ+9){d.dir*=-1;d.targetYaw+=Math.PI;} else npc.position.z=next;
+                }
+                if(now>d.nextTurn){
+                    d.walk=Math.random()<.65; d.nextTurn=now+1800+Math.random()*5200;
+                    if(Math.random()<.55)d.dir*=-1;
+                    d.targetYaw+=(Math.random()<.5?0:Math.PI);
+                }
+                const diff=Math.atan2(Math.sin(d.targetYaw-npc.rotation.y),Math.cos(d.targetYaw-npc.rotation.y));
+                npc.rotation.y+=diff*Math.min(1,delta*2.8);
+                if(!d.walk&&d.limbs)d.limbs.forEach(l=>{l.rotation.x*=Math.max(0,1-delta*8);});
+            }
+        }
+
+        function createStation(name, stationZ, stationNum) {
+            const g = new THREE.Group();
+            const concrete = new THREE.MeshStandardMaterial({color:0xb7bcc0,roughness:.82,metalness:.02});
+            const darkConcrete = new THREE.MeshStandardMaterial({color:0x596169,roughness:.75});
+            const steel = new THREE.MeshStandardMaterial({color:0x46515a,roughness:.34,metalness:.8});
+            const white = new THREE.MeshStandardMaterial({color:0xf3f5f6,roughness:.55});
+            const yellow = new THREE.MeshBasicMaterial({color:0xf4c400});
+            const blue = new THREE.MeshBasicMaterial({color:0x00a0e9});
+            const glass = new THREE.MeshPhysicalMaterial({color:0x8cc7d9,transparent:true,opacity:.42,roughness:.08,metalness:.05,side:THREE.DoubleSide});
+
+            const deck = new THREE.Mesh(new THREE.BoxGeometry(13.8,1.0,190), concrete);
+            deck.position.set(0,1.35,stationZ); g.add(deck);
+            const under = new THREE.Mesh(new THREE.BoxGeometry(14.4,1.6,190), darkConcrete);
+            under.position.set(0,.45,stationZ); g.add(under);
+
+            // Two realistic platforms, kept open around the running tracks.
+            [-1,1].forEach(side=>{
+                const px=side*6.0;
+                const platform = new THREE.Mesh(new THREE.BoxGeometry(4.7,0.38,184), white);
+                platform.position.set(px,1.9,stationZ); g.add(platform);
+                const tactile = new THREE.Mesh(new THREE.BoxGeometry(.42,.035,178), yellow);
+                tactile.position.set(side*4.72,2.115,stationZ); g.add(tactile);
+                const edge = new THREE.Mesh(new THREE.BoxGeometry(.08,.04,178), blue);
+                edge.position.set(side*4.43,2.13,stationZ); g.add(edge);
+
+                // Full-height glass safety screen with realistic steel posts.
+                for(let z=stationZ-86;z<=stationZ+86;z+=6.2){
+                    const post=new THREE.Mesh(new THREE.BoxGeometry(.09,2.7,.09),steel); post.position.set(side*4.55,3.25,z); g.add(post);
+                    const pane=new THREE.Mesh(new THREE.BoxGeometry(.045,2.35,5.8),glass); pane.position.set(side*4.55,3.25,z+3.1); pane.userData.sideOccluder=true; stationSideOccluders.push(pane); g.add(pane);
+                    const top=new THREE.Mesh(new THREE.BoxGeometry(.11,.09,6.1),steel); top.position.set(side*4.55,4.58,z+3.05); g.add(top);
+                    const blueRail=new THREE.Mesh(new THREE.BoxGeometry(.075,.11,6.1),blue); blueRail.position.set(side*4.55,3.35,z+3.05); g.add(blueRail);
+                }
+
+                // Deep station roof with steel trusses and translucent clerestory.
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(4.9,.32,188),new THREE.MeshStandardMaterial({color:0x4c565e,roughness:.56,metalness:.5}));
+                roof.position.set(side*7.0,7.05,stationZ); g.add(roof);
+                const soffit = new THREE.Mesh(new THREE.BoxGeometry(4.55,.12,186),new THREE.MeshStandardMaterial({color:0x747c82,roughness:.7}));
+                soffit.position.set(side*7.0,6.82,stationZ); g.add(soffit);
+                for(let z=stationZ-84;z<=stationZ+84;z+=14){
+                    const col=new THREE.Mesh(new THREE.BoxGeometry(.18,5.1,.18),steel); col.position.set(side*8.75,4.25,z); g.add(col);
+                    const beam=new THREE.Mesh(new THREE.BoxGeometry(3.8,.16,.16),steel); beam.position.set(side*7.0,5.9,z); g.add(beam);
+                }
+            });
+
+            // Platform wall on the outer sides, with ad panels.
+            [-9.0,9.0].forEach(side=>{
+                const wall=new THREE.Mesh(new THREE.BoxGeometry(.28,4.2,186),concrete); wall.position.set(side,3.8,stationZ); wall.userData.sideOccluder=true; stationSideOccluders.push(wall); g.add(wall);
+                for(let i=0;i<4;i++){
+                    const posterCanvas=document.createElement('canvas'); posterCanvas.width=360; posterCanvas.height=520;
+                    const pc=posterCanvas.getContext('2d'); pc.fillStyle=['#f4f1e8','#e9f2f5','#f6e8df','#eef0f8'][i]; pc.fillRect(0,0,360,520);
+                    pc.fillStyle=['#0077b6','#d62828','#ef9b00','#3157a4'][i]; pc.fillRect(0,0,360,90);
+                    pc.fillStyle='#fff'; pc.font='900 34px sans-serif'; pc.textAlign='center'; pc.fillText(['COFFEE','RAMEN','居酒屋','BUSINESS HOTEL'][i],180,58);
+                    pc.fillStyle='#1f2937'; pc.font='900 30px sans-serif'; pc.fillText(['朝の一杯','らーめん祭','夜はゆっくり','西葛西 HOTEL'][i],180,155);
+                    pc.font='700 20px sans-serif'; pc.fillText('TOKYO METRO TOZAI LINE',180,205); pc.fillText('安全・快適な駅をご利用ください',180,445);
+                    const tex=new THREE.CanvasTexture(posterCanvas);
+                    const poster=new THREE.Mesh(new THREE.PlaneGeometry(1.9,2.75),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
+                    poster.position.set(side*8.83,4.0,stationZ-62+i*34); poster.rotation.y=side>0?-Math.PI/2:Math.PI/2; poster.userData.sideOccluder=true; stationSideOccluders.push(poster); g.add(poster);
+                }
+            });
+
+            // Large, unmistakable station-name boards.
+            const sc=document.createElement('canvas'); sc.width=760; sc.height=210; const ctx=sc.getContext('2d');
+            ctx.fillStyle='#fff';ctx.fillRect(0,0,760,210);ctx.fillStyle='#00a0e9';ctx.fillRect(0,0,760,28);ctx.fillRect(0,182,760,28);
+            ctx.fillStyle='#00a0e9';ctx.beginPath();ctx.arc(76,105,48,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.font='900 42px sans-serif';ctx.textAlign='center';ctx.fillText('T',76,120);
+            ctx.fillStyle='#15202a';ctx.font='900 66px sans-serif';ctx.fillText(name,390,116);ctx.fillStyle='#59636d';ctx.font='700 26px sans-serif';ctx.fillText(stationNum,680,116);
+            const signTex=new THREE.CanvasTexture(sc); const signMat=new THREE.MeshBasicMaterial({map:signTex,side:THREE.DoubleSide});
+            [-1,1].forEach(side=>{
+                const sign=new THREE.Mesh(new THREE.PlaneGeometry(4.8,1.32),signMat); sign.position.set(side*8.82,5.75,stationZ); sign.rotation.y=side>0?-Math.PI/2:Math.PI/2; sign.userData.sideOccluder=true; stationSideOccluders.push(sign); g.add(sign);
+            });
+
+            // Bench and lighting details.
+            [-6.9,6.9].forEach(side=>{
+                const bench=new THREE.Mesh(new THREE.BoxGeometry(1.5,.28,3.8),steel); bench.position.set(side*1,2.25,stationZ+22); g.add(bench);
+                const back=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.0,.16),steel); back.position.set(side*1,2.7,stationZ+23.7); g.add(back);
+            });
+            for(let z=stationZ-78;z<=stationZ+78;z+=26){
+                [-7.1,7.1].forEach(side=>{
+                    const pole=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,4.8,10),steel); pole.position.set(side*1,4.9,z); g.add(pole);
+                    const lamp=new THREE.Mesh(new THREE.BoxGeometry(.55,.12,.35),new THREE.MeshStandardMaterial({color:0xfff4c2,emissive:0xffd86a,emissiveIntensity:.45})); lamp.position.set(side*1,7.25,z); g.add(lamp);
+                });
+            }
+
+            // Stop line and stopping marker on the running track.
+            const stopLine=new THREE.Mesh(new THREE.BoxGeometry(5.6,.055,.5),new THREE.MeshBasicMaterial({color:0xffd400}));
+            stopLine.position.set(0,2.08,stationZ); stopLine.userData.stopLine=true; g.add(stopLine);
+            const stopArrow=new THREE.Mesh(new THREE.BoxGeometry(1.1,.07,1.0),new THREE.MeshBasicMaterial({color:0xffffff})); stopArrow.position.set(0,2.11,stationZ+1.1); g.add(stopArrow);
+            scene.add(g);
+            createPlatformNPCs(stationZ);
+        }
+
+        function createCityScenery() {
+            // Dense but structured Tokyo-like elevated corridor. Trees are station-only.
+            const facadeMats=[0x9da3a7,0x7e878d,0xb6bcc0,0x66717a,0x8f969b,0x727b82];
+            const frameMat=new THREE.MeshStandardMaterial({color:0x27323a,metalness:.78,roughness:.28});
+            const warm=new THREE.MeshBasicMaterial({color:0xffd88a});
+            const cool=new THREE.MeshBasicMaterial({color:0x9dd9ea});
+            const darkGlass=new THREE.MeshPhysicalMaterial({color:0x78b8ca,transparent:true,opacity:.68,roughness:.12,metalness:.18});
+            const roadMat=new THREE.MeshStandardMaterial({color:0x2f3438,roughness:.93});
+
+            function addWindows(g,w,h,d,glassBuilding){
+                const cols=Math.max(4,Math.floor(w/2.25)), rows=Math.max(5,Math.floor(h/2.8));
+                for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+                    const ww=Math.min(1.42,(w-2)/cols-.18), hh=1.28;
+                    const m=glassBuilding?darkGlass:(Math.random()<.52?warm:cool);
+                    const win=new THREE.Mesh(new THREE.PlaneGeometry(ww,hh),m);
+                    win.position.set(-w/2+1+(c+.5)*(w-2)/cols,2.2+r*2.72,d/2+.025); g.add(win);
+                    if(glassBuilding){
+                        const v=new THREE.Mesh(new THREE.BoxGeometry(.045,hh+.12,.06),frameMat);v.position.set(win.position.x,win.position.y,d/2+.06);g.add(v);
+                    }
+                }
+                for(const side of [-1,1]){
+                    for(let r=1;r<rows;r+=1){
+                        const win=new THREE.Mesh(new THREE.PlaneGeometry(1.25,1.22),glassBuilding?darkGlass:(Math.random()<.5?warm:cool));
+                        win.position.set(side*(w/2+.035),2.25+r*2.72,-d/2+2.2);win.rotation.y=side>0?Math.PI/2:-Math.PI/2;g.add(win);
+                    }
+                }
+                if(glassBuilding){
+                    for(let x=-w/2+.8;x<=w/2-.8;x+=2.4){const v=new THREE.Mesh(new THREE.BoxGeometry(.07,h,.08),frameMat);v.position.set(x,h/2,d/2+.08);g.add(v);}
+                    for(let y=3;y<h;y+=3){const hh=new THREE.Mesh(new THREE.BoxGeometry(w,.07,.08),frameMat);hh.position.set(0,y,d/2+.08);g.add(hh);}
+                }
+            }
+            function makeVerticalSign(text,bg){
+                const c=document.createElement('canvas');c.width=110;c.height=420;const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.font='900 34px sans-serif';x.textAlign='center';[...text].slice(0,8).forEach((ch,i)=>x.fillText(ch,55,48+i*46));
+                const tex=new THREE.CanvasTexture(c);return new THREE.Mesh(new THREE.PlaneGeometry(.16,5.7),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
+            }
+            function makeNeon(ch,bg){const s=makeVerticalSign(ch,bg);s.scale.y=.42;return s;}
+            function makeSleeveSign(text,bg,fg='#fff'){
+                const c=document.createElement('canvas'); c.width=260; c.height=620;
+                const x=c.getContext('2d');
+                x.fillStyle=bg; x.fillRect(0,0,c.width,c.height);
+                x.strokeStyle='#ffffff'; x.lineWidth=8; x.strokeRect(6,6,c.width-12,c.height-12);
+                x.fillStyle=fg; x.font='900 54px sans-serif'; x.textAlign='center'; x.textBaseline='middle';
+                const chars=[...text].slice(0,6);
+                const step=92, start=310-(chars.length-1)*step/2;
+                chars.forEach((ch,i)=>x.fillText(ch,130,start+i*step));
+                const tex=new THREE.CanvasTexture(c); tex.anisotropy=4;
+                const board=new THREE.Group();
+                const body=new THREE.Mesh(new THREE.BoxGeometry(1.35,3.55,.20),new THREE.MeshStandardMaterial({color:bg,roughness:.38,metalness:.25}));
+                board.add(body);
+                const face=new THREE.Mesh(new THREE.PlaneGeometry(1.24,3.42),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,transparent:true}));
+                face.position.z=.111; board.add(face);
+                const back=face.clone(); back.material=face.material.clone(); back.position.z=-.111; back.rotation.y=Math.PI; board.add(back);
+                const arm=new THREE.Mesh(new THREE.BoxGeometry(1.05,.14,.14),frameMat); arm.position.x=0; arm.position.y=1.72; board.add(arm);
+                return board;
+            }
+
+            function makeATCTracksideSign(text, z, side){
+                const g=new THREE.Group();
+                const poleMat=new THREE.MeshStandardMaterial({color:0x59636b,metalness:.65,roughness:.35});
+                const boardMat=new THREE.MeshStandardMaterial({color:0x123047,metalness:.25,roughness:.35});
+                const c=document.createElement('canvas'); c.width=420; c.height=220;
+                const ctx=c.getContext('2d');
+                ctx.fillStyle='#102a3d'; ctx.fillRect(0,0,c.width,c.height);
+                ctx.strokeStyle='#ffffff'; ctx.lineWidth=10; ctx.strokeRect(8,8,c.width-16,c.height-16);
+                ctx.fillStyle='#ffffff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+                if(text.indexOf('前方')===0){
+                    const parts=text.split('  ');
+                    ctx.font='900 42px sans-serif';
+                    ctx.fillText(parts[0],210,60);
+                    ctx.fillStyle='#7dd3fc'; ctx.font='900 54px sans-serif';
+                    ctx.fillText(parts[1]||'',210,145);
+                }else{
+                    ctx.font='900 54px sans-serif';
+                    ctx.fillText('ATC',210,66);
+                    ctx.fillStyle='#7dd3fc'; ctx.font='900 76px sans-serif';
+                    ctx.fillText(text,210,145);
+                }
+                const tex=new THREE.CanvasTexture(c); tex.anisotropy=4;
+                const board=new THREE.Mesh(new THREE.BoxGeometry(2.35,1.35,.16),boardMat); board.position.y=4.45; g.add(board);
+                const face=new THREE.Mesh(new THREE.PlaneGeometry(2.18,1.18),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
+                face.position.set(0,4.45,.091); g.add(face);
+                const back=face.clone(); back.material=face.material.clone(); back.position.z=-.091; back.rotation.y=Math.PI; g.add(back);
+                const pole=new THREE.Mesh(new THREE.CylinderGeometry(.075,.095,4.4,8),poleMat); pole.position.y=2.2; g.add(pole);
+                g.position.set(side*6.8,0,z);
+                // 運転士に正面から読めるよう、線路に対して垂直（進行方向に正対）に設置。
+                // 以前の±90度回転は線路と平行になり、横向きで読みにくかったため廃止。
+                g.rotation.y=0;
+                scene.add(g);
+                return g;
+            }
+
+            // Station districts get greenery, station-to-station corridor remains urban.
+            [NISHI_KASAI_Z,KASAI_Z].forEach(sz=>{
+                for(let dz=-70;dz<=70;dz+=24){
+                    [-12,12].forEach(x=>{
+                        const tree=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.2,.28,2.8,8),new THREE.MeshStandardMaterial({color:0x6b472f,roughness:.9}));trunk.position.y=1.4;const crown=new THREE.Mesh(new THREE.SphereGeometry(1.35,10,8),new THREE.MeshStandardMaterial({color:0x2f7d4a,roughness:.82}));crown.position.y=3.55;tree.add(trunk,crown);tree.position.set(x,0,sz+dz);scene.add(tree);
+                    });
+                }
+            });
+
+            const bldStep = Math.max(30, WORLD_LEN/50);
+            for(let z=WORLD_Z0+90;z<=WORLD_Z1-90;z+=bldStep){
+                [-1,1].forEach(side=>{
+                    const w=11+Math.random()*16,h=20+Math.random()*44,d=12+Math.random()*16;
+                    const glassBuilding=Math.random()<.38;
+                    const g=new THREE.Group();
+                    const mat=glassBuilding?new THREE.MeshPhysicalMaterial({color:0x89b9c7,transparent:true,opacity:.74,roughness:.14,metalness:.2}):new THREE.MeshStandardMaterial({color:facadeMats[Math.floor(Math.random()*facadeMats.length)],roughness:.65,metalness:.08});
+                    const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);body.position.y=h/2-1;body.castShadow=true;body.receiveShadow=true;g.add(body);addWindows(g,w,h,d,glassBuilding);
+                    if(glassBuilding){
+                        const crown=new THREE.Mesh(new THREE.BoxGeometry(w+.4,.55,d+.4),frameMat);crown.position.y=h-.7;g.add(crown);
+                    }
+                    const r=Math.random();let sign=null;
+                    if(r<.22) sign=makeVerticalSign('居酒屋','#b91c1c'); else if(r<.40) sign=makeVerticalSign('ラーメン','#dc2626'); else if(r<.56) sign=makeVerticalSign('カフェ','#8b5e34'); else if(r<.72) sign=makeVerticalSign('ホテル','#2057a5'); else if(r<.87) sign=makeVerticalSign('ビジネスホテル','#2563eb');
+                    if(sign){sign.position.set(side*(w/2+.1),Math.min(h-2.5,6.5),d/2+.14);sign.rotation.y=side>0?-Math.PI/2:Math.PI/2;g.add(sign);}
+                    // 袖看板: 建物の側面から道路側へ直角に突き出す立体看板。
+                    if(h>25 && Math.random()<.72){
+                        const sleevePool=[['◯△商事','#1d4ed8'],['西葛西 HOTEL','#0f766e'],['焼肉 匠','#991b1b'],['居酒屋',' #b45309'],['らーめん','#7f1d1d'],['CAFE','#374151'],['東京メトロ商事','#075985']];
+                        const pick=sleevePool[Math.floor(Math.random()*sleevePool.length)];
+                        const ss=makeSleeveSign(pick[0],pick[1].trim());
+                        ss.position.set(side*(w/2+.72),Math.min(h-3.0,7.0),d*(Math.random()<.5?.28:-.28));
+                        ss.rotation.y=0;
+                        g.add(ss);
+                    }
+                    if(r>.70){for(let n=0;n<3;n++){const neon=makeNeon(['ス','ナ','ッ'][n],['#d81b60','#7c3aed','#06b6d4'][n]);neon.position.set(side*(w/2+.14),7+n*2.05,-d/2-.05);neon.rotation.y=side>0?-Math.PI/2:Math.PI/2;g.add(neon);}}
+                    g.position.set(side*(21+Math.random()*17),0,z+(Math.random()-.5)*7);scene.add(g);
+                });
+            }
+            const road=new THREE.Mesh(new THREE.PlaneGeometry(46,WORLD_LEN+100),roadMat);road.rotation.x=-Math.PI/2;road.position.set(0,.03,WORLD_MID);scene.add(road);
+            // Roads and low-rise blocks visible between towers.
+            for(let z=WORLD_Z0+100;z<WORLD_Z1-100;z+=70){
+                const lane=new THREE.Mesh(new THREE.BoxGeometry(46,.05,5),new THREE.MeshBasicMaterial({color:0xd6d8da}));lane.position.set(0,.06,z);scene.add(lane);
+            }
+            for(const pair of [[1,NISHI_KASAI_Z,KASAI_Z],[2,KASAI_Z,NISHI_KASAI_Z]]){
+                const stage=pair[0], start=pair[1], target=pair[2];
+                const span=Math.abs(target-start);
+                const sign45AdvanceZ = start + (target-start) * (1 - 700/span);
+                const sign45Z = start + (target-start) * (1 - 300/span);
+                const sign25AdvanceZ = start + (target-start) * (1 - 450/span);
+                const sign25Z = start + (target-start) * (1 - 150/span);
+                // ATC制限変更点そのものだけでなく、チュートリアルOFFでも間に合うように事前予告標識を設置。
+                makeATCTracksideSign('前方700m  ATC 45',sign45AdvanceZ, stage===1 ? 1 : -1);
+                makeATCTracksideSign('45 km/h',sign45Z, stage===1 ? 1 : -1);
+                makeATCTracksideSign('前方450m  ATC 25',sign25AdvanceZ, stage===1 ? 1 : -1);
+                makeATCTracksideSign('25 km/h',sign25Z, stage===1 ? 1 : -1);
+            }
+        }
+
+        function startGame() {
+            soundEngine.init();
+            const tutorialToggle=document.getElementById('tutorial-hints-toggle');
+            tutorialHintsEnabled = tutorialToggle ? !!tutorialToggle.checked : true;
+            gameStarted = true;
+            document.getElementById('start-modal').classList.add('hidden');
+            if (currentStage === 1) {
+                setupStage(1);
+            }
+            updateTutorialBubbles();
+        }
+
+        function updateDestinationDisplay(destText) {
+            [
+                { canvas: destCanvasFront, tex: destTexFront },
+                { canvas: destCanvasRear, tex: destTexRear }
+            ].forEach(item => {
+                if (!item.canvas || !item.tex) return;
+                const dctx = item.canvas.getContext('2d');
+                dctx.fillStyle = '#090d16'; dctx.fillRect(0, 0, 384, 80);
+                dctx.fillStyle = '#f59e0b'; dctx.font = 'bold 36px monospace';
+                dctx.fillText('67S', 12, 54);
+                dctx.fillStyle = '#' + ROUTE.band.toString(16).padStart(6,'0'); dctx.font = 'bold 30px sans-serif';
+                dctx.fillText(ROUTE.type, 105, 52);
+                dctx.fillStyle = '#ffffff'; dctx.font = 'bold 34px sans-serif';
+                dctx.fillText(destText, 255, 54);
+                item.tex.needsUpdate = true;
+            });
+        }
+
+        function createTrainModel() {
+            trainGroup = new THREE.Group();
+
+            // 15000系イメージの基準寸法。車輪をレール上に置き、車体を明確に浮かせる。
+            const W = 2.82;
+            const L = 19.5;
+            const BODY_BOTTOM = 2.60;
+            const BODY_TOP = 5.12;
+            const ROOF_Y = 5.28;
+            const WHEEL_R = 0.46;
+            const WHEEL_Y = 1.96 + WHEEL_R;
+            const BOGIE_Y = 2.28;
+            const numCars = ROUTE.cars || 4;
+
+            const silver = new THREE.MeshStandardMaterial({ color: 0xf5f6f6, metalness: 0.34, roughness: 0.22 });
+            const silverEdge = new THREE.MeshStandardMaterial({ color: 0xe3e7e9, metalness: 0.28, roughness: 0.25 });
+            const roofMat = new THREE.MeshStandardMaterial({ color: 0x747d84, metalness: 0.72, roughness: 0.33 });
+            const blue = new THREE.MeshBasicMaterial({ color: ROUTE.band });
+            const blueSoft = new THREE.MeshStandardMaterial({ color: ROUTE.accent, metalness: 0.15, roughness: 0.28 });
+            const black = new THREE.MeshStandardMaterial({ color: 0x10161d, metalness: 0.55, roughness: 0.22 });
+            const glass = new THREE.MeshStandardMaterial({
+                color: 0x1b2730,
+                metalness: 0.46,
+                roughness: 0.14
+            });
+            const rubber = new THREE.MeshStandardMaterial({ color: 0x22282d, metalness: 0.75, roughness: 0.28 });
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x252b30, metalness: 0.9, roughness: 0.24 });
+            const couplerMat = new THREE.MeshStandardMaterial({ color: 0x30363a, metalness: 0.95, roughness: 0.2 });
+
+            function roundedRectShape(w, h, r) {
+                const sh = new THREE.Shape();
+                sh.moveTo(-w/2+r, -h/2);
+                sh.lineTo(w/2-r, -h/2);
+                sh.quadraticCurveTo(w/2, -h/2, w/2, -h/2+r);
+                sh.lineTo(w/2, h/2-r);
+                sh.quadraticCurveTo(w/2, h/2, w/2-r, h/2);
+                sh.lineTo(-w/2+r, h/2);
+                sh.quadraticCurveTo(-w/2, h/2, -w/2, h/2-r);
+                sh.lineTo(-w/2, -h/2+r);
+                sh.quadraticCurveTo(-w/2, -h/2, -w/2+r, -h/2);
+                return sh;
+            }
+
+            function addFront(car, z, reverse) {
+                const fg = new THREE.Group();
+
+                // Front black-mask area. All material inside the cyan perimeter remains black/dark.
+                const faceMask = new THREE.Mesh(new THREE.BoxGeometry(W - 0.18, 2.18, 0.14), black);
+                faceMask.position.set(0, 3.92, z);
+                fg.add(faceMask);
+
+                // Rounded front windshield, dark glass.
+                const winGeo = new THREE.ShapeGeometry(roundedRectShape(2.38, 1.48, 0.24));
+                const win = new THREE.Mesh(winGeo, glass);
+                win.position.set(-0.08, 3.98, z + 0.12);
+                fg.add(win);
+
+                // Central windshield divider.
+                const divider = new THREE.Mesh(new THREE.BoxGeometry(0.065, 1.38, 0.10), black);
+                divider.position.set(-0.08, 3.98, z + 0.21);
+                fg.add(divider);
+
+                // Upper silver forehead and lower silver nose, separated from the black window zone.
+                const upperSilver = new THREE.Mesh(new THREE.BoxGeometry(W - 0.18, 0.28, 0.18), silver);
+                upperSilver.position.set(0, 5.16, z);
+                fg.add(upperSilver);
+                const lowerSilver = new THREE.Mesh(new THREE.BoxGeometry(W - 0.18, 0.62, 0.18), silverEdge);
+                lowerSilver.position.set(0, 2.53, z);
+                fg.add(lowerSilver);
+
+                // Cyan perimeter: top, both corners, and the line directly under the marker lamps.
+                const cyanTop = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.11, 0.12), blueSoft);
+                cyanTop.position.set(0, 5.03, z + 0.12);
+                fg.add(cyanTop);
+                const cyanLeft = new THREE.Mesh(new THREE.BoxGeometry(0.09, 2.28, 0.12), blueSoft);
+                cyanLeft.position.set(-1.36, 3.88, z + 0.12);
+                cyanLeft.rotation.z = -0.03;
+                fg.add(cyanLeft);
+                const cyanRight = cyanLeft.clone();
+                cyanRight.position.x = 1.36;
+                cyanRight.rotation.z = 0.03;
+                fg.add(cyanRight);
+                const cyanBottom = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.12, 0.12), blueSoft);
+                cyanBottom.position.set(0, 2.98, z + 0.12);
+                fg.add(cyanBottom);
+                // 前部標識灯高さから側面ラインへつながる左右コーナー。
+                [-1, 1].forEach(side=>{
+                    const corner = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.34), blueSoft);
+                    corner.position.set(side*(W/2-0.10), 2.98, z + 0.18);
+                    fg.add(corner);
+                });
+
+                // Destination display panel on the black front.
+                const destPanel = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.40, 0.10), black);
+                destPanel.position.set(0.72, 4.57, z + 0.18);
+                fg.add(destPanel);
+                const destCanvas = document.createElement('canvas');
+                destCanvas.width = 384; destCanvas.height = 80;
+                const destTex = new THREE.CanvasTexture(destCanvas);
+                if (!reverse) { destCanvasFront = destCanvas; destTexFront = destTex; }
+                else { destCanvasRear = destCanvas; destTexRear = destTex; }
+                const destSign = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.30), new THREE.MeshBasicMaterial({ map: destTex }));
+                destSign.position.set(0.72, 4.57, z + 0.24);
+                fg.add(destSign);
+
+                // Headlamps placed immediately above the cyan lower line.
+                const lampHousing = new THREE.MeshStandardMaterial({ color: 0x0b1015, metalness: 0.5, roughness: 0.24 });
+                const lampWhite = new THREE.MeshStandardMaterial({ color: 0xfffff4, emissive: 0xffffcc, emissiveIntensity: 0.95 });
+                [-1.03, 1.03].forEach(x => {
+                    const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.10, 24), lampHousing);
+                    housing.rotation.x = Math.PI / 2;
+                    housing.position.set(x, 2.99, z + 0.14);
+                    fg.add(housing);
+                    const lamp = new THREE.Mesh(new THREE.CircleGeometry(0.085, 24), lampWhite);
+                    lamp.position.set(x, 2.99, z + 0.205);
+                    fg.add(lamp);
+                });
+
+                // Number plate.
+                const numCanvas = document.createElement('canvas');
+                numCanvas.width = 128; numCanvas.height = 32;
+                const nctx = numCanvas.getContext('2d');
+                nctx.clearRect(0, 0, 128, 32);
+                nctx.fillStyle = '#e8edf0';
+                nctx.font = 'bold 22px sans-serif';
+                nctx.fillText('15001', 15, 24);
+                const numMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.82, 0.20), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(numCanvas), transparent: true }));
+                numMesh.position.set(0.12, 2.97, z + 0.16);
+                fg.add(numMesh);
+
+                // Raised front aero / skirt. It stays above rail level and does not overlap the running rail.
+                const aeroShape = new THREE.Shape();
+                aeroShape.moveTo(-1.30, 0.08);
+                aeroShape.lineTo(1.30, 0.08);
+                aeroShape.lineTo(1.04, 0.48);
+                aeroShape.lineTo(0.72, 0.68);
+                aeroShape.lineTo(0.38, 0.78);
+                aeroShape.lineTo(-0.38, 0.78);
+                aeroShape.lineTo(-0.72, 0.68);
+                aeroShape.lineTo(-1.04, 0.48);
+                aeroShape.closePath();
+                const aeroGeo = new THREE.ExtrudeGeometry(aeroShape, { depth: 0.34, bevelEnabled: true, bevelSegments: 4, bevelSize: 0.05, bevelThickness: 0.04 });
+                aeroGeo.translate(0, 2.06, z + 0.16);
+                const aero = new THREE.Mesh(aeroGeo, silverEdge);
+                fg.add(aero);
+
+                // Coupler remains centered and visually above the rail head.
+                const coupler = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.27, 0.36), couplerMat);
+                coupler.position.set(0, 2.08, z + 0.36);
+                fg.add(coupler);
+
+                if (reverse) fg.rotation.y = Math.PI;
+                return fg;
+            }
+
+            function buildCar() {
+                const car = new THREE.Group();
+                const shape = new THREE.Shape();
+                const hw = W / 2;
+                shape.moveTo(-hw, BODY_BOTTOM);
+                shape.lineTo(hw, BODY_BOTTOM);
+                shape.lineTo(hw, BODY_TOP - 0.38);
+                shape.quadraticCurveTo(hw, BODY_TOP, hw - 0.34, BODY_TOP);
+                shape.lineTo(-hw + 0.34, BODY_TOP);
+                shape.quadraticCurveTo(-hw, BODY_TOP, -hw, BODY_TOP - 0.38);
+                shape.closePath();
+                const bodyGeo = new THREE.ExtrudeGeometry(shape, { depth: L, bevelEnabled: true, bevelSegments: 6, bevelSize: 0.11, bevelThickness: 0.11, curveSegments: 8 });
+                bodyGeo.translate(0, 0, -L / 2);
+                const body = new THREE.Mesh(bodyGeo, silver);
+                body.castShadow = true;
+                body.receiveShadow = true;
+                car.add(body);
+
+                // Side black window band. Large enough to read as a real metro car at distance.
+                const sideBand = new THREE.Mesh(new THREE.BoxGeometry(W + 0.02, 1.56, L - 0.20), black);
+                sideBand.position.set(0, 3.72, 0);
+                car.add(sideBand);
+
+                // Individual dark windows and silver mullions over the band.
+                const windowZs = [-7.15, -5.05, -2.82, -0.58, 1.66, 3.88, 6.10];
+                windowZs.forEach(zp => [-1, 1].forEach(side => {
+                    const win = new THREE.Mesh(new THREE.BoxGeometry(0.105, 1.30, 1.60), glass);
+                    win.position.set(side * (W / 2 + 0.075), 3.72, zp);
+                    car.add(win);
+                    const frameLeft = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.40, 0.07), silverEdge);
+                    frameLeft.position.set(side * (W / 2 + 0.115), 3.72, zp - 0.86);
+                    car.add(frameLeft);
+                    const frameRight = frameLeft.clone();
+                    frameRight.position.z = zp + 0.86;
+                    car.add(frameRight);
+                }));
+
+                // Doors with black upper windows.
+                [-6.72, -2.24, 2.24, 6.72].forEach(zp => [-1, 1].forEach(side => {
+                    const door = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.98, 1.82), silverEdge);
+                    door.position.set(side * (W / 2 + 0.04), 3.43, zp);
+                    car.add(door);
+                    const doorGlass = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.94, 1.20), glass);
+                    doorGlass.position.set(side * (W / 2 + 0.105), 3.75, zp);
+                    car.add(doorGlass);
+                    const doorSplit = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.96, 0.065), silverEdge);
+                    doorSplit.position.set(side * (W / 2 + 0.115), 3.75, zp);
+                    car.add(doorSplit);
+                }));
+
+                // Side cyan lines: true side-surface strips. The upper strip sits directly under the black windows.
+                [-1, 1].forEach(side => {
+                    const lowerStripe = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.17, L - 0.14), blue);
+                    lowerStripe.position.set(side * (W / 2 + 0.065), 2.54, 0);
+                    car.add(lowerStripe);
+
+                    // Window-bottom cyan line: the window bottom is about y=3.07, so keep a very small gap.
+                    const windowBottomLine = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, L - 0.14), blue);
+                    windowBottomLine.position.set(side * (W / 2 + 0.07), 2.98, 0);
+                    car.add(windowBottomLine);
+
+                    const roofLine = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.12, L - 0.25), blue);
+                    roofLine.position.set(side * (W / 2 + 0.05), 5.03, 0);
+                    car.add(roofLine);
+                });
+
+                // Lower silver skirt and visible underframe.
+                const skirt = new THREE.Mesh(new THREE.BoxGeometry(W + 0.06, 0.38, L - 0.42), silverEdge);
+                skirt.position.set(0, 2.33, 0);
+                car.add(skirt);
+                const underframe = new THREE.Mesh(new THREE.BoxGeometry(2.30, 0.22, L - 1.6), rubber);
+                underframe.position.set(0, 2.03, 0);
+                car.add(underframe);
+
+                // Roof and rooftop equipment.
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(1.98, 0.25, L - 1.0), roofMat);
+                roof.position.y = ROOF_Y;
+                car.add(roof);
+                const roofCenter = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.12, L - 2.0), new THREE.MeshStandardMaterial({ color: 0x5a636a, metalness: 0.68, roughness: 0.34 }));
+                roofCenter.position.set(0, ROOF_Y + 0.17, 0);
+                car.add(roofCenter);
+
+                // Bogies and four visible wheels per car. Wheel bottoms sit at the rail head level.
+                [-6.05, 6.05].forEach(zp => {
+                    const bogie = new THREE.Mesh(new THREE.BoxGeometry(2.16, 0.30, 2.72), black);
+                    bogie.position.set(0, BOGIE_Y, zp);
+                    car.add(bogie);
+                    [-0.82, 0.82].forEach(wx => [ -0.92, 0.92 ].forEach(wz => {
+                        const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.52, 16), couplerMat);
+                        axle.rotation.z = Math.PI / 2;
+                        axle.position.set(wx, WHEEL_Y, zp + wz);
+                        car.add(axle);
+                        const wheel = new THREE.Mesh(new THREE.CylinderGeometry(WHEEL_R, WHEEL_R, 0.19, 28), wheelMat);
+                        wheel.rotation.z = Math.PI / 2;
+                        wheel.position.set(wx, WHEEL_Y, zp + wz);
+                        car.add(wheel);
+                    }));
+                });
+
+                return car;
+            }
+
+            for (let c = 0; c < numCars; c++) {
+                const car = buildCar();
+                car.position.z = -c * (L + 0.32);
+                trainGroup.add(car);
+                if (c === 0) trainGroup.add(addFront(car, L / 2, false));
+                if (c === numCars - 1) trainGroup.add(addFront(car, -L / 2, true));
+
+                if (c === 1 || c === 3) {
+                    const pant = new THREE.Group();
+                    const pm = new THREE.MeshStandardMaterial({ color: 0x747d83, metalness: 0.92, roughness: 0.26 });
+                    const base = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.12, 1.46), pm);
+                    base.position.y = ROOF_Y + 0.06;
+                    const a = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.38, 0.06), pm);
+                    a.rotation.z = 0.48; a.position.set(-0.42, ROOF_Y + 0.60, 0);
+                    const b = a.clone(); b.rotation.z = -0.48; b.position.x = 0.42;
+                    const shoe = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.06, 0.13), pm);
+                    shoe.position.y = ROOF_Y + 1.22;
+                    pant.add(base, a, b, shoe);
+                    car.add(pant);
+                }
+            }
+
+            scene.add(trainGroup);
+            cabViewCamera.position.set(-0.50, 3.88, L / 2 - 0.18);
+            cabViewCamera.rotation.set(0, Math.PI, 0);
+            trainGroup.add(cabViewCamera);
+        }
+
+        function placeHintBubble(id, anchorId, yGap = 8) {
+            const bubble = document.getElementById(id);
+            const anchor = document.getElementById(anchorId);
+            if (!bubble || !anchor) return;
+
+            bubble.classList.remove('hidden');
+            bubble.style.transform = 'none';
+            bubble.style.left = '0px';
+            bubble.style.top = '0px';
+
+            const r = anchor.getBoundingClientRect();
+            const viewportW = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+            const viewportH = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+            const br = bubble.getBoundingClientRect();
+            const margin = 10;
+
+            // Always keep the entire bubble inside the actual viewport.
+            let left = r.left + r.width / 2 - br.width / 2;
+            left = Math.max(margin, Math.min(left, viewportW - br.width - margin));
+
+            let top = r.top - br.height - yGap;
+            if (top < margin) top = r.bottom + yGap;
+            if (top + br.height > viewportH - margin) top = Math.max(margin, viewportH - br.height - margin);
+
+            bubble.style.left = Math.round(left) + 'px';
+            bubble.style.top = Math.round(top) + 'px';
+        }
+
+        function setTutorialHintsEnabled(enabled) {
+            tutorialHintsEnabled = !!enabled;
+            if (!tutorialHintsEnabled) {
+                if (tutorialBubbleTimer) { clearTimeout(tutorialBubbleTimer); tutorialBubbleTimer = null; }
+                tutorialBubbleKey = null;
+                hideAllTutorialBubbles();
+                return;
+            }
+            if (gameStarted) {
+                tutorialBubbleKey = null;
+                updateTutorialBubbles();
+            }
+        }
+
+        function hideAllTutorialBubbles() {
+            ['bubble-camera','bubble-horn','bubble-door','bubble-accel','bubble-brake'].forEach(id=>{
+                const el=document.getElementById(id);
+                if(el){ el.classList.add('hidden'); el.style.display='none'; }
+            });
+        }
+
+        function showTutorialBubbleForThreeSeconds(id, anchor, text) {
+            const bubble=document.getElementById(id);
+            if(!bubble) return;
+            bubble.innerText=text;
+            bubble.classList.remove('hidden');
+            bubble.style.display='block';
+            bubble.style.position='fixed';
+            bubble.style.zIndex='1000';
+            placeHintBubble(id, anchor, 10);
+            if (tutorialBubbleTimer) clearTimeout(tutorialBubbleTimer);
+            tutorialBubbleTimer=setTimeout(()=>{
+                const current=document.getElementById(id);
+                if(current){ current.classList.add('hidden'); current.style.display='none'; }
+                tutorialBubbleTimer=null;
+            },3000);
+        }
+
+        function updateTutorialBubbles() {
+            // 結果モーダル表示中はヒントを一切出さない。
+            if (gameState === STATE.FINISHED) { hideAllTutorialBubbles(); tutorialBubbleKey=null; return; }
+
+            const ids = ['bubble-camera','bubble-horn','bubble-door','bubble-accel','bubble-brake'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.parentElement !== document.body) document.body.appendChild(el);
+                if (el) {
+                    el.style.position = 'fixed';
+                    el.style.zIndex = '1000';
+                }
+            });
+
+            // チュートリアルヒントは3Dゲーム開始後だけ表示する。
+            if (!gameStarted || !tutorialHintsEnabled) { hideAllTutorialBubbles(); return; }
+
+            // ATC速度超過中は「加速して」を完全禁止し、必ず「減速して」。
+            if(atcOverspeedActive){
+                const key='atc-brake';
+                if(tutorialBubbleKey!==key){
+                    hideAllTutorialBubbles();
+                    tutorialBubbleKey=key;
+                    showTutorialBubbleForThreeSeconds('bubble-brake','btn-brake','🗨️ 減速して');
+                }
+                return;
+            }
+
+            let id = null, anchor = null, text = '';
+            if (tutorialStep === 0) { id='bubble-camera'; anchor='btn-camera'; text='🗨️ 目視確認'; }
+            else if (tutorialStep === 1) { id='bubble-horn'; anchor='btn-horn'; text='🗨️ 鳴らして'; }
+            else if (tutorialStep === 2) { id='bubble-door'; anchor='btn-door'; text='🗨️ 閉めて'; }
+            else if (tutorialStep === 3 || tutorialStep === 3.5) { id='bubble-accel'; anchor='btn-accel'; text='🗨️ 加速して'; }
+            else if (tutorialStep === 4 || tutorialStep === 4.5) { id='bubble-brake'; anchor='btn-brake'; text='🗨️ 減速して'; }
+            else if (tutorialStep === 5) { id='bubble-door'; anchor='btn-door'; text='🗨️ 開けて'; }
+            else { hideAllTutorialBubbles(); tutorialBubbleKey=null; return; }
+
+            // 同じヒントを毎フレーム再表示しない。表示から3秒後に消える。
+            const key=String(tutorialStep)+'|'+id;
+            if(tutorialBubbleKey===key) return;
+            tutorialBubbleKey=key;
+            hideAllTutorialBubbles();
+            showTutorialBubbleForThreeSeconds(id,anchor,text);
+        }
+
+        function clearMidpointTour() {
+            midpointTourTimers.forEach(t=>clearTimeout(t));
+            midpointTourTimers=[];
+            midpointTourActive=false;
+            const overlay=document.getElementById('midpoint-camera-overlay');
+            if(overlay) overlay.classList.remove('show');
+        }
+
+        function startMidpointCameraTour() {
+            if (midpointTourActive || gameState !== STATE.DRIVING || !gameStarted) return;
+            midpointTourActive=true;
+            midpointReturnCameraMode=cameraMode;
+            midpointReturnYawOffset=cameraYawOffset;
+            midpointReturnYawTarget=cameraYawTarget;
+
+            const overlay=document.getElementById('midpoint-camera-overlay');
+            if(overlay) overlay.classList.add('show');
+
+            const setTourView=(mode)=>{
+                cameraMode=mode;
+                cameraYawOffset=0;
+                cameraYawTarget=0;
+                updateCameras();
+            };
+
+            // 中間地点で前方外観へ切替、3秒後に側面、さらに3秒後に元の画面へ戻す。
+            setTourView(1);
+            midpointTourTimers.push(setTimeout(()=>setTourView(2),3000));
+            midpointTourTimers.push(setTimeout(()=>{
+                cameraMode=midpointReturnCameraMode;
+                cameraYawOffset=midpointReturnYawOffset;
+                cameraYawTarget=midpointReturnYawTarget;
+                updateCameras();
+                midpointTourActive=false;
+                if(overlay) overlay.classList.remove('show');
+                midpointTourTimers=[];
+            },6000));
+        }
+
+        function setupStage(stageNum) {
+            currentStage = stageNum;
+            gameState = STATE.BOARDING;
+            speedKmh = 0;
+            accelMss = 0;
+            currentNotch = 0;
+            doorsOpen = true;
+            speedLimitViolations = 0;
+            emergencyBrakeCount = 0;
+            elapsedTimeSec = 0;
+            stageStartTime = Date.now();
+            clearMidpointTour();
+            cameraYawOffset = 0;
+            cameraYawTarget = 0;
+            atcOverspeedActive=false;
+            atcEmergencyBrakeActive=false;
+            atcGuidance45Shown=false;
+            atcGuidance25Shown=false;
+            atcEarly25Shown=false;
+            atcAdviceUntil=0;
+            clearTimeout(atcAdviceTimer);
+            document.getElementById('atc-warning')?.classList.add('hidden');
+            document.getElementById('atc-warning-advice')?.classList.add('hidden');
+            document.getElementById('atc-warning-advice')?.classList.remove('atc-advice-blink');
+            document.getElementById('atc-advice-note')?.classList.remove('active','atc-advice-blink');
+            document.getElementById('atc-speed-arrow')?.classList.remove('active','atc-arrow-blink');
+
+            let trainX = TRACK_X_RIGHT;
+
+            if (stageNum === 1) {
+                direction = 1;
+                trainZ = NISHI_KASAI_Z;
+                targetStopZ = KASAI_Z;
+                trainX = TRACK_X_RIGHT;
+                trainGroup.rotation.y = 0;
+                document.getElementById('header-stage-title').innerText = EDO_TITLE;
+                updateDestinationDisplay(EDO_TO);
+                tutorialStep = tutorialHintsEnabled ? 0 : -1;
+            } else {
+                direction = -1;
+                trainZ = KASAI_Z;
+                targetStopZ = NISHI_KASAI_Z;
+                trainX = TRACK_X_LEFT;
+                trainGroup.rotation.y = Math.PI;
+                document.getElementById('header-stage-title').innerText = ROUTE.line + ' ' + EDO_TO + ' ➔ ' + EDO_FROM;
+                updateDestinationDisplay(EDO_FROM);
+                tutorialStep = tutorialHintsEnabled ? 0 : -1;
+            }
+
+            trainGroup.position.set(trainX, 0, trainZ);
+            stageStartZ = trainZ;
+            stageMidpointZ = (stageStartZ + targetStopZ) / 2;
+            stageMidpointTriggered = false;
+
+            updateMasconLeverUI();
+            updateDoorLightUI();
+            updateHUD();
+            updateCameras();
+            updateTutorialBubbles();
+            document.getElementById('short-stop-alert').classList.add('hidden');
+        }
+
+        function adjustNotch(delta) {
+            // During the approach tutorial, one tap on ▲ must reliably resume acceleration
+            // even when the lever is still in a braking notch after the player stopped early.
+            if (delta > 0 && tutorialStep === 4 && currentNotch < 1) {
+                setNotch(1);
+            } else {
+                setNotch(currentNotch + delta);
+            }
+
+            if (delta > 0 && tutorialStep === 3) {
+                tutorialStep = 3.5;
+                updateTutorialBubbles();
+            }
+            if (delta < 0 && tutorialStep === 4) {
+                tutorialStep = 4.5;
+                updateTutorialBubbles();
+            }
+        }
+
+        function setNotch(notch) {
+            if (gameState === STATE.FINISHED) return;
+
+            notch = Math.max(-9, Math.min(5, notch));
+            if (notch > 0 && doorsOpen) notch = 0;
+
+            const previousNotch=currentNotch;
+            if (notch === -9 && currentNotch !== -9 && !atcEmergencyBrakeActive) emergencyBrakeCount++;
+            currentNotch=notch;
+            updateMasconLeverUI();
+            if(currentNotch===5 && gameState === STATE.DRIVING){
+                document.getElementById('bubble-accel')?.classList.add('hidden');
+                document.getElementById('bubble-accel')?.style && (document.getElementById('bubble-accel').style.display='none');
+                showATCAdvice(3000);
+                updateTutorialBubbles();
+            }
+            if(previousNotch===5 && currentNotch!==5) document.getElementById('bubble-accel')?.classList.add('hidden');
+        }
+
+        function showATCAdvice(durationMs){
+            const note=document.getElementById('atc-advice-note');
+            const arrow=document.getElementById('atc-speed-arrow');
+            const warningAdvice=document.getElementById('atc-warning-advice');
+            document.getElementById('bubble-accel')?.classList.add('hidden');
+            note?.classList.add('active','atc-advice-blink');
+            arrow?.classList.add('active','atc-arrow-blink');
+            warningAdvice?.classList.remove('hidden');
+            warningAdvice?.classList.add('atc-advice-blink');
+            atcAdviceUntil=Date.now()+durationMs;
+            clearTimeout(atcAdviceTimer);
+            atcAdviceTimer=setTimeout(()=>{
+                if(Date.now()>=atcAdviceUntil){
+                    note?.classList.remove('active','atc-advice-blink');
+                    arrow?.classList.remove('active','atc-arrow-blink');
+                    warningAdvice?.classList.add('hidden');
+                    warningAdvice?.classList.remove('atc-advice-blink');
+                }
+            },durationMs+40);
+        }
+
+        function updateMasconLeverUI() {
+            const badge = document.getElementById('notch-badge-display');
+            const lever = document.getElementById('mascon-lever-arm');
+
+            if (!badge || !lever) return;
+
+            if (currentNotch > 0) {
+                badge.innerText = `P${currentNotch} (力行)`;
+                badge.className = "px-2 py-0.5 rounded-md bg-sky-500 text-white font-black text-[10px] sm:text-xs font-digits glow-cyan border border-sky-200";
+            } else if (currentNotch === 0) {
+                badge.innerText = "N (切)";
+                badge.className = "px-2 py-0.5 rounded-md bg-yellow-500 text-gray-950 font-black text-[10px] sm:text-xs font-digits glow-gold border border-yellow-200";
+            } else if (currentNotch > -9) {
+                badge.innerText = `B${Math.abs(currentNotch)} (制動)`;
+                badge.className = "px-2 py-0.5 rounded-md bg-red-600 text-white font-black text-[10px] sm:text-xs font-digits glow-red border border-red-300";
+            } else {
+                badge.innerText = "EB (非常)";
+                badge.className = "px-2 py-0.5 rounded-md bg-red-700 text-white font-black text-[10px] sm:text-xs font-digits glow-red border border-yellow-300 animate-pulse-fast";
+            }
+
+            let yOffset = 0;
+            if (currentNotch > 0) {
+                yOffset = - (currentNotch / 5) * 28;
+            } else if (currentNotch < 0) {
+                yOffset = (Math.abs(currentNotch) / 9) * 28;
+            }
+            lever.style.transform = `translateY(${yOffset}px)`;
+        }
+
+        function cycleNotchClick(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickY = e.clientY - rect.top;
+            const halfHeight = rect.height / 2;
+
+            if (clickY < halfHeight) {
+                adjustNotch(1);
+            } else {
+                adjustNotch(-1);
+            }
+        }
+
+        function getSignedStopErrorMeters() {
+            // 正の値 = 停車位置を越えた量、負の値 = 手前で止まった量。
+            return (trainZ - targetStopZ) * direction;
+        }
+
+        function isWithinArrivalTolerance(signedErrorMeters) {
+            return signedErrorMeters >= 0
+                ? signedErrorMeters <= STOP_OVERRUN_TOLERANCE_M
+                : Math.abs(signedErrorMeters) <= STOP_SHORT_TOLERANCE_M;
+        }
+
+        function toggleDoors() {
+            if (speedKmh > 0.5) return;
+            doorsOpen = !doorsOpen;
+            soundEngine.playDoorChime();
+            updateDoorLightUI();
+
+            if (!doorsOpen && tutorialStep === 2) {
+                tutorialStep = 3;
+                updateTutorialBubbles();
+            } else if (doorsOpen) {
+                const signedError = getSignedStopErrorMeters();
+                if (isWithinArrivalTolerance(signedError)) {
+                    tutorialStep = -1;
+                    updateTutorialBubbles();
+                    onArrivalAtStation(signedError);
+                }
+            }
+        }
+
+        function updateDoorLightUI() {
+            const light = document.getElementById('door-light');
+            const btnText = document.getElementById('btn-door-text');
+            const caption = document.getElementById('door-state-caption');
+            if (btnText) btnText.innerText = "扉状態";
+            if (!light) return;
+            light.classList.toggle('is-open', !!doorsOpen);
+            light.classList.toggle('is-closed', !doorsOpen);
+            if (caption) caption.innerText = doorsOpen ? '開いて\nます' : '閉じて\nます';
+        }
+
+        function playHorn() {
+            soundEngine.playHorn();
+
+            if (tutorialStep === 1) {
+                tutorialStep = 2;
+                updateTutorialBubbles();
+            }
+        }
+
+        function cycleCameraView() {
+            // A camera-button tap always returns the selected view to its default framing.
+            cameraYawOffset = 0;
+            cameraYawTarget = 0;
+            cameraMode = (cameraMode + 1) % 3;
+            updateCameras();
+
+            if (tutorialHintsEnabled && tutorialStep === 0) {
+                tutorialStep = 1;
+                updateTutorialBubbles();
+            }
+        }
+
+        function updateCameras() {
+            if (!trainGroup) return;
+            const carLength = 19.5;
+            const trainPos = trainGroup.position;
+            const yaw = cameraYawOffset;
+            const setUI = () => {
+                const frame=document.getElementById('cockpit-frame'); if(frame) frame.style.opacity=cameraMode===0?'1':'0';
+                const txt=document.getElementById('camera-btn-text'); if(txt) txt.innerText='🎥';
+            };
+            if (cameraMode !== 2) stationSideOccluders.forEach(o => { if(o) o.visible = true; });
+            if (cameraMode === 0) {
+                camera = cabViewCamera; setUI();
+                cabViewCamera.position.set(-0.55,3.65,carLength/2-0.1);
+                cabViewCamera.rotation.set(0,Math.PI+yaw,0);
+            } else if (cameraMode === 1) {
+                camera = frontExtCamera; setUI();
+                // 前方外観のデフォルトは、電車の前方から10°斜めに入り、
+                // 電車の背後に駅ホームが見える側から撮影する。
+                // Stage 1(+Z進行)は電車の左前方(-X,+Z)、Stage 2(-Z進行)は右前方(+X,-Z)。
+                // これにより駅外壁側ではなく、ホームを背景にした列車の斜め前方撮影になる。
+                const radius=26;
+                const sideForPlatform = direction === 1 ? -1 : 1;
+                const thetaOffset = cameraYawOffset;
+                const offsetX = sideForPlatform * Math.sin(FRONT_DEFAULT_ANGLE + thetaOffset) * radius;
+                const offsetZ = direction * Math.cos(FRONT_DEFAULT_ANGLE + thetaOffset) * radius;
+                frontExtCamera.position.set(trainPos.x + offsetX, 4.8, trainPos.z + offsetZ);
+                frontExtCamera.lookAt(trainPos.x,3.05,trainPos.z);
+            } else {
+                camera = sideCamera; setUI();
+                const sideHeading = (trainPos.x >= 0 ? Math.PI/2 : -Math.PI/2);
+                const theta = sideHeading + yaw;
+                const radius = 58;
+                sideCamera.position.set(trainPos.x+Math.sin(theta)*radius,4.6,trainPos.z+Math.cos(theta)*radius);
+                sideCamera.lookAt(trainPos.x,3.0,trainPos.z);
+                // A true distant side shot must not be hidden by the platform's opaque side barriers.
+                const hide = currentStage && Math.abs(trainPos.z-(currentStage===1?NISHI_KASAI_Z:KASAI_Z)) < 90;
+                stationSideOccluders.forEach(o => { if(o) o.visible = !hide; });
+            }
+        }
+
+        function updatePhysics(delta) {
+            if (gameState === STATE.FINISHED) return;
+
+            elapsedTimeSec = Math.floor((Date.now() - stageStartTime) / 1000);
+            const distToTarget = Math.abs(targetStopZ - trainZ);
+
+            // 駅間の中間地点で自動視点ツアーを1回だけ実行。
+            const passedMidpoint = direction === 1
+                ? trainZ >= stageMidpointZ
+                : trainZ <= stageMidpointZ;
+            if (!stageMidpointTriggered && passedMidpoint && gameState === STATE.DRIVING) {
+                stageMidpointTriggered = true;
+                startMidpointCameraTour();
+            }
+
+            // ATC Speed Limit Rules (Multi-stage ATC)
+            // The limit changes at exactly 300m and 150m before the stopping line.
+            if (distToTarget < 150) {
+                atcSpeedLimit = 25;
+            } else if (distToTarget < 300) {
+                atcSpeedLimit = 45;
+            } else {
+                atcSpeedLimit = ROUTE.atc || 75;
+            }
+
+            // Make the actual ATC change points visible to beginners.
+            if (tutorialHintsEnabled && gameStarted && !atcGuidance45Shown && distToTarget <= 300 && distToTarget > 150 && gameState === STATE.DRIVING) {
+                atcGuidance45Shown=true;
+                tutorialBubbleKey='atc-45';
+                hideAllTutorialBubbles();
+                showTutorialBubbleForThreeSeconds('bubble-brake','btn-brake','🗨️ 減速して　ATC 45 km/h');
+            }
+            if (tutorialHintsEnabled && gameStarted && !atcGuidance25Shown && distToTarget <= 150 && gameState === STATE.DRIVING) {
+                atcGuidance25Shown=true;
+                tutorialBubbleKey='atc-25';
+                hideAllTutorialBubbles();
+                showTutorialBubbleForThreeSeconds('bubble-brake','btn-brake','🗨️ 減速して　ATC 25 km/h');
+            }
+
+            // 減速ヒントはATC制限変更点より十分手前で出す。
+            // 変更点の直前では速度が落ち切らずEBになりやすいため、
+            // 45km/h制限の約600m手前、25km/h制限の約400m手前を
+            // 初心者が減速を開始する予告地点とする。
+            if (tutorialHintsEnabled && gameStarted && gameState === STATE.DRIVING && !atcOverspeedActive) {
+                if ((tutorialStep === 3 || tutorialStep === 3.5) && distToTarget <= 600 && distToTarget > 300 && speedKmh > 15) {
+                    tutorialStep = 4;
+                    tutorialBubbleKey = null;
+                    hideAllTutorialBubbles();
+                    showTutorialBubbleForThreeSeconds('bubble-brake','btn-brake','🗨️ 減速して');
+                }
+            }
+
+            // 25km/h制限に備える二段目の予告。ここでも制限変更地点より十分前に案内する。
+            if (tutorialHintsEnabled && gameStarted && gameState === STATE.DRIVING && !atcOverspeedActive && !atcEarly25Shown &&
+                tutorialStep >= 4 && distToTarget <= 400 && distToTarget > 150 && speedKmh > 15) {
+                atcEarly25Shown = true;
+                tutorialBubbleKey = 'atc-25-early';
+                hideAllTutorialBubbles();
+                showTutorialBubbleForThreeSeconds('bubble-brake','btn-brake','🗨️ 減速して');
+            }
+            // Once the train is in the station approach, show a clear stop hint.
+            if (currentStage === 1 && tutorialStep >= 3 && tutorialStep < 5 && distToTarget < 25 && speedKmh < 8) {
+                const bb=document.getElementById('bubble-brake');
+                if(bb){ bb.innerText='🗨️ 停車位置で減速'; placeHintBubble('bubble-brake','btn-brake'); }
+            }
+            if (currentStage === 1 && speedKmh < 0.2 && distToTarget >= 15 && distToTarget < 300 && gameState === STATE.DRIVING && !doorsOpen) {
+                // If the train stopped short, the only useful next action is acceleration.
+                tutorialStep = 3.5;
+                const ba=document.getElementById('bubble-accel');
+                if(ba){ ba.innerText='🗨️ 加速して'; placeHintBubble('bubble-accel','btn-accel'); }
+                const bb=document.getElementById('bubble-brake');
+                if(bb) bb.classList.add('hidden');
+            }
+
+            // Premature Short-stop Protection & Guidance Alert
+            const shortStopBanner = document.getElementById('short-stop-alert');
+            if (speedKmh < 0.2 && distToTarget > 15.0 && gameState === STATE.DRIVING && !doorsOpen) {
+                shortStopBanner.classList.remove('hidden');
+                document.getElementById('short-stop-msg').innerText = `⚠️ 駅手前 (${distToTarget.toFixed(1)}m) で停止しました！加速[▲]して進んでください`;
+                if (tutorialHintsEnabled && tutorialStep === 4 && !atcOverspeedActive) {
+                    document.getElementById('bubble-accel')?.classList.remove('hidden');
+                }
+            } else {
+                shortStopBanner.classList.add('hidden');
+            }
+
+            const overspeedNow=speedKmh>atcSpeedLimit+1.0;
+            if(overspeedNow){
+                if(!atcOverspeedActive){
+                    soundEngine.playATCBeep();
+                    speedLimitViolations++;
+                    showATCAdvice(3000);
+                }
+                atcOverspeedActive=true;
+                atcEmergencyBrakeActive=true;
+                document.getElementById('atc-warning').classList.remove('hidden');
+                document.getElementById('bubble-accel')?.classList.add('hidden');
+                const brake=document.getElementById('bubble-brake');
+                if(brake){
+                    brake.innerText='🗨️ 減速して';
+                    brake.classList.remove('hidden');
+                    brake.style.display='block';
+                    placeHintBubble('bubble-brake','btn-brake',10);
+                }
+                tutorialStep=4;
+                // ATCの自動非常ブレーキ作動中は、表示も必ずEBに同期。
+                if(currentNotch!==-9){
+                    currentNotch=-9;
+                    updateMasconLeverUI();
+                }
+            } else {
+                atcOverspeedActive=false;
+                atcEmergencyBrakeActive=false;
+                document.getElementById('atc-warning').classList.add('hidden');
+            }
+
+            if (currentNotch > 0) {
+                const maxAccel = 0.55 + currentNotch * 0.12;
+                accelMss = maxAccel * Math.max(0, (1 - speedKmh / 90));
+            } else if (currentNotch < 0) {
+                if (currentNotch === -9) {
+                    accelMss = -1.45;
+                } else {
+                    accelMss = currentNotch * 0.14;
+                }
+            } else {
+                accelMss = -0.018 - (speedKmh * 0.0003);
+            }
+
+            let speedMs = (speedKmh / 3.6) + accelMss * delta;
+            if (speedMs < 0) speedMs = 0;
+            speedKmh = speedMs * 3.6;
+
+            const prevTrainZ = trainZ;
+            const moveDelta = speedMs * delta * direction;
+            trainZ += moveDelta;
+            trainGroup.position.z = trainZ;
+
+            trainGroup.position.x = direction === 1 ? TRACK_X_RIGHT : TRACK_X_LEFT;
+
+            soundEngine.updateTrainSound(speedKmh, currentNotch);
+
+            const signedStopError = getSignedStopErrorMeters();
+
+            // stop lineを越えただけでは終了しない。
+            // 約1両分を越えたところで、実際のオーバーラン量を表示して終了する。
+            if (gameState === STATE.DRIVING && signedStopError > STOP_FORCE_OVERRUN_M) {
+                speedKmh = 0;
+                currentNotch = 0;
+                updateMasconLeverUI();
+                onArrivalAtStation(signedStopError);
+                return;
+            }
+
+            // 到着判定。手前15mまで、オーバーラン側は25mまで許容する。
+            // 誤差は実測値を使い、999mなどのダミー値は使わない。
+            if (speedKmh === 0 && Math.abs(moveDelta) === 0 && gameState === STATE.DRIVING && isWithinArrivalTolerance(signedStopError)) {
+                if (doorsOpen) {
+                    onArrivalAtStation(signedStopError);
+                } else {
+                    tutorialStep = tutorialHintsEnabled ? 5 : -1;
+                    updateTutorialBubbles();
+                }
+            } else if (speedKmh > 0.5) {
+                gameState = STATE.DRIVING;
+            }
+
+            updateHUD();
+        }
+
+        function onArrivalAtStation(stopErrorMeters) {
+            gameState = STATE.FINISHED;
+            hideAllTutorialBubbles();
+            soundEngine.updateTrainSound(0, 0);
+
+            // 評価は「基礎点50点 + 加算点50点」。
+            // 停車位置の採点は、手前/オーバーに関係なく実際の絶対誤差で計算する。
+            const stopErrorAbsMeters = Math.abs(Number(stopErrorMeters) || 0);
+            let rawStopScore = 0;
+            if (stopErrorAbsMeters <= 0.3) rawStopScore = 30;
+            else if (stopErrorAbsMeters <= 0.6) rawStopScore = 28;
+            else if (stopErrorAbsMeters <= 1.2) rawStopScore = 22;
+            else if (stopErrorAbsMeters <= 3.0) rawStopScore = 14;
+            else rawStopScore = 5;
+
+            const timeDiff = Math.abs(elapsedTimeSec - 90);
+            const rawTimeScore = Math.max(0, 25 - timeDiff * 2);
+            const rawSpeedScore = Math.max(0, 20 - speedLimitViolations * 4);
+            const rawDoorScore = 15;
+            const rawComfortScore = Math.max(0, 10 - emergencyBrakeCount * 3);
+
+            // 旧100点満点の内訳を、加算点50点満点へ縮小。
+            // 各項目の最大加算点は 15 + 12 + 10 + 8 + 5 = 50点。
+            const stopScore = Math.round(rawStopScore * 15 / 30);
+            const timeScore = Math.round(rawTimeScore * 12 / 25);
+            const speedScore = Math.round(rawSpeedScore * 10 / 20);
+            const doorScore = Math.round(rawDoorScore * 8 / 15);
+            const comfortScore = Math.round(rawComfortScore * 5 / 10);
+
+            const scoreBonus = Math.min(50, stopScore + timeScore + speedScore + doorScore + comfortScore);
+            const totalScore = Math.min(100, 50 + scoreBonus);
+
+            const scoreData = {
+                // 正: オーバーラン、負: 停車位置手前。表示には実測値を保持する。
+                stopError: Number(stopErrorMeters).toFixed(2),
+                stopScore, timeDiff: timeDiff.toFixed(1), timeScore,
+                speedViolations: speedLimitViolations, speedScore,
+                doorScore, comfortScore, scoreBonus, totalScore
+            };
+
+            if (currentStage === 1) {
+                stage1ScoreData = scoreData;
+                showStageResultModal(1);
+            } else {
+                stage2ScoreData = scoreData;
+                showStageResultModal(2);
+            }
+        }
+
+        function showStageResultModal(stageNum) {
+            hideAllTutorialBubbles();
+            const modal = document.getElementById('result-modal');
+            modal.classList.remove('hidden');
+
+            const scoreData = stageNum === 1 ? stage1ScoreData : stage2ScoreData;
+
+            document.getElementById('result-badge').innerText = stageNum === 1 ? "STAGE 1 葛西駅 到着結果" : "STAGE 2 西葛西駅 到着結果";
+            document.getElementById('modal-score').innerText = scoreData.totalScore;
+
+            const stopErrorValue = Number(scoreData.stopError);
+            const stopErrorAbsText = Math.abs(stopErrorValue).toFixed(2);
+            const stopErrorLabel = stopErrorValue === 0
+                ? '誤差 ±0.00m'
+                : `誤差 ${stopErrorValue > 0 ? '+' : '-'}${stopErrorAbsText}m`;
+            document.getElementById('metric-stop').innerText = `${stopErrorLabel} (+${scoreData.stopScore}点)`;
+            document.getElementById('metric-time').innerText = `誤差 ${scoreData.timeDiff}秒 (+${scoreData.timeScore}点)`;
+            document.getElementById('metric-speed').innerText = scoreData.speedViolations === 0 ? `違反なし (+${scoreData.speedScore}点)` : `超過 ${scoreData.speedViolations}回 (+${scoreData.speedScore}点)`;
+            document.getElementById('metric-door').innerText = `正常完了 (+${scoreData.doorScore}点)`;
+            document.getElementById('metric-comfort').innerText = `急制動 ${emergencyBrakeCount}回 (+${scoreData.comfortScore}点)`;
+
+            const nextBtn = document.getElementById('modal-next-btn');
+            const rankBox = document.getElementById('rank-container');
+
+            if (stageNum === 1) {
+                rankBox.classList.add('hidden');
+                nextBtn.innerText = "復路スタート";
+            } else {
+                rankBox.classList.remove('hidden');
+                const finalScore = stage1ScoreData.totalScore + stage2ScoreData.totalScore;
+                document.getElementById('result-title').innerText = "往復 総合評価発表";
+                document.getElementById('modal-score').innerText = finalScore;
+                document.getElementById('modal-max-score').innerText = "/ 200点";
+
+                let rank = "D";
+                let desc = "安全運転を心がけましょう。";
+                if (finalScore >= 185) { rank = "S"; desc = "完璧な東西線プロ運転士レベルです！"; }
+                else if (finalScore >= 160) { rank = "A"; desc = "素晴らしい操縦技術のベテラン運転士です！"; }
+                else if (finalScore >= 130) { rank = "B"; desc = "安定したグッドライディングです！"; }
+                else if (finalScore >= 100) { rank = "C"; desc = "停止位置精度を磨きましょう。"; }
+
+                document.getElementById('final-rank-text').innerText = `RANK ${rank}`;
+                document.getElementById('final-rank-desc').innerText = desc;
+                nextBtn.innerText = "最初からもう一度プレイ";
+            }
+        }
+
+        function nextStageOrReset() {
+            document.getElementById('result-modal').classList.add('hidden');
+            if (currentStage === 1) {
+                setupStage(2);
+            } else {
+                setupStage(1);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-speed').innerText = Math.round(speedKmh).toString().padStart(2, '0');
+            document.getElementById('hud-atc-limit').innerText = atcSpeedLimit;
+            
+            const dist = Math.abs(targetStopZ - trainZ);
+            document.getElementById('hud-distance').innerText = dist.toFixed(1);
+
+            const mins = Math.floor(elapsedTimeSec / 60).toString().padStart(2, '0');
+            const secs = (elapsedTimeSec % 60).toString().padStart(2, '0');
+            document.getElementById('hud-timer').innerText = `${mins}:${secs}`;
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            const w = container ? (container.clientWidth || window.innerWidth) : window.innerWidth;
+            const h = container ? (container.clientHeight || window.innerHeight) : window.innerHeight;
+            const aspect = w / h;
+            if (cabViewCamera) {
+                cabViewCamera.aspect = aspect;
+                cabViewCamera.updateUpdateMatrix ? cabViewCamera.updateMatrix() : null;
+                cabViewCamera.updateProjectionMatrix();
+            }
+            if (frontExtCamera) {
+                frontExtCamera.aspect = aspect;
+                frontExtCamera.updateProjectionMatrix();
+            }
+            if (sideCamera) {
+                sideCamera.aspect = aspect;
+                sideCamera.updateProjectionMatrix();
+            }
+            if (renderer) {
+                renderer.setSize(w, h);
+            }
+        }
+    </script>
+
+    <!-- MAIN LOOP & EVENT LISTENERS SCRIPT -->
+    <script>
+        let lastTime = performance.now();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const delta = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            updatePhysics(delta);
+            updatePlatformNPCs(delta,now);
+            cameraYawOffset += (cameraYawTarget - cameraYawOffset) * Math.min(1, delta * 10);
+            if (Math.abs(cameraYawTarget-cameraYawOffset) < 0.0005) cameraYawOffset = cameraYawTarget;
+            updateCameras();
+            if (tutorialHintsEnabled && tutorialStep >= 0 && tutorialStep <= 5 && now - lastHintLayoutAt > 180) { lastHintLayoutAt = now; updateTutorialBubbles(); }
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        // Horizontal swipe rotates every camera smoothly up to ±45°. No tutorial hint is used.
+        function applySwipeDelta(dx) {
+            const threshold = 18;
+            if (Math.abs(dx) < threshold) return;
+            const sensitivity = Math.PI / 360;
+            cameraYawTarget += -dx * sensitivity;
+            cameraYawTarget = Math.max(-Math.PI/4, Math.min(Math.PI/4, cameraYawTarget));
+        }
+        const canvasContainer = document.getElementById('canvas-container');
+        if (canvasContainer) {
+            canvasContainer.style.touchAction = 'none';
+            canvasContainer.addEventListener('pointerdown', e => {
+                swipeStartX=e.clientX; swipeStartY=e.clientY;
+            }, {passive:true});
+            canvasContainer.addEventListener('pointermove', e => {
+                if (swipeStartX===null) return;
+                const dx=e.clientX-swipeStartX, dy=e.clientY-swipeStartY;
+                if(Math.abs(dx)>Math.abs(dy)*1.15 && Math.abs(dx)>2){
+                    applySwipeDelta(dx);
+                    swipeStartX=e.clientX;
+                    swipeStartY=e.clientY;
+                }
+            }, {passive:true});
+            canvasContainer.addEventListener('pointerup', () => { swipeStartX=swipeStartY=null; }, {passive:true});
+            canvasContainer.addEventListener('pointercancel', () => { swipeStartX=swipeStartY=null; }, {passive:true});
+        }
+
+        window.addEventListener('resize', () => { updateTutorialBubbles(); });
+
+        // Keyboard Event Handlers
+        window.addEventListener('keydown', (e) => {
+            if (e.repeat) return;
+            switch(e.key.toLowerCase()) {
+                case 'w':
+                case 'arrowup':
+                    adjustNotch(1);
+                    break;
+                case 's':
+                case 'arrowdown':
+                    adjustNotch(-1);
+                    break;
+                case ' ':
+                    setNotch(-9);
+                    break;
+                case 'd':
+                    toggleDoors();
+                    break;
+                case 'c':
+                    cycleCameraView();
+                    break;
+                case 'h':
+                    playHorn();
+                    break;
+            }
+        });
+
+        window.onload = function() {
+            try {
+                init3DWorld();
+                setupStage(1);
+                animate();
+            } catch (err) {
+                console.error("3D Simulator Init Error:", err);
+                show3DError("3D画面の初期化に失敗しました。\n" + (err && err.message ? err.message : err));
+            }
+        };
+    </script>
+
+<script id="edogawa-train-bridge">
+(function(){
+  'use strict';
+  const EMBED = (window.parent !== window);
+  const GAME  = 'train';
+  const hex = n => '#'+Number(n).toString(16).padStart(6,'0');
+
+  // ── 開始画面を路線に合わせる ──
+  function paint(){
+    try{
+      const code=document.getElementById('edo-line-code');
+      if(code){ code.textContent = ROUTE.code; const box=code.parentElement;
+        if(box) box.style.background = hex(ROUTE.band); }
+      const ln=document.getElementById('edo-line-name'); if(ln) ln.textContent = ROUTE.line;
+      const tn=document.getElementById('edo-train-name'); if(tn) tn.textContent = ROUTE.train;
+      const sec=document.getElementById('edo-section');
+      if(sec) sec.textContent = '（' + EDO_FROM + '駅 ➔ ' + EDO_TO + '駅　実距離 約' +
+        (EDO_REAL_M/1000).toFixed(1) + 'km' + (EDO_SHORTENED ? '／体験用に' + (EDO_SIM_M/1000).toFixed(1) + 'kmへ短縮' : '') + '）';
+      const sl=document.getElementById('edo-start-label');
+      if(sl) sl.textContent = '運転開始（' + EDO_FROM + '発 ➔ ' + EDO_TO + '行）';
+      const hl=document.getElementById('hud-atc-limit'); if(hl) hl.textContent = String(ROUTE.atc||75);
+      const ht=document.getElementById('header-stage-title'); if(ht) ht.innerText = EDO_TITLE;
+      document.title = EDO_TITLE;
+    }catch(e){ console.error('[train]', e); }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', paint, {once:true});
+  else paint();
+
+  if (!EMBED) return;   // 単体で開いたときは、これまでどおり往復で遊べます
+
+  // ── 親（江戸川双六）とのやりとり ──
+  let sent = false;
+  function post(type, extra){
+    try{ window.parent.postMessage(Object.assign({type:type, game:GAME}, extra||{}), '*'); }catch(e){}
+  }
+  post('EDOGAWA_MINIGAME_RENDERED', {});
+
+  // 3Dが動かない端末・回線でも、画面が止まったままにならないようにします。
+  // （Three.js を読み込めなかった場合など）
+  (function(){
+    const origErr = window.show3DError;
+    if (typeof origErr === 'function'){
+      window.show3DError = function(msg){
+        try{ origErr(msg); }catch(e){}
+        post('EDOGAWA_MINIGAME_START_FAILED', {detail:String(msg||'')});
+      };
+    }
+    setTimeout(function(){
+      if (typeof window.THREE === 'undefined'){
+        post('EDOGAWA_MINIGAME_START_FAILED', {detail:'3Dライブラリを読み込めませんでした'});
+      }
+    }, 12000);
+  })();
+  // 運転中も「生きている」ことを親に伝えます（見張りタイマー対策）
+  setInterval(()=>post('EDOGAWA_MINIGAME_ALIVE', {}), 4000);
+
+  // 開始の合図を受けたら、開始ボタンを押します（他のミニゲームと同じ仕組み）
+  (function(){
+    let timer=null, tries=0, asked=false;
+    function shown(el){ if(!el) return false; try{ const c=getComputedStyle(el);
+      return c.display!=='none' && c.visibility!=='hidden' && c.opacity!=='0' && !el.classList.contains('hidden'); }catch(e){ return false; } }
+    function attempt(){
+      tries++;
+      const m=document.getElementById('start-modal');
+      if(shown(m)){
+        const bs=[].slice.call(m.querySelectorAll('button')).filter(b=>!b.disabled && shown(b));
+        if(bs.length){ try{ bs[bs.length-1].click(); }catch(e){}
+          window.__EDOGAWA_COMMON_START_SENT=true; if(timer){clearInterval(timer);timer=null;} return true; }
+      }
+      if(tries>60){ if(timer){clearInterval(timer);timer=null;} post('EDOGAWA_MINIGAME_START_FAILED',{}); }
+      return false;
+    }
+    window.addEventListener('message', function(e){
+      const d=e.data||{};
+      if(d.type!=='EDOGAWA_COMMON_MINIGAME_START' && !(d.type==='EDOGAWA_AUTO_START'&&d.auto)) return;
+      if(window.__EDOGAWA_COMMON_START_SENT || asked) return;
+      asked=true; tries=0;
+      if(attempt()) return;
+      timer=setInterval(attempt,200);
+    });
+  })();
+
+  // ── 到着したら、1区間で終わりにして結果を親へ送ります ──
+  const origShow = window.showStageResultModal;
+  if (typeof origShow === 'function'){
+    window.showStageResultModal = function(stageNum){
+      const r = origShow.call(this, stageNum);
+      try{
+        const data = (stageNum===1 ? stage1ScoreData : stage2ScoreData) || {};
+        const score = Math.max(0, Math.min(100, Math.round(Number(data.totalScore)||0)));
+        const prize = score * 100;               // 100点満点 × ¥100 ＝ 最大 ¥10,000
+        const err = Number(data.stopError);
+        const detail = '停止誤差 ' + (isFinite(err) ? (err>0?'+':'') + err.toFixed(2) : '—') + 'm ／ 運転評価 ' + score + '点 × ¥100';
+        const badge=document.getElementById('result-badge');
+        if(badge) badge.innerText = EDO_TO + '駅 到着';
+        const rank=document.getElementById('rank-container'); if(rank) rank.classList.add('hidden');
+        const next=document.getElementById('modal-next-btn');
+        if(next){
+          next.innerText = '江戸川双六へもどる';
+          next.onclick = function(){ post('EDOGAWA_MINIGAME_CLOSE', {}); };
+        }
+        if(!sent){
+          sent = true;
+          post('EDOGAWA_MINIGAME_RESULT', {score:score, delta:prize, prize:prize, reward:prize,
+            success:true, detail:detail, line:EDO_LINE, from:EDO_FROM, to:EDO_TO});
+        }
+      }catch(e){ console.error('[train]', e); }
+      return r;
+    };
+  }
+})();
+</script>
+
+</body>
+</html>

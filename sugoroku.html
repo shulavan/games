@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v75 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v76 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -14643,8 +14643,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   let tries=0;
   const iv=setInterval(()=>{
     tries++;
-    if(app.map && !app.map.__railDone){ app.map.__railDone=true; drawRail(app.map); }
-    if(app.lobbyMap && !app.lobbyMap.__railDone){ app.lobbyMap.__railDone=true; drawRail(app.lobbyMap); }
+    // あとから描き方を差し替えている場合があるので、その時点の描画関数を使います
+    const draw = app._drawRailOn || drawRail;
+    if(app.map && !app.map.__railDone){ app.map.__railDone=true; draw(app.map); }
+    if(app.lobbyMap && !app.lobbyMap.__railDone){ app.lobbyMap.__railDone=true; draw(app.lobbyMap); }
     if(tries>120) clearInterval(iv);
   }, 500);
 
@@ -15504,6 +15506,251 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   window.__EDOGAWA_RAILROUTE_INFO = (a,b) => app.planRailRoute(a,b);
 })();
 </script>
+
+
+<!-- ============================================================================
+     v76: 線路を地図の線路に重ねて、縞々（枕木風）で描く
+     ----------------------------------------------------------------------------
+     これまでは駅と駅を直線で結んでいたため、地図に描かれている実際の線路から
+     ずれていました。ベクター地図（地理院地図Vector）が持っている線路の線を
+     読み取り、その上をたどるように描き直します。
+     読み取れないとき（通常の地図で表示中など）は、これまでどおり直線にします。
+     ============================================================================ -->
+<script id="edogawa-v76">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
+  if(!LINES || !ST || !window.L) return;
+
+  const KEY = 'edogawa_rail_shape_v2';
+  const MAX_AGE = 30*24*3600*1000;      // 30日で取り直します
+
+  function km(a,b){
+    const R=6371, p1=a[0]*Math.PI/180, p2=b[0]*Math.PI/180;
+    const dp=(b[0]-a[0])*Math.PI/180, dl=(b[1]-a[1])*Math.PI/180;
+    const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+    return 2*R*Math.asin(Math.sqrt(x));
+  }
+  const P = (s)=>[s.lat, s.lng];
+
+  // ── 集めたもの ──────────────────────────────────────────
+  const NODES = new Map();     // "lat,lng" -> [lat,lng]
+  const ADJ   = new Map();     // key -> [key,...]
+  let segCount = 0;
+  let SHAPES = {};             // 路線キー -> [[lat,lng],...]
+  const INFO = { 線路の線分: 0, 形になった路線: [], 直線のままの路線: [], 読み取り: 'まだ', ソースレイヤー: [] };
+
+  try{
+    const c = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (c && c.t && (Date.now()-c.t) < MAX_AGE && c.shapes){
+      SHAPES = c.shapes; INFO.読み取り = '保存ずみを使用';
+      INFO.形になった路線 = Object.keys(SHAPES);
+    }
+  }catch(e){}
+
+  const nkey = (lat,lng)=> lat.toFixed(5)+','+lng.toFixed(5);
+  function addSeg(a, b){
+    const ka=nkey(a[0],a[1]), kb=nkey(b[0],b[1]);
+    if(ka===kb) return;
+    if(!NODES.has(ka)){ NODES.set(ka,a); ADJ.set(ka,[]); }
+    if(!NODES.has(kb)){ NODES.set(kb,b); ADJ.set(kb,[]); }
+    const la=ADJ.get(ka), lb=ADJ.get(kb);
+    if(la.indexOf(kb)<0){ la.push(kb); segCount++; }
+    if(lb.indexOf(ka)<0) lb.push(ka);
+  }
+
+  // ── ベクター地図から線路の線を読み取る ────────────────────
+  function mlMap(){
+    const m = app.map || app.lobbyMap;
+    const gl = m && m.__edoGlLayer;
+    return (gl && gl.getMaplibreMap) ? gl.getMaplibreMap() : (window.__edoMl || null);
+  }
+  const RAIL_RE = /rail|railway|railroad|tetsudo|鉄道|線路/i;
+
+  function collect(){
+    const ml = mlMap();
+    if(!ml || !ml.getStyle || !ml.querySourceFeatures) return 0;
+    let style=null; try{ style = ml.getStyle(); }catch(e){ return 0; }
+    if(!style || !Array.isArray(style.layers)) return 0;
+
+    // 「線路」という名前のついた source-layer を探します。
+    // 見つからないときは何もしません（道路を線路として拾わないため）。
+    const cands = new Set();
+    style.layers.forEach(l=>{
+      const sl = l['source-layer'];
+      if(!sl || !l.source) return;
+      if(RAIL_RE.test(sl) || RAIL_RE.test(l.id||'')) cands.add(l.source + '\u0001' + sl);
+    });
+    if(!cands.size) return 0;
+    INFO.ソースレイヤー = [...cands].map(x=>x.split('\u0001').join(' / '));
+
+    let added = 0;
+    cands.forEach(keyStr=>{
+      const parts = keyStr.split('\u0001');
+      let feats=[];
+      try{ feats = ml.querySourceFeatures(parts[0], {sourceLayer: parts[1]}) || []; }catch(e){ return; }
+      feats.forEach(f=>{
+        const g = f && f.geometry; if(!g) return;
+        const lines = g.type==='LineString' ? [g.coordinates]
+                    : g.type==='MultiLineString' ? g.coordinates : null;
+        if(!lines) return;
+        lines.forEach(cs=>{
+          for(let i=1;i<cs.length;i++){
+            const a=[cs[i-1][1], cs[i-1][0]], b=[cs[i][1], cs[i][0]];
+            if(!isFinite(a[0])||!isFinite(b[0])) continue;
+            const before = segCount; addSeg(a,b); if(segCount>before) added++;
+          }
+        });
+      });
+    });
+    INFO.線路の線分 = segCount;
+    return added;
+  }
+  app.railCollectShapes = collect;
+
+  // ── 2駅のあいだを、線路の線をたどって結ぶ ──────────────
+  function nearestNode(pt, maxKm){
+    let best=null, bd=maxKm;
+    NODES.forEach((v,k)=>{ const d=km(pt,v); if(d<bd){ bd=d; best=k; } });
+    return best;
+  }
+  function pathBetween(a, b){
+    const sa = nearestNode(a, 0.35), sb = nearestNode(b, 0.35);
+    if(!sa || !sb || sa===sb) return null;
+    // ダイクストラ（駅間は長くても数km なので素直に）
+    const dist=new Map([[sa,0]]), prev=new Map();
+    const done=new Set();
+    const pq=[[0,sa]];
+    while(pq.length){
+      pq.sort((x,y)=>x[0]-y[0]);
+      const cur=pq.shift(); const ck=cur[1];
+      if(done.has(ck)) continue;
+      done.add(ck);
+      if(ck===sb) break;
+      const cd=cur[0];
+      (ADJ.get(ck)||[]).forEach(nk=>{
+        if(done.has(nk)) return;
+        const nd = cd + km(NODES.get(ck), NODES.get(nk));
+        if(!dist.has(nk) || nd < dist.get(nk)){ dist.set(nk,nd); prev.set(nk,ck); pq.push([nd,nk]); }
+      });
+    }
+    if(!dist.has(sb)) return null;
+    const chord = km(a,b);
+    if(dist.get(sb) > chord*1.8 + 0.3) return null;   // 遠回りすぎる＝別の線をたどっています
+    const out=[]; let k=sb;
+    while(k){ out.push(NODES.get(k)); k = prev.get(k); }
+    out.reverse();
+    return out;
+  }
+  function simplify(pts, minM){
+    const out=[pts[0]];
+    for(let i=1;i<pts.length-1;i++) if(km(out[out.length-1], pts[i])*1000 > minM) out.push(pts[i]);
+    out.push(pts[pts.length-1]);
+    return out;
+  }
+  function round(pts){ return pts.map(p=>[+p[0].toFixed(5), +p[1].toFixed(5)]); }
+
+  function buildShapes(){
+    const made=[], straight=[];
+    Object.keys(LINES).forEach(k=>{
+      if(k==='metro7') return;                 // 構想路線は道路沿い（v75）で描いています
+      const L=LINES[k];
+      if(!L || L.stations.length<2) return;
+      let pts=[], ok=0;
+      for(let i=0;i<L.stations.length-1;i++){
+        const A=ST[L.stations[i]], B=ST[L.stations[i+1]];
+        if(!A||!B) continue;
+        const seg = pathBetween(P(A), P(B));
+        if(seg && seg.length>2){
+          ok++;
+          const body = simplify(seg, 8);
+          if(!pts.length) pts.push(P(A));
+          body.forEach(p=>pts.push(p));
+          pts.push(P(B));
+        }else{
+          if(!pts.length) pts.push(P(A));
+          pts.push(P(B));
+        }
+      }
+      if(ok>0){ SHAPES[k]=round(pts); made.push(L.name); }
+      else straight.push(L.name);
+    });
+    INFO.形になった路線=made; INFO.直線のままの路線=straight;
+    if(made.length){
+      INFO.読み取り='ベクター地図から取得';
+      try{ localStorage.setItem(KEY, JSON.stringify({t:Date.now(), shapes:SHAPES})); }catch(e){}
+    }
+    return made.length;
+  }
+  app.railBuildShapes = buildShapes;
+
+  // ── 描画（縞々の線路らしい見た目） ─────────────────────
+  function shapeOf(k){
+    if(SHAPES[k] && SHAPES[k].length>1) return SHAPES[k];
+    const L=LINES[k];
+    return L.stations.map(n=>[ST[n].lat, ST[n].lng]);
+  }
+  function drawRail(map){
+    if(!map || !window.L) return;
+    try{
+      if(Array.isArray(map.__railLayers)) map.__railLayers.forEach(l=>{ try{map.removeLayer(l);}catch(e){} });
+      map.__railLayers=[];
+      if(!app.railEnabled()) return;
+      const add=(l)=>{ l.addTo(map); map.__railLayers.push(l); return l; };
+      Object.keys(LINES).forEach(k=>{
+        const L=LINES[k];
+        if(!L || L.stations.length<2) return;
+        const pts=shapeOf(k);
+        if(pts.length<2) return;
+        // ①外側の縁取り　②路線色の帯　③枕木に見える縞
+        add(window.L.polyline(pts,{color:'#0f172a',weight:7,opacity:.45,lineCap:'butt',lineJoin:'round',interactive:false}));
+        add(window.L.polyline(pts,{color:'#ffffff',weight:5,opacity:.95,lineCap:'butt',lineJoin:'round',interactive:false}));
+        add(window.L.polyline(pts,{color:L.color,weight:5,opacity:.28,lineCap:'butt',lineJoin:'round',interactive:false}));
+        add(window.L.polyline(pts,{color:L.color,weight:5,opacity:1,lineCap:'butt',lineJoin:'round',
+          dashArray:'4 7', dashOffset:'0', interactive:false}));
+      });
+      map.__railLayers=map.__railLayers.filter(Boolean);
+      try{ map.__railLayers.forEach(l=>l.bringToBack && l.bringToBack()); }catch(e){}
+    }catch(e){ console.error('[v76]', e); }
+  }
+  app._drawRailOn = drawRail;
+  app._drawRail = function(){ drawRail(app.map); drawRail(app.lobbyMap); app._drawMetro7 && app._drawMetro7(); };
+
+  // ── 地図が動いて新しい線路が読めたら、作り直します ──────
+  const NEED = Object.keys(LINES).filter(k=>k!=='metro7' && LINES[k] && LINES[k].stations.length>1);
+  const allDone = ()=> NEED.every(k=>SHAPES[k] && SHAPES[k].length>1);
+  let tries=0, timer=null, iv=null;
+  function tick(){
+    tries++;
+    if(allDone() || tries>60){ clearInterval(iv); return; }   // 2分ほどで打ち切ります
+    const added = collect();
+    if(added > 0){
+      clearTimeout(timer);
+      timer = setTimeout(()=>{ if(buildShapes()){ app._drawRail(); } }, 1200);
+    }
+  }
+  // 保存ずみの形があるときは、地図を読み直しません
+  if(!allDone()) iv = setInterval(tick, 2000);
+  setTimeout(()=>{ app._drawRail(); }, 2500);
+
+  window.__EDOGAWA_RAILSHAPE_INFO = function(){
+    return Object.assign({}, INFO, {
+      路線ごとの点数: Object.keys(SHAPES).reduce((o,k)=>{ o[LINES[k]?LINES[k].name:k]=SHAPES[k].length; return o; }, {})
+    });
+  };
+  window.__EDOGAWA_RAILSHAPE_RESET = function(){
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    SHAPES={}; NODES.clear(); ADJ.clear(); segCount=0; tries=0;
+    INFO.読み取り='取り直し中'; INFO.形になった路線=[];
+    try{ clearInterval(iv); }catch(e){}
+    iv = setInterval(tick, 2000);
+    app._drawRail();
+    return '線路の形を捨てました。地図を少し動かすと、もう一度読み取ります。';
+  };
+})();
+</script>
+
 
 <script id="edogawa-v39-footer">
 
