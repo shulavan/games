@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v77 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v78 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -14555,19 +14555,19 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
                 stations:['葛西臨海公園'] }
   };
   const ST = {
-    '西葛西':      {lat:35.666783, lng:139.859337},
-    '葛西':        {lat:35.663605, lng:139.871672},
-    '東大島':      {lat:35.690158, lng:139.847513},
-    '船堀':        {lat:35.683706, lng:139.864220},
-    '一之江':      {lat:35.685987, lng:139.883000},
-    '瑞江':        {lat:35.693371, lng:139.897809},
-    '篠崎':        {lat:35.706092, lng:139.904128},
-    '平井':        {lat:35.708278, lng:139.842294},
-    '新小岩':      {lat:35.716792, lng:139.857629},
-    '小岩':        {lat:35.734444, lng:139.881111},
-    '京成小岩':    {lat:35.741941, lng:139.883590},
-    '江戸川':      {lat:35.739949, lng:139.895783},
-    '葛西臨海公園':{lat:35.644054, lng:139.861928}
+    '西葛西':      {lat:35.664567, lng:139.859254},
+    '葛西':        {lat:35.663582, lng:139.873137},
+    '東大島':      {lat:35.689492, lng:139.848471},
+    '船堀':        {lat:35.683828, lng:139.863996},
+    '一之江':      {lat:35.685954, lng:139.882621},
+    '瑞江':        {lat:35.693457, lng:139.897727},
+    '篠崎':        {lat:35.706003, lng:139.903832},
+    '平井':        {lat:35.706591, lng:139.842656},
+    '新小岩':      {lat:35.717192, lng:139.858331},
+    '小岩':        {lat:35.733161, lng:139.881643},
+    '京成小岩':    {lat:35.742480, lng:139.883254},
+    '江戸川':      {lat:35.737862, lng:139.895478},
+    '葛西臨海公園':{lat:35.644193, lng:139.862162}
   };
   app.RAIL_LINES = LINES; app.RAIL_STATIONS = ST;
 
@@ -14793,7 +14793,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   if (!LINES || !ST) return;
 
   // ── 新設駅（構想上の駅なので、実在の駅ではありません） ──
-  ST['鹿骨'] = { lat:35.708809, lng:139.887589, plan:true };
+  ST['鹿骨'] = { lat:35.708773, lng:139.887664, plan:true };
 
   LINES.metro7 = {
     name:'メトロセブン（構想）', color:'#ff2d95', short:'M7', plan:true,
@@ -15187,11 +15187,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   app.stationOriginal = function(n){ const o=ST_ORIG[n]; return o?{lat:o.lat,lng:o.lng}:null; };
   try{
     const saved = JSON.parse(localStorage.getItem(ST_FIX_KEY) || '{}');
+    let cleaned = false;
     Object.keys(saved).forEach(n=>{
-      if (ST[n] && typeof saved[n].lat === 'number' && typeof saved[n].lng === 'number'){
-        ST[n].lat = saved[n].lat; ST[n].lng = saved[n].lng;
+      const o = ST_ORIG[n];
+      if (!ST[n] || typeof saved[n].lat !== 'number' || typeof saved[n].lng !== 'number') return;
+      // 本体に取り込み済みの座標（1m以内）なら、調整の記録は消しておきます
+      if (o && Math.abs(o.lat-saved[n].lat) < 1e-5 && Math.abs(o.lng-saved[n].lng) < 1.2e-5){
+        delete saved[n]; cleaned = true; return;
       }
+      ST[n].lat = saved[n].lat; ST[n].lng = saved[n].lng;
     });
+    if (cleaned) localStorage.setItem(ST_FIX_KEY, JSON.stringify(saved));
   }catch(e){}
   app.stationFixes = function(){
     try{ return JSON.parse(localStorage.getItem(ST_FIX_KEY) || '{}') || {}; }catch(e){ return {}; }
@@ -15733,7 +15739,30 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 
   // ② 駅を線路の中心に載せます（ずれていた駅を自動で直します）
   const SNAP_MAX_KM = 0.2, SNAP_MIN_KM = 0.005;
+  // 駅の座標は実際の地図で確認していただいた値を入れてあります。
+  // そのため「線路に自動で載せる」は既定でOFFです（必要な方だけONにできます）。
+  const AUTOSNAP_KEY = 'edogawa_rail_autosnap_v1';
+  app.railAutoSnapEnabled = function(){
+    try{ return localStorage.getItem(AUTOSNAP_KEY) === 'on'; }catch(e){ return false; }
+  };
+  app.setRailAutoSnap = function(on){
+    try{ localStorage.setItem(AUTOSNAP_KEY, on?'on':'off'); }catch(e){}
+    if(!on){
+      // OFFにしたら、自動で動かした駅をもとの位置に戻します
+      const fixed=(app.stationFixes&&app.stationFixes())||{};
+      Object.keys(ST).forEach(n=>{
+        if(fixed[n]) return;                       // 手で直した駅はそのまま
+        const o=app.stationOriginal && app.stationOriginal(n);
+        if(o){ ST[n].lat=o.lat; ST[n].lng=o.lng; }
+      });
+      INFO.線路に載せた駅=[];
+      try{ app.snapAllStations && app.snapAllStations(); }catch(e){}
+    }
+    buildShapes(); app._drawRail && app._drawRail();
+    return on;
+  };
   function snapStationsToTrack(){
+    if(!app.railAutoSnapEnabled()){ INFO.線路に載せた駅=[]; return 0; }
     const fixed = (app.stationFixes && app.stationFixes()) || {};
     const moved = [];
     Object.keys(LINES).forEach(k=>{
@@ -15757,7 +15786,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{ app.snapAllStations && app.snapAllStations(); }catch(e){}
       try{ app.refreshFacilityMarkers && app.refreshFacilityMarkers(); }catch(e){}
     }
-    INFO.線路に載せた駅 = moved;
+    // 「いま、もとの座標からどれだけ動いているか」を一覧にします
+    // （何度読み直しても同じ内容になるように、動いた差分ではなく合計で見ます）
+    const list=[];
+    Object.keys(ST).forEach(n=>{
+      if(fixed[n]) return;
+      const o=app.stationOriginal && app.stationOriginal(n);
+      if(!o) return;
+      const d=km([o.lat,o.lng],[ST[n].lat,ST[n].lng])*1000;
+      if(d>1) list.push({駅:n, 動いたm:Math.round(d)});
+    });
+    INFO.線路に載せた駅 = list;
     return moved.length;
   }
   app.railSnapStations = snapStationsToTrack;
@@ -15992,6 +16031,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         <div class="edo-set-v">${autoList.length ? esc(autoList.map(x=>x.駅+'（'+x.動いたm+'m）').join('、')) : 'なし'}</div>
       </div>
       <button type="button" class="edo-set-wide" data-reload="1">🔄 線路をもう一度読み取る</button>
+      <button type="button" class="edo-set-wide" data-autosnap="1">${
+        app.railAutoSnapEnabled&&app.railAutoSnapEnabled()
+          ? '🧲 駅を線路に自動で載せる：ON（タップでOFF）'
+          : '🧲 駅を線路に自動で載せる：OFF（タップでON）'}</button>
+      <div class="edo-set-note">駅の座標はご確認いただいた値を入れてあります。自動で載せる機能は
+        既定でOFFです。ONにすると、地図の線路が読めた区間だけ駅を線路の中心に寄せます。</div>
       <div class="edo-set-note">地図を「ベクター」で表示しているときだけ線路を読み取れます。
         地下の区間（篠崎など）は地図に線路が無いため、直線のままになります。</div>
 
@@ -16012,6 +16057,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         setTimeout(()=>{ try{ app.railCollectShapes && app.railCollectShapes();
           app.railBuildShapes && app.railBuildShapes(); app._drawRail && app._drawRail(); }catch(e){}
           app.openRailSetup(); }, 2500);
+        return;
+      }
+      if(t.dataset.autosnap){
+        const now = app.railAutoSnapEnabled && app.railAutoSnapEnabled();
+        try{ app.setRailAutoSnap && app.setRailAutoSnap(!now); }catch(e){}
+        app.openRailSetup();
         return;
       }
       if(t.dataset.export){
