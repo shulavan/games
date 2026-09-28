@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v78 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v79 (2026-09-28)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -2035,11 +2035,56 @@
     // 地図に基盤地図を敷く。
     // ベクターの候補を上から順に試し、「本当に描けた」ものを採用します。
     // どれも描けなければ、最初に敷いたラスターのまま遊べます（地図は消えません）。
+    // 地図の種類（通常＝速い／ベクター＝きれい）。設定から切り替えられます。
+    const BASEMAP_PREF_KEY = 'edogawa_basemap_v1';
+    window.__EDO_BASEMAP_PREF = function(){
+      try{ return localStorage.getItem(BASEMAP_PREF_KEY) === 'raster' ? 'raster' : 'vector'; }
+      catch(e){ return 'vector'; }
+    };
+
+    // ベクター用のスタイルを軽くします（使っていない立体表示などを外します）
+    function slimStyle(style){
+      try{
+        if(!style || !Array.isArray(style.layers)) return style;
+        const s2 = JSON.parse(JSON.stringify(style));
+        s2.layers = s2.layers.filter(l=>{
+          if(l.type === 'fill-extrusion') return false;                 // 建物の立体表示
+          if(l.type === 'hillshade') return false;                      // 陰影起伏
+          if(/contour|hillshade|relief|等高線|陰影|標高/i.test(l.id||'')) return false;
+          return true;
+        });
+        return s2;
+      }catch(e){ return style; }
+    }
+
     function addBasemapTo(map) {
       if (!map) return;
       const raster = L.tileLayer(ACTIVE_BASEMAP.url, { ...ACTIVE_BASEMAP.options });
       raster.addTo(map);
       map.__gsiStatus = 'raster';
+      map.__edoRaster = raster;
+
+      // 設定で「通常の地図（速い）」を選んでいるときは、ここで終わりです
+      if (window.__EDO_BASEMAP_PREF() === 'raster'){
+        map.__gsiStatus = 'raster(設定：通常の地図)';
+        return;
+      }
+
+      // WebGLの描画面が失われた（他の3D画面などで端末のメモリが足りなくなった）時に、
+      // 地図が真っ暗になったままにならないよう、通常の地図へ戻します。
+      const backToRaster = (why) => {
+        if (map.__edoFellBack) return;
+        map.__edoFellBack = true;
+        map.__gsiStatus = 'raster(' + why + ')';
+        try{ if (map.__edoGlLayer) map.removeLayer(map.__edoGlLayer); }catch(e){}
+        map.__edoGlLayer = null;
+        try{ raster.addTo(map); }catch(e){}     // 既に入っていれば何も起きません
+        try{ raster.bringToBack(); }catch(e){}
+        try{ noteMapStatus('地図の描画が止まったため、通常の地図に戻しました（' + why + '）'); }catch(e){}
+        try{ window.EdogawaSugoroku && window.EdogawaSugoroku._drawRail && window.EdogawaSugoroku._drawRail(); }catch(e){}
+        try{ window.EdogawaSugoroku && window.EdogawaSugoroku._drawGreenways && window.EdogawaSugoroku._drawGreenways(); }catch(e){}
+      };
+      map.__edoBackToRaster = backToRaster;
 
       const candidates = [];
       if (USE_GSI_VECTOR) candidates.push({ name: '地理院ベクトル', style: GSI_VECTOR_STYLE_URL, credit: ACTIVE_BASEMAP.credit });
@@ -2100,8 +2145,15 @@
           // 先読みして端末に保存したスタイルがあればそれを使います（取得待ちゼロ）。
           const cachedStyle = (window.__EDO_STYLE_CACHE || {})[cand.style];
           gl = L.maplibreGL({
-            style: cachedStyle || cand.style,
+            style: cachedStyle ? slimStyle(cachedStyle) : cand.style,
             attribution: cand.credit,
+            // 読み込みを軽くするための設定
+            fadeDuration: 0,
+            antialias: false,
+            renderWorldCopies: false,
+            refreshExpiredTiles: false,
+            maxTileCacheSize: 32,
+            attributionControl: false,
             // 漢字・ひらがな・カタカナは端末のフォントで描きます。
             // 地図側の文字フォント（glyphs）が404でも日本語が出るようになります。
             localIdeographFontFamily: "'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',sans-serif"
@@ -2130,7 +2182,20 @@
           // の3つがそろった時だけにします。
           let styleLoaded = false;
           ml.on('idle', () => { if (!settled && styleLoaded && sourceLoaded) win(labels); });
+          // idle を待ちきれない端末のために、中身が届いていれば少し待って切り替えます
+          const softWin = setInterval(() => {
+            if (settled || done) { clearInterval(softWin); return; }
+            if (styleLoaded && sourceLoaded) { clearInterval(softWin); win(labels); }
+          }, 1200);
           map.on('resize', () => { try { ml.resize(); } catch (e) {} });
+          // 描画面が失われたら通常の地図に戻します
+          try{
+            const cv = ml.getCanvas && ml.getCanvas();
+            if (cv) cv.addEventListener('webglcontextlost', (ev) => {
+              try{ ev.preventDefault(); }catch(e){}
+              backToRaster('描画面が失われました');
+            }, {once:true});
+          }catch(e){}
         } catch (e) {
           fail(String((e && e.message) || e));
         }
@@ -2138,6 +2203,7 @@
 
       tryNext(0);
     }
+    try{ window.__EDO_ADD_BASEMAP = addBasemapTo; }catch(e){}
 
     // 「📍現在地を表示」で調べた地名を端末に保存しておくキー
     const NEARBY_CACHE_KEY = "edogawa_sugoroku_nearby_v1";
@@ -12326,19 +12392,47 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   guardFrame(document.getElementById(FRAME_ID));
 
   let watchdog=null;
+  // 【v79での修正】ミニゲームを minigames.html（別ファイル）に分けた時から、
+  // この見張りが srcdoc の長さだけを見ていたため、正常に遊んでいる最中でも
+  // 25秒で「起動できなかった」と判断して打ち切っていました。
+  // （3D系や左近川カヌーなど、25秒で終わらないゲームが全滅していました）
+  // いまは「本当に中身が出ているか」を見て判断します。
+  function miniFrameAlive(f){
+    if(!f) return false;
+    if((f.srcdoc||'').length>1000) return true;
+    if(app.__miniRendered) return true;                 // 子から「描けた」と連絡があった
+    const src=String(f.getAttribute('src')||'');
+    if(src && src.indexOf('minigames.html')>=0){
+      try{
+        const d=f.contentDocument;
+        if(!d) return true;                             // 読めない＝別オリジン扱い。動いているとみなす
+        if(d.body && (d.body.childElementCount>0 || (d.body.innerHTML||'').length>800)) return true;
+        if(d.readyState==='loading') return true;       // まだ読み込み中
+      }catch(e){ return true; }
+    }
+    return false;
+  }
   function armWatchdog(game,player){
     clearTimeout(watchdog);
+    app.__miniRendered=false;
     watchdog=setTimeout(()=>{
       const st=app.regionalMiniGame; if(!st||st.done)return;
       const f=document.getElementById(FRAME_ID);
-      if(f&&(f.srcdoc||'').length>1000)return;
+      if(miniFrameAlive(f))return;                      // 遊べているので何もしません
       console.warn('[v39] ミニゲームが起動しなかったため手番を進めます:',game);
       app.addLog?.(`⚠️ ${game} を起動できなかったため、スキップしました。`);
       try{app.closeRegionalMiniGame?.();}
       catch(e){app.miniGameActive=false;app.regionalMiniGame=null;app.finishMiniGameTurn?.(player);}
     },WATCHDOG_MS);
   }
-  const disarmWatchdog=()=>{clearTimeout(watchdog);watchdog=null;};
+  const disarmWatchdog=()=>{clearTimeout(watchdog);watchdog=null;app.__miniRendered=false;};
+  app._miniFrameAlive=miniFrameAlive;
+  // 子から「描けた」「読み込めた」と連絡が来たら、起動できたと記録します
+  window.addEventListener('message',(e)=>{
+    const d=e.data||{};
+    if(d.type==='EDOGAWA_MINIGAME_RENDERED' || d.type==='EDOGAWA_MINIGAMES_LOADED' ||
+       d.type==='EDOGAWA_MINIGAME_ALIVE') app.__miniRendered=true;
+  });
 
   app.formatMoney=fmt;
   app.formatMoneyMan=app.formatMoneyMan||((v)=>{v=moneyN(v);return `${v<0?'-':''}${(Math.abs(v)/10000).toFixed(1)}万`;});
@@ -15135,7 +15229,20 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
               .catch(()=>{ this.finishTurn(); });
           };
 
-          if (DRIVABLE.has(pick.line)) app.startTrainRide(player, pick.line, at.name, pick.to, arrive);
+          if (DRIVABLE.has(pick.line)){
+            // 運転シミュレーターを体験した人には、次のターンで使える「🚃 電車」を差し上げます
+            app.startTrainRide(player, pick.line, at.name, pick.to, (prize, detail)=>{
+              try{
+                if (!player.isFlying && !(player.wheelchairTurns>0)){
+                  player.vehicle = { emoji:'🚃', name:'電車', mult:4 };
+                  this.addLog(`🚃 ${player.name}：運転おつかれさまでした！　次のサイコロは【🚃 電車（4倍）】です。`);
+                  this.setPlayerIconState && this.setPlayerIconState(player, {});
+                  this.updateHUD && this.updateHUD();
+                }
+              }catch(e){}
+              arrive(prize, detail);
+            });
+          }
           else arrive(0,'');
         });
         return;
@@ -16163,6 +16270,87 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   addEntry();
 
   window.__EDOGAWA_RAILSETUP = ()=>{ app.openRailSetup(); return '「駅と線路の調整」を開きました'; };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v79: 地図の種類を選べるようにする／🚃の付与／ミニゲームの打ち切り対策
+     ============================================================================ -->
+<script id="edogawa-v79">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── 地図の種類（通常＝速い／ベクター＝きれい） ──
+  app.basemapPref = function(){
+    try{ return window.__EDO_BASEMAP_PREF ? window.__EDO_BASEMAP_PREF() : 'vector'; }catch(e){ return 'vector'; }
+  };
+  app.rebuildBasemap = function(){
+    [app.map, app.lobbyMap].forEach(m=>{
+      if(!m) return;
+      try{ if(m.__edoGlLayer) m.removeLayer(m.__edoGlLayer); }catch(e){}
+      try{ if(m.__edoRaster) m.removeLayer(m.__edoRaster); }catch(e){}
+      m.__edoGlLayer=null; m.__edoRaster=null; m.__edoFellBack=false;
+      try{ window.__EDO_ADD_BASEMAP && window.__EDO_ADD_BASEMAP(m); }catch(e){}
+    });
+    try{ app._drawRail && app._drawRail(); }catch(e){}
+    try{ app._drawGreenways && app._drawGreenways(); }catch(e){}
+    try{ app._drawMetro7 && app._drawMetro7(); }catch(e){}
+  };
+  app.settingsToggleBasemap = function(){
+    const next = app.basemapPref()==='raster' ? 'vector' : 'raster';
+    try{ localStorage.setItem('edogawa_basemap_v1', next); }catch(e){}
+    app.rebuildBasemap();
+    app.refreshSettingsModal && app.refreshSettingsModal();
+    try{ app.addLog && app.addLog(next==='raster'
+      ? '🗺️ 地図を「通常（速い）」にしました。'
+      : '🗺️ 地図を「ベクター（きれい）」にしました。読み込みに少し時間がかかります。'); }catch(e){}
+    return next;
+  };
+
+  function paintBasemapState(){
+    const el=document.getElementById('settings-basemap-state');
+    if(!el) return;
+    const raster = app.basemapPref()==='raster';
+    el.textContent = raster ? '通常' : 'ベクター';
+    el.className = 'px-2.5 py-1 rounded-full text-[11px] font-black ' + (raster
+      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+      : 'bg-sky-500/20 text-sky-300 border border-sky-500/40');
+  }
+  const origRefresh = app.refreshSettingsModal ? app.refreshSettingsModal.bind(app) : null;
+  app.refreshSettingsModal = function(){
+    const r = origRefresh ? origRefresh() : undefined;
+    try{ paintBasemapState(); }catch(e){}
+    return r;
+  };
+
+  function addEntry(){
+    const anchor = document.getElementById('settings-rail-state');
+    const btn = anchor && anchor.closest('button');
+    if(!btn || document.getElementById('edo-basemap-entry')) return true;
+    const b = document.createElement('button');
+    b.id = 'edo-basemap-entry';
+    b.type = 'button';
+    b.className = btn.className;
+    b.innerHTML = `<span class="text-left"><span class="text-sm font-bold text-slate-100">🗺 地図の種類</span><br>
+      <span class="text-[10px] text-slate-500">通常＝すぐ出ます／ベクター＝きれいですが重いです</span></span>
+      <span id="settings-basemap-state" class="px-2.5 py-1 rounded-full text-[11px] font-black bg-sky-500/20 text-sky-300 border border-sky-500/40">ベクター</span>`;
+    b.onclick = ()=>{ app.settingsToggleBasemap(); };
+    btn.parentNode.insertBefore(b, btn);
+    paintBasemapState();
+    return true;
+  }
+  let n=0;
+  const iv=setInterval(()=>{ n++; if(addEntry() || n>60) clearInterval(iv); }, 500);
+  addEntry();
+
+  window.__EDOGAWA_BASEMAP = ()=>({
+    設定: app.basemapPref()==='raster' ? '通常（速い）' : 'ベクター（きれい）',
+    盤面の地図: app.map ? app.map.__gsiStatus : '（まだ）',
+    ロビーの地図: app.lobbyMap ? app.lobbyMap.__gsiStatus : '（まだ）'
+  });
 })();
 </script>
 
