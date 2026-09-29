@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v81 (2026-09-29)';
+    window.__EDOGAWA_VERSION = 'v82 (2026-09-29)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1820,6 +1820,7 @@
     // セーブデータのキー。「ひとりで遊ぶ」と「マルチプレイ」で各1件だけ保存します。
     const SOLO_SAVE_KEY = "edogawa_sugoroku_state";
     const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
+    try{ window.__EDOGAWA_SAVE_KEYS = { solo: SOLO_SAVE_KEY, multi: MP_SAVE_KEY }; }catch(e){}
     // メニューの「設定」で切り替えた内容（音・読み上げ）の保存先。
     const SETTINGS_KEY = "edogawa_sugoroku_settings";
     // アクセス解析（Google アナリティクス）の同意状態の保存先
@@ -2665,6 +2666,36 @@
       { key: 'yasai',       emoji: '🥕', into: OD_YASAI,      markerMax: 6,  weight: 1.2 },
       { key: 'flower',      emoji: '🌸', into: OD_FLOWER,     markerMax: 6,  weight: 0.9 }
     ];
+    // 「食べきり協力店」には飲食店とお店（スーパー・薬局など）が混ざっています。
+    //   例）「食い処 てんてん」は飲食店ですが、これまでお店として扱われ、
+    //       目的地のカテゴリも🏪アイコンもスーパー扱いになっていました。
+    //   名前（と、あればデータの分類）を見て飲食店かどうかを判断します。
+    const EAT_RE = new RegExp([
+      '食堂','お食事','食事処','食い処','喰い処','めし','飯店','定食','割烹','料亭','旅館',
+      'レストラン','ファミレス','ラーメン','らーめん','拉麺','中華','餃子','つけ麺',
+      'そば','蕎麦','うどん','丼','どんぶり','寿司','すし','鮨','天ぷら','天麩羅',
+      '焼肉','焼き肉','焼鳥','焼き鳥','やきとり','串','鉄板','お好み焼','もんじゃ',
+      '居酒屋','酒場','ダイニング','ビストロ','バル','バール','カフェ','喫茶','珈琲','コーヒー',
+      'カレー','スパイス','とんかつ','トンカツ','ステーキ','ハンバーグ','洋食','和食',
+      'イタリア','フレンチ','スペイン','韓国','タイ料理','ベトナム','インド','ネパール',
+      'ピザ','ピッツァ','パスタ','グリル','キッチン','食彩','味処','味の','寿し','亭$','軒$','庵$','厨'
+    ].join('|'));
+    const SHOP_RE = new RegExp([
+      'スーパー','マート','ストア','ストアー','薬局','ドラッグ','マツモトキヨシ','ウエルシア',
+      'スギ薬局','ココカラ','クリエイト','トモズ','八百屋','青果','精肉','鮮魚','米穀','米店',
+      '酒販','酒店','生花','花屋','クリーニング','書店','文具','電器','金物','ホームセンター',
+      'コンビニ','ローソン','セブン','ファミリーマート','ミニストップ','デイリー','生活協同組合','コープ'
+    ].join('|'));
+    const looksRestaurant = (r) => {
+      const tag = String(r.g || r.genre || r.category || r.kind || r['業種'] || '');
+      if (/飲食|レストラン|料理|喫茶/.test(tag)) return true;
+      if (/小売|物販|販売|薬|スーパー/.test(tag)) return false;
+      const nm = String(r.name || '');
+      if (SHOP_RE.test(nm)) return false;
+      return EAT_RE.test(nm);
+    };
+    try{ window.__EDOGAWA_IS_RESTAURANT = looksRestaurant; }catch(e){}
+
     // 内蔵データと合流させるグループは、地図アイコンの上限を「合流先ごと」にかける。
     // 地図に同時に描く施設アイコンの上限と、アイコン同士の最低間隔（メートル）。
     // 表示範囲の中で「目印になりやすいもの・中心に近いもの」から順に置き、
@@ -5035,6 +5066,7 @@
         };
         const groups = (data && data.groups) || data || {};
         let added = 0, skipped = 0;
+
         OPENDATA_GROUPS.forEach(g => {
           const rows = Array.isArray(groups[g.key]) ? groups[g.key] : [];
           const seen = new Set(g.into.map(p => p && p.name));
@@ -5060,6 +5092,15 @@
               w: g.weight || 1,        // 「〇〇の近くの…」に使ってよいかの優先度
               fromOpenData: true
             };
+            // 食べきり協力店のうち飲食店らしいものは、飲食店の仲間に入れます
+            if (g.key === 'tabekiri' && looksRestaurant(r)) {
+              item.emoji = '🍽';
+              if (!OD_INSHOKU.some(x => x && x.name === name)) OD_INSHOKU.push(item);
+              const eat = DESTINATION_PRESETS['飲食店'];
+              if (eat && !eat.some(x => x && x.name === name)) eat.push(item);
+              added++;
+              return;
+            }
             g.into.push(item);
             // 目的地ルーレットの候補にも加える（公園はPARKSと同じ配列なので自動で入る）
             if (dest && !destSeen.has(name)) { dest.push(item); destSeen.add(name); }
@@ -16603,6 +16644,430 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     乗れる駅: (app.players&&app.players[app.currentPlayerIdx]||{}).pendingStation || null,
     案内が出ている: !!(document.getElementById('edo-board-ask')||{classList:{contains:()=>false}}).classList.contains('show'),
     範囲m: NEAR_M
+  });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v82: マルチプレイを「飛び入り参加」に作り直し／かくれんぼの固まり対策
+     ----------------------------------------------------------------------------
+     ・ホストとQRコードの仕組みをやめ、「マルチプレイ」を押したらすぐ参加します
+     ・最初に入った人は、CPU3名がすでに進んでいる部屋に飛び込む形にします
+     ・あとから人間が入るとCPUが1人入れ替わり、その人は西葛西駅から始めます
+     ・人間4名で満席。それ以上は新しい部屋（人間1＋CPU3）を作ります
+     ============================================================================ -->
+<style id="edogawa-v82-style">
+  #edo-mp-wait{ position:fixed; inset:0; z-index:2147483300; display:none;
+    align-items:center; justify-content:center; padding:18px }
+  #edo-mp-wait.show{ display:flex }
+  .edo-mp-box{ width:min(360px,92vw); background:#0f172a;
+    border:1px solid rgba(56,189,248,.55); border-radius:20px; padding:20px 18px; text-align:center;
+    box-shadow:0 20px 56px rgba(0,0,0,.6);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif }
+  .edo-mp-t{ font-size:17px; font-weight:900; color:#f8fafc }
+  .edo-mp-s{ font-size:11px; color:#94a3b8; margin-top:6px; line-height:1.7 }
+  .edo-mp-dots{ font-size:30px; margin-bottom:8px }
+  .edo-mp-btn{ width:100%; margin-top:14px; padding:11px; border-radius:12px; font-size:13px; font-weight:900;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
+  /* ミニゲームが固まった時の逃げ道 */
+  #edo-mini-escape{ position:absolute; top:8px; right:10px; z-index:6; display:none;
+    padding:7px 11px; border-radius:11px; font-size:11px; font-weight:900;
+    background:rgba(15,23,42,.92); border:1px solid #f59e0b; color:#fbbf24 }
+  #edo-mini-escape.show{ display:block }
+</style>
+<script id="edogawa-v82">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const FIXED = window.__EDOGAWA_FIXED_CPUS || [];
+
+  // ============================================================
+  // ① かくれんぼが固まる対策
+  //    3Dが途中で落ちて「簡易版」の開始画面が出直したとき、
+  //    親からの開始の合図が二度と届かず、ボタンが効かなくなっていました。
+  // ============================================================
+  let hideStartTimer = null;
+  window.addEventListener('message', (e)=>{
+    const d = e.data || {};
+    if(d.type !== 'EDOGAWA_HIDE_START_READY') return;
+    const st = app.regionalMiniGame;
+    if(!st || st.game !== 'hide' || st.done) return;
+    clearTimeout(hideStartTimer);
+    hideStartTimer = setTimeout(()=>{
+      try{
+        const f = document.getElementById('regional-mini-frame');
+        f && f.contentWindow && f.contentWindow.postMessage({type:'EDOGAWA_COMMON_MINIGAME_START', game:'hide'}, '*');
+      }catch(e){}
+    }, 3000);
+  });
+
+  // どのミニゲームでも、しばらく動きがなければ「とばす」を出します
+  const ESCAPE_MS = 45000;
+  let escTimer = null;
+  function escapeBtn(){
+    let b = document.getElementById('edo-mini-escape');
+    if(!b){
+      const shell = document.querySelector('#regional-mini-overlay .regional-mini-shell');
+      if(!shell) return null;
+      b = document.createElement('button');
+      b.id = 'edo-mini-escape';
+      b.type = 'button';
+      b.textContent = '⏭ とばす';
+      b.onclick = ()=>{
+        try{ app.addLog && app.addLog('⏭ ミニゲームをとばしました。'); }catch(e){}
+        try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e){}
+      };
+      shell.appendChild(b);
+    }
+    return b;
+  }
+  function armEscape(){
+    clearTimeout(escTimer);
+    const b = escapeBtn(); if(b) b.classList.remove('show');
+    escTimer = setTimeout(()=>{
+      const st = app.regionalMiniGame;
+      if(!st || st.done) return;
+      const b2 = escapeBtn(); if(b2) b2.classList.add('show');
+    }, ESCAPE_MS);
+  }
+  function disarmEscape(){
+    clearTimeout(escTimer);
+    const b = document.getElementById('edo-mini-escape'); if(b) b.classList.remove('show');
+  }
+  // 起動時に用意しておきます（必要になるまで出しません）
+  setTimeout(()=>{ try{ escapeBtn(); }catch(e){} }, 1200);
+  const origOpenMini = app.openRegionalMiniGame ? app.openRegionalMiniGame.bind(app) : null;
+  if(origOpenMini) app.openRegionalMiniGame = function(g,p){ const r = origOpenMini(g,p); armEscape(); return r; };
+  const origCloseMini = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
+  if(origCloseMini) app.closeRegionalMiniGame = function(...a){ disarmEscape(); clearTimeout(hideStartTimer); return origCloseMini(...a); };
+
+  // ============================================================
+  // ② マルチプレイ：飛び入り参加
+  // ============================================================
+  const LOBBY_ID = '__lobby_v1';
+  const ROOM_TTL_MS = 3 * 3600 * 1000;      // 3時間さわられていない部屋は消します
+  const MAX_HUMANS = 4;
+
+  function FB(){ return window.FirebaseLib; }
+  function roomRefOf(id){
+    return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id);
+  }
+  function lobbyRef(){ return roomRefOf(LOBBY_ID); }
+
+  // 同じ種から同じ並びを作る乱数（全員の画面で同じ配置にするため）
+  function rng(seed){
+    let t = (seed >>> 0) || 1;
+    return function(){
+      t += 0x6D2B79F5;
+      let x = t;
+      x = Math.imul(x ^ (x >>> 15), x | 1);
+      x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  app._mpRng = rng;
+
+  function meSeat(){
+    const acc = (typeof app._roomAccount === 'function') ? app._roomAccount() : {};
+    const prof = (typeof app.getUserProfile === 'function') ? app.getUserProfile() : null;
+    const name = (prof && prof.nickname) || app.myGuestNickname ||
+      (typeof localStorage!=='undefined' ? localStorage.getItem('edogawa_sugoroku_nickname') : '') || 'プレイヤー';
+    return {
+      uid: app.myUid,
+      name: String(name).slice(0, 12),
+      avatar: acc.avatar || app.selectedAvatar || '🧑',
+      isCpu: false,
+      money: Number.isFinite(acc.money) ? acc.money : 1000000,
+      stats: acc.stats || {intelligence:100,wealth:100,stamina:100,luck:100},
+      properties: Array.isArray(acc.properties) ? acc.properties : [],
+      goals: 0,                                  // ゴール数（陣地）は持ち込みません
+      movedSquares: 0,
+      authProvider: acc.authProvider || null,
+      lineUserId: acc.lineUserId || null
+    };
+  }
+  function cpuSeats(){
+    return FIXED.map((c,i)=>({
+      uid: 'cpu_'+i, name: c.name, avatar: c.avatar, isCpu: true,
+      money: c.money, stats: {...c.stats}, properties: [], goals: 0, movedSquares: 0
+    }));
+  }
+  app._mpMeSeat = meSeat;
+  app._mpCpuSeats = cpuSeats;
+
+  // ── 空いている部屋をさがす（見つからなければ作る） ──
+  app.mpFindRoom = async function(forceNew){
+    const ref = lobbyRef();
+    return await FB().runTransaction(app.db, async (tx)=>{
+      const snap = await tx.get(ref);
+      const now = Date.now();
+      let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
+        .filter(r => r && r.roomId && (now - (r.updatedAt || 0) < ROOM_TTL_MS));
+      let target = forceNew ? null : rooms.find(r => (r.humans || 0) < MAX_HUMANS);
+      let isNew = false;
+      if(!target){
+        target = { roomId: 'room_' + Math.floor(100000 + Math.random()*900000), humans: 0, updatedAt: now };
+        rooms.push(target);
+        isNew = true;
+      }
+      target.humans = (target.humans || 0) + 1;
+      target.updatedAt = now;
+      if(rooms.length > 40) rooms = rooms.slice(-40);
+      tx.set(ref, { rooms: rooms, updatedAt: now });
+      return { roomId: target.roomId, isNew: isNew, humans: target.humans };
+    });
+  };
+
+  // ── 部屋の席をとる（CPUと入れ替わる） ──
+  app.mpTakeSeat = async function(roomId){
+    const ref = roomRefOf(roomId);
+    const me = meSeat();
+    return await FB().runTransaction(app.db, async (tx)=>{
+      const snap = await tx.get(ref);
+      if(!snap || !snap.exists()){
+        const seed = Math.floor(Math.random() * 1000000000);
+        const finalPlayers = [me].concat(cpuSeats());
+        tx.set(ref, {
+          roomId: roomId, mode: 'dropin', seed: seed, status: 'playing',
+          finalPlayers: finalPlayers, players: finalPlayers,
+          hostUid: app.myUid, hostPresence: Date.now(),
+          createdAt: Date.now(), updatedAt: Date.now(),
+          presence: {}, guestAcks: {}, joinQueue: [], savedGame: null
+        });
+        return { created: true, seat: 0, seed: seed, finalPlayers: finalPlayers };
+      }
+      const d = snap.data();
+      const fp = Array.isArray(d.finalPlayers) ? d.finalPlayers.slice() : [];
+      const mine = fp.findIndex(p => p && p.uid === app.myUid);
+      if(mine >= 0) return { created:false, rejoin:true, seat:mine, seed:d.seed, finalPlayers:fp };
+      const idx = fp.findIndex(p => p && p.isCpu);
+      if(idx < 0) return { full: true };
+      fp[idx] = me;
+      const queue = (Array.isArray(d.joinQueue) ? d.joinQueue : []).concat([{ uid: app.myUid, seat: idx, at: Date.now() }]);
+      tx.update(ref, { finalPlayers: fp, players: fp, joinQueue: queue, updatedAt: Date.now() });
+      return { created:false, seat: idx, seed: d.seed, finalPlayers: fp };
+    });
+  };
+
+  // ── 待ち画面 ──
+  function wait(show, text, sub, onCancel){
+    let el = document.getElementById('edo-mp-wait');
+    if(!el){ el=document.createElement('div'); el.id='edo-mp-wait'; document.body.appendChild(el); }
+    if(!show){ el.classList.remove('show'); el.innerHTML=''; return; }
+    el.innerHTML = `<div class="edo-mp-box">
+      <div class="edo-mp-dots">👥</div>
+      <div class="edo-mp-t">${esc(text)}</div>
+      <div class="edo-mp-s">${sub||''}</div>
+      ${onCancel ? '<button type="button" class="edo-mp-btn" data-cancel="1">やめる</button>' : ''}
+    </div>`;
+    el.classList.add('show');
+    el.onclick = (ev)=>{ if(ev.target.closest('[data-cancel]')){ wait(false); onCancel && onCancel(); } };
+  }
+  app._mpWait = wait;
+
+  // ── 西葛西駅にいちばん近いマスへ置きます ──
+  app.mpPlaceAtStart = function(player){
+    try{
+      const ST = app.RAIL_STATIONS || {};
+      const s = ST['西葛西'];
+      const nodes = app.roadNetworkNodes || [];
+      if(!s || !nodes.length) return false;
+      let best = 0, bd = Infinity;
+      nodes.forEach((n,i)=>{
+        if(!n) return;
+        const dy=(n.lat-s.lat)*111000, dx=(n.lng-s.lng)*91000;
+        const d = dx*dx+dy*dy;
+        if(d < bd){ bd = d; best = i; }
+      });
+      player.currentNodeIdx = best;
+      player.pathIndex = best;
+      player.pos = best;
+      player.path = player.path || [];
+      return true;
+    }catch(e){ return false; }
+  };
+
+  // ── CPUを、それらしくバラバラに置きます ──
+  app.mpScatterCpus = function(seed){
+    const nodes = app.roadNetworkNodes || [];
+    if(!nodes.length) return 0;
+    const r = rng(seed || 1);
+    let n = 0;
+    (app.players||[]).forEach(p=>{
+      if(!p || !p.isCpu) return;
+      const idx = Math.max(1, Math.floor(r() * Math.floor(nodes.length * 0.8)));
+      p.currentNodeIdx = idx; p.pathIndex = idx; p.pos = idx;
+      p.goals = 1 + Math.floor(r() * 3);            // すでに何回かゴールしている状態
+      p.movedSquares = idx + Math.floor(r() * 120);
+      n++;
+    });
+    return n;
+  };
+
+  // ── 人間が入ってきたら、CPUと入れ替えて西葛西駅に置きます ──
+  app.mpProcessJoinQueue = function(data){
+    if(!app.isHost || !data) return 0;
+    const q = Array.isArray(data.joinQueue) ? data.joinQueue : [];
+    const fp = Array.isArray(data.finalPlayers) ? data.finalPlayers : [];
+    app._mpJoined = app._mpJoined || {};
+    let n = 0;
+    q.forEach(j=>{
+      if(!j || !j.uid || app._mpJoined[j.uid]) return;
+      if(j.uid === app.myUid){ app._mpJoined[j.uid] = true; return; }
+      const src = fp[j.seat]; if(!src) return;
+      const p = (app.players||[])[j.seat]; if(!p) return;
+      app._mpJoined[j.uid] = true;
+      p.uid = src.uid; p.name = src.name; p.avatar = src.avatar; p.isCpu = false;
+      if(Number.isFinite(src.money)) p.money = src.money;
+      if(Array.isArray(src.properties)) p.properties = src.properties;
+      if(src.stats) p.stats = Object.assign({}, p.stats, src.stats);
+      p.goals = 0; p.vehicle = null; p.skipTurn = false; p.wheelchairTurns = 0;
+      app.mpPlaceAtStart(p);
+      app.addLog && app.addLog(`👥 ${p.name} さんが参加しました（西葛西駅からスタート）`);
+      n++;
+    });
+    if(n){
+      app.updateHUD && app.updateHUD();
+      app.renderPlayers && app.renderPlayers();
+      app.syncGameStateToRoom && app.syncGameStateToRoom();
+    }
+    return n;
+  };
+  const origSnap = app.handleRoomSnapshot ? app.handleRoomSnapshot.bind(app) : null;
+  if(origSnap){
+    app.handleRoomSnapshot = function(data){
+      const r = origSnap(data);
+      try{ if(data && data.mode === 'dropin') app.mpProcessJoinQueue(data); }catch(e){ console.error('[v82]', e); }
+      return r;
+    };
+  }
+
+  // ── 「マルチプレイ」を押したときの動き ──
+  app.quickJoinMultiplayer = async function(opts){
+    opts = opts || {};
+    if(!opts.force && app._hasSave && app._hasSave((window.__EDOGAWA_SAVE_KEYS && window.__EDOGAWA_SAVE_KEYS.multi) || 'edogawa_sugoroku_mp_state')){
+      // 続きがあるときは、これまでどおり確認します
+      if(app.openRestartConfirm){ app.openRestartConfirm('multi'); return; }
+    }
+    if(app.__mpJoining) return;
+    app.__mpJoining = true;
+    let cancelled = false;
+    wait(true, '部屋をさがしています…', 'すでに進んでいるゲームに入ります。<br>あなたは西葛西駅からのスタートです。',
+      ()=>{ cancelled = true; app.__mpJoining = false; });
+    try{
+      await app.ensureGameDataReady();
+      await app.initFirebase();
+      if(cancelled) return;
+
+      if(!app.db || !FB()){
+        // 通信が使えないときは、その場で同じ形の対戦を始めます
+        wait(false);
+        app.addLog && app.addLog('👥 通信が使えないため、この端末だけで対戦します。');
+        return app.mpStartLocal();
+      }
+
+      let found = await app.mpFindRoom(false);
+      let seat = await app.mpTakeSeat(found.roomId);
+      if(seat && seat.full){
+        found = await app.mpFindRoom(true);           // 満席だったので新しい部屋を作ります
+        seat = await app.mpTakeSeat(found.roomId);
+      }
+      if(cancelled) return;
+      if(!seat || seat.full) throw new Error('NO_SEAT');
+
+      app.roomId = found.roomId;
+      app.isHost = !!seat.created;
+      app.hostUidForSave = app.myUid;
+      app.gameStateVersion = 0;
+      app.lastAppliedEventSeq = 0;
+      app.eventSeq = 0;
+      app._mpSeed = seat.seed || 1;
+      app._mpSeat = seat.seat;
+
+      // 部屋の変化を受け取り続けます
+      try{ app.roomUnsubscribe && app.roomUnsubscribe(); }catch(e){}
+      const ref = roomRefOf(app.roomId);
+      app.roomUnsubscribe = FB().onSnapshot(ref, (snapshot)=>{
+        if(!snapshot || !snapshot.exists()) return;
+        app.handleRoomSnapshot(snapshot.data());
+      }, (err)=>console.error('[v82] snapshot', err));
+      app._startPresenceHeartbeat && app._startPresenceHeartbeat();
+
+      if(seat.created){
+        wait(true, 'ゲームに入っています…', '進行中のゲームに飛び込みます。');
+        app.startMultiplayerGameSession(seat.finalPlayers);
+        await app.mpAfterBoardReady(true);
+      }else{
+        wait(true, 'ゲームに入っています…', 'いまの状況を受け取っています。');
+        // 席は取れたので、あとは部屋の状態が届いたら始まります
+        setTimeout(()=>{ wait(false); }, 6000);
+      }
+    }catch(e){
+      console.error('[v82] quickJoin', e);
+      wait(false);
+      app.addLog && app.addLog('👥 部屋に入れませんでした。この端末だけで対戦します。');
+      app.mpStartLocal();
+    }finally{
+      app.__mpJoining = false;
+      setTimeout(()=>wait(false), 500);
+    }
+  };
+
+  // 盤面ができたら、CPUを散らして自分を西葛西駅へ置きます
+  app.mpAfterBoardReady = async function(isNew){
+    for(let i=0;i<60;i++){
+      if((app.roadNetworkNodes||[]).length) break;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    if(!(app.roadNetworkNodes||[]).length) { wait(false); return false; }
+    if(isNew) app.mpScatterCpus(app._mpSeed);
+    const me = (app.players||[]).find(p=>p && !p.isCpu && p.uid===app.myUid) || (app.players||[])[0];
+    if(me) app.mpPlaceAtStart(me);
+    app.updateHUD && app.updateHUD();
+    app.renderPlayers && app.renderPlayers();
+    app.panToCurrentPlayer && app.panToCurrentPlayer();
+    if(app.isHost) app.syncGameStateToRoom && app.syncGameStateToRoom();
+    wait(false);
+    return true;
+  };
+
+  // 通信が使えないときの、同じ形の対戦
+  app.mpStartLocal = async function(){
+    app.roomId = null; app.isHost = true;
+    app._mpSeed = Math.floor(Math.random()*1000000000);
+    app.startMultiplayerGameSession([meSeat()].concat(cpuSeats()));
+    return app.mpAfterBoardReady(true);
+  };
+
+  // ── 入口をつけかえます（ホスト募集・QRは使いません） ──
+  app.onRecruitButton = function(){
+    if(app._hasSave && app._hasSave((window.__EDOGAWA_SAVE_KEYS && window.__EDOGAWA_SAVE_KEYS.multi) || 'edogawa_sugoroku_mp_state') && app.resumeMultiplayerGame){
+      return app.resumeMultiplayerGame();
+    }
+    return app.quickJoinMultiplayer();
+  };
+  app.openRecruitmentModal = function(){ return app.quickJoinMultiplayer({force:true}); };
+
+  // 画面の文言も合わせます
+  function paintEntry(){
+    try{
+      const box = document.getElementById('recruit-caption');
+      if(box) box.textContent = 'マルチプレイ4人対戦';
+    }catch(e){}
+    ['modal-qrcode-container','modal-join-url','host-recruitment-modal'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el && id==='host-recruitment-modal') el.classList.add('hidden');
+    });
+  }
+  paintEntry();
+
+  window.__EDOGAWA_MP_INFO = ()=>({
+    部屋: app.roomId, 席: app._mpSeat, 進行役: !!app.isHost, 種: app._mpSeed,
+    人数: (app.players||[]).length,
+    顔ぶれ: (app.players||[]).map(p=>({名:p.name, CPU:!!p.isCpu, マス:p.currentNodeIdx, ゴール:p.goals}))
   });
 })();
 </script>
