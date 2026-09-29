@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v82 (2026-09-29)';
+    window.__EDOGAWA_VERSION = 'v83 (2026-09-29)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -2694,7 +2694,22 @@
       if (SHOP_RE.test(nm)) return false;
       return EAT_RE.test(nm);
     };
-    try{ window.__EDOGAWA_IS_RESTAURANT = looksRestaurant; }catch(e){}
+    try{
+      window.__EDOGAWA_IS_RESTAURANT = looksRestaurant;
+      // 調べもの用（どのお店がどの分類に入っているかを確かめられます）
+      window.__EDOGAWA_FIND_PLACE = (nm)=>{
+        const n = String(nm||'').replace(/[\s　]/g,'');
+        const hit = (arr, where)=>(arr||[]).filter(x=>x && String(x.name).replace(/[\s　]/g,'')===n)
+          .map(x=>({どこ:where, 名前:x.name, アイコン:x.emoji, 住所:x.address||'', 写真:!!x.photo}));
+        return [].concat(
+          hit(OD_INSHOKU,'飲食店（区データ）'),
+          hit(OD_SHOPS,'食べきり協力店'),
+          hit(OD_SUPER,'スーパー（区データ）'),
+          hit(HOTPEPPER_SHOPS,'ホットペッパー'),
+          hit(DESTINATION_PRESETS['飲食店'],'目的地：飲食店'),
+          hit(DESTINATION_PRESETS['スーパー（薬屋含む）'],'目的地：スーパー'));
+      };
+    }catch(e){}
 
     // 内蔵データと合流させるグループは、地図アイコンの上限を「合流先ごと」にかける。
     // 地図に同時に描く施設アイコンの上限と、アイコン同士の最低間隔（メートル）。
@@ -4920,6 +4935,24 @@
           known.add(norm(sp.name));
           HOTPEPPER_SHOPS.push({ ...sp, emoji: sp.emoji || '🍽', fromHotpepper: true });
           added++;
+          // ホットペッパーグルメに載っている＝飲食店です。
+          // 区オープンデータの「食べきり協力店」側にも同じ名前があると、
+          // そちらが🏪（お店）として扱われて目的地もスーパー扱いになっていました。
+          // 見つけたら飲食店の側へ移します。
+          const iShop = OD_SHOPS.findIndex(x => x && norm(x.name) === norm(sp.name));
+          if (iShop >= 0) {
+            const moved = OD_SHOPS.splice(iShop, 1)[0];
+            moved.emoji = '🍽';
+            if (!moved.photo && sp.photo) moved.photo = sp.photo;
+            if (!moved.url && sp.url) moved.url = sp.url;
+            if (!moved.tel && sp.tel) moved.tel = sp.tel;
+            if (!OD_INSHOKU.some(x => x && norm(x.name) === norm(moved.name))) OD_INSHOKU.push(moved);
+            const eat = DESTINATION_PRESETS['飲食店'];
+            if (eat && !eat.some(x => x && norm(x.name) === norm(moved.name))) eat.push(moved);
+            const mart = DESTINATION_PRESETS['スーパー（薬屋含む）'];
+            if (mart) { const k = mart.findIndex(x => x && norm(x.name) === norm(moved.name)); if (k >= 0) mart.splice(k, 1); }
+            this._facilityPoiCache = null;
+          }
           // 区オープンデータ側に同じ名前の飲食店があれば、写真などを補う
           const same = OD_INSHOKU.find(x => x && norm(x.name) === norm(sp.name));
           if (same) {
@@ -12607,8 +12640,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         const onReady=(e)=>{const d=e.data||{};if(d.type!=='EDOGAWA_HIDE_START_READY')return;ready=true;window.removeEventListener('message',onReady);startTimer=setTimeout(()=>{miniBGM();try{document.getElementById('regional-mini-frame')?.contentWindow?.postMessage({type:'EDOGAWA_COMMON_MINIGAME_START',game:'hide'},'*')}catch(e){};if(p.isCpu)setTimeout(()=>{try{document.getElementById('regional-mini-frame')?.contentWindow?.postMessage({type:'EDOGAWA_COMMON_CPU_RESULT',game:'hide',score:100,delta:10000,reward:10000,success:true,detail:'CPUが区長を発見しました。'},'*')}catch(e){}},650)},3000);};
         window.addEventListener('message',onReady);
         // If the 3D game has not produced its existing #loading start surface, ask it to use its black fallback.
-        app._v37HideFallbackTimer=setTimeout(()=>{if(ready)return;try{document.getElementById('regional-mini-frame')?.contentWindow?.postMessage({type:'EDOGAWA_FORCE_HIDE_FALLBACK'},'*')}catch(e){}},9000);
-        app._v37HideFailTimer=setTimeout(()=>{window.removeEventListener('message',onReady);if(!app.regionalMiniGame||app.regionalMiniGame.playerId!==p.id)return;try{document.getElementById('regional-mini-frame')?.contentWindow?.postMessage({type:'EDOGAWA_FORCE_HIDE_FALLBACK'},'*')}catch(e){}},16000);
+        app._v37HideFallbackTimer=setTimeout(()=>{if(ready)return;try{document.getElementById('regional-mini-frame')?.contentWindow?.postMessage({type:'EDOGAWA_FORCE_HIDE_FALLBACK'},'*')}catch(e){}},22000);
+        app._v37HideFailTimer=setTimeout(()=>{if(!app.regionalMiniGame||app.regionalMiniGame.playerId!==p.id)return;try{document.getElementById('regional-mini-frame')?.contentWindow?.postMessage({type:'EDOGAWA_FORCE_HIDE_FALLBACK'},'*')}catch(e){}},32000);
       }else parentStartAfter3s(game,p.isCpu?()=>{setTimeout(()=>{try{document.getElementById('regional-mini-frame')?.contentWindow?.postMessage({type:'EDOGAWA_COMMON_CPU_RESULT',game,score:game==='delivery'?80:70,delta:game==='delivery'?8000:7000,reward:game==='delivery'?8000:7000,success:true,detail:'CPUが自動プレイしました。'},'*')}catch(e){}},650)}:null);
       return true;
     }
