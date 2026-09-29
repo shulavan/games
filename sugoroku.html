@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v80 (2026-09-29)';
+    window.__EDOGAWA_VERSION = 'v81 (2026-09-29)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -4341,9 +4341,11 @@
         this.players = [
           { id: 0, name: pName, avatar: (account?.avatarValue || this.selectedAvatar), color: PLAYER_COLORS[0], money: Number.isFinite(account?.money) ? account.money : INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: false,
             goals: Number.isFinite(account?.goals) ? account.goals : 0, movedSquares: Number.isFinite(account?.movedSquares) ? account.movedSquares : 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100, ...(account?.stats || {})}, properties: Array.isArray(account?.properties) ? account.properties : [] },
-          { id: 1, ...cpuSeed(0), color: PLAYER_COLORS[1], pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, properties: [] },
-          { id: 2, ...cpuSeed(1), color: PLAYER_COLORS[2], pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, properties: [] },
-          { id: 3, ...cpuSeed(2), color: PLAYER_COLORS[3], pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, properties: [] }
+          // ひとりで遊ぶときのCPUは、これまでどおり動物の絵文字＋ランダムな名前です
+          // （固定の3名はマルチプレイ専用です）
+          { id: 1, name: shuffledCpuNames[0], avatar: shuffledCpuAvatars[0], color: PLAYER_COLORS[1], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] },
+          { id: 2, name: shuffledCpuNames[1], avatar: shuffledCpuAvatars[1], color: PLAYER_COLORS[2], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] },
+          { id: 3, name: shuffledCpuNames[2], avatar: shuffledCpuAvatars[2], color: PLAYER_COLORS[3], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] }
         ];
 
         document.getElementById("lobby-screen").classList.add("hidden");
@@ -16382,7 +16384,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-rail-modal .edo-rail-item .fare{ font-size:17px; text-align:right; margin-top:auto }
 
   /* 次のターンに出る「乗車しますか？」の案内。サイコロの上に浮かせます */
-  #edo-board-ask{ position:fixed; left:10px; right:10px; bottom:210px; z-index:2147483200;
+  #edo-board-ask{ position:fixed; left:10px; right:10px; bottom:220px; z-index:2147483200;
     display:none; justify-content:center; pointer-events:none }
   #edo-board-ask.show{ display:flex }
   .edo-ask-box{ pointer-events:auto; width:min(380px,96vw);
