@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v79 (2026-09-28)';
+    window.__EDOGAWA_VERSION = 'v80 (2026-09-29)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -2771,6 +2771,22 @@
 
     const CPU_NAME_POOL = [];
 
+    // CPU3名は固定です（名前・能力・所持金・写真アイコン）
+    const FIXED_CPUS = [
+      { name:'呑んべぇ社長',  avatar:'https://shulavan.github.io/img/matsu.jpg',
+        money: 8329280,  stats:{ intelligence:112, wealth:123, stamina: 81, luck:155 } },
+      { name:'イルカヒロシ',  avatar:'https://shulavan.github.io/img/hiroshi.jpg',
+        money: 2105340,  stats:{ intelligence: 99, wealth:120, stamina:153, luck:138 } },
+      { name:'親方舟大工',    avatar:'https://shulavan.github.io/img/oyakata.jpg',
+        money:44837190,  stats:{ intelligence:167, wealth:199, stamina:148, luck:185 } }
+    ];
+    window.__EDOGAWA_FIXED_CPUS = FIXED_CPUS;
+    const cpuSeed = (i) => ({
+      name: FIXED_CPUS[i].name,
+      avatar: FIXED_CPUS[i].avatar,
+      money: FIXED_CPUS[i].money,
+      stats: { ...FIXED_CPUS[i].stats }
+    });
     const CPU_AVATAR_POOL = ["🐶", "🐱", "🐻", "🐼", "🦊", "🐰", "🐯", "🦁", "🐨", "🐵", "🐔", "🐧", "🐤", "🦉", "🦄", "🐷", "🐸", "🐙", "🐢", "🦜", "🦝", "🐺", "🦌", "🐘"];
 
     // --- SOUND ENGINE ---
@@ -3526,19 +3542,12 @@
         const finalPlayers = [...currentPlayers];
 
         let cpuIdx = 1;
+        // 空いている席は、固定のCPU3名で埋めます
         while (finalPlayers.length < 4) {
-          let name;
-          do { name = CPU_NAME_POOL[Math.floor(Math.random() * CPU_NAME_POOL.length)]; } while (usedCpuNames.has(name) && usedCpuNames.size < CPU_NAME_POOL.length);
-          usedCpuNames.add(name);
-
-          let avatar;
-          do { avatar = CPU_AVATAR_POOL[Math.floor(Math.random() * CPU_AVATAR_POOL.length)]; } while (usedCpuAvatars.has(avatar) && usedCpuAvatars.size < CPU_AVATAR_POOL.length);
-          usedCpuAvatars.add(avatar);
-
+          const seed = cpuSeed(Math.min(cpuIdx, FIXED_CPUS.length - 1));
           finalPlayers.push({
             uid: `cpu_${cpuIdx}`,
-            name: name,
-            avatar: avatar,
+            ...seed,
             isCpu: true
           });
           cpuIdx++;
@@ -4332,9 +4341,9 @@
         this.players = [
           { id: 0, name: pName, avatar: (account?.avatarValue || this.selectedAvatar), color: PLAYER_COLORS[0], money: Number.isFinite(account?.money) ? account.money : INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: false,
             goals: Number.isFinite(account?.goals) ? account.goals : 0, movedSquares: Number.isFinite(account?.movedSquares) ? account.movedSquares : 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100, ...(account?.stats || {})}, properties: Array.isArray(account?.properties) ? account.properties : [] },
-          { id: 1, name: shuffledCpuNames[0], avatar: shuffledCpuAvatars[0], color: PLAYER_COLORS[1], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] },
-          { id: 2, name: shuffledCpuNames[1], avatar: shuffledCpuAvatars[1], color: PLAYER_COLORS[2], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] },
-          { id: 3, name: shuffledCpuNames[2], avatar: shuffledCpuAvatars[2], color: PLAYER_COLORS[3], money: INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, stats: {intelligence:100,wealth:100,stamina:100,luck:100}, properties: [] }
+          { id: 1, ...cpuSeed(0), color: PLAYER_COLORS[1], pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, properties: [] },
+          { id: 2, ...cpuSeed(1), color: PLAYER_COLORS[2], pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, properties: [] },
+          { id: 3, ...cpuSeed(2), color: PLAYER_COLORS[3], pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: true, goals: 0, movedSquares: 0, properties: [] }
         ];
 
         document.getElementById("lobby-screen").classList.add("hidden");
@@ -16350,6 +16359,248 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     設定: app.basemapPref()==='raster' ? '通常（速い）' : 'ベクター（きれい）',
     盤面の地図: app.map ? app.map.__gsiStatus : '（まだ）',
     ロビーの地図: app.lobbyMap ? app.lobbyMap.__gsiStatus : '（まだ）'
+  });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v80: 競艇の締めの実況／駅の乗車を次のターンに／乗車画面を2列に
+     ============================================================================ -->
+<style id="edogawa-v80-style">
+  /* 行き先の駅ボタンを2列に並べます */
+  #edo-rail-modal .edo-rail-group{ display:grid; grid-template-columns:1fr 1fr; gap:8px; align-items:stretch }
+  #edo-rail-modal .edo-rail-group > .edo-rail-gname,
+  #edo-rail-modal .edo-rail-group > .edo-rail-sub,
+  #edo-rail-modal .edo-rail-group > .edo-rail-open{ grid-column:1 / -1 }
+  #edo-rail-modal .edo-rail-item{ flex-direction:column; align-items:stretch; justify-content:flex-start;
+    gap:2px; padding:10px 11px; min-height:78px }
+  #edo-rail-modal .edo-rail-item > span{ display:block; min-width:0 }
+  #edo-rail-modal .edo-rail-item .nm{ font-size:14px; line-height:1.25 }
+  #edo-rail-modal .edo-rail-item .km{ font-size:10px; margin-top:2px }
+  #edo-rail-modal .edo-rail-item .fare{ font-size:17px; text-align:right; margin-top:auto }
+
+  /* 次のターンに出る「乗車しますか？」の案内。サイコロの上に浮かせます */
+  #edo-board-ask{ position:fixed; left:10px; right:10px; bottom:210px; z-index:2147483200;
+    display:none; justify-content:center; pointer-events:none }
+  #edo-board-ask.show{ display:flex }
+  .edo-ask-box{ pointer-events:auto; width:min(380px,96vw);
+    background:#0f172a; border:1px solid rgba(56,189,248,.6); border-radius:16px;
+    padding:12px 13px; box-shadow:0 14px 40px rgba(0,0,0,.55);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif }
+  .edo-ask-t{ font-size:15px; font-weight:900; color:#f8fafc }
+  .edo-ask-s{ font-size:10px; color:#94a3b8; margin-top:3px; line-height:1.6 }
+  .edo-ask-btns{ display:flex; gap:8px; margin-top:10px }
+  .edo-ask-btns button{ flex:1 1 0; padding:11px 6px; border-radius:12px; font-size:14px; font-weight:900;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
+  .edo-ask-btns button.go{ background:#0284c7; border-color:#38bdf8; color:#fff }
+  .edo-ask-btns button:active{ transform:scale(.97) }
+</style>
+<script id="edogawa-v80">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ============================================================
+  // ① 江戸川競艇の締めの実況が5秒で切れる
+  //    v37で入れた「5秒たったら閉じる」タイマーが、実況の読み上げを
+  //    見ていませんでした。読み終わるまで閉じないようにします。
+  // ============================================================
+  const SPEAK_MAX_MS = 20000, MIN_SHOW_MS = 5000;
+  function speaking(){
+    try{ const s=window.speechSynthesis; return !!(s && (s.speaking || s.pending)); }catch(e){ return false; }
+  }
+  function armBoatClose(){
+    clearTimeout(app.__boatCloseTimer);
+    const t0 = Date.now();
+    const tick = ()=>{
+      const st = app.boatRaceState;
+      if(!st || st.phase!=='result') return;                 // もう閉じています
+      const el = document.getElementById('boatrace-result-screen');
+      if(!el || el.classList.contains('hidden')) return;
+      const waited = Date.now()-t0;
+      const busy = (app._boatOutroSpeaking===true) || speaking();
+      if(waited < MIN_SHOW_MS || (busy && waited < SPEAK_MAX_MS)){
+        app.__boatCloseTimer = setTimeout(tick, 250); return;
+      }
+      // 言い終わったので、少し余韻を置いてから閉じます
+      app.__boatCloseTimer = setTimeout(()=>{ try{ app.closeBoatRaceEvent && app.closeBoatRaceEvent(); }catch(e){} }, 350);
+    };
+    app.__boatCloseTimer = setTimeout(tick, 250);
+  }
+  const origBoatRender = app._renderBoatRaceResult ? app._renderBoatRaceResult.bind(app) : null;
+  if(origBoatRender){
+    app._renderBoatRaceResult = function(...a){
+      const r = origBoatRender(...a);
+      try{
+        clearTimeout(this._v37BoatResultTimer); this._v37BoatResultTimer = null;   // 5秒で切るタイマーを止めます
+        const st = this.boatRaceState;
+        if(st && st.phase==='result') armBoatClose();
+      }catch(e){ console.error('[v80]', e); }
+      return r;
+    };
+  }
+  const origBoatClose = app.closeBoatRaceEvent ? app.closeBoatRaceEvent.bind(app) : null;
+  if(origBoatClose){
+    app.closeBoatRaceEvent = function(...a){ clearTimeout(app.__boatCloseTimer); return origBoatClose(...a); };
+  }
+
+  // ============================================================
+  // ② 駅の乗車を「次のターンのはじめ」に聞くようにします
+  //    ・駅の中心から6マス（約240m）以内に止まったら、
+  //      その場では普通のマスの出来事をそのまま行います
+  //    ・次の自分の番のはじめに「◯◯駅に乗車しますか？」を出します
+  //    ・サイコロを振ったら、その案内は消えます
+  // ============================================================
+  const SQUARE_M = 40, NEAR_SQUARES = 6;
+  const NEAR_M = SQUARE_M * NEAR_SQUARES;     // 240m
+
+  function askBox(){
+    let el = document.getElementById('edo-board-ask');
+    if(!el){ el=document.createElement('div'); el.id='edo-board-ask'; document.body.appendChild(el); }
+    return el;
+  }
+  app.closeBoardAsk = function(){
+    const el = document.getElementById('edo-board-ask');
+    if(el){ el.classList.remove('show'); el.innerHTML=''; }
+  };
+  function openBoardAsk(player, at){
+    const el = askBox();
+    el.innerHTML = `<div class="edo-ask-box">
+      <div class="edo-ask-t">🚉 ${esc(at.name)}駅に乗車しますか？</div>
+      <div class="edo-ask-s">運賃を払うと、その路線の駅まで移動できます。<br>
+        サイコロを振ると、この案内は消えて普通に進みます。</div>
+      <div class="edo-ask-btns">
+        <button type="button" data-no="1">キャンセル</button>
+        <button type="button" class="go" data-yes="1">乗車</button>
+      </div>
+    </div>`;
+    el.classList.add('show');
+    el.onclick = (ev)=>{
+      const t = ev.target.closest('button'); if(!t) return;
+      if(t.dataset.no){ player.pendingStation = null; app.closeBoardAsk(); app.updateHUD && app.updateHUD(); return; }
+      if(t.dataset.yes){ app.closeBoardAsk(); app.boardTrainNow(player); }
+    };
+  }
+
+  // 「乗車」を押したときに、いまの駅乗車画面を開きます
+  app.boardTrainNow = function(player){
+    const ps = player && player.pendingStation; if(!ps) return;
+    const at = app.stationLinesAt ? app.stationLinesAt(ps.lat, ps.lng, NEAR_M) : null;
+    if(!at || !at.lines.length){ player.pendingStation=null; return; }
+    player.pendingStation = null;
+    app._openRailRide(player, at, (pick)=>{
+      if(!pick){ app.updateHUD && app.updateHUD(); return; }
+      const f = app.railFare(pick.line, at.name, pick.to);
+      if(!f || (Number(player.money)||0) < f.fare){ app.updateHUD && app.updateHUD(); return; }
+      player.money = Math.max(0, (Number(player.money)||0) - f.fare);
+      app.addLog && app.addLog(`🚃 ${player.name}：${LINES[pick.line].name} ${at.name}駅 → ${pick.to}駅（運賃 ¥${f.fare.toLocaleString('ja-JP')}／約${f.km}km）`);
+      app.updateHUD && app.updateHUD();
+
+      const arrive = (prize, detail)=>{
+        if(prize>0){
+          player.money = (Number(player.money)||0) + prize;
+          app.addLog && app.addLog(`🎖 ${player.name}：運転ボーナス ＋¥${prize.toLocaleString('ja-JP')}（${detail||''}）`);
+        }
+        try{
+          if(!player.isFlying && !(player.wheelchairTurns>0)){
+            player.vehicle = { emoji:'🚃', name:'電車', mult:4 };
+            app.addLog && app.addLog(`🚃 ${player.name}：運転おつかれさまでした！　次のサイコロは【🚃 電車（4倍）】です。`);
+            app.setPlayerIconState && app.setPlayerIconState(player, {});
+          }
+        }catch(e){}
+        app.updateHUD && app.updateHUD();
+        app.scheduleProfilePersist && app.scheduleProfilePersist(player);
+        const dest = ST[pick.to];
+        Promise.resolve(app.teleportPlayer(player, {name:pick.to+'駅', lat:dest.lat, lng:dest.lng}))
+          .then(()=>{ app.finishTurn(); app.panToCurrentPlayer && app.panToCurrentPlayer(); })
+          .catch(()=>{ app.finishTurn(); });
+      };
+      const drivable = app.startTrainRide && ['tozai','shinjuku','sobu','keiyo','keisei','metro7'].indexOf(pick.line)>=0;
+      if(drivable) app.startTrainRide(player, pick.line, at.name, pick.to, arrive);
+      else arrive(0,'');
+    });
+  };
+
+  // 止まった場所が駅のそばなら、覚えておくだけにします（その場では聞きません）
+  const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  const plainLand = app.__origLandOnSpot ? app.__origLandOnSpot.bind(app) : origLand;
+  if(plainLand){
+    app.landOnSpot = function(player){
+      try{
+        const node = this.roadNetworkNodes && this.roadNetworkNodes[player.currentNodeIdx];
+        const at = (node && app.stationLinesAt) ? app.stationLinesAt(node.lat, node.lng, NEAR_M) : null;
+        const isMine = !player.isCpu && (!this.myUid || player.uid===this.myUid);
+        if(at && at.lines.length && isMine && !player.isFlying && ST[at.name]){
+          player.pendingStation = { name: at.name, lat: ST[at.name].lat, lng: ST[at.name].lng };
+          app.addLog && app.addLog(`🚉 ${player.name}：${at.name}駅のそばに着きました。次のターンに乗車できます。`);
+        }else{
+          player.pendingStation = null;
+        }
+      }catch(e){ console.error('[v80]', e); }
+      // 普通のマスの出来事をそのまま行います
+      return (app.__origLandOnSpot || plainLand).call(app, player);
+    };
+  }
+
+  // 自分の番のはじめに案内を出します（サイコロを振ったら消えます）
+  function refreshBoardAsk(){
+    try{
+      const cp = app.players && app.players[app.currentPlayerIdx];
+      if(!cp){ app.closeBoardAsk(); return; }
+      const mine = !cp.isCpu && (!app.myUid || cp.uid===app.myUid);
+      const canAct = app.canActNow ? app.canActNow() : true;
+      if(!mine || !canAct || app.isRolling || app.miniGameActive || app.boatRaceActive || cp.skipTurn){
+        app.closeBoardAsk(); return;
+      }
+      if(!cp.pendingStation){ app.closeBoardAsk(); return; }
+      const el = document.getElementById('edo-board-ask');
+      if(el && el.classList.contains('show')) return;      // もう出ています
+      openBoardAsk(cp, cp.pendingStation);
+    }catch(e){ console.error('[v80]', e); }
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){
+    app.updateHUD = function(...a){ const r = origHUD(...a); refreshBoardAsk(); return r; };
+  }
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){
+    app.rollDice = function(...a){
+      try{
+        const cp = app.players && app.players[app.currentPlayerIdx];
+        if(cp) cp.pendingStation = null;      // 振ったら、その駅の案内は終わりにします
+        app.closeBoardAsk();
+      }catch(e){}
+      return origRoll(...a);
+    };
+  }
+
+  // ============================================================
+  // ③ マルチプレイに持ち込むのは「所持金・不動産・能力」まで
+  //    ゴール数（陣地）は持ち込まず、0から始めます
+  // ============================================================
+  const origMpStart = app.startMultiplayerGameSession ? app.startMultiplayerGameSession.bind(app) : null;
+  if(origMpStart){
+    app.startMultiplayerGameSession = function(list){
+      const r = origMpStart(list);
+      try{
+        (this.players||[]).forEach(p=>{ p.goals = 0; });
+        this.goaledPlaces = [];
+        this.territory = {};
+        this.updateHUD && this.updateHUD();
+      }catch(e){}
+      return r;
+    };
+  }
+
+  window.__EDOGAWA_BOARD_ASK = ()=>({
+    いまの人: (app.players&&app.players[app.currentPlayerIdx]||{}).name,
+    乗れる駅: (app.players&&app.players[app.currentPlayerIdx]||{}).pendingStation || null,
+    案内が出ている: !!(document.getElementById('edo-board-ask')||{classList:{contains:()=>false}}).classList.contains('show'),
+    範囲m: NEAR_M
   });
 })();
 </script>
