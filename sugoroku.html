@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v83 (2026-09-29)';
+    window.__EDOGAWA_VERSION = 'v84 (2026-09-29)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -828,7 +828,7 @@
   <!-- MAIN GAME UI FOOTER -->
   <footer data-app="1" class="absolute bottom-0 left-0 right-0 p-3 sm:p-4 z-20 flex flex-col gap-3">
 
-    <div class="relative flex items-center justify-between gap-3">
+    <div id="edo-footer-top-row" class="relative flex items-center justify-between gap-3">
       <div id="active-player-footer" class="sticker-btn flex items-center gap-2.5 bg-slate-950 rounded-xl px-3 py-2">
         <div id="active-player-avatar" class="w-10 h-10 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center text-xl shrink-0 shadow-md">
           🧑‍🦱
@@ -839,6 +839,7 @@
           </span>
           <span id="active-player-name" class="font-extrabold text-sm text-slate-100 whitespace-nowrap">プレイヤー1</span>
           <span id="active-player-money" class="text-xs text-amber-400 font-extrabold whitespace-nowrap">¥1,000,000</span>
+          <span id="active-player-terr" class="text-[10px] font-extrabold whitespace-nowrap text-emerald-300">🎨 陣地0</span>
         </div>
       </div>
 
@@ -863,7 +864,9 @@
       </div>
     </div>
 
-    <div id="players-card-container" class="grid grid-cols-4 gap-2 w-full pt-2 border-t border-slate-800/60"></div>
+    <div id="players-card-container" class="grid grid-cols-4 gap-2 w-full"></div>
+    <!-- 現在いる場所は、4人枠のすぐ下に置きます（重ならないように） -->
+    <div id="edo-nearby-row" class="w-full flex justify-end"></div>
   </footer>
 
   <!-- 広告枠（現在は広告を出していないので空です）
@@ -6470,6 +6473,12 @@
         activeMoneyEl.textContent = this.formatMoneyMan(cp.money);
         // マイナスは赤字で表示
         activeMoneyEl.classList.toggle("text-rose-400", cp.money < 0);
+        const activeTerrEl = document.getElementById("active-player-terr");
+        if (activeTerrEl) {
+          const myTerr = (typeof this.territoryCount === 'function') ? this.territoryCount(cp.id) : 0;
+          activeTerrEl.textContent = `🎨 陣地${myTerr || 0}`;
+          activeTerrEl.style.color = cp.color && cp.color.stroke ? cp.color.stroke : '#34d399';
+        }
         // ケガ（🦽）の間は乗り物は使えないので、乗り物表示は出さず🦽の案内にする。
         // このテキストは後で「サイコロを振る」ボタンの2行目として表示する。
         this._activePlayerVehicleText =
@@ -6517,7 +6526,7 @@
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold ${p.money < 0 ? 'text-rose-400' : 'text-amber-400'}">${this.formatMoneyMan(p.money)}</div>
               <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
-              ${terr ? `<div class="text-[9px] font-bold" style="color:${p.color.stroke || '#f59e0b'}">🎨 陣地${terr}</div>` : ''}
+              <div class="text-[9px] font-bold" style="color:${p.color.stroke || '#f59e0b'}">🏁 ${Number(p.goals) || 0}ゴール</div>
               ${offline ? '<div class="absolute top-1 left-1 px-1 rounded bg-slate-950/85 border border-slate-600 text-[8px] font-black text-slate-300">離脱</div>' : ''}
             </div>
           `;
@@ -12751,7 +12760,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
      下のボタン列の位置は出典を入れる前と同じままです）。
      目立たせる必要はないので枠なし・小さめの文字にしています。 */
   #map-credit-btn.edo-map-credit{
-    position:fixed; top:10px; left:8px; z-index:30;
+    position:fixed; top:20px; left:8px; z-index:30;
     margin:0; padding:0; border:0; background:transparent; box-shadow:none;
     font-size:7px; line-height:1.2; font-weight:600; letter-spacing:.01em;
     color:#64748b; text-align:left; white-space:nowrap;
@@ -16545,6 +16554,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
   function openBoardAsk(player, at){
     const el = askBox();
+    // フッターの高さに合わせて、サイコロと「サイコロを振る」の上に浮かせます
+    try{
+      const f = document.querySelector('footer[data-app="1"]');
+      const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
+      el.style.bottom = (h + 16) + 'px';
+    }catch(e){}
     el.innerHTML = `<div class="edo-ask-box">
       <div class="edo-ask-t">🚉 ${esc(at.name)}駅に乗車しますか？</div>
       <div class="edo-ask-s">運賃を払うと、その路線の駅まで移動できます。<br>
@@ -17102,6 +17117,71 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     人数: (app.players||[]).length,
     顔ぶれ: (app.players||[]).map(p=>({名:p.name, CPU:!!p.isCpu, マス:p.currentNodeIdx, ゴール:p.goals}))
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v84: フッターの並び／自分枠に陣地／4人枠はゴール数／ヘッダーの位置
+     ============================================================================ -->
+<style id="edogawa-v84-style">
+  /* 目的地の枠を5px下げます（スマホ・PCとも） */
+  #mobile-destination-badge{ top:calc(0.75rem + 5px) !important; }
+  #game-destination-badge-slot{ margin-top:5px; }
+
+  /* 4人枠の上の横線をやめた分、自分枠とサイコロの段を下げます */
+  #edo-footer-top-row{ margin-top:10px; }
+
+  /* 現在いる場所は、4人枠のすぐ下に静かに置きます */
+  #edo-nearby-row{ margin-top:6px; min-height:0; }
+  #edo-nearby-row:empty{ display:none; }
+  #edo-nearby-row #nearby-place-badge,
+  #edo-nearby-row #nearby-locate-btn{
+    position:static !important; inset:auto !important;
+    bottom:auto !important; right:auto !important; left:auto !important; top:auto !important;
+    z-index:auto !important; margin:0 !important;
+  }
+  #edo-nearby-row #nearby-place-badge.hidden,
+  #edo-nearby-row #nearby-locate-btn.hidden{ display:none !important; }
+</style>
+<script id="edogawa-v84">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // 「現在地」の枠を、4人枠の下（フッターの中）へ移します。
+  // もともと地図の上に浮かせていたため、4人枠の裏に隠れていました。
+  function moveNearby(){
+    const row = document.getElementById('edo-nearby-row');
+    if(!row) return false;
+    let moved = 0;
+    ['nearby-place-badge','nearby-locate-btn'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el || el.parentElement === row) return;
+      el.classList.remove('absolute','bottom-3','right-3','z-20');
+      row.appendChild(el);
+      moved++;
+    });
+    return moved > 0 || !!document.getElementById('nearby-place-badge');
+  }
+  let n = 0;
+  const iv = setInterval(()=>{ n++; if(moveNearby() || n > 40) clearInterval(iv); }, 300);
+  moveNearby();
+
+  window.__EDOGAWA_FOOTER_INFO = ()=>{
+    const row = document.getElementById('edo-nearby-row');
+    const cards = document.getElementById('players-card-container');
+    const top = document.getElementById('edo-footer-top-row');
+    const r = (el)=>{ if(!el) return null; const b=el.getBoundingClientRect();
+      return {上:Math.round(b.top), 下:Math.round(b.bottom)}; };
+    return {
+      現在地の枠の場所: row && document.getElementById('nearby-place-badge') &&
+        document.getElementById('nearby-place-badge').parentElement === row ? '4人枠の下' : 'まだ地図の上',
+      自分枠の段: r(top), 四人枠: r(cards), 現在地の行: r(row),
+      横線: cards ? getComputedStyle(cards).borderTopWidth : null
+    };
+  };
 })();
 </script>
 
