@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v84 (2026-09-29)';
+    window.__EDOGAWA_VERSION = 'v85 (2026-09-29)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1824,6 +1824,7 @@
     const SOLO_SAVE_KEY = "edogawa_sugoroku_state";
     const MP_SAVE_KEY = "edogawa_sugoroku_mp_state";
     try{ window.__EDOGAWA_SAVE_KEYS = { solo: SOLO_SAVE_KEY, multi: MP_SAVE_KEY }; }catch(e){}
+    try{ setTimeout(()=>{ window.__EDOGAWA_START_LOC = EDOGAWA_START; window.__EDOGAWA_FIRST_GOAL = FIRST_GOAL; }, 0); }catch(e){}
     // メニューの「設定」で切り替えた内容（音・読み上げ）の保存先。
     const SETTINGS_KEY = "edogawa_sugoroku_settings";
     // アクセス解析（Google アナリティクス）の同意状態の保存先
@@ -3843,7 +3844,7 @@
         if (this.isHost) {
           // The host is the single source of truth: it generates the board & random
           // square layout once, then broadcasts it so every device sees the identical board.
-          this.setupBoard(EDOGAWA_START, FIRST_GOAL).then(() => {
+          this.setupBoard(EDOGAWA_START, this._mpGoal || FIRST_GOAL).then(() => {
             this.updateHUD();
             this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
           });
@@ -3967,9 +3968,17 @@
 
       applyRemoteGameState(gs) {
         if (!gs) return;
-        if (!this.isHost) this.applyRemoteBoatRaceState(gs.boatRace || null);
-        if (!this.isHost) this.applyRemoteQuizState(gs.quiz || null);
-        if (!this.isHost) this.applyRemoteKingyoState(gs.kingyo || null);
+        // 【v85での修正】ここで存在しない関数（applyRemoteKingyoState）を呼んでいたため、
+        // 参加者側はゲーム状態を受け取るたびに例外で止まり、
+        // 盤面・自分のコマ・サイコロがいつまでも出ませんでした。
+        if (!this.isHost) {
+          try{ if (typeof this.applyRemoteBoatRaceState === 'function') this.applyRemoteBoatRaceState(gs.boatRace || null); }
+          catch(e){ console.error('[remote boat]', e); }
+          try{ if (typeof this.applyRemoteQuizState === 'function') this.applyRemoteQuizState(gs.quiz || null); }
+          catch(e){ console.error('[remote quiz]', e); }
+          try{ if (typeof this.applyRemoteKingyoState === 'function') this.applyRemoteKingyoState(gs.kingyo || null); }
+          catch(e){ console.error('[remote kingyo]', e); }
+        }
         if (typeof gs.version === 'number' && gs.version <= this.gameStateVersion) return;
         this.gameStateVersion = gs.version || this.gameStateVersion;
 
@@ -17181,6 +17190,328 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       自分枠の段: r(top), 四人枠: r(cards), 現在地の行: r(row),
       横線: cards ? getComputedStyle(cards).borderTopWidth : null
     };
+  };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v85: マルチプレイの検証で見つかった不具合の修正
+     ----------------------------------------------------------------------------
+     ・進行役（内部のホスト）がいない部屋に入ってしまうと、誰も盤面を作らないため
+       マスが出ず、サイコロも回らない状態になっていました
+     ・古い部屋がロビーに残り続け、別々の部屋に入ってしまうことがありました
+     ・目的地が毎回同じでした
+     ============================================================================ -->
+<style id="edogawa-v85-style">
+  /* 「駅と線路の調整」は今は使わないので隠します（機能は残しています） */
+  #edo-railset-entry{ display:none !important; }
+</style>
+<script id="edogawa-v85">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const FB = ()=>window.FirebaseLib;
+  const HOST_DEAD_MS = 45000;          // 45秒さわられていない進行役は「いない」とみなします
+  const ROOM_FRESH_MS = 10 * 60 * 1000; // ロビーに残す部屋の寿命（10分）
+
+  function roomRefOf(id){
+    return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id);
+  }
+  function km(a,b){
+    if(!a||!b) return 1e9;
+    const dy=(b.lat-a.lat)*111, dx=(b.lng-a.lng)*91;
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+
+  // ── 目的地を部屋ごとにランダムで決めます ──
+  app.mpPickRandomGoal = function(seed){
+    const r = app._mpRng ? app._mpRng(seed || Math.floor(Math.random()*1e9)) : Math.random;
+    const start = window.__EDOGAWA_START_LOC;
+    const first = window.__EDOGAWA_FIRST_GOAL;
+    let pool = [];
+    try{ pool = (app.getAllFacilityObjects() || []); }catch(e){}
+    const ok = pool.filter(x => x && x.name && isFinite(x.lat) && isFinite(x.lng)
+      && (!first || x.name !== first.name)
+      && (!start || x.name !== start.name)
+      && (!start || (km(start, x) > 0.8 && km(start, x) < 6)));
+    if(!ok.length) return first || null;
+    const pick = ok[Math.floor(r() * ok.length)];
+    return { name: pick.name, lat: pick.lat, lng: pick.lng, emoji: pick.emoji, address: pick.address || '' };
+  };
+
+  // ── 部屋さがし（古い部屋は捨てます） ──
+  const origFind = app.mpFindRoom ? app.mpFindRoom.bind(app) : null;
+  app.mpFindRoom = async function(forceNew){
+    const ref = roomRefOf('__lobby_v1');
+    return await FB().runTransaction(app.db, async (tx)=>{
+      const snap = await tx.get(ref);
+      const now = Date.now();
+      let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
+        .filter(r => r && r.roomId && (now - (r.updatedAt || 0) < ROOM_FRESH_MS));
+      let target = forceNew ? null : rooms.find(r => (r.humans || 0) < 4);
+      let isNew = false;
+      if(!target){
+        target = { roomId: 'room_' + Math.floor(100000 + Math.random()*900000), humans: 0, updatedAt: now };
+        rooms.push(target);
+        isNew = true;
+      }
+      target.humans = (target.humans || 0) + 1;
+      target.updatedAt = now;
+      if(rooms.length > 20) rooms = rooms.slice(-20);
+      tx.set(ref, { rooms: rooms, updatedAt: now });
+      return { roomId: target.roomId, isNew: isNew, humans: target.humans };
+    });
+  };
+
+  // ── 席をとる（進行役がいない部屋なら、自分が進行役になります） ──
+  app.mpTakeSeat = async function(roomId){
+    const ref = roomRefOf(roomId);
+    const me = app._mpMeSeat();
+    return await FB().runTransaction(app.db, async (tx)=>{
+      const snap = await tx.get(ref);
+      const now = Date.now();
+      if(!snap || !snap.exists()){
+        const seed = Math.floor(Math.random() * 1000000000);
+        const goal = app.mpPickRandomGoal(seed);
+        const finalPlayers = [me].concat(app._mpCpuSeats());
+        tx.set(ref, {
+          roomId: roomId, mode: 'dropin', seed: seed, goal: goal, status: 'playing',
+          finalPlayers: finalPlayers, players: finalPlayers,
+          hostUid: app.myUid, hostPresence: now,
+          createdAt: now, updatedAt: now,
+          presence: {}, guestAcks: {}, joinQueue: [], savedGame: null
+        });
+        return { created:true, host:true, seat:0, seed:seed, goal:goal, finalPlayers:finalPlayers };
+      }
+      const d = snap.data();
+      const hostAlive = (now - Number(d.hostPresence || 0)) < HOST_DEAD_MS;
+      const fp = Array.isArray(d.finalPlayers) ? d.finalPlayers.slice() : [];
+      const seed = d.seed || Math.floor(Math.random()*1000000000);
+      const goal = d.goal || app.mpPickRandomGoal(seed);
+
+      let seat = fp.findIndex(p => p && p.uid === app.myUid);
+      let rejoin = seat >= 0;
+      if(seat < 0){
+        seat = fp.findIndex(p => p && p.isCpu);
+        if(seat < 0) return { full: true };
+        fp[seat] = me;
+      }else{
+        fp[seat] = me;                      // 入り直しのときは中身を新しくします
+      }
+      const patch = { finalPlayers: fp, players: fp, updatedAt: now, seed: seed, goal: goal };
+      if(!rejoin){
+        patch.joinQueue = (Array.isArray(d.joinQueue) ? d.joinQueue : []).concat([{ uid: app.myUid, seat: seat, at: now }]);
+      }
+      // 進行役がいない部屋なら、自分が引き継ぎます（誰も盤面を作らない状態を防ぎます）
+      const takeover = !hostAlive;
+      if(takeover){ patch.hostUid = app.myUid; patch.hostPresence = now; patch.joinQueue = []; }
+      tx.update(ref, patch);
+      return { created:false, host:takeover, takeover:takeover, rejoin:rejoin,
+               seat:seat, seed:seed, goal:goal, finalPlayers:fp };
+    });
+  };
+
+  // ── 「マルチプレイ」を押したとき ──
+  app.quickJoinMultiplayer = async function(opts){
+    opts = opts || {};
+    const KEY = (window.__EDOGAWA_SAVE_KEYS && window.__EDOGAWA_SAVE_KEYS.multi) || 'edogawa_sugoroku_mp_state';
+    if(!opts.force && app._hasSave && app._hasSave(KEY) && app.openRestartConfirm){
+      app.openRestartConfirm('multi'); return;
+    }
+    if(app.__mpJoining) return;
+    app.__mpJoining = true;
+    let cancelled = false;
+    app._mpWait(true, '部屋をさがしています…',
+      'すでに進んでいるゲームに入ります。<br>あなたは西葛西駅からのスタートです。',
+      ()=>{ cancelled = true; app.__mpJoining = false; });
+    try{
+      await app.ensureGameDataReady();
+      await app.initFirebase();
+      if(cancelled) return;
+      if(!app.db || !FB()){
+        app._mpWait(false);
+        app.addLog && app.addLog('👥 通信が使えないため、この端末だけで対戦します。');
+        return app.mpStartLocal();
+      }
+
+      let found = await app.mpFindRoom(false);
+      let seat = await app.mpTakeSeat(found.roomId);
+      if(seat && seat.full){
+        found = await app.mpFindRoom(true);
+        seat = await app.mpTakeSeat(found.roomId);
+      }
+      if(cancelled) return;
+      if(!seat || seat.full) throw new Error('NO_SEAT');
+
+      app.roomId = found.roomId;
+      app.isHost = !!seat.host;
+      if(seat.host) app._mpHostSince = Date.now();
+      app.hostUidForSave = app.myUid;
+      app.gameStateVersion = 0;
+      app.lastAppliedEventSeq = 0;
+      app.eventSeq = 0;
+      app._mpSeed = seat.seed || 1;
+      app._mpSeat = seat.seat;
+      app._mpGoal = seat.goal || null;
+      app._mpJoinedAt = Date.now();
+      app._mpLastHostPresence = Date.now();
+      app._mpJoined = {};
+
+      try{ app.roomUnsubscribe && app.roomUnsubscribe(); }catch(e){}
+      const ref = roomRefOf(app.roomId);
+      app.roomUnsubscribe = FB().onSnapshot(ref, (snapshot)=>{
+        if(!snapshot || !snapshot.exists()) return;
+        app.handleRoomSnapshot(snapshot.data());
+      }, (err)=>console.error('[v85] snapshot', err));
+      app._startPresenceHeartbeat && app._startPresenceHeartbeat();
+      app.mpWatchHost();
+      app.mpWatchBoard();
+
+      if(seat.host){
+        app._mpWait(true, 'ゲームに入っています…', '進行中のゲームに飛び込みます。');
+        if(seat.takeover) app.addLog && app.addLog('👥 進行役がいなかったので、引き継ぎました。');
+        app.startMultiplayerGameSession(seat.finalPlayers);
+        await app.mpAfterBoardReady(true);
+      }else{
+        app._mpWait(true, 'ゲームに入っています…', 'いまの状況を受け取っています。');
+        setTimeout(()=>{ app._mpWait(false); }, 6000);
+      }
+    }catch(e){
+      console.error('[v85] quickJoin', e);
+      app._mpWait(false);
+      app.addLog && app.addLog('👥 部屋に入れませんでした。この端末だけで対戦します。');
+      app.mpStartLocal();
+    }finally{
+      app.__mpJoining = false;
+      setTimeout(()=>app._mpWait(false), 500);
+    }
+  };
+
+  // ── 進行役の見張り（いなくなったら引き継ぎます） ──
+  app.mpWatchHost = function(){
+    clearInterval(app.__mpHostWatch);
+    app.__mpHostWatch = setInterval(async ()=>{
+      try{
+        if(!app.isMultiplayer || !app.db || !app.roomId) return;
+        if(app.isHost) return;
+        const last = Number(app._mpLastHostPresence || 0);
+        if(Date.now() - last < HOST_DEAD_MS) return;
+        await app.mpBecomeHost();
+      }catch(e){ console.error('[v85] watch', e); }
+    }, 6000);
+  };
+
+  app.mpBecomeHost = async function(){
+    if(app.isHost || !app.db || !app.roomId) return false;
+    // 人間のうち、いちばん席が早い人が引き継ぎます（全員が同時に名乗り出ないように）
+    const humans = (app.players||[]).filter(p => p && !p.isCpu && p.uid);
+    if(!humans.length || humans[0].uid !== app.myUid) return false;
+    const ref = roomRefOf(app.roomId);
+    let got = false;
+    try{
+      got = await FB().runTransaction(app.db, async (tx)=>{
+        const snap = await tx.get(ref);
+        if(!snap || !snap.exists()) return false;
+        const d = snap.data();
+        if((Date.now() - Number(d.hostPresence || 0)) < HOST_DEAD_MS) return false;
+        tx.update(ref, { hostUid: app.myUid, hostPresence: Date.now(), joinQueue: [], updatedAt: Date.now() });
+        return true;
+      });
+    }catch(e){ return false; }
+    if(!got) return false;
+    app.isHost = true;
+    app._mpHostSince = Date.now();
+    app._mpJoined = {};
+    app.addLog && app.addLog('👥 進行役がいなくなったので、引き継ぎました。');
+    app._startPresenceHeartbeat && app._startPresenceHeartbeat();
+    if(!(app.roadNetworkNodes||[]).length){
+      await app.setupBoard(window.__EDOGAWA_START_LOC, app._mpGoal || window.__EDOGAWA_FIRST_GOAL);
+      await app.mpAfterBoardReady(true);
+    }else{
+      app.syncGameStateToRoom && app.syncGameStateToRoom();
+    }
+    return true;
+  };
+
+  // 部屋の様子から、進行役の生死を記録します
+  const origSnap = app.handleRoomSnapshot ? app.handleRoomSnapshot.bind(app) : null;
+  if(origSnap){
+    app.handleRoomSnapshot = function(data){
+      try{
+        if(data){
+          if(Number(data.hostPresence)) app._mpLastHostPresence = Number(data.hostPresence);
+          if(data.goal && !app._mpGoal) app._mpGoal = data.goal;
+          if(data.seed && !app._mpSeed) app._mpSeed = data.seed;
+          // 進行役が他の人に移っていて、その人がちゃんと生きているときだけ降ります
+          if(data.hostUid && data.hostUid !== app.myUid && app.isHost && data.mode === 'dropin'
+             && (Date.now() - Number(data.hostPresence || 0)) < HOST_DEAD_MS
+             && (Date.now() - Number(app._mpHostSince || 0)) > 15000){
+            app.isHost = false;
+          }
+          // 参加者から「盤面をもう一度」と言われたら送り直します
+          if(app.isHost && data.resyncAt && data.resyncAt !== app.__mpLastResync){
+            app.__mpLastResync = data.resyncAt;
+            setTimeout(()=>{ try{ app.syncGameStateToRoom && app.syncGameStateToRoom(); }catch(e){} }, 300);
+          }
+        }
+      }catch(e){}
+      return origSnap(data);
+    };
+  }
+
+  // ── 盤面が届かないときは、進行役に送り直してもらいます ──
+  app.mpRequestResync = async function(){
+    if(!app.db || !app.roomId || app.isHost) return false;
+    try{
+      await FB().updateDoc(roomRefOf(app.roomId), { resyncAt: Date.now(), resyncBy: app.myUid });
+      return true;
+    }catch(e){ return false; }
+  };
+  let resyncTimer = null;
+  app.mpWatchBoard = function(){
+    clearInterval(resyncTimer);
+    resyncTimer = setInterval(()=>{
+      if(!app.isMultiplayer || app.isHost) return;
+      if((app.roadNetworkNodes||[]).length) return;
+      if(Date.now() - Number(app._mpJoinedAt||0) < 6000) return;
+      app.addLog && app.addLog('👥 盤面を受け取れていないので、もう一度お願いしています…');
+      app.mpRequestResync();
+    }, 7000);
+  };
+
+  // 盤面ができるまで、しっかり待ってから配置します
+  app.mpAfterBoardReady = async function(isNew){
+    for(let i=0;i<80;i++){
+      if((app.roadNetworkNodes||[]).length > 2 && Number.isFinite(app.goalNodeIdx)) break;
+      await new Promise(r=>setTimeout(r,300));
+    }
+    if(!((app.roadNetworkNodes||[]).length > 2)){ app._mpWait(false); return false; }
+    await new Promise(r=>setTimeout(r,900));      // 盤面の初期配置が終わるのを待ちます
+    if(isNew) app.mpScatterCpus(app._mpSeed);
+    const me = (app.players||[]).find(p=>p && !p.isCpu && p.uid===app.myUid) || (app.players||[])[0];
+    if(me) app.mpPlaceAtStart(me);
+    app.updateHUD && app.updateHUD();
+    app.renderPlayers && app.renderPlayers();
+    app.panToCurrentPlayer && app.panToCurrentPlayer();
+    if(app.isHost) app.syncGameStateToRoom && app.syncGameStateToRoom();
+    app._mpWait(false);
+    return true;
+  };
+
+  window.__EDOGAWA_MP_INFO = ()=>({
+    部屋: app.roomId, 席: app._mpSeat, 進行役: !!app.isHost, 種: app._mpSeed,
+    目的地: app._mpGoal ? app._mpGoal.name : null,
+    進行役の最終確認: app._mpLastHostPresence ? new Date(app._mpLastHostPresence).toLocaleTimeString('ja-JP') : null,
+    マスの数: (app.roadNetworkNodes||[]).length,
+    顔ぶれ: (app.players||[]).map(p=>({名:p.name, CPU:!!p.isCpu, マス:p.currentNodeIdx, ゴール:p.goals}))
+  });
+  // 困ったときに、この端末の部屋を捨てて入り直すための逃げ道
+  window.__EDOGAWA_MP_RESET = async ()=>{
+    try{ app.roomUnsubscribe && app.roomUnsubscribe(); }catch(e){}
+    try{ await FB().setDoc(roomRefOf('__lobby_v1'), { rooms: [], updatedAt: Date.now() }); }catch(e){}
+    return 'ロビーを空にしました。もう一度「マルチプレイ」を押してください。';
   };
 })();
 </script>
