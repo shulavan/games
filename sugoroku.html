@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v85 (2026-09-29)';
+    window.__EDOGAWA_VERSION = 'v86 (2026-09-29)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -7686,7 +7686,10 @@
           this.continueAfterGoalAmida(player); return;
         }
         const send=()=>frame.contentWindow?.postMessage({
-          type:'EDOGAWA_SET_PLAYER_AVATAR', avatar:(this.avatarPlain?this.avatarPlain(player.avatar):(player.avatar||'🧑‍🦱')), playerName:player.name
+          type:'EDOGAWA_SET_PLAYER_AVATAR',
+          avatar:(this.avatarPlain?this.avatarPlain(player.avatar):(player.avatar||'🧑‍🦱')),
+          avatarImage:(this.avatarImageSrc?this.avatarImageSrc(player.avatar):null),
+          playerName:player.name
         },'*');
         frame.onload=()=>{
           send();
@@ -12622,8 +12625,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     },100);
   }
   function sendPlayer(game,p,frame){
-    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:moneyN(p.money),playerName:p.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
-    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:p.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(p.avatar):p.avatar)},'*')}catch(e){}
+    const AV=(v)=>((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(v):v);
+    const AVIMG=(v)=>((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarImageSrc)?window.EdogawaSugoroku.avatarImageSrc(v):null);
+    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_MONEY',money:moneyN(p.money),playerName:p.name,avatar:AV(p.avatar),avatarImage:AVIMG(p.avatar)},'*')}catch(e){}
+    try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_PLAYER',playerName:p.name,avatar:AV(p.avatar),avatarImage:AVIMG(p.avatar)},'*')}catch(e){}
     if(game==='canoe')try{frame?.contentWindow?.postMessage({type:'EDOGAWA_SET_CANOE_PLAYERS',playerId:p.id,players:(app.players||[]).map(x=>({id:x.id,name:x.name,avatar:((window.EdogawaSugoroku&&window.EdogawaSugoroku.avatarPlain)?window.EdogawaSugoroku.avatarPlain(x.avatar):(x.avatar||'🚣‍♂️')),isCpu:!!x.isCpu,money:moneyN(x.money)}))},'*')}catch(e){}
   }
   function loadChild(game,p){
@@ -13533,6 +13538,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if (!x) return AV_FALLBACK;
     if (/^(https?:|data:|photo:)/i.test(x)) return AV_FALLBACK;   // 文字にできないものは絵文字に
     return x;
+  };
+  // 写真（LINEのアイコンや端末の写真）の画像URLを返します。絵文字のときは null。
+  app.avatarImageSrc = function(v){
+    const x = String(v ?? '');
+    if (!x) return null;
+    if (x === PHOTO_MARK) return app.getAvatarPhoto() || null;
+    if (/^(https?:|data:)/i.test(x)) return x;
+    return null;
   };
   app.avatarMarkup = function(v, cls){
     const x = String(v ?? '');
@@ -17513,6 +17526,38 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ await FB().setDoc(roomRefOf('__lobby_v1'), { rooms: [], updatedAt: Date.now() }); }catch(e){}
     return 'ロビーを空にしました。もう一度「マルチプレイ」を押してください。';
   };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v86: ミニゲームの共通タイトル枠をやめる／あみだくじにLINEアイコンを渡す
+     ============================================================================ -->
+<style id="edogawa-v86-style">
+  /* ミニゲームの上に出していた共通のタイトル枠は、
+     それぞれのゲームが持つタイトルと重なるのでやめます */
+  #regional-mini-title,
+  .regional-mini-title,
+  .goal-amida-title{ display:none !important; }
+</style>
+<script id="edogawa-v86">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  // 念のため、要素そのものも取り除いておきます
+  function drop(){
+    ['regional-mini-title'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
+    document.querySelectorAll('.goal-amida-title').forEach(el=>{ el.textContent=''; });
+  }
+  drop();
+  let n=0; const iv=setInterval(()=>{ n++; drop(); if(n>20) clearInterval(iv); }, 500);
+
+  window.__EDOGAWA_AVATAR_INFO = (v)=>({
+    もとの値: v,
+    文字にすると: app.avatarPlain ? app.avatarPlain(v) : null,
+    画像のありか: app.avatarImageSrc ? app.avatarImageSrc(v) : null
+  });
 })();
 </script>
 
