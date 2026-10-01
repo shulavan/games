@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v90 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v91 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -18514,6 +18514,160 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       お金の絵文字: px(ic), 中央の絵文字: px(rs)
     };
   };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v91: 文字の揃え・大きさ／マルチプレイがつながらない件の原因表示と回避
+     ============================================================================ -->
+<style id="edogawa-v91-style">
+  /* ① アプリインストールの説明文を左揃えに */
+  #pwa-install-modal #edo-pwa-lead{ text-align:left !important; }
+  /* ② メトロセブンのお知らせ本文を左揃え・1.5倍（14px→21px） */
+  .edo-m7-msg{ text-align:left !important; font-size:21px !important; line-height:1.7 !important; }
+  .edo-m7-head{ text-align:center !important; }
+  /* ③ お知らせ枠の本文を左揃え・1.5倍（13px→19.5px） */
+  .edo-notice-body{ text-align:left !important; font-size:19.5px !important; line-height:1.7 !important; }
+</style>
+<script id="edogawa-v91">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const FB = ()=>window.FirebaseLib;
+
+  // ── ① アプリインストールの説明文 ──
+  function markPwaLead(){
+    const m = document.getElementById('pwa-install-modal'); if(!m) return;
+    const p = m.querySelector('p'); if(p) p.id = 'edo-pwa-lead';
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', markPwaLead);
+  else markPwaLead();
+
+  // ── ② 議案可決のお知らせは、ひとり用のときだけ出します ──
+  //    マルチプレイ（部屋に入れずこの端末だけで対戦するときを含む）は
+  //    「全線開通ずみ」の扱いなので、着工のお知らせは出しません。
+  const origPlan = app.showMetro7Plan ? app.showMetro7Plan.bind(app) : null;
+  if(origPlan){
+    app.showMetro7Plan = function(){ if(app.isMultiplayer) return; return origPlan(); };
+  }
+
+  // ── ③ マルチプレイ：ロビー用の文書を使わずに部屋をさがします ──
+  //    これまでは rooms/__lobby_v1 という専用の文書に部屋の一覧を書いていました。
+  //    Firestore のルールが「部屋の形（hostUid など）」を前提にしていると、
+  //    この一覧の文書だけ書き込みを拒否され、部屋さがしの時点で失敗します。
+  //    決まった名前の部屋をそのまま読みにいく形に変え、専用の文書をやめます。
+  const ROOM_IDS = ['room_01','room_02','room_03','room_04','room_05','room_06','room_07','room_08'];
+  const HOST_DEAD_MS = 45000;
+  const ROOM_FRESH_MS = 30 * 60 * 1000;
+  function roomRefOf(id){ return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id); }
+
+  app.mpScanRooms = async function(){
+    const now = Date.now(); const out = [];
+    for(const id of ROOM_IDS){
+      let d = null, err = null;
+      try{ const s = await FB().getDoc(roomRefOf(id)); d = (s && s.exists()) ? s.data() : null; }
+      catch(e){ err = (e && e.message) || String(e); }
+      if(err){ out.push({ id, 読めない: err }); continue; }
+      if(!d){ out.push({ id, 空き: true, updatedAt: 0 }); continue; }
+      const fp = Array.isArray(d.finalPlayers) ? d.finalPlayers : [];
+      out.push({
+        id, 空き: false,
+        updatedAt: Number(d.updatedAt || 0),
+        進行役が生きている: (now - Number(d.hostPresence || 0)) < HOST_DEAD_MS,
+        空席: fp.some(p => p && p.isCpu),
+        自分の席: fp.some(p => p && p.uid && p.uid === app.myUid),
+        新しい: (now - Number(d.updatedAt || 0)) < ROOM_FRESH_MS,
+        人数: fp.filter(p => p && !p.isCpu).length
+      });
+    }
+    return out;
+  };
+
+  app.mpFindRoom = async function(forceNew){
+    const rooms = await app.mpScanRooms();
+    const ok = rooms.filter(r => !r['読めない']);
+    if(!ok.length) throw new Error('部屋を読み取れません（通信かFirestoreの権限）');
+    if(!forceNew){
+      // ①前に自分が座っていた部屋 → ②進行役がいて空席のある部屋
+      const mine = ok.find(r => !r.空き && r.自分の席 && r.新しい);
+      if(mine) return { roomId: mine.id, isNew: false, humans: mine.人数 };
+      const open = ok.filter(r => !r.空き && r.新しい && r.進行役が生きている && r.空席)
+        .sort((a,b)=> b.updatedAt - a.updatedAt)[0];
+      if(open) return { roomId: open.id, isNew: false, humans: open.人数 };
+    }
+    // 空いている枠 → 古くて席も空いている枠 → いちばん古い枠
+    //（進行役がいない部屋なら、入った人が自動で引き継ぎます）
+    const empty = ok.find(r => r.空き);
+    if(empty) return { roomId: empty.id, isNew: true, humans: 0 };
+    const byAge = ok.slice().sort((a,b)=> a.updatedAt - b.updatedAt);
+    const seatable = byAge.find(r => r.空席);
+    const pick = seatable || byAge[0];
+    return { roomId: pick.id, isNew: true, humans: 0 };
+  };
+
+  // ロビー用の文書は使わないので、部屋そのものの時刻だけ新しくします
+  app.mpTouchLobby = async function(){
+    if(!app.db || !app.roomId || !FB()) return false;
+    try{ await FB().updateDoc(roomRefOf(app.roomId), { updatedAt: Date.now() }); return true; }
+    catch(e){ return false; }
+  };
+
+  // ── ④ つながらない理由を、その場で分かるようにします ──
+  app.mpWhyText = function(){
+    if(!app.firebaseReady) return 'サーバーにログインできていません（通信が届いていないか、匿名ログインが無効です）。';
+    if(!app.db) return 'サーバーへの接続ができていません。';
+    const e = app.__mpLastError ? String(app.__mpLastError) : '';
+    if(/permission|insufficient|PERMISSION_DENIED/i.test(e)) return 'サーバー側の権限設定で、部屋の読み書きが断られました。（Firestoreのルール）';
+    if(/unavailable|network|offline|Failed to fetch/i.test(e)) return '通信が届きませんでした。電波のよい場所でもう一度お試しください。';
+    return e || '理由が分かりませんでした。';
+  };
+
+  app.mpDiagnose = async function(){
+    const r = ['【マルチプレイの状態】'];
+    try{ if(!app.firebaseReady) app.firebaseInitAttempted = false; await app.initFirebase(); }catch(e){}
+    r.push('サーバー接続：' + (app.firebaseReady ? 'OK' : 'NG'));
+    r.push('自分のID：' + (app.myUid || '(なし)'));
+    if(app.db && FB()){
+      try{
+        const rooms = await app.mpScanRooms();
+        rooms.forEach(x => r.push(' ' + x.id + '：' + (x['読めない'] ? '読めません（' + x['読めない'] + '）'
+          : x.空き ? '空き' : ('人間' + x.人数 + '人／進行役' + (x.進行役が生きている ? 'あり' : 'なし')))));
+      }catch(e){ r.push('部屋さがし：NG（' + ((e && e.message) || e) + '）'); }
+    }
+    if(app.__mpLastError) r.push('直前のエラー：' + app.__mpLastError);
+    const text = r.join('\n');
+    try{ app.addLog && app.addLog('👥 ' + text.replace(/\n/g, ' / ')); }catch(e){}
+    return text;
+  };
+  window.__EDOGAWA_MP_DIAG = ()=>app.mpDiagnose();
+
+  // ── ⑤ ひとり対戦に落ちたときのお知らせ（改行をやめ、理由を添えます） ──
+  const origLocal = app.mpStartLocal ? app.mpStartLocal.bind(app) : null;
+  if(origLocal){
+    app.mpStartLocal = function(){
+      const why = app.mpWhyText();
+      setTimeout(()=>{
+        try{
+          app.showNotice && app.showNotice('👥 ひとりでの対戦になります',
+            'サーバーの部屋に入れなかったため、この端末だけで対戦します。通信環境をご確認のうえ、もう一度「マルチプレイ」を押すと入り直せます。'
+            + (why ? '\n\n【原因】' + why : ''));
+        }catch(e){}
+        // 原因をあとから確認できるように、ログにも残します
+        try{ app.mpDiagnose(); }catch(e){}
+      }, 0);
+      return origLocal();
+    };
+  }
+  // 入り直すときは、サーバー接続もやり直します
+  const origQuick = app.quickJoinMultiplayer ? app.quickJoinMultiplayer.bind(app) : null;
+  if(origQuick){
+    app.quickJoinMultiplayer = function(opts){
+      if(!app.firebaseReady) app.firebaseInitAttempted = false;   // もう一度ログインを試します
+      return origQuick(opts);
+    };
+  }
 })();
 </script>
 
