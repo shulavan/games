@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v86 (2026-09-29)';
+    window.__EDOGAWA_VERSION = 'v87 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1403,12 +1403,12 @@
     <div id="event-modal-card" class="relative bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-3 transition-colors">
       <div id="event-modal-avatar" class="absolute top-3 left-3 w-10 h-10 rounded-full bg-slate-950/70 border border-slate-700 flex items-center justify-center text-xl shadow-md"></div>
       <div id="event-modal-icon" class="text-6xl">🎉</div>
-      <div id="event-modal-reason-icon" class="hidden text-9xl leading-none py-1">🎣</div>
+      <div id="event-modal-reason-icon" class="edo-event-reason hidden leading-none py-1">🎣</div>
       <div>
         <h3 id="event-modal-title" class="font-mincho text-xl font-bold text-amber-400 mb-2">イベント発生！</h3>
-        <p id="event-modal-desc" class="text-sm text-slate-100 font-medium leading-relaxed whitespace-pre-line text-left">イベント説明文</p>
+        <p id="event-modal-desc" class="edo-event-desc text-slate-100 font-medium leading-relaxed whitespace-pre-line text-left">イベント説明文</p>
       </div>
-      <div id="event-modal-extra" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-sm text-amber-300 font-extrabold text-center hidden"></div>
+      <div id="event-modal-extra" class="edo-event-extra bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-amber-300 font-extrabold text-center hidden"></div>
       <button id="event-modal-close-btn" onclick="EdogawaSugoroku.closeEventModal()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black py-2.5 px-4 rounded-xl shadow-md transition">
         閉じる
       </button>
@@ -2029,9 +2029,9 @@
     })();
 
     // 地図の状態は、コンソールを開かなくても分かるようにゲーム内ログにも出します。
-    let _mapNoteDone = false;
+    let _mapNoteLast = '';
     function noteMapStatus(text) {
-      if (_mapNoteDone) return; _mapNoteDone = true;
+      if (_mapNoteLast === text) return; _mapNoteLast = text;
       setTimeout(() => {
         try { window.EdogawaSugoroku && EdogawaSugoroku.addLog && EdogawaSugoroku.addLog('🗺️ ' + text); } catch (e) {}
       }, 1200);
@@ -2080,6 +2080,19 @@
       const backToRaster = (why) => {
         if (map.__edoFellBack) return;
         map.__edoFellBack = true;
+        // 一度きりの失敗で通常の地図に固定されないよう、30秒後にもう一度だけ試します
+        if (!map.__edoRetried) {
+          map.__edoRetried = true;
+          setTimeout(() => {
+            try{
+              if (window.__EDO_BASEMAP_PREF && window.__EDO_BASEMAP_PREF() !== 'vector') return;
+              map.__edoFellBack = false;
+              if (map.__edoRaster) { try{ map.removeLayer(map.__edoRaster); }catch(e){} }
+              map.__edoRaster = null;
+              window.__EDO_ADD_BASEMAP && window.__EDO_ADD_BASEMAP(map);
+            }catch(e){}
+          }, 30000);
+        }
         map.__gsiStatus = 'raster(' + why + ')';
         try{ if (map.__edoGlLayer) map.removeLayer(map.__edoGlLayer); }catch(e){}
         map.__edoGlLayer = null;
@@ -2150,15 +2163,12 @@
           // 先読みして端末に保存したスタイルがあればそれを使います（取得待ちゼロ）。
           const cachedStyle = (window.__EDO_STYLE_CACHE || {})[cand.style];
           gl = L.maplibreGL({
-            style: cachedStyle ? slimStyle(cachedStyle) : cand.style,
+            // 【v87】スタイルを間引く処理（slimStyle）と、タイル保持数・出典表示の設定は
+            // ベクターが出なくなった原因の可能性があるため、やめました。
+            style: cachedStyle || cand.style,
             attribution: cand.credit,
-            // 読み込みを軽くするための設定
             fadeDuration: 0,
-            antialias: false,
             renderWorldCopies: false,
-            refreshExpiredTiles: false,
-            maxTileCacheSize: 32,
-            attributionControl: false,
             // 漢字・ひらがな・カタカナは端末のフォントで描きます。
             // 地図側の文字フォント（glyphs）が404でも日本語が出るようになります。
             localIdeographFontFamily: "'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',sans-serif"
@@ -2522,10 +2532,10 @@
 
     // --- EDOGAWA WARD REAL STREET CONSTANTS & EXACT ROAD NETWORK GEOMETRY ---
     const EDOGAWA_START = {
-      // 国土地理院の地名検索で確認した西葛西駅の座標に合わせています。
+      // 実際の地図で確認いただいた西葛西駅の座標です（v78で取り込んだ値と同じ）。
       name: "西葛西駅",
-      lat: 35.666783,
-      lng: 139.859337
+      lat: 35.664567,
+      lng: 139.859254
     };
 
     const FIRST_GOAL = {
@@ -6224,13 +6234,13 @@
 
               let wasNew = false;
               if (matchedIdx === -1) {
-                // 赤:青:緑(旧イベントマス):★(新・特別イベントマス) = 40:30:25:5。
-                // ★は他のマスの5分の1程度の低頻度になるよう設計している。
+                // 赤:青:緑(旧イベントマス):★(新・特別イベントマス) = 36:27:22:15。
+                // ★はご要望により、これまでの3倍（5%→15%）に増やしています。
                 let type = 'blue';
                 const r = Math.random();
-                if (r < 0.40) type = 'red';
-                else if (r < 0.70) type = 'blue';
-                else if (r < 0.95) type = 'green';
+                if (r < 0.36) type = 'red';
+                else if (r < 0.63) type = 'blue';
+                else if (r < 0.85) type = 'green';
                 else type = 'star';
 
                 nodes.push({
@@ -7110,7 +7120,7 @@
         const FORCED_MOVE_LIMIT = 2;
         const forcedMoveLimitReached = player.forcedMoveCount >= FORCED_MOVE_LIMIT;
         // 乗り物の基本取得率52%を、体力(100=基準)に比例して±し、特別イベントの枠は維持する。
-        const staminaForVehicle = Math.max(1, Math.min(200, Math.round(player.stats?.stamina ?? 100)));
+        const staminaForVehicle = Math.max(1, Math.min(999, Math.round(player.stats?.stamina ?? 100)));
         const vehicleChance = Math.max(0.01, Math.min(0.72, 0.52 * (staminaForVehicle / 100)));
         const vehicleThreshold = 1 - vehicleChance;
         const roll = forcedMoveLimitReached ? (vehicleThreshold + Math.random() * (1 - vehicleThreshold)) : Math.random();
@@ -10923,7 +10933,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const validNum = (v, fallback=0) => Number.isFinite(Number(v)) ? Number(v) : fallback;
-  function clampStat(v){ return Math.max(1, Math.min(200, Math.round(validNum(v,100)))); }
+  function clampStat(v){ return Math.max(1, Math.min(999, Math.round(validNum(v,100)))); }
+  try{ window.__EDOGAWA_CLAMP_STAT = clampStat; }catch(e){}
   function cleanNickname(v, fallback='プレイヤー1'){
     const t=String(v??'').trim().slice(0,6);
     return t || fallback;
@@ -17558,6 +17569,210 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     文字にすると: app.avatarPlain ? app.avatarPlain(v) : null,
     画像のありか: app.avatarImageSrc ? app.avatarImageSrc(v) : null
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v87: 画面配置の整理／設定メニューの並べ替え／地図の状態を画面で確認できるように
+     ============================================================================ -->
+<style id="edogawa-v87-style">
+  /* 青・赤・緑マスの説明文を1.5倍に */
+  .edo-event-desc{ font-size:21px !important; line-height:1.7 !important; }
+  .edo-event-extra{ font-size:21px !important; line-height:1.6 !important; }
+  /* 中央の絵文字は、乗り物の絵文字と同じ大きさ（6xl=60px）にそろえます */
+  .edo-event-reason{ font-size:60px !important; }
+
+  /* 地理院の出典は、左に2文字ぶんの余白を入れます */
+  #map-credit-btn.edo-map-credit{ left:calc(8px + 2em) !important; }
+
+  /* 現在地はヘッダーの右上へ */
+  #edo-nearby-head{ position:absolute; top:calc(0.75rem + 5px); right:0.75rem; z-index:21;
+    display:flex; justify-content:flex-end; max-width:72vw; pointer-events:auto }
+  #edo-nearby-head #nearby-place-badge,
+  #edo-nearby-head #nearby-locate-btn{
+    position:static !important; inset:auto !important; margin:0 !important; z-index:auto !important;
+    max-width:72vw; }
+
+  /* フッターの下の段：左に「投稿」、右に「目的地」 */
+  #edo-nearby-row{ display:flex !important; align-items:center; justify-content:space-between;
+    gap:8px; margin-top:6px; }
+  #edo-nearby-row:empty{ display:none !important; }
+  #edo-nearby-row #visited-pin-tool{ flex:0 0 auto; }
+  #edo-nearby-row #mobile-destination-badge{
+    position:static !important; inset:auto !important; margin:0 !important; z-index:auto !important;
+    display:inline-block !important; max-width:62vw !important; }
+  #edo-nearby-row #mobile-destination-badge #mobile-destination-name{ max-width:none !important; }
+
+  /* 「投稿」が抜けたので、「サイコロを振る」は上下中央に */
+  #visited-roll-stack{ justify-content:center; }
+</style>
+<script id="edogawa-v87">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① ヘッダーとフッターの入れ替え ──
+  function layout(){
+    const footer = document.querySelector('footer[data-app="1"]');
+    const row = document.getElementById('edo-nearby-row');
+    const main = document.querySelector('main[data-app="1"]');
+    if(!footer || !row || !main) return false;
+
+    // 現在地はヘッダーの右上へ
+    let head = document.getElementById('edo-nearby-head');
+    if(!head){
+      head = document.createElement('div');
+      head.id = 'edo-nearby-head';
+      main.appendChild(head);
+    }
+    ['nearby-place-badge','nearby-locate-btn'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el && el.parentElement !== head){
+        el.classList.remove('absolute','bottom-3','right-3','z-20');
+        head.appendChild(el);
+      }
+    });
+
+    // 「投稿◯◯件」をフッターの下の段の左端へ
+    const pin = document.getElementById('visited-pin-tool');
+    if(pin && pin.parentElement !== row) row.appendChild(pin);
+
+    // 目的地をフッターの下の段の右端へ
+    const dest = document.getElementById('mobile-destination-badge');
+    if(dest && dest.parentElement !== row){
+      dest.classList.remove('absolute','top-3','right-3','z-20','sm:hidden','truncate','max-w-[180px]');
+      row.appendChild(dest);
+    }
+    // 並び順を「投稿」→「目的地」に固定します
+    if(pin && dest && pin.parentElement === row && dest.parentElement === row){
+      if(row.firstElementChild !== pin) row.insertBefore(pin, row.firstElementChild);
+      if(row.lastElementChild !== dest) row.appendChild(dest);
+    }
+    return !!(pin && dest && pin.parentElement === row);
+  }
+  let n=0; const iv=setInterval(()=>{ n++; if(layout() || n>60) clearInterval(iv); }, 300);
+  layout();
+
+  // 目的地をタップしたら、目的地アイコンまで地図を動かします
+  document.addEventListener('click', (ev)=>{
+    const t = ev.target.closest && ev.target.closest('#mobile-destination-badge');
+    if(!t) return;
+    try{ app.panToDestination && app.panToDestination(); }catch(e){}
+  }, true);
+
+  // 目的地の文字は、入る分だけ長く出します
+  const origName = app.updateHUD ? null : null;
+  function fitDestName(){
+    const el = document.getElementById('mobile-destination-name');
+    if(!el) return;
+    el.style.display = 'inline-block';
+    el.style.maxWidth = 'none';
+    el.style.overflow = 'hidden';
+    el.style.textOverflow = 'ellipsis';
+    el.style.whiteSpace = 'nowrap';
+  }
+  setTimeout(fitDestName, 800);
+
+  // ── ② 設定メニューの並べ替えと、使わない項目の非表示 ──
+  function tidySettings(){
+    const byState = (id)=>{ const s=document.getElementById(id); return s ? s.closest('button') : null; };
+    const auto  = byState('settings-auto-state');
+    const green = byState('settings-greenway-state');
+    const basemap = document.getElementById('edo-basemap-entry');
+    const analytics = byState('settings-analytics-state');
+    const rail = byState('settings-rail-state');
+    const install = document.querySelector('button[onclick*="settingsOpenInstall"]');
+    if(!rail) return false;
+    // 使わない項目は隠します
+    if(auto) auto.style.display = 'none';
+    if(green) green.style.display = 'none';
+    // 地図の種類をいちばん上へ
+    const box = rail.parentElement;
+    if(basemap && box && box.firstElementChild !== basemap) box.insertBefore(basemap, box.firstElementChild);
+    // アクセス解析は「アプリとしてインストール」の真上へ
+    if(analytics && install && install.previousElementSibling !== analytics){
+      install.parentElement.insertBefore(analytics, install);
+    }
+    return !!basemap;
+  }
+  let n2=0; const iv2=setInterval(()=>{ n2++; if(tidySettings() || n2>60) clearInterval(iv2); }, 300);
+  tidySettings();
+
+  // ── ③ 地図の状態を、設定の行に出します（コンソール不要） ──
+  function paintBasemapNote(){
+    const entry = document.getElementById('edo-basemap-entry');
+    if(!entry) return;
+    let note = entry.querySelector('.edo-basemap-note');
+    if(!note){
+      const left = entry.querySelector('span.text-left');
+      if(!left) return;
+      note = document.createElement('span');
+      note.className = 'edo-basemap-note block text-[10px] font-bold';
+      left.appendChild(note);
+    }
+    const st = String((app.map && app.map.__gsiStatus) || (app.lobbyMap && app.lobbyMap.__gsiStatus) || '');
+    const ok = st.indexOf('vector') === 0;
+    note.textContent = 'いま：' + (ok ? 'ベクターで表示中' : ('通常の地図（' + (st.replace(/^raster\(?|\)$/g,'') || '準備中') + '）'));
+    note.style.color = ok ? '#86efac' : '#fca5a5';
+  }
+  setInterval(paintBasemapNote, 2000);
+  const origRefresh = app.refreshSettingsModal ? app.refreshSettingsModal.bind(app) : null;
+  if(origRefresh) app.refreshSettingsModal = function(){ const r = origRefresh(); try{ paintBasemapNote(); }catch(e){} return r; };
+
+  // ── ④ マルチプレイ：「保存終了」はもう使わないので隠します ──
+  function hideSave(){
+    const b = document.getElementById('host-save-btn');
+    if(b){ b.style.display = 'none'; b.classList.add('hidden'); }
+  }
+  hideSave(); setInterval(hideSave, 3000);
+
+  // ── ⑤ マルチプレイ：CPUはゴールまで50〜150マスの範囲に散らします ──
+  app.mpScatterCpus = function(seed){
+    const nodes = app.roadNetworkNodes || [];
+    const goal = Number.isFinite(app.goalNodeIdx) ? app.goalNodeIdx : (nodes.length - 1);
+    if(!nodes.length || !goal) return 0;
+    const r = app._mpRng ? app._mpRng(seed || 1) : Math.random;
+    let n = 0;
+    (app.players||[]).forEach(p=>{
+      if(!p || !p.isCpu) return;
+      // ゴールまで50〜150マスの位置に置きます（盤面が短いときは範囲を詰めます）
+      const want = 50 + Math.floor(r() * 101);
+      const remain = Math.min(want, Math.max(5, goal - 1));
+      const idx = Math.max(1, goal - remain);
+      p.currentNodeIdx = idx; p.pathIndex = idx; p.pos = idx;
+      p.goals = 1 + Math.floor(r() * 3);
+      p.movedSquares = idx + Math.floor(r() * 120);
+      n++;
+    });
+    return n;
+  };
+
+  // ── ⑥ 部屋に入れたかどうかを、画面のログで分かるようにします ──
+  const origLocal = app.mpStartLocal ? app.mpStartLocal.bind(app) : null;
+  if(origLocal){
+    app.mpStartLocal = function(){
+      try{
+        app.showNotice && app.showNotice('👥 ひとりでの対戦になります',
+          'サーバーの部屋に入れなかったため、この端末だけで対戦します。\n' +
+          '通信環境をご確認のうえ、もう一度「マルチプレイ」を押すと入り直せます。');
+      }catch(e){}
+      return origLocal();
+    };
+  }
+
+  window.__EDOGAWA_LAYOUT_INFO = ()=>{
+    const id = (x)=>document.getElementById(x);
+    const where = (x)=>{ const el=id(x); return el && el.parentElement ? (el.parentElement.id || el.parentElement.tagName) : 'なし'; };
+    return {
+      現在地: where('nearby-place-badge'),
+      目的地: where('mobile-destination-badge'),
+      投稿: where('visited-pin-tool'),
+      地図の状態: (app.map && app.map.__gsiStatus) || (app.lobbyMap && app.lobbyMap.__gsiStatus) || null,
+      地図の設定: app.basemapPref ? app.basemapPref() : null
+    };
+  };
 })();
 </script>
 
