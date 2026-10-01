@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v93 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v94 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -19010,6 +19010,75 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     ミニゲーム案内: !!(document.getElementById('edo-mp-busy') || {}).classList
       && document.getElementById('edo-mp-busy').classList.contains('show')
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v94: 緑マスの絵文字はモーダルの中央に大きく出します
+     ----------------------------------------------------------------------------
+     青・赤マス … ヘッダー左に 🎉 / 💸（小）＋ 中央に理由の絵文字（大）
+     緑マス     … 理由の絵文字が無いので、乗り物や🚤🚣‍♂️などを中央に大きく出します
+     ============================================================================ -->
+<style id="edogawa-v94-style">
+  /* 中央に出すとき（＝理由の絵文字が無いとき）の大きさ */
+  #event-modal-card.edo-icon-center #event-modal-icon{
+    flex:none !important; width:auto !important; height:auto !important;
+    display:block !important; text-align:center !important;
+    font-size:60px !important; line-height:1 !important; margin:2px 0 4px !important;
+  }
+  /* ヘッダーにプレーヤーアイコンだけが残るときも、高さは変えません */
+  #event-modal-card.edo-icon-center #edo-event-head{ min-height:40px; }
+</style>
+<script id="edogawa-v94">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  function placeEventIcon(){
+    const card = document.getElementById('event-modal-card');
+    const head = document.getElementById('edo-event-head');
+    const ic   = document.getElementById('event-modal-icon');
+    const rs   = document.getElementById('event-modal-reason-icon');
+    if(!card || !ic || !rs) return;
+    const hasReason = !rs.classList.contains('hidden') && String(rs.textContent||'').trim() !== '';
+    if(hasReason){
+      // 青・赤マス：🎉💸はヘッダー左、理由の絵文字は中央（v90のまま）
+      if(head && ic.parentElement !== head) head.appendChild(ic);
+      card.classList.remove('edo-icon-center');
+    }else{
+      // 緑マスなど：絵文字は1つしか無いので、中央に大きく出します
+      if(ic.parentElement !== card || ic.nextElementSibling !== rs) card.insertBefore(ic, rs);
+      card.classList.add('edo-icon-center');
+    }
+  }
+  app.__placeEventIcon = placeEventIcon;
+
+  ['showEventModal','showEventModalReadOnly'].forEach(name=>{
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(){
+      const r = orig.apply(null, arguments);
+      try{ placeEventIcon(); }catch(e){ console.error('[v94]', e); }
+      return r;
+    };
+  });
+
+  window.__EDOGAWA_V94_INFO = ()=>{
+    const card = document.getElementById('event-modal-card');
+    const ic = document.getElementById('event-modal-icon');
+    const rs = document.getElementById('event-modal-reason-icon');
+    const px = (el)=> el ? Math.round(parseFloat(getComputedStyle(el).fontSize)) : null;
+    return {
+      中央表示: !!(card && card.classList.contains('edo-icon-center')),
+      絵文字の親: ic ? (ic.parentElement && ic.parentElement.id) : null,
+      絵文字: ic ? ic.textContent : null,
+      絵文字の大きさ: px(ic),
+      理由の絵文字: rs && !rs.classList.contains('hidden') ? rs.textContent : null,
+      理由の大きさ: px(rs)
+    };
+  };
 })();
 </script>
 
