@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v94 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v95 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -6616,7 +6616,8 @@
           this.autoRollTimer = setTimeout(() => {
             this.autoRollTimer = null;
             this.rollDice();
-          }, cp && cp.isCpu ? 650 : 1200);   // v93：CPUは短めに
+          }, (cp && cp.isCpu && typeof this.mpCpuSpeed === 'function')
+               ? this.mpCpuSpeed().roll : 1200);   // v95：遅れているときだけ短めに
         }
 
         // 江戸川競艇は強制参加型。終了後に確認画面は表示しない。
@@ -6799,10 +6800,13 @@
         // 離脱した参加者の手番はホストが代理で進めるので、CPUと同じように
         // サイコロ演出＋コマ移動をきちんと見せる（相手の端末はもう見ていない）。
         const isRemoteTurn = this.isMultiplayer && !cp.isCpu && cp.uid !== this.myUid && !this.isPlayerOffline(cp);
-        // v93：CPUの手番は短めにして、参加者の画面が遅れすぎないようにします。
+        // v95：CPUの手番は、マルチプレイで参加者の表示が遅れているときだけ短くします。
+        // （ひとりプレイや、遅れが出ていないマルチプレイは今までどおりの速さです）
         const __cpuTurn = this.isAutoPlayedPlayer(cp);
-        const initialDelay = isRemoteTurn ? 200 : (__cpuTurn ? 650 : 1200);
-        const stepDelay = isRemoteTurn ? 80 : (__cpuTurn ? 170 : 350);
+        const __sp = (typeof this.mpCpuSpeed === 'function') ? this.mpCpuSpeed()
+                                                            : { first: 1200, step: 350 };
+        const initialDelay = isRemoteTurn ? 200 : (__cpuTurn ? __sp.first : 1200);
+        const stepDelay = isRemoteTurn ? 80 : (__cpuTurn ? __sp.step : 350);
 
         const cube = document.getElementById("dice-cube");
 
@@ -8559,9 +8563,10 @@
 
         // すべてのモーダルと同じ「閉じる（自動進行：3秒）」で統一。
         // オートモードのON/OFFや自分の手番かどうかに関係なく、同じ動きにする。
-        // v93：CPUの手番だけは2秒にして、参加者の画面が遅れすぎないようにします。
-        this.armModalAutoClose('event', 'event-modal-close-btn', () => this.closeEventModal(),
-          (activePlayer && activePlayer.isCpu) ? 2 : MODAL_AUTO_CLOSE_SECONDS);
+        // v95：CPUの手番で、しかも参加者の表示が遅れているときだけ2秒にします。
+        const __evSec = (activePlayer && activePlayer.isCpu && typeof this.mpCpuSpeed === 'function')
+          ? this.mpCpuSpeed().modalSec : MODAL_AUTO_CLOSE_SECONDS;
+        this.armModalAutoClose('event', 'event-modal-close-btn', () => this.closeEventModal(), __evSec);
       },
 
       // ============================================================
@@ -19079,6 +19084,64 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       理由の大きさ: px(rs)
     };
   };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v95: CPUの速さは「マルチプレイで遅れが出ているとき」だけ早めます
+     ----------------------------------------------------------------------------
+     v93では、ひとりプレイを含めて常にCPUを早くしてしまっていました。
+     ひとりプレイには通信の遅れがないので、今までどおりの速さに戻します。
+     ============================================================================ -->
+<script id="edogawa-v95">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // 今までどおりの速さ
+  const NORMAL = { first: 1200, step: 350, roll: 1200, modalSec: 3 };
+  // 少し遅れているとき
+  const MID    = { first:  900, step: 250, roll:  900, modalSec: 3 };
+  // かなり遅れているとき
+  const FAST   = { first:  650, step: 170, roll:  650, modalSec: 2 };
+
+  // ── 参加者がどれだけ遅れているかを測ります ──
+  //    ホストは状態を送るたびに版番号を1つ増やし、参加者は反映できた版を返します。
+  //    その差が「遅れ」です。
+  app.mpLagLevel = function(){
+    if(!app.isMultiplayer) return 0;                 // ひとりプレイは遅れません
+    // 参加者の画面では、自分の順番待ちの数で測ります
+    if(!app.isHost){
+      const d = (typeof app.__gqDepth === 'function') ? app.__gqDepth() : 0;
+      return d >= 4 ? 2 : d >= 2 ? 1 : 0;
+    }
+    // ほかに人間がいなければ、遅れを気にする必要はありません
+    const others = (app.players || []).filter(p =>
+      p && !p.isCpu && p.uid && p.uid !== app.myUid &&
+      !(typeof app.isPlayerOffline === 'function' && app.isPlayerOffline(p)));
+    if(!others.length) return 0;
+    const now = Number(app.gameStateVersion || 0);
+    const acks = app.guestAcks || {};
+    let worst = 0;
+    others.forEach(p => { worst = Math.max(worst, now - Number(acks[p.uid] || 0)); });
+    return worst >= 4 ? 2 : worst >= 2 ? 1 : 0;
+  };
+
+  app.mpCpuSpeed = function(){
+    const lv = app.mpLagLevel();
+    return lv >= 2 ? FAST : lv === 1 ? MID : NORMAL;
+  };
+
+  window.__EDOGAWA_V95_INFO = ()=>({
+    マルチプレイ: !!app.isMultiplayer,
+    進行役: !!app.isHost,
+    遅れ: app.mpLagLevel(),
+    CPUの速さ: app.mpCpuSpeed(),
+    いまの版: Number(app.gameStateVersion || 0),
+    参加者が返した版: app.guestAcks || {}
+  });
 })();
 </script>
 
