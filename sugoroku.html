@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v89 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v90 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -17971,12 +17971,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const STEP = 20;          // 以後20ターンごとに1駅ずつ
   app.metro7PlanTurn = PLAN_TURN;
   function openCount(t){
+    // マルチプレイは「もう全線開通している世界」として遊びます。
+    // 途中から入ってきた人と開通ぐあいが食い違わないようにするためです。
+    if (app.isMultiplayer) return ORDER.length;
     const T = Math.max(0, Number(t==null?app.turnCount:t)||0);
     if (T < PLAN_TURN + STEP) return 0;                 // 40ターン未満は0駅
     return Math.min(ORDER.length, Math.floor((T - PLAN_TURN) / STEP) + 1);
   }
   app.metro7OpenCount = openCount;
-  app.metro7PlanAnnounced = ()=> (Number(app.turnCount)||0) >= PLAN_TURN;
+  app.metro7PlanAnnounced = ()=> app.isMultiplayer || (Number(app.turnCount)||0) >= PLAN_TURN;
 
   // ── 線形（道路沿い。取れなければ直線） ──
   const SHAPE_KEY = 'edogawa_metro7_shape_v3';
@@ -18112,9 +18115,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ app.addLog && app.addLog('🚃 ' + msg); }catch(e){}
   };
 
-  // ターンが進んだら知らせます
+  // ターンが進んだら知らせます。
+  // 【v90での修正】これまでは、そのターンのプレーヤー全員（CPUを含む）に
+  // 出ていました。自分（人間プレーヤー）の番のときに1回だけ出します。
   let lastCount = openCount();
   let planShown = app.metro7PlanAnnounced();
+  app.metro7IsMyTurn = function(){
+    const p = (app.players||[])[app.currentPlayerIdx];
+    if(!p || p.isCpu) return false;
+    if(app.isMultiplayer) return !!(p.uid && app.myUid && p.uid === app.myUid);
+    return Number(p.id) === 0;
+  };
   const origFinish = app.finishTurnContinue ? app.finishTurnContinue.bind(app) : null;
   if(origFinish){
     app.finishTurnContinue = function(){
@@ -18122,12 +18133,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{ r = origFinish(); }catch(e){ err = e; }
       try{
         app._drawMetro7 && app._drawMetro7();
-        if(!planShown && app.metro7PlanAnnounced()){ planShown = true; app.showMetro7Plan(); }
+        const mine = app.metro7IsMyTurn();
         const now = openCount();
-        if(now > lastCount && now >= 2){
-          lastCount = now;
-          app.showMetro7Open(ORDER.slice(0, now));
-        }else{ lastCount = now; }
+        if(!planShown && app.metro7PlanAnnounced()){
+          // 自分の番が来るまで待ってから出します（CPUの番では出しません）
+          if(mine){ planShown = true; app.showMetro7Plan(); }
+        }else if(now > lastCount && now >= 2){
+          if(mine){ lastCount = now; app.showMetro7Open(ORDER.slice(0, now)); }
+        }else if(now < lastCount){ lastCount = now; }
       }catch(e){ console.error('[v89]', e); }
       if(err) throw err;
       return r;
@@ -18413,6 +18426,94 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     直前のエラー: app.__mpLastError ? String(app.__mpLastError).slice(0,200) : null,
     部屋の寿命分: ROOM_FRESH_MS/60000
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v90: イベント枠の絵文字の置きかた／開通していない駅では乗車枠を出さない
+     ============================================================================ -->
+<style id="edogawa-v90-style">
+  /* イベント枠のヘッダー：左端に「プレーヤーアイコン＋🎉（お金が増えた・減った）」を並べます */
+  #event-modal-card{ padding-top:14px !important; }
+  #edo-event-head{ display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+  #event-modal-card #event-modal-avatar{
+    position:static !important; top:auto !important; left:auto !important;
+    flex:0 0 40px; width:40px !important; height:40px !important; }
+  #event-modal-card #event-modal-icon{
+    flex:0 0 auto; width:40px; height:40px;
+    display:flex !important; align-items:center; justify-content:center;
+    font-size:28px !important; line-height:1 !important; margin:0 !important; }
+  /* 中央の絵文字（📦など）は、乗り物の絵文字と同じ大きさにします */
+  #event-modal-card .edo-event-reason{ font-size:60px !important; line-height:1 !important; }
+</style>
+<script id="edogawa-v90">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① 🎉はヘッダー左端（アイコンの隣）、📦は中央で大きく ──
+  function layoutEventHead(){
+    const card = document.getElementById('event-modal-card');
+    const av = document.getElementById('event-modal-avatar');
+    const ic = document.getElementById('event-modal-icon');
+    if(!card || !av || !ic) return;
+    let head = document.getElementById('edo-event-head');
+    if(!head){
+      head = document.createElement('div');
+      head.id = 'edo-event-head';
+      card.insertBefore(head, card.firstChild);
+    }
+    if(av.parentElement !== head) head.appendChild(av);
+    if(ic.parentElement !== head) head.appendChild(ic);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', layoutEventHead);
+  else layoutEventHead();
+  const origShow = app.showEventModal ? app.showEventModal.bind(app) : null;
+  if(origShow){
+    app.showEventModal = function(){ const r = origShow.apply(null, arguments); layoutEventHead(); return r; };
+  }
+
+  // ── ② 行ける駅が1つも無いときは、乗車の枠そのものを出しません ──
+  const LINES = app.RAIL_LINES || {};
+  function hasDestination(at){
+    if(!at) return false;
+    const lines = at.lines || (at.line ? [at.line] : []);
+    for(const k of lines){
+      const L = LINES[k]; if(!L || !Array.isArray(L.stations)) continue;
+      let others = L.stations.filter(n => n !== at.name);
+      if(k === 'metro7'){
+        const open = app.metro7OpenStations ? app.metro7OpenStations() : L.stations;
+        if(open.indexOf(at.name) < 0) continue;            // この駅がまだ開通していない
+        others = others.filter(n => open.indexOf(n) >= 0);
+      }
+      if(others.some(n => { try{ return !!app.railFare(k, at.name, n); }catch(e){ return false; } })) return true;
+    }
+    return false;
+  }
+  app.railHasDestination = hasDestination;
+  const origRide = app._openRailRide ? app._openRailRide.bind(app) : null;
+  if(origRide){
+    app._openRailRide = function(player, at, done){
+      // 「行ける駅がありません。」だけの枠は、押すところが無く邪魔になるだけなので出しません。
+      if(!hasDestination(at)){ if(done) done(null); return; }
+      return origRide(player, at, done);
+    };
+  }
+
+  window.__EDOGAWA_V90_INFO = ()=>{
+    const head = document.getElementById('edo-event-head');
+    const ic = document.getElementById('event-modal-icon');
+    const rs = document.getElementById('event-modal-reason-icon');
+    const av = document.getElementById('event-modal-avatar');
+    const px = (el)=> el ? Math.round(parseFloat(getComputedStyle(el).fontSize)) : null;
+    return {
+      ヘッダーの中身: head ? [...head.children].map(x=>x.id) : null,
+      アイコンの大きさ: av ? Math.round(av.getBoundingClientRect().width) : null,
+      お金の絵文字: px(ic), 中央の絵文字: px(rs)
+    };
+  };
 })();
 </script>
 
