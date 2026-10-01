@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v92 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v93 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -4211,8 +4211,11 @@
 
         // マルチプレイのゲスト演出はホスト側の次ターン移行を待たせすぎない。
         // 6マスでも約1.6秒以内を目安に完了する。
-        const guestInitialDelay = 500;
-        const guestStepDelay = 180;
+        // v93：処理待ちがたまっているときは、少し速めて追いつきます。
+        const __sp = (typeof this.__guestAnimSpeed === 'function')
+          ? this.__guestAnimSpeed() : { first: 500, step: 180 };
+        const guestInitialDelay = __sp.first;
+        const guestStepDelay = __sp.step;
 
         setTimeout(() => {
           if (cube) {
@@ -6613,7 +6616,7 @@
           this.autoRollTimer = setTimeout(() => {
             this.autoRollTimer = null;
             this.rollDice();
-          }, 1200);
+          }, cp && cp.isCpu ? 650 : 1200);   // v93：CPUは短めに
         }
 
         // 江戸川競艇は強制参加型。終了後に確認画面は表示しない。
@@ -6796,8 +6799,10 @@
         // 離脱した参加者の手番はホストが代理で進めるので、CPUと同じように
         // サイコロ演出＋コマ移動をきちんと見せる（相手の端末はもう見ていない）。
         const isRemoteTurn = this.isMultiplayer && !cp.isCpu && cp.uid !== this.myUid && !this.isPlayerOffline(cp);
-        const initialDelay = isRemoteTurn ? 200 : 1200;
-        const stepDelay = isRemoteTurn ? 80 : 350;
+        // v93：CPUの手番は短めにして、参加者の画面が遅れすぎないようにします。
+        const __cpuTurn = this.isAutoPlayedPlayer(cp);
+        const initialDelay = isRemoteTurn ? 200 : (__cpuTurn ? 650 : 1200);
+        const stepDelay = isRemoteTurn ? 80 : (__cpuTurn ? 170 : 350);
 
         const cube = document.getElementById("dice-cube");
 
@@ -8554,7 +8559,9 @@
 
         // すべてのモーダルと同じ「閉じる（自動進行：3秒）」で統一。
         // オートモードのON/OFFや自分の手番かどうかに関係なく、同じ動きにする。
-        this.armModalAutoClose('event', 'event-modal-close-btn', () => this.closeEventModal());
+        // v93：CPUの手番だけは2秒にして、参加者の画面が遅れすぎないようにします。
+        this.armModalAutoClose('event', 'event-modal-close-btn', () => this.closeEventModal(),
+          (activePlayer && activePlayer.isCpu) ? 2 : MODAL_AUTO_CLOSE_SECONDS);
       },
 
       // ============================================================
@@ -18754,6 +18761,254 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   window.__EDOGAWA_V92_INFO = ()=>({
     包んだか: !!(window.FirebaseLib && window.FirebaseLib.__edoSafe),
     undefinedを除く例: clean({ a:1, b:undefined, c:{ d:undefined, e:'x' }, f:[1, undefined, 2], g:NaN })
+  });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v93: マルチプレイの表示を順番どおりに／参加者の席／ミニゲーム中の案内
+     ============================================================================ -->
+<style id="edogawa-v93-style">
+  /* 路線図は折り返さず、駅の数に合わせて文字を縮めます（東新小岩が改行していました） */
+  .edo-m7-map{ flex-wrap:nowrap !important; overflow-x:auto; gap:3px !important; padding:12px 6px !important; }
+  .edo-m7-col{ min-width:0 !important; flex:0 0 auto; }
+  .edo-m7-col span{ font-size:var(--m7fs,15px) !important; line-height:1.2 !important; }
+  .edo-m7-arw{ font-size:calc(var(--m7fs,15px) * 0.85) !important; line-height:1.2 !important;
+    flex:0 0 auto; padding-top:0 !important; }
+
+  /* だれかがミニゲーム中であることの案内 */
+  #edo-mp-busy{ position:fixed; inset:0; z-index:2147483200; display:none;
+    align-items:center; justify-content:center; padding:24px;
+    background:rgba(2,6,23,.72); backdrop-filter:blur(3px) }
+  #edo-mp-busy.show{ display:flex }
+  .edo-mp-busy-box{ width:min(340px,92vw); background:#0f172a; border:1px solid #334155;
+    border-radius:20px; padding:22px 18px; text-align:center; box-shadow:0 20px 56px rgba(0,0,0,.6) }
+  .edo-mp-busy-icon{ font-size:48px; line-height:1 }
+  .edo-mp-busy-text{ margin-top:12px; font-size:19.5px; font-weight:900; color:#e2e8f0; line-height:1.7 }
+  .edo-mp-busy-sub{ margin-top:10px; font-size:13px; color:#94a3b8 }
+  .edo-mp-busy-dots{ margin-top:12px; font-size:22px; letter-spacing:4px; color:#fbbf24;
+    animation:edoMpDots 1.2s steps(4,end) infinite }
+  @keyframes edoMpDots{ 0%{opacity:.35} 50%{opacity:1} 100%{opacity:.35} }
+</style>
+<script id="edogawa-v93">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const FB = ()=>window.FirebaseLib;
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ============================================================
+  // ① メトロセブン：マルチプレイでは開通のお知らせを出しません
+  // ============================================================
+  const origOpen = app.showMetro7Open ? app.showMetro7Open.bind(app) : null;
+  if(origOpen){
+    app.showMetro7Open = function(names){
+      if(app.isMultiplayer) return;        // 全線開通ずみの扱いなので知らせません
+      return origOpen(names);
+    };
+  }
+  // 路線図は駅の数に合わせて文字を縮め、折り返さないようにします
+  const origMap = app.metro7RouteMapHtml ? app.metro7RouteMapHtml.bind(app) : null;
+  if(origMap){
+    app.metro7RouteMapHtml = function(names){
+      const n = (names || []).length;
+      const longest = (names || []).reduce((a,b)=>Math.max(a, String(b).length), 0);
+      // 8駅＋矢印7本が1行に収まるように決めます
+      const fs = n <= 4 ? 16 : n <= 5 ? 15 : n <= 6 ? 14 : n <= 7 ? 13 : 12;
+      const html = origMap(names);
+      return html.replace('<div class="edo-m7-map">',
+        `<div class="edo-m7-map" style="--m7fs:${fs}px" data-cols="${n}" data-long="${longest}">`);
+    };
+  }
+
+  // ============================================================
+  // ② 参加者の席（名前・アイコン）を、部屋の席表にそろえます
+  // ============================================================
+  app.mpSyncSeats = function(finalPlayers){
+    if(!app.isMultiplayer || !Array.isArray(finalPlayers) || !Array.isArray(app.players)) return 0;
+    let changed = 0;
+    finalPlayers.forEach((fp, i)=>{
+      const p = app.players[i];
+      if(!p || !fp) return;
+      const wasCpu = !!p.isCpu, oldUid = p.uid, oldName = p.name;
+      if(fp.uid && p.uid !== fp.uid) { p.uid = fp.uid; changed++; }
+      if(fp.name && p.name !== fp.name) { p.name = fp.name; changed++; }
+      if(fp.avatar && p.avatar !== fp.avatar) { p.avatar = fp.avatar; changed++; }
+      const isCpu = !!fp.isCpu;
+      if(wasCpu !== isCpu) { p.isCpu = isCpu; changed++; }
+      if(changed && p.uid === app.myUid) app._mpSeat = i;
+      void oldUid; void oldName;
+    });
+    if(changed){
+      try{
+        // コマの絵も描き直します（CPUの顔のままになるのを防ぎます）
+        if(Array.isArray(app.playerMarkers) && app.map){
+          app.players.forEach(p=>{
+            const m = app.playerMarkers[p.id];
+            if(m && app.createPlayerIcon) m.setIcon(app.createPlayerIcon(p, ''));
+          });
+        }
+        app.updateHUD && app.updateHUD();
+        app.renderPlayers && app.renderPlayers();
+      }catch(e){ console.error('[v93 seats]', e); }
+    }
+    return changed;
+  };
+
+  // ============================================================
+  // ③ 参加者の画面：届いた状態を1つずつ、演出が終わってから反映します
+  // ============================================================
+  const queue = [];
+  let busy = false, busySince = 0;
+  app.__gqDepth = ()=>queue.length;
+
+  const BUSY_IDS = ['event-modal','goal-modal','quiz-modal','boatrace-modal',
+    'boatrace-continue-modal','regional-mini-overlay','goal-amida-overlay','edo-m7-notice'];
+  function shown(id){
+    const e = document.getElementById(id);
+    if(!e) return false;
+    if(e.classList.contains('hidden')) return false;
+    if(e.classList.contains('show')) return true;
+    const cs = getComputedStyle(e);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function uiBusy(){
+    if(app.__guestAnimating) return true;
+    if(app.isRolling || app.miniGameActive || app.boatRaceActive) return true;
+    return BUSY_IDS.some(shown);
+  }
+  app.__mpUiBusy = uiBusy;
+
+  // たまっている量に応じて、コマの動きを少し速めます（止めたり飛ばしたりはしません）
+  app.__guestAnimSpeed = function(){
+    const d = queue.length;
+    if(d >= 6) return { first: 160, step: 60 };
+    if(d >= 3) return { first: 260, step: 95 };
+    if(d >= 1) return { first: 380, step: 130 };
+    return { first: 500, step: 180 };
+  };
+
+  const origAnim = app.animateGuestPlayerMovement ? app.animateGuestPlayerMovement.bind(app) : null;
+  if(origAnim){
+    app.animateGuestPlayerMovement = function(p, a, b, d, cb){
+      app.__guestAnimating = true;
+      let done = false;
+      const finish = ()=>{ if(done) return; done = true; app.__guestAnimating = false; if(typeof cb==='function') cb(); };
+      // 万一コールバックが来なくても止まらないようにします
+      const guard = setTimeout(finish, 20000);
+      return origAnim(p, a, b, d, ()=>{ clearTimeout(guard); finish(); });
+    };
+  }
+
+  const origApply = app.applyRemoteGameState ? app.applyRemoteGameState.bind(app) : null;
+  if(origApply){
+    app.applyRemoteGameState = function(gs){
+      if(!gs) return;
+      if(app.isHost) return origApply(gs);       // 進行役は今までどおり
+      const v = Number(gs.version) || 0;
+      if(v && v <= Number(app.__gqQueued || 0)) return;   // 同じ版は捨てます
+      if(v) app.__gqQueued = v;
+      queue.push(gs);
+      pump();
+    };
+  }
+  function pump(){
+    if(busy || !queue.length) return;
+    if(uiBusy()){ setTimeout(pump, 120); return; }
+    busy = true; busySince = Date.now();
+    const gs = queue.shift();
+    try{ origApply(gs); }catch(e){ console.error('[v93 apply]', e); }
+    setTimeout(watch, 120);
+  }
+  function watch(){
+    // 20秒以上ふさがっていたら、念のため先へ進めます
+    if(uiBusy() && (Date.now() - busySince) < 20000){ setTimeout(watch, 120); return; }
+    busy = false;
+    setTimeout(pump, 50);
+  }
+  setInterval(()=>{ if(!busy && queue.length) pump(); }, 500);
+
+  // ============================================================
+  // ④ だれかがミニゲーム中であることを、ほかの人の画面に出します
+  // ============================================================
+  const TITLES = {
+    plane:'江戸川飛行隊', mart:'Edogawaマート 日雇いバイト', clinic:'江戸川診療所',
+    bus:'江戸川 GoGoバス乗車', toilet:'公園トイレ脱出大作戦', lunch:'えどがわ給食当番',
+    hotel:'江戸川ホテル物語', kingyo:'江戸川金魚すくい', tower:'増築 船堀タワー',
+    wheel:'ダイヤと花の大観覧車', canoe:'新左近川カヌー大会', delivery:'江戸川出前ライダー',
+    kanken:'いきなり漢字書き取りテスト', hide:'江戸川区新庁舎 かくれんぼ',
+    nuts:'ガキんちょ木の実ドロボー', archery:'ガキんちょ果実射撃', train:'電車運転シミュレーター'
+  };
+  const ICONS = { plane:'✈️', mart:'🛒', clinic:'🏥', bus:'🚌', toilet:'🚻', lunch:'🍱',
+    hotel:'🛏️', kingyo:'🏮', tower:'🏗️', wheel:'🎡', canoe:'🚣', delivery:'🛵',
+    kanken:'✍️', hide:'🔍', nuts:'⚾️', archery:'🏹', train:'🚃' };
+  app.miniGameTitleOf = (g)=>TITLES[g] || 'ミニゲーム';
+
+  function busyBox(){
+    let el = document.getElementById('edo-mp-busy');
+    if(!el){ el = document.createElement('div'); el.id = 'edo-mp-busy'; document.body.appendChild(el); }
+    return el;
+  }
+  app.showMpBusy = function(name, game){
+    const el = busyBox();
+    el.innerHTML = `<div class="edo-mp-busy-box">
+      <div class="edo-mp-busy-icon">${ICONS[game] || '🎮'}</div>
+      <div class="edo-mp-busy-text">${esc(name || 'ほかのプレーヤー')}が<br>${esc(app.miniGameTitleOf(game))}をプレイ中です</div>
+      <div class="edo-mp-busy-dots">● ● ●</div>
+      <div class="edo-mp-busy-sub">終わるまでお待ちください</div>
+    </div>`;
+    el.classList.add('show');
+  };
+  app.hideMpBusy = function(){ const el = document.getElementById('edo-mp-busy'); if(el) el.classList.remove('show'); };
+
+  function roomRefOf(){ return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', app.roomId); }
+  app.mpSetActiveMini = function(game, playerName){
+    if(!app.isMultiplayer || !app.db || !app.roomId || !FB()) return;
+    const v = game ? { game: String(game), name: String(playerName || ''), by: app.myUid || '', at: Date.now() } : null;
+    app.__mpMineActive = v;
+    try{ FB().updateDoc(roomRefOf(), { activeMini: v }).catch(()=>{}); }catch(e){}
+  };
+
+  // ミニゲームの開始・終了にあわせて知らせます
+  const origOpenMini = app.openRegionalMiniGame ? app.openRegionalMiniGame.bind(app) : null;
+  if(origOpenMini){
+    app.openRegionalMiniGame = function(game, p){
+      try{ if(p && !p.isCpu) app.mpSetActiveMini(game, p.name); }catch(e){}
+      return origOpenMini(game, p);
+    };
+  }
+  const origCloseMini = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
+  if(origCloseMini){
+    app.closeRegionalMiniGame = function(){
+      try{ if(app.__mpMineActive) app.mpSetActiveMini(null); }catch(e){}
+      return origCloseMini();
+    };
+  }
+
+  // 部屋の様子から、ほかの人のミニゲームを見張ります
+  const origSnap = app.handleRoomSnapshot ? app.handleRoomSnapshot.bind(app) : null;
+  if(origSnap){
+    app.handleRoomSnapshot = function(data){
+      const r = origSnap(data);
+      try{
+        if(data && Array.isArray(data.finalPlayers)) app.mpSyncSeats(data.finalPlayers);
+        const a = data && data.activeMini;
+        const mine = a && app.myUid && a.by === app.myUid;
+        const fresh = a && (Date.now() - Number(a.at || 0)) < 10 * 60 * 1000;
+        if(a && !mine && fresh && !app.miniGameActive) app.showMpBusy(a.name, a.game);
+        else app.hideMpBusy();
+      }catch(e){ console.error('[v93 snap]', e); }
+      return r;
+    };
+  }
+
+  window.__EDOGAWA_V93_INFO = ()=>({
+    たまっている数: queue.length, 処理中: busy, 画面がふさがっている: uiBusy(),
+    動きの速さ: app.__guestAnimSpeed(),
+    ミニゲーム案内: !!(document.getElementById('edo-mp-busy') || {}).classList
+      && document.getElementById('edo-mp-busy').classList.contains('show')
   });
 })();
 </script>
