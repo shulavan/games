@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v87 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v89 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -12890,7 +12890,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       <div class="edo-mc-emoji">${m.e}</div>
       <div class="edo-mc-kicker">ミニゲーム</div>
       <div class="edo-mc-title">${esc(m.t)}</div>
-      ${player?`<div class="edo-mc-player">${esc(player.name||'')}${player.isCpu?'（CPU）':''} のばん</div>`:''}
+      ${player?`<div class="edo-mc-player">${esc(player.name||'')}${player.isCpu?'（CPU）':''} の番</div>`:''}
       <ul class="edo-mc-rules">${m.r.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
       ${bar(START_MS)}
       <div class="edo-mc-hint">まもなくスタート！</div>
@@ -12910,15 +12910,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const delta=Math.round(Number(o.delta)||0);
     el.innerHTML=`<div class="edo-mc-box">
       <div class="edo-mc-emoji">${m.e}</div>
-      <div class="edo-mc-kicker">けっか はっぴょう</div>
+      <div class="edo-mc-kicker">結果発表</div>
       <div class="edo-mc-title">${esc(m.t)}</div>
       ${o.playerName?`<div class="edo-mc-player">${esc(o.playerName)}</div>`:''}
       ${o.detail?`<div class="edo-mc-detail">${esc(o.detail)}</div>`:''}
       ${rows?`<div class="edo-mc-list">${rows.map(r=>`<div><span>${esc(r.name)}</span><span style="color:${Math.round(Number(r.delta)||0)<0?'#fb7185':'#34d399'}">${Math.round(Number(r.delta)||0)>=0?'＋':''}${yen(r.delta)}</span></div>`).join('')}</div>`
-            :`<div class="edo-mc-reward${delta<0?' minus':''}"><span class="lbl">しょうきん・ほうしゅう</span><span class="val">${delta>=0?'＋':''}${yen(delta)}</span></div>`}
+            :`<div class="edo-mc-reward${delta<0?' minus':''}"><span class="lbl">賞金・報酬</span><span class="val">${delta>=0?'＋':''}${yen(delta)}</span></div>`}
       ${o.money!=null?`<div class="edo-mc-money">所持金 ${yen(o.money)}</div>`:''}
       ${bar(RESULT_MS)}
-      <div class="edo-mc-hint">5秒後に自動でとじます</div>
+      <div class="edo-mc-hint">5秒後に自動で閉じます</div>
     </div>`;
     el.classList.add('show');
     clearTimeout(resultTimer);
@@ -15188,7 +15188,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       groups += `<div class="edo-rail-group">
         <div class="edo-rail-gname"><span class="edo-rail-chip" style="background:${L.color}"></span>${esc(String(L.name).replace('（構想）',''))}${L.plan?'<span class="edo-m7-badge">構想</span>':''}</div>
         ${rows || '<div class="edo-rail-sub">まだ先の区間が開通していません。</div>'}
-        ${isM7 ? `<div class="edo-rail-open">🚧 開通 ${Math.round(app.metro7Progress()*100)}%（${app.metro7OpenStations().length}/${LINES.metro7.stations.length}駅）</div>` : ''}
+        ${isM7 ? `<div class="edo-rail-open">🚧 開通 ${(app.metro7OpenStationsAll?app.metro7OpenStationsAll():app.metro7OpenStations()).length}/${LINES.metro7.stations.length}駅</div>` : ''}
       </div>`;
     });
     el.innerHTML=`<div class="edo-rail-box">
@@ -17404,6 +17404,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }
     }catch(e){
       console.error('[v85] quickJoin', e);
+      app.__mpLastError = (e && e.message) || String(e);   // v89：あとで理由を確認できるように残します
       app._mpWait(false);
       app.addLog && app.addLog('👥 部屋に入れませんでした。この端末だけで対戦します。');
       app.mpStartLocal();
@@ -17773,6 +17774,645 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       地図の設定: app.basemapPref ? app.basemapPref() : null
     };
   };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v88: ミニゲームの「✕」統一／CPUは結果だけ／結果モーダルが閉じない対策
+     ============================================================================ -->
+<style id="edogawa-v88-style">
+  /* ミニゲームの枠を「上の細い帯（✕だけ）＋中身」に分け、重なりを無くします */
+  .regional-mini-shell, .goal-amida-shell{ display:flex !important; flex-direction:column !important; }
+  .regional-mini-shell > iframe, .goal-amida-shell > iframe{ flex:1 1 auto !important; height:auto !important; min-height:0 !important; }
+  .edo-mini-bar{ flex:0 0 40px; height:40px; display:flex; align-items:center; justify-content:flex-end;
+    padding:0 10px; background:#0f172a; border-bottom:1px solid #1e293b; z-index:5; }
+  .edo-mini-x{ width:32px; height:32px; border-radius:11px; background:#1e293b; border:1px solid #475569;
+    color:#e2e8f0; font-size:16px; font-weight:900; line-height:1; }
+  .edo-mini-x:active{ transform:scale(.95) }
+  /* 旧「とばす」はもう使いません */
+  #edo-mini-escape{ display:none !important; }
+</style>
+<script id="edogawa-v88">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const moneyN = (v)=>Math.round(Number(v)||0);
+
+  // ── ① 「✕」を全ミニゲームの枠の上に1つだけ置きます ──
+  function bar(shellSel, onClose){
+    const shell = document.querySelector(shellSel);
+    if(!shell) return null;
+    let b = shell.querySelector('.edo-mini-bar');
+    if(!b){
+      b = document.createElement('div');
+      b.className = 'edo-mini-bar';
+      const x = document.createElement('button');
+      x.type = 'button'; x.className = 'edo-mini-x'; x.setAttribute('aria-label','閉じる');
+      x.textContent = '✕';
+      x.onclick = onClose;
+      b.appendChild(x);
+      shell.insertBefore(b, shell.firstChild);
+    }
+    return b;
+  }
+  function makeBars(){
+    bar('#regional-mini-overlay .regional-mini-shell', ()=>{
+      try{ app.addLog && app.addLog('✕ ミニゲームを閉じました。'); }catch(e){}
+      try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e){}
+    });
+    bar('#goal-amida-overlay .goal-amida-shell', ()=>{
+      try{ app.finishGoalAmida && app.finishGoalAmida(); }catch(e){}
+    });
+  }
+  makeBars(); setInterval(makeBars, 2000);
+
+  // 子の中にある「✕ ゲームをやめる」は、重なるので隠します
+  function hideChildQuit(){
+    ['regional-mini-frame','goal-amida-frame'].forEach(id=>{
+      try{
+        const f = document.getElementById(id);
+        const d = f && f.contentDocument;
+        if(!d || !d.head) return;
+        if(d.getElementById('edo-hide-quit')) return;
+        const st = d.createElement('style');
+        st.id = 'edo-hide-quit';
+        st.textContent = '#btn-quit-game{display:none !important}';
+        d.head.appendChild(st);
+      }catch(e){}
+    });
+  }
+  setInterval(hideChildQuit, 1200);
+
+  // ── ② CPUのミニゲームは、結果だけ出します（開始画面も音声も出しません） ──
+  const CPU_PRIZE = {
+    delivery: ()=>{ const s=50+Math.floor(Math.random()*51); return {score:s, delta:s*100, detail:`ステージ1クリア：評価点 ${s}点 × ￥100`}; },
+    kanken:   ()=>{ const s=30+Math.floor(Math.random()*71); return {score:s, delta:s*100, detail:`採点 ${s}点 × ￥100`}; },
+    hide:     ()=>({score:100, delta:10000, detail:'区長を発見！クリア賞金 ￥10,000'}),
+    archery:  ()=>{ const s=3+Math.floor(Math.random()*13); return {score:s, delta:s*1000, detail:`矢 ${s}本 × ￥1,000`}; },
+    nuts:     ()=>{ const s=20+Math.floor(Math.random()*81); return {score:s, delta:s*100, detail:`${s}点 × ￥100`}; },
+    toilet:   ()=>{ const s=60+Math.floor(Math.random()*121); return {score:s, delta:s*100, detail:`${s}点 × ￥100`}; }
+  };
+  app.cpuMiniGameResultOnly = function(game, p){
+    const f = CPU_PRIZE[game] || (()=>{ const s=30+Math.floor(Math.random()*71); return {score:s, delta:s*100, detail:`採点 ${s}点 × ￥100`}; });
+    const r = f();
+    app.miniGameActive = true;
+    app.activeMiniGamePlayerId = p.id;
+    app.regionalMiniGame = { game: game, playerId: p.id, done: true, cpuOnly: true };
+    p.money = Math.max(0, moneyN(p.money) + moneyN(r.delta));
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    try{ app.awardMiniGameStats && app.awardMiniGameStats(p); }catch(e){}
+    try{ app.addLog && app.addLog(`🎮 ${p.name}：${r.detail}`); }catch(e){}
+    try{
+      app._miniCommonResultShow && app._miniCommonResultShow({
+        game: game, playerName: p.name + '（CPU）', delta: r.delta, money: p.money, detail: r.detail });
+    }catch(e){
+      // 結果モーダルが出せないときでも、手番は必ず進めます
+      setTimeout(()=>{ try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e2){} }, 300);
+    }
+    return true;
+  };
+  const origOpenMini = app.openRegionalMiniGame ? app.openRegionalMiniGame.bind(app) : null;
+  if(origOpenMini){
+    app.openRegionalMiniGame = function(game, p){
+      if(p && p.isCpu && game !== 'canoe') return app.cpuMiniGameResultOnly(game, p);
+      return origOpenMini(game, p);
+    };
+  }
+
+  // ── ③ 結果モーダルが出たまま閉じないときの保険 ──
+  //    （かくれんぼ・診療所など、子の結果画面から戻れないことがありました）
+  let watch = null;
+  function armCloseWatch(){
+    clearTimeout(watch);
+    watch = setTimeout(()=>{
+      const st = app.regionalMiniGame;
+      if(!st || !st.done) return;
+      try{ app.addLog && app.addLog('⏱ 結果画面を閉じて先に進みます。'); }catch(e){}
+      try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e){}
+    }, 9000);
+  }
+  ['applyRegionalMiniGameResult','applyIntegratedMiniGameResult'].forEach(name=>{
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(d){ const r = orig(d); try{ armCloseWatch(); }catch(e){} return r; };
+  });
+  const origCloseMini2 = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
+  if(origCloseMini2) app.closeRegionalMiniGame = function(...a){ clearTimeout(watch); return origCloseMini2(...a); };
+
+  window.__EDOGAWA_MINI_UI = ()=>({
+    閉じるボタン: !!document.querySelector('#regional-mini-overlay .edo-mini-x'),
+    あみだの閉じる: !!document.querySelector('#goal-amida-overlay .edo-mini-x'),
+    いまのミニゲーム: app.regionalMiniGame || null
+  });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v89: メトロセブンの仕様変更（8駅・20ターンごとの開通）
+     ----------------------------------------------------------------------------
+     参考：環七高速鉄道（メトロセブン）構想
+     https://tabiris.com/archives/eightliner-metroseven/
+     ============================================================================ -->
+<style id="edogawa-v89-style">
+  #edo-m7-notice{ position:fixed; inset:0; z-index:2147483310; display:none;
+    align-items:center; justify-content:center; padding:16px }
+  #edo-m7-notice.show{ display:flex }
+  .edo-m7-box{ width:min(380px,94vw); max-height:88vh; overflow-y:auto;
+    background:#0f172a; border:1px solid rgba(255,45,149,.55); border-radius:20px;
+    padding:16px; text-align:center; box-shadow:0 20px 56px rgba(0,0,0,.6);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif }
+  .edo-m7-img{ width:100%; border-radius:14px; display:block; margin-bottom:12px;
+    border:1px solid #334155; background:#1e293b }
+  .edo-m7-head{ font-size:17px; font-weight:900; color:#ff78bd; letter-spacing:.04em }
+  .edo-m7-msg{ font-size:14px; font-weight:800; color:#e2e8f0; line-height:1.8; margin-top:10px }
+  .edo-m7-map{ display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start;
+    gap:4px; margin:14px 0 6px; padding:12px 8px;
+    background:rgba(2,6,23,.6); border:1px solid #1e293b; border-radius:14px }
+  .edo-m7-col{ display:flex; flex-direction:column; align-items:center; min-width:22px }
+  .edo-m7-col span{ font-size:15px; font-weight:900; color:#f8fafc; line-height:1.25 }
+  .edo-m7-col.plan span{ color:#94a3b8 }
+  .edo-m7-arw{ font-size:15px; font-weight:900; color:#ff78bd; line-height:1.25; padding-top:1px }
+  .edo-m7-note{ font-size:10px; color:#64748b; margin-top:8px; line-height:1.7 }
+  .edo-m7-btn{ width:100%; margin-top:12px; padding:12px; border-radius:12px; font-size:14px; font-weight:900;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
+</style>
+<script id="edogawa-v89">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
+  if(!LINES || !ST || !LINES.metro7) return;
+  const M7 = LINES.metro7;
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ── 駅（ご指定の8駅） ──
+  const NEW_ST = {
+    '南葛西':     {lat:35.6524081, lng:139.8720738, plan:true},
+    '江戸川６丁目':{lat:35.6753441, lng:139.8778080, plan:true},
+    '西一之江':   {lat:35.6976423, lng:139.8818115, plan:true},
+    '松本':       {lat:35.7191564, lng:139.8771508, plan:true},
+    '東新小岩':   {lat:35.7190184, lng:139.8569994, plan:true, outside:true}   // 葛飾区（区外）
+  };
+  Object.keys(NEW_ST).forEach(n=>{ ST[n] = Object.assign({}, NEW_ST[n]); });
+  try{ delete ST['鹿骨']; }catch(e){}
+  const ORDER = ['葛西臨海公園','南葛西','葛西','江戸川６丁目','一之江','西一之江','松本','東新小岩'];
+  M7.stations.length = 0;
+  ORDER.forEach(n=>M7.stations.push(n));
+  const OUTSIDE = new Set(['東新小岩']);                 // 区外：地図とコースには出しません
+  const INSIDE = ORDER.filter(n=>!OUTSIDE.has(n));
+
+  // ── 開通の時期 ──
+  const PLAN_TURN = 20;     // 議案可決・着工のお知らせ
+  const STEP = 20;          // 以後20ターンごとに1駅ずつ
+  app.metro7PlanTurn = PLAN_TURN;
+  function openCount(t){
+    const T = Math.max(0, Number(t==null?app.turnCount:t)||0);
+    if (T < PLAN_TURN + STEP) return 0;                 // 40ターン未満は0駅
+    return Math.min(ORDER.length, Math.floor((T - PLAN_TURN) / STEP) + 1);
+  }
+  app.metro7OpenCount = openCount;
+  app.metro7PlanAnnounced = ()=> (Number(app.turnCount)||0) >= PLAN_TURN;
+
+  // ── 線形（道路沿い。取れなければ直線） ──
+  const SHAPE_KEY = 'edogawa_metro7_shape_v3';
+  let PTS = [], CUM = [], IDX = [];
+  function km(a,b){
+    const R=6371, p1=a[0]*Math.PI/180, p2=b[0]*Math.PI/180;
+    const dp=(b[0]-a[0])*Math.PI/180, dl=(b[1]-a[1])*Math.PI/180;
+    const x=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+    return 2*R*Math.asin(Math.sqrt(x));
+  }
+  function setShape(pts, idx){
+    PTS = pts; IDX = idx; CUM = [0];
+    for(let i=1;i<pts.length;i++) CUM.push(CUM[i-1] + km(pts[i-1], pts[i]));
+    M7.totalKm = Math.round((CUM[IDX[INSIDE.length-1]]||0)*100)/100;
+  }
+  function straight(){
+    const pts=[], idx=[];
+    ORDER.forEach(n=>{ idx.push(pts.length); pts.push([ST[n].lat, ST[n].lng]); });
+    setShape(pts, idx);
+  }
+  straight();
+  try{
+    const c = JSON.parse(localStorage.getItem(SHAPE_KEY) || 'null');
+    if (c && Array.isArray(c.pts) && Array.isArray(c.idx) && c.idx.length === ORDER.length
+        && (Date.now()-(c.t||0)) < 30*24*3600*1000) setShape(c.pts, c.idx);
+  }catch(e){}
+
+  app.metro7BuildShapeV3 = async function(force){
+    if(!force && PTS.length > ORDER.length) return PTS;
+    try{
+      const pts=[], idx=[];
+      for(let i=0;i<ORDER.length-1;i++){
+        const a=ST[ORDER[i]], b=ST[ORDER[i+1]];
+        let leg=null;
+        try{
+          const url='https://router.project-osrm.org/route/v1/driving/'+
+            a.lng+','+a.lat+';'+b.lng+','+b.lat+'?overview=full&geometries=geojson';
+          const r=await fetch(url,{cache:'force-cache'});
+          if(r.ok){ const j=await r.json();
+            const cs=j&&j.routes&&j.routes[0]&&j.routes[0].geometry&&j.routes[0].geometry.coordinates;
+            if(Array.isArray(cs)&&cs.length>=2) leg=cs.map(x=>[x[1],x[0]]); }
+        }catch(e){}
+        if(!leg) leg=[[a.lat,a.lng],[b.lat,b.lng]];
+        leg[0]=[a.lat,a.lng]; leg[leg.length-1]=[b.lat,b.lng];
+        if(i===0){ idx.push(0); pts.push(leg[0]); }
+        for(let k=1;k<leg.length;k++) pts.push(leg[k]);
+        idx.push(pts.length-1);
+      }
+      // 明らかに遠回りな結果は採用しません
+      let road=0; for(let i=1;i<pts.length;i++) road+=km(pts[i-1],pts[i]);
+      let direct=0; for(let i=0;i<ORDER.length-1;i++) direct+=km([ST[ORDER[i]].lat,ST[ORDER[i]].lng],[ST[ORDER[i+1]].lat,ST[ORDER[i+1]].lng]);
+      if(pts.length>ORDER.length && road < direct*1.8){
+        setShape(pts.map(p=>[+p[0].toFixed(6), +p[1].toFixed(6)]), idx);
+        try{ localStorage.setItem(SHAPE_KEY, JSON.stringify({pts:PTS, idx:IDX, t:Date.now()})); }catch(e){}
+        app._drawMetro7 && app._drawMetro7();
+      }
+    }catch(e){ console.error('[v89]', e); }
+    return PTS;
+  };
+  setTimeout(()=>{ app.metro7BuildShapeV3(); }, 5000);
+
+  // ── 開通の状態 ──
+  app.metro7OpenStationsAll = function(){ return ORDER.slice(0, openCount()); };
+  app.metro7OpenStations = function(){
+    return app.metro7OpenStationsAll().filter(n=>!OUTSIDE.has(n));   // 区外は乗車・地図から外します
+  };
+  app.metro7Started = function(){ return openCount() > 0; };
+  app.metro7Progress = function(){
+    const n = app.metro7OpenStations().length;
+    return n <= 1 ? 0 : Math.min(1, (n-1) / (INSIDE.length-1));
+  };
+  app.metro7OpenKm = function(){
+    const n = app.metro7OpenStations().length;
+    return n < 2 ? 0 : (CUM[IDX[n-1]] || 0);
+  };
+  app.metro7Tip = function(){ return null; };             // 工事中の先端は出しません
+  app.metro7Path = function(){
+    const n = app.metro7OpenStations().length;
+    if(n < 2) return [];
+    return PTS.slice(0, IDX[n-1] + 1).map(p=>[p[0], p[1]]);
+  };
+  app.metro7FullPath = function(){
+    return PTS.slice(0, IDX[INSIDE.length-1] + 1).map(p=>[p[0], p[1]]);
+  };
+
+  // ── お知らせ ──
+  const IMG = 'https://shulavan.github.io/img/metro7.jpg';
+  function box(){
+    let el = document.getElementById('edo-m7-notice');
+    if(!el){ el=document.createElement('div'); el.id='edo-m7-notice'; document.body.appendChild(el); }
+    return el;
+  }
+  function closeNotice(){ const el=document.getElementById('edo-m7-notice'); if(el){ el.classList.remove('show'); el.innerHTML=''; } }
+  app.closeMetro7Notice = closeNotice;
+
+  // 縦書きの路線図（葛 → 南 → 葛 …）
+  function routeMap(names){
+    const cols = names.map(n=>{
+      const plan = OUTSIDE.has(n) ? ' plan' : '';
+      return `<div class="edo-m7-col${plan}">${[...n].map(c=>`<span>${esc(c)}</span>`).join('')}</div>`;
+    });
+    const out = [];
+    cols.forEach((c,i)=>{ if(i) out.push('<div class="edo-m7-arw">→</div>'); out.push(c); });
+    return `<div class="edo-m7-map">${out.join('')}</div>`;
+  }
+  app.metro7RouteMapHtml = routeMap;
+
+  function show(html){
+    const el = box();
+    el.innerHTML = `<div class="edo-m7-box">${html}
+      <button type="button" class="edo-m7-btn" data-close="1">閉じる</button></div>`;
+    el.classList.add('show');
+    el.onclick = (ev)=>{ if(ev.target===el || ev.target.closest('[data-close]')) closeNotice(); };
+  }
+
+  app.showMetro7Plan = function(){
+    show(`<img class="edo-m7-img" src="${IMG}" alt="メトロセブン" referrerpolicy="no-referrer"
+            onerror="this.style.display='none'">
+      <div class="edo-m7-head">🚧 メトロセブン</div>
+      <div class="edo-m7-msg">環七高速鉄道（メトロセブン）構想議案が可決され着工します</div>
+      <div class="edo-m7-note">出典：環七高速鉄道（メトロセブン）構想</div>`);
+    try{ app.addLog && app.addLog('🚧 環七高速鉄道（メトロセブン）構想議案が可決され着工します'); }catch(e){}
+  };
+  app.showMetro7Open = function(names){
+    // 路線図は「ここまで開通した全区間」、文章は「本日開通した区間」です。
+    const to = names[names.length-1];
+    const from = names.length >= 2 ? names[names.length-2] : names[0];
+    const msg = `メトロセブンの${from}から${to}までが本日開通しました`;
+    show(`<div class="edo-m7-head">メトロセブン開通のお知らせ</div>
+      ${routeMap(names)}
+      <div class="edo-m7-msg">${esc(msg)}</div>
+      ${OUTSIDE.has(to)?'<div class="edo-m7-note">※ 東新小岩駅は葛飾区のため、地図とコースには出ません。</div>':''}`);
+    try{ app.addLog && app.addLog('🚃 ' + msg); }catch(e){}
+  };
+
+  // ターンが進んだら知らせます
+  let lastCount = openCount();
+  let planShown = app.metro7PlanAnnounced();
+  const origFinish = app.finishTurnContinue ? app.finishTurnContinue.bind(app) : null;
+  if(origFinish){
+    app.finishTurnContinue = function(){
+      let r, err=null;
+      try{ r = origFinish(); }catch(e){ err = e; }
+      try{
+        app._drawMetro7 && app._drawMetro7();
+        if(!planShown && app.metro7PlanAnnounced()){ planShown = true; app.showMetro7Plan(); }
+        const now = openCount();
+        if(now > lastCount && now >= 2){
+          lastCount = now;
+          app.showMetro7Open(ORDER.slice(0, now));
+        }else{ lastCount = now; }
+      }catch(e){ console.error('[v89]', e); }
+      if(err) throw err;
+      return r;
+    };
+  }
+  // v75の古いお知らせは出しません
+  app.metro7AnnounceOpen = function(){ return null; };
+
+  window.__EDOGAWA_METRO7_INFO = ()=>({
+    駅: ORDER,
+    区外: [...OUTSIDE],
+    いまのターン: app.turnCount,
+    議案可決ターン: PLAN_TURN,
+    開通した駅: app.metro7OpenStationsAll(),
+    地図に出る駅: app.metro7OpenStations(),
+    全長km: M7.totalKm,
+    線形の点数: PTS.length,
+    道なりになっているか: PTS.length > ORDER.length
+  });
+  window.__EDOGAWA_METRO7_TEST = (t)=>{ const old=app.turnCount; app.turnCount=t;
+    const n=openCount(); const names=ORDER.slice(0,n); app.turnCount=old;
+    return {ターン:t, 開通駅数:n, 駅:names}; };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v89: 目的地ルーレットの表示（枠の大きさを固定・3行・上下中央・縦スクロール）
+     ============================================================================ -->
+<style id="edogawa-v89-roulette-style">
+  /* 説明文は1.5倍・左揃え。枠だけは中央のままにします。 */
+  #roulette-section{ text-align:left !important }
+  #roulette-section .edo-rt-title{ font-size:21px !important; line-height:1.5; text-align:left !important }
+  #roulette-anchor-note{ font-size:19.5px !important; line-height:1.6; text-align:left !important }
+  #roulette-cpu-countdown{ font-size:21px !important; line-height:1.5; text-align:left !important }
+
+  /* 枠は常に同じ大きさ（3行ぶん）。中身は上下中央にそろえます。 */
+  #roulette-box.edo-rt-box{
+    position:relative; overflow:hidden;
+    height:calc(20px * 1.35 * 3 + 20px);
+    padding:10px 12px; display:block; text-align:center }
+  #roulette-box .edo-rt-cell{
+    position:absolute; left:12px; right:12px; top:0; bottom:0;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:20px; line-height:1.35; font-weight:700; color:#f1f5f9;
+    word-break:break-all; will-change:transform }
+  #roulette-box .edo-rt-cell > span{ display:block; max-height:calc(20px * 1.35 * 3) }
+  @media (prefers-reduced-motion:no-preference){
+    #roulette-box .edo-rt-cell.enter{ animation:edoRtIn .12s linear }
+    #roulette-box .edo-rt-cell.leave{ animation:edoRtOut .12s linear forwards }
+  }
+  @keyframes edoRtIn { from{ transform:translateY(100%) } to{ transform:translateY(0) } }
+  @keyframes edoRtOut{ from{ transform:translateY(0) } to{ transform:translateY(-100%) } }
+</style>
+<script id="edogawa-v89-roulette">
+(function(){
+  'use strict';
+  function init(){
+    const box = document.getElementById('roulette-box');
+    const sec = document.getElementById('roulette-section');
+    if(!box || !sec || box.__edoRt) return;
+    box.__edoRt = true;
+
+    // 「江戸川区内ルーレット抽選中...」に印をつけます
+    const t = sec.querySelector('.animate-pulse');
+    if(t) t.classList.add('edo-rt-title');
+    sec.classList.remove('text-center');
+
+    box.classList.add('edo-rt-box');
+    box.classList.remove('py-3.5','text-xl','font-bold');
+    box.innerHTML = '';
+
+    const LH = 20 * 1.35, MAX = LH * 3 + 1;
+    let cur = null;
+
+    function fit(span, text){
+      const s = String(text == null ? '' : text);
+      span.textContent = s;
+      if (s.length < 2) return;
+      if (!span.scrollHeight){
+        // 画面に出ていないときは測れないので、文字数でおおよそ省略します
+        if (s.length > 36) span.textContent = s.slice(0, 36) + '⋯';
+        return;
+      }
+      if (span.scrollHeight <= MAX) return;
+      // 3行に収まらないときは「⋯」で省略します
+      let lo = 1, hi = s.length;
+      while (lo < hi){
+        const mid = Math.ceil((lo + hi) / 2);
+        span.textContent = s.slice(0, mid) + '⋯';
+        if (span.scrollHeight <= MAX) lo = mid; else hi = mid - 1;
+      }
+      span.textContent = s.slice(0, lo) + '⋯';
+    }
+
+    function make(text){
+      const cell = document.createElement('div');
+      cell.className = 'edo-rt-cell';
+      const span = document.createElement('span');
+      cell.appendChild(span);
+      box.appendChild(cell);
+      fit(span, text);
+      return cell;
+    }
+
+    // 施設名のときだけスロットマシンのように下から上へ流します
+    function set(text, animate){
+      const next = make(text);
+      if (cur){
+        if (animate){
+          next.classList.add('enter');
+          const old = cur; old.classList.add('leave');
+          setTimeout(()=>{ try{ old.remove(); }catch(e){} }, 220);
+        } else {
+          try{ cur.remove(); }catch(e){}
+        }
+      }
+      cur = next;
+    }
+
+    Object.defineProperty(box, 'textContent', {
+      configurable: true,
+      get(){ return cur ? cur.textContent : ''; },
+      set(v){
+        const s = String(v == null ? '' : v);
+        // 📍🎯や「検索中」は結果・案内の表示なので、流さずに切り替えます
+        const plain = /^(📍|🎯)/.test(s) || /検索中/.test(s) || s === '---' || s === '';
+        set(s, !plain);
+      }
+    });
+    set('---', false);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  window.__EDOGAWA_ROULETTE_INFO = ()=>{
+    const b = document.getElementById('roulette-box');
+    const c = b && b.querySelector('.edo-rt-cell:last-child');
+    return { 枠の高さ: b ? b.offsetHeight : null, いまの表示: c ? c.textContent : null,
+      セル数: b ? b.querySelectorAll('.edo-rt-cell').length : 0 };
+  };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v89: マルチプレイ（2人目が同じ部屋に入れない／目的地がカラオケ固定）の修正
+     ============================================================================ -->
+<script id="edogawa-v89-mp">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const FB = ()=>window.FirebaseLib;
+  const ROOM_FRESH_MS = 30 * 60 * 1000;   // ロビーに残す部屋の寿命（10分→30分）
+  const LOBBY_BEAT_MS = 60 * 1000;        // 遊んでいる間、1分ごとに部屋を新しく見せます
+  function roomRefOf(id){ return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id); }
+  function km(a,b){ if(!a||!b) return 1e9;
+    const dy=(b.lat-a.lat)*111, dx=(b.lng-a.lng)*91; return Math.sqrt(dx*dx+dy*dy); }
+
+  // ── ① 目的地：カラオケ酔処「ゆう」は選ばないようにします ──
+  const FIRST = ()=>window.__EDOGAWA_FIRST_GOAL || null;
+  app.mpPickRandomGoal = function(seed){
+    const r = app._mpRng ? app._mpRng(seed || Math.floor(Math.random()*1e9)) : Math.random;
+    const start = window.__EDOGAWA_START_LOC, first = FIRST();
+    let pool = [];
+    try{ pool = (app.getAllFacilityObjects() || []); }catch(e){}
+    const base = pool.filter(x => x && x.name && isFinite(x.lat) && isFinite(x.lng)
+      && (!first || x.name !== first.name)
+      && (!start || x.name !== start.name));
+    // まずは「スタートから0.8〜6km」で探し、見つからなければ距離の条件をゆるめます
+    let ok = base.filter(x => !start || (km(start,x) > 0.8 && km(start,x) < 6));
+    if(!ok.length) ok = base.filter(x => !start || km(start,x) > 0.3);
+    if(!ok.length) ok = base;
+    if(!ok.length){
+      // 施設データがまだ読めていないときの保険。ここでカラオケに戻ると、
+      // 2人とも同じ「カラオケ酔処「ゆう」」になってしまっていました。
+      const alt = (app.RAIL_STATIONS && Object.keys(app.RAIL_STATIONS)
+        .filter(n => !app.RAIL_STATIONS[n].plan && (!start || n !== start.name))) || [];
+      if(alt.length){
+        const n = alt[Math.floor(r() * alt.length)], s = app.RAIL_STATIONS[n];
+        return { name: n, lat: s.lat, lng: s.lng, emoji: '🚉', address: '' };
+      }
+      return first || null;
+    }
+    const p = ok[Math.floor(r() * ok.length)];
+    return { name: p.name, lat: p.lat, lng: p.lng, emoji: p.emoji, address: p.address || '' };
+  };
+
+  // ── ② 部屋さがし：「押した回数」ではなく「実際に座っている人数」で判断します ──
+  //    これまでは mpFindRoom を呼ぶたびに humans を1つ増やしていたため、
+  //    1人目が「マルチプレイ」を何度か押しただけで満室あつかいになり、
+  //    2人目が別の部屋に回されていました。
+  app.mpFindRoom = async function(forceNew){
+    const ref = roomRefOf('__lobby_v1');
+    return await FB().runTransaction(app.db, async (tx)=>{
+      const snap = await tx.get(ref);
+      const now = Date.now();
+      let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
+        .filter(r => r && r.roomId && (now - (r.updatedAt || 0) < ROOM_FRESH_MS));
+      let target = null;
+      if(!forceNew){
+        const open = rooms.filter(r => (r.humans || 0) < 4);
+        open.sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0));   // いちばん新しい部屋へ
+        target = open[0] || null;
+      }
+      let isNew = false;
+      if(!target){
+        target = { roomId: 'room_' + Math.floor(100000 + Math.random()*900000), humans: 0, updatedAt: now };
+        rooms.push(target); isNew = true;
+      }
+      target.updatedAt = now;                 // ← humans はここでは増やしません
+      if(rooms.length > 20) rooms = rooms.slice(-20);
+      tx.set(ref, { rooms: rooms, updatedAt: now });
+      return { roomId: target.roomId, isNew: isNew, humans: target.humans || 0 };
+    });
+  };
+
+  // 実際の人数をロビーに書き戻し、遊んでいる間は部屋を新しく見せ続けます
+  app.mpTouchLobby = async function(humans){
+    if(!app.db || !app.roomId || !FB()) return false;
+    const n = Number.isFinite(humans) ? humans
+      : (app.players||[]).filter(p => p && !p.isCpu && p.uid).length;
+    try{
+      const ref = roomRefOf('__lobby_v1');
+      await FB().runTransaction(app.db, async (tx)=>{
+        const snap = await tx.get(ref);
+        const now = Date.now();
+        let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
+          .filter(r => r && r.roomId && (now - (r.updatedAt||0) < ROOM_FRESH_MS));
+        const i = rooms.findIndex(r => r.roomId === app.roomId);
+        if(i >= 0){ rooms[i].humans = Math.max(0, Math.min(4, n)); rooms[i].updatedAt = now; }
+        else rooms.push({ roomId: app.roomId, humans: Math.max(0, Math.min(4, n)), updatedAt: now });
+        tx.set(ref, { rooms: rooms, updatedAt: now });
+      });
+      return true;
+    }catch(e){ return false; }
+  };
+  clearInterval(app.__mpLobbyBeat);
+  app.__mpLobbyBeat = setInterval(()=>{ try{ app.mpTouchLobby(); }catch(e){} }, LOBBY_BEAT_MS);
+
+  // ── ③ 部屋に入ったら、人数をロビーに反映します ──
+  const origJoin = app.quickJoinMultiplayer ? app.quickJoinMultiplayer.bind(app) : null;
+  if(origJoin){
+    app.quickJoinMultiplayer = async function(opts){
+      app.__mpLastError = null;
+      const r = await origJoin(opts);
+      try{ if(app.roomId) await app.mpTouchLobby(); }catch(e){}
+      return r;
+    };
+  }
+  // 人間が入ってきたときも、人数を書き戻します
+  const origQueue = app.mpProcessJoinQueue ? app.mpProcessJoinQueue.bind(app) : null;
+  if(origQueue){
+    app.mpProcessJoinQueue = function(data){
+      const n = origQueue(data);
+      if(n){ try{ app.mpTouchLobby(); }catch(e){} }
+      return n;
+    };
+  }
+
+  // ── ④ ひとりになったときは、目的地を決め直し、理由も残します ──
+  const origLocal = app.mpStartLocal ? app.mpStartLocal.bind(app) : null;
+  if(origLocal){
+    app.mpStartLocal = function(){
+      // ここで目的地を決め直さないと、ひとり対戦はいつも
+      // 「カラオケ酔処「ゆう」」になってしまいます。
+      try{ app._mpGoal = app.mpPickRandomGoal(Math.floor(Math.random()*1e9)) || app._mpGoal; }catch(e){}
+      try{
+        const why = app.__mpLastError ? `\n（原因：${String(app.__mpLastError).slice(0,120)}）` : '';
+        app.addLog && app.addLog('👥 部屋に入れなかったため、この端末だけで対戦します。' + why.replace(/\n/g,''));
+      }catch(e){}
+      return origLocal();
+    };
+  }
+
+  window.__EDOGAWA_MP_WHY = ()=>({
+    部屋: app.roomId || null,
+    通信: !!app.db,
+    自分のID: app.myUid || null,
+    進行役: !!app.isHost,
+    目的地: app._mpGoal ? app._mpGoal.name : null,
+    直前のエラー: app.__mpLastError ? String(app.__mpLastError).slice(0,200) : null,
+    部屋の寿命分: ROOM_FRESH_MS/60000
+  });
 })();
 </script>
 
