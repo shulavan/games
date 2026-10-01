@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v91 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v92 (2026-10-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -18668,6 +18668,93 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       return origQuick(opts);
     };
   }
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v92: サーバーへ undefined を書き込んでいた不具合の修正
+     ----------------------------------------------------------------------------
+     Firestore は undefined を受け付けません。
+       Function Transaction.set() called with invalid data.
+       Unsupported field value: undefined (found in field goal.emoji ...)
+     目的地に絵文字が登録されていない施設だと goal.emoji が undefined になり、
+     部屋を作る最初の書き込みで必ず失敗していました。
+     （＝これが「サーバーの部屋に入れなかったため」の正体です。
+       Firebaseの設定・ルールの問題ではありませんでした）
+     ============================================================================ -->
+<script id="edogawa-v92">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① 目的地に必ず値が入るようにします ──
+  const origPick = app.mpPickRandomGoal ? app.mpPickRandomGoal.bind(app) : null;
+  if(origPick){
+    app.mpPickRandomGoal = function(seed){
+      const g = origPick(seed);
+      if(!g) return g;
+      return {
+        name: String(g.name || '目的地'),
+        lat: Number(g.lat), lng: Number(g.lng),
+        emoji: g.emoji || '📍',
+        address: g.address || ''
+      };
+    };
+  }
+
+  // ── ② 念のため、サーバーへ送る中身から undefined を取り除きます ──
+  //    プレーヤーの写真・持ち物・ステータスなど、どこか1つでも undefined が
+  //    混じると書き込み全体が失敗してしまうためです。
+  function clean(v, depth){
+    depth = depth || 0;
+    if(depth > 12) return null;
+    if(v === undefined) return undefined;
+    if(v === null) return null;
+    const t = typeof v;
+    if(t === 'number') return isFinite(v) ? v : 0;
+    if(t === 'string' || t === 'boolean') return v;
+    if(t === 'function') return undefined;
+    if(Array.isArray(v)) return v.map(x => { const c = clean(x, depth+1); return c === undefined ? null : c; });
+    if(t === 'object'){
+      if(v instanceof Date) return v;
+      if(v._methodName || v.toDate || v.isEqual) return v;    // Firestoreの特別な値はそのまま
+      const o = {};
+      Object.keys(v).forEach(k => { const c = clean(v[k], depth+1); if(c !== undefined) o[k] = c; });
+      return o;
+    }
+    return undefined;
+  }
+  app.__edoClean = clean;
+
+  function wrapFB(){
+    const L = window.FirebaseLib;
+    if(!L || L.__edoSafe) return;
+    const sd = L.setDoc, ud = L.updateDoc, rt = L.runTransaction;
+    if(typeof sd === 'function') L.setDoc = function(ref, data, opt){
+      return opt === undefined ? sd(ref, clean(data)) : sd(ref, clean(data), opt); };
+    if(typeof ud === 'function') L.updateDoc = function(ref, data){ return ud(ref, clean(data)); };
+    if(typeof rt === 'function') L.runTransaction = function(db, fn){
+      return rt(db, (tx)=>{
+        const safe = Object.create(tx);
+        safe.get = (r)=>tx.get(r);
+        safe.set = (r, d, o)=> o === undefined ? tx.set(r, clean(d)) : tx.set(r, clean(d), o);
+        safe.update = (r, d)=>tx.update(r, clean(d));
+        if(typeof tx.delete === 'function') safe.delete = (r)=>tx.delete(r);
+        return fn(safe);
+      });
+    };
+    L.__edoSafe = true;
+  }
+  wrapFB();
+  setInterval(wrapFB, 1000);      // 読み込み順や差し替えに関係なく効くようにします
+  app.__edoWrapFirebase = wrapFB;
+
+  window.__EDOGAWA_V92_INFO = ()=>({
+    包んだか: !!(window.FirebaseLib && window.FirebaseLib.__edoSafe),
+    undefinedを除く例: clean({ a:1, b:undefined, c:{ d:undefined, e:'x' }, f:[1, undefined, 2], g:NaN })
+  });
 })();
 </script>
 
