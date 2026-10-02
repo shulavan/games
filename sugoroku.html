@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v101 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v106 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1590,7 +1590,7 @@
       </div>
 
       <div id="roulette-section" class="hidden bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center space-y-3">
-        <div class="text-sm font-bold text-amber-400 animate-pulse">江戸川区内ルーレット抽選中...</div>
+        <div class="text-sm font-bold text-amber-400 animate-pulse">次の目的地を抽選中...</div>
         <div id="roulette-box" class="text-xl font-bold text-slate-100 py-3.5 bg-slate-900 border border-slate-700 rounded-xl shadow-inner font-mincho">
           ---
         </div>
@@ -8106,8 +8106,13 @@
           const remain = this.remainingSquares(lastPlace);
           this.addLog(`💥 ビリ罰金：${lastPlace.name}（残り${remain === null ? '-' : remain}マスで最下位）に -￥${penalty.toLocaleString()}（残 ${this.formatMoney(lastPlace.money)}）`);
           if (penaltyEl) {
-            penaltyEl.textContent = `💥 ビリ罰金：${lastPlace.name}（残り${remain === null ? '-' : remain}マス・最下位）に -￥${penalty.toLocaleString()}`;
-            penaltyEl.classList.remove("hidden");
+            // v106：その人のアイコンを添えます
+            if (typeof this.paintGoalPenalty === 'function') {
+              this.paintGoalPenalty(lastPlace, penalty);
+            } else {
+              penaltyEl.textContent = `ビリ罰金: ${lastPlace.name}に -￥${penalty.toLocaleString()}`;
+              penaltyEl.classList.remove("hidden");
+            }
           }
         } else if (penaltyEl) {
           penaltyEl.classList.add("hidden");
@@ -8124,9 +8129,14 @@
         // 陣取り：ゴールした施設そのものが、この人の色になる（地図にも残る）
         if (this.currentDestination) this.claimTerritory(player, this.currentDestination);
 
-        document.getElementById("goal-winner-text").textContent =
-          `${player.name} が ${this.currentDestination.name} に先着ゴール！` +
-          `（陣地 ${this.territoryCount(player.id)}か所）`;
+        // v106：見出しは「👑 ◯◯ ゴール！」＋「（◯ゴール目）」の2行にします
+        if (typeof this.paintGoalHeader === 'function') {
+          this.paintGoalHeader(player);
+        } else {
+          document.getElementById("goal-winner-text").textContent =
+            `${player.name} が ${this.currentDestination.name} に先着ゴール！` +
+            `（陣地 ${this.territoryCount(player.id)}か所）`;
+        }
         document.getElementById("category-select-section").classList.remove("hidden");
         this.refreshCategoryButtons();
         document.getElementById("category-cpu-countdown").classList.add("hidden");
@@ -8425,7 +8435,8 @@
         const note = document.getElementById('roulette-anchor-note');
         if (note) {
           if (laggard && laggard !== winnerPlayer) {
-            note.textContent = `📍 ビリの ${laggard.name} さんの近くのエリアから抽選します`;
+            // v105：先頭の📍は出しません。名前が「〜さん」で終わるときは「さん」を重ねません。
+            note.textContent = `ビリの ${laggard.name}${/さん$/.test(String(laggard.name)) ? '' : ' さん'} の近くのエリアから抽選します`;
             note.classList.remove('hidden');
           } else {
             note.classList.add('hidden');
@@ -8479,7 +8490,9 @@
                   }
                 }
               }
-              box.textContent = `🎯 決定: ${nextGoal.name}`;
+              // v105：「🎯 決定:」は出さず、施設名だけを金色の枠で見せます
+              box.textContent = `${nextGoal.name}`;
+              try{ box.classList.add('edo-rt-decided'); }catch(e){}
               // どのカテゴリから選ばれたかを覚えておく（ゴール時の🍴判定に使う）
               this.nextDestinationCandidate = { ...nextGoal, category: catName };
               document.getElementById("roulette-confirm-btn").classList.remove("hidden");
@@ -18390,6 +18403,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       get(){ return cur ? cur.textContent : ''; },
       set(v){
         const s = String(v == null ? '' : v);
+        try{ box.classList.remove('edo-rt-decided'); }catch(e){}   // v105：金色をいったん戻します
         // 📍🎯や「検索中」は結果・案内の表示なので、流さずに切り替えます
         const plain = /^(📍|🎯)/.test(s) || /検索中/.test(s) || s === '---' || s === '';
         set(s, !plain);
@@ -19872,6 +19886,193 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         han('日本語は、そのまま。「カギカッコ」も・中点も。')
     }
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v105: ゴール画面の文字そろえ・抽選枠の見た目
+     ============================================================================ -->
+<style id="edogawa-v105-style">
+  /* ① ゴールした人の説明文は左揃え */
+  #goal-winner-text{ text-align:left !important; }
+
+  /* ② 抽選中の見出し・抽選枠の中身も左揃え */
+  #roulette-section .edo-rt-title{ text-align:left !important; }
+  #roulette-box.edo-rt-box{ text-align:left !important; }
+  #roulette-box .edo-rt-cell{
+    justify-content:flex-start !important; text-align:left !important; }
+  #roulette-box .edo-rt-cell > span{ width:100%; }
+
+  /* ③ 決まった目的地は、賞金（💰）と同じ金色の枠に黒い文字で */
+  #roulette-box.edo-rt-decided{
+    background:#fbbf24 !important; border-color:#d97706 !important;
+    box-shadow:0 8px 22px rgba(245,158,11,.35) !important; }
+  #roulette-box.edo-rt-decided .edo-rt-cell{
+    color:#0f172a !important; }
+  #roulette-box.edo-rt-decided .edo-rt-cell > span{ font-weight:900 !important; }
+
+  /* ④ 「ビリの◯◯さんの近くの…」は小さめ（3分の2）に */
+  #roulette-anchor-note{ font-size:13px !important; line-height:1.6 !important; }
+
+  /* ⑤ ビリ罰金の行も左揃えにそろえます */
+  #goal-penalty-text{ text-align:left !important; }
+</style>
+<script id="edogawa-v105">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // 抽選をやり直すときは、金色の枠を元に戻します
+  const origSelect = app.selectCategory ? app.selectCategory.bind(app) : null;
+  if(origSelect){
+    app.selectCategory = function(){
+      try{ document.getElementById('roulette-box')?.classList.remove('edo-rt-decided'); }catch(e){}
+      return origSelect.apply(null, arguments);
+    };
+  }
+  const origConfirm = app.confirmNextSugoroku ? app.confirmNextSugoroku.bind(app) : null;
+  if(origConfirm){
+    app.confirmNextSugoroku = function(){
+      try{ document.getElementById('roulette-box')?.classList.remove('edo-rt-decided'); }catch(e){}
+      return origConfirm.apply(null, arguments);
+    };
+  }
+
+  window.__EDOGAWA_V105_INFO = ()=>{
+    const g = (id)=>document.getElementById(id);
+    const cs = (el)=> el ? getComputedStyle(el) : null;
+    const box = g('roulette-box');
+    const cell = box && box.querySelector('.edo-rt-cell:last-child');
+    const title = document.querySelector('#roulette-section .edo-rt-title');
+    return {
+      ゴール説明の揃え: cs(g('goal-winner-text')) && cs(g('goal-winner-text')).textAlign,
+      罰金の文: g('goal-penalty-text') ? g('goal-penalty-text').textContent : null,
+      見出し: title ? title.textContent.trim() : null,
+      見出しの揃え: cs(title) && cs(title).textAlign,
+      枠の文字: cell ? cell.textContent : null,
+      枠の揃え: cs(cell) && cs(cell).justifyContent,
+      枠の色: cs(box) && cs(box).backgroundColor,
+      枠の文字色: cs(cell) && cs(cell).color,
+      決定中: !!(box && box.classList.contains('edo-rt-decided')),
+      ビリ案内: g('roulette-anchor-note') ? g('roulette-anchor-note').textContent : null,
+      ビリ案内の大きさ: cs(g('roulette-anchor-note')) && cs(g('roulette-anchor-note')).fontSize
+    };
+  };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v106: ゴール画面の見出しと、プレーヤーアイコンの配置
+     ============================================================================ -->
+<style id="edogawa-v106-style">
+  /* ① 「👑 ◯◯ ゴール！」＋「（◯ゴール目）」の2行を、
+        左のプレーヤーアイコン（2行ぶんの高さ）と横に並べます */
+  #edo-goal-head{ display:flex; align-items:center; gap:12px; text-align:left; }
+  #edo-goal-avatar{
+    flex:0 0 64px; width:64px; height:64px; border-radius:9999px; overflow:hidden;
+    background:rgba(2,6,23,.7); border:2px solid rgba(245,158,11,.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:34px; line-height:1; box-shadow:0 8px 20px rgba(0,0,0,.35); }
+  #edo-goal-avatar img{ width:100%; height:100%; object-fit:cover; border-radius:9999px; }
+  #edo-goal-head-text{ min-width:0; flex:1 1 auto; }
+  #edo-goal-head-text h2{ margin:0 !important; text-align:left !important; }
+  #edo-goal-head-text #goal-winner-text{ margin:2px 0 0 !important; text-align:left !important; }
+  /* 旧レイアウトの「👑」だけの行は出しません */
+  #edo-goal-crown-old{ display:none !important; }
+
+  /* ② ビリ罰金の行にも、その人のアイコンを添えます */
+  #goal-penalty-text{ display:flex !important; align-items:center; gap:8px;
+    text-align:left !important; }
+  #goal-penalty-text.hidden{ display:none !important; }
+  #edo-penalty-avatar{
+    flex:0 0 26px; width:26px; height:26px; border-radius:9999px; overflow:hidden;
+    background:rgba(2,6,23,.7); border:1px solid rgba(248,113,113,.55);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; line-height:1; }
+  #edo-penalty-avatar img{ width:100%; height:100%; object-fit:cover; border-radius:9999px; }
+</style>
+<script id="edogawa-v106">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function avatarHtml(v){
+    try{ if(app.avatarMarkup) return app.avatarMarkup(v, 'w-full h-full object-cover rounded-full'); }catch(e){}
+    return esc(v || '🙂');
+  }
+
+  // ── 見出しのつくり直し（1回だけ） ──
+  function buildHead(){
+    const title = document.querySelector('#goal-modal h2');
+    const winner = document.getElementById('goal-winner-text');
+    if(!title || !winner) return null;
+    let head = document.getElementById('edo-goal-head');
+    if(!head){
+      head = document.createElement('div');
+      head.id = 'edo-goal-head';
+      const av = document.createElement('div'); av.id = 'edo-goal-avatar';
+      const tx = document.createElement('div'); tx.id = 'edo-goal-head-text';
+      head.appendChild(av); head.appendChild(tx);
+      title.parentNode.insertBefore(head, title);
+      tx.appendChild(title); tx.appendChild(winner);
+      // 「👑」だけの行は使わないので隠します
+      const crown = head.parentElement && head.parentElement.querySelector('span.text-4xl');
+      if(crown) crown.id = 'edo-goal-crown-old';
+    }
+    return head;
+  }
+
+  // ── ゴールした人の見出しを描きます ──
+  app.paintGoalHeader = function(player){
+    try{
+      buildHead();
+      const title = document.querySelector('#goal-modal h2');
+      const winner = document.getElementById('goal-winner-text');
+      const av = document.getElementById('edo-goal-avatar');
+      if(!player) return;
+      if(av) av.innerHTML = avatarHtml(player.avatar);
+      if(title) title.textContent = `👑 ${player.name} ゴール！`;
+      const n = Math.max(1, Number(player.goals) || 1);
+      if(winner) winner.textContent = `（${n}ゴール目）`;
+    }catch(e){ console.error('[v106]', e); }
+  };
+
+  // ── ビリ罰金の行を描きます ──
+  app.paintGoalPenalty = function(lastPlace, penalty){
+    try{
+      const el = document.getElementById('goal-penalty-text');
+      if(!el) return;
+      if(!lastPlace){ el.classList.add('hidden'); return; }
+      el.innerHTML = `<span id="edo-penalty-avatar">${avatarHtml(lastPlace.avatar)}</span>` +
+        `<span>ビリ罰金: ${esc(lastPlace.name)}に -￥${Math.round(Number(penalty)||0).toLocaleString('ja-JP')}</span>`;
+      el.classList.remove('hidden');
+    }catch(e){ console.error('[v106]', e); }
+  };
+
+  window.__EDOGAWA_V106_INFO = ()=>{
+    const g = (id)=>document.getElementById(id);
+    const title = document.querySelector('#goal-modal h2');
+    const av = g('edo-goal-avatar');
+    const pav = g('edo-penalty-avatar');
+    const px = (el)=> el ? Math.round(el.getBoundingClientRect().width) : null;
+    return {
+      見出し: title ? title.textContent : null,
+      ゴール数の行: g('goal-winner-text') ? g('goal-winner-text').textContent : null,
+      見出しのアイコン: av ? (av.textContent || (av.querySelector('img') ? '(写真)' : '')) : 'なし',
+      アイコンの大きさ: px(av),
+      見出し2行の高さ: g('edo-goal-head-text') ? Math.round(g('edo-goal-head-text').getBoundingClientRect().height) : null,
+      罰金の文: (()=>{ const e = g('goal-penalty-text'); if(!e) return null;
+        const t = e.querySelector('span:not(#edo-penalty-avatar)');
+        return t ? t.textContent : e.textContent; })(),
+      罰金のアイコン: pav ? (pav.textContent || (pav.querySelector('img') ? '(写真)' : '')) : 'なし',
+      罰金アイコンの大きさ: px(pav),
+      古い王冠: (()=>{ const c=g('edo-goal-crown-old'); return c ? getComputedStyle(c).display : 'なし'; })()
+    };
+  };
 })();
 </script>
 
