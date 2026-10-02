@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v107 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v108 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1599,7 +1599,7 @@
       </div>
 
       <button id="roulette-confirm-btn" onclick="EdogawaSugoroku.confirmNextSugoroku()" class="hidden w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg shadow-amber-500/20 active:scale-95 transition text-base">
-        🎯 目的地を確定する
+        次の双六を開始
       </button>
     </div>
   </div>
@@ -20332,6 +20332,97 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 })();
 </script>
 
+
+
+<!-- ============================================================================
+     v108: 「（◯ゴール目）」の中央揃え／ルーレット中もボタンの場所を空けておく
+     ============================================================================ -->
+<style id="edogawa-v108-style">
+  /* ① 「（◯ゴール目）」を中央に（「👑 ◯◯ ゴール！」の行はそのまま） */
+  #edo-goal-head-text #goal-winner-text,
+  #goal-winner-text{ text-align:center !important; }
+
+  /* ② ルーレットが回っている間も、ボタンを灰色で置いておきます。
+        （あとから出てくると画面の高さが変わってブレるため） */
+  #roulette-confirm-btn.edo-rt-wait{
+    background-image:none !important;
+    background:#1e293b !important;
+    color:#64748b !important;
+    /* 枠線は box-shadow で描きます（border だとボタンの高さが変わってしまうため） */
+    box-shadow:inset 0 0 0 1px #334155 !important;
+    cursor:default !important;
+    pointer-events:none !important;
+    transform:none !important;
+  }
+</style>
+<script id="edogawa-v108">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const BTN_TEXT = '次の双六を開始';
+
+  const g = (id)=>document.getElementById(id);
+  const visible = (el)=> !!el && !el.classList.contains('hidden');
+
+  // ルーレットが回っている間：押せない灰色のボタンを置いておきます
+  function waiting(b){
+    b.textContent = BTN_TEXT;
+    b.classList.add('edo-rt-wait');
+    b.setAttribute('disabled','disabled');
+    b.setAttribute('aria-disabled','true');
+    b.classList.remove('hidden');
+  }
+  // ルーレットが止まったら：押せるようにします
+  function ready(b){
+    b.textContent = BTN_TEXT;
+    b.classList.remove('edo-rt-wait');
+    b.removeAttribute('disabled');
+    b.removeAttribute('aria-disabled');
+    b.classList.remove('hidden');
+  }
+
+  function sync(){
+    const modal = g('goal-modal'), sec = g('roulette-section'), b = g('roulette-confirm-btn');
+    if(!modal || !sec || !b) return;
+    // ゴール画面が出ていない、またはまだジャンル選びの段階ならなにもしません
+    if(!visible(modal) || !visible(sec)){
+      b.classList.add('edo-rt-wait');          // 次に出るときは必ず灰色から
+      b.setAttribute('disabled','disabled');
+      return;
+    }
+    const box = g('roulette-box');
+    const decided = !!(box && box.classList.contains('edo-rt-decided')) && !!app.nextDestinationCandidate;
+    if(decided) ready(b); else waiting(b);
+  }
+
+  // 画面の変化に合わせてこまめに合わせます（重い処理はありません）
+  function boot(){
+    try{ sync(); }catch(e){}
+    setInterval(()=>{ try{ sync(); }catch(e){} }, 200);
+    try{
+      const box = g('roulette-box');
+      if(box && window.MutationObserver){
+        new MutationObserver(()=>{ try{ sync(); }catch(e){} })
+          .observe(box, { attributes:true, attributeFilter:['class'] });
+      }
+    }catch(e){}
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V108_INFO = ()=>{
+    const b = g('roulette-confirm-btn');
+    const cs = (el)=> el ? getComputedStyle(el) : null;
+    return {
+      ゴール数の揃え: cs(g('goal-winner-text')) && cs(g('goal-winner-text')).textAlign,
+      ボタンの文言: b ? b.textContent.trim() : null,
+      ボタンが見えるか: visible(b),
+      ボタンが押せるか: !!b && !b.disabled,
+      灰色か: !!b && b.classList.contains('edo-rt-wait')
+    };
+  };
+})();
+</script>
 
 <script id="edogawa-v39-footer">
 
