@@ -73,6 +73,85 @@
     try{ if(!on) document.documentElement.classList.add('edo-vector-off'); }catch(e){}
   })();
   </script>
+  <!-- 【v101】APIやJSONから取り込む文字の「全角英数字・記号・スペース」を
+       半角に直して表示します。
+       　　Ａ-Ｚ ａ-ｚ ０-９ （）［］｛｝！？：；／＠＃＆＋－＊＝＜＞．，　（全角空白）
+       　　→ A-Z a-z 0-9 ()[]{}!?:;/@#&+-*=<>., （半角空白）
+       日本語の読点・句点（、。）やカギカッコ（「」）はそのままです。
+       止めたいときは、読み込み前に window.__EDOGAWA_HANKAKU_ON = false としてください。 -->
+  <script id="edogawa-hankaku">
+  (function(){
+    if (typeof window.__EDOGAWA_HANKAKU_ON === 'undefined') window.__EDOGAWA_HANKAKU_ON = true;
+
+    function han(s){
+      if (typeof s !== 'string' || !s) return s;
+      if (!window.__EDOGAWA_HANKAKU_ON) return s;
+      // 全角の英数字・記号（！～～）を半角へ
+      var out = s.replace(/[！-～]/g, function(c){
+        return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+      });
+      // 全角スペースを半角スペースへ
+      out = out.replace(/　/g, ' ');
+      return out;
+    }
+    window.__EDOGAWA_HANKAKU = han;
+
+    // 入れ子になった中身も、まとめて直します（新しい入れ物を返します）
+    function deep(v, d){
+      d = d || 0;
+      if (d > 12) return v;
+      if (typeof v === 'string') return han(v);
+      if (Array.isArray(v)) { for (var i=0;i<v.length;i++) v[i] = deep(v[i], d+1); return v; }
+      if (v && typeof v === 'object'){
+        for (var k in v){ if (Object.prototype.hasOwnProperty.call(v,k)) v[k] = deep(v[k], d+1); }
+        return v;
+      }
+      return v;
+    }
+    window.__EDOGAWA_HANKAKU_DEEP = deep;
+
+    // ── どこから取ってきた文字を直すか ──
+    //   直すもの：このゲームのJSON、ホットペッパー等のAPI（GAS経由）、
+    //             住所検索（Nominatim）、ウィキペディア
+    //   直さないもの：地図タイル・経路（OSRM）・Firebase・Supabase・LINE
+    //             （座標や通信の中身で、画面の文字ではないため）
+    function target(url){
+      var u = String(url || '');
+      if (!u) return false;
+      if (/osrm|cyberjapandata|tile|\.pbf|\.png|\.jpg|basemaps|openfreemap|gsi\.go\.jp\/vector/i.test(u)) return false;
+      if (/supabase|firebase|googleapis|gstatic|line\.me|cdnjs|unpkg|jsdelivr/i.test(u)) return false;
+      if (/\.json(\?|$)/i.test(u)) return true;                    // このゲームのデータファイル
+      if (/script\.google\.com/i.test(u)) return true;             // GAS（ホットペッパー等）
+      if (/nominatim\.openstreetmap\.org/i.test(u)) return true;   // 住所検索
+      if (/wikipedia\.org/i.test(u)) return true;                  // ウィキペディア
+      if (/overpass/i.test(u)) return true;                        // OpenStreetMap
+      return false;
+    }
+    window.__EDOGAWA_HANKAKU_TARGET = target;
+
+    if (typeof window.fetch === 'function' && !window.fetch.__edoHankaku){
+      var orig = window.fetch.bind(window);
+      var wrapped = function(input, init){
+        var url = '';
+        try{ url = (typeof input === 'string') ? input : (input && input.url) || ''; }catch(e){}
+        var p = orig(input, init);
+        if (!target(url)) return p;
+        return p.then(function(res){
+          try{
+            var oj = res.json.bind(res), ot = res.text.bind(res);
+            Object.defineProperty(res, 'json', { configurable:true, writable:true,
+              value: function(){ return oj().then(function(v){ try{ return deep(v); }catch(e){ return v; } }); } });
+            Object.defineProperty(res, 'text', { configurable:true, writable:true,
+              value: function(){ return ot().then(function(t){ try{ return han(t); }catch(e){ return t; } }); } });
+          }catch(e){}
+          return res;
+        });
+      };
+      wrapped.__edoHankaku = true;
+      window.fetch = wrapped;
+    }
+  })();
+  </script>
   <script id="edogawa-style-prefetch">
   (function(){
     // ベクター地図を使わないときは、重いスタイルJSONを取りにいきません
@@ -170,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v100 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v101 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -19713,6 +19792,85 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     '設定の「地図の種類」': (()=>{ const b = document.getElementById('edo-basemap-entry');
       return b ? getComputedStyle(b).display : 'なし'; })(),
     地図の状態: (app.map && app.map.__gsiStatus) || (app.lobbyMap && app.lobbyMap.__gsiStatus) || null
+  });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v101: 全角英数字を半角にして表示（取り込みずみのデータも直します）
+     ============================================================================ -->
+<script id="edogawa-v101">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const han = window.__EDOGAWA_HANKAKU || (s=>s);
+  const deep = window.__EDOGAWA_HANKAKU_DEEP || (v=>v);
+
+  // ── ① HTMLの中に直接書いてあるデータ（通信しないので上の仕組みを通りません） ──
+  function fixInlineData(){
+    try{ if(Array.isArray(window.__EDOGAWA_GREENWAYS)) deep(window.__EDOGAWA_GREENWAYS); }catch(e){}
+    try{ if(window.__EDOGAWA_RAILSHAPE) deep(window.__EDOGAWA_RAILSHAPE); }catch(e){}
+  }
+  fixInlineData();
+
+  // ── ② 読み込みずみの施設データを、その場で直します ──
+  //    （施設名・住所・説明文・ジャンルなど、画面に出る文字だけ）
+  const TEXT_KEYS = ['name','address','addr','desc','description','note','genre','category',
+                     'catch','access','open','tel','url','displayName','geocodeDisplayName',
+                     'label','title','sub','shopName','area','station'];
+  let fixedCount = 0;
+  function fixObj(o){
+    if(!o || typeof o !== 'object') return;
+    TEXT_KEYS.forEach(k=>{
+      if(typeof o[k] === 'string'){
+        const v = han(o[k]);
+        if(v !== o[k]){ o[k] = v; fixedCount++; }
+      }
+    });
+  }
+  function fixFacilities(){
+    try{ (app.getAllFacilityObjects() || []).forEach(fixObj); }catch(e){}
+    try{ (app.visitedEntries || []).forEach(x=>{ if(x) { const v=han(x.ownerName); if(v!==x.ownerName) { x.ownerName=v; fixedCount++; } } }); }catch(e){}
+    try{ if(app.currentDestination) fixObj(app.currentDestination); }catch(e){}
+    try{ (app.roadNetworkNodes || []).forEach(fixObj); }catch(e){}
+    try{ (app.goaledPlaces || []).forEach(fixObj); }catch(e){}
+  }
+  fixFacilities();
+  // データは少しずつ読み込まれるので、しばらく見張ります
+  let n = 0;
+  const iv = setInterval(()=>{ n++; fixInlineData(); fixFacilities(); if(n > 60) clearInterval(iv); }, 2000);
+
+  // ── ③ 新しく読み込まれたデータにも効くようにします ──
+  const origReady = app.ensureGameDataReady ? app.ensureGameDataReady.bind(app) : null;
+  if(origReady){
+    app.ensureGameDataReady = async function(){
+      const r = await origReady();
+      try{ fixInlineData(); fixFacilities(); }catch(e){}
+      return r;
+    };
+  }
+  const origShops = app.fetchNearbyRestaurants ? app.fetchNearbyRestaurants.bind(app) : null;
+  if(origShops){
+    app.fetchNearbyRestaurants = async function(loc){
+      const r = await origShops(loc);
+      try{ if(Array.isArray(r)) r.forEach(fixObj); }catch(e){}
+      return r;
+    };
+  }
+
+  window.__EDOGAWA_HANKAKU_INFO = ()=>({
+    はたらいているか: window.__EDOGAWA_HANKAKU_ON !== false,
+    直した件数: fixedCount,
+    見本: {
+      'ＡＢＣ１２３': han('ＡＢＣ１２３'),
+      '（医）津端会　京葉病院': han('（医）津端会　京葉病院'),
+      'ワイズマート　西葛西店': han('ワイズマート　西葛西店'),
+      'ＪＲ総武線': han('ＪＲ総武線'),
+      '日本語は、そのまま。「カギカッコ」も・中点も。':
+        han('日本語は、そのまま。「カギカッコ」も・中点も。')
+    }
   });
 })();
 </script>
