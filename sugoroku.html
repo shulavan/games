@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v98 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v99 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -19258,10 +19258,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         }, err=>{
           app.geoError = (err && err.code === 1)
             ? '位置情報の利用が許可されていません。ブラウザの設定をご確認ください。'
-            : '位置情報を取得できませんでした。';
-          app.__geoInFlight = null; done(null);
-        }, { enableHighAccuracy: !!opts.high, maximumAge: opts.force ? 0 : 120000,
-             timeout: opts.force ? 15000 : 20000 });
+            : '位置情報を取得できませんでした。（' + ((err && err.message) || '理由不明') + '）';
+          app.__geoInFlight = null;
+          // 高い精度で取れなくても、前に取れた位置があればそれを使います
+          done(app.lastGeo || null);
+        }, { enableHighAccuracy: !!opts.high, maximumAge: opts.force ? 30000 : 120000,
+             timeout: opts.force ? 20000 : 20000 });
       });
       app.__geoInFlight.then(resolve);
     });
@@ -19474,6 +19476,142 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       位置情報: app.lastGeo ? '取得ずみ' : (app.geoError || 'まだ')
     };
   };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v99: 📌のボタンが押せなかった本当の原因／ベクター地図の扱い
+     ============================================================================ -->
+<style id="edogawa-v99-style">
+  /* 【原因】📌モードでは footer 全体を pointer-events:none にして
+     地図を操作できるようにしていました。以前は「投稿」ボタンが
+     #visited-roll-stack の中にあり、そこだけ pointer-events:auto に
+     戻していたのですが、v87でボタンを #edo-nearby-row へ移したあとも
+     戻す指定を移していませんでした。
+     そのため v87 以降、📌モードの「📌投稿◯件」はタップが地図に
+     吸い込まれ、まったく反応しない状態でした。 */
+  body.edo-visited-only #edo-nearby-row,
+  body.edo-visited-only #visited-pin-tool{
+    pointer-events:auto !important; }
+  body.edo-visited-only #edo-nearby-row{
+    position:relative !important; z-index:45 !important; }
+  #visited-pin-tool{ position:relative !important; z-index:46 !important; }
+
+  /* 📌モードでは「目的地」は使わないので出しません
+     （v97で指定を強めたせいで出てしまっていました） */
+  body.edo-visited-only #edo-nearby-row #mobile-destination-badge,
+  body.edo-visited-only #mobile-destination-badge,
+  body.edo-visited-only #mobile-destination-badge.sticker-btn{ display:none !important; }
+</style>
+<script id="edogawa-v99">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① 押せるかどうかを、実際に当たり判定で確かめて直します ──
+  function fixPinHit(){
+    const t = document.getElementById('visited-pin-tool');
+    if(!t) return;
+    const visited = document.body.classList.contains('edo-visited-only');
+    const row = document.getElementById('edo-nearby-row');
+    if(visited){
+      if(row){ row.style.pointerEvents = 'auto'; row.style.position = 'relative'; row.style.zIndex = '45'; }
+      t.style.pointerEvents = 'auto';
+      const d = document.getElementById('mobile-destination-badge');
+      if(d) d.style.setProperty('display','none','important');
+    }else{
+      if(row){ row.style.removeProperty('pointer-events'); }
+      const d = document.getElementById('mobile-destination-badge');
+      if(d) d.style.removeProperty('display');
+    }
+  }
+  setInterval(fixPinHit, 1000);
+  setTimeout(fixPinHit, 200);
+  app.__fixPinHit = fixPinHit;
+
+  // 当たり判定の点検（画面に出さずに確認できます）
+  app.pinHitTest = function(){
+    const t = document.getElementById('visited-pin-tool');
+    if(!t) return { ボタン:'なし' };
+    const r = t.getBoundingClientRect();
+    const hit = document.elementFromPoint(Math.round(r.left + r.width/2), Math.round(r.top + r.height/2));
+    return {
+      大きさ: [Math.round(r.width), Math.round(r.height)],
+      上にあるもの: hit ? (hit.id || hit.className.toString().slice(0,30)) : null,
+      自分で受けられる: !!(hit && (hit === t || t.contains(hit)))
+    };
+  };
+
+  // ── ② 📌を押したときは、必ず位置情報を取りにいきます ──
+  const origRecord = app.startVisitedPinRecord ? app.startVisitedPinRecord.bind(app) : null;
+  if(origRecord){
+    app.startVisitedPinRecord = async function(){
+      const btn = document.getElementById('visited-pin-tool');
+      try{
+        if(btn){ btn.disabled = true; btn.textContent = '📍 位置を確認中…'; }
+        // タップの流れの中で聞くので、iPhoneでも確認が出ます
+        let g = null;
+        try{ g = await app.requestStartupLocation({ high:true, force:true }); }catch(e){}
+        if(!g) g = app.lastGeo || null;        // 前に取れた位置があれば、それで進みます
+        if(!g){
+          app.showNotice && app.showNotice('📌 行ったところ',
+            (app.geoError || '位置情報を取得できませんでした。') +
+            '\n\niPhoneの場合は「設定 → Safari → 位置情報」と、' +
+            'このページの「ぁあ」→「Webサイトの設定」もご確認ください。');
+          return;
+        }
+      }finally{
+        if(btn){ btn.disabled = false; try{ app.refreshVisitedLobbyCount && app.refreshVisitedLobbyCount(); }catch(e){} }
+      }
+      return origRecord();
+    };
+  }
+
+  // ── ③ ベクター地図：一度ダメだった端末では、もう自動で試しません ──
+  //    毎回90秒待たされたうえで通常の地図に戻るのを防ぎます。
+  const FAIL_KEY = 'edogawa_vector_failed_v1';
+  app.vectorFailedBefore = function(){
+    try{ return localStorage.getItem(FAIL_KEY) === 'yes'; }catch(e){ return false; }
+  };
+  app.markVectorFailed = function(on){
+    try{ localStorage.setItem(FAIL_KEY, on ? 'yes' : 'no'); }catch(e){}
+  };
+  // 通常の地図に落ちたら、その事実を覚えます
+  setInterval(()=>{
+    try{
+      const st = String((app.map && app.map.__gsiStatus) || (app.lobbyMap && app.lobbyMap.__gsiStatus) || '');
+      if(/^raster\(/.test(st) && /時間切れ|取得失敗|失われました|WebGL/.test(st)) app.markVectorFailed(true);
+      if(/^vector:/.test(st)) app.markVectorFailed(false);
+    }catch(e){}
+  }, 5000);
+  // 自動では試さないようにします（設定から手で選んだときだけ試します）
+  (function(){
+    try{
+      if(app.vectorFailedBefore() && app.basemapPref && app.basemapPref() !== 'raster'){
+        localStorage.setItem('edogawa_basemap_v1', 'raster');
+      }
+    }catch(e){}
+  })();
+  const origToggle = app.settingsToggleBasemap ? app.settingsToggleBasemap.bind(app) : null;
+  if(origToggle){
+    app.settingsToggleBasemap = function(){
+      const next = origToggle();
+      if(next !== 'raster') app.markVectorFailed(false);   // 手で選んだときはもう一度試します
+      return next;
+    };
+  }
+
+  window.__EDOGAWA_V99_INFO = ()=>({
+    '📌の当たり判定': app.pinHitTest(),
+    '📌モード': document.body.classList.contains('edo-visited-only'),
+    目的地バッジ: (()=>{ const d = document.getElementById('mobile-destination-badge');
+      return d ? getComputedStyle(d).display : 'なし'; })(),
+    ベクターを前にあきらめた: app.vectorFailedBefore(),
+    地図の設定: app.basemapPref ? app.basemapPref() : null,
+    位置情報: app.lastGeo ? '取得ずみ' : (app.geoError || 'まだ')
+  });
 })();
 </script>
 
