@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v97 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v98 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1898,9 +1898,9 @@
     const USE_GSI_VECTOR = true;
     const GSI_VECTOR_LABEL_SIZE = 10;
     const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
-    // これだけ待って描けなければあきらめます（v97で18秒→40秒。端末によっては
-    // ベクター地図の読み込みに30秒以上かかるため）。点検用に上書きできます。
-    const GSI_VECTOR_READY_MS = Number(window.__EDOGAWA_VECTOR_TIMEOUT_MS) || 40000;
+    // これだけ待って描けなければあきらめます（v98で90秒。実機では1分以上
+    // かかることがあるため）。点検用に上書きできます。
+    const GSI_VECTOR_READY_MS = Number(window.__EDOGAWA_VECTOR_TIMEOUT_MS) || 90000;
     // 地理院ベクトルが使えなかった場合の予備。キー不要・回数制限なしの無料サービスです。
     // 使いたくない場合は false にしてください（その場合はラスターに戻ります）。
     const USE_OPENFREEMAP_FALLBACK = true;
@@ -19351,6 +19351,127 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       設定の鉄道路線: !!document.querySelector('button[onclick*="settingsToggleRail"]:not([style*="display: none"])'),
       位置情報: app.lastGeo ? '取得ずみ' : (app.geoError || 'まだ'),
       'トップの📌': !!document.getElementById('lobby-visited-pin-top')
+    };
+  };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v98: 画面をふさいでいた見えない枠／ハンバーガーメニューの復帰／位置情報／待ち時間
+     ============================================================================ -->
+<style id="edogawa-v98-style">
+  /* 【重要】ミニゲームとあみだくじの全画面枠は、
+     .hidden を付けても display:flex のまま残っていました。
+     （あとから書いた .regional-mini-overlay{display:flex} が
+       Tailwind の .hidden{display:none} に勝っていたためです）
+     そのため、遊んでいない間もこの枠が画面の上に乗ったままになり、
+     ヘッダー付近のボタン（📌・メニューなど）が押せなくなっていました。 */
+  .regional-mini-overlay.hidden,
+  .goal-amida-overlay.hidden{ display:none !important; }
+
+  /* 📌モードから戻ったあともメニューが消えたままにならないようにします */
+  body:not(.edo-visited-only) #game-menu-btn{ display:flex !important; }
+</style>
+<script id="edogawa-v98">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① 見えない全画面枠が残らないように、念のため毎回たしかめます ──
+  //   .hidden が付いているときだけ確実に消します。
+  //   「遊んでいるかどうか」を自分で判断すると、電車の運転シミュレーターのように
+  //   別の入口で開く画面まで閉じてしまうため、判断はしません。
+  function hideIdleOverlays(){
+    ['regional-mini-overlay','goal-amida-overlay'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(el.classList.contains('hidden')) el.style.setProperty('display','none','important');
+      else el.style.removeProperty('display');
+    });
+  }
+  setInterval(hideIdleOverlays, 1200);
+  setTimeout(hideIdleOverlays, 200);
+  app.__hideIdleOverlays = hideIdleOverlays;
+
+  // ── ② 📌モードを閉じたら、ハンバーガーメニューを必ず戻します ──
+  function restoreMenuButton(){
+    const b = document.getElementById('game-menu-btn');
+    if(!b) return;
+    if(document.body.classList.contains('edo-visited-only')) return;
+    b.style.removeProperty('display');
+    b.classList.remove('hidden');
+  }
+  app.__restoreMenuButton = restoreMenuButton;
+  const origClose = app.closeVisitedOnlyMode ? app.closeVisitedOnlyMode.bind(app) : null;
+  if(origClose){
+    app.closeVisitedOnlyMode = function(){
+      const r = origClose();
+      try{ restoreMenuButton(); hideIdleOverlays(); }catch(e){}
+      setTimeout(()=>{ try{ restoreMenuButton(); }catch(e){} }, 200);
+      return r;
+    };
+  }
+  setInterval(restoreMenuButton, 1500);
+
+  // ── ③ 位置情報は「最初に画面をさわったとき」にも取りにいきます ──
+  //    iPhoneでは、読み込んだだけの状態だと位置情報の確認が
+  //    出ないことがあるためです。
+  let geoAsked = false;
+  function askGeoOnce(){
+    if(geoAsked) return;
+    let agreed = false;
+    try{ agreed = localStorage.getItem('edogawa_sugoroku_terms_v1') === 'granted'; }catch(e){}
+    if(!agreed) return;
+    geoAsked = true;
+    try{ app.requestStartupLocation && app.requestStartupLocation(); }catch(e){}
+  }
+  ['pointerdown','touchstart','click','keydown'].forEach(ev=>{
+    document.addEventListener(ev, askGeoOnce, { capture:true, passive:true });
+  });
+  // 同意の直後にも1回
+  const origAgree = app.acceptTerms ? app.acceptTerms.bind(app) : null;
+  if(origAgree){ app.acceptTerms = function(){ const r = origAgree.apply(null, arguments);
+    setTimeout(askGeoOnce, 400); return r; }; }
+
+  // ── ④ 📌（トップページ）を押したときの流れを分かりやすくします ──
+  function wireTopPin(){
+    const b = document.getElementById('lobby-visited-pin-top');
+    if(!b || b.__edoV98) return;
+    b.__edoV98 = true;
+    b.onclick = async ()=>{
+      askGeoOnce();
+      hideIdleOverlays();
+      b.disabled = true;
+      try{
+        await app.openVisitedOnlyMode();
+        if(!app._visitedOnlyMode){
+          app.showNotice && app.showNotice('📌 行ったところ',
+            '「行ったところ」を開けませんでした。通信環境をご確認のうえ、もう一度お試しください。');
+        }
+      }catch(e){
+        app.showNotice && app.showNotice('📌 行ったところ',
+          '開けませんでした。\n' + String((e && e.message) || e));
+      }finally{ b.disabled = false; }
+    };
+  }
+  wireTopPin(); setInterval(wireTopPin, 1500);
+
+  window.__EDOGAWA_V98_INFO = ()=>{
+    const d = (id)=>{ const e = document.getElementById(id); return e ? getComputedStyle(e).display : null; };
+    const at = (id)=>{
+      const e = document.getElementById(id); if(!e) return null;
+      const r = e.getBoundingClientRect();
+      const t = document.elementFromPoint(Math.round(r.left + r.width/2), Math.round(r.top + r.height/2));
+      return t ? (t.id || t.className.toString().slice(0,30)) : null;
+    };
+    return {
+      ミニゲーム枠: d('regional-mini-overlay'),
+      あみだ枠: d('goal-amida-overlay'),
+      メニュー: d('game-menu-btn'),
+      'トップの📌の上にあるもの': at('lobby-visited-pin-top'),
+      位置情報: app.lastGeo ? '取得ずみ' : (app.geoError || 'まだ')
     };
   };
 })();
