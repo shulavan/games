@@ -55,8 +55,28 @@
        （この1ファイルの取得に68秒かかることがあり、ベクター地図に
          切り替わらない原因になっていました。タイル自体は画面に映る範囲
          だけを都度読むので、読み込み量の問題ではありません） -->
+  <!-- 【v100】ベクター地図を使うかどうかを、いちばん最初に決めておきます。
+       既定はOFFです（地理院ベクトルは試験公開でスマホには重すぎるため）。
+       地理院が正式公開したら、下の false を true に戻すだけで復活します。 -->
+  <script id="edogawa-vector-switch">
+  (function(){
+    var DEFAULT_ON = false;                 // ← ここを true にすると復活します
+    var on = DEFAULT_ON;
+    try{
+      if (typeof window.__EDOGAWA_VECTOR_ENABLED !== 'undefined') on = !!window.__EDOGAWA_VECTOR_ENABLED;
+      else {
+        var v = localStorage.getItem('edogawa_vector_force_v1');
+        if (v === 'yes') on = true; else if (v === 'no') on = false;
+      }
+    }catch(e){}
+    window.__EDOGAWA_VECTOR_ON = on;
+    try{ if(!on) document.documentElement.classList.add('edo-vector-off'); }catch(e){}
+  })();
+  </script>
   <script id="edogawa-style-prefetch">
   (function(){
+    // ベクター地図を使わないときは、重いスタイルJSONを取りにいきません
+    if (!window.__EDOGAWA_VECTOR_ON) return;
     window.__EDO_STYLE_CACHE = window.__EDO_STYLE_CACHE || {};
     const KEY = 'edogawa_style_cache_v1';
     const TTL = 7*24*60*60*1000;         // 1週間で取り直す
@@ -150,7 +170,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v99 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v100 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1895,7 +1915,17 @@
     const FACILITY_LABEL_SKIP = new Set(['🍽', '🛏️', '🚏']);
     const FACILITY_LABEL_MAX_CHARS = 9;
 
-    const USE_GSI_VECTOR = true;
+    // ─────────────────────────────────────────────────────────────
+    // 【v100】ベクター地図は既定でOFFにしています。
+    //   地理院ベクトルは「地理院地図Vector（仮称）」という試験公開の
+    //   サービスで、スマホでは描画が間に合わず（90秒でも時間切れ）、
+    //   WebGLの描画面が失われる（メモリ不足）こともありました。
+    //   地理院が正式公開したら、次の1行を true に戻すだけで復活します。
+    //   （ブラウザのコンソールから window.__EDOGAWA_VECTOR_ENABLED = true と
+    //     してから読み込み直しても、その場で試せます）
+    const EDOGAWA_VECTOR_ENABLED = !!window.__EDOGAWA_VECTOR_ON;   // 先頭の切り替えで決めています
+    // ─────────────────────────────────────────────────────────────
+    const USE_GSI_VECTOR = EDOGAWA_VECTOR_ENABLED;
     const GSI_VECTOR_LABEL_SIZE = 10;
     const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
     // これだけ待って描けなければあきらめます（v98で90秒。実機では1分以上
@@ -1903,7 +1933,7 @@
     const GSI_VECTOR_READY_MS = Number(window.__EDOGAWA_VECTOR_TIMEOUT_MS) || 90000;
     // 地理院ベクトルが使えなかった場合の予備。キー不要・回数制限なしの無料サービスです。
     // 使いたくない場合は false にしてください（その場合はラスターに戻ります）。
-    const USE_OPENFREEMAP_FALLBACK = true;
+    const USE_OPENFREEMAP_FALLBACK = EDOGAWA_VECTOR_ENABLED;
     const OFM_STYLE_URL = 'https://tiles.openfreemap.org/styles/positron';
     const OFM_CREDIT = 'OpenFreeMap © OpenMapTiles Data from OpenStreetMap';
 
@@ -19611,6 +19641,78 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     ベクターを前にあきらめた: app.vectorFailedBefore(),
     地図の設定: app.basemapPref ? app.basemapPref() : null,
     位置情報: app.lastGeo ? '取得ずみ' : (app.geoError || 'まだ')
+  });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v100: ベクター地図はOFF（機能は残します）／設定の「地図の種類」を非表示
+     ============================================================================ -->
+<style id="edogawa-v100-style">
+  /* 「🗺 地図の種類」は出しません（ベクター地図をOFFにしたため）。
+     復活させるときは、この指定と下の JS の非表示処理を外してください。 */
+  html.edo-vector-off #edo-basemap-entry{ display:none !important; }
+  html.edo-vector-off #edo-basemap-note{ display:none !important; }
+</style>
+<script id="edogawa-v100">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const KEY = 'edogawa_basemap_v1';
+  // 本体が決めた値（window.__EDOGAWA_VECTOR_ON）をそのまま使います
+  const vectorOn = ()=> !!window.__EDOGAWA_VECTOR_ON;
+
+  // ① 設定は「通常の地図」に固定します（前に「ベクター」を選んでいた端末も戻します）
+  function forceRaster(){
+    if(vectorOn()) return;
+    try{ if(localStorage.getItem(KEY) !== 'raster') localStorage.setItem(KEY, 'raster'); }catch(e){}
+  }
+  forceRaster();
+
+  // ② 設定メニューの「地図の種類」を隠します
+  function hideEntry(){
+    if(vectorOn()) return;
+    const b = document.getElementById('edo-basemap-entry');
+    if(b) b.style.setProperty('display','none','important');
+  }
+  hideEntry(); setInterval(hideEntry, 2000);
+
+  // ③ 「いま：…」の地図の状態メモも出しません（通常の地図しか使わないため）
+  function hideNote(){
+    if(vectorOn()) return;
+    const n = document.getElementById('edo-basemap-note');
+    if(n) n.style.setProperty('display','none','important');
+  }
+  hideNote(); setInterval(hideNote, 2000);
+
+  // ④ 誤って切り替わらないようにします（機能そのものは残しています）
+  const origToggle = app.settingsToggleBasemap ? app.settingsToggleBasemap.bind(app) : null;
+  if(origToggle){
+    app.settingsToggleBasemap = function(){
+      if(!vectorOn()) return 'raster';     // OFFのあいだは何もしません
+      return origToggle();
+    };
+  }
+
+  // 復活のしかた（開発用）：
+  //   window.__EDOGAWA_VECTOR_ENABLE_NOW() を実行すると、この端末だけ
+  //   次回の読み込みからベクター地図を試せるようになります。
+  window.__EDOGAWA_VECTOR_ENABLE_NOW = function(on){
+    const yes = (on === undefined) ? true : !!on;
+    try{ localStorage.setItem('edogawa_vector_force_v1', yes ? 'yes' : 'no'); }catch(e){}
+    return yes
+      ? 'つぎの読み込みからベクター地図を試します（戻すときは __EDOGAWA_VECTOR_ENABLE_NOW(false)）'
+      : 'ベクター地図をOFFに戻しました。';
+  };
+
+  window.__EDOGAWA_V100_INFO = ()=>({
+    ベクター地図: vectorOn() ? 'ON' : 'OFF',
+    地図の設定: app.basemapPref ? app.basemapPref() : null,
+    '設定の「地図の種類」': (()=>{ const b = document.getElementById('edo-basemap-entry');
+      return b ? getComputedStyle(b).display : 'なし'; })(),
+    地図の状態: (app.map && app.map.__gsiStatus) || (app.lobbyMap && app.lobbyMap.__gsiStatus) || null
   });
 })();
 </script>
