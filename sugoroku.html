@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v106 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v107 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -8436,7 +8436,7 @@
         if (note) {
           if (laggard && laggard !== winnerPlayer) {
             // v105：先頭の📍は出しません。名前が「〜さん」で終わるときは「さん」を重ねません。
-            note.textContent = `ビリの ${laggard.name}${/さん$/.test(String(laggard.name)) ? '' : ' さん'} の近くのエリアから抽選します`;
+            note.textContent = `ビリの ${laggard.name}${/さん$/.test(String(laggard.name)) ? '' : ' さん'} の近くの地域から抽選`;
             note.classList.remove('hidden');
           } else {
             note.classList.add('hidden');
@@ -20071,6 +20071,262 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       罰金のアイコン: pav ? (pav.textContent || (pav.querySelector('img') ? '(写真)' : '')) : 'なし',
       罰金アイコンの大きさ: px(pav),
       古い王冠: (()=>{ const c=g('edo-goal-crown-old'); return c ? getComputedStyle(c).display : 'なし'; })()
+    };
+  };
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v107: ゴール画面の中央揃え／設定に「データ保存・復元」（暗号化バックアップ）
+     ============================================================================ -->
+<style id="edogawa-v107-style">
+  /* ① ビリ罰金の行は中央に（アイコンごと真ん中へ） */
+  #goal-penalty-text{ justify-content:center !important; text-align:center !important; }
+  /* ② 「ビリの◯◯の近くの地域から抽選」も中央に */
+  #roulette-anchor-note{ text-align:center !important; }
+
+  /* ③ データ保存・復元の画面 */
+  #edo-backup-modal{ position:fixed; inset:0; z-index:2147483330; display:none;
+    align-items:center; justify-content:center; padding:16px;
+    background:rgba(2,6,23,.92); backdrop-filter:blur(8px) }
+  #edo-backup-modal.show{ display:flex }
+  .edo-bk-box{ width:min(420px,94vw); max-height:88vh; overflow-y:auto;
+    background:#0f172a; border:1px solid #334155; border-radius:22px; padding:18px;
+    box-shadow:0 24px 64px rgba(0,0,0,.6) }
+  .edo-bk-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px }
+  .edo-bk-title{ font-size:17px; font-weight:900; color:#fbbf24 }
+  .edo-bk-lead{ font-size:13px; color:#cbd5e1; line-height:1.8; text-align:left }
+  .edo-bk-sec{ margin-top:14px; padding:12px; border:1px solid #1e293b; border-radius:16px;
+    background:rgba(2,6,23,.55) }
+  .edo-bk-sec h4{ margin:0 0 8px; font-size:14px; font-weight:900; color:#e2e8f0 }
+  .edo-bk-sec p{ margin:0 0 10px; font-size:12px; color:#94a3b8; line-height:1.7; text-align:left }
+  .edo-bk-input{ width:100%; padding:11px 12px; border-radius:12px; background:#020617;
+    border:1px solid #334155; color:#e2e8f0; font-size:16px; font-weight:700 }
+  .edo-bk-btn{ width:100%; margin-top:10px; padding:12px; border-radius:12px; font-size:15px;
+    font-weight:900; border:1px solid #475569; background:#1e293b; color:#e2e8f0 }
+  .edo-bk-btn.primary{ background:linear-gradient(180deg,#f59e0b,#d97706); border-color:#b45309; color:#0f172a }
+  .edo-bk-btn:disabled{ opacity:.55 }
+  .edo-bk-file{ width:100%; font-size:12px; color:#cbd5e1; margin-top:4px }
+  .edo-bk-msg{ margin-top:10px; font-size:13px; font-weight:800; line-height:1.7; text-align:left }
+  .edo-bk-msg.ok{ color:#86efac } .edo-bk-msg.err{ color:#fca5a5 } .edo-bk-msg.info{ color:#93c5fd }
+  .edo-bk-warn{ margin-top:12px; font-size:12px; color:#fca5a5; line-height:1.7; text-align:left }
+</style>
+<script id="edogawa-v107">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ============================================================
+  // ① ビリ案内の文言
+  // ============================================================
+  const origSelect = app.selectCategory ? app.selectCategory.bind(app) : null;
+  function fixAnchorNote(){
+    const n = document.getElementById('roulette-anchor-note');
+    if(!n) return;
+    const t = n.textContent || '';
+    // 末尾の言い回しだけを差し替えます（名前の「さん」は消しません）
+    if(/の近くのエリアから抽選します\s*$/.test(t)){
+      n.textContent = t.replace(/の近くのエリアから抽選します\s*$/, 'の近くの地域から抽選');
+    }
+  }
+  setInterval(fixAnchorNote, 400);
+  if(origSelect){
+    app.selectCategory = function(){ const r = origSelect.apply(null, arguments);
+      setTimeout(fixAnchorNote, 50); return r; };
+  }
+
+  // ============================================================
+  // ② データ保存・復元（暗号化したバックアップ）
+  // ============================================================
+  const PREFIX = 'edogawa';
+  const SKIP = ['edogawa_style_cache_v1'];          // 地図のスタイル（大きく、作り直せます）
+  const MAX_VALUE = 400 * 1024;                     // 1件400KBを超えるものは入れません
+  const MAGIC = 'EDOGAWA-SUGOROKU-BACKUP';
+
+  function collect(){
+    const out = {}; const skipped = [];
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const k = localStorage.key(i);
+        if(!k || k.indexOf(PREFIX) !== 0) continue;
+        if(SKIP.indexOf(k) >= 0){ skipped.push(k); continue; }
+        const v = localStorage.getItem(k);
+        if(v == null) continue;
+        if(v.length > MAX_VALUE){ skipped.push(k); continue; }
+        out[k] = v;
+      }
+    }catch(e){}
+    return { data: out, skipped };
+  }
+
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const b64 = (buf)=>{ const b = new Uint8Array(buf); let s=''; 
+    for(let i=0;i<b.length;i++) s += String.fromCharCode(b[i]); return btoa(s); };
+  const unb64 = (s)=>{ const bin = atob(s); const b = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) b[i] = bin.charCodeAt(i); return b; };
+
+  async function deriveKey(pass, salt, iter){
+    const base = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt, iterations: iter, hash:'SHA-256' },
+      base, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+  }
+
+  app.backupExport = async function(pass){
+    if(!pass || String(pass).length < 4) throw new Error('パスワードは4文字以上で入れてください。');
+    if(!(window.crypto && crypto.subtle)) throw new Error('この端末では暗号化を使えません（https でお試しください）。');
+    const { data, skipped } = collect();
+    const keys = Object.keys(data);
+    if(!keys.length) throw new Error('保存できるデータが見つかりませんでした。');
+    const body = JSON.stringify({ magic: MAGIC, v: 1, at: Date.now(), keys: keys.length, data });
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv   = crypto.getRandomValues(new Uint8Array(12));
+    const iter = 150000;
+    const key  = await deriveKey(pass, salt, iter);
+    const ct   = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, enc.encode(body));
+    const env  = { magic: MAGIC, v: 1, alg: 'AES-GCM-256', kdf: 'PBKDF2-SHA256',
+      iter, salt: b64(salt), iv: b64(iv), at: new Date().toISOString(), data: b64(ct) };
+    return { text: JSON.stringify(env), keys: keys.length, skipped };
+  };
+
+  app.backupImport = async function(text, pass){
+    if(!pass) throw new Error('パスワードを入れてください。');
+    let env = null;
+    try{ env = JSON.parse(text); }catch(e){ throw new Error('バックアップの中身を読めませんでした。'); }
+    if(!env || env.magic !== MAGIC) throw new Error('このゲームのバックアップではありません。');
+    const key = await deriveKey(pass, unb64(env.salt), Number(env.iter) || 150000);
+    let plain = null;
+    try{
+      const buf = await crypto.subtle.decrypt({ name:'AES-GCM', iv: unb64(env.iv) }, key, unb64(env.data));
+      plain = JSON.parse(dec.decode(buf));
+    }catch(e){ throw new Error('パスワードが違うか、ファイルが壊れています。'); }
+    if(!plain || plain.magic !== MAGIC || !plain.data) throw new Error('バックアップの中身が壊れています。');
+    let n = 0;
+    Object.keys(plain.data).forEach(k=>{
+      if(k.indexOf(PREFIX) !== 0) return;
+      try{ localStorage.setItem(k, String(plain.data[k])); n++; }catch(e){}
+    });
+    return { restored: n, at: plain.at ? new Date(plain.at) : null };
+  };
+
+  // ── 画面 ──
+  function box(){
+    let el = document.getElementById('edo-backup-modal');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'edo-backup-modal';
+    el.innerHTML = `<div class="edo-bk-box">
+      <div class="edo-bk-head">
+        <div class="edo-bk-title">🔐 データ保存・復元</div>
+        <button type="button" class="edo-x-btn" id="edo-bk-close" aria-label="閉じる">×</button>
+      </div>
+      <div class="edo-bk-lead">
+        この端末のセーブデータ（進行・所持金・ニックネーム・設定など）を、
+        パスワードで暗号化したファイルとして取り出し／書き戻しできます。
+      </div>
+
+      <div class="edo-bk-sec">
+        <h4>📤 バックアップを取り出す</h4>
+        <p>パスワードを決めて「書き出す」を押すと、暗号化したファイルが保存されます。</p>
+        <input class="edo-bk-input" id="edo-bk-pass1" type="password" autocomplete="new-password"
+          inputmode="text" placeholder="パスワード（4文字以上）">
+        <button type="button" class="edo-bk-btn primary" id="edo-bk-export">💾 書き出す</button>
+      </div>
+
+      <div class="edo-bk-sec">
+        <h4>📥 バックアップから戻す</h4>
+        <p>書き出したファイルを選び、そのときのパスワードを入れてください。<br>
+           いまのデータは上書きされます。</p>
+        <input class="edo-bk-file" id="edo-bk-file" type="file" accept=".json,.txt,application/json,text/plain">
+        <input class="edo-bk-input" id="edo-bk-pass2" type="password" autocomplete="current-password"
+          inputmode="text" placeholder="そのときのパスワード" style="margin-top:8px">
+        <button type="button" class="edo-bk-btn" id="edo-bk-import">↩️ 復元する</button>
+      </div>
+
+      <div class="edo-bk-msg" id="edo-bk-msg"></div>
+      <div class="edo-bk-warn">※ パスワードを忘れると、二度と復元できません。<br>
+        ※ ファイルは端末の中だけで作ります。どこへも送られません。</div>
+      <button type="button" class="edo-bk-btn" id="edo-bk-close2">閉じる</button>
+    </div>`;
+    document.body.appendChild(el);
+
+    const msg = (t, cls)=>{ const m = el.querySelector('#edo-bk-msg');
+      m.textContent = t || ''; m.className = 'edo-bk-msg ' + (cls || 'info'); };
+    const close = ()=>{ el.classList.remove('show'); msg(''); };
+    el.querySelector('#edo-bk-close').onclick = close;
+    el.querySelector('#edo-bk-close2').onclick = close;
+    el.addEventListener('click', (ev)=>{ if(ev.target === el) close(); });
+
+    el.querySelector('#edo-bk-export').onclick = async ()=>{
+      const btn = el.querySelector('#edo-bk-export');
+      const pass = el.querySelector('#edo-bk-pass1').value;
+      btn.disabled = true; msg('暗号化しています…', 'info');
+      try{
+        const r = await app.backupExport(pass);
+        const d = new Date();
+        const pad = (n)=>String(n).padStart(2,'0');
+        const name = `edogawa-sugoroku-backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+        const blob = new Blob([r.text], { type:'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = name; a.rel = 'noopener';
+        document.body.appendChild(a); a.click();
+        setTimeout(()=>{ try{ document.body.removeChild(a); URL.revokeObjectURL(url); }catch(e){} }, 1500);
+        msg(`書き出しました（${r.keys}件）。\nファイル名：${name}`, 'ok');
+        app.__lastBackupName = name;
+      }catch(e){ msg(String((e && e.message) || e), 'err'); }
+      finally{ btn.disabled = false; }
+    };
+
+    el.querySelector('#edo-bk-import').onclick = async ()=>{
+      const btn = el.querySelector('#edo-bk-import');
+      const f = el.querySelector('#edo-bk-file').files && el.querySelector('#edo-bk-file').files[0];
+      const pass = el.querySelector('#edo-bk-pass2').value;
+      if(!f){ msg('バックアップのファイルを選んでください。', 'err'); return; }
+      btn.disabled = true; msg('読み込んでいます…', 'info');
+      try{
+        const text = await f.text();
+        const r = await app.backupImport(text, pass);
+        msg(`復元しました（${r.restored}件）。3秒後に読み込み直します。`, 'ok');
+        setTimeout(()=>{ try{ location.reload(); }catch(e){} }, 3000);
+      }catch(e){ msg(String((e && e.message) || e), 'err'); }
+      finally{ btn.disabled = false; }
+    };
+    return el;
+  }
+  app.openBackupModal = function(){ const el = box(); el.classList.add('show'); };
+  app.closeBackupModal = function(){ const el = document.getElementById('edo-backup-modal');
+    if(el) el.classList.remove('show'); };
+
+  // ── 設定メニューに追加 ──
+  function addEntry(){
+    if(document.getElementById('edo-backup-entry')) return true;
+    const install = document.querySelector('button[onclick*="settingsOpenInstall"]');
+    if(!install) return false;
+    const b = document.createElement('button');
+    b.id = 'edo-backup-entry';
+    b.type = 'button';
+    b.className = install.className;
+    b.innerHTML = `<span class="text-xl">🔐</span>` +
+      `<span class="text-sm font-bold text-slate-100">データ保存・復元</span>`;
+    b.onclick = ()=>{ app.openBackupModal(); };
+    install.parentNode.insertBefore(b, install.nextSibling);
+    return true;
+  }
+  addEntry(); setInterval(addEntry, 2000);
+
+  window.__EDOGAWA_V107_INFO = ()=>{
+    const g = (id)=>document.getElementById(id);
+    const cs = (el)=> el ? getComputedStyle(el) : null;
+    return {
+      罰金の揃え: cs(g('goal-penalty-text')) && cs(g('goal-penalty-text')).justifyContent,
+      ビリ案内: g('roulette-anchor-note') ? g('roulette-anchor-note').textContent : null,
+      ビリ案内の揃え: cs(g('roulette-anchor-note')) && cs(g('roulette-anchor-note')).textAlign,
+      設定の入口: !!g('edo-backup-entry'),
+      暗号化が使えるか: !!(window.crypto && crypto.subtle)
     };
   };
 })();
