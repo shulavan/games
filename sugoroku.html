@@ -150,7 +150,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v95 (2026-10-01)';
+    window.__EDOGAWA_VERSION = 'v97 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1898,7 +1898,9 @@
     const USE_GSI_VECTOR = true;
     const GSI_VECTOR_LABEL_SIZE = 10;
     const GSI_VECTOR_STYLE_URL = 'https://maps.gsi.go.jp/vector/data/std.json';
-    const GSI_VECTOR_READY_MS = 18000;   // これだけ待って描けなければあきらめる
+    // これだけ待って描けなければあきらめます（v97で18秒→40秒。端末によっては
+    // ベクター地図の読み込みに30秒以上かかるため）。点検用に上書きできます。
+    const GSI_VECTOR_READY_MS = Number(window.__EDOGAWA_VECTOR_TIMEOUT_MS) || 40000;
     // 地理院ベクトルが使えなかった場合の予備。キー不要・回数制限なしの無料サービスです。
     // 使いたくない場合は false にしてください（その場合はラスターに戻ります）。
     const USE_OPENFREEMAP_FALLBACK = true;
@@ -19142,6 +19144,215 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     いまの版: Number(app.gameStateVersion || 0),
     参加者が返した版: app.guestAcks || {}
   });
+})();
+</script>
+
+
+
+<!-- ============================================================================
+     v97: 線路の線を消す／ヘッダーのボタンをそろえる／目的地バッジ／起動時に位置取得
+     ============================================================================ -->
+<style id="edogawa-v97-style">
+  /* ① 設定の「鉄道路線」は出しません（線を描かなくなったため） */
+  button[onclick*="settingsToggleRail"]{ display:none !important; }
+
+  /* ② ヘッダーのボタンはすべて同じ大きさ（♪・全画面・メニュー） */
+  #game-header-tools > button{
+    width:44px !important; height:44px !important; padding:0 !important;
+    display:flex !important; align-items:center !important; justify-content:center !important;
+    flex:0 0 44px !important; }
+  #game-header-tools > #game-menu-btn{ flex-direction:column !important; gap:3px !important; }
+  #game-header-tools > #host-save-btn{ display:none !important; }
+  #game-header-tools #bgm-label{ display:none !important; }
+  #game-header-tools #bgm-icon{ font-size:17px; line-height:1 }
+
+  /* ③ 目的地バッジ：「目的地:」と施設名の高さをそろえます */
+  #edo-nearby-row #mobile-destination-badge,
+  #mobile-destination-badge.sticker-btn{
+    display:flex !important; align-items:baseline !important; gap:5px;
+    white-space:nowrap; overflow:hidden !important; }
+  #edo-nearby-row #mobile-destination-badge > span,
+  #mobile-destination-badge.sticker-btn > span{
+    display:block !important; line-height:1.5 !important; font-size:11px !important;
+    vertical-align:baseline !important; }
+  #edo-nearby-row #mobile-destination-badge #mobile-destination-name,
+  #mobile-destination-badge.sticker-btn #mobile-destination-name{
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* ④ トップページの📌（件数つき） */
+  #lobby-visited-pin-top{ width:auto !important; min-width:40px; padding:0 10px !important;
+    gap:4px; font-size:1.05rem !important; }
+  #lobby-visited-pin-top .edo-pin-count{ font-size:12px; font-weight:900; }
+</style>
+<script id="edogawa-v97">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ============================================================
+  // ① 線路の線は描きません（駅だけ残します）
+  //    メトロセブンの線形は道路をなぞって作っていたため、
+  //    実際の線路とかけ離れた迂回路になっていました。
+  //    駅の位置だけを残し、電車での移動（乗車）は今までどおり使えます。
+  // ============================================================
+  function stripLines(map){
+    if(!map || !window.L) return 0;
+    let n = 0;
+    ['__railLayers','__m7Layers'].forEach(key=>{
+      if(!Array.isArray(map[key])) return;
+      map[key] = map[key].filter(l=>{
+        // 線（Polyline）はgetLatLngsを持ち、駅のマーカーは持ちません
+        const isLine = !!l && typeof l.getLatLngs === 'function'
+          && !(window.L.Marker && l instanceof window.L.Marker);
+        if(isLine){ try{ map.removeLayer(l); }catch(e){} n++; return false; }
+        return true;
+      });
+    });
+    return n;
+  }
+  app.__stripRailLines = stripLines;
+  function stripAll(){ stripLines(app.map); stripLines(app.lobbyMap); }
+
+  ['_drawRail','_drawMetro7'].forEach(name=>{
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(){ const r = orig(); try{ stripAll(); }catch(e){} return r; };
+  });
+  ['_drawRailOn','_drawMetro7On'].forEach(name=>{
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(map){ const r = orig(map); try{ stripLines(map); }catch(e){} return r; };
+  });
+  // あとから描き直されても線が出ないように、定期的に消します
+  setInterval(stripAll, 1500);
+  setTimeout(stripAll, 300);
+
+  // ============================================================
+  // ② ヘッダーのボタンをそろえる（CSSだけで足りない分の調整）
+  // ============================================================
+  function tidyHeader(){
+    const box = document.getElementById('game-header-tools');
+    if(!box) return;
+    const menu = document.getElementById('game-menu-btn');
+    if(menu && menu.parentElement === box && box.lastElementChild !== menu) box.appendChild(menu);
+  }
+  tidyHeader(); setInterval(tidyHeader, 2000);
+
+  // ============================================================
+  // ③ 起動時に位置情報を取っておきます
+  //    （📌を押してから取りにいくと時間がかかり、失敗もしやすいため）
+  // ============================================================
+  const GEO_FRESH_MS = 3 * 60 * 1000;
+  app.lastGeo = app.lastGeo || null;
+  app.requestStartupLocation = function(opts){
+    opts = opts || {};
+    return new Promise(resolve=>{
+      if(!navigator.geolocation){ app.geoError = 'この端末では位置情報を使えません。'; return resolve(null); }
+      if(app.lastGeo && (Date.now() - app.lastGeo.at) < GEO_FRESH_MS && !opts.force) return resolve(app.lastGeo);
+      if(app.__geoInFlight) return app.__geoInFlight.then(resolve);
+      app.__geoInFlight = new Promise(done=>{
+        navigator.geolocation.getCurrentPosition(pos=>{
+          app.lastGeo = { lat: Number(pos.coords.latitude), lng: Number(pos.coords.longitude),
+            accuracy: Number(pos.coords.accuracy) || 9999, at: Date.now() };
+          app.geoError = null; app.__geoInFlight = null; done(app.lastGeo);
+        }, err=>{
+          app.geoError = (err && err.code === 1)
+            ? '位置情報の利用が許可されていません。ブラウザの設定をご確認ください。'
+            : '位置情報を取得できませんでした。';
+          app.__geoInFlight = null; done(null);
+        }, { enableHighAccuracy: !!opts.high, maximumAge: opts.force ? 0 : 120000,
+             timeout: opts.force ? 15000 : 20000 });
+      });
+      app.__geoInFlight.then(resolve);
+    });
+  };
+  // 利用規約に同意済みなら、起動した時点で1回だけ聞きます
+  function kickGeo(){
+    let agreed = false;
+    try{ agreed = localStorage.getItem('edogawa_sugoroku_terms_v1') === 'granted'; }catch(e){}
+    if(!agreed) return false;
+    app.requestStartupLocation();
+    return true;
+  }
+  if(!kickGeo()){
+    const iv = setInterval(()=>{ if(kickGeo()) clearInterval(iv); }, 3000);
+    setTimeout(()=>clearInterval(iv), 10 * 60 * 1000);
+  }
+
+  // 📌の記録は、取っておいた位置をそのまま使います（待ち時間なし）
+  const origStart = app.startVisitedPinRecord ? app.startVisitedPinRecord.bind(app) : null;
+  if(origStart){
+    app.startVisitedPinRecord = async function(){
+      // トップページから押したときは、先に「行ったところ」の地図を開きます
+      if(!app.map){
+        if(app.openVisitedOnlyMode){ await app.openVisitedOnlyMode(); }
+        for(let i=0;i<40 && !app.map;i++) await new Promise(r=>setTimeout(r,100));
+        if(!app.map){ app.showNotice && app.showNotice('📌 行ったところ','地図の準備ができませんでした。少し待ってからもう一度お試しください。'); return; }
+      }
+      const g = await app.requestStartupLocation({ high:true, force:false });
+      if(!g){
+        app.showNotice && app.showNotice('📌 行ったところ',
+          app.geoError || '位置情報を取得できませんでした。');
+        return;
+      }
+      return origStart();
+    };
+  }
+
+  // ============================================================
+  // ④ トップページの📌に件数を出し、押せる状態を保ちます
+  // ============================================================
+  function paintTopPin(){
+    const b = document.getElementById('lobby-visited-pin-top');
+    if(!b) return;
+    const n = Math.max(0, Number(app.visitedEntryCount || 0));
+    let c = b.querySelector('.edo-pin-count');
+    if(!c){ c = document.createElement('span'); c.className = 'edo-pin-count'; b.appendChild(c); }
+    if(b.firstChild && b.firstChild.nodeType === 3) b.firstChild.nodeValue = '📌';
+    c.textContent = String(n);
+  }
+  function ensureTopPin(){
+    if(document.getElementById('lobby-visited-pin-top')){ paintTopPin(); return true; }
+    const pwa = document.getElementById('pwa-install-btn');
+    const host = pwa ? pwa.parentElement : null;
+    if(!host) return false;
+    const b = document.createElement('button');
+    b.id = 'lobby-visited-pin-top'; b.type = 'button';
+    b.title = '📌 行ったところ'; b.setAttribute('aria-label', '📌 行ったところ');
+    b.textContent = '📌';
+    b.onclick = async ()=>{
+      try{ await app.openVisitedOnlyMode(); }
+      catch(e){ app.showNotice && app.showNotice('📌 行ったところ',
+        '開けませんでした。\n' + String((e && e.message) || e)); }
+    };
+    host.insertBefore(b, pwa);
+    paintTopPin();
+    return true;
+  }
+  ensureTopPin(); setInterval(()=>{ ensureTopPin(); paintTopPin(); }, 2000);
+
+  window.__EDOGAWA_V97_INFO = ()=>{
+    const lines = (m)=>{
+      if(!m) return null;
+      let n = 0;
+      ['__railLayers','__m7Layers'].forEach(k=>{ (m[k]||[]).forEach(l=>{
+        if(l && typeof l.getLatLngs === 'function') n++; }); });
+      return n;
+    };
+    const markers = (m)=>{
+      if(!m) return null;
+      let n = 0;
+      ['__railLayers','__m7Layers'].forEach(k=>{ (m[k]||[]).forEach(l=>{
+        if(l && window.L.Marker && l instanceof window.L.Marker) n++; }); });
+      return n;
+    };
+    return {
+      盤面の線: lines(app.map), 盤面の駅: markers(app.map),
+      設定の鉄道路線: !!document.querySelector('button[onclick*="settingsToggleRail"]:not([style*="display: none"])'),
+      位置情報: app.lastGeo ? '取得ずみ' : (app.geoError || 'まだ'),
+      'トップの📌': !!document.getElementById('lobby-visited-pin-top')
+    };
+  };
 })();
 </script>
 
