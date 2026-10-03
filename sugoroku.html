@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v108 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v109 (2026-10-02)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -18254,8 +18254,27 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // ターンが進んだら知らせます。
   // 【v90での修正】これまでは、そのターンのプレーヤー全員（CPUを含む）に
   // 出ていました。自分（人間プレーヤー）の番のときに1回だけ出します。
-  let lastCount = openCount();
-  let planShown = app.metro7PlanAnnounced();
+  // 【v109】ゲームを開き直すたびに「議案可決」のお知らせが出ていました。
+  //   一度出したら端末に覚えておき、次からは出しません。
+  //   「本日開通しました」のお知らせも、続きから遊ぶたびに出し直さないようにします。
+  const PLAN_KEY = 'edogawa_metro7_plan_shown_v1';
+  const OPEN_KEY = 'edogawa_metro7_open_shown_v1';
+  const readNum = (k)=>{ try{ const v = localStorage.getItem(k); return v==null ? null : Number(v); }catch(e){ return null; } };
+  const writeNum = (k,v)=>{ try{ localStorage.setItem(k, String(v)); }catch(e){} };
+  let planShown = (readNum(PLAN_KEY) === 1) || app.metro7PlanAnnounced();
+  let lastCount = Math.max(openCount(), readNum(OPEN_KEY) || 0);
+  // ページを開いてから最初のターンは、いまの開通ぶんを「すでに知っている」ことにします
+  // （続きから遊んだときに「本日開通しました」が出し直されるのを防ぎます）
+  let firstSeen = true;
+  // 新しいゲームを最初から始めたときは、またお知らせが出るように戻します
+  app.metro7ResetNotices = function(){
+    planShown = false; lastCount = 0; firstSeen = true;
+    writeNum(PLAN_KEY, 0); writeNum(OPEN_KEY, 0);
+  };
+  app.metro7NoticeState = function(){
+    return { 議案可決を出したか: !!planShown, 開通を出した駅数: lastCount,
+      保存: { plan: readNum(PLAN_KEY), open: readNum(OPEN_KEY) } };
+  };
   app.metro7IsMyTurn = function(){
     const p = (app.players||[])[app.currentPlayerIdx];
     if(!p || p.isCpu) return false;
@@ -18271,12 +18290,20 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         app._drawMetro7 && app._drawMetro7();
         const mine = app.metro7IsMyTurn();
         const now = openCount();
+        // 「ひとりで遊ぶ」を最初から始め直したときは、またお知らせを出せるようにします
+        if(!app.isMultiplayer && (Number(app.turnCount)||0) < PLAN_TURN && (planShown || lastCount)){
+          planShown = false; lastCount = 0; writeNum(PLAN_KEY, 0); writeNum(OPEN_KEY, 0);
+        }
+        if(firstSeen){
+          firstSeen = false;
+          if(now > lastCount){ lastCount = now; writeNum(OPEN_KEY, now); }
+        }
         if(!planShown && app.metro7PlanAnnounced()){
           // 自分の番が来るまで待ってから出します（CPUの番では出しません）
-          if(mine){ planShown = true; app.showMetro7Plan(); }
+          if(mine){ planShown = true; writeNum(PLAN_KEY, 1); app.showMetro7Plan(); }
         }else if(now > lastCount && now >= 2){
-          if(mine){ lastCount = now; app.showMetro7Open(ORDER.slice(0, now)); }
-        }else if(now < lastCount){ lastCount = now; }
+          if(mine){ lastCount = now; writeNum(OPEN_KEY, now); app.showMetro7Open(ORDER.slice(0, now)); }
+        }else if(now < lastCount){ lastCount = now; writeNum(OPEN_KEY, now); }
       }catch(e){ console.error('[v89]', e); }
       if(err) throw err;
       return r;
@@ -20421,6 +20448,83 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       灰色か: !!b && b.classList.contains('edo-rt-wait')
     };
   };
+})();
+</script>
+
+
+<!-- ============================================================================
+     v109: オートモードを切ったときにCPUが止まる／メトロセブンのお知らせの出し直し
+     ============================================================================ -->
+<script id="edogawa-v109">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① オートモードを切ると、次のCPUが動かなくなる問題 ──
+  // オートモードの切り替えで「自動サイコロの予約」をいったん取り消しますが、
+  // CPUの手番の予約まで消えてしまい、誰も動かなくなっていました。
+  // 切ったあとに画面を作り直して、CPUの予約を取り直します。
+  const origToggle = app.toggleAutoMode ? app.toggleAutoMode.bind(app) : null;
+  if(origToggle){
+    app.toggleAutoMode = function(){
+      const r = origToggle();
+      try{
+        if(!app.autoRollTimer) app.updateHUD();
+      }catch(e){ console.error('[v109]', e); }
+      return r;
+    };
+  }
+
+  // 念のための見張り。モーダルもミニゲームも開いていないのに、
+  // CPU（または離脱者）の手番で予約が無いまま3秒以上止まっていたら作り直します。
+  let stuckSince = 0;
+  setInterval(function(){
+    try{
+      // ロビー（タイトル画面）が出ている間は何もしません
+      const lobby = document.getElementById('lobby-screen');
+      if(lobby && getComputedStyle(lobby).display !== 'none' && !lobby.classList.contains('hidden')){ stuckSince = 0; return; }
+      if(!Array.isArray(app.players) || !app.players.length){ stuckSince = 0; return; }
+      const cp = app.players[app.currentPlayerIdx];
+      if(!cp) { stuckSince = 0; return; }
+      const auto = (typeof app.isAutoPlayedPlayer === 'function') && app.isAutoPlayedPlayer(cp);
+      const hostSide = !app.isMultiplayer || app.isHost;
+      if(!auto || !hostSide){ stuckSince = 0; return; }
+      if(app.isRolling || app.miniGameActive || app.boatRaceActive || app._boatRaceOfferOpen ||
+         app.awaitingGoalSelection || app.autoRollTimer){ stuckSince = 0; return; }
+      const open = ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','boatrace-continue-modal',
+        'goal-modal','rocket-gift-modal','regional-mini-overlay','goal-amida-overlay',
+        'settings-modal','menu-modal','edo-backup-modal','edo-m7-notice','facility-modal']
+        .some(id => { const el = document.getElementById(id);
+          if(!el || el.classList.contains('hidden')) return false;
+          try{ return getComputedStyle(el).display !== 'none'; }catch(e){ return false; } });
+      if(open){ stuckSince = 0; return; }
+      const t = Date.now();
+      if(!stuckSince){ stuckSince = t; return; }
+      if(t - stuckSince < 3000) return;
+      stuckSince = 0;
+      app.updateHUD();
+    }catch(e){}
+  }, 1000);
+
+  // ── ② メトロセブンのお知らせ ──
+  // 「ひとりで遊ぶ」を最初から始めたときと、保存データを消したときは、
+  // またお知らせが出るように戻します。
+  function wrapReset(name){
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(){
+      try{ app.metro7ResetNotices && app.metro7ResetNotices(); }catch(e){}
+      return orig.apply(null, arguments);
+    };
+  }
+  wrapReset('settingsClearSaves');
+  wrapReset('clearAllAccountData');
+
+  window.__EDOGAWA_V109_INFO = ()=>({
+    オートモード: !!app.autoMode,
+    自動サイコロの予約: !!app.autoRollTimer,
+    メトロセブン: app.metro7NoticeState ? app.metro7NoticeState() : null
+  });
 })();
 </script>
 
