@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v114 (2026-10-06)';
+    window.__EDOGAWA_VERSION = 'v116 (2026-10-06)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -12961,7 +12961,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   #edo-mini-common .edo-mc-rules li+li{margin-top:5px;}
   #edo-mini-common .edo-mc-rules li::before{content:"・";position:absolute;left:0;color:#fbbf24;font-weight:900;}
   #edo-mini-common .edo-mc-player{font-size:15px;font-weight:900;color:#7dd3fc;margin-bottom:10px;}
-  #edo-mini-common .edo-mc-detail{font-size:16px;line-height:1.6;color:#e2e8f0;margin-bottom:12px;white-space:pre-wrap;}
+  /* 【v116】結果の説明文は左揃え・読みやすい大きさで、枠に入れて見やすくします */
+  #edo-mini-common .edo-mc-detail{font-size:16px;line-height:1.9;color:#e2e8f0;margin-bottom:12px;
+    white-space:pre-wrap;text-align:left;background:rgba(15,23,42,.85);
+    border:1px solid rgba(148,163,184,.25);border-radius:14px;padding:12px 14px;}
+  /* 1行だけの短い説明は、これまでどおり中央に出します */
+  #edo-mini-common .edo-mc-detail.one{text-align:center;background:none;border:0;padding:0;line-height:1.6;}
   #edo-mini-common .edo-mc-reward{border-radius:14px;padding:12px 14px;margin-bottom:10px;
     background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.4);}
   #edo-mini-common .edo-mc-reward.minus{background:rgba(244,63,94,.12);border-color:rgba(244,63,94,.4);}
@@ -13057,7 +13062,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       <div class="edo-mc-kicker">結果発表</div>
       <div class="edo-mc-title">${esc(m.t)}</div>
       ${o.playerName?`<div class="edo-mc-player">${esc(o.playerName)}</div>`:''}
-      ${o.detail?`<div class="edo-mc-detail">${esc(o.detail)}</div>`:''}
+      ${o.detail?`<div class="edo-mc-detail${/[\n]/.test(String(o.detail))?'':' one'}">${esc(o.detail)}</div>`:''}
       ${rows?`<div class="edo-mc-list">${rows.map(r=>`<div><span>${esc(r.name)}</span><span style="color:${Math.round(Number(r.delta)||0)<0?'#fb7185':'#34d399'}">${Math.round(Number(r.delta)||0)>=0?'＋':''}${yen(r.delta)}</span></div>`).join('')}</div>`
             :`<div class="edo-mc-reward${delta<0?' minus':''}"><span class="lbl">賞金・報酬</span><span class="val">${delta>=0?'＋':''}${yen(delta)}</span></div>`}
       ${o.money!=null?`<div class="edo-mc-money">所持金 ${yen(o.money)}</div>`:''}
@@ -15424,14 +15429,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     frame.src = q;
   }
 
-  app.startTrainRide = function(player, lineKey, from, to, onFinish){
+  app.startTrainRide = function(player, lineKey, from, to, onFinish, opts){
+    opts = opts || {};
     const overlay=document.getElementById('regional-mini-overlay');
     const frame=document.getElementById('regional-mini-frame');
     const title=document.getElementById('regional-mini-title');
     const loading=document.getElementById('regional-mini-loading');
     if(!overlay || !frame){ onFinish && onFinish(0); return false; }
 
-    let finished=false, prize=0, detail='';
+    let finished=false, prize=0, detail='', skipped=false;
     const cleanup=()=>{
       window.removeEventListener('message', onMsg);
       clearTimeout(guard);
@@ -15443,11 +15449,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const done=()=>{
       if(finished) return; finished=true;
       cleanup();
-      onFinish && onFinish(prize, detail);
+      onFinish && onFinish(skipped ? 0 : prize, detail, {skipped:skipped});
     };
     const onMsg=(e)=>{
       const d=e.data||{};
       if(d.game!=='train') return;
+      if(d.skipped){ skipped=true; prize=0; detail=''; }
       if(d.type==='EDOGAWA_MINIGAME_RENDERED'){ if(loading) loading.style.display='none'; return; }
       if(d.type==='EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard=setTimeout(done, 600000); return; }
       if(d.type==='EDOGAWA_MINIGAME_RESULT'){
@@ -15461,12 +15468,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     window.addEventListener('message', onMsg);
 
     app.miniGameActive=true;
-    if(title) title.textContent='🚃 ' + LINES[lineKey].name + '　' + from + ' ➔ ' + to;
+    if(title) title.textContent='🚃 ' + LINES[lineKey].name + '　' + from + ' ➔ ' + to +
+      (opts.legs>1 ? `（乗換 ${opts.leg}/${opts.legs}）` : '');
     if(loading) loading.style.display='flex';
     frame.style.display='block';
     overlay.classList.remove('hidden');
     frame.onload=()=>{ if(loading) loading.style.display='none'; };
-    loadGame(frame, 'train', {line:lineKey, from:from, to:to});
+    const params = {line:lineKey, from:from, to:to};
+    if(opts.nostart) params.nostart = '1';
+    if(opts.leg) params.leg = String(opts.leg);
+    if(opts.legs) params.legs = String(opts.legs);
+    if(opts.nextLabel) params.nextlabel = opts.nextLabel;
+    loadGame(frame, 'train', params);
     return true;
   };
 
@@ -20601,12 +20614,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // 電車の運転ボーナスにも反映します
   const origTrain = app.startTrainRide ? app.startTrainRide.bind(app) : null;
   if(origTrain){
-    app.startTrainRide = function(player, lineKey, from, to, onFinish){
-      return origTrain(player, lineKey, from, to, function(prize, detail){
+    app.startTrainRide = function(player, lineKey, from, to, onFinish, opts){
+      return origTrain(player, lineKey, from, to, function(prize, detail, info){
         const scaled = app.scaleTurnMoney(Number(prize)||0);
         const label = app.turnBonusLabel();
-        onFinish && onFinish(scaled, label ? String(detail||'') + `（${label}）` : detail);
-      });
+        onFinish && onFinish(scaled, (scaled>0 && label) ? String(detail||'') + `（${label}）` : detail, info);
+      }, opts);
     };
   }
 
@@ -21180,6 +21193,270 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         return !e || getComputedStyle(e).display==='none'; })(),
       フッターのまるボタン: [...document.querySelectorAll('#edo-visited-foot .edo-vf-btn')].map(b=>b.textContent.trim())
     };
+  };
+})();
+</script>
+
+
+<!-- ============================================================================
+     v115: 電車の乗り換え（他の路線 ⇔ メトロセブン）と、乗換ごとの運転シミュレーション
+     ============================================================================ -->
+<style id="edogawa-v115-style">
+  .edo-rail-via{ display:block; font-size:10px; color:#38bdf8; margin-top:3px; line-height:1.5 }
+  .edo-rail-group.transfer .edo-rail-gname{ color:#7dd3fc }
+  .edo-rail-chip.multi{ background:linear-gradient(90deg,#ff2d95,#38bdf8) }
+</style>
+<script id="edogawa-v115">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
+  if(!LINES || !ST) return;
+  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const DRIVABLE = new Set(['tozai','shinjuku','sobu','keiyo','keisei','metro7']);
+
+  // ── いま乗れる駅（メトロセブンは開通ぶんだけ） ──
+  function openStations(k){
+    const L = LINES[k]; if(!L || !Array.isArray(L.stations)) return [];
+    if(k === 'metro7'){
+      try{ return (app.metro7OpenStations ? app.metro7OpenStations() : L.stations).slice(); }
+      catch(e){ return []; }
+    }
+    return L.stations.slice();
+  }
+  function linesAt(name){ return Object.keys(LINES).filter(k => openStations(k).indexOf(name) >= 0); }
+  // 乗り換えは「ほかの路線 ⇔ メトロセブン」のあいだだけです
+  function canTransfer(a, b){ return (a === 'metro7') !== (b === 'metro7'); }
+  app.railCanTransfer = canTransfer;
+
+  // ── 行き先さがし（最大2回の乗り換え＝3区間まで） ──
+  app.railRouteSearch = function(fromName, fromLines, maxLegs){
+    const max = Math.max(1, Math.min(3, Number(maxLegs) || 3));
+    const best = {};
+    const startLines = (fromLines && fromLines.length ? fromLines.slice() : linesAt(fromName))
+      .filter(k => openStations(k).indexOf(fromName) >= 0);
+    const cost = (r)=>r.reduce((a,x)=>a + (Number(x.fare)||0), 0);
+    const queue = startLines.map(k => ({ at: fromName, line: k, route: [] }));
+    const seen = new Set(startLines.map(k => fromName + '|' + k + '|0'));
+    let guard = 0;
+    while(queue.length && guard++ < 4000){
+      const cur = queue.shift();
+      if(cur.route.length >= max) continue;
+      openStations(cur.line).forEach(n => {
+        if(n === cur.at) return;
+        let f = null;
+        try{ f = app.railFare(cur.line, cur.at, n); }catch(e){ f = null; }
+        if(!f) return;
+        const route = cur.route.concat([{line:cur.line, from:cur.at, to:n, fare:f.fare, km:f.km}]);
+        if(n !== fromName){
+          const prev = best[n];
+          if(!prev || route.length < prev.length ||
+             (route.length === prev.length && cost(route) < cost(prev))) best[n] = route;
+        }
+        if(route.length < max){
+          linesAt(n).forEach(k2 => {
+            if(k2 === cur.line || !canTransfer(cur.line, k2)) return;
+            const key = n + '|' + k2 + '|' + route.length;
+            if(seen.has(key)) return;
+            seen.add(key);
+            queue.push({ at:n, line:k2, route:route });
+          });
+        }
+      });
+    }
+    return best;
+  };
+  app.railRouteFare = function(route){ return (route||[]).reduce((a,x)=>a + (Number(x.fare)||0), 0); };
+  app.railRouteKm   = function(route){
+    return Math.round((route||[]).reduce((a,x)=>a + (Number(x.km)||0), 0) * 10) / 10;
+  };
+
+  // ── 乗車画面（直通ぶん＋乗り換えぶん） ──
+  app._openRailRide = function(player, at, done){
+    const el = (function(){ let e=document.getElementById('edo-rail-modal');
+      if(!e){ e=document.createElement('div'); e.id='edo-rail-modal'; document.body.appendChild(e); } return e; })();
+    const eco = app.economy();
+    const money = Number(player.money) || 0;
+    const lines = (at.lines || [at.line]).filter(Boolean);
+    const routes = app.railRouteSearch(at.name, lines, 3);
+    // 行ける駅が1つも無いときは、押すところの無い枠を出さずにそのまま進みます
+    if(!Object.keys(routes).length){ done && done(null); return; }
+    const direct = {};        // 乗り換えなしで行ける駅
+    const trans  = [];        // 乗り換えが要る駅
+    Object.keys(routes).forEach(n => {
+      const r = routes[n];
+      if(r.length === 1) (direct[r[0].line] = direct[r[0].line] || []).push({to:n, route:r});
+      else trans.push({to:n, route:r});
+    });
+    trans.sort((a,b)=> app.railRouteFare(a.route) - app.railRouteFare(b.route));
+
+    const row = (label, sub, fare, route)=>{
+      const can = money >= fare;
+      // 乗り換えなしの行は、これまでどおり data-line / data-to も持たせます
+      const one = (route.length === 1)
+        ? ` data-line="${esc(route[0].line)}" data-to="${esc(route[0].to)}"` : ' data-legs="' + route.length + '"';
+      return `<button type="button" class="edo-rail-item" data-route="${esc(JSON.stringify(route))}"${one} ${can?'':'disabled'}>
+        <span><span class="nm">${esc(label)}</span><span class="km">${esc(sub)}${can?'':'　所持金が足りません'}</span></span>
+        <span class="fare${eco.fare>1?' up':''}">¥${fare.toLocaleString('ja-JP')}</span></button>`;
+    };
+
+    let groups = '';
+    lines.forEach(k => {
+      const L = LINES[k]; if(!L) return;
+      const isM7 = (k === 'metro7');
+      if(isM7 && openStations('metro7').indexOf(at.name) < 0) return;
+      const list = (direct[k] || []).sort((a,b)=>a.route[0].fare - b.route[0].fare);
+      const rows = list.map(x => row(x.to + '駅', '約' + x.route[0].km + 'km', x.route[0].fare, x.route)).join('');
+      if(!rows && !isM7) return;
+      groups += `<div class="edo-rail-group">
+        <div class="edo-rail-gname"><span class="edo-rail-chip" style="background:${L.color}"></span>${esc(String(L.name).replace('（構想）',''))}${L.plan?'<span class="edo-m7-badge">構想</span>':''}</div>
+        ${rows || '<div class="edo-rail-sub">まだ先の区間が開通していません。</div>'}
+        ${isM7 ? `<div class="edo-rail-open">🚧 開通 ${(app.metro7OpenStationsAll?app.metro7OpenStationsAll():openStations('metro7')).length}/${LINES.metro7.stations.length}駅</div>` : ''}
+      </div>`;
+    });
+
+    if(trans.length){
+      const rows = trans.map(x => {
+        const via = x.route.slice(0, -1).map(seg => seg.to).join('・');
+        const path = x.route.map(seg => String(LINES[seg.line].name).replace('（構想）','')).join(' → ');
+        const n = x.route.length - 1;
+        return row(x.to + '駅',
+          `${n}回乗換　合計 約${app.railRouteKm(x.route)}km`,
+          app.railRouteFare(x.route), x.route)
+          .replace('</span></span>', `</span><span class="edo-rail-via">${esc(via)}で乗換　${esc(path)}</span></span>`);
+      }).join('');
+      groups += `<div class="edo-rail-group transfer">
+        <div class="edo-rail-gname"><span class="edo-rail-chip multi"></span>🔁 乗り換えて行く</div>
+        ${rows}
+      </div>`;
+    }
+
+    el.innerHTML = `<div class="edo-rail-box">
+      <div class="edo-rail-head">
+        <div style="min-width:0">
+          <div class="edo-rail-title">🚃 ${esc(at.name)}駅</div>
+          <div class="edo-rail-sub">運賃を払うと、その駅まで移動できます。${eco.fare>1?'<br><b style="color:#f87171">'+esc(eco.name)+'：運賃'+eco.fare+'倍</b>':''}</div>
+        </div>
+        <button type="button" class="edo-x-btn" aria-label="閉じる">×</button>
+      </div>
+      ${groups || '<div class="edo-rail-sub" style="margin-top:12px">行ける駅がありません。</div>'}
+      <button type="button" class="edo-rail-skip">乗らずに進む</button>
+      <div class="edo-rail-note">運賃は営業キロの目安による概算です。乗り換えがあるときは区間ごとの運賃の合計です。メトロセブンは構想段階の路線で、運賃は都営地下鉄の区分にならった想定額です。</div>
+    </div>`;
+    el.classList.add('show');
+    const close = (ride)=>{ el.classList.remove('show'); done && done(ride); };
+    el.querySelector('.edo-x-btn').onclick = ()=>close(null);
+    el.querySelector('.edo-rail-skip').onclick = ()=>close(null);
+    el.onclick = (ev)=>{ if(ev.target === el) close(null); };
+    el.querySelectorAll('.edo-rail-item').forEach(b=>{
+      b.onclick = ()=>{
+        if(b.disabled) return;
+        let route = null;
+        try{ route = JSON.parse(b.dataset.route); }catch(e){ route = null; }
+        if(!route || !route.length) return;
+        close({ line: route[0].line, to: route[route.length-1].to, route: route });
+      };
+    });
+  };
+
+  // 行ける駅があるかどうか（乗り換えぶんも数えます）
+  app.railHasDestination = function(at){
+    if(!at) return false;
+    const lines = at.lines || (at.line ? [at.line] : []);
+    try{ return Object.keys(app.railRouteSearch(at.name, lines, 3)).length > 0; }
+    catch(e){ return false; }
+  };
+
+  // ── 区間ごとに運転します（乗換駅では結果モーダル → そのまま次の区間へ） ──
+  app.runRailRoute = function(player, route, onDone){
+    const legs = (route || []).filter(x => x && x.line && x.from && x.to);
+    if(!legs.length){ onDone && onDone({prize:0, skipped:false}); return; }
+    let total = 0, i = 0;
+    const step = ()=>{
+      if(i >= legs.length){ onDone && onDone({prize:total, skipped:false}); return; }
+      const seg = legs[i];
+      const last = (i === legs.length - 1);
+      const nextSeg = last ? null : legs[i+1];
+      const opts = {
+        nostart: i > 0,
+        leg: i + 1,
+        legs: legs.length,
+        nextLabel: last ? '江戸川双六へもどる'
+          : (String(LINES[nextSeg.line].name).replace('（構想）','') + 'に乗り換える')
+      };
+      if(!DRIVABLE.has(seg.line) || !app.startTrainRide){
+        i++; step(); return;
+      }
+      const ok = app.startTrainRide(player, seg.line, seg.from, seg.to, (prize, detail, info)=>{
+        if(info && info.skipped){ onDone && onDone({prize:0, skipped:true}); return; }
+        total += Math.max(0, Number(prize) || 0);
+        i++;
+        // 乗換駅の結果モーダルを閉じたら、間をおかずに次の区間へ
+        setTimeout(step, 200);
+      }, opts);
+      if(!ok){ i++; step(); }
+    };
+    step();
+  };
+
+  // ── 「乗車」を押したときの流れ（乗り換えに対応） ──
+  app.boardTrainNow = function(player){
+    const ps = player && player.pendingStation; if(!ps) return;
+    const NEAR_M = 140;
+    const at = app.stationLinesAt ? app.stationLinesAt(ps.lat, ps.lng, NEAR_M) : null;
+    if(!at || !at.lines.length){ player.pendingStation = null; return; }
+    player.pendingStation = null;
+    app._openRailRide(player, at, (pick)=>{
+      if(!pick){ app.updateHUD && app.updateHUD(); return; }
+      const route = pick.route || [{line:pick.line, from:at.name, to:pick.to,
+        fare:(app.railFare(pick.line, at.name, pick.to)||{}).fare || 0}];
+      const fare = app.railRouteFare(route);
+      if(!fare || (Number(player.money)||0) < fare){ app.updateHUD && app.updateHUD(); return; }
+      player.money = Math.max(0, (Number(player.money)||0) - fare);
+      const path = route.map(sg => String(LINES[sg.line].name).replace('（構想）','') + ' ' + sg.from + '→' + sg.to).join(' ／ ');
+      app.addLog && app.addLog(`🚃 ${player.name}：${path}（運賃 ¥${fare.toLocaleString('ja-JP')}／約${app.railRouteKm(route)}km${route.length>1?'　'+(route.length-1)+'回乗換':''}）`);
+      app.updateHUD && app.updateHUD();
+
+      const finish = (res)=>{
+        const prize = Math.max(0, Number(res && res.prize) || 0);
+        const skipped = !!(res && res.skipped);
+        if(prize > 0){
+          player.money = (Number(player.money)||0) + prize;
+          app.addLog && app.addLog(`🎖 ${player.name}：運転ボーナス ＋¥${prize.toLocaleString('ja-JP')}`);
+        }
+        if(skipped) app.addLog && app.addLog(`⏭ ${player.name}：運転をスキップしました（評価なし）`);
+        // スキップでも🚃の乗り物は適用します
+        try{
+          if(!player.isFlying && !(player.wheelchairTurns > 0)){
+            player.vehicle = { emoji:'🚃', name:'電車', mult:4 };
+            app.addLog && app.addLog(`🚃 ${player.name}：次のサイコロは【🚃 電車（4倍）】です。`);
+            app.setPlayerIconState && app.setPlayerIconState(player, {});
+          }
+        }catch(e){}
+        app.updateHUD && app.updateHUD();
+        app.scheduleProfilePersist && app.scheduleProfilePersist(player);
+        const toName = route[route.length - 1].to;
+        const dest = ST[toName] || {lat:ps.lat, lng:ps.lng};
+        Promise.resolve(app.teleportPlayer(player, {name:toName + '駅', lat:dest.lat, lng:dest.lng}))
+          .then(()=>{ app.finishTurn(); app.panToCurrentPlayer && app.panToCurrentPlayer(); })
+          .catch(()=>{ app.finishTurn(); });
+      };
+
+      const anyDrivable = route.some(sg => DRIVABLE.has(sg.line));
+      if(anyDrivable && app.runRailRoute) app.runRailRoute(player, route, finish);
+      else finish({prize:0, skipped:false});
+    });
+  };
+
+  window.__EDOGAWA_V115_INFO = (station)=>{
+    const n = station || '西葛西';
+    const r = app.railRouteSearch(n, null, 3);
+    const out = {};
+    Object.keys(r).forEach(k=>{
+      out[k] = { 乗換:r[k].length-1, 運賃:app.railRouteFare(r[k]), km:app.railRouteKm(r[k]),
+        経路:r[k].map(x=>`${String(LINES[x.line].name).replace('（構想）','')} ${x.from}→${x.to}`) };
+    });
+    return { 駅:n, メトロセブン開通:app.metro7OpenStations?app.metro7OpenStations():[], 行き先:out };
   };
 })();
 </script>
