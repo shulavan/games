@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v109 (2026-10-02)';
+    window.__EDOGAWA_VERSION = 'v111 (2026-10-06)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1568,8 +1568,8 @@
           <button onclick="EdogawaSugoroku.selectCategory('学校・神社仏閣')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-1.5">
             <span class="text-xl shrink-0">⛩️</span>
             <div>
-              <div class="cat-btn-name text-[15px] font-bold text-slate-100 leading-tight">学校・寺社</div>
-              <div class="cat-btn-sub text-[12px] text-slate-400 leading-tight">学校・お寺・神社</div>
+              <div class="cat-btn-name text-[15px] font-bold text-slate-100 leading-tight">学校</div>
+              <div class="cat-btn-sub text-[12px] text-slate-400 leading-tight">小中高・保育園</div>
             </div>
           </button>
           <button onclick="EdogawaSugoroku.selectCategory('宿泊施設')" class="cat-btn bg-slate-800 hover:bg-amber-500/20 hover:border-amber-500 border border-slate-700 p-2.5 rounded-xl text-left transition flex items-center gap-1.5">
@@ -1712,10 +1712,14 @@
         <p class="text-sm text-slate-300">舟券購入: 2連単 <span id="boatrace-buy-pair" class="text-amber-300 font-bold"></span></p>
         <p class="text-[11px] text-slate-400">所持金 <span id="boatrace-buy-money" class="text-emerald-300 font-bold"></span></p>
         <div class="grid grid-cols-4 gap-2">
-          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(100)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥100</button>
-          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(500)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥500</button>
-          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(1000)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥1,000</button>
-          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(5000)" class="bg-slate-800 border border-slate-700 rounded-lg py-2 text-xs font-bold text-slate-200 hover:border-amber-500">¥5,000</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(100)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥100</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(500)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥500</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(1000)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥1,000</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(5000)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥5,000</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(10000)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥10,000</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(50000)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥50,000</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(100000)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥100,000</button>
+          <button onclick="EdogawaSugoroku.boatRaceSetBetAmount(500000)" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg py-2 text-[11px] font-bold text-slate-200 hover:border-amber-500">¥500,000</button>
         </div>
         <p id="boatrace-buy-amount-display" class="text-2xl font-black text-amber-400">¥0</p>
         <p id="boatrace-buy-payout" class="text-[11px] text-slate-400"></p>
@@ -2432,7 +2436,7 @@
 
           <h4>ゴールしたあと</h4>
           <p>だれかがゴールすると順位とご祝儀が決まり、ルーレットで次の目的地が選ばれます。
-          ジャンルは <strong>飲食店／スーパー・薬局／公園／駅・バス停／公共・スポーツ施設／学校・神社仏閣／宿泊施設／病院</strong> の8種類で、
+          ジャンルは <strong>飲食店／スーパー・薬局／公園／駅・バス停／公共・スポーツ施設／学校／宿泊施設／病院</strong> の8種類で、
           地図に出るすべての絵文字アイコン（約2,100か所）が目的地の対象です。
           次の目的地は江戸川区内から選ばれ、直前と同じ場所は選ばれません。ゲームは繰り返し続けられます。</p>
 
@@ -2862,7 +2866,7 @@
       { name: '公園', emoji: '🌳', sub: '自然・広場' },
       { name: '駅（バス停含む）', emoji: '🚉', sub: '交通スポット' },
       { name: '公共・スポーツ施設', emoji: '🏛', sub: '区の施設・体育館' },
-      { name: '学校・神社仏閣', emoji: '⛩️', sub: '学校・お寺・神社' },
+      { name: '学校・神社仏閣', emoji: '🏫', sub: '小中高・保育園' },   // v110：表示は「学校」。寺社は御朱印帳用に取り置き
       { name: '宿泊施設', emoji: '🛏️', sub: 'ホテル・旅館' },
       { name: '病院', emoji: '🏥', sub: 'クリニックなど' }
     ];
@@ -7164,7 +7168,8 @@
 
         if (node && node.type === 'red') {
           sound.playLandRed();
-          const amount = (Math.floor(Math.random() * 8) + 1) * 500;
+          // v110：ターンが進むほど金額が大きくなります（100円未満は切捨て）
+          const amount = this.scaleTurnMoney((Math.floor(Math.random() * 8) + 1) * 500);
           player.money -= amount;   // マイナスも許容（所持金は「-￥〇〇」で表示）
 
           if (player.isFlying) {
@@ -7180,7 +7185,8 @@
 
         } else if (node && node.type === 'blue') {
           sound.playLandBlue();
-          const amount = (Math.floor(Math.random() * 10) + 1) * 1000;
+          // v110：ターンが進むほど金額が大きくなります（100円未満は切捨て）
+          const amount = this.scaleTurnMoney((Math.floor(Math.random() * 10) + 1) * 1000);
           player.money += amount;
 
           if (player.isFlying) {
@@ -7718,7 +7724,8 @@
         const chosenText = q.options[index];
         const correct = chosenText === q.answer;
         document.querySelectorAll('#quiz-options button').forEach(b => b.disabled = true);
-        if (correct) { player.money += 50000; sound.playQuizCorrect(); } else { sound.playQuizWrong(); }
+        const quizPrize = this.scaleTurnMoney(50000);   // v110：ターン数で増額
+        if (correct) { player.money += quizPrize; sound.playQuizCorrect(); } else { sound.playQuizWrong(); }
         document.getElementById('quiz-question-screen')?.classList.add('hidden');
         const result = document.getElementById('quiz-result-screen');
         result?.classList.remove('hidden');
@@ -7732,9 +7739,9 @@
         if (playerEl) playerEl.textContent = `${this.avatarPlain ? this.avatarPlain(player.avatar) : (player.avatar||'')} ${player.name} の挑戦`;
         document.getElementById('quiz-result-text').textContent = correct ? '正解！' : '不正解！';
         document.getElementById('quiz-result-text').className = `text-base font-black ${correct ? 'text-red-400' : 'text-blue-400'}`;
-        document.getElementById('quiz-result-money').textContent = correct ? '賞金 ＋¥50,000' : '賞金なし';
+        document.getElementById('quiz-result-money').textContent = correct ? `賞金 ＋¥${quizPrize.toLocaleString('ja-JP')}` : '賞金なし';
         this.updateHUD();
-        this.addLog(`🧠 [江戸川クイズ] ${player.name} は${correct ? '正解！＋¥50,000' : '不正解'}。`);
+        this.addLog(`🧠 [江戸川クイズ] ${player.name} は${correct ? `正解！＋¥${quizPrize.toLocaleString('ja-JP')}` : '不正解'}。`);
         this._syncQuizState({ phase: 'result', chosenIndex: index, chosenText: chosenText, correct, answerText: q.answer });
         this.armModalAutoClose('quiz', 'quiz-close-btn', () => this.closeQuizEvent());
       },
@@ -8306,7 +8313,8 @@
             return uniq([OD_SPORTS, OD_CULTURE, OD_REKU, OD_LIBRARIES, OD_OFFICES,
                          OD_KYOIKU, OD_HEALTH, [BOAT_RACE_LOC]]);
           case '学校・神社仏閣':
-            return uniq([SCHOOLS, OD_HIGHSCHOOL, TEMPLES_SHRINES, OD_HOIKU, OD_KOSODATE]);
+            // 【v110】寺社は目的地ルーレットから外します（御朱印帳の機能で使う予定）。
+            return uniq([SCHOOLS, OD_HIGHSCHOOL, OD_HOIKU, OD_KOSODATE]);
           case '宿泊施設':
             return uniq([RAKUTEN_HOTELS]);
           case '病院':
@@ -17993,6 +18001,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   app.cpuMiniGameResultOnly = function(game, p){
     const f = CPU_PRIZE[game] || (()=>{ const s=30+Math.floor(Math.random()*71); return {score:s, delta:s*100, detail:`採点 ${s}点 × ￥100`}; });
     const r = f();
+    // v110：ターン数に応じた増額をCPUの結果にも反映します
+    try{
+      const base = moneyN(r.delta), scaled = app.scaleTurnMoney ? app.scaleTurnMoney(base) : base;
+      if(scaled !== base){
+        r.delta = scaled;
+        const lb = app.turnBonusLabel ? app.turnBonusLabel() : '';
+        if(lb) r.detail = String(r.detail||'') + `（${lb}）`;
+      }
+    }catch(e){}
     app.miniGameActive = true;
     app.activeMiniGamePlayerId = p.id;
     app.regionalMiniGame = { game: game, playerId: p.id, done: true, cpuOnly: true };
@@ -20525,6 +20542,587 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     自動サイコロの予約: !!app.autoRollTimer,
     メトロセブン: app.metro7NoticeState ? app.metro7NoticeState() : null
   });
+})();
+</script>
+
+
+<!-- ============================================================================
+     v110: ターン数に応じた増額／ミニゲーム報酬への反映
+     ============================================================================ -->
+<script id="edogawa-v110">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ターン数に応じた増額率 ──
+  //   15ターン → +1.5％、123ターン → +12.3％（ターン数 ÷ 10 ＝ ％）
+  app.turnMoneyRate = function(){
+    const t = Math.max(0, Number(this.turnCount) || 0);
+    return 1 + t / 1000;
+  };
+  app.turnMoneyPercent = function(){
+    return Math.round((this.turnMoneyRate() - 1) * 1000) / 10;   // 例：12.3
+  };
+  // 金額を増やして、100円未満は切り捨てます（マイナスは絶対値で切り捨て）
+  app.scaleTurnMoney = function(n){
+    const v = Number(n) || 0;
+    if (!v) return 0;
+    const abs = Math.abs(v);
+    if (abs < 100) return v;                 // 100円未満はそのまま（0円になってしまうため）
+    const scaled = Math.floor(abs * this.turnMoneyRate() / 100) * 100;
+    return v < 0 ? -scaled : scaled;
+  };
+  app.turnBonusLabel = function(){
+    const pct = this.turnMoneyPercent();
+    return pct > 0 ? `${this.turnCount||0}ターン　ターンボーナス +${pct}%` : '';
+  };
+
+  // ── ミニゲームの報酬にも反映します ──
+  function scaleResult(d){
+    if(!d || d.__edoTurnScaled) return d;
+    const out = Object.assign({}, d);
+    out.__edoTurnScaled = true;
+    const base = Number(d.delta != null ? d.delta : d.prize);
+    if(!Number.isFinite(base) || base === 0) return out;
+    const scaled = app.scaleTurnMoney(base);
+    if(scaled === base) return out;
+    if(d.delta != null) out.delta = scaled;
+    if(d.prize != null) out.prize = scaled;
+    const label = app.turnBonusLabel();
+    if(label) out.detail = String(d.detail || '') + `（${label}）`;
+    return out;
+  }
+  ['applyRegionalMiniGameResult','applyIntegratedMiniGameResult'].forEach(function(name){
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(data){ return orig(scaleResult(data)); };
+  });
+
+  // 電車の運転ボーナスにも反映します
+  const origTrain = app.startTrainRide ? app.startTrainRide.bind(app) : null;
+  if(origTrain){
+    app.startTrainRide = function(player, lineKey, from, to, onFinish){
+      return origTrain(player, lineKey, from, to, function(prize, detail){
+        const scaled = app.scaleTurnMoney(Number(prize)||0);
+        const label = app.turnBonusLabel();
+        onFinish && onFinish(scaled, label ? String(detail||'') + `（${label}）` : detail);
+      });
+    };
+  }
+
+  window.__EDOGAWA_V110_INFO = ()=>({
+    ターン: app.turnCount,
+    増額率: app.turnMoneyPercent() + '%',
+    例_1000円: app.scaleTurnMoney(1000),
+    例_4000円: app.scaleTurnMoney(4000),
+    例_マイナス2500円: app.scaleTurnMoney(-2500),
+    寺社がルーレットに出るか: (app.destinationPoolFor('学校・神社仏閣')||[]).some(x=>/神社|最勝寺|氷川|興之宮/.test(String(x.name))),
+    掛金ボタン: [...document.querySelectorAll('#boatrace-buy-screen .edo-bet-btn')].map(b=>b.textContent.trim())
+  });
+})();
+</script>
+
+
+<!-- ============================================================================
+     v111: 江戸川ジャンボ宝くじ／ゲーム画面のメニュー（投稿・不動産・御朱印・宝くじ）
+     ============================================================================ -->
+<style id="edogawa-v111-style">
+  /* ゲーム画面のフッターは「メニュー」1つにします（📌投稿◯件は出しません） */
+  #visited-pin-tool{ display:none !important; }
+  #edo-game-menu-tool{
+    background:rgba(15,23,42,.95); border:1px solid rgba(245,158,11,.55); color:#fbbf24;
+    border-radius:12px; padding:8px 14px; font-size:12px; font-weight:900;
+    box-shadow:0 10px 26px rgba(0,0,0,.34); position:relative; z-index:46;
+    pointer-events:auto !important; white-space:nowrap; }
+  #edo-game-menu-tool:active{ transform:scale(.97); }
+  body.edo-visited-only #edo-game-menu-tool{ display:none !important; }
+
+  /* メニュー（下から出るシート） */
+  #edo-menu-sheet{ position:fixed; inset:0; z-index:2147483200; display:none;
+    align-items:flex-end; justify-content:center; background:rgba(2,6,23,.78); backdrop-filter:blur(7px); }
+  #edo-menu-sheet.show{ display:flex }
+  .edo-ms-box{ width:min(460px,100%); background:#0f172a; border:1px solid #334155;
+    border-radius:22px 22px 0 0; padding:16px 16px 22px; box-shadow:0 -18px 50px rgba(0,0,0,.55) }
+  .edo-ms-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px }
+  .edo-ms-title{ font-size:16px; font-weight:900; color:#fbbf24 }
+  .edo-ms-item{ width:100%; display:flex; align-items:center; gap:12px; text-align:left;
+    background:rgba(2,6,23,.6); border:1px solid #1e293b; border-radius:16px;
+    padding:12px 14px; margin-bottom:9px; color:#e2e8f0 }
+  .edo-ms-item:active{ transform:scale(.985) }
+  .edo-ms-item.readonly{ opacity:.95; border-style:dashed }
+  .edo-ms-ic{ font-size:22px; width:30px; text-align:center; flex:0 0 30px }
+  .edo-ms-tx{ flex:1 1 auto; min-width:0 }
+  .edo-ms-t1{ font-size:14px; font-weight:900 }
+  .edo-ms-t2{ font-size:11px; color:#94a3b8; margin-top:2px }
+  .edo-ms-ar{ color:#64748b; font-weight:900 }
+
+  /* 一覧モーダル（不動産・投稿） */
+  #edo-list-modal{ position:fixed; inset:0; z-index:2147483210; display:none;
+    align-items:center; justify-content:center; padding:14px; background:rgba(2,6,23,.9); backdrop-filter:blur(8px) }
+  #edo-list-modal.show{ display:flex }
+  .edo-lm-box{ width:min(460px,96vw); max-height:86vh; display:flex; flex-direction:column;
+    background:#0f172a; border:1px solid #334155; border-radius:22px; padding:16px;
+    box-shadow:0 24px 64px rgba(0,0,0,.6) }
+  .edo-lm-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px }
+  .edo-lm-title{ font-size:16px; font-weight:900; color:#fbbf24 }
+  .edo-lm-body{ flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch }
+  .edo-lm-foot{ display:flex; gap:10px; margin-top:12px }
+  .edo-lm-btn{ flex:1 1 0; padding:12px; border-radius:14px; font-size:14px; font-weight:900;
+    border:1px solid #475569; background:#1e293b; color:#e2e8f0 }
+  .edo-lm-btn.primary{ background:linear-gradient(180deg,#f59e0b,#d97706); border-color:#b45309; color:#0f172a }
+  .edo-prop-row{ display:flex; align-items:center; gap:11px; padding:10px 11px; margin-bottom:8px;
+    background:rgba(2,6,23,.6); border:1px solid #1e293b; border-radius:14px }
+  .edo-prop-ic{ font-size:25px; width:36px; text-align:center; flex:0 0 36px }
+  .edo-prop-tx{ min-width:0; flex:1 1 auto }
+  .edo-prop-n{ font-size:13px; font-weight:900; color:#f1f5f9; line-height:1.35 }
+  .edo-prop-p{ font-size:12px; color:#cbd5e1; margin-top:3px; line-height:1.35 }
+  .edo-prop-p b{ color:#fbbf24 }
+  .edo-prop-p .inc{ color:#86efac }
+  .edo-lm-empty{ text-align:center; color:#94a3b8; font-size:13px; padding:34px 10px; line-height:1.9 }
+  .edo-lm-sum{ font-size:12px; color:#cbd5e1; text-align:right; margin:2px 2px 10px }
+
+  /* 📌 画面のフッター（まるボタン） */
+  body.edo-visited-only #visited-only-back-btn{ display:none !important; }
+  #edo-visited-foot{ position:fixed; left:0; right:0; bottom:calc(14px + env(safe-area-inset-bottom,0px));
+    z-index:2147483100; display:none; justify-content:center; gap:22px; pointer-events:none }
+  body.edo-visited-only #edo-visited-foot{ display:flex }
+  .edo-vf-btn{ pointer-events:auto; width:78px; height:78px; border-radius:9999px;
+    background:rgba(15,23,42,.96); border:2px solid rgba(245,158,11,.6); color:#fbbf24;
+    font-size:13px; font-weight:900; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:3px; box-shadow:0 12px 30px rgba(0,0,0,.5) }
+  .edo-vf-btn .e{ font-size:21px; line-height:1 }
+  .edo-vf-btn:active{ transform:scale(.95) }
+  .edo-vf-btn:disabled{ opacity:.6 }
+</style>
+<script id="edogawa-v111">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const esc = (v)=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const yen = (n)=>'¥'+Math.round(Number(n)||0).toLocaleString('ja-JP');
+
+  // ══════════════════════════════════════════════════════════════
+  //  ① 江戸川ジャンボ宝くじ
+  //     7ターンごとに「購入画面」→ その7ターン後に「抽選画面」をくり返します
+  // ══════════════════════════════════════════════════════════════
+  const LOTTERY_EVERY = 7;
+  app.lotteryEvery = LOTTERY_EVERY;
+
+  app.lotteryStore = function(player){
+    if(!player) return null;
+    const L = player.lottery = player.lottery || {};
+    if(!Array.isArray(L.tickets)) L.tickets = [];
+    if(!Number.isFinite(L.renban)) L.renban = 0;
+    if(!Number.isFinite(L.bara))   L.bara   = 0;
+    if(!L.history) L.history = {p1_front_back:0,p1:0,p2:0,p3:0,p4:0,p5:0,p6:0};
+    return L;
+  };
+
+  // 購入画面／抽選画面をひらきます（電車の運転シミュレーターと同じ作りです）
+  app.startLotteryGame = function(player, mode, onFinish){
+    const overlay = document.getElementById('regional-mini-overlay');
+    const frame   = document.getElementById('regional-mini-frame');
+    const title   = document.getElementById('regional-mini-title');
+    const loading = document.getElementById('regional-mini-loading');
+    if(!overlay || !frame){ onFinish && onFinish(null); return false; }
+
+    const L = app.lotteryStore(player);
+    let finished = false, payload = null;
+    const cleanup = ()=>{
+      window.removeEventListener('message', onMsg);
+      clearTimeout(guard);
+      try{ frame.onload=null; frame.removeAttribute('srcdoc'); frame.src='about:blank'; }catch(e){}
+      overlay.classList.add('hidden');
+      frame.style.display='none';
+      app.miniGameActive = false;
+    };
+    const done = ()=>{ if(finished) return; finished = true; cleanup(); onFinish && onFinish(payload); };
+
+    const onMsg = (e)=>{
+      const d = e.data || {};
+      if(d.game !== 'lottery') return;
+      if(d.type === 'EDOGAWA_LOTTERY_REQUEST'){
+        try{
+          frame.contentWindow.postMessage({ type:'EDOGAWA_LOTTERY_DATA', data:{
+            money: Math.max(0, Number(player.money)||0),
+            tickets: (mode==='draw') ? L.tickets : [],
+            history: L.history,
+            renbanCount: L.renban, baraCount: L.bara,
+            playerName: player.name
+          }}, '*');
+        }catch(err){}
+        return;
+      }
+      if(d.type === 'EDOGAWA_MINIGAME_RENDERED'){ if(loading) loading.style.display='none'; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard = setTimeout(done, 900000); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_RESULT'){ payload = d; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_CLOSE' || d.type === 'EDOGAWA_MINIGAME_START_FAILED'){ done(); return; }
+    };
+    let guard = setTimeout(done, 900000);
+    window.addEventListener('message', onMsg);
+
+    app.miniGameActive = true;
+    if(title) title.textContent = (mode==='draw') ? '🎊 江戸川ジャンボ宝くじ　抽選会' : '🎫 江戸川ジャンボ宝くじ　売り場';
+    if(loading) loading.style.display='flex';
+    frame.style.display='block';
+    overlay.classList.remove('hidden');
+    frame.onload = ()=>{ if(loading) loading.style.display='none'; };
+    try{ frame.removeAttribute('srcdoc'); }catch(e){}
+    frame.src = 'minigames.html?game=lottery&mode=' + (mode==='draw'?'draw':'shop') +
+                '&v=' + (window.__EDOGAWA_MINIGAMES_VER || '1');
+    return true;
+  };
+
+  // 結果を所持金とデータに反映します
+  app.applyLotteryResult = function(player, d){
+    const L = app.lotteryStore(player);
+    if(!d || !d.kind){ return; }
+    if(d.kind === 'buy'){
+      const cost = Math.max(0, Math.round(Number(d.cost)||0));
+      player.money = (Number(player.money)||0) - cost;      // マイナスも許容
+      L.tickets = Array.isArray(d.tickets) ? d.tickets.map(t=>({type:String(t.type||'バラ'), number:String(t.number||'')})) : [];
+      L.renban  = Math.max(0, Number(d.renban)||0);
+      L.bara    = Math.max(0, Number(d.bara)||0);
+      app.addLog(`🎫 ${player.name}：宝くじを購入　連番${L.renban}枚・バラ${L.bara}枚（−${yen(cost)}）`);
+    }else if(d.kind === 'draw'){
+      const prize = Math.max(0, Math.round(Number(d.prize ?? d.delta)||0));
+      player.money = (Number(player.money)||0) + prize;
+      if(d.history) L.history = Object.assign(L.history, d.history);
+      L.tickets = []; L.renban = 0; L.bara = 0;
+      app.addLog(prize > 0
+        ? `🎊 ${player.name}：宝くじ当せん　＋${yen(prize)}`
+        : `🎫 ${player.name}：宝くじは当たりませんでした`);
+    }else{
+      app.addLog(`🎫 ${player.name}：宝くじは買いませんでした`);
+    }
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    try{ app.scheduleProfilePersist && app.scheduleProfilePersist(player); }catch(e){}
+  };
+
+  // ── 7ターンごとの呼び出し ──
+  function myPlayer(){
+    const ps = app.players || [];
+    if(app.isMultiplayer) return ps.find(p=>p && p.uid && p.uid === app.myUid) || null;
+    return ps.find(p=>p && Number(p.id)===0 && !p.isCpu) || null;
+  }
+  function isMyTurn(){
+    const p = (app.players||[])[app.currentPlayerIdx];
+    if(!p || p.isCpu) return false;
+    return p === myPlayer();
+  }
+  let lastLotteryTurn = -1, pendingLottery = null;
+  app.lotteryPhaseFor = function(turn){
+    const t = Math.max(0, Number(turn)||0);
+    if(t <= 0 || t % LOTTERY_EVERY !== 0) return null;
+    return ((t / LOTTERY_EVERY) % 2 === 1) ? 'shop' : 'draw';
+  };
+  function screenBusy(){
+    if(app.miniGameActive || app.boatRaceActive || app.goalAmidaActive || app.awaitingGoalSelection) return true;
+    if(app.isRolling) return true;
+    return ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','boatrace-continue-modal',
+      'goal-modal','rocket-gift-modal','regional-mini-overlay','edo-m7-notice','edo-list-modal',
+      'edo-menu-sheet','edo-backup-modal','settings-modal','menu-modal']
+      .some(id=>{ const el=document.getElementById(id); if(!el||el.classList.contains('hidden')) return false;
+        try{ return getComputedStyle(el).display !== 'none'; }catch(e){ return false; } });
+  }
+  app.maybeOpenLottery = function(){
+    try{
+      const t = Math.max(0, Number(app.turnCount)||0);
+      const phase = app.lotteryPhaseFor(t);
+      // そのターンになったら予約しておき、画面が空いたときに開きます
+      if(phase && t !== lastLotteryTurn && (!pendingLottery || pendingLottery.turn !== t)){
+        pendingLottery = { turn:t, phase:phase };
+      }
+      if(!pendingLottery) return false;
+      if(!isMyTurn()) return false;
+      if(screenBusy()) return false;
+      if(document.body.classList.contains('edo-visited-only')) return false;
+      const p = myPlayer(); if(!p) return false;
+      const L = app.lotteryStore(p);
+      // 買っていないのに抽選だけ開いても意味がないので、その回は購入画面にします
+      const mode = (pendingLottery.phase === 'draw' && !L.tickets.length) ? 'shop' : pendingLottery.phase;
+      lastLotteryTurn = pendingLottery.turn;
+      pendingLottery = null;
+      return app.startLotteryGame(p, mode, (d)=>{ app.applyLotteryResult(p, d); });
+    }catch(e){ console.error('[v111]', e); return false; }
+  };
+  setInterval(()=>{ try{ if(pendingLottery) app.maybeOpenLottery(); }catch(e){} }, 2500);
+
+  const origFinish = app.finishTurnContinue ? app.finishTurnContinue.bind(app) : null;
+  if(origFinish){
+    app.finishTurnContinue = function(){
+      let r, err = null;
+      try{ r = origFinish(); }catch(e){ err = e; }
+      try{ setTimeout(()=>{ app.maybeOpenLottery(); }, 700); }catch(e){}
+      if(err) throw err;
+      return r;
+    };
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  ② ゲーム画面のメニュー
+  // ══════════════════════════════════════════════════════════════
+  function ensureMenuButton(){
+    const row = document.getElementById('edo-nearby-row');
+    if(!row) return;
+    if(document.getElementById('edo-game-menu-tool')) return;
+    const b = document.createElement('button');
+    b.id = 'edo-game-menu-tool'; b.type = 'button';
+    b.textContent = '☰ メニュー';
+    b.onclick = ()=>app.openGameMenuSheet();
+    row.appendChild(b);
+  }
+
+  function ensureSheet(){
+    let el = document.getElementById('edo-menu-sheet');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'edo-menu-sheet';
+    el.innerHTML =
+      '<div class="edo-ms-box">' +
+        '<div class="edo-ms-head"><div class="edo-ms-title">☰ メニュー</div>' +
+        '<button type="button" id="edo-ms-close" class="text-slate-400 font-black text-lg">✕</button></div>' +
+        '<div id="edo-ms-items"></div>' +
+      '</div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', (ev)=>{ if(ev.target === el) app.closeGameMenuSheet(); });
+    el.querySelector('#edo-ms-close').onclick = ()=>app.closeGameMenuSheet();
+    return el;
+  }
+
+  app.closeGameMenuSheet = function(){ document.getElementById('edo-menu-sheet')?.classList.remove('show'); };
+
+  app.openGameMenuSheet = function(){
+    const el = ensureSheet();
+    const p = myPlayer() || (app.players||[])[0] || {};
+    const L = app.lotteryStore(p) || {renban:0,bara:0,tickets:[]};
+    const posts = Math.max(0, Number(app.visitedEntryCount)||0);
+    const props = Array.isArray(p.properties) ? p.properties : [];
+    const stamps = Array.isArray(p.goshuin) ? p.goshuin.length : 0;
+    const income = props.reduce((a,x)=>a + Math.floor((Number(x.price)||0)*0.01), 0);
+
+    const items = [
+      {ic:'📌', t1:`投稿${posts.toLocaleString('ja-JP')}件`, t2:'行ったところの記録を見る・投稿する',
+        go:()=>{ app.closeGameMenuSheet(); app.openVisitedFlow(); }},
+      {ic:'🏠', t1:`不動産${props.length}件`, t2: props.length ? `毎ターン ＋${yen(income)}の収入` : 'まだ購入していません',
+        go:()=>{ app.closeGameMenuSheet(); app.openPropertyList(); }},
+      {ic:'📿', t1:`御朱印${stamps}個`, t2:'区内の寺社でいただいた御朱印（準備中）', readonly:true},
+      {ic:'🎫', t1:'宝くじ購入枚数', t2:`連番 ${L.renban}枚　バラ ${L.bara}枚`, readonly:true}
+    ];
+    const box = el.querySelector('#edo-ms-items');
+    box.innerHTML = '';
+    items.forEach(it=>{
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'edo-ms-item' + (it.readonly ? ' readonly' : '');
+      b.innerHTML = `<span class="edo-ms-ic">${it.ic}</span>` +
+        `<span class="edo-ms-tx"><span class="edo-ms-t1">${esc(it.t1)}</span>` +
+        `<span class="edo-ms-t2">${esc(it.t2)}</span></span>` +
+        (it.readonly ? '' : '<span class="edo-ms-ar">›</span>');
+      if(it.readonly){ b.disabled = true; } else { b.onclick = it.go; }
+      box.appendChild(b);
+    });
+    el.classList.add('show');
+    try{ app.refreshVisitedLobbyCount && app.refreshVisitedLobbyCount(); }catch(e){}
+  };
+
+  // ── 一覧モーダルの土台 ──
+  function ensureListModal(){
+    let el = document.getElementById('edo-list-modal');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'edo-list-modal';
+    el.innerHTML =
+      '<div class="edo-lm-box">' +
+        '<div class="edo-lm-head"><div class="edo-lm-title" id="edo-lm-title"></div>' +
+        '<button type="button" id="edo-lm-x" class="text-slate-400 font-black text-lg">✕</button></div>' +
+        '<div class="edo-lm-body" id="edo-lm-body"></div>' +
+        '<div class="edo-lm-foot" id="edo-lm-foot"></div>' +
+      '</div>';
+    document.body.appendChild(el);
+    el.querySelector('#edo-lm-x').onclick = ()=>app.closeListModal();
+    return el;
+  }
+  app.closeListModal = function(){ document.getElementById('edo-list-modal')?.classList.remove('show'); };
+  app.showListModal = function(title, bodyHtml, buttons){
+    const el = ensureListModal();
+    el.querySelector('#edo-lm-title').textContent = title;
+    el.querySelector('#edo-lm-body').innerHTML = bodyHtml;
+    const foot = el.querySelector('#edo-lm-foot');
+    foot.innerHTML = '';
+    (buttons||[]).forEach(b=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'edo-lm-btn' + (b.primary ? ' primary' : '');
+      btn.textContent = b.label;
+      btn.onclick = b.go;
+      foot.appendChild(btn);
+    });
+    el.classList.add('show');
+    return el;
+  };
+
+  // ── 不動産の一覧 ──
+  app.openPropertyList = function(){
+    const p = myPlayer() || (app.players||[])[0] || {};
+    const props = Array.isArray(p.properties) ? p.properties.slice() : [];
+    props.sort((a,b)=>(Number(b.purchasedAt)||0)-(Number(a.purchasedAt)||0));
+    const icon = (x)=>{ try{ return app.goalEmojiFor({name:x.name, category:x.category}); }catch(e){ return '🏠'; } };
+    let html, total = 0, income = 0;
+    if(!props.length){
+      html = '<div class="edo-lm-empty">まだ不動産を持っていません。<br>' +
+             '飲食店・スーパー・宿泊施設・病院にゴールすると購入できます。</div>';
+    }else{
+      props.forEach(x=>{ total += Number(x.price)||0; income += Math.floor((Number(x.price)||0)*0.01); });
+      html = `<div class="edo-lm-sum">${props.length}件　総額 <b style="color:#fbbf24">${yen(total)}</b>　毎ターン <b style="color:#86efac">＋${yen(income)}</b></div>` +
+        props.map(x=>{
+          const inc = Math.floor((Number(x.price)||0)*0.01);
+          return '<div class="edo-prop-row">' +
+            `<span class="edo-prop-ic">${icon(x)}</span>` +
+            '<span class="edo-prop-tx">' +
+              `<span class="edo-prop-n">${esc(x.name)}</span>` +
+              `<span class="edo-prop-p">実勢価格 <b>${yen(x.price)}</b>　／　自ターン収入 <span class="inc">＋${yen(inc)}</span></span>` +
+            '</span></div>';
+        }).join('');
+    }
+    app.showListModal('🏠 不動産', html, [{label:'閉じる', go:()=>app.closeListModal()}]);
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  //  ③ 📌 行ったところ：位置を確かめてから投稿リストを出します
+  // ══════════════════════════════════════════════════════════════
+  function ensureVisitedFooter(){
+    let el = document.getElementById('edo-visited-foot');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'edo-visited-foot';
+    el.innerHTML =
+      '<button type="button" id="edo-vf-back" class="edo-vf-btn"><span class="e">↩️</span><span>戻る</span></button>' +
+      '<button type="button" id="edo-vf-here" class="edo-vf-btn"><span class="e">📍</span><span>現在地</span></button>';
+    document.body.appendChild(el);
+    el.querySelector('#edo-vf-back').onclick = ()=>{ app.closeListModal(); app.closeVisitedOnlyMode && app.closeVisitedOnlyMode(); };
+    el.querySelector('#edo-vf-here').onclick = ()=>app.visitedLocateMe();
+    return el;
+  }
+
+  // 現在地を調べます（成功したら {lat,lng,acc}、だめなら null）
+  app.visitedGetPosition = function(){
+    return new Promise((resolve)=>{
+      if(!navigator.geolocation){ resolve(null); return; }
+      let settled = false;
+      const ok = (pos)=>{ if(settled) return; settled = true;
+        resolve({ lat:Number(pos.coords.latitude), lng:Number(pos.coords.longitude),
+                  acc:Number(pos.coords.accuracy)||9999 }); };
+      const ng = ()=>{ if(settled) return; settled = true;
+        resolve(app.lastGeo ? {lat:app.lastGeo.lat, lng:app.lastGeo.lng, acc:app.lastGeo.acc||9999} : null); };
+      try{ navigator.geolocation.getCurrentPosition(ok, ng, {enableHighAccuracy:true, maximumAge:30000, timeout:12000}); }
+      catch(e){ ng(); }
+      setTimeout(ng, 13000);
+    });
+  };
+
+  app.visitedLocateMe = async function(){
+    const btn = document.getElementById('edo-vf-here');
+    if(btn){ btn.disabled = true; }
+    const pos = await app.visitedGetPosition();
+    if(btn){ btn.disabled = false; }
+    if(!pos){ alert('位置情報を取得できませんでした。端末の位置情報の設定をご確認ください。'); return null; }
+    app.lastGeo = {lat:pos.lat, lng:pos.lng, acc:pos.acc};
+    try{ app.map && app.map.flyTo([pos.lat, pos.lng], 18, {duration:.6}); }catch(e){}
+    return pos;
+  };
+
+  // 投稿リスト（自分の投稿）を出します
+  app.openVisitedPostList = async function(){
+    const rows = await (async ()=>{
+      try{
+        const sb = app.visitedSupabase, uid = app.visitedSupabaseUser && app.visitedSupabaseUser.id;
+        if(!sb || !uid) return null;
+        const { data, error } = await sb.from('visited_entries')
+          .select('id,visit_date,note,created_at').eq('owner_uid', uid)
+          .order('created_at', {ascending:false});
+        if(error) throw error;
+        return data || [];
+      }catch(e){ console.warn('[v111] 投稿一覧', e); return null; }
+    })();
+
+    let html;
+    if(rows === null){
+      html = '<div class="edo-lm-empty">投稿一覧を読み込めませんでした。<br>通信の状態をご確認ください。</div>';
+    }else if(!rows.length){
+      html = '<div class="edo-lm-empty">まだ投稿がありません。<br>「投稿する」から記録できます。</div>';
+    }else{
+      html = `<div class="edo-lm-sum">${rows.length}件</div>` + rows.map(e=>
+        '<div class="edo-prop-row">' +
+          '<span class="edo-prop-ic">📌</span>' +
+          '<span class="edo-prop-tx">' +
+            `<span class="edo-prop-n">${esc(e.visit_date || '日付未設定')}</span>` +
+            `<span class="edo-prop-p">${esc(String(e.note || 'メモなし')).slice(0,60)}</span>` +
+          '</span></div>').join('');
+    }
+    app.showListModal('📌 行ったところ', html, [
+      {label:'投稿する', primary:true, go:()=>{ app.closeListModal(); app.startVisitedPinRecord && app.startVisitedPinRecord(); }},
+      {label:'閉じる', go:()=>{ app.closeListModal(); app.closeVisitedOnlyMode && app.closeVisitedOnlyMode(); }}
+    ]);
+  };
+
+  // 📌 画面をひらいて、位置を確かめてから投稿リストを出す一連の流れ
+  app.openVisitedFlow = async function(){
+    ensureVisitedFooter();
+    if(app.openVisitedOnlyMode){
+      try{ await app.openVisitedOnlyMode(); }catch(e){ return; }
+    }
+    if(!app._visitedOnlyMode) return;        // Supabase未接続などで開けなかった
+    const pos = await app.visitedGetPosition();
+    if(!pos){
+      alert('位置情報を取得できませんでした。端末の位置情報の設定をご確認ください。');
+      app.closeVisitedOnlyMode && app.closeVisitedOnlyMode();
+      return;
+    }
+    app.lastGeo = {lat:pos.lat, lng:pos.lng, acc:pos.acc};
+    const inside = (typeof window.isInsideEdogawaWard === 'function')
+      ? window.isInsideEdogawaWard(pos.lat, pos.lng) : true;
+    if(!inside){
+      alert('現在地が江戸川区の外のため、📌の投稿はできません。江戸川区内でお試しください。');
+      app.closeVisitedOnlyMode && app.closeVisitedOnlyMode();
+      return;
+    }
+    try{ app.map && app.map.flyTo([pos.lat, pos.lng], 18, {duration:.6}); }catch(e){}
+    await app.openVisitedPostList();
+  };
+
+  // トップページの「📌」も同じ流れにします
+  const origOpenVisited = app.openVisitedOnlyMode ? app.openVisitedOnlyMode.bind(app) : null;
+  app.openVisitedFromTop = function(){ return app.openVisitedFlow(); };
+  function patchTopPin(){
+    const b = document.getElementById('lobby-visited-pin-top');
+    if(b && !b.__edoV111){ b.__edoV111 = true; b.onclick = ()=>app.openVisitedFlow(); }
+    const b2 = document.getElementById('edogawa-lobby-visited-btn');
+    if(b2 && !b2.__edoV111){ b2.__edoV111 = true; b2.onclick = ()=>app.openVisitedFlow(); }
+  }
+
+  function boot(){
+    ensureMenuButton(); ensureVisitedFooter(); patchTopPin();
+    setInterval(()=>{ try{ ensureMenuButton(); patchTopPin(); }catch(e){} }, 1500);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V111_INFO = ()=>{
+    const p = myPlayer() || (app.players||[])[0] || {};
+    const L = app.lotteryStore(p) || {};
+    return {
+      宝くじの周期: LOTTERY_EVERY,
+      ターンごとの画面: [7,14,21,28,35,42].map(t=>t+':'+app.lotteryPhaseFor(t)),
+      買ってある枚数: (L.tickets||[]).length,
+      連番: L.renban, バラ: L.bara,
+      メニューボタン: !!document.getElementById('edo-game-menu-tool'),
+      投稿ボタンが消えているか: (()=>{ const e=document.getElementById('visited-pin-tool');
+        return !e || getComputedStyle(e).display==='none'; })(),
+      フッターのまるボタン: [...document.querySelectorAll('#edo-visited-foot .edo-vf-btn')].map(b=>b.textContent.trim())
+    };
+  };
 })();
 </script>
 
