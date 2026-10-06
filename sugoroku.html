@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v111 (2026-10-06)';
+    window.__EDOGAWA_VERSION = 'v113 (2026-10-06)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -20652,8 +20652,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   .edo-ms-item.readonly{ opacity:.95; border-style:dashed }
   .edo-ms-ic{ font-size:22px; width:30px; text-align:center; flex:0 0 30px }
   .edo-ms-tx{ flex:1 1 auto; min-width:0 }
-  .edo-ms-t1{ font-size:14px; font-weight:900 }
-  .edo-ms-t2{ font-size:11px; color:#94a3b8; margin-top:2px }
+  .edo-ms-t1{ font-size:14px; font-weight:900; display:inline }
+  /* v112：見出しと説明がくっついて見えたので、1文字ぶん空けます */
+  .edo-ms-t2{ font-size:11px; color:#94a3b8; display:inline; margin-left:1em }
   .edo-ms-ar{ color:#64748b; font-weight:900 }
 
   /* 一覧モーダル（不動産・投稿） */
@@ -20674,12 +20675,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     background:rgba(2,6,23,.6); border:1px solid #1e293b; border-radius:14px }
   .edo-prop-ic{ font-size:25px; width:36px; text-align:center; flex:0 0 36px }
   .edo-prop-tx{ min-width:0; flex:1 1 auto }
-  .edo-prop-n{ font-size:13px; font-weight:900; color:#f1f5f9; line-height:1.35 }
-  .edo-prop-p{ font-size:12px; color:#cbd5e1; margin-top:3px; line-height:1.35 }
+  .edo-prop-n{ display:block; font-size:13px; font-weight:900; color:#f1f5f9; line-height:1.35 }
+  .edo-prop-p{ display:block; font-size:11px; color:#cbd5e1; margin-top:3px; line-height:1.5; text-align:left }
+  .edo-prop-p .nb{ white-space:nowrap }
   .edo-prop-p b{ color:#fbbf24 }
   .edo-prop-p .inc{ color:#86efac }
-  .edo-lm-empty{ text-align:center; color:#94a3b8; font-size:13px; padding:34px 10px; line-height:1.9 }
+  /* v112：2行にまたがる説明文は左揃えにします */
+  .edo-lm-empty{ text-align:left; color:#94a3b8; font-size:13px; padding:28px 14px; line-height:1.9 }
   .edo-lm-sum{ font-size:12px; color:#cbd5e1; text-align:right; margin:2px 2px 10px }
+  /* 自分の投稿一覧に足す「投稿する」「閉じる」 */
+  #visited-own-list-modal .visited-pin-box{ display:flex; flex-direction:column; max-height:86vh }
+  #visited-own-list-modal #visited-own-list-body{ flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch }
+  #edo-own-list-foot{ flex:0 0 auto }
 
   /* 📌 画面のフッター（まるボタン） */
   body.edo-visited-only #visited-only-back-btn{ display:none !important; }
@@ -20982,7 +20989,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
             `<span class="edo-prop-ic">${icon(x)}</span>` +
             '<span class="edo-prop-tx">' +
               `<span class="edo-prop-n">${esc(x.name)}</span>` +
-              `<span class="edo-prop-p">実勢価格 <b>${yen(x.price)}</b>　／　自ターン収入 <span class="inc">＋${yen(inc)}</span></span>` +
+              `<span class="edo-prop-p"><span class="nb">実勢価格 <b>${yen(x.price)}</b></span>　<span class="nb">自ターン収入 <span class="inc">＋${yen(inc)}</span></span></span>` +
             '</span></div>';
         }).join('');
     }
@@ -21001,7 +21008,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       '<button type="button" id="edo-vf-back" class="edo-vf-btn"><span class="e">↩️</span><span>戻る</span></button>' +
       '<button type="button" id="edo-vf-here" class="edo-vf-btn"><span class="e">📍</span><span>現在地</span></button>';
     document.body.appendChild(el);
-    el.querySelector('#edo-vf-back').onclick = ()=>{ app.closeListModal(); app.closeVisitedOnlyMode && app.closeVisitedOnlyMode(); };
+    el.querySelector('#edo-vf-back').onclick = ()=>{
+      app.closeListModal();
+      try{ app.hideVisitedOwnList && app.hideVisitedOwnList(); }catch(e){}
+      app.closeVisitedOnlyMode && app.closeVisitedOnlyMode();
+    };
     el.querySelector('#edo-vf-here').onclick = ()=>app.visitedLocateMe();
     return el;
   }
@@ -21033,43 +21044,61 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return pos;
   };
 
-  // 投稿リスト（自分の投稿）を出します
-  app.openVisitedPostList = async function(){
-    const rows = await (async ()=>{
-      try{
-        const sb = app.visitedSupabase, uid = app.visitedSupabaseUser && app.visitedSupabaseUser.id;
-        if(!sb || !uid) return null;
-        const { data, error } = await sb.from('visited_entries')
-          .select('id,visit_date,note,created_at').eq('owner_uid', uid)
-          .order('created_at', {ascending:false});
-        if(error) throw error;
-        return data || [];
-      }catch(e){ console.warn('[v111] 投稿一覧', e); return null; }
-    })();
+  // 投稿リスト ＝ もとからある「📌 自分の投稿一覧」に
+  //              「投稿する」「閉じる」のフッターを足したものを使います
+  function ownListModal(){ return document.getElementById('visited-own-list-modal'); }
+  function hideOwnList(){
+    const m = ownListModal();
+    if(m){ m.classList.add('hidden'); m.classList.remove('flex'); }
+  }
+  app.hideVisitedOwnList = hideOwnList;
+  function ensureOwnListFooter(){
+    const m = ownListModal(); if(!m) return;
+    const box = m.querySelector('.visited-pin-box'); if(!box) return;
+    if(document.getElementById('edo-own-list-foot')) return;
+    const f = document.createElement('div');
+    f.id = 'edo-own-list-foot';
+    f.className = 'edo-lm-foot';
+    f.innerHTML = '<button type="button" class="edo-lm-btn primary" id="edo-own-post">投稿する</button>' +
+                  '<button type="button" class="edo-lm-btn" id="edo-own-close">戻る</button>';
+    box.appendChild(f);
+    f.querySelector('#edo-own-post').onclick = ()=>{
+      hideOwnList();
+      app.startVisitedPinRecord && app.startVisitedPinRecord();
+    };
+    f.querySelector('#edo-own-close').onclick = ()=>{
+      hideOwnList();
+      app.closeVisitedOnlyMode && app.closeVisitedOnlyMode();
+    };
+  }
+  app.ensureVisitedOwnListFooter = ensureOwnListFooter;
 
-    let html;
-    if(rows === null){
-      html = '<div class="edo-lm-empty">投稿一覧を読み込めませんでした。<br>通信の状態をご確認ください。</div>';
-    }else if(!rows.length){
-      html = '<div class="edo-lm-empty">まだ投稿がありません。<br>「投稿する」から記録できます。</div>';
-    }else{
-      html = `<div class="edo-lm-sum">${rows.length}件</div>` + rows.map(e=>
-        '<div class="edo-prop-row">' +
-          '<span class="edo-prop-ic">📌</span>' +
-          '<span class="edo-prop-tx">' +
-            `<span class="edo-prop-n">${esc(e.visit_date || '日付未設定')}</span>` +
-            `<span class="edo-prop-p">${esc(String(e.note || 'メモなし')).slice(0,60)}</span>` +
-          '</span></div>').join('');
+  app.openVisitedPostList = async function(){
+    try{
+      if(app.openVisitedOwnList) await app.openVisitedOwnList();
+    }catch(e){ console.warn('[v112] 投稿一覧', e); }
+    ensureOwnListFooter();
+    const m = ownListModal();
+    if(m && m.classList.contains('hidden')){
+      // 一覧を出せなかったときも、投稿だけはできるようにします
+      const body = document.getElementById('visited-own-list-body');
+      if(body && !body.innerHTML.trim()){
+        body.innerHTML = '<div class="edo-lm-empty">投稿一覧を読み込めませんでした。<br>' +
+                         '通信の状態をご確認ください。投稿はこのまま続けられます。</div>';
+      }
+      m.classList.remove('hidden'); m.classList.add('flex');
     }
-    app.showListModal('📌 行ったところ', html, [
-      {label:'投稿する', primary:true, go:()=>{ app.closeListModal(); app.startVisitedPinRecord && app.startVisitedPinRecord(); }},
-      {label:'閉じる', go:()=>{ app.closeListModal(); app.closeVisitedOnlyMode && app.closeVisitedOnlyMode(); }}
-    ]);
   };
 
   // 📌 画面をひらいて、位置を確かめてから投稿リストを出す一連の流れ
   app.openVisitedFlow = async function(){
     ensureVisitedFooter();
+    // 【v113】トップページから開いたのか、双六ゲーム画面から開いたのかを覚えておき、
+    //         「戻る」でもとの画面に戻れるようにします。
+    try{
+      const lobby = document.getElementById('lobby-screen');
+      app._visitedOpenedFrom = (lobby && !lobby.classList.contains('hidden')) ? 'lobby' : 'game';
+    }catch(e){ app._visitedOpenedFrom = 'lobby'; }
     if(app.openVisitedOnlyMode){
       try{ await app.openVisitedOnlyMode(); }catch(e){ return; }
     }
@@ -21092,8 +21121,31 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     await app.openVisitedPostList();
   };
 
+  // 【v113】「戻る」「閉じる」は、開いたときの画面へ戻します。
+  //   トップページから開いた → トップページ
+  //   双六ゲーム画面から開いた → 双六ゲーム画面（トップページは出しません）
+  const origCloseVisited = app.closeVisitedOnlyMode ? app.closeVisitedOnlyMode.bind(app) : null;
+  if(origCloseVisited){
+    app.closeVisitedOnlyMode = function(){
+      const from = app._visitedOpenedFrom;
+      let r;
+      try{ r = origCloseVisited.apply(null, arguments); }
+      finally{
+        try{
+          if(from === 'game'){
+            document.getElementById('lobby-screen')?.classList.add('hidden');
+            setTimeout(()=>{ try{ app.map && app.map.invalidateSize(); }catch(e){} }, 150);
+            try{ app.updateHUD && app.updateHUD(); }catch(e){}
+            try{ app.panToCurrentPlayer && app.panToCurrentPlayer(); }catch(e){}
+          }
+        }catch(e){ console.error('[v113]', e); }
+        app._visitedOpenedFrom = null;
+      }
+      return r;
+    };
+  }
+
   // トップページの「📌」も同じ流れにします
-  const origOpenVisited = app.openVisitedOnlyMode ? app.openVisitedOnlyMode.bind(app) : null;
   app.openVisitedFromTop = function(){ return app.openVisitedFlow(); };
   function patchTopPin(){
     const b = document.getElementById('lobby-visited-pin-top');
@@ -21102,9 +21154,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(b2 && !b2.__edoV111){ b2.__edoV111 = true; b2.onclick = ()=>app.openVisitedFlow(); }
   }
 
+  // ヘッダーの赤いハンバーガーも、同じ「投稿する／閉じる」つきの一覧を開きます
+  function patchOwnMenuBtn(){
+    const b = document.getElementById('visited-only-own-menu-btn');
+    if(b && !b.__edoV112){ b.__edoV112 = true; b.onclick = ()=>app.openVisitedPostList(); }
+  }
+
   function boot(){
-    ensureMenuButton(); ensureVisitedFooter(); patchTopPin();
-    setInterval(()=>{ try{ ensureMenuButton(); patchTopPin(); }catch(e){} }, 1500);
+    ensureMenuButton(); ensureVisitedFooter(); patchTopPin(); patchOwnMenuBtn(); ensureOwnListFooter();
+    setInterval(()=>{ try{ ensureMenuButton(); patchTopPin(); patchOwnMenuBtn(); ensureOwnListFooter(); }catch(e){} }, 1500);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
