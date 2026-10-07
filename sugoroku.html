@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v121 (2026-10-07)';
+    window.__EDOGAWA_VERSION = 'v123 (2026-10-07)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -9551,7 +9551,8 @@
           const list = this.boatRaceState.bets[player.id] || [];
           if (list.length >= 3) return;
           const amount = Math.floor(Number(action.amount) / 100) * 100;
-          if (amount < 100 || amount > 5000 || !this.boatRaceState.odds[action.pair]) return;
+          // 【v123】掛金に ￥10,000〜￥500,000 を追加したので、上限もそろえます
+          if (amount < 100 || amount > 500000 || !this.boatRaceState.odds[action.pair]) return;
           player.money -= amount;
           list.push({ pair: action.pair, amount });
           this.boatRaceState.bets[player.id] = list;
@@ -21823,10 +21824,27 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const CANCEL_RE = /^\s*(キャンセル|戻る|もどる|見送る)\s*$/;
 
   // ── あとから付ける「✕」 ──
+  function isXBtn(el){
+    return el && el.tagName === 'BUTTON' &&
+      /^(×|✕|x|X)$/.test((el.innerText || el.textContent || '').trim());
+  }
+  // すでに「✕」を持っているモーダルには、もう1つ足しません（二重になるため）
+  function ownX(host){
+    if(!host) return null;
+    const seen = [];
+    [...host.children].forEach(el=>{
+      if(el.classList.contains('edo-x2')) return;
+      if(isXBtn(el)){ seen.push(el); return; }
+      [...el.children].forEach(c=>{ if(!c.classList.contains('edo-x2') && isXBtn(c)) seen.push(c); });
+    });
+    return seen[0] || null;
+  }
   function addX(host, side, action){
     if(!host) return null;
     let x = host.querySelector(':scope > .edo-x2');
     if(x){ x.__act = action; return x; }
+    const own = ownX(host);
+    if(own){ own.classList.add('edo-x-btn'); return own; }   // もとからある✕をそのまま使います
     host.classList.add('edo-x2-host');
     x = document.createElement('button');
     x.type = 'button';
@@ -22151,6 +22169,215 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
                  そろえ:getComputedStyle(el).textAlign });
     });
     return out;
+  };
+})();
+</script>
+<script id="edogawa-v122">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── 「お知らせ」：ボタンを置かずに、3秒のバーで自動で閉じます ──
+  //    （「はい／キャンセル」をたずねる確認のときは、ボタンを残します）
+  const SEC = 3;
+  let timer = null;
+
+  function clear(){ if(timer){ clearTimeout(timer); timer = null; } }
+
+  function dressNotice(){
+    const el = document.getElementById('edo-notice');
+    if(!el) return;
+    const box = el.querySelector('.edo-notice-box');
+    const acts = el.querySelector('.edo-notice-actions');
+    const ok = document.getElementById('edo-notice-ok');
+    const cancel = document.getElementById('edo-notice-cancel');
+    if(!box || !acts || !ok) return;
+
+    if(!el.classList.contains('show')){ clear(); const b = box.querySelector('.edo-bar'); if(b) b.remove(); return; }
+
+    const asking = cancel && getComputedStyle(cancel).display !== 'none';   // 確認（はい／キャンセル）か
+    if(asking){
+      clear();
+      const b = box.querySelector('.edo-bar'); if(b) b.remove();
+      ok.classList.remove('edo-hidden-close');
+      acts.classList.add('edo-foot-row');
+      ok.classList.add('edo-btn-primary');
+      cancel.classList.add('edo-btn-cancel');
+      acts.appendChild(cancel);                         // キャンセルは右
+      return;
+    }
+
+    // ただのお知らせ：OKを消して、バーで自動的に閉じます
+    ok.classList.add('edo-hidden-close');
+    acts.classList.remove('edo-foot-row');
+    if(!box.querySelector('.edo-bar')){
+      const bar = document.createElement('div');
+      bar.className = 'edo-bar';
+      bar.innerHTML = '<i style="animation-duration:' + (SEC*1000) + 'ms"></i>';
+      acts.parentNode.insertBefore(bar, acts);
+      clear();
+      timer = setTimeout(()=>{ timer = null; try{ ok.click(); }catch(e){} }, SEC*1000);
+    }
+  }
+
+  function boot(){
+    const run = ()=>{ try{ dressNotice(); }catch(e){} };
+    run();
+    setInterval(run, 300);
+    const el = document.getElementById('edo-notice');
+    if(el) new MutationObserver(run).observe(el, {attributes:true, attributeFilter:['class']});
+    // あとから作られることもあるので、body も見ておきます
+    new MutationObserver(()=>{ run(); }).observe(document.body, {childList:true});
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  // ── ミニゲームを閉じたら、中で鳴っている音を止めてもらいます ──
+  //    （この画面はミニゲームの入れ物を次に開くまで残す作りなので、
+  //      閉じたことを中に伝えて、音だけ止めてもらいます）
+  function teardown(){
+    const fr = document.getElementById('regional-mini-frame');
+    if(!fr || !fr.contentWindow) return;
+    try{ fr.contentWindow.postMessage({type:'EDOGAWA_MINIGAME_TEARDOWN'}, '*'); }catch(e){}
+  }
+  let wasOpen = false;
+  setInterval(()=>{
+    try{
+      const ov = document.getElementById('regional-mini-overlay');
+      if(!ov) return;
+      const open = !ov.classList.contains('hidden');
+      if(wasOpen && !open) teardown();       // 閉じた瞬間に伝えます
+      wasOpen = open;
+    }catch(e){}
+  }, 300);
+  app.__edoMiniTeardown = teardown;
+
+  window.__EDOGAWA_V122_INFO = ()=>{
+    const el = document.getElementById('edo-notice');
+    if(!el) return null;
+    const ok = document.getElementById('edo-notice-ok');
+    const cancel = document.getElementById('edo-notice-cancel');
+    const bar = el.querySelector('.edo-bar i');
+    const btns = [...el.querySelectorAll('.edo-notice-actions button')]
+      .filter(b=>getComputedStyle(b).display !== 'none')
+      .map(b=>(b.innerText||'').replace(/\s+/g,''));
+    return { 出ているか: el.classList.contains('show'),
+      見えているボタン: btns,
+      バー: !!bar,
+      バーの時間: bar ? getComputedStyle(bar).animationDuration : null,
+      OKが見えるか: ok ? getComputedStyle(ok).display !== 'none' : null,
+      キャンセルが見えるか: cancel ? getComputedStyle(cancel).display !== 'none' : null };
+  };
+})();
+</script>
+<script id="edogawa-v123">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ══════════════════════════════════════════════════════════════
+  //  ① メトロセブンのお知らせ：5秒のバーで自動的に閉じます
+  // ══════════════════════════════════════════════════════════════
+  const M7_MS = 5000;
+  let m7Timer = null;
+  function dressM7(){
+    const el = document.getElementById('edo-m7-notice');
+    if(!el){ return; }
+    if(!el.classList.contains('show')){
+      if(m7Timer){ clearTimeout(m7Timer); m7Timer = null; }
+      return;
+    }
+    const box = el.querySelector('.edo-m7-box');
+    if(!box || box.querySelector('.edo-bar')) return;
+    const bar = document.createElement('div');
+    bar.className = 'edo-bar';
+    bar.innerHTML = '<i style="animation-duration:' + M7_MS + 'ms"></i>';
+    box.appendChild(bar);
+    if(m7Timer) clearTimeout(m7Timer);
+    m7Timer = setTimeout(()=>{
+      m7Timer = null;
+      try{ app.closeMetro7Notice && app.closeMetro7Notice(); }catch(e){}
+    }, M7_MS);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  ② 宝くじ：ほかのミニゲームと同じ開始モーダル（3秒のバー）を出します
+  // ══════════════════════════════════════════════════════════════
+  const LOT = {
+    shop: { e:'🎫', t:'江戸川ジャンボ宝くじ　売り場',
+            r:['連番・バラを選んで宝くじを購入します。','購入した宝くじは、次の抽選会まで保管されます。'] },
+    draw: { e:'🎊', t:'江戸川ジャンボ宝くじ　抽選会',
+            r:['前回買った宝くじの抽選会です。','1等は 10億円。当せん金はそのまま所持金になります。'] }
+  };
+  function paintLottery(mode){
+    const m = LOT[mode === 'draw' ? 'draw' : 'shop'];
+    const box = document.querySelector('#edo-mini-common .edo-mc-box');
+    if(!box) return;
+    const e = box.querySelector('.edo-mc-emoji');
+    const t = box.querySelector('.edo-mc-title');
+    const r = box.querySelector('.edo-mc-rules');
+    const k = box.querySelector('.edo-mc-kicker');
+    if(e) e.textContent = m.e;
+    if(t) t.textContent = m.t;
+    if(k) k.textContent = 'ミニゲーム';
+    if(r) r.innerHTML = m.r.map(x=>'<li>' + String(x).replace(/[&<>]/g,'') + '</li>').join('');
+  }
+
+  const origLottery = app.startLotteryGame ? app.startLotteryGame.bind(app) : null;
+  if(origLottery){
+    app.startLotteryGame = function(player, mode, onFinish){
+      let shown = false;
+      const showAt = Date.now();
+      try{
+        if(app._miniCommonStartShow){
+          app._miniCommonStartShow('lottery', player);   // 3秒のバー付き開始モーダル
+          paintLottery(mode);
+          shown = true;
+        }
+      }catch(e){}
+      if(shown){
+        const close = ()=>{ try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){} };
+        const hide = (ev)=>{
+          const d = (ev && ev.data) || {};
+          if(d.game !== 'lottery') return;
+          if(d.type === 'EDOGAWA_MINIGAME_RENDERED' || d.type === 'EDOGAWA_MINIGAME_START_FAILED'){
+            window.removeEventListener('message', hide);
+            // バーが終わるのと同じ3秒のところで閉じます
+            setTimeout(close, Math.max(0, 3000 - (Date.now() - showAt)));
+          }
+        };
+        window.addEventListener('message', hide);
+        setTimeout(()=>{ window.removeEventListener('message', hide); close(); }, 8000);
+      }
+      return origLottery(player, mode, onFinish);
+    };
+  }
+
+  function boot(){
+    const run = ()=>{ try{ dressM7(); }catch(e){} };
+    run();
+    setInterval(run, 300);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V123_INFO = ()=>{
+    const m7 = document.getElementById('edo-m7-notice');
+    const m7bar = m7 && m7.querySelector('.edo-bar i');
+    const mc = document.querySelector('#edo-mini-common .edo-mc-box');
+    const mcbar = mc && mc.querySelector('.edo-mc-bar i, .edo-bar i');
+    return {
+      メトロセブン: { 出ている: !!(m7 && m7.classList.contains('show')),
+        バー: !!m7bar, バーの時間: m7bar ? getComputedStyle(m7bar).animationDuration : null,
+        閉じるボタン: m7 ? [...m7.querySelectorAll('button')]
+          .filter(b=>getComputedStyle(b).display !== 'none')
+          .map(b=>(b.innerText||'').replace(/\s+/g,''))
+          .filter(t=>!/^(×|✕|x|X)$/.test(t)) : [] },
+      宝くじ: { 出ている: !!(mc && mc.closest('#edo-mini-common').classList.contains('show')),
+        題名: mc ? (mc.querySelector('.edo-mc-title')||{}).textContent : null,
+        バー: !!mcbar, バーの時間: mcbar ? getComputedStyle(mcbar).animationDuration : null },
+      競艇の上限: 500000
+    };
   };
 })();
 </script>
