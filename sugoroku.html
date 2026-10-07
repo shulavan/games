@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v116 (2026-10-06)';
+    window.__EDOGAWA_VERSION = 'v117 (2026-10-07)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -21457,6 +21457,277 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         経路:r[k].map(x=>`${String(LINES[x.line].name).replace('（構想）','')} ${x.from}→${x.to}`) };
     });
     return { 駅:n, メトロセブン開通:app.metro7OpenStations?app.metro7OpenStations():[], 行き先:out };
+  };
+})();
+</script>
+
+
+<!-- ============================================================================
+     v117: はじめて遊ぶ人への案内（👉のしるし・チュートリアル）
+     ============================================================================ -->
+<style id="edogawa-v117-style">
+  /* ① 「利用規約」「プライバシー」は、同意の画面より前に出します */
+  #doc-modal{ z-index:2147483500 !important; }
+
+  /* ② ニックネームの入力欄は、6文字ぶんの半分の幅に */
+  #edogawa-user-setup .edo-nick-input{
+    flex:0 0 auto !important; width:52% !important; max-width:230px;
+    font-size:18px !important; text-align:center; }
+
+  /* ③ 👉 のしるし（大小をくりかえします） */
+  .edo-hand{
+    position:fixed; z-index:2147483600; pointer-events:none;
+    font-size:34px; line-height:1;
+    transform-origin:50% 50%;
+    filter:drop-shadow(0 3px 7px rgba(0,0,0,.65));
+    animation:edoHandPulse 1.1s ease-in-out infinite; }
+  @keyframes edoHandPulse{
+    0%,100%{ transform:rotate(45deg) scale(1); }
+    50%    { transform:rotate(45deg) scale(1.38); } }
+
+  /* ④ チュートリアル */
+  #edo-tutorial{ position:fixed; inset:0; z-index:2147483550; display:none;
+    align-items:center; justify-content:center; padding:14px;
+    background:rgba(2,6,23,.88); backdrop-filter:blur(8px) }
+  #edo-tutorial.show{ display:flex }
+  .edo-tt-box{ width:min(440px,96vw); max-height:88vh; overflow-y:auto;
+    background:#0f172a; border:1px solid rgba(245,158,11,.45); border-radius:22px;
+    padding:18px; box-shadow:0 24px 70px rgba(0,0,0,.6) }
+  .edo-tt-head{ text-align:center; font-size:19px; font-weight:900; color:#fbbf24; margin-bottom:4px }
+  .edo-tt-sub{ text-align:center; font-size:11px; color:#94a3b8; margin-bottom:12px }
+  .edo-tt-lead{ text-align:left; font-size:14px; line-height:1.9; color:#e2e8f0;
+    background:rgba(2,6,23,.6); border:1px solid #1e293b; border-radius:14px;
+    padding:12px 14px; margin-bottom:12px }
+  .edo-tt-steps{ margin:0 0 12px; padding:0; list-style:none }
+  .edo-tt-steps li{ display:flex; gap:9px; align-items:flex-start; text-align:left;
+    font-size:15px; line-height:1.75; color:#f1f5f9; padding:5px 2px }
+  .edo-tt-steps li b{ flex:0 0 auto; color:#fbbf24; font-weight:900 }
+  .edo-tt-cells{ background:rgba(2,6,23,.6); border:1px solid #1e293b; border-radius:14px;
+    padding:11px 14px; margin-bottom:12px }
+  .edo-tt-cells div{ display:flex; gap:10px; align-items:baseline; text-align:left;
+    font-size:14px; line-height:1.9; color:#e2e8f0 }
+  .edo-tt-cells .m{ flex:0 0 auto; font-weight:900; min-width:2.6em }
+  .edo-tt-foot{ text-align:left; font-size:14px; line-height:1.9; color:#cbd5e1; margin-bottom:12px }
+  .edo-tt-bar{ height:5px; border-radius:999px; background:#1e293b; overflow:hidden }
+  .edo-tt-bar i{ display:block; height:100%; width:100%; background:#f59e0b;
+    transform-origin:left center; animation:edoTtBar 5s linear forwards }
+  @keyframes edoTtBar{ from{ transform:scaleX(1) } to{ transform:scaleX(0) } }
+  .edo-tt-hint{ text-align:center; font-size:11px; color:#64748b; margin-top:7px }
+</style>
+<script id="edogawa-v117">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const KEY = 'edogawa_tutorial_v1';
+  const PROFILE_KEY = 'edogawa_sugoroku_profile_v1';
+
+  function done(){ try{ return localStorage.getItem(KEY) === 'done'; }catch(e){ return true; } }
+  function markDone(){ try{ localStorage.setItem(KEY, 'done'); }catch(e){} clearHands(); }
+  app.tutorialFinished = done;
+  app.tutorialReset = function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+  // ── 👉 のしるし（相手の左上の角に置いて、ついていきます） ──
+  const hands = new Map();
+  function clearHands(){
+    hands.forEach(h=>{ clearInterval(h.timer); try{ h.el.remove(); }catch(e){} });
+    hands.clear();
+  }
+  app.hideTutorialHands = clearHands;
+
+  function showHand(id, getTarget, dx, dy){
+    if(hands.has(id)) return;
+    const el = document.createElement('div');
+    el.className = 'edo-hand'; el.id = 'edo-hand-' + id;
+    el.textContent = '👉';
+    document.body.appendChild(el);
+    const place = ()=>{
+      const t = (typeof getTarget === 'function') ? getTarget() : getTarget;
+      if(!t || !t.getBoundingClientRect){ el.style.display='none'; return; }
+      const cs = getComputedStyle(t);
+      if(cs.display === 'none' || cs.visibility === 'hidden' || !t.offsetWidth){ el.style.display='none'; return; }
+      const r = t.getBoundingClientRect();
+      el.style.display = 'block';
+      el.style.left = Math.round(r.left + (dx||0)) + 'px';
+      el.style.top  = Math.round(r.top  + (dy||0)) + 'px';
+    };
+    place();
+    const timer = setInterval(place, 250);
+    window.addEventListener('scroll', place, true);
+    window.addEventListener('resize', place);
+    hands.set(id, {el, timer, place});
+  }
+  function hideHand(id){
+    const h = hands.get(id); if(!h) return;
+    clearInterval(h.timer); try{ h.el.remove(); }catch(e){}
+    hands.delete(id);
+  }
+  app.showTutorialHand = showHand;
+
+  // ── ② アカウント情報：はじめてのときだけ、ニックネームにカーソル＋👉 ──
+  const origSetup = app._openSetup ? app._openSetup.bind(app) : null;
+  if(origSetup){
+    app._openSetup = function(mode, lineProfile){
+      const first = !done() && !localStorage.getItem(PROFILE_KEY);
+      const r = origSetup(mode, lineProfile);
+      setTimeout(()=>{
+        try{
+          const name = document.getElementById('edo-setup-name');
+          if(first && name){ name.focus(); try{ name.select(); }catch(e){} }
+          if(first){
+            // 「💾 保存」ボタンの左上の角
+            showHand('save', ()=>document.getElementById('edo-setup-save'), -16, -18);
+          }else{
+            hideHand('save');
+            if(name) try{ name.blur(); }catch(e){}
+          }
+        }catch(e){ console.error('[v117]', e); }
+      }, 120);
+      return r;
+    };
+  }
+
+  // ── ③ トップページ：はじめてのときだけ「ひとりで遊ぶ」に👉 ──
+  //   「ひとりで遊ぶ（CPU対戦）」の文字の左上に出します
+  function soloTarget(){
+    const b = document.getElementById('start-game-btn');
+    if(!b) return null;
+    const spans = b.querySelectorAll('span');
+    return spans.length > 1 ? spans[spans.length-1] : b;
+  }
+  const origLobby = app._enterLobbyAfterAuth ? app._enterLobbyAfterAuth.bind(app) : null;
+  if(origLobby){
+    app._enterLobbyAfterAuth = function(){
+      const r = origLobby.apply(null, arguments);
+      try{
+        hideHand('save');
+        if(!done()) setTimeout(()=>showHand('solo', soloTarget, -18, -20), 250);
+      }catch(e){ console.error('[v117]', e); }
+      return r;
+    };
+  }
+  // 画面を開き直したときも、まだなら出します
+  function lobbyWatch(){
+    try{
+      if(done()){ hideHand('solo'); return; }
+      const lobby = document.getElementById('lobby-screen');
+      const setup = document.getElementById('edogawa-user-setup');
+      const auth  = document.getElementById('edogawa-auth-screen');
+      const shown = lobby && !lobby.classList.contains('hidden') &&
+        !(setup && setup.classList.contains('show')) &&
+        !(auth && auth.classList.contains('show')) &&
+        localStorage.getItem(PROFILE_KEY);
+      if(shown) showHand('solo', soloTarget, -18, -20);
+      else hideHand('solo');
+    }catch(e){}
+  }
+
+  // ── ④ 双六の画面：はじめてのときだけチュートリアル ──
+  const TUTORIAL_MS = 5000;
+  function ensureTutorial(){
+    let el = document.getElementById('edo-tutorial');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'edo-tutorial';
+    el.innerHTML =
+      '<div class="edo-tt-box">' +
+        '<div class="edo-tt-head">🎲 あそびかた</div>' +
+        '<div class="edo-tt-sub">江戸川双六へようこそ</div>' +
+        '<div class="edo-tt-lead">本物の江戸川区の地図の上を、サイコロを振って進む双六です。' +
+          '🎲を振って出た目の数だけ進み、止まったマスでいろいろな出来事が起こります。' +
+          '目的地にいちばん早く着いた人が、賞金をもらえます。</div>' +
+        '<ul class="edo-tt-steps">' +
+          '<li><b>①</b><span>🎲サイコロをタップ。</span></li>' +
+          '<li><b>②</b><span>サイコロの目の分、マスを進む。</span></li>' +
+          '<li><b>③</b><span>マス毎にいろんなことが起きる。</span></li>' +
+          '<li><b>④</b><span>ゴールを目指す。</span></li>' +
+        '</ul>' +
+        '<div class="edo-tt-cells">' +
+          '<div><span class="m" style="color:#60a5fa">■マス</span><span>お金などが増えます。</span></div>' +
+          '<div><span class="m" style="color:#f87171">●マス</span><span>お金などが減ります。</span></div>' +
+          '<div><span class="m" style="color:#4ade80">▲マス</span><span>何かが起きます。</span></div>' +
+          '<div><span class="m" style="color:#fbbf24">★マス</span><span>ミニゲームがあります。</span></div>' +
+        '</div>' +
+        '<div class="edo-tt-foot">ゴールを目指し、江戸川区を探検してみましょう。' +
+          '途中でゲームを辞めても続きからゲームができます。</div>' +
+        '<div class="edo-tt-bar"><i></i></div>' +
+        '<div class="edo-tt-hint">5秒後に自動で閉じます</div>' +
+      '</div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', ()=>app.closeTutorial());
+    return el;
+  }
+  let ttTimer = null;
+  app.closeTutorial = function(){
+    clearTimeout(ttTimer); ttTimer = null;
+    document.getElementById('edo-tutorial')?.classList.remove('show');
+    try{ if(!done()) showHand('dice', ()=>document.getElementById('roll-dice-btn'), -14, -18); }catch(e){}
+  };
+  app.openTutorial = function(force){
+    if(!force && done()) return false;
+    const el = ensureTutorial();
+    // やり直しのためにアニメーションを作り直します
+    const bar = el.querySelector('.edo-tt-bar'); if(bar) bar.innerHTML = '<i></i>';
+    el.classList.add('show');
+    clearTimeout(ttTimer);
+    ttTimer = setTimeout(()=>app.closeTutorial(), TUTORIAL_MS);
+    return true;
+  };
+
+  // ゲームが始まったら出します
+  let tutorialShown = false;
+  function mapWatch(){
+    try{
+      if(done()){ hideHand('dice'); return; }
+      const lobby = document.getElementById('lobby-screen');
+      const inGame = lobby && lobby.classList.contains('hidden') &&
+        Array.isArray(app.players) && app.players.length &&
+        !document.body.classList.contains('edo-visited-only');
+      if(!inGame){ hideHand('dice'); return; }
+      if(!tutorialShown){
+        tutorialShown = true;
+        app.openTutorial();
+        return;
+      }
+      const tt = document.getElementById('edo-tutorial');
+      if(tt && tt.classList.contains('show')) return;    // 説明を出している間は👉を出しません
+      showHand('dice', ()=>document.getElementById('roll-dice-btn'), -14, -18);
+    }catch(e){}
+  }
+
+  // ── ⑤ サイコロを振ったら、案内はおしまい ──
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){
+    app.rollDice = function(){
+      if(!done()){
+        try{ document.getElementById('edo-tutorial')?.classList.remove('show'); }catch(e){}
+        markDone();
+      }
+      return origRoll.apply(null, arguments);
+    };
+  }
+
+  function boot(){
+    setInterval(()=>{ try{ lobbyWatch(); mapWatch(); }catch(e){} }, 600);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V117_INFO = ()=>{
+    const h = (id)=>{ const e=document.getElementById('edo-hand-'+id);
+      if(!e) return null; const r=e.getBoundingClientRect();
+      return { 出ている:getComputedStyle(e).display!=='none',
+        位置:{x:Math.round(r.left), y:Math.round(r.top)},
+        向き:getComputedStyle(e).transform }; };
+    const tt = document.getElementById('edo-tutorial');
+    return {
+      案内ずみ: done(),
+      しるし: { 保存:h('save'), ひとりで遊ぶ:h('solo'), サイコロ:h('dice') },
+      チュートリアル: tt ? (tt.classList.contains('show') ? '出ている' : '閉じている') : 'なし',
+      規約のz: (()=>{ const d=document.getElementById('doc-modal');
+        return d ? getComputedStyle(d).zIndex : null; })(),
+      同意のz: (()=>{ const d=document.getElementById('consent-modal');
+        return d ? getComputedStyle(d).zIndex : null; })()
+    };
   };
 })();
 </script>
