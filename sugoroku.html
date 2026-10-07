@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v119 (2026-10-07)';
+    window.__EDOGAWA_VERSION = 'v121 (2026-10-07)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -21860,27 +21860,49 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ if(getComputedStyle(b).display === 'none') return false; }catch(e){}
     return true;
   }
+  // 「フッター」をきちんと見つけます。
+  //   ・枠のいちばん下にあるボタン（または、中身がボタンだけの行）
+  //   ・ボタンは3つまで。設定の一覧のような「ボタンが並ぶ本文」はフッターにしません
+  function findFooter(host, depth){
+    if(!host || depth > 2) return null;
+    const kids = [...host.children].filter(el=>!el.classList.contains('edo-x2'));
+    for(let i = kids.length - 1; i >= 0; i--){
+      const el = kids[i];
+      if(el.tagName === 'BUTTON'){
+        const btns = [];
+        for(let j = i; j >= 0; j--){
+          if(kids[j].tagName === 'BUTTON') btns.unshift(kids[j]); else break;
+        }
+        return btns.length <= 3 ? { row: host, btns: btns, inline: true } : null;
+      }
+      const ch = [...el.children].filter(x=>!x.classList.contains('edo-x2'));
+      if(ch.length && ch.length <= 3 && ch.every(x=>x.tagName === 'BUTTON'))
+        return { row: el, btns: ch };
+      if(ch.length === 1) return findFooter(el, depth + 1);
+      return null;                       // いちばん下がボタンでなければ、フッターは無しとみなします
+    }
+    return null;
+  }
+
   function tidyFooter(box){
     if(!box) return null;
-    const all = [...box.querySelectorAll('button')].filter(usableBtn);
-    if(!all.length) return null;
-    // いちばん下のボタンの行を「フッター」とみなします
-    const row = all[all.length-1].parentElement;
-    const btns = all.filter(b=>b.parentElement === row);
+    const f = findFooter(box, 0);
+    if(!f) return null;
+    if(!f.btns.length) return null;
     let closeBtn = null;
-    btns.forEach(b=>{
+    f.btns.forEach(b=>{                       // 「閉じる」は、すでに隠したあとでも見つけます
       const t = (b.innerText || b.textContent || '').replace(/\s+/g,'');
       if(CLOSE_RE.test(t)) closeBtn = closeBtn || b;
     });
-    const others = btns.filter(b=>b !== closeBtn);
+    const others = f.btns.filter(b=>b !== closeBtn && usableBtn(b));
     if(closeBtn) closeBtn.classList.add('edo-hidden-close');   // 「閉じる」は✕にゆずります
-    if(others.length >= 1 && row !== box){
-      row.classList.add('edo-foot-row');
+    if(others.length >= 1 && !f.inline){
+      f.row.classList.add('edo-foot-row');
       const cancels = others.filter(b=>CANCEL_RE.test((b.innerText||'').replace(/\s+/g,'')));
       cancels.forEach(c=>{
         if((c.innerText||'').replace(/\s+/g,'') !== 'キャンセル') c.textContent = 'キャンセル';
         c.classList.add('edo-btn-cancel');
-        row.appendChild(c);                        // いちばん右へ
+        f.row.appendChild(c);                      // いちばん右へ
       });
       others.filter(b=>cancels.indexOf(b) < 0).forEach(b=>{
         if(!b.classList.contains('edo-btn-cancel')) b.classList.add('edo-btn-primary');
@@ -21889,7 +21911,6 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return closeBtn;
   }
 
-  // ── 共通の仕上げ ──
   // すでに「✕」があるモーダルは、その✕を同じ見た目にそろえます
   function adoptX(host){
     if(!host) return;
@@ -21915,7 +21936,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   // ── どのモーダルをそろえるか ──
-  //   boxSel: 枠（✕を置くところ） / x:'left' でミニゲーム / outside:false は枠外タップ無効
+  //   boxSel: 枠（✕を置くところ） / outside:false は枠外タップ無効
   const LIST = [
     ['pwa-install-modal',      {}],
     ['edo-backup-modal',       {boxSel:'.edo-bk-box', x:false}],
@@ -21949,7 +21970,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(!root || !root.classList.contains('show')) return;
     const box = root.querySelector('.edo-mc-box');
     if(!box) return;
-    addX(box, 'left', ()=>{
+    addX(box, 'right', ()=>{
       try{ root.classList.remove('show'); root.innerHTML=''; }catch(e){}
       try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e){}
     });
@@ -22068,6 +22089,71 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 })();
 </script>
 
+<style id="edogawa-v120-style">
+  /* 【v120】モーダルの中で2行以上になった説明文は、中央寄せではなく左揃えにします */
+  .edo-left2{ text-align:left !important; }
+</style>
+<script id="edogawa-v120">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // 説明文をさがす範囲（モーダルの中だけ）
+  const SCOPE = '[id*="modal"],[class*="modal"],#edo-mini-common,#edo-list-modal,' +
+                '#edo-backup-modal,#edogawa-user-setup,#edo-m7-notice,#edo-tutorial,' +
+                '#edo-menu-sheet,.visited-pin-box,.edo-mc-box,#event-modal-card';
+  // 中に入っていても「文章のかたまり」とみなせる飾り
+  const INLINE = /^(BR|B|STRONG|EM|I|U|S|SMALL|SPAN|A|CODE|FONT|MARK|SUP|SUB|WBR)$/;
+  const SKIP   = /^(BUTTON|INPUT|SELECT|TEXTAREA|LABEL|H1|H2|H3|TABLE|THEAD|TBODY|TR|TD|TH|UL|OL|LI|CANVAS|SVG|IMG|VIDEO)$/;
+
+  function textish(el){
+    if(SKIP.test(el.tagName)) return false;
+    if(el.closest('button')) return false;
+    for(const c of el.children){ if(!INLINE.test(c.tagName)) return false; }
+    const t = (el.textContent || '').replace(/\s+/g,'');
+    return t.length >= 10;
+  }
+
+  function fix(el){
+    if(el.classList.contains('edo-left2')) return;
+    if(!textish(el)) return;
+    let cs; try{ cs = getComputedStyle(el); }catch(e){ return; }
+    if(cs.textAlign !== 'center') return;
+    if(cs.display === 'none' || cs.visibility === 'hidden') return;
+    const fs = parseFloat(cs.fontSize) || 16;
+    if(fs > 18) return;                                   // 見出しや金額の大きな文字はそのまま
+    const lh = parseFloat(cs.lineHeight) || fs * 1.5;
+    const h  = el.clientHeight || el.getBoundingClientRect().height;
+    if(!h) return;
+    const pad = (parseFloat(cs.paddingTop)||0) + (parseFloat(cs.paddingBottom)||0);
+    if((h - pad) < lh * 1.75) return;                     // 1行だけなら中央寄せのまま
+    el.classList.add('edo-left2');
+  }
+
+  function sweep(){
+    let hosts;
+    try{ hosts = document.querySelectorAll(SCOPE); }catch(e){ return; }
+    hosts.forEach(host=>{
+      if(!host.offsetParent && host !== document.body && !host.getClientRects().length) return;
+      host.querySelectorAll('div,p,span,section,article,dd,dt,figcaption,blockquote')
+          .forEach(fix);
+    });
+  }
+
+  function boot(){ sweep(); setInterval(sweep, 600); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V120_INFO = ()=>{
+    const out = [];
+    document.querySelectorAll('.edo-left2').forEach(el=>{
+      out.push({ 文:(el.textContent||'').replace(/\s+/g,' ').slice(0,30),
+                 そろえ:getComputedStyle(el).textAlign });
+    });
+    return out;
+  };
+})();
+</script>
 <script id="edogawa-v39-footer">
 
 (function(){
