@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v117 (2026-10-07)';
+    window.__EDOGAWA_VERSION = 'v119 (2026-10-07)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -21073,7 +21073,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     f.id = 'edo-own-list-foot';
     f.className = 'edo-lm-foot';
     f.innerHTML = '<button type="button" class="edo-lm-btn primary" id="edo-own-post">投稿する</button>' +
-                  '<button type="button" class="edo-lm-btn" id="edo-own-close">戻る</button>';
+                  '<button type="button" class="edo-lm-btn" id="edo-own-close">キャンセル</button>';
     box.appendChild(f);
     f.querySelector('#edo-own-post').onclick = ()=>{
       hideOwnList();
@@ -21567,18 +21567,46 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const origSetup = app._openSetup ? app._openSetup.bind(app) : null;
   if(origSetup){
     app._openSetup = function(mode, lineProfile){
-      const first = !done() && !localStorage.getItem(PROFILE_KEY);
+      // 【v118】「ログイン無しで遊ぶ」は、この画面を開く直前に
+      //   saveUserProfile() を呼ぶので、保存データの有無では
+      //   「はじめて」を判定できませんでした（カーソルが入らない原因）。
+      //   設定から開いたかどうかで見分けます。
+      const fromSettings = !!app._settingsEditMode;
+      const first = !done() && !fromSettings;
       const r = origSetup(mode, lineProfile);
+      const name = document.getElementById('edo-setup-name');
+      if(first && name){
+        // 【v118】iPhone（iOS Safari）は、画面をタップした流れの中で
+        //   そのまま focus() したときだけキーボードを出します。
+        //   setTimeout をはさむと「指で押していない」とみなされ、
+        //   カーソルは入るのにキーボードが出ませんでした。
+        //   ここで（「ログイン無しで遊ぶ」を押した流れのまま）すぐ focus します。
+        try{
+          const modal = document.getElementById('edogawa-user-setup');
+          if(modal) void modal.offsetHeight;        // 先に表示を確定させます
+          name.focus({preventScroll:true});
+          try{ name.select(); }catch(e){}
+          try{ name.setSelectionRange(0, name.value.length); }catch(e){}
+        }catch(e){ console.error('[v118]', e); }
+        // 間に合わなかった端末のために、少しあとでもう一度だけ試します
+        [60, 200, 500].forEach(ms=>setTimeout(()=>{
+          try{
+            const el = document.getElementById('edo-setup-name');
+            const sh = document.getElementById('edogawa-user-setup');
+            if(!el || !sh || !sh.classList.contains('show')) return;
+            if(document.activeElement !== el){ el.focus({preventScroll:true}); try{ el.select(); }catch(e){} }
+          }catch(e){}
+        }, ms));
+      }
       setTimeout(()=>{
         try{
-          const name = document.getElementById('edo-setup-name');
-          if(first && name){ name.focus(); try{ name.select(); }catch(e){} }
           if(first){
             // 「💾 保存」ボタンの左上の角
             showHand('save', ()=>document.getElementById('edo-setup-save'), -16, -18);
           }else{
             hideHand('save');
-            if(name) try{ name.blur(); }catch(e){}
+            const el = document.getElementById('edo-setup-name');
+            if(el) try{ el.blur(); }catch(e){}
           }
         }catch(e){ console.error('[v117]', e); }
       }, 120);
@@ -21608,6 +21636,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // 画面を開き直したときも、まだなら出します
   function lobbyWatch(){
     try{
+      // アカウント情報が閉じているときは「保存」の👉を消します
+      const su = document.getElementById('edogawa-user-setup');
+      if(!su || !su.classList.contains('show')) hideHand('save');
       if(done()){ hideHand('solo'); return; }
       const lobby = document.getElementById('lobby-screen');
       const setup = document.getElementById('edogawa-user-setup');
@@ -21728,6 +21759,311 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       同意のz: (()=>{ const d=document.getElementById('consent-modal');
         return d ? getComputedStyle(d).zIndex : null; })()
     };
+  };
+})();
+</script>
+
+
+<!-- ============================================================================
+     v119: モーダルの見た目と操作を全部そろえる
+       ・「閉じる」ボタンは置かず、右上の「✕」に統一（ミニゲームだけ左上）
+       ・枠の外をタップしても閉じる
+       ・ミニゲームとマスのイベントは、秒数を出さずプログレスバーだけ
+       ・フッターにほかのボタンがあるときは、右が「キャンセル」
+     ============================================================================ -->
+<style id="edogawa-v119-style">
+  /* ── ✕ ボタン（全部おなじ見た目） ── */
+  .edo-x-btn, .edo-mini-x, .edo-x2{
+    width:34px !important; height:34px !important; flex:0 0 auto !important;
+    border-radius:11px !important; background:#1e293b !important;
+    border:1px solid #475569 !important; color:#cbd5e1 !important;
+    font-size:19px !important; line-height:1 !important; font-weight:900 !important;
+    display:flex !important; align-items:center !important; justify-content:center !important;
+    padding:0 !important; cursor:pointer; transition:.15s; }
+  .edo-x-btn:active, .edo-mini-x:active, .edo-x2:active{ transform:scale(.94); }
+  /* あとから付ける✕（枠の右上・ミニゲームは左上） */
+  .edo-x2{ position:absolute !important; top:10px !important; z-index:40 !important; }
+  .edo-x2.right{ right:10px !important; }
+  .edo-x2.left{ left:10px !important; }
+  .edo-x2-host{ position:relative !important; }
+
+  /* ── フッターのボタン（全部おなじ見た目） ── */
+  .edo-foot-row{ display:flex !important; gap:10px !important; margin-top:14px !important; }
+  .edo-foot-row > button{ flex:1 1 0 !important; min-width:0 !important;
+    padding:12px !important; border-radius:14px !important;
+    font-size:15px !important; font-weight:900 !important; line-height:1.2 !important; }
+  .edo-btn-cancel{ background:#1e293b !important; background-image:none !important;
+    border:1px solid #475569 !important; color:#e2e8f0 !important; box-shadow:none !important; }
+  .edo-btn-primary{ background:linear-gradient(180deg,#f59e0b,#d97706) !important;
+    border:1px solid #b45309 !important; color:#0f172a !important; }
+  .edo-hidden-close{ display:none !important; }
+
+  /* ── プログレスバー（全部おなじ） ── */
+  .edo-bar{ height:6px; border-radius:99px; background:rgba(148,163,184,.22);
+    overflow:hidden; margin-top:12px; }
+  .edo-bar > i{ display:block; height:100%; width:100%;
+    background:linear-gradient(90deg,#fbbf24,#f59e0b);
+    transform-origin:left center; animation:edoBarRun linear forwards; }
+  @keyframes edoBarRun{ from{ transform:scaleX(1) } to{ transform:scaleX(0) } }
+
+  /* ミニゲームの開始・結果：✕は左上、秒数の文字は出さない */
+  #edo-mini-common .edo-mc-box{ position:relative; }
+  #edo-mini-common .edo-mc-hint{ display:none !important; }
+
+  /* マスのイベント：「閉じる」は出さず、✕とバーにする */
+  #event-modal-close-btn{ display:none !important; }
+  #event-modal-card{ position:relative; }
+</style>
+<script id="edogawa-v119">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  const CLOSE_RE  = /^\s*(×|✕|x)?\s*(閉じる|とじる|閉じる（自動進行：\d+秒）|閉じる\s*\(\d+\)|OK|ＯＫ)\s*$/;
+  const CANCEL_RE = /^\s*(キャンセル|戻る|もどる|見送る)\s*$/;
+
+  // ── あとから付ける「✕」 ──
+  function addX(host, side, action){
+    if(!host) return null;
+    let x = host.querySelector(':scope > .edo-x2');
+    if(x){ x.__act = action; return x; }
+    host.classList.add('edo-x2-host');
+    x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'edo-x2 ' + (side === 'left' ? 'left' : 'right');
+    x.setAttribute('aria-label','閉じる');
+    x.textContent = '×';
+    x.__act = action;
+    x.addEventListener('click', (ev)=>{ ev.stopPropagation(); try{ x.__act && x.__act(); }catch(e){} });
+    host.appendChild(x);
+    return x;
+  }
+
+  // ── 枠の外をタップしたら閉じる ──
+  function bindOutside(root, action){
+    if(!root || root.__edoOutside119) return;
+    root.__edoOutside119 = true;
+    root.addEventListener('click', (ev)=>{
+      if(ev.target !== root) return;
+      try{ action(); }catch(e){}
+    });
+  }
+
+  // ── フッターのボタンをそろえる ──
+  //   「閉じる」だけ → 消して✕に。ほかのボタンがある → 右を「キャンセル」に。
+  // ✕ そのものや、絵文字えらびのような「フッターではないボタン」は数えません
+  function usableBtn(b){
+    if(b.classList.contains('edo-x-btn') || b.classList.contains('edo-x2') ||
+       b.classList.contains('edo-mini-x') || b.classList.contains('edo-emoji-btn')) return false;
+    const t = (b.innerText || b.textContent || '').replace(/\s+/g,'');
+    if(/^(×|✕|x|X)$/.test(t)) return false;
+    try{ if(getComputedStyle(b).display === 'none') return false; }catch(e){}
+    return true;
+  }
+  function tidyFooter(box){
+    if(!box) return null;
+    const all = [...box.querySelectorAll('button')].filter(usableBtn);
+    if(!all.length) return null;
+    // いちばん下のボタンの行を「フッター」とみなします
+    const row = all[all.length-1].parentElement;
+    const btns = all.filter(b=>b.parentElement === row);
+    let closeBtn = null;
+    btns.forEach(b=>{
+      const t = (b.innerText || b.textContent || '').replace(/\s+/g,'');
+      if(CLOSE_RE.test(t)) closeBtn = closeBtn || b;
+    });
+    const others = btns.filter(b=>b !== closeBtn);
+    if(closeBtn) closeBtn.classList.add('edo-hidden-close');   // 「閉じる」は✕にゆずります
+    if(others.length >= 1 && row !== box){
+      row.classList.add('edo-foot-row');
+      const cancels = others.filter(b=>CANCEL_RE.test((b.innerText||'').replace(/\s+/g,'')));
+      cancels.forEach(c=>{
+        if((c.innerText||'').replace(/\s+/g,'') !== 'キャンセル') c.textContent = 'キャンセル';
+        c.classList.add('edo-btn-cancel');
+        row.appendChild(c);                        // いちばん右へ
+      });
+      others.filter(b=>cancels.indexOf(b) < 0).forEach(b=>{
+        if(!b.classList.contains('edo-btn-cancel')) b.classList.add('edo-btn-primary');
+      });
+    }
+    return closeBtn;
+  }
+
+  // ── 共通の仕上げ ──
+  // すでに「✕」があるモーダルは、その✕を同じ見た目にそろえます
+  function adoptX(host){
+    if(!host) return;
+    const b = [...host.querySelectorAll('button')]
+      .find(x=>/^(×|✕|x|X)$/.test((x.innerText||x.textContent||'').trim()));
+    if(b) b.classList.add('edo-x-btn');
+  }
+
+  function normalize(id, opt){
+    const root = document.getElementById(id);
+    if(!root) return;
+    const o = opt || {};
+    const box = o.boxSel ? root.querySelector(o.boxSel) : root.firstElementChild;
+    const closeBtn = tidyFooter(box || root);
+    const act = ()=>{
+      if(typeof o.close === 'function'){ o.close(); return; }
+      if(closeBtn){ closeBtn.click(); return; }
+      root.classList.add('hidden'); root.classList.remove('show');
+    };
+    if(o.x !== false) addX(box || root, o.x === 'left' ? 'left' : 'right', act);
+    else adoptX(box || root);
+    if(o.outside !== false) bindOutside(root, act);
+  }
+
+  // ── どのモーダルをそろえるか ──
+  //   boxSel: 枠（✕を置くところ） / x:'left' でミニゲーム / outside:false は枠外タップ無効
+  const LIST = [
+    ['pwa-install-modal',      {}],
+    ['edo-backup-modal',       {boxSel:'.edo-bk-box', x:false}],
+    ['edo-list-modal',         {boxSel:'.edo-lm-box', x:false}],
+    ['visited-own-list-modal', {boxSel:'.visited-pin-box', x:false}],
+    ['facility-modal',         {}],
+    ['menu-modal',             {}],
+    ['settings-modal',         {}],
+    ['doc-modal',              {}],
+    ['log-modal',              {}],
+    ['edo-m7-notice',          {boxSel:'.edo-m7-box'}],
+    ['quiz-modal',             {}],
+    ['kingyo-modal',           {}],
+    ['edogawa-property-modal', {boxSel:'.edo-prop-box', x:false}],
+    ['edogawa-user-setup',     {boxSel:'.box', x:false, outside:false}],
+    ['mp-saved-notice-modal',  {}],
+    ['entry-limit-modal',      {}],
+    ['host-absent-modal',      {}],
+    ['rocket-gift-modal',      {}]
+  ];
+
+  function sweep(){
+    LIST.forEach(([id, opt])=>{ try{ normalize(id, opt); }catch(e){} });
+    try{ fixMiniCommon(); }catch(e){}
+    try{ fixEventModal(); }catch(e){}
+  }
+
+  // ── ミニゲームの開始・結果モーダル（✕は左上・秒数は出さない） ──
+  function fixMiniCommon(){
+    const root = document.getElementById('edo-mini-common');
+    if(!root || !root.classList.contains('show')) return;
+    const box = root.querySelector('.edo-mc-box');
+    if(!box) return;
+    addX(box, 'left', ()=>{
+      try{ root.classList.remove('show'); root.innerHTML=''; }catch(e){}
+      try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e){}
+    });
+  }
+
+  // ── ■●▲マス：✕は右上、3秒のバー、秒数は出さない ──
+  function fixEventModal(){
+    const card = document.getElementById('event-modal-card');
+    if(!card) return;
+    addX(card, 'right', ()=>{ try{ app.closeEventModal && app.closeEventModal(); }catch(e){} });
+  }
+  bindOutside(document.getElementById('event-modal'),
+    ()=>{ try{ app.closeEventModal && app.closeEventModal(); }catch(e){} });
+
+  // 自動で閉じるカウントは、文字ではなくバーで見せます
+  const origArm = app.armModalAutoClose ? app.armModalAutoClose.bind(app) : null;
+  if(origArm){
+    app.armModalAutoClose = function(key, buttonId, onClose, seconds){
+      const sec = Number(seconds) || 3;
+      const r = origArm(key, buttonId, onClose, sec);
+      try{
+        const btn = document.getElementById(buttonId);
+        if(btn){
+          btn.classList.add('edo-hidden-close');
+          const box = btn.parentElement;
+          if(box){
+            let bar = box.querySelector(':scope > .edo-bar');
+            if(!bar){ bar = document.createElement('div'); bar.className = 'edo-bar';
+              box.insertBefore(bar, btn.nextSibling); }
+            bar.innerHTML = '<i style="animation-duration:' + (sec*1000) + 'ms"></i>';
+          }
+        }
+      }catch(e){ console.error('[v119]', e); }
+      return r;
+    };
+  }
+  const origClear = app.clearModalAutoClose ? app.clearModalAutoClose.bind(app) : null;
+  if(origClear){
+    app.clearModalAutoClose = function(key){
+      const r = origClear(key);
+      try{ document.querySelectorAll('.edo-bar').forEach(b=>{
+        if(!b.closest('#edo-mini-common')) b.innerHTML=''; }); }catch(e){}
+      return r;
+    };
+  }
+
+  // ── ニックネームは空欄＋うすい見本。空のままは保存させません ──
+  const PLACEHOLDER = '江戸川双六';
+  function prepNickname(first){
+    const el = document.getElementById('edo-setup-name');
+    if(!el) return;
+    el.setAttribute('placeholder', PLACEHOLDER);
+    if(first) el.value = '';
+  }
+  const origOpen119 = app._openSetup ? app._openSetup.bind(app) : null;
+  if(origOpen119){
+    app._openSetup = function(mode, lineProfile){
+      const fromSettings = !!app._settingsEditMode;
+      const first = !(app.tutorialFinished && app.tutorialFinished()) && !fromSettings;
+      const r = origOpen119(mode, lineProfile);
+      try{
+        prepNickname(first && mode !== 'line');
+        if(first && mode !== 'line'){
+          const el = document.getElementById('edo-setup-name');
+          if(el){ el.focus({preventScroll:true}); }
+        }
+      }catch(e){ console.error('[v119]', e); }
+      return r;
+    };
+  }
+  // 空のまま「保存」は通しません
+  function guardSave(){
+    const b = document.getElementById('edo-setup-save');
+    if(!b || b.__edoGuard) return;
+    b.__edoGuard = true;
+    b.addEventListener('click', (ev)=>{
+      const el = document.getElementById('edo-setup-name');
+      const v = el ? String(el.value||'').trim() : '';
+      if(v) return;
+      ev.preventDefault(); ev.stopImmediatePropagation();
+      try{ app.showNotice ? app.showNotice('ニックネーム', 'ニックネームを入力してください。')
+                          : alert('ニックネームを入力してください。'); }catch(e){}
+      try{ el && el.focus({preventScroll:true}); }catch(e){}
+    }, true);
+  }
+
+  function boot(){
+    sweep(); guardSave();
+    setInterval(()=>{ try{ sweep(); guardSave(); }catch(e){} }, 700);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V119_INFO = (id)=>{
+    const root = id ? document.getElementById(id) : null;
+    const info = (el)=>{
+      if(!el) return null;
+      const box = el.firstElementChild;
+      const xs = el.querySelectorAll('.edo-x2, .edo-x-btn, .edo-mini-x');
+      const btns = [...el.querySelectorAll('button')].filter(usableBtn)
+        .map(b=>(b.innerText||'').replace(/\s+/g,''));
+      return { '✕の数': xs.length,
+        '✕の位置': [...xs].map(x=>x.classList.contains('left')?'左上':'右上'),
+        見えているボタン: btns,
+        閉じるが残っているか: btns.some(t=>/^(閉じる|とじる)$/.test(t)),
+        枠外で閉じる: !!el.__edoOutside119,
+        バー: !!el.querySelector('.edo-bar i, .edo-mc-bar i') };
+    };
+    if(root) return info(root);
+    const out = {};
+    LIST.concat([['edo-mini-common',{}],['event-modal',{}]]).forEach(([k])=>{
+      const el = document.getElementById(k); if(el) out[k] = info(el);
+    });
+    return out;
   };
 })();
 </script>
