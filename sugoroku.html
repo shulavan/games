@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v123 (2026-10-07)';
+    window.__EDOGAWA_VERSION = 'v124 (2026-10-07)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -22354,12 +22354,28 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   function boot(){
-    const run = ()=>{ try{ dressM7(); }catch(e){} };
+    const run = ()=>{ try{ dressM7(); }catch(e){} try{ bindGoalFlag(); }catch(e){} };
     run();
     setInterval(run, 300);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
+
+  // ══════════════════════════════════════════════════════════════
+  //  ③ 地図の🚩（目的地）をタップすると、施設の詳細を出します
+  // ══════════════════════════════════════════════════════════════
+  function bindGoalFlag(){
+    const m = app.destinationMarker;
+    if(!m || m.__edoGoalTap) return;
+    m.__edoGoalTap = true;
+    try{
+      m.on('click', ()=>{
+        const d = app.currentDestination;
+        if(!d) return;
+        try{ app.showFacilityDetail(d, { heading:'🚩 目的地' }); }catch(e){}
+      });
+    }catch(e){}
+  }
 
   window.__EDOGAWA_V123_INFO = ()=>{
     const m7 = document.getElementById('edo-m7-notice');
