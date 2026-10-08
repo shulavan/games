@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v126 (2026-10-08)';
+    window.__EDOGAWA_VERSION = 'v127 (2026-10-08)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -22654,6 +22654,75 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       ゴール一覧: app.myGoalPlaces().length,
       絞り込み: glFilter,
       ジャンル: CATS.map(c=>c.ic)
+    };
+  };
+})();
+</script>
+<style id="edogawa-v127-style">
+  /* 【v127】セリフのふきだしは、コマ（丸いアイコン）の真上・中央に出します。
+     もとは枠（220px）の中央に合わせていたため、コマより左に寄っていました。 */
+  .custom-player-marker .speech-bubble{
+    left:auto !important; right:32px !important;
+    transform:translateX(50%) translateY(-6px) !important;
+    animation:edoBubblePopC .3s cubic-bezier(.175,.885,.32,1.275) !important; }
+  @keyframes edoBubblePopC{
+    0%  { opacity:0; transform:translateX(50%) translateY(0) scale(.6); }
+    100%{ opacity:1; transform:translateX(50%) translateY(-6px) scale(1); } }
+
+  /* 【v127】ゴール達成一覧：絞り込みを切り替えても枠の大きさと位置を変えません */
+  .edo-lm-box.edo-lm-fixed{ height:var(--edo-lm-h, 86vh) !important; }
+  .edo-lm-box.edo-lm-fixed .edo-lm-body{ flex:1 1 auto; overflow-y:auto; align-self:stretch; }
+</style>
+<script id="edogawa-v127">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // 一覧モーダルは、開くたびに高さの指定をいったん外します
+  const origShowList = app.showListModal ? app.showListModal.bind(app) : null;
+  if(origShowList){
+    app.showListModal = function(title, bodyHtml, buttons){
+      const r = origShowList(title, bodyHtml, buttons);
+      try{
+        const box = document.querySelector('#edo-list-modal .edo-lm-box');
+        if(box){ box.classList.remove('edo-lm-fixed'); box.style.removeProperty('--edo-lm-h'); }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  // ゴール達成一覧は「全」のときの大きさに固定し、絞り込んでも上詰めのままにします
+  const origGoalList = app.openGoalList ? app.openGoalList.bind(app) : null;
+  if(origGoalList){
+    app.openGoalList = function(){
+      const r = origGoalList();
+      try{
+        const box = document.querySelector('#edo-list-modal .edo-lm-box');
+        if(box){
+          box.classList.remove('edo-lm-fixed');
+          box.style.removeProperty('--edo-lm-h');
+          // いったん描き終えてから、「全」のときの高さを測って固定します
+          requestAnimationFrame(()=>{
+            try{
+              const h = Math.round(box.getBoundingClientRect().height);
+              if(h > 0){
+                box.style.setProperty('--edo-lm-h', h + 'px');
+                box.classList.add('edo-lm-fixed');
+              }
+            }catch(e){}
+          });
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  window.__EDOGAWA_V127_INFO = ()=>{
+    const box = document.querySelector('#edo-list-modal .edo-lm-box');
+    return {
+      高さ固定: !!(box && box.classList.contains('edo-lm-fixed')),
+      高さ: box ? Math.round(box.getBoundingClientRect().height) : null,
+      上: box ? Math.round(box.getBoundingClientRect().top) : null
     };
   };
 })();
