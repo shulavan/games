@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v132 (2026-10-08)';
+    window.__EDOGAWA_VERSION = 'v135 (2026-10-08)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -2376,8 +2376,8 @@
     // 利用規約などの改定日（表示用）
     const DOC_UPDATED = "2026年8月26日";
     // 🚁/✈️を配る条件（残りマス数のしきい値）。ゴール1回につき、それぞれ1人だけ・早い者勝ち。
-    const FLIGHT_HELI_MIN_SQUARES = 200;   // 🚁ヘリコプター（残り200マス以上）
-    const FLIGHT_PLANE_MIN_SQUARES = 200;  // ✈️飛行機（残り200マス以上）
+    const FLIGHT_HELI_MIN_SQUARES = 100;   // 【v134】🚁ヘリコプター（残り100マス以上）
+    const FLIGHT_PLANE_MIN_SQUARES = 150;  // 【v134】✈️飛行機（残り150マス以上）
     // 競艇実況の読み上げ速度（1.0が標準）。場面によって喋り方を切り替える。
     // 舟券購入中と結果発表は落ち着いた喋り、レースが始まったら実況らしい早口にする。
     const BOAT_RACE_SPEECH_RATE_CALM = 1.15;   // 舟券購入中・結果発表
@@ -7241,20 +7241,17 @@
         }
       },
 
-      // 緑▲マス（旧・黄マス）: 強制移動系（競艇・警察・病院）と乗り物獲得系のイベント。
+      // 緑▲マス：【v135】出るものと割合をはっきり決めました。
+      //   🚲自転車 25% ／ 🚗自動車 20% ／ 🚃電車 15% ／ 🚅新幹線 10%
+      //   警察・病院 10%（🚓警察 → 🚑病院 の順にくりかえし）
+      //   ミニゲーム 20%（競艇 → カヌー → 大観覧車 → 船堀タワー の順に持ち回り）
+      //   ※ゴールまで150マス以上なら✈️、100マス以上なら🚁を、抽選より先に必ず配ります
+      //     （どちらも1レグにつき1人まで。✈️のほうが強いので先に見ます）
       resolveGreenEvent(player) {
-        // 緑▲のミニゲームは江戸川競艇または新左近川親水公園カヌー。
-        // ★マスのミニゲーム（クイズ・金魚・増築船堀タワー・大観覧車）とは完全に分離。
         if (typeof player.forcedMoveCount !== 'number') player.forcedMoveCount = 0;
         if (typeof player.boatRaceCount !== 'number') player.boatRaceCount = 0;
 
-        // ★最優先★ 🚁/✈️の特別枠
-        // 「ゴール1回（1レグ）につき、それぞれ1人だけ・早い者勝ち」。
-        //   ・残りマスが150以上 → ✈️（飛行機）を1人だけ
-        //   ・残りマスが100以上 → 🚁（ヘリコプター）を1人だけ
-        // 条件を満たしている人が緑▲マスに止まったら、強制移動の抽選より先に必ず付与する
-        // （そうしないと警察・病院の抽選に吸われて、なかなか配られないため）。
-        // 両方の条件を満たす場合は、より強い✈️を優先（✈️が出ていれば🚁）。
+        // ── ① 大きく離されている人への特別枠（✈️・🚁） ──
         const myRemaining = this.remainingSquares(player);
         let flightEmoji = null;
         if (!player.isFlying && myRemaining !== null) {
@@ -7271,34 +7268,20 @@
           return;
         }
 
-        // Cap forced teleports (boat race / police / hospital) at 2 per player per goal-leg,
-        // otherwise a run of bad luck can bounce a player back and forth forever and the
-        // game never progresses. Once the cap is hit, this player only draws the vehicle-boost
-        // outcome from green squares for the rest of this leg.
-        const FORCED_MOVE_LIMIT = 2;
-        const forcedMoveLimitReached = player.forcedMoveCount >= FORCED_MOVE_LIMIT;
-        // 乗り物の基本取得率52%を、体力(100=基準)に比例して±し、特別イベントの枠は維持する。
-        const staminaForVehicle = Math.max(1, Math.min(999, Math.round(player.stats?.stamina ?? 100)));
-        const vehicleChance = Math.max(0.01, Math.min(0.72, 0.52 * (staminaForVehicle / 100)));
-        const vehicleThreshold = 1 - vehicleChance;
-        const roll = forcedMoveLimitReached ? (vehicleThreshold + Math.random() * (1 - vehicleThreshold)) : Math.random();
-
-        // 江戸川競艇／新左近川親水公園カヌー：緑▲の特別イベント。
-        // 発生したときは「競艇→カヌー→競艇→カヌー…」と必ず交互。
-        // 1レグにつき各1回まで。片方をすでに使っている場合は、未使用の方を優先。
-        // ▲（緑マス）の強制ジャンプは4種類。競艇 → カヌー → 船堀タワー → 大観覧車 の
-        // 順に持ち回りで、1レグにつき各1回まで。使い切った種類は自動で飛ばします。
-        const GREEN_ORDER = ['boat', 'canoe', 'tower', 'wheel'];
+        // ── ② ミニゲーム 20% ──
+        //    ミニゲームは「競艇 → カヌー → 大観覧車 → 船堀タワー」の順に持ち回り、
+        //    1レグにつき各1回まで。使い切っている場合は乗り物になります。
+        const GREEN_ORDER = ['boat', 'canoe', 'wheel', 'tower'];
         const greenAvail = {
           boat:  this.boatRaceEventsThisLeg < this.boatRaceCapThisLeg,
           canoe: this.canoeEventsThisLeg    < this.canoeCapThisLeg,
-          tower: this.towerEventsThisLeg    < this.towerCapThisLeg,
-          wheel: this.wheelEventsThisLeg    < this.wheelCapThisLeg
+          wheel: this.wheelEventsThisLeg    < this.wheelCapThisLeg,
+          tower: this.towerEventsThisLeg    < this.towerCapThisLeg
         };
-        // 【v125】以前は25%の抽選でしたが、カヌー・船堀タワー・大観覧車が
-        //         ほとんど出なかったため、まだ残っている種類があるときは必ず出します。
-        if (GREEN_ORDER.some(k => greenAvail[k])) {
-          // 次に出す予定のものから順に、まだ残っている種類を探す
+        const roll = Math.random();
+        const wantMiniGame = (roll < 0.20) && GREEN_ORDER.some(k => greenAvail[k]);
+
+        if (wantMiniGame) {
           let pick = null;
           const startAt = Math.max(0, GREEN_ORDER.indexOf(this.greenSpecialNext || 'boat'));
           for (let i = 0; i < GREEN_ORDER.length; i++) {
@@ -7344,8 +7327,8 @@
             return;
           }
 
-          const useCanoe = (pick === 'canoe');
-          if (useCanoe) {
+          // 🚣‍♂️ 新左近川カヌー
+          if (pick === 'canoe') {
             this.canoeEventsThisLeg++;
             this.pendingCanoePlayerId = player.id;
             sound.playEngineRev();
@@ -7359,6 +7342,7 @@
             return;
           }
 
+          // 🚤 江戸川競艇
           this.boatRaceEventsThisLeg++;
           player.boatRaceCount++;
           sound.playEngineRev();
@@ -7376,16 +7360,28 @@
           return;
         }
 
-        if (roll < 0.28) {
+        // ── ③ 警察・病院への強制移動 10%（🚓警察 → 🚑病院 の順にくりかえし）──
+        const policeOk   = Array.isArray(POLICE_STATIONS) && POLICE_STATIONS.length > 0;
+        const hospitalOk = Array.isArray(HOSPITALS)       && HOSPITALS.length > 0;
+        let forcedKind = null;
+        if (roll >= 0.20 && roll < 0.30) {
+          const next = (this.greenForcedNext === 'hospital') ? 'hospital' : 'police';
+          if (next === 'police'   && policeOk)   forcedKind = 'police';
+          else if (next === 'hospital' && hospitalOk) forcedKind = 'hospital';
+          else if (policeOk)   forcedKind = 'police';
+          else if (hospitalOk) forcedKind = 'hospital';
+        }
+
+        if (forcedKind === 'police') {
+          this.greenForcedNext = 'hospital';
           player.forcedMoveCount++;
           let nearest = POLICE_STATIONS[0];
           let minDist = Infinity;
           const currPt = this.roadNetworkNodes[player.currentNodeIdx] || EDOGAWA_START;
-          POLICE_STATIONS.forEach(p => {
-            const d = Math.hypot(p.lat - currPt.lat, p.lng - currPt.lng);
-            if (d < minDist) { minDist = d; nearest = p; }
+          POLICE_STATIONS.forEach(x => {
+            const d = Math.hypot(x.lat - currPt.lat, x.lng - currPt.lng);
+            if (d < minDist) { minDist = d; nearest = x; }
           });
-
           sound.playSiren();
           this.showEventModal(
             `${nearest.name} へ緊急連行！`,
@@ -7401,7 +7397,8 @@
           return;
         }
 
-        if (roll < vehicleThreshold) {
+        if (forcedKind === 'hospital') {
+          this.greenForcedNext = 'police';
           player.forcedMoveCount++;
           let nearest = HOSPITALS[0];
           let minDist = Infinity;
@@ -7410,7 +7407,6 @@
             const d = Math.hypot(h.lat - currPt.lat, h.lng - currPt.lng);
             if (d < minDist) { minDist = d; nearest = h; }
           });
-
           const turns = Math.floor(Math.random() * 3) + 3;
           player.wheelchairTurns = turns;
           sound.playSiren();
@@ -7428,7 +7424,16 @@
           return;
         }
 
-        const vehicle = NON_FLIGHT_VEHICLES[Math.floor(Math.random() * NON_FLIGHT_VEHICLES.length)];
+        // ── ④ 乗り物（🚲25% 🚗20% 🚃15% 🚅10%）──
+        //    ミニゲームにも警察・病院にもならなかった分（＝70%ぶん）を、この割合で分けます。
+        const VEHICLE_ODDS = [
+          { emoji: '🚲', p: 0.25 }, { emoji: '🚗', p: 0.20 },
+          { emoji: '🚃', p: 0.15 }, { emoji: '🚅', p: 0.10 }
+        ];
+        const r2 = Math.random() * 0.70;      // 乗り物のなかでの抽選
+        let acc = 0, wantEmoji = '🚲';
+        for (const v of VEHICLE_ODDS) { acc += v.p; if (r2 < acc) { wantEmoji = v.emoji; break; } }
+        const vehicle = VEHICLES.find(v => v.emoji === wantEmoji) || NON_FLIGHT_VEHICLES[0];
         player.vehicle = vehicle;
 
         this.setPlayerIconState(player, { bubbleText: `${vehicle.emoji} ゲット！` });
@@ -13164,7 +13169,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       <div class="edo-mc-title">${esc(m.t)}</div>
       ${o.playerName?`<div class="edo-mc-player">${esc(o.playerName)}</div>`:''}
       ${o.detail?`<div class="edo-mc-detail${/[\n]/.test(String(o.detail))?'':' one'}">${esc(o.detail)}</div>`:''}
-      ${rows?`<div class="edo-mc-list">${rows.map(r=>`<div><span>${esc(r.name)}</span><span style="color:${Math.round(Number(r.delta)||0)<0?'#fb7185':'#34d399'}">${Math.round(Number(r.delta)||0)>=0?'＋':''}${yen(r.delta)}</span></div>`).join('')}</div>`
+      ${rows?`<div class="edo-mc-list">${rows.map(r=>{const hasTxt=(r.text!=null&&r.text!=='');const dv=Math.round(Number(r.delta)||0);const col=hasTxt?'#cbd5e1':(dv<0?'#fb7185':'#34d399');const val=hasTxt?esc(r.text):`${dv>=0?'＋':''}${yen(dv)}`;return `<div><span>${esc(r.name)}</span><span style="color:${col}">${val}</span></div>`;}).join('')}</div>`
             :`<div class="edo-mc-reward${delta<0?' minus':''}"><span class="lbl">賞金・報酬</span><span class="val">${delta>=0?'＋':''}${yen(delta)}</span></div>`}
       ${o.money!=null?`<div class="edo-mc-money">所持金 ${yen(o.money)}</div>`:''}
       ${bar(RESULT_MS)}
@@ -13193,11 +13198,26 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
       const r=orig(data);
       if(already||!game)return r;
       try{
-        if(game==='canoe'&&Array.isArray(data?.results)){
-          const rows=data.results.map(x=>{
-            const q=this.players?.find(y=>Number(y.id)===Number(x.id));
-            return {name:q?.name||`プレイヤー${x.id}`,delta:x.delta};
-          });
+        if(game==='canoe'&&(Array.isArray(data?.ranking)||Array.isArray(data?.results))){
+          // v134: 順位表＋賞金／所持金をひとつの結果モーダルにまとめて表示する。
+          let rows;
+          if(Array.isArray(data?.ranking)&&data.ranking.length){
+            rows=data.ranking.slice().sort((a,b)=>(Number(a.rank)||0)-(Number(b.rank)||0)).map(x=>{
+              const q=x.id!=null?this.players?.find(y=>Number(y.id)===Number(x.id)):null;
+              const nm=q?.name||x.name||'レーサー';
+              const tm=Number(x.time)>0?`（${Number(x.time).toFixed(2)}秒）`:'';
+              const row={name:`${Number(x.rank)||0}位 ${nm}${tm}`};
+              if(x.real&&x.delta!=null) row.delta=Number(x.delta)||0;
+              else row.text=`￥${Math.round(Number(x.prize)||0).toLocaleString('ja-JP')}`;
+              return row;
+            });
+          }else{
+            rows=data.results.map(x=>{
+              const q=this.players?.find(y=>Number(y.id)===Number(x.id));
+              const nm=q?.name||`プレイヤー${x.id}`;
+              return {name:x.rank?`${x.rank}位 ${nm}`:nm,delta:x.delta};
+            });
+          }
           const me=this.players?.find(x=>Number(x.id)===Number(st.playerId));
           this._miniCommonResultShow({game,rows,money:me?me.money:null,playerName:null,detail:data?.detail||''});
         }else{
@@ -21126,8 +21146,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     el.id = 'edo-visited-foot';
     el.innerHTML =
       '<button type="button" id="edo-vf-back" class="edo-vf-btn"><span class="e">↩️</span><span>戻る</span></button>' +
-      '<button type="button" id="edo-vf-here" class="edo-vf-btn"><span class="e">📍</span><span>現在地</span></button>';
+      '<button type="button" id="edo-vf-here" class="edo-vf-btn"><span class="e">📍</span><span>現在地</span></button>' +
+      '<button type="button" id="edo-vf-list" class="edo-vf-btn"><span class="e">🗒️</span><span>一覧</span></button>';
     document.body.appendChild(el);
+    el.querySelector('#edo-vf-list').onclick = ()=>app.openVisitedPostList();
     el.querySelector('#edo-vf-back').onclick = ()=>{
       app.closeListModal();
       try{ app.hideVisitedOwnList && app.hideVisitedOwnList(); }catch(e){}
@@ -21160,7 +21182,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(btn){ btn.disabled = false; }
     if(!pos){ alert('位置情報を取得できませんでした。端末の位置情報の設定をご確認ください。'); return null; }
     app.lastGeo = {lat:pos.lat, lng:pos.lng, acc:pos.acc};
-    try{ app.map && app.map.flyTo([pos.lat, pos.lng], 18, {duration:.6}); }catch(e){}
+    try{ app.map && app.map.flyTo([pos.lat, pos.lng], 19, {duration:.6}); }catch(e){}
     return pos;
   };
 
@@ -21179,16 +21201,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const f = document.createElement('div');
     f.id = 'edo-own-list-foot';
     f.className = 'edo-lm-foot';
-    f.innerHTML = '<button type="button" class="edo-lm-btn primary" id="edo-own-post">投稿する</button>' +
-                  '<button type="button" class="edo-lm-btn" id="edo-own-close">キャンセル</button>';
+    f.innerHTML = '<button type="button" class="edo-lm-btn primary" id="edo-own-post">現在地で投稿する</button>';
     box.appendChild(f);
     f.querySelector('#edo-own-post').onclick = ()=>{
       hideOwnList();
       app.startVisitedPinRecord && app.startVisitedPinRecord();
-    };
-    f.querySelector('#edo-own-close').onclick = ()=>{
-      hideOwnList();
-      app.closeVisitedOnlyMode && app.closeVisitedOnlyMode();
     };
   }
   app.ensureVisitedOwnListFooter = ensureOwnListFooter;
@@ -21237,7 +21254,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       app.closeVisitedOnlyMode && app.closeVisitedOnlyMode();
       return;
     }
-    try{ app.map && app.map.flyTo([pos.lat, pos.lng], 18, {duration:.6}); }catch(e){}
+    try{ app.map && app.map.flyTo([pos.lat, pos.lng], 19, {duration:.6}); }catch(e){}
     await app.openVisitedPostList();
   };
 
@@ -23121,6 +23138,194 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       どこから: app._visitedDetailFrom || null
     };
   };
+})();
+</script>
+<style id="edogawa-v133-style">
+  /* 【v133】📌画面のヘッダーのハンバーガーは、フッターの「🗒️ 一覧」に移しました */
+  body.edo-visited-only #visited-only-own-menu-btn{ display:none !important; }
+  /* まるボタンは3つ並ぶので、少しだけ小さく・間を詰めます */
+  body.edo-visited-only #edo-visited-foot{ gap:16px }
+  .edo-vf-btn{ width:72px; height:72px; }
+  @media (max-width:360px){ .edo-vf-btn{ width:64px; height:64px; font-size:12px } }
+</style>
+<script id="edogawa-v133">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  const HIDE_WHEN = ['visited-pin-modal','visited-pin-detail-modal','visited-pin-list-modal','visited-own-list-modal'];
+  const shown = (el)=>{
+    if(!el) return false;
+    try{
+      if(el.classList.contains('hidden')) return false;
+      return getComputedStyle(el).display !== 'none';
+    }catch(e){ return false; }
+  };
+
+  // ── まるボタンを隠す場面をふやします ──
+  //    記録の3画面に加えて、「自分の投稿一覧」と
+  //    「この場所でいいですか？／現在地でいいですか？」が出ている間も隠します。
+  function syncFoot(){
+    const open = HIDE_WHEN.some(id=>shown(document.getElementById(id)))
+              || !!app.visitedConfirmOpen
+              || !!document.querySelector('.visited-location-confirm');
+    document.body.classList.toggle('edo-visited-form', open);
+  }
+
+  // ── フッターの「🗒️ 一覧」ボタン ──
+  function ensureListBtn(){
+    const foot = document.getElementById('edo-visited-foot');
+    if(!foot) return;
+    let b = document.getElementById('edo-vf-list');
+    if(!b){
+      b = document.createElement('button');
+      b.type = 'button'; b.id = 'edo-vf-list'; b.className = 'edo-vf-btn';
+      b.innerHTML = '<span class="e">🗒️</span><span>一覧</span>';
+      foot.appendChild(b);
+    }
+    if(!b.__edoV133){ b.__edoV133 = true; b.onclick = ()=>app.openVisitedPostList(); }
+    // 「戻る」「現在地」「一覧」の並びにそろえます
+    const back = document.getElementById('edo-vf-back');
+    const here = document.getElementById('edo-vf-here');
+    if(back && here && foot.lastElementChild !== b){ foot.appendChild(b); }
+  }
+
+  function boot(){
+    const run = ()=>{ try{ syncFoot(); ensureListBtn(); }catch(e){} };
+    run();
+    setInterval(run, 250);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V133_INFO = ()=>{
+    const foot = document.getElementById('edo-visited-foot');
+    const own = document.getElementById('visited-own-list-modal');
+    return {
+      まるボタン: foot ? [...foot.children].map(b=>(b.innerText||'').replace(/\s+/g,'')) : [],
+      フッターの出方: foot ? getComputedStyle(foot).display : null,
+      ヘッダーのメニュー: (()=>{ const b=document.getElementById('visited-only-own-menu-btn');
+        return b ? getComputedStyle(b).display : 'なし'; })(),
+      一覧のボタン: own ? [...own.querySelectorAll('#edo-own-list-foot .edo-lm-btn')]
+        .map(b=>(b.innerText||'').replace(/\s+/g,'')) : [],
+      地図の倍率: (()=>{ try{ return app.map && app.map.getZoom ? app.map.getZoom() : null; }catch(e){ return null; } })(),
+      確認が出ている: !!app.visitedConfirmOpen
+    };
+  };
+})();
+</script>
+<!-- ============================================================================
+     v134: あみだくじへ移るときの地図のちらつきを消す（幕）
+     ============================================================================ -->
+<style id="edogawa-v134-style">
+  #edo-amida-curtain{position:fixed;inset:0;z-index:2147482900;display:none;
+    align-items:center;justify-content:center;flex-direction:column;gap:14px;
+    background:rgba(2,6,23,.98);backdrop-filter:blur(8px);}
+  #edo-amida-curtain.show{display:flex;}
+  #edo-amida-curtain .edo-ac-emoji{font-size:52px;line-height:1;}
+  #edo-amida-curtain .edo-ac-text{font-size:15px;font-weight:900;color:#fbbf24;letter-spacing:.06em;}
+  #edo-amida-curtain .edo-ac-dots{width:140px;height:6px;border-radius:999px;overflow:hidden;
+    background:rgba(148,163,184,.25);}
+  #edo-amida-curtain .edo-ac-dots i{display:block;height:100%;width:40%;border-radius:999px;
+    background:linear-gradient(90deg,#fbbf24,#f59e0b);animation:edoAcSlide 1.1s linear infinite;}
+  @keyframes edoAcSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+</style>
+<script id="edogawa-v134">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ゴール後ミニゲーム → あみだくじ の間に地図が一瞬見えるのを防ぐ幕 ──
+  let el = null, raisedAt = 0, poll = null, hardTimer = null;
+
+  function ensure(){
+    if(el && document.body.contains(el)) return el;
+    el = document.getElementById('edo-amida-curtain');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'edo-amida-curtain';
+      el.innerHTML = '<div class="edo-ac-emoji">🏯</div>'
+        + '<div class="edo-ac-text">江戸川あみだくじを準備中…</div>'
+        + '<div class="edo-ac-dots"><i></i></div>';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function amidaShown(){
+    try{
+      const ov = document.getElementById('goal-amida-overlay');
+      if(!ov || ov.classList.contains('hidden')) return false;
+      if(getComputedStyle(ov).display === 'none') return false;
+      const fr = document.getElementById('goal-amida-frame');
+      if(!fr) return false;
+      // 子ページが読み込めているかを確かめます（別ドメインではないので読めます）
+      const d = fr.contentDocument;
+      return !!(d && d.body && d.body.childElementCount > 0);
+    }catch(e){ return true; }
+  }
+
+  function lower(){
+    if(poll){ clearInterval(poll); poll = null; }
+    if(hardTimer){ clearTimeout(hardTimer); hardTimer = null; }
+    raisedAt = 0;
+    try{ ensure().classList.remove('show'); }catch(e){}
+  }
+  function lowerSoon(){ setTimeout(lower, 260); }
+
+  function raise(){
+    if(!app._pendingGoalAmidaPlayer && !app.goalAmidaActive) return;
+    const c = ensure();
+    if(c.classList.contains('show')) return;
+    c.classList.add('show');
+    raisedAt = Date.now();
+    if(poll) clearInterval(poll);
+    poll = setInterval(()=>{
+      try{
+        const waited = Date.now() - raisedAt;
+        // あみだくじ枠自体も不透明なので、出ていれば幕は不要です
+        if(app.goalAmidaActive){ if(amidaShown() || waited > 3000) lowerSoon(); return; }
+        // あみだくじが始まらないまま終わった場合は幕をたたみます
+        if(!app._pendingGoalAmidaPlayer && waited > 1500) lower();
+      }catch(e){ lower(); }
+    }, 100);
+    if(hardTimer) clearTimeout(hardTimer);
+    hardTimer = setTimeout(lower, 6000);
+  }
+  app.__edoAmidaCurtain = { raise, lower, shown:()=>!!(el && el.classList.contains('show')) };
+
+  // 結果モーダルを出す時点で、あらかじめ下に幕を敷いておきます
+  const origResultShow = app._miniCommonResultShow ? app._miniCommonResultShow.bind(app) : null;
+  if(origResultShow){
+    app._miniCommonResultShow = function(opt){
+      try{ if(this._pendingGoalAmidaPlayer) raise(); }catch(e){}
+      return origResultShow(opt);
+    };
+  }
+  ['closeRegionalMiniGame','finishMiniGameTurn','startGoalAmida'].forEach(name=>{
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(a, b){
+      try{ raise(); }catch(e){}
+      return orig(a, b);
+    };
+  });
+  // あみだくじが終わったら必ず幕をたたみます
+  ['finishGoalAmida','continueAfterGoalAmida','closeGoalAmida'].forEach(name=>{
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = function(a, b){
+      const r = orig(a, b);
+      try{ lower(); }catch(e){}
+      return r;
+    };
+  });
+
+  window.__EDOGAWA_V134_INFO = ()=>({
+    幕: !!(el && el.classList.contains('show')),
+    あみだ待ち: !!app._pendingGoalAmidaPlayer,
+    あみだ中: !!app.goalAmidaActive
+  });
 })();
 </script>
 <script id="edogawa-v39-footer">
