@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v125 (2026-10-08)';
+    window.__EDOGAWA_VERSION = 'v126 (2026-10-08)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -4944,11 +4944,12 @@
         if (/病院|クリニック|医院|診療所|眼科|歯科|内科|外科|皮膚科|小児科/.test(name)) return '🏥';
         if (/神社|神宮|天祖|香取|氷川/.test(name)) return '⛩️';
         if (/寺|院$/.test(name)) return '🛕';
+        // 【v126】「◯◯公園 バス停」が公園になってしまうため、停留所・駅を先に見ます
+        if (/バス停|停留所/.test(name)) return '🚏';
+        if (/駅$|駅前$/.test(name)) return '🚉';
         if (/保育園|こども園|幼稚園|保育室|学童/.test(name)) return '🛝';
         if (/学校|高校|中学|小学/.test(name)) return '🏫';
         if (/公園|ひろば|広場|遊園|緑道/.test(name)) return '⛲️';
-        if (/駅$/.test(name)) return '🚉';
-        if (/バス停/.test(name)) return '🚏';
         if (/図書館/.test(name)) return '📚';
         if (/警察|交番/.test(name)) return '🚨';
         if (/郵便局/.test(name)) return '🏣';
@@ -7485,7 +7486,7 @@
         // isRolling=true のままターンが進まず「フリーズ」していました。
         // 【v125】★マスは「クイズ → 金魚 → 船堀タワー → 大観覧車 → 飛行隊」の
         //         順番で必ず持ち回ります（ランダムだと出ない種類があったため）。
-        const rotation = ['quiz', 'kingyo', 'tower', 'wheel', 'plane'];
+        const rotation = ['quiz', 'kingyo', 'tower', 'wheel'];
         if (typeof this.starRotationIdx !== 'number') this.starRotationIdx = 0;
         const kind = rotation[this.starRotationIdx % rotation.length];
         this.starRotationIdx = (this.starRotationIdx + 1) % rotation.length;
@@ -10954,7 +10955,7 @@ if(window.EdogawaSugoroku)window.EdogawaSugoroku._updateFullscreenClass();
  const META={delivery:{title:'🛵 江戸川出前ライダー',icon:'🛵'},hide:{title:'🏢 江戸川区新庁舎 かくれんぼ',icon:'🏢'},kanken:{title:'漢 いきなり漢字書き取りテスト',icon:'漢'}};
  const oldGoal=app.getGoalMiniGameKey?app.getGoalMiniGameKey.bind(app):null;
  app.getGoalMiniGameKey=function(c){if(c==='飲食店')return'delivery';if(c==='公共・スポーツ施設')return'hide';return oldGoal?oldGoal(c):null;};
- app.resolveStarEvent=function(p){if(!p)return;/* ★マス：タワーと大観覧車は▲マスへ移したので外し、木の実ドロボーと果実射撃を追加 *//* 【v125】ランダムだと出ない種類があったので、必ず順番に持ち回ります */const a=['quiz','kingyo','kanken','nuts','archery','plane'];if(typeof this.starRotationIdx!=='number')this.starRotationIdx=0;const k=a[this.starRotationIdx%a.length];this.starRotationIdx=(this.starRotationIdx+1)%a.length;this.lastStarMiniGameKind=k;this.miniGameActive=true;this.activeMiniGamePlayerId=p.id;if(k==='quiz')this.startQuizInvite(p);else if(k==='kingyo')this.startKingyoInvite(p);else this.openRegionalMiniGame(k,p);};
+ app.resolveStarEvent=function(p){if(!p)return;/* ★マス：タワーと大観覧車は▲マスへ移したので外し、木の実ドロボーと果実射撃を追加 *//* 【v125】ランダムだと出ない種類があったので、必ず順番に持ち回ります */const a=['quiz','kingyo','kanken','nuts','archery'];if(typeof this.starRotationIdx!=='number')this.starRotationIdx=0;const k=a[this.starRotationIdx%a.length];this.starRotationIdx=(this.starRotationIdx+1)%a.length;this.lastStarMiniGameKind=k;this.miniGameActive=true;this.activeMiniGamePlayerId=p.id;if(k==='quiz')this.startQuizInvite(p);else if(k==='kingyo')this.startKingyoInvite(p);else this.openRegionalMiniGame(k,p);};
  const oldOpen=app.openRegionalMiniGame?app.openRegionalMiniGame.bind(app):null;
  app.openRegionalMiniGame=function(game,player){
    if(!NEW_GAMES.has(game))return oldOpen?oldOpen(game,player):this.finishMiniGameTurn(player);
@@ -22408,25 +22409,16 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 </script>
 <style id="edogawa-v125-style">
   /* 【v125】プレーヤーの真上に出す「あと◯マス」のふきだし */
-  .edo-remain-bubble{
-    position:absolute; right:32px; top:-30px; transform:translateX(50%);
-    background:rgba(2,6,23,.92); border:1px solid #38bdf8; color:#7dd3fc;
-    font-size:12px; font-weight:900; line-height:1; white-space:nowrap;
-    padding:5px 9px; border-radius:999px; box-shadow:0 4px 12px rgba(0,0,0,.5);
-    pointer-events:none; }
-  .edo-remain-bubble::after{
-    content:''; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%);
-    border-left:5px solid transparent; border-right:5px solid transparent;
-    border-top:5px solid #38bdf8; }
 
   /* 【v125】ゴール達成一覧 */
-  .edo-gl-tabs{ display:flex; flex-wrap:nowrap; gap:6px; margin-bottom:10px;
-    overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; }
-  .edo-gl-tabs::-webkit-scrollbar{ height:4px; }
-  .edo-gl-tabs::-webkit-scrollbar-thumb{ background:#334155; border-radius:99px; }
-  .edo-gl-tab{ flex:0 0 auto; min-width:38px; padding:6px 8px; border-radius:12px;
+  .edo-gl-tabs{ display:flex; flex-wrap:nowrap; gap:4px; margin-bottom:10px; width:100%; }
+  .edo-gl-tab{ flex:1 1 0; min-width:0; height:40px; padding:0; border-radius:10px;
     background:#1e293b; border:1px solid #475569; color:#e2e8f0;
-    font-size:16px; font-weight:900; line-height:1; cursor:pointer; transition:.15s; }
+    font-size:15px; font-weight:900; line-height:1; cursor:pointer; transition:.15s;
+    display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  @media (max-width:360px){ .edo-gl-tab{ height:36px; font-size:13px; } }
+  /* 施設の詳細は、一覧より手前に出します */
+  #facility-modal.edo-front{ z-index:2147483260 !important; }
   .edo-gl-tab.on{ background:linear-gradient(180deg,#f59e0b,#d97706); border-color:#b45309; color:#0f172a; }
   .edo-gl-tab:active{ transform:scale(.94); }
   .edo-gl-row{ display:flex; align-items:center; gap:10px; width:100%;
@@ -22473,23 +22465,6 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // ══════════════════════════════════════════════════════════════
   //  ② サイコロを振る前、プレーヤーの真上に「あと◯マス」を出します
   // ══════════════════════════════════════════════════════════════
-  const origIcon = app.createPlayerIcon ? app.createPlayerIcon.bind(app) : null;
-  if(origIcon){
-    app.createPlayerIcon = function(player, bubbleText, moveCountdown){
-      const icon = origIcon(player, bubbleText, moveCountdown);
-      try{
-        const label = player && player.__edoRemainLabel;
-        const opt = (icon && icon.options) ? icon.options : icon;   // 地図の作りの違いを吸収します
-        if(label && opt && typeof opt.html === 'string'){
-          opt.html = opt.html.replace(
-            /(<div class="relative player-token"[^>]*>)/,
-            '$1<div class="edo-remain-bubble">🗨️ ' + esc(label) + '</div>');
-        }
-      }catch(e){}
-      return icon;
-    };
-  }
-
   function wantLabel(p){
     if(!p || !app.players || !app.players.length) return '';
     if(p.id !== app.currentPlayerIdx) return '';          // 手番の人だけ
@@ -22502,14 +22477,32 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ return app.remainingSquaresLabel(p); }catch(e){ return 'あと' + r + 'マス'; }
   }
 
+  // サイコロを振る前は、セリフのふきだしに「あと◯マス」を出します。
+  // サイコロを振るとゲーム本体が「いい流れを引き寄せろ！」などに書き換えるので、
+  // わたしたちが入れた文言のときだけ手を入れます。
   function paintBubbles(force){
     if(!app.players || !app.playerMarkers) return;
+    const KEEP_MS = 3000;     // ほかのお知らせは3秒だけそのままにします
     app.players.forEach(p=>{
       if(!p) return;
       const want = wantLabel(p);
-      if(!force && p.__edoRemainLabel === want) return;
+      const cur  = String(p.currentBubbleText || '');
+      const mine = (p.__edoBubbleMine !== undefined && cur === p.__edoBubbleMine);
+      // ゲーム本体がセリフを入れ替えた時刻をおぼえておきます
+      if(cur !== p.__edoBubbleSeen){
+        p.__edoBubbleSeen = cur;
+        if(cur && !mine) p.__edoBubbleAt = Date.now();
+      }
       p.__edoRemainLabel = want;
-      try{ app.setPlayerIconState && app.setPlayerIconState(p, {}); }catch(e){}
+      if(!want){
+        if(mine && cur) p.__edoBubbleMine = undefined;   // 振っている間はゲーム本体にまかせます
+        return;
+      }
+      if(cur && !mine && (Date.now() - (p.__edoBubbleAt || 0)) < KEEP_MS) return;
+      if(!force && cur === want) return;
+      p.__edoBubbleMine = want;
+      p.__edoBubbleSeen = want;
+      try{ app.updatePlayerBubble && app.updatePlayerBubble(p, want); }catch(e){}
     });
   }
 
@@ -22527,7 +22520,26 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     { key:'宿',   ic:'🛏️' },
     { key:'病',   ic:'🏥' }
   ];
+  // 名前 → 絵文字 → ジャンル名 の順に見ます。
+  // （保存されているジャンル名が実際と合っていないことがあるため、名前を最優先にします）
   function catOf(it){
+    const n = String((it && it.name) || '');
+    if(/バス停|停留所|駅$|駅前|ターミナル/.test(n))                     return '駅';
+    if(/病院|クリニック|医院|診療所|歯科|眼科|内科|外科|皮膚科|小児科/.test(n)) return '病';
+    if(/小学校|中学校|高等学校|高校|中学|小学|学校|保育園|こども園|幼稚園|学園|大学|神社|神宮|寺$|寺院/.test(n)) return '学';
+    if(/ホテル|旅館|イン$|民宿/.test(n))                                return '宿';
+    if(/公園|ひろば|広場|緑道|遊園/.test(n))                            return '園';
+    if(/スーパー|マート|ストア|ドラッグ|薬局|薬店|百貨店|モール/.test(n)) return '買';
+    if(/体育館|区民館|図書館|会館|文化センター|スポーツセンター|区役所|事務所|郵便局|交番|警察/.test(n)) return '公';
+    const e = String((it && it.emoji) || '');
+    if(/🚉|🚏|🚇|🚃|🚌/.test(e))       return '駅';
+    if(/🏥/.test(e))                   return '病';
+    if(/🏫|⛩|🛕|🛝|🎓/.test(e))       return '学';
+    if(/🛏|🏨/.test(e))                return '宿';
+    if(/⛲|🌳|🛝|🏞/.test(e))          return '園';
+    if(/🛒|🏪|💊|🏬/.test(e))          return '買';
+    if(/🏛|🏟|🏢|🏣|🚨|🚓|📚/.test(e)) return '公';
+    if(/🍽|🍴|🍜|☕|🍣|🍺|🍔/.test(e)) return '食';
     const c = String((it && it.category) || '');
     if(/飲食|グルメ|カフェ|レストラン/.test(c)) return '食';
     if(/スーパー|薬|買物|ドラッグ/.test(c))   return '買';
@@ -22537,22 +22549,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(/学校|神社|仏閣/.test(c))              return '学';
     if(/宿泊|ホテル/.test(c))                 return '宿';
     if(/病院|クリニック/.test(c))             return '病';
-    const e = String((it && it.emoji) || '');
-    if(/🍽|🍴|🍜|☕|🍣|🍺|🍔/.test(e)) return '食';
-    if(/🛒|🏪|💊|🏬/.test(e))          return '買';
-    if(/⛲|🌳|🛝|🏞/.test(e))          return '園';
-    if(/🚉|🚏|🚇|🚃/.test(e))          return '駅';
-    if(/🏛|🏟|🏢|🏣|🚨|🚓/.test(e))    return '公';
-    if(/🏫|⛩|🛕/.test(e))             return '学';
-    if(/🛏|🏨/.test(e))                return '宿';
-    if(/🏥/.test(e))                   return '病';
-    const n = String((it && it.name) || '');
-    if(/病院|クリニック|医院|歯科|内科/.test(n)) return '病';
-    if(/小学校|中学校|高校|学校|保育園|幼稚園/.test(n)) return '学';
-    if(/公園|広場|緑道/.test(n)) return '園';
-    if(/駅$|駅前|バス停/.test(n)) return '駅';
-    if(/ホテル|旅館|イン$/.test(n)) return '宿';
     return '他';
+  }
+
+  // 一覧に出すアイコン。保存されている絵文字が合っていないことがあるので、
+  // 「◯◯ バス停」などは名前から出し直します。
+  function iconOf(it){
+    const n = String((it && it.name) || '');
+    if(/バス停|停留所/.test(n)) return '🚏';
+    if(/駅$|駅前$/.test(n))     return '🚉';
+    const e = String((it && it.emoji) || '');
+    if(e) return e;
+    return '📍';
   }
 
   function myPlayer(){
@@ -22586,7 +22594,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     }
     const rows = shown.map((it,i)=>
       `<button type="button" class="edo-gl-row" data-gli="${list.indexOf(it)}">` +
-        `<span class="edo-gl-ic">${esc(it.emoji||'📍')}</span>` +
+        `<span class="edo-gl-ic">${esc(iconOf(it))}</span>` +
         `<span class="edo-gl-tx">` +
           `<span class="edo-gl-n">${esc(it.name||'')}</span>` +
           `<span class="edo-gl-a">${esc(it.address||'住所は記録されていません')}</span>` +
@@ -22606,7 +22614,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const list = app.myGoalPlaces();
         const it = list[Number(b.dataset.gli)];
         if(!it) return;
-        try{ app.showFacilityDetail(it, { heading:'🏁 ゴールした施設' }); }catch(e){}
+        try{
+          const fm = document.getElementById('facility-modal');
+          if(fm) fm.classList.add('edo-front');      // 一覧より手前に出します
+          app.showFacilityDetail(it, { heading:'🏁 ゴールした施設' });
+        }catch(e){}
       };
     });
   }
@@ -22621,6 +22633,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 
   function boot(){
     setInterval(()=>{ try{ paintBubbles(false); }catch(e){} }, 400);
+    // 施設の詳細を閉じたら、手前に出す指定も外します
+    setInterval(()=>{
+      try{
+        const fm = document.getElementById('facility-modal');
+        if(fm && fm.classList.contains('edo-front') && fm.classList.contains('hidden'))
+          fm.classList.remove('edo-front');
+      }catch(e){}
+    }, 500);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
