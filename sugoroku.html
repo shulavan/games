@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v131 (2026-10-08)';
+    window.__EDOGAWA_VERSION = 'v132 (2026-10-08)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -6279,6 +6279,21 @@
         return nearestIdx;
       },
 
+      // 【v132】保存データが古いなどで色が無くても落ちないようにします
+      playerColorOf(p) {
+        const c = p && p.color;
+        if (c && typeof c === 'object' && c.bg && c.stroke && c.border) return c;
+        const FALL = [
+          { bg:'bg-emerald-500', stroke:'#10b981', border:'border-emerald-500' },
+          { bg:'bg-violet-500',  stroke:'#8b5cf6', border:'border-violet-500'  },
+          { bg:'bg-orange-500',  stroke:'#f97316', border:'border-orange-500'  },
+          { bg:'bg-sky-500',     stroke:'#0ea5e9', border:'border-sky-500'     }
+        ];
+        const fixed = Object.assign({}, FALL[(Number(p && p.id) || 0) % FALL.length], c || {});
+        if (p) p.color = fixed;
+        return fixed;
+      },
+
       updatePlayerRoutes() {
         this.playerRoutePolylines.forEach(line => this.map.removeLayer(line));
         this.playerRoutePolylines = [];
@@ -6299,7 +6314,7 @@
           // 直線ではあるが実在するマス目の並びになっている。
           const isFlying = !!p.isFlying;
           const polyline = L.polyline(latLngs, {
-            color: p.color.stroke,
+            color: this.playerColorOf(p).stroke,
             weight: 5,
             opacity: isFlying ? 0.95 : 0.85,
             dashArray: isFlying ? "2, 12" : "6, 8",
@@ -6483,7 +6498,7 @@
           <div class="relative player-token" style="width: 220px; height: 64px;">
             ${bubbleHtml}
             ${countdownHtml}
-            <div class="absolute w-16 h-16 rounded-full ${player.color.bg} border-4 border-white shadow-2xl flex items-center justify-center text-3xl ring-2 ring-slate-950 overflow-hidden" style="right: 0; top: 0;">
+            <div class="absolute w-16 h-16 rounded-full ${this.playerColorOf(player).bg} border-4 border-white shadow-2xl flex items-center justify-center text-3xl ring-2 ring-slate-950 overflow-hidden" style="right: 0; top: 0;">
               ${this.avatarMarkup ? this.avatarMarkup(displayAvatar,'w-full h-full object-cover') : displayAvatar}
             </div>
           </div>
@@ -6605,7 +6620,7 @@
 
         const displayAvatar = cp.wheelchairTurns > 0 ? '🦽' : (cp.vehicle ? cp.vehicle.emoji : cp.avatar);
         document.getElementById("active-player-avatar").innerHTML = this.avatarMarkup ? this.avatarMarkup(displayAvatar,'w-full h-full object-cover rounded-full') : displayAvatar;
-        document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${cp.color.bg}/20 border-2 ${cp.color.border} flex items-center justify-center text-xl shrink-0 shadow-md overflow-hidden`;
+        document.getElementById("active-player-avatar").className = `w-10 h-10 rounded-full ${this.playerColorOf(cp).bg}/20 border-2 ${this.playerColorOf(cp).border} flex items-center justify-center text-xl shrink-0 shadow-md overflow-hidden`;
         document.getElementById("active-player-name").textContent = cp.name;
         const activeMoneyEl = document.getElementById("active-player-money");
         activeMoneyEl.textContent = this.formatMoneyMan(cp.money);
@@ -6659,12 +6674,12 @@
             <div onclick="EdogawaSugoroku.panToPlayer(${idx})" class="bg-slate-900 ${isActive ? 'border-amber-400 ring-1 ring-amber-400/50' : 'border-slate-800'} ${offline ? 'opacity-40 grayscale' : ''} border p-2 rounded-xl flex flex-col justify-between transition cursor-pointer active:scale-95 relative">
               <div class="flex items-center justify-between">
                 <span class="text-sm inline-flex items-center justify-center w-6 h-6 rounded-full overflow-hidden shrink-0">${this.avatarMarkup ? this.avatarMarkup(cardAvatar,'w-full h-full object-cover') : cardAvatar}</span>
-                <span class="text-[9px] font-bold px-1 rounded ${p.color.bg} text-slate-950">${idx+1}P</span>
+                <span class="text-[9px] font-bold px-1 rounded ${this.playerColorOf(p).bg} text-slate-950">${idx+1}P</span>
               </div>
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold ${p.money < 0 ? 'text-rose-400' : 'text-amber-400'}">${this.formatMoneyMan(p.money)}</div>
               <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
-              <div class="text-[9px] font-bold" style="color:${p.color.stroke || '#f59e0b'}">🏁 ${Number(p.goals) || 0}ゴール</div>
+              <div class="text-[9px] font-bold" style="color:${this.playerColorOf(p).stroke || '#f59e0b'}">🏁 ${Number(p.goals) || 0}ゴール</div>
               ${offline ? '<div class="absolute top-1 left-1 px-1 rounded bg-slate-950/85 border border-slate-600 text-[8px] font-black text-slate-300">離脱</div>' : ''}
             </div>
           `;
@@ -7042,10 +7057,13 @@
         const available = Math.max(0, path.length - 1 - startIndex);
         const actualSteps = Math.min(Math.max(0, Math.floor(totalSteps)), available);
 
+        // 【v132】ここから下は、おまけの処理で失敗してもターンが止まらないようにします
+        const safePre = (fn) => { try { fn(); } catch (e) { console.warn('[move]', e); } };
+
         if (actualSteps === 0) {
-          this.updateMoveCountdown(player, 0, 0);
+          safePre(() => this.updateMoveCountdown(player, 0, 0));
           this._suppressNearby = false;
-          this.showNearbyForCurrentPlayer();
+          safePre(() => this.showNearbyForCurrentPlayer());
           if (player.currentNodeIdx === this.goalNodeIdx) {
             setTimeout(() => this.handleGoalReach(player), silent ? 0 : 50);
           } else {
@@ -7055,63 +7073,76 @@
         }
 
         let currentStep = 0;
-        if (!silent) this.updateMoveCountdown(player, actualSteps, actualSteps);
+        if (!silent) safePre(() => this.updateMoveCountdown(player, actualSteps, actualSteps));
         // サイコロでコマが動いている間は「現在地」表示を消す
         this._suppressNearby = true;
-        this.hideNearbyBadge();
+        safePre(() => this.hideNearbyBadge());
 
         // コマ移動のintervalも常に1本だけ。二重に走ると2人分の移動が同時に進み、
         // ターンの二重進行につながる。
         if (this.moveInterval) { clearInterval(this.moveInterval); this.moveInterval = null; }
-        const interval = this.moveInterval = setInterval(() => {
-          currentStep++;
-
-          const nextIndex = startIndex + currentStep;
-          if (nextIndex < path.length) {
-            player.pathIndex = nextIndex;
-            player.currentNodeIdx = path[nextIndex];
-          }
-
-          const node = this.roadNetworkNodes[player.currentNodeIdx];
-          const marker = this.playerMarkers[player.id];
-          if (marker && node && Number.isFinite(node.lat) && Number.isFinite(node.lng)) {
-            marker.setLatLng([node.lat, node.lng]);
-            if (!silent) {
-              this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 });
+        // 【v132】1マスごとの処理で万一つまずいても、コマが止まらなくなることが
+        //         ないように作り直しました。
+        //   ・進む／止まるの判定を、いちばん先に必ず通します
+        //   ・見た目や保存など「おまけの処理」は、ひとつずつ try で包みます
+        //     （ひとつ失敗しても、ほかと「止まる判定」には影響しません）
+        const safe = (fn) => {
+          try { fn(); }
+          catch (e) {
+            console.warn('[move]', e);
+            if (!this._moveErrLogged) {
+              this._moveErrLogged = true;
+              try { this.addLog && this.addLog('⚠️ コマを進める途中で問題が起きました：' + ((e && e.message) || e)); } catch (_) {}
             }
           }
+        };
+        const interval = this.moveInterval = setInterval(() => {
+          let finish = null;
+          try {
+            currentStep++;
 
-          this.updatePlayerRoutes();
+            const nextIndex = startIndex + currentStep;
+            if (nextIndex < path.length) {
+              player.pathIndex = nextIndex;
+              player.currentNodeIdx = path[nextIndex];
+            }
+
+            const node = this.roadNetworkNodes[player.currentNodeIdx];
+            const marker = this.playerMarkers[player.id];
+            if (marker && node && Number.isFinite(node.lat) && Number.isFinite(node.lng)) {
+              marker.setLatLng([node.lat, node.lng]);
+              if (!silent) safe(() => this.map.panTo([node.lat, node.lng], { animate: true, duration: 0.2 }));
+            }
+
+            // ── ここで「止まるかどうか」を先に決めます ──
+            if (player.currentNodeIdx === this.goalNodeIdx) finish = 'goal';
+            else if (currentStep >= actualSteps) finish = 'stop';
+          } catch (e) {
+            console.error('[move] コマを進める処理でエラー:', e);
+            finish = 'stop';                      // 何かあっても必ず止めます
+          }
+
+          safe(() => this.updatePlayerRoutes());
           // ブラウザを途中終了しても、直前に進んだマスまで「前回の続き」に残す。
-          if (!this.isMultiplayer) this.saveGameState();
+          // （毎マス保存すると重いので、止まる時と数マスごとだけにします）
+          if (!this.isMultiplayer && (finish || currentStep % 4 === 0)) safe(() => this.saveGameState());
 
           if (!silent) {
-            sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05);
-            this.updateMoveCountdown(player, actualSteps - currentStep, actualSteps);
-            this.updateActivePlayerRemainingLive(player);
+            safe(() => sound.playTone(400 + currentStep * 30, 'sine', 0.05, 0.05));
+            safe(() => this.updateMoveCountdown(player, actualSteps - currentStep, actualSteps));
+            safe(() => this.updateActivePlayerRemainingLive(player));
           }
 
-          if (player.currentNodeIdx === this.goalNodeIdx) {
-            clearInterval(interval);
-            if (this.moveInterval === interval) this.moveInterval = null;
-            this.clearUsedVehicle(player);
-            this.updateMoveCountdown(player, 0, 0);
-            this._suppressNearby = false;
-            this.showNearbyForCurrentPlayer();
-            setTimeout(() => this.handleGoalReach(player), silent ? 0 : 300);
-            return;
-          }
+          if (!finish) return;
 
-          if (currentStep >= actualSteps) {
-            clearInterval(interval);
-            if (this.moveInterval === interval) this.moveInterval = null;
-            this.clearUsedVehicle(player);
-            this.updateMoveCountdown(player, 0, 0);
-            // 止まった地点で「〇〇付近」を表示する
-            this._suppressNearby = false;
-            this.showNearbyForCurrentPlayer();
-            setTimeout(() => this.landOnSpot(player), silent ? 0 : 300);
-          }
+          clearInterval(interval);
+          if (this.moveInterval === interval) this.moveInterval = null;
+          safe(() => this.clearUsedVehicle(player));
+          safe(() => this.updateMoveCountdown(player, 0, 0));
+          this._suppressNearby = false;
+          safe(() => this.showNearbyForCurrentPlayer());
+          if (finish === 'goal') setTimeout(() => this.handleGoalReach(player), silent ? 0 : 300);
+          else                   setTimeout(() => this.landOnSpot(player), silent ? 0 : 300);
         }, stepDelay);
       },
 
@@ -8624,7 +8655,10 @@
 
       saveGameState() {
         if (this.isMultiplayer) return; // multiplayer sessions live in Firestore, not local save
-        const state = {
+        // 【v132】保存に失敗しても、ゲームが止まらないようにします。
+        //   端末の保存できる量（ふつう5MBほど）を超えると setItem は例外を投げます。
+        //   長く遊ぶほどデータが増えるので、あふれたら軽くして入れ直します。
+        const build = (slim) => ({
           players: this.players,
           turnCount: this.turnCount,
           currentPlayerIdx: this.currentPlayerIdx,
@@ -8634,14 +8668,26 @@
           roadNetworkNodes: this.roadNetworkNodes,
           goalNodeIdx: this.goalNodeIdx,
           specialEventUsed: this.specialEventUsed,
-          recentDestinationNames: this.recentDestinationNames || [],
+          recentDestinationNames: slim ? [] : (this.recentDestinationNames || []),
           helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
           planeGrantedThisLeg: !!this.planeGrantedThisLeg,
-          goaledPlaces: this.goaledPlaces || [],
+          goaledPlaces: slim ? (this.goaledPlaces || []).slice(-40) : (this.goaledPlaces || []),
           territory: this.territory || {},
           savedAt: Date.now()
-        };
-        localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(state));
+        });
+        const put = (slim) => { localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(build(slim))); };
+        try { put(false); this._saveTrouble = false; return true; }
+        catch (e) {
+          try { put(true); this._saveTrouble = false; console.warn('保存データを軽くして保存しました', e); return true; }
+          catch (e2) {
+            if (!this._saveTrouble) {
+              this._saveTrouble = true;
+              console.error('セーブに失敗しました（端末の保存容量が足りません）:', e2);
+              try { this.addLog && this.addLog('⚠️ 端末の保存容量が足りず、「前回の続き」を保存できませんでした。'); } catch (_) {}
+            }
+            return false;
+          }
+        }
       },
 
       showEventModal(title, desc, extra = null, options = {}) {
