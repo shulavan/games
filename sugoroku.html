@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v135 (2026-10-08)';
+    window.__EDOGAWA_VERSION = 'v136 (2026-10-09)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23326,6 +23326,81 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     あみだ待ち: !!app._pendingGoalAmidaPlayer,
     あみだ中: !!app.goalAmidaActive
   });
+})();
+</script>
+<!-- ============================================================================
+     v136: 📌画面のまるボタン（戻る・現在地・一覧）のチカチカを直す
+     ============================================================================ -->
+<style id="edogawa-v136-style">
+  /* 【v136】v129・v130・v133 がそれぞれ別の条件で同じ目印（edo-visited-form）を
+     付けたり外したりしていたため、0.25秒ごとに取り合いになって
+     まるボタンが「消えたり付いたり」していました。
+     ここで決めた結論だけが効くよう、専用の目印を用意します。 */
+  body.edo-foot-off #edo-visited-foot{ display:none !important; }
+  body.edo-foot-off #edo-visited-foot .edo-vf-btn{ display:none !important; }
+</style>
+<script id="edogawa-v136">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // 旧版が見ていた画面を「すべてまとめて」見ます（どれか1つでも出ていれば隠す）
+  const HIDE_WHEN = ['visited-pin-modal','visited-pin-detail-modal',
+                     'visited-pin-list-modal','visited-own-list-modal'];
+  const openLoose = (el)=>{
+    if(!el) return false;
+    try{ return getComputedStyle(el).display !== 'none'; }catch(e){ return false; }
+  };
+
+  function shouldHide(){
+    for(const id of HIDE_WHEN){ if(openLoose(document.getElementById(id))) return true; }
+    if(app.visitedConfirmOpen) return true;                       // この場所／現在地でいいですか？
+    if(document.querySelector('.visited-location-confirm')) return true;
+    return false;
+  }
+
+  // 旧版のタイマーがこの目印を外しても、毎回こちらで付け直します。
+  // （「見てから変える」のではなく「毎回そろえる」ので、取り合いになりません）
+  function apply(){
+    let hide;
+    try{ hide = shouldHide(); }catch(e){ return; }
+    const cl = document.body.classList;
+    if(hide){
+      if(!cl.contains('edo-foot-off'))      cl.add('edo-foot-off');
+      if(!cl.contains('edo-visited-form'))  cl.add('edo-visited-form');   // 旧版の目印もそろえます
+    }else{
+      if(cl.contains('edo-foot-off'))       cl.remove('edo-foot-off');
+    }
+  }
+  app.__edoSyncVisitedFoot = apply;
+
+  // タップの直後は、間をあけずに何度か見にいきます（出た瞬間のちらつき防止）
+  function burst(){
+    apply();
+    [0, 30, 80, 160, 320, 600].forEach(ms=>setTimeout(apply, ms));
+    try{ requestAnimationFrame(apply); }catch(e){}
+  }
+
+  function boot(){
+    apply();
+    setInterval(apply, 100);
+    ['click','touchend','pointerup'].forEach(t=>
+      document.addEventListener(t, burst, {capture:true, passive:true}));
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V136_INFO = ()=>{
+    const foot = document.getElementById('edo-visited-foot');
+    return {
+      隠す判定: shouldHide(),
+      まるボタンの出方: foot ? getComputedStyle(foot).display : null,
+      見えているボタン: foot ? [...foot.children]
+        .filter(b=>{ try{ return getComputedStyle(b).display !== 'none'; }catch(e){ return false; } })
+        .map(b=>(b.innerText||'').replace(/\s+/g,'')) : [],
+      目印: [...document.body.classList].filter(c=>/visited|foot/.test(c))
+    };
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
