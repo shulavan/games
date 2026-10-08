@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v136 (2026-10-09)';
+    window.__EDOGAWA_VERSION = 'v137 (2026-10-09)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -8663,8 +8663,40 @@
         // 【v132】保存に失敗しても、ゲームが止まらないようにします。
         //   端末の保存できる量（ふつう5MBほど）を超えると setItem は例外を投げます。
         //   長く遊ぶほどデータが増えるので、あふれたら軽くして入れ直します。
+        // 【v137】保存できない値（地図のコマなど）が紛れ込んでも、
+        //   保存そのものが失敗しないよう、安全な形に写し取ってから保存します。
+        //   ・画面表示だけに使う「__」で始まる項目は保存しません
+        //   ・同じものを指し合う「循環参照」はその場で切ります
+        //   ・画面の部品（DOM）や関数は保存しません
+        const clean = (v, depth, seen) => {
+          if (v === null) return null;
+          const t = typeof v;
+          if (t === 'number')  return Number.isFinite(v) ? v : 0;
+          if (t === 'string' || t === 'boolean') return v;
+          if (t !== 'object')  return undefined;                    // 関数などは保存しません
+          if (depth > 8) return undefined;
+          try { if (typeof Node !== 'undefined' && v instanceof Node) return undefined; } catch (_) {}
+          if (seen.has(v)) return undefined;                        // 循環参照はここで切ります
+          seen.add(v);
+          let out;
+          if (Array.isArray(v)) {
+            out = v.map(x => { const r = clean(x, depth + 1, seen); return r === undefined ? null : r; });
+          } else {
+            out = {};
+            for (const k of Object.keys(v)) {
+              if (k.lastIndexOf('__', 0) === 0) continue;           // 画面用の一時データ
+              const r = clean(v[k], depth + 1, seen);
+              if (r !== undefined) out[k] = r;
+            }
+          }
+          seen.delete(v);
+          return out;
+        };
+        const cleanPlayers = () => { try { return clean(this.players, 0, new WeakSet()); }
+                                     catch (e) { console.warn('[save] players', e); return this.players; } };
+
         const build = (slim) => ({
-          players: this.players,
+          players: cleanPlayers(),
           turnCount: this.turnCount,
           currentPlayerIdx: this.currentPlayerIdx,
           currentDestination: this.currentDestination,
@@ -8681,16 +8713,29 @@
           savedAt: Date.now()
         });
         const put = (slim) => { localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(build(slim))); };
-        try { put(false); this._saveTrouble = false; return true; }
+        this.lastSaveOk = false;
+        try { put(false); this._saveTrouble = false; this.lastSaveOk = true; this.lastSavedAt = Date.now(); return true; }
         catch (e) {
-          try { put(true); this._saveTrouble = false; console.warn('保存データを軽くして保存しました', e); return true; }
+          try { put(true); this._saveTrouble = false; this.lastSaveOk = true; this.lastSavedAt = Date.now();
+                console.warn('保存データを軽くして保存しました', e); return true; }
           catch (e2) {
-            if (!this._saveTrouble) {
-              this._saveTrouble = true;
-              console.error('セーブに失敗しました（端末の保存容量が足りません）:', e2);
-              try { this.addLog && this.addLog('⚠️ 端末の保存容量が足りず、「前回の続き」を保存できませんでした。'); } catch (_) {}
+            // 3段目：盤面ごと安全な形に写し取って、もう一度だけ入れ直します
+            try {
+              const o = build(true);
+              o.roadNetworkNodes = clean(this.roadNetworkNodes, 0, new WeakSet());
+              o.currentDestination = clean(this.currentDestination, 0, new WeakSet());
+              o.territory = clean(this.territory || {}, 0, new WeakSet());
+              localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(o));
+              this._saveTrouble = false; this.lastSaveOk = true; this.lastSavedAt = Date.now();
+              console.warn('保存データを作り直して保存しました', e2); return true;
+            } catch (e3) {
+              if (!this._saveTrouble) {
+                this._saveTrouble = true;
+                console.error('セーブに失敗しました:', e3);
+                try { this.addLog && this.addLog('⚠️ 「前回の続き」を保存できませんでした：' + ((e3 && e3.message) || e3)); } catch (_) {}
+              }
+              return false;
             }
-            return false;
           }
         }
       },
@@ -22594,6 +22639,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // サイコロを振る前は、セリフのふきだしに「あと◯マス」を出します。
   // サイコロを振るとゲーム本体が「いい流れを引き寄せろ！」などに書き換えるので、
   // わたしたちが入れた文言のときだけ手を入れます。
+  let mkSeq = 0;
   function paintBubbles(force){
     if(!app.players || !app.playerMarkers) return;
     const KEEP_MS = 3000;     // ほかのお知らせは3秒だけそのままにします
@@ -22601,7 +22647,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(!p) return;
       const want = wantLabel(p);
       const cur  = String(p.currentBubbleText || '');
-      const mine = (p.__edoBubbleMine !== undefined && cur === p.__edoBubbleMine);
+      // 【v137】「前回の続きから」では、保存から戻った文言がすでに「あと◯マス」の
+      //   ことがあります。これも自分が入れたものとして扱い、3秒待たずに描き直します。
+      const mine = (p.__edoBubbleMine !== undefined && cur === p.__edoBubbleMine)
+                || (!!cur && cur === want);
       // ゲーム本体がセリフを入れ替えた時刻をおぼえておきます
       if(cur !== p.__edoBubbleSeen){
         p.__edoBubbleSeen = cur;
@@ -22617,12 +22666,16 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       //   そのままだと地図にふきだしが出ませんでした。
       const mk = (app.playerMarkers || [])[p.id] || null;
       if(!mk) return;                                   // コマができてから出します
-      const sameMarker = (p.__edoBubbleMarker === mk);
+      // 【v137】ここで地図のコマ（Leafletのオブジェクト）をプレーヤーに持たせると、
+      //   保存のときの JSON 変換が「循環参照」で失敗し、
+      //   「前回の続きから」が古いままになっていました。番号だけを覚えます。
+      const mkId = (mk && (mk._leaflet_id != null ? mk._leaflet_id : (mk.__edoMkId || (mk.__edoMkId = ++mkSeq)))) || 0;
+      const sameMarker = (p.__edoBubbleMarkerId === mkId);
       if(cur && !mine && (Date.now() - (p.__edoBubbleAt || 0)) < KEEP_MS) return;
       if(!force && cur === want && sameMarker) return;
       p.__edoBubbleMine = want;
       p.__edoBubbleSeen = want;
-      p.__edoBubbleMarker = mk;
+      p.__edoBubbleMarkerId = mkId;
       try{ app.updatePlayerBubble && app.updatePlayerBubble(p, want); }catch(e){}
     });
   }
@@ -23399,6 +23452,70 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         .filter(b=>{ try{ return getComputedStyle(b).display !== 'none'; }catch(e){ return false; } })
         .map(b=>(b.innerText||'').replace(/\s+/g,'')) : [],
       目印: [...document.body.classList].filter(c=>/visited|foot/.test(c))
+    };
+  };
+})();
+</script>
+<!-- ============================================================================
+     v137: 「前回の続きから」が古いままになる不具合の修正（保存のとりこぼし防止）
+     ============================================================================ -->
+<script id="edogawa-v137">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── 手番が次の人に変わったら、必ずその時点で保存します ──
+  //    （どの道すじで手番が進んでも取りこぼさないよう、見張っておきます）
+  let lastIdx = null, lastTurn = null, lastGoals = null;
+  function snapshot(){
+    const g = (app.players||[]).map(p=>p&&p.goals||0).join(',');
+    return { idx: app.currentPlayerIdx, turn: app.turnCount, goals: g };
+  }
+  function tick(){
+    try{
+      if(app.isMultiplayer) return;
+      if(!Array.isArray(app.players) || !app.players.length) return;
+      const s = snapshot();
+      if(lastIdx === null){ lastIdx = s.idx; lastTurn = s.turn; lastGoals = s.goals; return; }
+      if(s.idx === lastIdx && s.turn === lastTurn && s.goals === lastGoals) return;
+      lastIdx = s.idx; lastTurn = s.turn; lastGoals = s.goals;
+      app.saveGameState && app.saveGameState();
+    }catch(e){}
+  }
+
+  // ── 画面を閉じる・切り替えるときも、その時点の状態を残します ──
+  function saveNow(){
+    try{
+      if(app.isMultiplayer) return;
+      if(!Array.isArray(app.players) || !app.players.length) return;
+      if(document.getElementById('lobby-screen') &&
+         !document.getElementById('lobby-screen').classList.contains('hidden')) return;  // トップページでは触りません
+      app.saveGameState && app.saveGameState();
+    }catch(e){}
+  }
+
+  function boot(){
+    setInterval(tick, 400);
+    window.addEventListener('pagehide', saveNow);
+    window.addEventListener('beforeunload', saveNow);
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') saveNow(); });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V137_INFO = ()=>{
+    let raw = '';
+    try{ raw = localStorage.getItem(window.__EDOGAWA_SAVE_KEYS.solo) || ''; }catch(e){}
+    let o = null; try{ o = JSON.parse(raw); }catch(e){}
+    return {
+      保存できている: app.lastSaveOk !== false,
+      保存の大きさ: raw.length,
+      保存の手番: o ? o.currentPlayerIdx : null,
+      保存のターン: o ? o.turnCount : null,
+      保存の位置: o ? (o.players||[]).map(p=>p && p.currentNodeIdx) : null,
+      いまの位置: (app.players||[]).map(p=>p && p.currentNodeIdx),
+      一時データが混ざっていない: o ? !(o.players||[]).some(p=>p && Object.keys(p).some(k=>k.lastIndexOf('__',0)===0)) : null,
+      保存時刻: o && o.savedAt ? new Date(o.savedAt).toISOString() : null
     };
   };
 })();
