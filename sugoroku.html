@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v127 (2026-10-08)';
+    window.__EDOGAWA_VERSION = 'v130 (2026-10-08)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -11814,6 +11814,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     .visited-photo-action-btn{background:#020617;border:1px solid #334155;color:#e2e8f0;border-radius:12px;padding:11px 8px;font-weight:900;font-size:14px}
     .visited-photo-action-btn:active{transform:scale(.98)}
     #visited-pin-modal,#visited-pin-list-modal,#visited-pin-detail-modal{position:fixed;inset:0;z-index:132;background:rgba(2,6,23,.84);backdrop-filter:blur(9px);display:none;align-items:center;justify-content:center;padding:14px}
+    /* 【v129】記録画面は地図をそのまま見せます（背景を暗くしません） */
+    #visited-pin-modal{background:transparent !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
     .visited-pin-box{width:min(430px,95vw);max-height:92vh;overflow:auto;background:#0f172a;border:1px solid rgba(245,158,11,.42);border-radius:22px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.55)}
     .visited-photo-preview{width:100%;max-height:240px;object-fit:cover;border-radius:14px;border:1px solid #334155;background:#020617}
     .visited-thumb{width:68px;height:68px;object-fit:cover;border-radius:12px;background:#020617;border:1px solid #334155;flex:none}
@@ -11897,14 +11899,20 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     return groups;
   }
   app.visitedEntryCount=Number(app.visitedEntryCount)||0;
-  const markerIcon=(count)=>L.divIcon({className:'',html:`<div class="visited-marker-wrap"><span class="visited-marker-emoji">📌</span>${count>1?`<span class="visited-marker-count">${count}</span>`:''}</div>`,iconSize:[34,34],iconAnchor:[17,30]});
+  // 【v129】現在地から記録したものは📌、地図でえらんだ場所は🖋️
+  const markerIcon=(count,emoji)=>L.divIcon({className:'',html:`<div class="visited-marker-wrap"><span class="visited-marker-emoji">${emoji||'📌'}</span>${count>1?`<span class="visited-marker-count">${count}</span>`:''}</div>`,iconSize:[34,34],iconAnchor:[17,30]});
+  const pinEmojiOf=(entries)=>{
+    const list=Array.isArray(entries)?entries:[entries];
+    const here=list.some(e=>Number(e&&e.accuracyMeters)>0);
+    return here?'📌':'🖋️';
+  };
   const clearMarkers=()=>{(app.visitedPinMarkers||[]).forEach(m=>{try{app.map?.removeLayer(m);}catch(_){}});app.visitedPinMarkers=[];};
 
   app.refreshVisitedPinMarkers=function(){
     if(!this.map || typeof L==='undefined') return;
     clearMarkers();
     makeGroups(Array.isArray(this.visitedEntries)?this.visitedEntries:[]).forEach(group=>{
-      const marker=L.marker([group.lat,group.lng],{icon:markerIcon(group.entries.length),zIndexOffset:1500,keyboard:true,title:`行ったところ ${group.entries.length}件`}).addTo(this.map);
+      const marker=L.marker([group.lat,group.lng],{icon:markerIcon(group.entries.length,pinEmojiOf(group.entries)),zIndexOffset:1500,keyboard:true,title:`行ったところ ${group.entries.length}件`}).addTo(this.map);
       marker.on('click',()=>group.entries.length===1?this.openVisitedEntryDetail(group.entries[0]):this.openVisitedPinList(group.entries,group));
       this.visitedPinMarkers.push(marker);
     });
@@ -11956,7 +11964,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   const ensureModal=(id,html)=>{let el=document.getElementById(id);if(!el){el=document.createElement('div');el.id=id;el.innerHTML=html;document.body.appendChild(el);}return el;};
   const show=el=>{if(el)el.style.display='flex';};
   const hide=el=>{if(el)el.style.display='none';};
-  const formModal=ensureModal('visited-pin-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 id="visited-pin-form-title" class="font-black text-amber-400 text-lg">📌 行ったところを記録</h3><button id="visited-pin-form-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-form-location" class="text-[11px] text-slate-400 bg-slate-950/60 rounded-xl p-2 mb-3"></div><div class="visited-date-row mb-4"><span class="text-xs font-bold text-slate-300 shrink-0">日付</span><button id="visited-pin-date-btn" type="button" class="visited-date-btn">2026/09/25</button><input id="visited-pin-date" type="date" class="sr-only" tabindex="-1" aria-hidden="true"></div><div class="visited-photo-row mb-4"><span class="text-xs font-bold text-slate-300 shrink-0">写真</span><div class="visited-photo-actions"><button id="visited-pin-camera-btn" type="button" class="visited-photo-action-btn">📷 カメラ</button><button id="visited-pin-gallery-btn" type="button" class="visited-photo-action-btn">🖼 画像</button></div></div><input id="visited-pin-photo-camera" type="file" accept="image/*" capture="environment" class="hidden"><input id="visited-pin-photo-gallery" type="file" accept="image/*" class="hidden"><div id="visited-pin-photo-preview-wrap" class="hidden mt-2"><img id="visited-pin-photo-preview" class="visited-photo-preview" alt="写真プレビュー"></div><label class="block text-xs font-bold text-slate-300 mt-4 mb-2">メモ</label><textarea id="visited-pin-note" maxlength="500" rows="5" placeholder="行った場所の思い出やメモ（500文字まで）" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 resize-none"></textarea><div id="visited-pin-form-status" class="hidden text-xs mt-3 rounded-xl p-2"></div><div class="grid grid-cols-3 gap-2 mt-4"><button id="visited-pin-form-cancel" class="bg-slate-800 text-slate-300 font-bold py-3 rounded-xl">キャンセル</button><button id="visited-pin-form-delete" class="hidden bg-rose-950/70 border border-rose-700/70 text-rose-200 font-bold py-3 rounded-xl">削除</button><button id="visited-pin-form-save" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">保存する</button></div></div>`);
+  const formModal=ensureModal('visited-pin-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 id="visited-pin-form-title" class="font-black text-amber-400 text-lg">📌 行ったところを記録</h3><button id="visited-pin-form-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-form-location" class="text-[11px] text-slate-400 bg-slate-950/60 rounded-xl p-2 mb-3"></div><div class="visited-date-row mb-4"><span class="text-xs font-bold text-slate-300 shrink-0">日付</span><button id="visited-pin-date-btn" type="button" class="visited-date-btn">2026/09/25</button><input id="visited-pin-date" type="date" class="sr-only" tabindex="-1" aria-hidden="true"></div><div class="visited-photo-row mb-4"><span class="text-xs font-bold text-slate-300 shrink-0">写真</span><div class="visited-photo-actions"><button id="visited-pin-camera-btn" type="button" class="visited-photo-action-btn">📷 カメラ</button><button id="visited-pin-gallery-btn" type="button" class="visited-photo-action-btn">🖼 画像</button></div></div><input id="visited-pin-photo-camera" type="file" accept="image/*" capture="environment" class="hidden"><input id="visited-pin-photo-gallery" type="file" accept="image/*" class="hidden"><div id="visited-pin-photo-preview-wrap" class="hidden mt-2"><img id="visited-pin-photo-preview" class="visited-photo-preview" alt="写真プレビュー"></div><textarea id="visited-pin-note" maxlength="500" rows="5" placeholder="行った場所の思い出やメモ（500文字まで）" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 resize-none"></textarea><div id="visited-pin-form-status" class="hidden text-xs mt-3 rounded-xl p-2"></div><div class="edo-foot-row"><button id="visited-pin-form-save" class="edo-btn-primary">💾 保存</button><button id="visited-pin-form-delete" class="hidden edo-btn-danger">削除</button><button id="visited-pin-form-cancel" class="edo-btn-cancel">キャンセル</button></div></div>`);
   const listModal=ensureModal('visited-pin-list-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><div><h3 class="font-black text-amber-400 text-lg">📌 この場所の記録</h3><div id="visited-pin-list-location" class="text-[10px] text-slate-500 mt-1"></div></div><button id="visited-pin-list-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-list" class="space-y-2"></div></div>`);
   const detailModal=ensureModal('visited-pin-detail-modal',`<div class="visited-pin-box"><div class="flex items-center justify-between gap-2 mb-3"><h3 class="font-black text-amber-400 text-lg">📌 記録詳細</h3><button id="visited-pin-detail-close" class="text-slate-400 font-bold text-lg">✕</button></div><div id="visited-pin-detail-body"></div></div>`);
   let pendingPhoto=null;
@@ -12021,7 +12029,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   function openLocationConfirm(lat,lng,accuracy=0){
     if(!app.map || typeof L==='undefined')return;
     clearVisitedDraftMarker();
-    visitedDraftMarker=L.marker([lat,lng],{icon:markerIcon(1),zIndexOffset:2500,keyboard:false}).addTo(app.map);
+    visitedDraftMarker=L.marker([lat,lng],{icon:markerIcon(1,Number(accuracy)>0?'📌':'🖋️'),zIndexOffset:2500,keyboard:false}).addTo(app.map);
     const content=`<div class="visited-location-confirm"><div class="visited-location-confirm-title">この場所でいいですか？</div><div class="visited-location-confirm-actions"><button type="button" class="visited-location-confirm-yes">はい</button><button type="button" class="visited-location-confirm-no">いいえ</button></div></div>`;
     visitedConfirmPopup=L.popup({closeButton:false,autoClose:false,closeOnClick:false,offset:[0,16],className:'visited-location-popup'}).setLatLng([lat,lng]).setContent(content).openOn(app.map);
     setTimeout(()=>{
@@ -12047,9 +12055,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   function prepareNewEntryForm(){
     const dateEl=document.getElementById('visited-pin-date'),dateBtn=document.getElementById('visited-pin-date-btn'),today=TODAY();
     if(dateEl)dateEl.value=today;if(dateBtn)dateBtn.textContent=today.replace(/-/g,'/');
-    document.getElementById('visited-pin-form-title').textContent='📌 行ったところを記録';
     document.getElementById('visited-pin-form-delete')?.classList.add('hidden');
     const d=app.visitedPinDraft||{},acc=num(d.accuracy,0);
+    document.getElementById('visited-pin-form-title').textContent=(acc>0?'📌':'🖋️')+' 行ったところを記録';
+    setSaveLabel(acc>0?'📌投稿':'🖋️投稿');
     document.getElementById('visited-pin-form-location').textContent=acc?`江戸川区内 ／ 位置精度 約${Math.round(acc)}m`:'江戸川区内 ／ 地図で選択した場所';
     document.getElementById('visited-pin-note').value='';
     document.getElementById('visited-pin-photo-camera').value='';document.getElementById('visited-pin-photo-gallery').value='';
@@ -12071,6 +12080,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         setTimeout(()=>openLocationConfirm(lat,lng,acc),650);
       }finally{if(btn){btn.disabled=false;updateVisitedToolLabel();}}
     },err=>{if(btn){btn.disabled=false;updateVisitedToolLabel();}alert(err?.code===1?'位置情報の利用が許可されていません。ブラウザの位置情報設定を確認してください。':'位置情報を取得できませんでした。もう一度お試しください。');},{enableHighAccuracy:true,maximumAge:0,timeout:12000});
+  }
+
+  // 【v130】「保存」ボタンの文言（新規＝📌投稿／🖋️投稿、編集＝💾 保存）
+  function setSaveLabel(text){
+    const b=document.getElementById('visited-pin-form-save');
+    if(!b)return; b.dataset.label=text; if(!b.disabled) b.textContent=text;
+  }
+  function restoreSaveLabel(){
+    const b=document.getElementById('visited-pin-form-save');
+    if(!b)return; b.textContent=b.dataset.label||'💾 保存';
   }
 
   function prepareSelectedPhoto(file){
@@ -12110,8 +12129,10 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         payload.id=id; const {error}=await app.visitedSupabase.from(VISITED_TABLE).insert(payload); if(error) throw error;
       }
       hide(formModal);clearVisitedDraftMarker();clearVisitedPickHint();app.visitedPickMode=false;app.visitedPinDraft=null;pendingPhoto=null;pendingSelectedFile=null;await app.refreshVisitedLobbyCount?.();updateVisitedToolLabel(app.visitedEntryCount);
+      // 【v129】保存したあとも、地図を動かして次の場所をタップで記録できます
+      if(!draft.editId) setTimeout(()=>enableVisitedMapPick(),60);
     }catch(e){console.error(e);setStatus(e?.message||'保存に失敗しました。','error');}
-    finally{btn.disabled=false;btn.textContent='保存する';}
+    finally{btn.disabled=false;restoreSaveLabel();}
   }
 
   async function deleteVisitedEntry(entry){
@@ -12133,7 +12154,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     if(!entry || !isMine(entry)){alert('他人の📌は編集できません。');return;}
     if(!(await ensureSupabase())){alert('Supabase接続を確認してください。');return;}
     app.visitedPinDraft={lat:num(entry.lat),lng:num(entry.lng),accuracy:num(entry.accuracyMeters),editId:entry.id};pendingPhoto={existingPath:entry.photoPath||null};pendingSelectedFile=null;
-    document.getElementById('visited-pin-form-title').textContent='📌 記録を編集';document.getElementById('visited-pin-form-delete')?.classList.remove('hidden');document.getElementById('visited-pin-form-location').textContent=`江戸川区内 ／ 投稿者：${entry.ownerName||'プレーヤー'}`;document.getElementById('visited-pin-date').value=entry.visitDate||TODAY();document.getElementById('visited-pin-date-btn').textContent=(entry.visitDate||TODAY()).replace(/-/g,'/');document.getElementById('visited-pin-note').value=entry.note||'';document.getElementById('visited-pin-photo-camera').value='';document.getElementById('visited-pin-photo-gallery').value='';
+    document.getElementById('visited-pin-form-title').textContent='📌 記録を編集';setSaveLabel('💾 保存');document.getElementById('visited-pin-form-delete')?.classList.remove('hidden');document.getElementById('visited-pin-form-location').textContent=`江戸川区内 ／ 投稿者：${entry.ownerName||'プレーヤー'}`;document.getElementById('visited-pin-date').value=entry.visitDate||TODAY();document.getElementById('visited-pin-date-btn').textContent=(entry.visitDate||TODAY()).replace(/-/g,'/');document.getElementById('visited-pin-note').value=entry.note||'';document.getElementById('visited-pin-photo-camera').value='';document.getElementById('visited-pin-photo-gallery').value='';
     const wrap=document.getElementById('visited-pin-photo-preview-wrap'),img=document.getElementById('visited-pin-photo-preview');
     try{const url=await getSignedPhotoUrl(entry);if(url){img.src=url;wrap.classList.remove('hidden');}else wrap.classList.add('hidden');}catch(_){wrap.classList.add('hidden');}
     show(formModal);
@@ -22498,10 +22519,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         if(mine && cur) p.__edoBubbleMine = undefined;   // 振っている間はゲーム本体にまかせます
         return;
       }
+      // 【v128】コマ（マーカー）が作り直された直後は、文言が同じでも描き直します。
+      //   「前回の続きから」では、文言を入れたあとにコマが空のふきだしで作られるため、
+      //   そのままだと地図にふきだしが出ませんでした。
+      const mk = (app.playerMarkers || [])[p.id] || null;
+      if(!mk) return;                                   // コマができてから出します
+      const sameMarker = (p.__edoBubbleMarker === mk);
       if(cur && !mine && (Date.now() - (p.__edoBubbleAt || 0)) < KEEP_MS) return;
-      if(!force && cur === want) return;
+      if(!force && cur === want && sameMarker) return;
       p.__edoBubbleMine = want;
       p.__edoBubbleSeen = want;
+      p.__edoBubbleMarker = mk;
       try{ app.updatePlayerBubble && app.updatePlayerBubble(p, want); }catch(e){}
     });
   }
@@ -22723,6 +22751,179 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       高さ固定: !!(box && box.classList.contains('edo-lm-fixed')),
       高さ: box ? Math.round(box.getBoundingClientRect().height) : null,
       上: box ? Math.round(box.getBoundingClientRect().top) : null
+    };
+  };
+})();
+</script>
+<style id="edogawa-v129-style">
+  /* 【v129】「行ったところを記録」を出している間は、下の丸ボタンを隠します */
+  body.edo-visited-form #edo-visited-foot{ display:none !important; }
+  /* フッターのボタンは、ほかのモーダルと同じ見た目に */
+  #visited-pin-modal .edo-foot-row{ margin-top:14px !important; }
+</style>
+<script id="edogawa-v129">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① 記録画面が出ている間は「戻る」「現在地」を隠します ──
+  function syncFoot(){
+    const m = document.getElementById('visited-pin-modal');
+    let open = false;
+    try{ open = !!m && getComputedStyle(m).display !== 'none'; }catch(e){}
+    document.body.classList.toggle('edo-visited-form', open);
+  }
+
+  // ── ② ミニゲームのあと、あみだくじへ移る一瞬だけ地図が見えるのを防ぎます ──
+  let coverTimer = null;
+  function coverForAmida(){
+    if(!app._pendingGoalAmidaPlayer) return;
+    if(app.goalAmidaPlayedThisLeg || app.goalAmidaActive) return;
+    const ov = document.getElementById('goal-amida-overlay');
+    if(!ov || !ov.classList.contains('hidden')) return;
+    ov.classList.remove('hidden');
+    ov.__edoPreCover = true;
+    if(coverTimer) clearTimeout(coverTimer);
+    // あみだくじが始まらなかったときのための安全弁
+    coverTimer = setTimeout(()=>{
+      coverTimer = null;
+      try{
+        if(ov.__edoPreCover && !app.goalAmidaActive){ ov.classList.add('hidden'); ov.__edoPreCover = false; }
+      }catch(e){}
+    }, 8000);
+  }
+  const origCloseMini = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
+  if(origCloseMini){
+    app.closeRegionalMiniGame = function(){
+      try{ coverForAmida(); }catch(e){}
+      return origCloseMini();
+    };
+  }
+  const origFinishMini = app.finishMiniGameTurn ? app.finishMiniGameTurn.bind(app) : null;
+  if(origFinishMini){
+    app.finishMiniGameTurn = function(player, logText){
+      try{ coverForAmida(); }catch(e){}
+      return origFinishMini(player, logText);
+    };
+  }
+  const origStartAmida = app.startGoalAmida ? app.startGoalAmida.bind(app) : null;
+  if(origStartAmida){
+    app.startGoalAmida = function(player){
+      const r = origStartAmida(player);
+      try{
+        const ov = document.getElementById('goal-amida-overlay');
+        if(ov) ov.__edoPreCover = false;
+        if(coverTimer){ clearTimeout(coverTimer); coverTimer = null; }
+        // あみだくじが始まらなかった場合は、かぶせた幕をすぐ外します
+        if(ov && !app.goalAmidaActive) ov.classList.add('hidden');
+      }catch(e){}
+      return r;
+    };
+  }
+
+  function boot(){
+    syncFoot();
+    setInterval(()=>{ try{ syncFoot(); }catch(e){} }, 250);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V129_INFO = ()=>{
+    const m = document.getElementById('visited-pin-modal');
+    const foot = document.getElementById('edo-visited-foot');
+    const btns = m ? [...m.querySelectorAll('.edo-foot-row button')]
+      .filter(b=>getComputedStyle(b).display !== 'none')
+      .map(b=>(b.innerText||'').replace(/\s+/g,'')) : [];
+    return {
+      記録画面: m ? getComputedStyle(m).display !== 'none' : null,
+      背景: m ? getComputedStyle(m).backgroundColor : null,
+      ボタン: btns,
+      メモの見出し: m ? !!m.querySelector('label') : null,
+      丸ボタン: foot ? getComputedStyle(foot).display : null,
+      題名: (document.getElementById('visited-pin-form-title')||{}).textContent
+    };
+  };
+})();
+</script>
+<style id="edogawa-v130-style">
+  /* 【v130】記録の「詳細」「編集」「新規」は、地図をそのまま見せます */
+  #visited-pin-modal, #visited-pin-detail-modal{
+    background:transparent !important; backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important; }
+  /* これらを出している間は、下の丸ボタン（戻る・現在地）を隠します */
+  body.edo-visited-form #edo-visited-foot{ display:none !important; }
+  /* 「削除」も、ほかのボタンと同じ形にそろえます */
+  .edo-btn-danger{ background:#4c0519 !important; background-image:none !important;
+    border:1px solid #9f1239 !important; color:#fecdd3 !important; box-shadow:none !important; }
+  #visited-pin-modal .edo-foot-row{ margin-top:14px !important; }
+  #visited-pin-modal .edo-foot-row > button{ padding:12px !important; border-radius:14px !important;
+    font-size:15px !important; font-weight:900 !important; }
+</style>
+<script id="edogawa-v130">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  const IDS = ['visited-pin-modal', 'visited-pin-detail-modal'];
+  const isOpen = (el)=>{ try{ return !!el && getComputedStyle(el).display !== 'none'; }catch(e){ return false; } };
+
+  // ── ① どれか出ている間は「戻る」「現在地」を隠します ──
+  function syncFoot(){
+    const open = IDS.some(id=>isOpen(document.getElementById(id)));
+    document.body.classList.toggle('edo-visited-form', open);
+  }
+
+  // ── ② 枠の外をタップしたら閉じます ──
+  function closeForm(){
+    const m = document.getElementById('visited-pin-modal');
+    if(!m) return;
+    // 「キャンセル」と同じ後始末になるよう、既存のボタンを押します
+    const c = document.getElementById('visited-pin-form-cancel');
+    if(c){ c.click(); return; }
+    m.style.display = 'none';
+  }
+  function closeDetail(){
+    const c = document.getElementById('visited-pin-detail-close');
+    if(c){ c.click(); return; }
+    const m = document.getElementById('visited-pin-detail-modal');
+    if(m) m.style.display = 'none';
+  }
+  function bindOutside(){
+    IDS.forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el || el.__edoOutside130) return;
+      el.__edoOutside130 = true;
+      el.addEventListener('click', (ev)=>{
+        if(ev.target !== el) return;
+        if(id === 'visited-pin-modal') closeForm(); else closeDetail();
+      });
+    });
+  }
+
+  function boot(){
+    const run = ()=>{ try{ syncFoot(); bindOutside(); }catch(e){} };
+    run();
+    setInterval(run, 250);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V130_INFO = ()=>{
+    const f = document.getElementById('visited-pin-modal');
+    const d = document.getElementById('visited-pin-detail-modal');
+    const foot = document.getElementById('edo-visited-foot');
+    const row = f ? f.querySelector('.edo-foot-row') : null;
+    const btns = row ? [...row.children].filter(b=>getComputedStyle(b).display !== 'none')
+      .map(b=>(b.innerText||'').replace(/\s+/g,'')) : [];
+    const sizes = row ? [...row.children].filter(b=>getComputedStyle(b).display !== 'none')
+      .map(b=>Math.round(b.getBoundingClientRect().height)) : [];
+    return {
+      記録画面: isOpen(f), 詳細画面: isOpen(d),
+      記録の背景: f ? getComputedStyle(f).backgroundColor : null,
+      詳細の背景: d ? getComputedStyle(d).backgroundColor : null,
+      ボタン: btns, 高さ: sizes,
+      丸ボタン: foot ? getComputedStyle(foot).display : null,
+      枠外で閉じる: IDS.map(id=>!!(document.getElementById(id)||{}).__edoOutside130)
     };
   };
 })();
