@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v138 (2026-10-09)';
+    window.__EDOGAWA_VERSION = 'v139 (2026-10-09)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23593,6 +23593,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   .edo-dev-in{ width:100%; padding:10px; border-radius:12px; background:#020617;
     border:1px solid #475569; color:#e2e8f0; font-size:14px; }
   .edo-dev-note{ font-size:11px; color:#94a3b8; margin-top:10px; line-height:1.7; }
+  .edo-dev-box{ position:relative; }
+  .edo-dev-x{ position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:11px;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0; font-size:16px; font-weight:900;
+    line-height:1; z-index:5; }
+  .edo-dev-ttl{ padding:0 40px; }
 </style>
 <script id="edogawa-v138">
 (function(){
@@ -23826,8 +23831,21 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       document.body.appendChild(ov); }
     return ov;
   }
+  // ほかのモーダルと同じく、枠の右上に「✕」を置きます
+  function devX(id){
+    const box = ensureOverlay(id).querySelector('.edo-dev-box');
+    if(!box) return;
+    let x = box.querySelector('.edo-dev-x');
+    if(!x){
+      x = document.createElement('button');
+      x.type = 'button'; x.className = 'edo-dev-x'; x.setAttribute('aria-label','閉じる');
+      x.textContent = '✕';
+      box.appendChild(x);
+    }else{ box.appendChild(x); }
+    x.onclick = ()=>devHide(id);
+  }
   const devBox = (id)=>ensureOverlay(id).querySelector('.edo-dev-box');
-  const devShow = (id)=>ensureOverlay(id).classList.add('show');
+  const devShow = (id)=>{ ensureOverlay(id).classList.add('show'); devX(id); };
   const devHide = (id)=>{ const o = g(id); if(o) o.classList.remove('show'); };
 
   function openDevPassword(){
@@ -23869,9 +23887,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         '<span class="sub">いま：' + esc(basemapLabel()) + '（タップで切り替え・読み込み直します）</span></button>' +
       '<button type="button" class="edo-dev-btn" id="edo-dev-all">📋 全ユーザ投稿一覧' +
         '<span class="sub">みんなの📌を見て、編集・削除します</span></button>' +
-      '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-close">閉じる</button></div>';
+      '';
     devShow('edo-dev-menu-modal');
-    g('edo-dev-close').onclick = ()=>devHide('edo-dev-menu-modal');
     g('edo-dev-rail').onclick = ()=>{ devHide('edo-dev-menu-modal');
       try{ app.openRailSetup && app.openRailSetup(); }catch(e){ alert('「駅と線路の調整」を開けませんでした。'); } };
     g('edo-dev-base').onclick = ()=>toggleBasemap();
@@ -23924,9 +23941,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     postsShell('<div class="edo-dev-empty">読み込み中…</div>', '');
     const sb = await supa();
     if(!sb){
-      postsShell('<div class="edo-dev-empty">Supabaseにつながりませんでした。</div>',
-        '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-lc">閉じる</button></div>');
-      g('edo-dev-lc').onclick = ()=>devHide('edo-dev-list-modal');
+      postsShell('<div class="edo-dev-empty">Supabaseにつながりませんでした。</div>', '');
       return;
     }
     let rows = [], err = null;
@@ -23938,9 +23953,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       rows = res.data || [];
     }catch(e){ err = e; }
     if(err){
-      postsShell('<div class="edo-dev-empty">読み込めませんでした。<br>' + esc(err.message||'') + '</div>',
-        '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-lc">閉じる</button></div>');
-      g('edo-dev-lc').onclick = ()=>devHide('edo-dev-list-modal');
+      postsShell('<div class="edo-dev-empty">読み込めませんでした。<br>' + esc(err.message||'') + '</div>', '');
       return;
     }
     devEntries = rows;
@@ -23954,9 +23967,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       : '<div class="edo-dev-empty">投稿はありません。</div>';
     postsShell(body,
       '<div class="edo-dev-note">全' + rows.length + '件</div>' +
-      '<button type="button" class="edo-dev-btn danger" id="edo-dev-wipe">投稿を初期化する</button>' +
-      '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-lc">閉じる</button></div>');
-    g('edo-dev-lc').onclick = ()=>devHide('edo-dev-list-modal');
+      '<button type="button" class="edo-dev-btn danger" id="edo-dev-wipe">投稿を初期化する</button>');
     g('edo-dev-wipe').onclick = ()=>confirmWipe();
     document.querySelectorAll('#edo-dev-list-body [data-dev-i]').forEach(b=>{
       b.onclick = ()=>openPostEdit(Number(b.getAttribute('data-dev-i')));
@@ -23985,11 +23996,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const msg = g('edo-dev-msg'); msg.textContent = '保存しています…';
       const sb = await supa(); if(!sb){ msg.textContent = 'Supabaseにつながりません。'; return; }
       try{
+        // .select() を付けると「実際に変わった行」が返ります（0件＝権限で拒否）
         const res = await sb.from(TABLE).update({
           visit_date: g('edo-dev-date').value || null,
           note: g('edo-dev-note').value || ''
-        }).eq('id', e.id);
+        }).eq('id', e.id).select('id');
         if(res.error) throw res.error;
+        if(!res.data || !res.data.length){ msg.innerHTML = rlsMsg('保存'); return; }
         openAllPosts();
       }catch(err){ msg.textContent = '保存できませんでした：' + (err.message || err); }
     };
@@ -23997,12 +24010,22 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const msg = g('edo-dev-msg'); msg.textContent = '削除しています…';
       const sb = await supa(); if(!sb){ msg.textContent = 'Supabaseにつながりません。'; return; }
       try{
-        const res = await sb.from(TABLE).delete().eq('id', e.id);
+        const res = await sb.from(TABLE).delete().eq('id', e.id).select('id');
         if(res.error) throw res.error;
+        if(!res.data || !res.data.length){ msg.innerHTML = rlsMsg('削除'); return; }
         if(e.photo_path){ try{ await sb.storage.from(BUCKET).remove([e.photo_path]); }catch(_){} }
         openAllPosts();
       }catch(err){ msg.textContent = '削除できませんでした：' + (err.message || err); }
     };
+  }
+
+  // Supabase は「権限がない行」をエラーにせず、だまって0件で返します。
+  // そのままだと何も起きないように見えるので、理由をはっきり出します。
+  function rlsMsg(what){
+    return '<span style="color:#fb7185">ほかの人の投稿は' + what + 'できませんでした（0件）。</span><br>' +
+      'Supabase の権限設定（RLS）で、自分の投稿だけ' + what + 'できるようになっています。<br>' +
+      'テーブル visited_entries の UPDATE / DELETE ポリシーを<br>' +
+      '「全員ぶんを操作できる」条件に変えると、ここから' + what + 'できるようになります。';
   }
 
   function confirmWipe(){
@@ -24031,8 +24054,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const paths = rows.map(r=>r.photo_path).filter(Boolean);
       for(const r of rows){
         try{
-          const d = await sb.from(TABLE).delete().eq('id', r.id);
-          if(d.error){ lastErr = d.error; left++; } else removed++;
+          const d = await sb.from(TABLE).delete().eq('id', r.id).select('id');
+          if(d.error){ lastErr = d.error; left++; }
+          else if(!d.data || !d.data.length){ left++; }      // 権限で拒まれた（エラーにはなりません）
+          else removed++;
         }catch(e){ lastErr = e; left++; }
       }
       if(paths.length){ try{ await sb.storage.from(BUCKET).remove(paths); }catch(e){} }
@@ -24043,8 +24068,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       '<div class="edo-dev-ttl">🧹 初期化のけっか</div>' +
       '<div class="edo-dev-note">消せた投稿：' + removed + '件<br>' +
         (left ? ('消せなかった投稿：' + left + '件<br>' +
-                 '<span style="color:#fb7185">' + esc((lastErr && lastErr.message) || '') + '</span><br>' +
-                 '※ほかの人の投稿は、サーバー側の権限設定（RLS）で守られていることがあります。')
+                 (lastErr && lastErr.message ? '<span style="color:#fb7185">' + esc(lastErr.message) + '</span><br>' : '') +
+                 rlsMsg('削除'))
               : 'すべての投稿を消しました。') + '</div>' +
       '<div class="edo-dev-row"><button type="button" class="edo-dev-btn primary" id="edo-dev-back">一覧へ</button></div>';
     g('edo-dev-back').onclick = ()=>openAllPosts();
@@ -24064,6 +24089,208 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     飛行レイヤー: (()=>{ try{ const p = app.map && app.map.getPane && app.map.getPane('edoFlightPane');
       return p ? Number(p.style.zIndex) : null; }catch(e){ return null; } })()
   });
+})();
+</script>
+<!-- ============================================================================
+     v139: 江戸川クイズの「読み上げ中に選んだ答え」を取りこぼさない／
+           賞金・所持金の表示を見やすく整える
+     ============================================================================ -->
+<style id="edogawa-v139-style">
+  /* 読み上げ中に選んだ答えは、オレンジ枠のまま残します */
+  .quiz-option-btn.edo-q-pick{ border-color:#f59e0b !important;
+    background:rgba(245,158,11,.18) !important; opacity:1 !important; }
+  .quiz-option-btn.edo-q-wait{ opacity:.78; }
+
+  /* 賞金・収支・所持金は、左に項目／右に金額でそろえます */
+  .edo-mpanel{ width:100%; max-width:340px; margin:12px auto 0; padding:4px 14px;
+    border-radius:16px; background:rgba(2,6,23,.6); border:1px solid rgba(245,158,11,.3);
+    text-align:left; }
+  .edo-mpanel .r{ display:flex; align-items:baseline; justify-content:space-between;
+    gap:10px; padding:8px 0; }
+  .edo-mpanel .r + .r{ border-top:1px solid rgba(148,163,184,.22); }
+  .edo-mpanel .k{ font-size:12px; font-weight:900; color:#94a3b8; white-space:nowrap; }
+  .edo-mpanel .v{ font-size:20px; font-weight:1000; white-space:nowrap; text-align:right;
+    line-height:1.2; }
+  .edo-mpanel .v.plus { color:#34d399; }
+  .edo-mpanel .v.minus{ color:#fb7185; }
+  .edo-mpanel .v.zero { color:#cbd5e1; }
+  .edo-mpanel .v.money{ color:#fbbf24; font-size:18px; }
+</style>
+<script id="edogawa-v139">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const n = (v)=>Math.round(Number(v)||0);
+  const yen = (v)=>`￥${Math.abs(n(v)).toLocaleString('ja-JP')}`;
+  const signed = (v)=>(n(v) > 0 ? '＋' : (n(v) < 0 ? '－' : '')) + yen(v);
+
+  // ── 賞金まわりの表示を、項目と金額の2列にそろえます ──
+  app.__edoMoneyPanel = function(el, o){
+    if(!el) return;
+    const rows = [];
+    if(o && o.reward != null) rows.push(['賞金', signed(o.reward), n(o.reward) > 0 ? 'plus' : 'zero']);
+    if(o && o.delta  != null) rows.push(['今回の収支', signed(o.delta), n(o.delta) > 0 ? 'plus' : (n(o.delta) < 0 ? 'minus' : 'zero')]);
+    if(o && o.money  != null) rows.push(['所持金', yen(o.money), 'money']);
+    if(!rows.length) return;
+    el.className = 'edo-mpanel';
+    el.innerHTML = rows.map(r=>
+      `<div class="r"><span class="k">${r[0]}</span><span class="v ${r[2]}">${r[1]}</span></div>`).join('');
+  };
+
+  function quizMoneyPanel(){
+    const el = g('quiz-result-money'); if(!el) return;
+    const pId = (app.quizSession && app.quizSession.playerId) ?? app.activeQuizPlayerId ?? app.activeMiniGamePlayerId;
+    const p = (app.players || []).find(x=>Number(x.id) === Number(pId));
+    const reward = n(app._edoQuizReward);
+    app.__edoMoneyPanel(el, { reward: reward, money: p ? p.money : null });
+  }
+
+  // ── ① 読み上げ中に選んだ答えを覚えて、読み終わったら確定します ──
+  function prepOptions(){
+    const box = g('quiz-options'); if(!box) return;
+    const screen = g('quiz-question-screen');
+    if(!screen || screen.classList.contains('hidden')) return;
+    if(!app.activeQuizQuestion) return;                      // 参加者側の表示では触りません
+    const me = (app.players || [])[app.activeQuizPlayerId ?? -1];
+    if(!me || me.isCpu) return;                              // CPUの手番では触りません
+    const btns = [...box.querySelectorAll('button')];
+    btns.forEach((b, i)=>{
+      if(!b.__edoQ){
+        b.__edoQ = true;
+        b.addEventListener('click', (ev)=>{
+          if(app.quizAnswered) return;
+          if(app.quizAnswerEnabled) return;                  // 読み上げが終わっていれば、そのまま確定
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          app._quizPendingChoice = i;
+          btns.forEach(x=>x.classList.remove('edo-q-pick'));
+          b.classList.add('edo-q-pick');
+        }, true);
+      }
+      // 読み上げ中もタップできるようにします（答えはまだ確定しません）
+      if(!app.quizAnswerEnabled && !app.quizAnswered){
+        if(b.disabled){ b.disabled = false; b.classList.add('edo-q-wait'); }
+      }else{
+        b.classList.remove('edo-q-wait');
+      }
+    });
+  }
+  function flushPending(){
+    if(app._quizPendingChoice == null) return;
+    if(app.quizAnswered){ app._quizPendingChoice = null; return; }
+    if(!app.quizAnswerEnabled) return;
+    const i = app._quizPendingChoice;
+    app._quizPendingChoice = null;
+    try{ app.answerQuiz(i); }catch(e){ console.warn('[v139]', e); }
+  }
+
+  const origInvite = app.startQuizInvite ? app.startQuizInvite.bind(app) : null;
+  if(origInvite){
+    app.startQuizInvite = function(player){
+      app._quizPendingChoice = null;
+      app._edoQuizReward = 0;
+      return origInvite(player);
+    };
+  }
+
+  // 答えが確定したら、賞金の表示を整えます
+  const origAnswer = app.answerQuiz ? app.answerQuiz.bind(app) : null;
+  if(origAnswer){
+    app.answerQuiz = function(index){
+      const pId = (this.quizSession && this.quizSession.playerId) ?? this.activeQuizPlayerId ?? this.activeMiniGamePlayerId;
+      const p = (this.players || []).find(x=>Number(x.id) === Number(pId));
+      const before = p ? n(p.money) : 0;
+      this._quizPendingChoice = null;
+      const r = origAnswer(index);
+      try{
+        const after = p ? n(p.money) : before;
+        this._edoQuizReward = Math.max(0, after - before);
+        quizMoneyPanel();
+      }catch(e){ console.warn('[v139]', e); }
+      return r;
+    };
+  }
+  const origRemote = app.applyRemoteQuizState ? app.applyRemoteQuizState.bind(app) : null;
+  if(origRemote){
+    app.applyRemoteQuizState = function(st){
+      const r = origRemote(st);
+      try{
+        if(st && st.phase === 'result'){
+          const p = (this.players || []).find(x=>Number(x.id) === Number(st.playerId));
+          app.__edoMoneyPanel(g('quiz-result-money'),
+            { reward: st.correct ? 50000 : 0, money: p ? p.money : null });
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  // ── ② 統合ミニゲームの結果（「◯◯ の現在の所持金：…」の1行）も整えます ──
+  const origIntegrated = app.applyIntegratedMiniGameResult ? app.applyIntegratedMiniGameResult.bind(app) : null;
+  if(origIntegrated){
+    app.applyIntegratedMiniGameResult = function(data){
+      const st = this.regionalMiniGame;
+      const pId = st && st.playerId;
+      const p = (this.players || []).find(x=>Number(x.id) === Number(pId));
+      const before = p ? n(p.money) : null;
+      const r = origIntegrated(data);
+      try{
+        const el = g('integrated-mini-result-money');
+        if(el && p){
+          const delta = before == null ? null : n(p.money) - before;
+          app.__edoMoneyPanel(el, { reward: delta, money: p.money });
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  // ── ③ 江戸川競艇の結果の中の「◯◯ の現在の所持金：…」も整えます ──
+  function fixBoatInfo(){
+    const screen = g('boatrace-result-screen');
+    if(!screen || screen.classList.contains('hidden')) return;
+    const box = screen.querySelector('.edogawa-common-result-info');
+    if(!box || box.__edoFixed === box.innerHTML) return;
+    const grab = (sel)=>{ const e = box.querySelector(sel); return e ? e.textContent.trim() : null; };
+    const reward = grab('.reward'), delta = grab('.delta');
+    const moneyText = grab('.money');
+    if(reward == null && delta == null && moneyText == null) return;
+    const money = moneyText ? (moneyText.match(/[-－]?[￥¥][\d,]+/) || [''])[0] : '';
+    const rows = [];
+    if(reward != null) rows.push(['賞金', reward, /＋/.test(reward) ? 'plus' : 'zero']);
+    if(delta  != null) rows.push(['今回の収支', delta.replace(/^今回の収支：?/, ''),
+      /－|-/.test(delta) ? 'minus' : (/＋/.test(delta) ? 'plus' : 'zero')]);
+    if(money) rows.push(['所持金', money, 'money']);
+    box.className = 'edo-mpanel';
+    box.innerHTML = rows.map(r=>
+      `<div class="r"><span class="k">${r[0]}</span><span class="v ${r[2]}">${r[1]}</span></div>`).join('');
+    box.__edoFixed = box.innerHTML;
+  }
+
+  function boot(){
+    setInterval(()=>{
+      try{ prepOptions(); }catch(e){}
+      try{ flushPending(); }catch(e){}
+      try{ fixBoatInfo(); }catch(e){}
+    }, 120);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V139_INFO = ()=>{
+    const box = g('quiz-options');
+    const el = g('quiz-result-money');
+    return {
+      選べる: box ? [...box.querySelectorAll('button')].map(b=>!b.disabled) : [],
+      選んだ番号: app._quizPendingChoice,
+      印: box ? [...box.querySelectorAll('button')].map(b=>b.classList.contains('edo-q-pick')) : [],
+      答えを受け付ける: !!app.quizAnswerEnabled,
+      回答ずみ: !!app.quizAnswered,
+      賞金欄: el ? el.className : null,
+      賞金欄の行: el ? [...el.querySelectorAll('.r')].map(r=>
+        [...r.children].map(c=>c.textContent.trim()).join('｜')) : []
+    };
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
