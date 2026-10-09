@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.1 (2026-10-09)';
+    window.__EDOGAWA_VERSION = 'ver1.0.2 (2026-10-09)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23838,12 +23838,58 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         '<span class="sub">いま：' + esc(basemapLabel()) + '（タップで切り替え・読み込み直します）</span></button>' +
       '<button type="button" class="edo-dev-btn" id="edo-dev-all">📋 全ユーザ投稿一覧' +
         '<span class="sub">みんなの📌を見て、編集・削除します</span></button>' +
+      '<button type="button" class="edo-dev-btn" id="edo-dev-voice">🔊 読み上げテスト' +
+        '<span class="sub">この端末で音声が出るかを確かめます</span></button>' +
       '';
     devShow('edo-dev-menu-modal');
     g('edo-dev-rail').onclick = ()=>{ devHide('edo-dev-menu-modal');
       try{ app.openRailSetup && app.openRailSetup(); }catch(e){ alert('「駅と線路の調整」を開けませんでした。'); } };
     g('edo-dev-base').onclick = ()=>toggleBasemap();
     g('edo-dev-all').onclick = ()=>{ devHide('edo-dev-menu-modal'); openAllPosts(); };
+    g('edo-dev-voice').onclick = ()=>openVoiceTest();
+  }
+
+  // ── 読み上げテスト（iPhoneで鳴るかを確かめます）──
+  function openVoiceTest(){
+    const info = (typeof window.__EDOGAWA_SPEECH_INFO === 'function')
+      ? window.__EDOGAWA_SPEECH_INFO() : {読み上げ機能:false};
+    const box = devBox('edo-dev-menu-modal');
+    const row = (k,v)=>'<div class="r"><span class="k">'+k+'</span><span class="v">'+esc(v)+'</span></div>';
+    box.innerHTML =
+      '<div class="edo-dev-ttl">🔊 読み上げテスト</div>' +
+      '<div class="edo-mpanel">' +
+        row('読み上げ機能', info.読み上げ機能 ? 'あり' : 'なし') +
+        row('鍵をあけた', info.鍵をあけた ? 'はい' : 'いいえ') +
+        row('設定', info.読み上げ設定 ? 'オン' : 'オフ') +
+        row('日本語の声', (info.日本語の声 && info.日本語の声.length) ? (info.日本語の声.length + '種類') : 'まだ読み込めていません') +
+      '</div>' +
+      '<div id="edo-dev-vmsg" class="edo-dev-note">下のボタンを押すと「江戸川双六へようこそ」と読み上げます。</div>' +
+      '<button type="button" class="edo-dev-btn primary" id="edo-dev-vplay">▶ 読み上げてみる</button>' +
+      '<div class="edo-dev-note">鳴らないときは、iPhone本体の<b>消音スイッチ（マナーモード）</b>と' +
+        '<b>音量</b>、設定の「読み上げ」がオンかをご確認ください。</div>';
+    devShow('edo-dev-menu-modal');
+    g('edo-dev-vplay').onclick = ()=>{
+      const msg = g('edo-dev-vmsg');
+      try{
+        const S = window.speechSynthesis;
+        if(!S){ msg.textContent = 'この端末では読み上げが使えません。'; return; }
+        app.__edoUnlockSpeech && app.__edoUnlockSpeech();
+        const u = new SpeechSynthesisUtterance('江戸川双六へようこそ');
+        u.lang = 'ja-JP';
+        u.onstart = ()=>{ msg.innerHTML = '<span style="color:#34d399">読み上げが始まりました。</span>'; };
+        u.onend   = ()=>{ msg.innerHTML = '<span style="color:#34d399">読み上げが終わりました。この端末では鳴ります。</span>'; };
+        u.onerror = (e)=>{ msg.innerHTML = '<span style="color:#fb7185">読み上げに失敗しました：' +
+          esc((e && e.error) || '原因不明') + '</span>'; };
+        msg.textContent = '読み上げています…';
+        S.speak(u);
+        setTimeout(()=>{
+          if(!S.speaking && !S.pending && /読み上げています/.test(msg.textContent)){
+            msg.innerHTML = '<span style="color:#fb7185">始まりませんでした。' +
+              '消音スイッチ（マナーモード）がオンになっていないかご確認ください。</span>';
+          }
+        }, 1500);
+      }catch(e){ msg.textContent = 'エラー：' + (e && e.message || e); }
+    };
   }
 
   function toggleBasemap(){
@@ -24286,6 +24332,113 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     演出中: !!app._destIntroRunning,
     サイコロ待ち: !!waitTimer
   });
+})();
+</script>
+<!-- ============================================================================
+     ver1.0.2: iPhone（iOS Safari）で読み上げが鳴らない問題への対応
+     ============================================================================ -->
+<script id="edogawa-v141">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const S = window.speechSynthesis;
+  if(!S) return;
+
+  // ──────────────────────────────────────────────────────────────
+  //  iOS Safari の決まり
+  //   「最初の読み上げは、画面をさわった操作の中から始めないと無視される」
+  //   江戸川クイズや競艇の実況は、マスに止まった流れで始まるため、
+  //   この決まりに引っかかって一度も鳴りませんでした。
+  //   そこで、ゲームを開いて最初に画面をさわった瞬間に、
+  //   音の出ない短い読み上げを1回だけ流して「鍵」をあけておきます。
+  // ──────────────────────────────────────────────────────────────
+  const origSpeak  = S.speak.bind(S);
+  const origCancel = S.cancel.bind(S);
+
+  let unlocked = false, trying = false, tries = 0;
+  app.__speechUnlocked = false;
+  function markUnlocked(){ unlocked = true; trying = false; app.__speechUnlocked = true; }
+  function unlockSpeech(){
+    // 効果音（Web Audio）の方も、同じ操作のうちに動けるようにします
+    try{ if(typeof sound !== 'undefined' && sound.init) sound.init(); }catch(e){}
+    if(unlocked || trying || tries > 8) return;
+    try{
+      const u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0; u.lang = 'ja-JP';
+      // 「実際に始まった」ときだけ、鍵があいたとみなします。
+      // 無視された場合は、次に画面をさわったときにもう一度ためします。
+      u.onstart = markUnlocked;
+      try{ u.addEventListener('start', markUnlocked); }catch(e){}
+      u.onend = ()=>{ trying = false; };
+      u.onerror = ()=>{ trying = false; };
+      trying = true; tries++;
+      origSpeak(u);
+      try{ S.resume(); }catch(e){}
+      setTimeout(()=>{
+        trying = false;
+        try{ if(!unlocked && (S.speaking || S.pending)) markUnlocked(); }catch(e){}
+      }, 450);
+    }catch(e){ trying = false; }
+  }
+  app.__edoUnlockSpeech = unlockSpeech;
+
+  // 読み上げを止めた直後に次を始めると、iOSでは無視されることがあります。
+  let lastCancel = 0;
+  S.cancel = function(){ lastCancel = Date.now(); try{ return origCancel(); }catch(e){} };
+
+  S.speak = function(u){
+    if(!u) return;
+    unlockSpeech();
+    // どの読み上げでも、実際に始まったなら鍵はあいています
+    try{ u.addEventListener('start', ()=>{ u.__edoStarted = true; markUnlocked(); }); }catch(e){}
+    const go = ()=>{
+      try{ origSpeak(u); }catch(e){ return; }
+      try{ S.resume(); }catch(e){}          // iOSでは止まった状態で始まることがあります
+      // それでも始まらなかったときは、1回だけやり直します
+      setTimeout(()=>{
+        try{
+          if(!u.__edoStarted && !u.__edoRetried && !S.speaking && !S.pending){
+            u.__edoRetried = true;
+            origSpeak(u);
+            S.resume();
+          }
+        }catch(e){}
+      }, 280);
+    };
+    if(Date.now() - lastCancel < 80) setTimeout(go, 90); else go();
+  };
+
+  // 声の一覧は、すぐには用意されないことがあります。先に読み込んでおきます。
+  function warmVoices(){ try{ S.getVoices(); }catch(e){} }
+  warmVoices();
+  try{ S.addEventListener('voiceschanged', warmVoices); }catch(e){
+    try{ S.onvoiceschanged = warmVoices; }catch(e2){}
+  }
+
+  // 最初にさわった瞬間（タップ・クリック・キー操作）で鍵をあけます
+  ['pointerdown','touchstart','touchend','mousedown','click','keydown'].forEach(t=>{
+    try{ document.addEventListener(t, unlockSpeech, {capture:true, passive:true}); }catch(e){
+      document.addEventListener(t, unlockSpeech, true);
+    }
+  });
+
+  // 画面を戻ってきたときに止まったままにならないように
+  document.addEventListener('visibilitychange', ()=>{
+    try{ if(document.visibilityState === 'visible' && S.paused) S.resume(); }catch(e){}
+  });
+
+  window.__EDOGAWA_SPEECH_INFO = ()=>{
+    let voices = [];
+    try{ voices = (S.getVoices()||[]).filter(v=>/ja/i.test(v.lang||'')).map(v=>v.name); }catch(e){}
+    return {
+      読み上げ機能: true,
+      鍵をあけた: !!app.__speechUnlocked,
+      読み上げ設定: app.speechEnabled !== false,
+      いま喋っている: !!S.speaking,
+      一時停止中: !!S.paused,
+      日本語の声: voices
+    };
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
