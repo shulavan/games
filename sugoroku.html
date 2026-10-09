@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'v137 (2026-10-09)';
+    window.__EDOGAWA_VERSION = 'v138 (2026-10-09)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -6320,10 +6320,25 @@
             dashArray: isFlying ? "2, 12" : "6, 8",
             lineCap: "round",
             lineJoin: "round",
+            // 【v138】✈️🚁の一直線ルートは、施設アイコンより前に出します
+            pane: isFlying ? this._ensureFlightPane() : undefined,
             className: isFlying ? "flight-route-line" : undefined
           }).addTo(this.map);
           this.playerRoutePolylines.push(polyline);
         });
+      },
+
+      // 【v138】✈️🚁の飛行ルート専用のレイヤー。施設アイコン（markerPane:600）より
+      //   手前（650）に置き、線が隠れないようにします。
+      _ensureFlightPane() {
+        try {
+          if (!this.map || !this.map.createPane) return undefined;
+          if (!this.map.getPane || !this.map.getPane('edoFlightPane')) {
+            const pane = this.map.createPane('edoFlightPane');
+            if (pane) { pane.style.zIndex = 650; pane.style.pointerEvents = 'none'; }
+          }
+          return 'edoFlightPane';
+        } catch (e) { return undefined; }
       },
 
       buildRoadNetwork(roads, spacingMeters, allowCrossConnect = false, targetNodes = null) {
@@ -23518,6 +23533,537 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       保存時刻: o && o.savedAt ? new Date(o.savedAt).toISOString() : null
     };
   };
+})();
+</script>
+<!-- ============================================================================
+     v138: 目的地ジャンプ演出／ルーレット3秒バー／✈️自動起動／飛行ルートを前面へ／検証用メニュー
+     ============================================================================ -->
+<style id="edogawa-v138-style">
+  /* ── 目的地の紹介中は、ほかの操作ができないようにします ── */
+  #edo-intro-lock{ position:fixed; inset:0; z-index:2147483100; display:none;
+    background:rgba(2,6,23,.55); }
+  #edo-intro-lock.show{ display:block; }
+  body.edo-intro-locked #facility-modal{ z-index:2147483300 !important; }
+  #edo-intro-tag{ position:fixed; left:50%; top:12px; transform:translateX(-50%);
+    z-index:2147483150; display:none; background:rgba(15,23,42,.94);
+    border:1px solid #64748b; border-radius:999px; padding:6px 16px;
+    font-size:12px; font-weight:900; color:#fbbf24; white-space:nowrap; }
+  #edo-intro-tag.show{ display:block; }
+
+  /* ── ルーレット確定後の3秒バー（「次の双六を開始」は残します） ── */
+  /* 高さが変わらないよう、ボタンが出ている間はいつも場所だけ取っておきます */
+  #edo-roulette-bar{ display:none; height:8px; margin-top:10px; border-radius:999px;
+    background:rgba(148,163,184,.25); overflow:hidden; }
+  #edo-roulette-bar.ready{ display:block; visibility:hidden; }
+  #edo-roulette-bar.ready.show{ visibility:visible; }
+  #edo-roulette-bar i{ display:block; height:100%; width:100%; border-radius:999px;
+    background:linear-gradient(90deg,#fbbf24,#f59e0b); }
+
+  /* ── トップページの「設定」リンク ── */
+  #edo-dev-link{ text-decoration:underline; }
+
+  /* ── 検証用のモーダル ── */
+  .edo-dev-ov{ position:fixed; inset:0; z-index:2147483200; display:none;
+    align-items:center; justify-content:center; padding:16px;
+    background:rgba(2,6,23,.88); backdrop-filter:blur(8px); }
+  .edo-dev-ov.show{ display:flex; }
+  .edo-dev-box{ width:min(460px,94vw); max-height:88vh; overflow-y:auto;
+    background:#0f172a; border:1px solid #475569; border-radius:22px; padding:18px;
+    box-shadow:0 30px 80px rgba(0,0,0,.6); }
+  .edo-dev-ttl{ font-size:17px; font-weight:900; color:#fbbf24; margin-bottom:12px; text-align:center; }
+  .edo-dev-pw{ width:100%; font-size:26px; font-weight:900; letter-spacing:.5em; text-align:center;
+    padding:12px; border-radius:14px; background:#020617; border:1px solid #475569; color:#e2e8f0; }
+  .edo-dev-btn{ width:100%; padding:13px; border-radius:14px; font-size:15px; font-weight:900;
+    background:#1e293b; border:1px solid #475569; color:#e2e8f0; margin-top:9px; text-align:left; }
+  .edo-dev-btn.primary{ background:linear-gradient(90deg,#f59e0b,#d97706); color:#0f172a; border-color:#fbbf24; text-align:center; }
+  .edo-dev-btn.danger{ background:#4c0519; border-color:#9f1239; color:#fecdd3; text-align:center; }
+  .edo-dev-btn .sub{ display:block; font-size:11px; font-weight:700; color:#94a3b8; margin-top:3px; }
+  .edo-dev-row{ display:flex; gap:9px; margin-top:12px; }
+  .edo-dev-row .edo-dev-btn{ margin-top:0; }
+  .edo-dev-item{ width:100%; display:flex; gap:10px; align-items:center; text-align:left;
+    padding:10px; border-radius:14px; background:#111c33; border:1px solid #23324d; margin-bottom:8px; }
+  .edo-dev-item .th{ flex:0 0 46px; width:46px; height:46px; border-radius:11px; object-fit:cover;
+    background:#0b1324; display:flex; align-items:center; justify-content:center; font-size:21px; }
+  .edo-dev-item .tx{ min-width:0; flex:1 1 auto; }
+  .edo-dev-item .tx b{ display:block; font-size:13px; color:#e2e8f0; }
+  .edo-dev-item .tx span{ display:block; font-size:11px; color:#94a3b8;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .edo-dev-empty{ text-align:center; color:#94a3b8; font-size:13px; padding:28px 0; }
+  .edo-dev-f{ display:block; font-size:12px; font-weight:900; color:#94a3b8; margin:10px 0 4px; }
+  .edo-dev-in{ width:100%; padding:10px; border-radius:12px; background:#020617;
+    border:1px solid #475569; color:#e2e8f0; font-size:14px; }
+  .edo-dev-note{ font-size:11px; color:#94a3b8; margin-top:10px; line-height:1.7; }
+</style>
+<script id="edogawa-v138">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g  = (id)=>document.getElementById(id);
+  const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
+  const esc = (v)=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ══════════════════════════════════════════════════════════════
+  //  ① 目的地までジャンプして、施設の詳細を3秒見せる演出
+  // ══════════════════════════════════════════════════════════════
+  function lockUI(on, text){
+    let ov = g('edo-intro-lock');
+    if(!ov){ ov = document.createElement('div'); ov.id = 'edo-intro-lock';
+      ov.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); });
+      document.body.appendChild(ov); }
+    let tag = g('edo-intro-tag');
+    if(!tag){ tag = document.createElement('div'); tag.id = 'edo-intro-tag'; document.body.appendChild(tag); }
+    if(on){
+      tag.textContent = text || '🚩 次の目的地を確認しています…';
+      ov.classList.add('show'); tag.classList.add('show');
+      document.body.classList.add('edo-intro-locked');
+    }else{
+      ov.classList.remove('show'); tag.classList.remove('show');
+      document.body.classList.remove('edo-intro-locked');
+    }
+  }
+  app.__edoIntroLock = lockUI;
+
+  // back:true … 紹介のあとに自分のコマへ戻ります（はじめからのとき）
+  // back:false… 戻らず、そのまま次の手番へ進みます（ゴール後のとき）
+  app.playDestinationIntro = async function(opts){
+    const o = opts || {};
+    const dest = this.currentDestination;
+    if(!dest || !this.map) return false;
+    if(this._destIntroRunning) return false;
+    this._destIntroRunning = true;
+    lockUI(true, o.text);
+    try{
+      const z = (this.map.getZoom && this.map.getZoom()) || 19;
+      try{ this.map.flyTo([Number(dest.lat), Number(dest.lng)], z, {duration:1.1}); }catch(e){}
+      await wait(1200);
+      let shown = false;
+      try{ this.showFacilityDetail(dest, { heading:'🚩 次の目的地', autoCloseSec:3 }); shown = true; }catch(e){}
+      const fm = g('facility-modal');
+      if(shown && fm){
+        const t0 = Date.now();
+        while(Date.now() - t0 < 5200){
+          await wait(100);
+          if(fm.classList.contains('hidden')) break;
+        }
+        if(!fm.classList.contains('hidden')){
+          try{ this.closeFacilityModal && this.closeFacilityModal(); }catch(e){}
+        }
+      }else{
+        await wait(3000);
+      }
+      await wait(150);
+      if(o.back){
+        try{ this.panToCurrentPlayer(); }catch(e){}
+        await wait(850);
+      }
+    }catch(e){ console.warn('[v138] 目的地の紹介', e); }
+    finally{
+      lockUI(false);
+      this._destIntroRunning = false;
+    }
+    return true;
+  };
+
+  // ── はじめから遊ぶとき：チュートリアルが終わってから演出します ──
+  function armIntroAfterTutorial(){
+    if(!app.currentDestination) return;
+    let waited = 0, sawTutorial = false;
+    const step = ()=>{
+      try{
+        const tt = g('edo-tutorial');
+        if(tt && tt.classList.contains('show')){ sawTutorial = true; setTimeout(step, 200); return; }
+        waited += 200;
+        const mayShow = !(app.tutorialFinished && app.tutorialFinished());
+        if(!sawTutorial && mayShow && waited < 4000){ setTimeout(step, 200); return; }
+        if(waited < 600){ setTimeout(step, 200); return; }
+        const lobby = g('lobby-screen');
+        if(lobby && !lobby.classList.contains('hidden')) return;   // トップに戻っていたら何もしません
+        app.playDestinationIntro({ back:true });
+      }catch(e){}
+    };
+    setTimeout(step, 400);
+  }
+  app.__edoArmIntro = armIntroAfterTutorial;
+
+  const origStart = app.startGame ? app.startGame.bind(app) : null;
+  if(origStart){
+    app.startGame = async function(opts){
+      const r = await origStart(opts);
+      try{
+        if(Array.isArray(this.players) && this.players.length && this.currentDestination){
+          armIntroAfterTutorial();
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  // ── ゴール後：次の盤面ができたら目的地へジャンプ → 3秒 → そのまま手番へ ──
+  const origConfirm = app.confirmNextSugoroku ? app.confirmNextSugoroku.bind(app) : null;
+  if(origConfirm){
+    app.confirmNextSugoroku = async function(){
+      if(this.legTransitionInProgress || !this.nextDestinationCandidate) return origConfirm();
+      hideRouletteBar();
+      let pending = false;
+      const realFinish = this.finishTurn;
+      this.finishTurn = function(){ pending = true; };       // 紹介が終わるまで手番を預かります
+      let r;
+      try{ r = await origConfirm(); }
+      finally{ this.finishTurn = realFinish; }
+      try{ await this.playDestinationIntro({ back:false }); }catch(e){}
+      if(pending){ try{ this.finishTurn(); }catch(e){} }
+      return r;
+    };
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  ② ルーレット確定後：ボタンは残したまま、3秒バーで自動的に次へ
+  // ══════════════════════════════════════════════════════════════
+  let rtArmed = false, rtTimer = null;
+  function ensureRouletteBar(){
+    const btn = g('roulette-confirm-btn'); if(!btn || !btn.parentElement) return null;
+    let bar = g('edo-roulette-bar');
+    if(!bar){ bar = document.createElement('div'); bar.id = 'edo-roulette-bar';
+      bar.innerHTML = '<i></i>'; btn.parentElement.insertBefore(bar, btn.nextSibling); }
+    if(btn.nextSibling !== bar) btn.parentElement.insertBefore(bar, btn.nextSibling);
+    return bar;
+  }
+  function rouletteBar(ms){
+    const bar = ensureRouletteBar(); if(!bar) return;
+    bar.classList.add('ready'); bar.classList.add('show');
+    const i = bar.querySelector('i');
+    if(i){ i.style.transition = 'none'; i.style.width = '100%'; void i.offsetWidth;
+           i.style.transition = 'width ' + ms + 'ms linear'; i.style.width = '0%'; }
+  }
+  function hideRouletteBar(){
+    rtArmed = false;
+    if(rtTimer){ clearTimeout(rtTimer); rtTimer = null; }
+    const bar = g('edo-roulette-bar'); if(bar) bar.classList.remove('show');
+  }
+  function rouletteWatch(){
+    const modal = g('goal-modal'), btn = g('roulette-confirm-btn');
+    const open = !!modal && !modal.classList.contains('hidden');
+    // ボタンが出ている間は、バーの場所だけ先に取っておきます（高さが動かないように）
+    const shown = open && !!btn && !btn.classList.contains('hidden');
+    const bar0 = shown ? ensureRouletteBar() : g('edo-roulette-bar');
+    if(bar0){ if(shown) bar0.classList.add('ready');
+              else { bar0.classList.remove('ready'); bar0.classList.remove('show'); } }
+    const ready = shown && !btn.disabled && !!app.nextDestinationCandidate;
+    if(!ready){ if(rtArmed) hideRouletteBar(); return; }
+    if(rtArmed) return;
+    rtArmed = true;
+    rouletteBar(3000);
+    rtTimer = setTimeout(()=>{
+      rtTimer = null;
+      try{ app.confirmNextSugoroku && app.confirmNextSugoroku(); }catch(e){}
+    }, 3000);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  ③ ✈️江戸川飛行隊：自分の手番になったら自動で始めます
+  // ══════════════════════════════════════════════════════════════
+  const BUSY = ['event-modal','goal-modal','quiz-modal','kingyo-modal','boatrace-modal',
+    'boatrace-continue-modal','rocket-gift-modal','regional-mini-overlay','goal-amida-overlay',
+    'settings-modal','menu-modal','facility-modal','edo-m7-notice','edo-tutorial'];
+  const openNow = (id)=>{ const e = g(id); if(!e) return false;
+    if(e.classList.contains('hidden')) return false;
+    if(id === 'edo-tutorial') return e.classList.contains('show');
+    try{ return getComputedStyle(e).display !== 'none'; }catch(err){ return false; } };
+  let planeSince = 0;
+  function planeWatch(){
+    try{
+      const lobby = g('lobby-screen');
+      if(!lobby || !lobby.classList.contains('hidden')){ planeSince = 0; return; }
+      if(app.isMultiplayer && !app.isHost){ planeSince = 0; return; }
+      const cp = (app.players||[])[app.currentPlayerIdx];
+      if(!cp || !cp.pendingPlaneMission || cp.isCpu){ planeSince = 0; return; }
+      if(app.isRolling || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive ||
+         app._destIntroRunning || app.legTransitionInProgress){ planeSince = 0; return; }
+      if(BUSY.some(openNow)){ planeSince = 0; return; }
+      const t = Date.now();
+      if(!planeSince){ planeSince = t; return; }
+      if(t - planeSince < 800) return;                    // 画面が落ち着いてから始めます
+      planeSince = 0;
+      app.rollDice && app.rollDice();                     // ✈️のミッションがここから始まります
+    }catch(e){ planeSince = 0; }
+  }
+
+  function boot(){
+    setInterval(()=>{ try{ rouletteWatch(); }catch(e){} try{ planeWatch(); }catch(e){} }, 200);
+    try{ ensureDevLink(); }catch(e){}
+    setInterval(()=>{ try{ ensureDevLink(); }catch(e){} }, 1500);
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  ④ トップページの「設定」（検証用・パスワード 456）
+  // ══════════════════════════════════════════════════════════════
+  const DEV_PW = '456';
+
+  function ensureDevLink(){
+    if(g('edo-dev-link')) return;
+    const lobby = g('lobby-screen'); if(!lobby) return;
+    let host = null;
+    lobby.querySelectorAll('span').forEach(sp=>{
+      if(host) return;
+      const t = (sp.textContent||'').replace(/\s+/g,'');
+      if(/使い方/.test(t) && /運営元/.test(t) && sp.querySelectorAll('button').length >= 3) host = sp;
+    });
+    if(!host) return;
+    const sep = document.createTextNode('・');
+    const b = document.createElement('button');
+    b.type = 'button'; b.id = 'edo-dev-link';
+    b.className = 'underline hover:text-slate-400';
+    b.textContent = '設定';
+    b.onclick = ()=>openDevPassword();
+    host.appendChild(sep); host.appendChild(b);
+  }
+
+  function ensureOverlay(id){
+    let ov = g(id);
+    if(!ov){ ov = document.createElement('div'); ov.id = id; ov.className = 'edo-dev-ov';
+      ov.innerHTML = '<div class="edo-dev-box"></div>';
+      ov.addEventListener('click', (e)=>{ if(e.target === ov) ov.classList.remove('show'); });
+      document.body.appendChild(ov); }
+    return ov;
+  }
+  const devBox = (id)=>ensureOverlay(id).querySelector('.edo-dev-box');
+  const devShow = (id)=>ensureOverlay(id).classList.add('show');
+  const devHide = (id)=>{ const o = g(id); if(o) o.classList.remove('show'); };
+
+  function openDevPassword(){
+    const box = devBox('edo-dev-pw-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">🔑 パスワード</div>' +
+      '<input id="edo-dev-pw-in" class="edo-dev-pw" type="tel" inputmode="numeric" maxlength="3" ' +
+        'autocomplete="off" placeholder="・・・">' +
+      '<div id="edo-dev-pw-ng" class="edo-dev-note" style="color:#fb7185;display:none">パスワードが違います。</div>' +
+      '<div class="edo-dev-row">' +
+        '<button type="button" class="edo-dev-btn" id="edo-dev-pw-cancel">キャンセル</button>' +
+        '<button type="button" class="edo-dev-btn primary" id="edo-dev-pw-ok">OK</button>' +
+      '</div>';
+    devShow('edo-dev-pw-modal');
+    const inp = g('edo-dev-pw-in');
+    setTimeout(()=>{ try{ inp.focus(); }catch(e){} }, 120);
+    const tryOk = ()=>{
+      if(String(inp.value||'').trim() === DEV_PW){ devHide('edo-dev-pw-modal'); openDevMenu(); }
+      else { g('edo-dev-pw-ng').style.display = 'block'; inp.value = ''; }
+    };
+    g('edo-dev-pw-ok').onclick = tryOk;
+    g('edo-dev-pw-cancel').onclick = ()=>devHide('edo-dev-pw-modal');
+    inp.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') tryOk(); });
+    inp.addEventListener('input', ()=>{ if(String(inp.value||'').length >= 3) tryOk(); });
+  }
+  app.openDevSettings = openDevPassword;
+
+  function basemapLabel(){
+    try{ return (app.basemapPref && app.basemapPref() === 'vector') ? 'ベクター（きれい）' : '通常（速い）'; }
+    catch(e){ return '通常（速い）'; }
+  }
+  function openDevMenu(){
+    const box = devBox('edo-dev-menu-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">🧪 検証用メニュー</div>' +
+      '<button type="button" class="edo-dev-btn" id="edo-dev-rail">🛠 駅と線路の調整' +
+        '<span class="sub">駅の位置や線路のつなぎ方を直します</span></button>' +
+      '<button type="button" class="edo-dev-btn" id="edo-dev-base">🗺 地図の種類' +
+        '<span class="sub">いま：' + esc(basemapLabel()) + '（タップで切り替え・読み込み直します）</span></button>' +
+      '<button type="button" class="edo-dev-btn" id="edo-dev-all">📋 全ユーザ投稿一覧' +
+        '<span class="sub">みんなの📌を見て、編集・削除します</span></button>' +
+      '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-close">閉じる</button></div>';
+    devShow('edo-dev-menu-modal');
+    g('edo-dev-close').onclick = ()=>devHide('edo-dev-menu-modal');
+    g('edo-dev-rail').onclick = ()=>{ devHide('edo-dev-menu-modal');
+      try{ app.openRailSetup && app.openRailSetup(); }catch(e){ alert('「駅と線路の調整」を開けませんでした。'); } };
+    g('edo-dev-base').onclick = ()=>toggleBasemap();
+    g('edo-dev-all').onclick = ()=>{ devHide('edo-dev-menu-modal'); openAllPosts(); };
+  }
+
+  function toggleBasemap(){
+    let now = 'raster';
+    try{ now = (app.basemapPref && app.basemapPref()) || 'raster'; }catch(e){}
+    const next = (now === 'raster') ? 'vector' : 'raster';
+    try{
+      localStorage.setItem('edogawa_basemap_v1', next);
+      // ベクターは通常ОFFなので、この端末だけ試せるようにします
+      localStorage.setItem('edogawa_vector_force_v1', next === 'vector' ? 'yes' : 'no');
+    }catch(e){}
+    const box = devBox('edo-dev-menu-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">🗺 地図の種類</div>' +
+      '<div class="edo-dev-note">「' + (next === 'vector' ? 'ベクター（きれい）' : '通常（速い）') +
+        '」にしました。<br>読み込み直すと切り替わります。</div>' +
+      '<div class="edo-dev-row">' +
+        '<button type="button" class="edo-dev-btn" id="edo-dev-later">あとで</button>' +
+        '<button type="button" class="edo-dev-btn primary" id="edo-dev-reload">読み込み直す</button></div>';
+    g('edo-dev-later').onclick = ()=>devHide('edo-dev-menu-modal');
+    g('edo-dev-reload').onclick = ()=>{ try{ location.reload(); }catch(e){} };
+  }
+
+  // ── 全ユーザ投稿一覧 ──
+  async function supa(){
+    try{
+      if(app.visitedSupabase && app.visitedSupabaseUser) return app.visitedSupabase;
+      const r = await (app.checkVisitedSupabase ? app.checkVisitedSupabase() : Promise.resolve({ok:false}));
+      return (r && r.ok) ? app.visitedSupabase : null;
+    }catch(e){ return null; }
+  }
+  const TABLE  = (window.EDOGAWA_SUPABASE_VISITED_TABLE  || 'visited_entries');
+  const BUCKET = (window.EDOGAWA_SUPABASE_VISITED_BUCKET || 'visited-pins');
+  let devEntries = [];
+
+  function postsShell(bodyHtml, footHtml){
+    const box = devBox('edo-dev-list-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">📋 全ユーザ投稿一覧</div>' +
+      '<div id="edo-dev-list-body">' + bodyHtml + '</div>' +
+      (footHtml || '');
+    devShow('edo-dev-list-modal');
+  }
+
+  async function openAllPosts(){
+    postsShell('<div class="edo-dev-empty">読み込み中…</div>', '');
+    const sb = await supa();
+    if(!sb){
+      postsShell('<div class="edo-dev-empty">Supabaseにつながりませんでした。</div>',
+        '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-lc">閉じる</button></div>');
+      g('edo-dev-lc').onclick = ()=>devHide('edo-dev-list-modal');
+      return;
+    }
+    let rows = [], err = null;
+    try{
+      const res = await sb.from(TABLE)
+        .select('id,owner_uid,owner_name,lat,lng,visit_date,note,photo_path,created_at')
+        .order('created_at', {ascending:false});
+      if(res.error) throw res.error;
+      rows = res.data || [];
+    }catch(e){ err = e; }
+    if(err){
+      postsShell('<div class="edo-dev-empty">読み込めませんでした。<br>' + esc(err.message||'') + '</div>',
+        '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-lc">閉じる</button></div>');
+      g('edo-dev-lc').onclick = ()=>devHide('edo-dev-list-modal');
+      return;
+    }
+    devEntries = rows;
+    const body = rows.length
+      ? rows.map((e,i)=>
+          '<button type="button" class="edo-dev-item" data-dev-i="' + i + '">' +
+            '<span class="th">📌</span>' +
+            '<span class="tx"><b>' + esc(e.visit_date || '日付未設定') + '　' + esc(e.owner_name || '名前なし') + '</b>' +
+            '<span>' + esc(e.note || 'メモなし') + '</span></span>' +
+            '<span style="color:#64748b">›</span></button>').join('')
+      : '<div class="edo-dev-empty">投稿はありません。</div>';
+    postsShell(body,
+      '<div class="edo-dev-note">全' + rows.length + '件</div>' +
+      '<button type="button" class="edo-dev-btn danger" id="edo-dev-wipe">投稿を初期化する</button>' +
+      '<div class="edo-dev-row"><button type="button" class="edo-dev-btn" id="edo-dev-lc">閉じる</button></div>');
+    g('edo-dev-lc').onclick = ()=>devHide('edo-dev-list-modal');
+    g('edo-dev-wipe').onclick = ()=>confirmWipe();
+    document.querySelectorAll('#edo-dev-list-body [data-dev-i]').forEach(b=>{
+      b.onclick = ()=>openPostEdit(Number(b.getAttribute('data-dev-i')));
+    });
+  }
+  app.openAllVisitedPosts = openAllPosts;
+
+  function openPostEdit(i){
+    const e = devEntries[i]; if(!e) return;
+    const box = devBox('edo-dev-list-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">✏️ 投稿を編集</div>' +
+      '<div class="edo-dev-note">投稿者：' + esc(e.owner_name || '名前なし') + '</div>' +
+      '<label class="edo-dev-f">日付</label>' +
+      '<input id="edo-dev-date" class="edo-dev-in" type="date" value="' + esc(e.visit_date || '') + '">' +
+      '<label class="edo-dev-f">メモ</label>' +
+      '<textarea id="edo-dev-note" class="edo-dev-in" rows="4">' + esc(e.note || '') + '</textarea>' +
+      '<div id="edo-dev-msg" class="edo-dev-note"></div>' +
+      '<div class="edo-dev-row">' +
+        '<button type="button" class="edo-dev-btn" id="edo-dev-back">キャンセル</button>' +
+        '<button type="button" class="edo-dev-btn danger" id="edo-dev-del">🗑 削除</button>' +
+        '<button type="button" class="edo-dev-btn primary" id="edo-dev-save">💾 保存</button>' +
+      '</div>';
+    g('edo-dev-back').onclick = ()=>openAllPosts();
+    g('edo-dev-save').onclick = async ()=>{
+      const msg = g('edo-dev-msg'); msg.textContent = '保存しています…';
+      const sb = await supa(); if(!sb){ msg.textContent = 'Supabaseにつながりません。'; return; }
+      try{
+        const res = await sb.from(TABLE).update({
+          visit_date: g('edo-dev-date').value || null,
+          note: g('edo-dev-note').value || ''
+        }).eq('id', e.id);
+        if(res.error) throw res.error;
+        openAllPosts();
+      }catch(err){ msg.textContent = '保存できませんでした：' + (err.message || err); }
+    };
+    g('edo-dev-del').onclick = async ()=>{
+      const msg = g('edo-dev-msg'); msg.textContent = '削除しています…';
+      const sb = await supa(); if(!sb){ msg.textContent = 'Supabaseにつながりません。'; return; }
+      try{
+        const res = await sb.from(TABLE).delete().eq('id', e.id);
+        if(res.error) throw res.error;
+        if(e.photo_path){ try{ await sb.storage.from(BUCKET).remove([e.photo_path]); }catch(_){} }
+        openAllPosts();
+      }catch(err){ msg.textContent = '削除できませんでした：' + (err.message || err); }
+    };
+  }
+
+  function confirmWipe(){
+    const box = devBox('edo-dev-list-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">⚠️ 投稿を初期化する</div>' +
+      '<div class="edo-dev-note">すべてのユーザの📌の投稿（写真とメモ）を消します。<br>' +
+        'もとに戻すことはできません。よろしいですか？</div>' +
+      '<div id="edo-dev-msg" class="edo-dev-note"></div>' +
+      '<div class="edo-dev-row">' +
+        '<button type="button" class="edo-dev-btn" id="edo-dev-back">やめる</button>' +
+        '<button type="button" class="edo-dev-btn danger" id="edo-dev-go">全部消す</button></div>';
+    g('edo-dev-back').onclick = ()=>openAllPosts();
+    g('edo-dev-go').onclick = ()=>wipeAll();
+  }
+
+  async function wipeAll(){
+    const msg = g('edo-dev-msg'); if(msg) msg.textContent = '消しています…';
+    const sb = await supa();
+    if(!sb){ if(msg) msg.textContent = 'Supabaseにつながりません。'; return; }
+    let left = 0, removed = 0, lastErr = null;
+    try{
+      const res = await sb.from(TABLE).select('id,photo_path');
+      if(res.error) throw res.error;
+      const rows = res.data || [];
+      const paths = rows.map(r=>r.photo_path).filter(Boolean);
+      for(const r of rows){
+        try{
+          const d = await sb.from(TABLE).delete().eq('id', r.id);
+          if(d.error){ lastErr = d.error; left++; } else removed++;
+        }catch(e){ lastErr = e; left++; }
+      }
+      if(paths.length){ try{ await sb.storage.from(BUCKET).remove(paths); }catch(e){} }
+    }catch(e){ lastErr = e; }
+    try{ app.refreshVisitedLobbyCount && app.refreshVisitedLobbyCount(); }catch(e){}
+    const box = devBox('edo-dev-list-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">🧹 初期化のけっか</div>' +
+      '<div class="edo-dev-note">消せた投稿：' + removed + '件<br>' +
+        (left ? ('消せなかった投稿：' + left + '件<br>' +
+                 '<span style="color:#fb7185">' + esc((lastErr && lastErr.message) || '') + '</span><br>' +
+                 '※ほかの人の投稿は、サーバー側の権限設定（RLS）で守られていることがあります。')
+              : 'すべての投稿を消しました。') + '</div>' +
+      '<div class="edo-dev-row"><button type="button" class="edo-dev-btn primary" id="edo-dev-back">一覧へ</button></div>';
+    g('edo-dev-back').onclick = ()=>openAllPosts();
+  }
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V138_INFO = ()=>({
+    演出中: !!app._destIntroRunning,
+    さえぎり: (()=>{ const o = g('edo-intro-lock'); return !!o && o.classList.contains('show'); })(),
+    案内: (()=>{ const t = g('edo-intro-tag'); return t && t.classList.contains('show') ? t.textContent : null; })(),
+    ルーレットのバー: (()=>{ const b = g('edo-roulette-bar'); return !!b && b.classList.contains('show'); })(),
+    開始ボタン: (()=>{ const b = g('roulette-confirm-btn');
+      return b && !b.classList.contains('hidden') ? b.textContent.trim() : null; })(),
+    設定リンク: !!g('edo-dev-link'),
+    飛行レイヤー: (()=>{ try{ const p = app.map && app.map.getPane && app.map.getPane('edoFlightPane');
+      return p ? Number(p.style.zIndex) : null; }catch(e){ return null; } })()
+  });
 })();
 </script>
 <script id="edogawa-v39-footer">
