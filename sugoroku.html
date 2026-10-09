@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.2 (2026-10-09)';
+    window.__EDOGAWA_VERSION = 'ver1.0.3 (2026-10-09)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -18108,6 +18108,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function makeBars(){
     bar('#regional-mini-overlay .regional-mini-shell', ()=>{
       try{ app.addLog && app.addLog('✕ ミニゲームを閉じました。'); }catch(e){}
+      app.__edoMiniQuit = true;       // 自分でやめたときは、結果モーダルを出しません
       try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e){}
     });
     bar('#goal-amida-overlay .goal-amida-shell', ()=>{
@@ -23838,6 +23839,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         '<span class="sub">いま：' + esc(basemapLabel()) + '（タップで切り替え・読み込み直します）</span></button>' +
       '<button type="button" class="edo-dev-btn" id="edo-dev-all">📋 全ユーザ投稿一覧' +
         '<span class="sub">みんなの📌を見て、編集・削除します</span></button>' +
+      '<button type="button" class="edo-dev-btn" id="edo-dev-mini">🎮 ミニゲーム確認' +
+        '<span class="sub">全ミニゲームを、開始→プレイ→結果まで試せます</span></button>' +
       '<button type="button" class="edo-dev-btn" id="edo-dev-voice">🔊 読み上げテスト' +
         '<span class="sub">この端末で音声が出るかを確かめます</span></button>' +
       '';
@@ -23847,7 +23850,154 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     g('edo-dev-base').onclick = ()=>toggleBasemap();
     g('edo-dev-all').onclick = ()=>{ devHide('edo-dev-menu-modal'); openAllPosts(); };
     g('edo-dev-voice').onclick = ()=>openVoiceTest();
+    g('edo-dev-mini').onclick = ()=>openMiniTest();
   }
+
+
+  // ══════════════════════════════════════════════════════════════
+  //  🎮 ミニゲーム確認（検証用・本番のゲームとは別です）
+  //    所持金100万円の仮のプレイヤーで、開始モーダル → プレイ → 結果モーダル
+  //    までをひととおり試せます。保存データには触りません。
+  // ══════════════════════════════════════════════════════════════
+  const MINI_GROUPS = [
+    { t:'★マス（順番に出ます）', items:[
+      {k:'quiz',     ic:'🧠', n:'江戸川クイズ'},
+      {k:'kingyo',   ic:'🐟', n:'江戸川金魚すくい'},
+      {k:'kanken',   ic:'✍️', n:'江戸川漢字検定'},
+      {k:'nuts',     ic:'⚾️', n:'ガキんちょ木の実ドロボー'},
+      {k:'archery',  ic:'🏹', n:'ガキんちょ果実射撃'}
+    ]},
+    { t:'▲マス', items:[
+      {k:'boat',     ic:'🚤', n:'江戸川競艇'},
+      {k:'canoe',    ic:'🚣', n:'新左近川カヌー'},
+      {k:'wheel',    ic:'🎡', n:'ダイヤと花の大観覧車'},
+      {k:'tower',    ic:'🏗', n:'増築船堀タワー'},
+      {k:'plane',    ic:'✈️', n:'江戸川飛行隊（✈️取得時）'}
+    ]},
+    { t:'ゴール後（目的地のジャンル別）', items:[
+      {k:'delivery', ic:'🛵', n:'出前バイク配達（飲食店）'},
+      {k:'mart',     ic:'🛒', n:'Edogawaマート（スーパー）'},
+      {k:'toilet',   ic:'🚻', n:'公園トイレ脱出大作戦（公園）'},
+      {k:'bus',      ic:'🚌', n:'江戸川GoGoバス乗車（駅）'},
+      {k:'lunch',    ic:'🍱', n:'えどがわ給食当番（学校）'},
+      {k:'hotel',    ic:'🏨', n:'江戸川ホテル物語（宿泊）'},
+      {k:'clinic',   ic:'🏥', n:'江戸川診療所（病院）'},
+      {k:'hide',     ic:'🕵️', n:'江戸川かくれんぼ（公共施設）'},
+      {k:'amida',    ic:'🏯', n:'江戸川あみだくじ（ゴール後に必ず）'}
+    ]},
+    { t:'そのほか', items:[
+      {k:'lottery_shop', ic:'🎫', n:'江戸川ジャンボ宝くじ　売り場'},
+      {k:'lottery_draw', ic:'🎊', n:'江戸川ジャンボ宝くじ　抽選会'},
+      {k:'train',        ic:'🚃', n:'電車シミュレーター'}
+    ]}
+  ];
+
+  function openMiniTest(){
+    const box = devBox('edo-dev-menu-modal');
+    box.innerHTML =
+      '<div class="edo-dev-ttl">🎮 ミニゲーム確認</div>' +
+      '<div class="edo-dev-note">所持金100万円の仮のプレイヤーで試します。' +
+      '本番の保存データには触りません。</div>' +
+      MINI_GROUPS.map(gr =>
+        '<div class="edo-dev-f">' + esc(gr.t) + '</div>' +
+        gr.items.map(it =>
+          '<button type="button" class="edo-dev-btn" data-mini-k="' + it.k + '">' +
+          it.ic + ' ' + esc(it.n) + '</button>').join('')
+      ).join('');
+    devShow('edo-dev-menu-modal');
+    box.querySelectorAll('[data-mini-k]').forEach(b=>{
+      b.onclick = ()=>runMiniTest(b.getAttribute('data-mini-k'));
+    });
+  }
+
+  function runMiniTest(key){
+    devHide('edo-dev-menu-modal');
+    // ── 本番の状態を退避します ──
+    const keep = {};
+    const names = ['players','currentPlayerIdx','isMultiplayer','isHost','autoMode',
+      'saveGameState','syncGameStateToRoom','finishTurn','finishTurnContinue','finishMiniGameTurn',
+      'startGoalAmida','continueAfterGoalAmida','updateHUD','awardMiniGameStats','scheduleProfilePersist',
+      'panToCurrentPlayer','addLog','regionalMiniGame','miniGameActive','activeMiniGamePlayerId',
+      'goalAmidaActive','goalAmidaPlayedThisLeg','goalAmidaPlayerId','_pendingGoalAmidaPlayer',
+      'boatRaceActive','_boatRaceOfferOpen','teleportPlayer'];
+    names.forEach(n=>{ keep[n] = app[n]; });
+
+    let restored = false;
+    function restore(){
+      if(restored) return; restored = true;
+      try{
+        ['regional-mini-overlay','goal-amida-overlay','quiz-modal','boatrace-modal',
+         'boatrace-continue-modal','event-modal'].forEach(id=>{
+          const e = g(id); if(e) e.classList.add('hidden');
+        });
+        const mc = g('edo-mini-common'); if(mc){ mc.classList.remove('show'); mc.innerHTML=''; }
+        const fr = g('regional-mini-frame');
+        if(fr){ try{ fr.removeAttribute('srcdoc'); fr.src='about:blank'; fr.style.display='none'; }catch(e){} }
+        const af = g('goal-amida-frame');
+        if(af){ try{ af.removeAttribute('srcdoc'); af.src='about:blank'; }catch(e){} }
+      }catch(e){}
+      names.forEach(n=>{ app[n] = keep[n]; });
+      app.__edoMiniTesting = false;
+      setTimeout(()=>{ try{ openMiniTest(); }catch(e){} }, 400);   // 一覧へ戻ります
+    }
+    app.__edoMiniTestRestore = restore;
+    app.__edoMiniTesting = true;
+
+    // ── 仮の状態に差し替えます ──
+    const mk = (id,name,cpu)=>({ id:id, name:name, avatar: cpu?'🐱':'🧪', isCpu:!!cpu,
+      money:1000000, properties:[], goals:0, movedSquares:0, forcedMoveCount:0, boatRaceCount:0,
+      stats:{intelligence:100,wealth:100,stamina:100,luck:100},
+      color:{bg:'bg-emerald-500',border:'border-emerald-400',stroke:'#10b981'},
+      path:[], pathIndex:0, currentNodeIdx:0, vehicle:null, skipTurn:false, wheelchairTurns:0,
+      lottery:{renban:0,bara:0,tickets:[],history:{}} });
+    const p = mk(0,'検証プレイヤー',false);
+    app.players = [p, mk(1,'CPU1',true), mk(2,'CPU2',true), mk(3,'CPU3',true)];
+    app.currentPlayerIdx = 0;
+    app.isMultiplayer = false; app.isHost = true; app.autoMode = false;
+    app.miniGameActive = false; app.regionalMiniGame = null;
+    app.goalAmidaActive = false; app.goalAmidaPlayedThisLeg = false; app._pendingGoalAmidaPlayer = null;
+    app.boatRaceActive = false; app._boatRaceOfferOpen = false;
+    app.saveGameState = ()=>{};                  // 本番の保存データを守ります
+    app.syncGameStateToRoom = async ()=>{};
+    app.scheduleProfilePersist = ()=>{};
+    app.awardMiniGameStats = ()=>{};
+    app.panToCurrentPlayer = ()=>{};
+    app.teleportPlayer = ()=>Promise.resolve();
+    app.updateHUD = ()=>{};
+    app.finishTurn = ()=>restore();
+    app.finishTurnContinue = ()=>restore();
+    app.finishMiniGameTurn = ()=>restore();
+    app.continueAfterGoalAmida = ()=>restore();
+    if(key !== 'amida') app.startGoalAmida = ()=>restore();
+
+    // ── 起動します ──
+    try{
+      if(key === 'quiz'){ app.startQuizInvite(p); return; }
+      if(key === 'boat'){ Promise.resolve(app.startBoatRaceEvent(p)).catch(()=>restore()); return; }
+      if(key === 'amida'){ (keep.startGoalAmida || app.startGoalAmida).call(app, p); return; }
+      if(key === 'lottery_shop' || key === 'lottery_draw'){
+        if(key === 'lottery_draw'){
+          const L = app.lotteryStore ? app.lotteryStore(p) : (p.lottery = p.lottery || {});
+          L.renban = 10; L.bara = 10;
+          L.tickets = Array.from({length:20}, (_,i)=>({ type: i<10?'連番':'バラ',
+            number: String(Math.floor(Math.random()*1000000)).padStart(6,'0') }));
+        }
+        app.startLotteryGame(p, key === 'lottery_draw' ? 'draw' : 'shop', ()=>restore());
+        return;
+      }
+      if(key === 'train'){
+        app.startTrainRide(p, 'tozai', '西葛西', '葛西', ()=>restore());
+        return;
+      }
+      app.openRegionalMiniGame(key, p);
+    }catch(e){
+      console.error('[ミニゲーム確認]', e);
+      restore();
+    }
+    // 10分たっても終わらなければ、念のため戻します
+    setTimeout(()=>{ if(app.__edoMiniTesting) restore(); }, 600000);
+  }
+  app.openMiniGameTest = openMiniTest;
 
   // ── 読み上げテスト（iPhoneで鳴るかを確かめます）──
   function openVoiceTest(){
@@ -24439,6 +24589,96 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       日本語の声: voices
     };
   };
+})();
+</script>
+<!-- ============================================================================
+     ver1.0.3: ミニゲームの結果モーダルが出ないことがある問題への対応
+     ============================================================================ -->
+<script id="edogawa-v142">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+
+  // 共通の結果モーダルが出ているか
+  function resultShowing(){
+    const el = g('edo-mini-common');
+    if(!el || !el.classList.contains('show')) return false;
+    return /結果発表/.test(el.textContent || '');
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  //  ① 結果モーダルが一瞬で消えてしまうのを防ぎます
+  //    ミニゲームによっては「結果を送る」→「0.15秒後に閉じる」という順で
+  //    合図を送ってきます。閉じる合図がそのまま通ると、せっかく出した
+  //    結果モーダルがすぐ消えて、あみだくじへ飛んでしまっていました。
+  //    （バス乗車がこれでした）
+  //    結果モーダルが出ている間は、閉じるのを待たせます。
+  // ──────────────────────────────────────────────────────────────
+  let deferring = false;
+  const origClose = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
+  if(origClose){
+    app.closeRegionalMiniGame = function(){
+      // 結果モーダルが出ている間は、かならず待たせます
+      if(resultShowing()){
+        if(!deferring){
+          deferring = true;
+          const t0 = Date.now();
+          const wait = ()=>{
+            if(resultShowing() && Date.now() - t0 < 9000){ setTimeout(wait, 100); return; }
+            deferring = false;
+            try{ origClose(); }catch(e){ console.warn('[v142]', e); }
+          };
+          setTimeout(wait, 100);
+        }
+        return;
+      }
+      // ── ② 結果を出さずに終わったときは、賞金なしの結果モーダルを出します ──
+      const st = this.regionalMiniGame;
+      const played = st && st.__edoOpenedAt ? (Date.now() - st.__edoOpenedAt) : 0;
+      // ゲームがそもそも開かなかったとき（読み込み失敗など）は、結果モーダルも出しません
+      if(st && !st.done && !app.__edoMiniQuit && app.__miniRendered && played > 4000 && !deferring){
+        st.done = true;
+        const p = (this.players || []).find(x=>Number(x.id) === Number(st.playerId));
+        try{
+          app._miniCommonResultShow && app._miniCommonResultShow({
+            game: st.game, playerName: p ? p.name : '', money: p ? p.money : null,
+            delta: 0, detail: '今回は賞金なしでした。'
+          });
+        }catch(e){}
+        if(resultShowing()){
+          deferring = true;
+          const t0 = Date.now();
+          const wait = ()=>{
+            if(resultShowing() && Date.now() - t0 < 9000){ setTimeout(wait, 100); return; }
+            deferring = false;
+            try{ origClose(); }catch(e){}
+          };
+          setTimeout(wait, 100);
+          return;
+        }
+      }
+      app.__edoMiniQuit = false;
+      return origClose();
+    };
+  }
+
+  // ミニゲームを開いた時刻を覚えておきます（すぐ閉じたときの判断に使います）
+  const origOpen = app.openRegionalMiniGame ? app.openRegionalMiniGame.bind(app) : null;
+  if(origOpen){
+    app.openRegionalMiniGame = function(game, p){
+      app.__edoMiniQuit = false;
+      const r = origOpen(game, p);
+      try{ if(this.regionalMiniGame) this.regionalMiniGame.__edoOpenedAt = Date.now(); }catch(e){}
+      return r;
+    };
+  }
+
+  window.__EDOGAWA_V142_INFO = ()=>({
+    結果モーダル: resultShowing(),
+    閉じるのを待っている: deferring,
+    自分でやめた: !!app.__edoMiniQuit
+  });
 })();
 </script>
 <script id="edogawa-v39-footer">
