@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.4 (2026-10-10)';
+    window.__EDOGAWA_VERSION = 'ver1.0.5 (2026-10-10)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -24986,6 +24986,277 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     自分の投稿: Number(app.visitedEntryCount) || 0,
     みんなの投稿: (app.visitedEntryCountAll === null || app.visitedEntryCountAll === undefined)
       ? '未取得' : Number(app.visitedEntryCountAll)
+  });
+})();
+</script>
+<style id="edogawa-v146-style">
+  /* 予想屋の一覧（縦に並べます） */
+  .edo-yosao-list{ display:flex; flex-direction:column; gap:8px; text-align:left; }
+  .edo-yosao-item{ display:flex; align-items:center; gap:10px; width:100%;
+    background:#1e293b; border:1px solid #334155; border-radius:14px;
+    padding:9px 12px; transition:border-color .15s, transform .08s; }
+  .edo-yosao-item:active{ transform:scale(.98); }
+  .edo-yosao-item:hover{ border-color:#f59e0b; }
+  .edo-yosao-ic{ font-size:28px; line-height:1; flex:0 0 auto; width:34px; text-align:center; }
+  .edo-yosao-tx{ min-width:0; flex:1 1 auto; display:block; }
+  .edo-yosao-t1{ display:block; font-size:14px; font-weight:900; color:#fcd34d; line-height:1.3; }
+  .edo-yosao-pop{ font-size:11px; font-weight:700; color:#94a3b8; margin-left:2px; }
+  .edo-yosao-t2{ display:block; font-size:11px; color:#cbd5e1; line-height:1.4; margin-top:1px; }
+
+  /* 舟券購入モーダル */
+  .edo-buy-head{ font-size:14px; font-weight:800; color:#e2e8f0; line-height:1.35; }
+  .edo-buy-head .big{ font-size:21px; }                  /* いまの1.5倍 */
+  .edo-buy-head .hl{ color:#fbbf24; font-weight:900; }   /* オレンジ */
+  .edo-buy-x{ position:absolute; right:0; top:-2px; width:30px; height:30px; line-height:30px;
+    text-align:center; border-radius:10px; color:#94a3b8; font-weight:900; font-size:17px;
+    background:rgba(15,23,42,.9); border:1px solid #334155; }
+  .edo-bet-btn{ display:block; text-align:center; }
+  .edo-bet-btn .amt{ display:block; font-size:11px; font-weight:800; color:#e2e8f0; line-height:1.25; }
+  .edo-bet-btn .pk{ display:block; font-size:9px; color:#94a3b8; text-align:left; line-height:1.25; }
+  .edo-bet-btn .pv{ display:block; font-size:9px; color:#86efac; text-align:right; line-height:1.25; }
+</style>
+<script id="edogawa-v146">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.5 ①　予想屋の一覧を縦に並べ、名前と人物像を出します
+  // ──────────────────────────────────────────────────────────────
+  const YOSAO = [
+    { emoji:'👹', name:'赤城乃鬼',  pop:88, desc:'激辛カレーが主食で常に闘志を燃やす', style:'honmei'  },
+    { emoji:'👺', name:'天狗哲朗',  pop:75, desc:'サウナ上がりの好物は寿司の赤身だけ', style:'weather' },
+    { emoji:'👽', name:'レプティ',  pop:92, desc:'優雅に紅茶を嗜む的中率重視の姐御',   style:'odds'    },
+    { emoji:'👻', name:'艇霊王子',  pop:64, desc:'趣味は古着巡り、大のネコ好き男子',   style:'random'  },
+    { emoji:'🤖', name:'RX-BUG',    pop:81, desc:'データ分析オタクでオリーブオイルが燃料', style:'worst' }
+  ];
+  // 既存の仕組み（絵文字で予想の癖を引く）も、新しい顔ぶれに入れ替えます
+  app.boatRaceYosaoList = YOSAO.map(y=>({ emoji:y.emoji, name:y.name, style:y.style }));
+
+  // 「チャリン♪」の効果音（100円を払ったとき）
+  try{
+    if(typeof sound !== 'undefined' && sound && !sound.playCoin){
+      sound.playCoin = function(){
+        try{
+          this.playTone(1318.51, 'square', 0.07, 0.10);
+          setTimeout(()=>{ try{ this.playTone(1975.53, 'square', 0.22, 0.09); }catch(e){} }, 70);
+        }catch(e){}
+      };
+    }
+  }catch(e){}
+  function chari(){ try{ if(typeof sound !== 'undefined' && sound.playCoin) sound.playCoin(); }catch(e){} }
+
+  function paintYosaoScreen(){
+    const sc = g('boatrace-yosao-screen'); if(!sc || sc.__edoV146) return;
+    sc.__edoV146 = true;
+    sc.innerHTML =
+      '<h3 id="boatrace-yosao-head" class="font-mincho text-base font-bold text-amber-300">' +
+        'どの予想屋に100円を払いますか？</h3>' +
+      '<div id="boatrace-yosao-picker" class="edo-yosao-list">' +
+        YOSAO.map((y,i)=>
+          '<button type="button" class="edo-yosao-item" data-yosao="' + i + '">' +
+            '<span class="edo-yosao-ic">' + y.emoji + '</span>' +
+            '<span class="edo-yosao-tx">' +
+              '<span class="edo-yosao-t1">' + esc(y.name) +
+                '<span class="edo-yosao-pop">（人気度: ' + y.pop + '%）</span></span>' +
+              '<span class="edo-yosao-t2">' + esc(y.desc) + '</span>' +
+            '</span>' +
+          '</button>').join('') +
+      '</div>' +
+      '<div id="boatrace-yosao-result" class="hidden">' +
+        '<div class="relative bg-amber-50 text-slate-900 border-2 border-slate-900 rounded-xl px-3 py-2.5 ' +
+             'text-sm font-bold leading-snug mx-auto max-w-[92%] shadow-lg">' +
+          '<span id="boatrace-yosao-text"></span>' +
+          '<span class="absolute left-1/2 -bottom-[9px] -translate-x-1/2 w-0 h-0 border-x-[9px] ' +
+                'border-x-transparent border-t-[9px] border-t-slate-900"></span>' +
+          '<span class="absolute left-1/2 -bottom-[6px] -translate-x-1/2 w-0 h-0 border-x-[8px] ' +
+                'border-x-transparent border-t-[8px] border-t-amber-50"></span>' +
+        '</div>' +
+        '<div id="boatrace-yosao-icon" class="text-6xl mt-3"></div>' +
+        '<p id="boatrace-yosao-name" class="text-[11px] text-slate-400"></p>' +
+      '</div>' +
+      '<div id="boatrace-yosao-foot"></div>';
+
+    sc.querySelectorAll('[data-yosao]').forEach(b=>{
+      b.onclick = ()=>{
+        const y = YOSAO[Number(b.getAttribute('data-yosao'))];
+        if(y) app.selectBoatRaceYosao(y.emoji);
+      };
+    });
+    paintYosaoFoot(null);
+  }
+
+  // 下のボタン。予想を買う前は「キャンセル」だけ、買ったあとは左に「◯-◯の舟券購入」。
+  function paintYosaoFoot(pair){
+    const foot = g('boatrace-yosao-foot'); if(!foot) return;
+    const cancel = '<button type="button" id="boatrace-yosao-cancel" ' +
+      'class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl ' +
+      'border border-slate-700 active:scale-95 transition">キャンセル</button>';
+    if(!pair){ foot.className = ''; foot.innerHTML = cancel; }
+    else{
+      foot.className = 'grid grid-cols-2 gap-2';
+      foot.innerHTML =
+        '<button type="button" id="boatrace-yosao-buy" ' +
+          'class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 ' +
+          'text-slate-950 font-black py-2.5 rounded-xl active:scale-95 transition">' +
+          esc(pair) + 'の舟券購入</button>' + cancel;
+      g('boatrace-yosao-buy').onclick = ()=>{ app.openBoatRaceBuy(pair); };
+    }
+    g('boatrace-yosao-cancel').onclick = ()=>{ app.closeBoatRaceYosao(); };
+  }
+
+  const origOpenYosao = app.openBoatRaceYosao ? app.openBoatRaceYosao.bind(app) : null;
+  app.openBoatRaceYosao = function(){
+    paintYosaoScreen();
+    const h = g('boatrace-yosao-head');
+    if(h) h.textContent = 'どの予想屋に100円を払いますか？';
+    paintYosaoFoot(null);
+    return origOpenYosao ? origOpenYosao() : undefined;
+  };
+
+  const origSelectYosao = app.selectBoatRaceYosao ? app.selectBoatRaceYosao.bind(app) : null;
+  app.selectBoatRaceYosao = function(emoji){
+    paintYosaoScreen();
+    const r = origSelectYosao ? origSelectYosao(emoji) : undefined;
+    chari();
+    const def = YOSAO.find(y=>y.emoji === emoji) || YOSAO[0];
+    const h = g('boatrace-yosao-head');
+    if(h) h.textContent = def.name + 'に100円を払いました';
+    let pair = null;
+    try{
+      const me = this._boatRaceLocalPlayer && this._boatRaceLocalPlayer();
+      const st = this.boatRaceState;
+      if(me && st && st.yosao && st.yosao[me.id]) pair = st.yosao[me.id].pair;
+    }catch(e){}
+    paintYosaoFoot(pair);
+    return r;
+  };
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.5 ②　舟券購入モーダル
+  //    金額ボタンを押したら、その場で購入して閉じます。
+  // ──────────────────────────────────────────────────────────────
+  const AMOUNTS = [100, 500, 1000, 5000, 10000, 50000, 100000, 500000];
+  const yen = (n)=>'¥' + Math.floor(Number(n)||0).toLocaleString('ja-JP');
+
+  function paintBuyScreen(){
+    const sc = g('boatrace-buy-screen'); if(!sc || sc.__edoV146) return;
+    sc.__edoV146 = true;
+    sc.innerHTML =
+      '<div class="relative pr-9">' +
+        '<p id="boatrace-buy-head" class="edo-buy-head text-left"></p>' +
+        '<button type="button" id="boatrace-buy-x" class="edo-buy-x" aria-label="閉じる">✕</button>' +
+      '</div>' +
+      '<ul id="boatrace-buy-entries" class="br-entry-list text-slate-200 bg-slate-950/60 ' +
+          'rounded-xl px-3 py-2 space-y-1 text-left"></ul>' +
+      '<div class="flex items-center justify-between text-sm bg-slate-950/60 rounded-lg px-3 py-2">' +
+        '<span class="text-slate-300">所持金</span>' +
+        '<span id="boatrace-buy-money" class="text-emerald-300 font-bold"></span>' +
+      '</div>' +
+      '<div class="grid grid-cols-4 gap-2">' +
+        AMOUNTS.map(a=>
+          '<button type="button" class="edo-bet-btn bg-slate-800 border border-slate-700 rounded-lg ' +
+            'py-1.5 px-1 hover:border-amber-500 active:scale-95 transition" ' +
+            'onclick="EdogawaSugoroku.boatRaceSetBetAmount(' + a + ')">' +
+            '<span class="amt">' + yen(a) + '</span>' +
+            '<span class="pk">（払戻）</span>' +
+            '<span class="pv" data-payout="' + a + '">—</span>' +
+          '</button>').join('') +
+      '</div>' +
+      // ほかの画面から参照されても困らないように、見えない置きかえを残します
+      '<span id="boatrace-buy-pair" class="hidden"></span>' +
+      '<span id="boatrace-buy-amount-display" class="hidden"></span>' +
+      '<span id="boatrace-buy-payout" class="hidden"></span>';
+    g('boatrace-buy-x').onclick = ()=>{ app.closeBoatRaceBuy(); };
+  }
+
+  function paintBuy(pair){
+    paintBuyScreen();
+    const st = app.boatRaceState; if(!st || !pair) return;
+    const odds = st.odds && st.odds[pair];
+    const oddsTxt = (odds == null) ? '—' : String(odds);
+
+    // ヘッダー：(2連単) 1-2 オッズ 2.7倍
+    const head = g('boatrace-buy-head');
+    if(head){
+      head.innerHTML = '（2連単）&nbsp;' +
+        '<span class="big hl">' + esc(pair) + '</span>&nbsp;&nbsp;オッズ&nbsp;' +
+        '<span class="hl"><span class="big">' + esc(oddsTxt) + '</span>倍</span>';
+    }
+
+    // 投票画面の出走表から、この買い目の2艇だけを写します
+    const ul = g('boatrace-buy-entries');
+    if(ul){
+      const src = document.querySelectorAll('#boatrace-betting-screen .br-entry-list .br-entry');
+      const nos = String(pair).split('-').map(n=>Number(n));
+      ul.innerHTML = '';
+      nos.forEach(no=>{
+        const li = src[no-1] ? src[no-1].cloneNode(true) : null;
+        if(li) ul.appendChild(li);
+        else{
+          const b = (app.boatRaceBoats || [])[no];
+          const x = document.createElement('li');
+          x.className = 'br-entry';
+          x.innerHTML = '<span class="br-entry-no">' + ((b && b.emoji) || '🚤') + ' ' + no + '号艇</span>' +
+                        '<span>' + esc((b && b.desc) || '') + '</span>';
+          ul.appendChild(x);
+        }
+      });
+    }
+
+    const me = app._boatRaceLocalPlayer && app._boatRaceLocalPlayer();
+    const mo = g('boatrace-buy-money');
+    if(mo && me) mo.textContent = app.formatMoney(me.money);
+
+    // 各金額の払戻（金額 × オッズ）
+    const o = parseFloat(odds || '1') || 1;
+    document.querySelectorAll('#boatrace-buy-screen [data-payout]').forEach(el=>{
+      const a = Number(el.getAttribute('data-payout')) || 0;
+      el.textContent = yen(a * o);
+    });
+  }
+
+  // 「的中したら 払戻…」の行はなくしました（各金額ボタンに払戻を出すためです）
+  app._updateBoatRaceBuyPayout = function(){
+    const el = g('boatrace-buy-payout');
+    if(el) el.textContent = '';
+  };
+
+  const origOpenBuy = app.openBoatRaceBuy ? app.openBoatRaceBuy.bind(app) : null;
+  app.openBoatRaceBuy = function(pair){
+    paintBuyScreen();
+    app.__buyBusy = false;
+    const r = origOpenBuy ? origOpenBuy(pair) : undefined;
+    // 買えない（締切・3点まで）ときは画面が切り替わらないので、そのときは何もしません
+    if(this.boatRaceSelectedPair === pair) paintBuy(pair);
+    return r;
+  };
+
+  // 金額を押した時点で購入し、投票画面へ戻ります（「賭ける」ボタンはありません）
+  app.boatRaceSetBetAmount = function(amount){
+    if(app.__buyBusy) return;
+    app.__buyBusy = true;
+    this.boatRaceSelectedAmount = amount;
+    try{ Promise.resolve(this.confirmBoatRaceBet()).catch(()=>{}); }
+    catch(e){ app.__buyBusy = false; }
+    setTimeout(()=>{ app.__buyBusy = false; }, 1200);
+  };
+
+  function boot(){ paintYosaoScreen(); paintBuyScreen(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V146_INFO = ()=>({
+    予想屋: YOSAO.map(y=>y.emoji + y.name + '(' + y.pop + '%)'),
+    予想屋の見出し: (g('boatrace-yosao-head')||{}).textContent || '',
+    下のボタン: [...document.querySelectorAll('#boatrace-yosao-foot button')].map(b=>b.textContent.trim()),
+    購入ヘッダー: (g('boatrace-buy-head')||{}).textContent || '',
+    購入の艇: [...document.querySelectorAll('#boatrace-buy-entries .br-entry')].map(li=>li.textContent.trim()),
+    金額ボタン: [...document.querySelectorAll('#boatrace-buy-screen .edo-bet-btn')].map(b=>({
+      金額: (b.querySelector('.amt')||{}).textContent,
+      払戻: (b.querySelector('.pv')||{}).textContent }))
   });
 })();
 </script>
