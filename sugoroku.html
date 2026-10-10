@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.3 (2026-10-09)';
+    window.__EDOGAWA_VERSION = 'ver1.0.4 (2026-10-10)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -24012,6 +24012,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         row('鍵をあけた', info.鍵をあけた ? 'はい' : 'いいえ') +
         row('設定', info.読み上げ設定 ? 'オン' : 'オフ') +
         row('日本語の声', (info.日本語の声 && info.日本語の声.length) ? (info.日本語の声.length + '種類') : 'まだ読み込めていません') +
+        (function(){
+          // 【ver1.0.4】iPhoneは早口になるため、速さを下げています
+          const v = (typeof window.__EDOGAWA_V144_INFO === 'function') ? window.__EDOGAWA_V144_INFO() : null;
+          if(!v) return '';
+          return row('端末', v.端末) +
+                 row('速さの調整', v.速さの調整) +
+                 row('競艇の実況', '速さ ' + Math.round(v.例.競艇の実況 * 100) / 100);
+        })() +
       '</div>' +
       '<div id="edo-dev-vmsg" class="edo-dev-note">下のボタンを押すと「江戸川双六へようこそ」と読み上げます。</div>' +
       '<button type="button" class="edo-dev-btn primary" id="edo-dev-vplay">▶ 読み上げてみる</button>' +
@@ -24074,6 +24082,35 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const TABLE  = (window.EDOGAWA_SUPABASE_VISITED_TABLE  || 'visited_entries');
   const BUCKET = (window.EDOGAWA_SUPABASE_VISITED_BUCKET || 'visited-pins');
   let devEntries = [];
+  // 【ver1.0.4】ほかの人の投稿を直す・消すための「管理の合言葉」。
+  //   Supabase 側の関数（edogawa_admin_*）に設定したものを、使うときだけ入れてもらいます。
+  //   HTMLには書き込みません。画面を読み込み直すと消えます。
+  let ADMIN_PASS = '';
+  function passField(hint){
+    return '<label class="edo-dev-f">管理の合言葉</label>' +
+      '<input id="edo-dev-pass" class="edo-dev-in" type="password" autocomplete="off" ' +
+        'placeholder="' + hint + '" value="' + esc(ADMIN_PASS) + '">';
+  }
+  function readPass(){
+    const el = g('edo-dev-pass');
+    ADMIN_PASS = el ? String(el.value || '').trim() : '';
+    return ADMIN_PASS;
+  }
+  // Supabase側の関数を呼びます。{ok:true,n:件数} か {ok:false,msg:理由} を返します。
+  async function adminRpc(sb, name, args){
+    try{
+      const r = await sb.rpc(name, args);
+      if(r.error){
+        const m = String(r.error.message || '');
+        if(/could not find the function|does not exist|schema cache/i.test(m)){
+          return {ok:false, missing:true, msg:'Supabaseに管理用の関数がまだありません（SQLの手順5が未実行です）。'};
+        }
+        if(/合言葉/.test(m)) return {ok:false, msg:'管理の合言葉がちがいます。'};
+        return {ok:false, msg:m};
+      }
+      return {ok:true, n:Number(r.data) || 0};
+    }catch(e){ return {ok:false, msg:String(e && e.message || e)}; }
+  }
 
   function postsShell(bodyHtml, footHtml){
     const box = devBox('edo-dev-list-modal');
@@ -24132,6 +24169,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       '<input id="edo-dev-date" class="edo-dev-in" type="date" value="' + esc(e.visit_date || '') + '">' +
       '<label class="edo-dev-f">メモ</label>' +
       '<textarea id="edo-dev-note" class="edo-dev-in" rows="4">' + esc(e.note || '') + '</textarea>' +
+      passField('自分の投稿だけなら、空のままでOK') +
       '<div id="edo-dev-msg" class="edo-dev-note"></div>' +
       '<div class="edo-dev-row">' +
         '<button type="button" class="edo-dev-btn" id="edo-dev-back">キャンセル</button>' +
@@ -24142,6 +24180,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     g('edo-dev-save').onclick = async ()=>{
       const msg = g('edo-dev-msg'); msg.textContent = '保存しています…';
       const sb = await supa(); if(!sb){ msg.textContent = 'Supabaseにつながりません。'; return; }
+      // 【ver1.0.4】合言葉が入っていれば、ほかの人の投稿も直せます
+      const pass = readPass();
+      if(pass){
+        const r = await adminRpc(sb, 'edogawa_admin_update_post', {
+          pass: pass, target: e.id,
+          new_date: g('edo-dev-date').value || null,
+          new_note: g('edo-dev-note').value || ''
+        });
+        if(r.ok){ openAllPosts(); return; }
+        msg.innerHTML = '<span style="color:#fb7185">' + esc(r.msg) + '</span>';
+        return;
+      }
       try{
         // .select() を付けると「実際に変わった行」が返ります（0件＝権限で拒否）
         const res = await sb.from(TABLE).update({
@@ -24156,6 +24206,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     g('edo-dev-del').onclick = async ()=>{
       const msg = g('edo-dev-msg'); msg.textContent = '削除しています…';
       const sb = await supa(); if(!sb){ msg.textContent = 'Supabaseにつながりません。'; return; }
+      const pass = readPass();
+      if(pass){
+        const r = await adminRpc(sb, 'edogawa_admin_delete_post', { pass: pass, target: e.id });
+        if(r.ok){ openAllPosts(); return; }
+        msg.innerHTML = '<span style="color:#fb7185">' + esc(r.msg) + '</span>';
+        return;
+      }
       try{
         const res = await sb.from(TABLE).delete().eq('id', e.id).select('id');
         if(res.error) throw res.error;
@@ -24171,8 +24228,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function rlsMsg(what){
     return '<span style="color:#fb7185">ほかの人の投稿は' + what + 'できませんでした（0件）。</span><br>' +
       'Supabase の権限設定（RLS）で、自分の投稿だけ' + what + 'できるようになっています。<br>' +
-      'テーブル visited_entries の UPDATE / DELETE ポリシーを<br>' +
-      '「全員ぶんを操作できる」条件に変えると、ここから' + what + 'できるようになります。';
+      '「Supabase設定.sql」の<b>手順5</b>を実行すると、<br>' +
+      'この画面の<b>管理の合言葉</b>を入れるだけで' + what + 'できるようになります。';
   }
 
   function confirmWipe(){
@@ -24181,19 +24238,40 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       '<div class="edo-dev-ttl">⚠️ 投稿を初期化する</div>' +
       '<div class="edo-dev-note">すべてのユーザの📌の投稿（写真とメモ）を消します。<br>' +
         'もとに戻すことはできません。よろしいですか？</div>' +
+      passField('空のままだと、自分の投稿だけ消えます') +
       '<div id="edo-dev-msg" class="edo-dev-note"></div>' +
       '<div class="edo-dev-row">' +
         '<button type="button" class="edo-dev-btn" id="edo-dev-back">やめる</button>' +
         '<button type="button" class="edo-dev-btn danger" id="edo-dev-go">全部消す</button></div>';
     g('edo-dev-back').onclick = ()=>openAllPosts();
-    g('edo-dev-go').onclick = ()=>wipeAll();
+    g('edo-dev-go').onclick = ()=>{ const pass = readPass(); wipeAll(pass); };
   }
 
-  async function wipeAll(){
+  async function wipeAll(pass){
     const msg = g('edo-dev-msg'); if(msg) msg.textContent = '消しています…';
     const sb = await supa();
     if(!sb){ if(msg) msg.textContent = 'Supabaseにつながりません。'; return; }
     let left = 0, removed = 0, lastErr = null;
+
+    // 【ver1.0.4】合言葉が入っていれば、Supabase側でまとめて消します
+    if(pass){
+      const before = devEntries.length;
+      const r = await adminRpc(sb, 'edogawa_admin_wipe_posts', { pass: pass });
+      if(r.ok){
+        try{ app.refreshVisitedLobbyCount && app.refreshVisitedLobbyCount(); }catch(e){}
+        const box0 = devBox('edo-dev-list-modal');
+        box0.innerHTML =
+          '<div class="edo-dev-ttl">🧹 初期化のけっか</div>' +
+          '<div class="edo-dev-note">すべての投稿を消しました（' + (r.n || before) + '件）。<br>' +
+            '写真もいっしょに消えています。</div>' +
+          '<div class="edo-dev-row"><button type="button" class="edo-dev-btn primary" id="edo-dev-back">一覧へ</button></div>';
+        g('edo-dev-back').onclick = ()=>openAllPosts();
+        return;
+      }
+      if(msg) msg.innerHTML = '<span style="color:#fb7185">' + esc(r.msg) + '</span><br>' +
+        '合言葉なしのやり方（自分の投稿だけ）で続けます…';
+    }
+
     try{
       const res = await sb.from(TABLE).select('id,photo_path');
       if(res.error) throw res.error;
@@ -24678,6 +24756,236 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     結果モーダル: resultShowing(),
     閉じるのを待っている: deferring,
     自分でやめた: !!app.__edoMiniQuit
+  });
+})();
+</script>
+<script id="edogawa-v144">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const S = window.speechSynthesis;
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.4 ①　iPhone（iOS Safari）は読み上げが早口になります
+  //
+  //  同じ「速さ1.9」でも、iPhoneはAndroidよりずっと早口に聞こえます。
+  //  とくに江戸川競艇のレース実況は聞き取れない速さでした。
+  //  そこで iPhone のときだけ、全体をゆっくりにします。
+  //  「速い指定」ほど強めにおさえるので、落ち着いた場面は
+  //  ほとんど変わらず、実況だけがぐっと聞きやすくなります。
+  // ──────────────────────────────────────────────────────────────
+  const ua = navigator.userAgent || '';
+  const IS_IOS = /iPad|iPhone|iPod/.test(ua) ||
+                 (/Macintosh/.test(ua) && (Number(navigator.maxTouchPoints) || 0) > 1);
+  app.__isIOS = IS_IOS;
+
+  const IOS_BASE = 0.92;   // 全体をこれだけゆっくりに
+  const IOS_SPAN = 0.55;   // 「1.0より速い分」をこの割合までおさえます
+  function scaleRate(r){
+    r = Number(r);
+    if(!isFinite(r) || r <= 0) r = 1;
+    if(!IS_IOS) return r;
+    return Math.max(0.5, Math.min(2, (1 + (r - 1) * IOS_SPAN) * IOS_BASE));
+  }
+  app.__speechRate = scaleRate;
+
+  // 読み上げを流す直前に、速さだけ直します（v141の鍵あけのさらに外側）
+  if(S){
+    const prevSpeak = S.speak.bind(S);
+    S.speak = function(u){
+      try{
+        if(u && IS_IOS && !u.__edoRateFixed){
+          u.__edoRateFixed = true;
+          u.rate = scaleRate(u.rate);
+        }
+      }catch(e){}
+      return prevSpeak(u);
+    };
+  }
+
+  // 競艇の実況は「読み終わる目安の時間」で次の実況へ進みます。
+  // ゆっくりにした分だけ、目安の時間も伸ばさないと語尾が切れてしまいます。
+  if(typeof app._estimateSpeechMs === 'function'){
+    const origEst = app._estimateSpeechMs.bind(app);
+    app._estimateSpeechMs = function(text, rate){
+      let r = Number(rate);
+      if(!isFinite(r) || r <= 0) r = Number(this && this.boatRaceSpeechRate) || 1.15;
+      return origEst(text, scaleRate(r));
+    };
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.4 ②　ミニゲームの読み上げを、双六の画面が代わりに声に出します
+  //
+  //  iPhoneは「最初の読み上げは、その画面をさわった操作の中から
+  //  始めないと無視する」決まりです。ミニゲームは別画面（iframe）で
+  //  動くため、開いた直後はまだ一度もさわられておらず、
+  //  出前バイクや宝くじの最初のアナウンスが鳴りませんでした。
+  //
+  //  双六の画面は、サイコロなどで何度もさわられていて鍵があいています。
+  //  そこでミニゲーム側は「この文を読んで」と双六へお願いし、
+  //  双六が代わりに声に出します。読み終わったら合図を返すので、
+  //  ミニゲーム側の進行（onend）もこれまでどおり動きます。
+  // ──────────────────────────────────────────────────────────────
+  const live = new Set();
+
+  function pickVoice(name, lang){
+    try{
+      const vs = S.getVoices() || [];
+      if(name){ const v = vs.find(x => x.name === name); if(v) return v; }
+      const pre = String(lang || 'ja').slice(0,2).toLowerCase();
+      const v2 = vs.find(x => String(x.lang || '').toLowerCase().startsWith(pre));
+      if(v2) return v2;
+    }catch(e){}
+    return null;
+  }
+
+  function reply(src, type, id){
+    try{ src && src.postMessage({ type: type, id: id }, '*'); }catch(e){}
+  }
+
+  window.addEventListener('message', function(ev){
+    const d = ev.data;
+    if(!d || typeof d !== 'object') return;
+
+    if(d.type === 'EDOGAWA_SPEAK_CANCEL'){
+      live.clear();
+      try{ S && S.cancel(); }catch(e){}
+      return;
+    }
+
+    if(d.type !== 'EDOGAWA_SPEAK') return;
+    const src = ev.source;
+
+    // 読み上げが使えない端末は、ことわります（ミニゲーム側が自分で読み上げます）
+    if(!S){ reply(src, 'EDOGAWA_SPEAK_NG', d.id); return; }
+
+    // 「設定」で読み上げをオフにしているときは、鳴らさずに終わった合図だけ返します
+    if(app.speechEnabled === false){
+      reply(src, 'EDOGAWA_SPEAK_ACK', d.id);
+      reply(src, 'EDOGAWA_SPEAK_END', d.id);
+      return;
+    }
+
+    let u;
+    try{
+      u = new SpeechSynthesisUtterance(String(d.text == null ? '' : d.text));
+    }catch(e){ reply(src, 'EDOGAWA_SPEAK_NG', d.id); return; }
+
+    u.lang   = d.lang || 'ja-JP';
+    u.rate   = Number(d.rate) || 1;        // iPhone向けの調整は S.speak の中で行います
+    u.pitch  = (d.pitch  == null) ? 1 : Number(d.pitch);
+    u.volume = (d.volume == null) ? 1 : Number(d.volume);
+    const v = pickVoice(d.voiceName, u.lang);
+    if(v){ try{ u.voice = v; }catch(e){} }
+
+    let done = false;
+    const finish = ()=>{
+      if(done) return;
+      done = true;
+      live.delete(u);
+      reply(src, 'EDOGAWA_SPEAK_END', d.id);
+    };
+    u.onstart = ()=>reply(src, 'EDOGAWA_SPEAK_START', d.id);
+    u.onend   = finish;
+    u.onerror = finish;
+
+    live.add(u);
+    reply(src, 'EDOGAWA_SPEAK_ACK', d.id);
+    try{ S.speak(u); }catch(e){ finish(); }
+  });
+
+  // ミニゲームが閉じたのに声だけ残る、ということがないようにします
+  setInterval(function(){
+    if(!live.size) return;
+    const f = document.getElementById('regional-mini-frame');
+    const o = document.getElementById('regional-mini-overlay');
+    const open = !!(o && !o.classList.contains('hidden') && f && f.contentWindow);
+    if(!open){
+      live.clear();
+      try{ S && S.cancel(); }catch(e){}
+    }
+  }, 600);
+
+  window.__EDOGAWA_V144_INFO = ()=>({
+    端末: IS_IOS ? 'iPhone / iPad' : 'そのほか',
+    速さの調整: IS_IOS ? ('×' + IOS_BASE + '（速い指定は' + Math.round(IOS_SPAN*100) + '%まで）') : 'なし',
+    例: { クイズ: scaleRate(1.15), 競艇の実況: scaleRate(1.9), 宝くじ: scaleRate(1.25) },
+    代わりに読み上げ中: live.size
+  });
+})();
+</script>
+<script id="edogawa-v145">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.4　📌「投稿◯件」の数え方をそろえます
+  //
+  //  これまで「投稿◯件」は、みんなの投稿の合計を出していました。
+  //  ところがタップして開く一覧は「自分の投稿」だけなので、
+  //  昔のバージョンの投稿がサーバーに残っていると
+  //  「投稿2件 → 開くと0件」というちぐはぐな見え方になっていました。
+  //
+  //  タップした先と同じになるように、「投稿◯件」は自分のぶんを数えます。
+  //  みんなの合計は、トップページの小さい文字のほうに出します。
+  // ──────────────────────────────────────────────────────────────
+  const TABLE = window.EDOGAWA_SUPABASE_VISITED_TABLE || 'visited_entries';
+
+  function paintLabels(mine, all){
+    app.visitedEntryCount = mine;
+    app.visitedEntryCountAll = all;
+    const n = Number(mine).toLocaleString('ja-JP');
+    try{
+      const btn = document.getElementById('visited-pin-tool');
+      if(btn) btn.textContent = '📌投稿' + n + '件';
+    }catch(e){}
+    try{
+      const lob = document.querySelector('#edogawa-lobby-visited-btn .text-base');
+      if(lob) lob.textContent = '📌投稿' + n + '件';
+    }catch(e){}
+    try{
+      const c = document.querySelector('#lobby-visited-pin-top .edo-pin-count');
+      if(c) c.textContent = String(mine);
+    }catch(e){}
+    try{
+      const sub = document.getElementById('edogawa-lobby-visited-count');
+      if(sub){
+        sub.textContent = (all === null || all === undefined)
+          ? ('自分の投稿：' + n + '件')
+          : ('自分の投稿：' + n + '件　みんな：' + Number(all).toLocaleString('ja-JP') + '件');
+      }
+    }catch(e){}
+  }
+
+  const orig = app.refreshVisitedLobbyCount ? app.refreshVisitedLobbyCount.bind(app) : null;
+
+  app.refreshVisitedLobbyCount = async function(){
+    let all = null;
+    try{ all = await orig?.(); }catch(e){ all = null; }   // みんなの合計（これまでどおり）
+    try{
+      const sb = app.visitedSupabase;
+      const uid = app.visitedSupabaseUser && app.visitedSupabaseUser.id;
+      if(!sb || !uid){ paintLabels(Math.max(0, Number(all) || 0), all); return Number(all) || 0; }
+      const {count, error} = await sb.from(TABLE)
+        .select('id', {count:'exact', head:true})
+        .eq('owner_uid', uid);
+      if(error) throw error;
+      const mine = Math.max(0, Number(count) || 0);
+      paintLabels(mine, all);
+      return mine;
+    }catch(e){
+      console.warn('📌自分の投稿件数の取得に失敗:', e);
+      paintLabels(Math.max(0, Number(app.visitedEntryCount) || 0), all);
+      return null;
+    }
+  };
+
+  window.__EDOGAWA_V145_INFO = ()=>({
+    自分の投稿: Number(app.visitedEntryCount) || 0,
+    みんなの投稿: (app.visitedEntryCountAll === null || app.visitedEntryCountAll === undefined)
+      ? '未取得' : Number(app.visitedEntryCountAll)
   });
 })();
 </script>
