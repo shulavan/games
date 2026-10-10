@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.8 (2026-10-10)';
+    window.__EDOGAWA_VERSION = 'ver1.0.9 (2026-10-10)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -25683,6 +25683,75 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         .every(n=>typeof app['__edoOrig_' + n] === 'function')
     };
   };
+})();
+</script>
+<script id="edogawa-v149">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.9　はじめての双六では、駅の乗車案内を出しません
+  //
+  //  ゲームを始めた直後は西葛西駅のそばからスタートするため、
+  //  1回目の目的地をめざしている間ずっと
+  //  「🚉 西葛西駅に乗車しますか？」が出ていました。
+  //  はじめての人には分かりにくいので、1回目のゴールまではお休みにして、
+  //  次の目的地から乗れるようにします。
+  // ──────────────────────────────────────────────────────────────
+  function firstRound(){
+    // まだ一度もゴールしていない間が「はじめての双六」です
+    try{ return !((app.goaledPlaces || []).length > 0); }catch(e){ return false; }
+  }
+  app.railRideReady = ()=>!firstRound();
+
+  // ① マスに止まったとき：1回目の目的地の間は、駅の案内そのものを出しません
+  const outerLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(outerLand){
+    app.landOnSpot = function(player){
+      if(firstRound()){
+        try{ if(player) player.pendingStation = null; }catch(e){}
+        try{ app.closeBoardAsk && app.closeBoardAsk(); }catch(e){}
+        // 駅まわりの処理を飛ばして、ふつうのマスの出来事だけ行います
+        const plain = app.__origLandOnSpot || outerLand;
+        return plain.call(app, player);
+      }
+      return outerLand(player);
+    };
+  }
+
+  // ② 念のため、ほかの入り口からも乗れないようにします
+  const outerBoard = app.boardTrainNow ? app.boardTrainNow.bind(app) : null;
+  if(outerBoard){
+    app.boardTrainNow = function(player){
+      if(firstRound()){
+        try{ if(player) player.pendingStation = null; }catch(e){}
+        try{ app.closeBoardAsk && app.closeBoardAsk(); }catch(e){}
+        return;
+      }
+      return outerBoard(player);
+    };
+  }
+
+  // ③ 1回目の目的地の間に案内が残っていたら、そっと消します
+  setInterval(()=>{
+    if(!firstRound()) return;
+    try{
+      (app.players || []).forEach(p=>{ if(p && p.pendingStation) p.pendingStation = null; });
+      const el = document.getElementById('edo-board-ask');
+      if(el && el.classList.contains('show')) app.closeBoardAsk && app.closeBoardAsk();
+    }catch(e){}
+  }, 500);
+
+  window.__EDOGAWA_V149_INFO = ()=>({
+    はじめての双六: firstRound(),
+    ゴールした数: (app.goaledPlaces || []).length,
+    駅に乗れる: app.railRideReady(),
+    乗車の案内: (()=>{ const el = document.getElementById('edo-board-ask');
+      return !!(el && el.classList.contains('show')); })(),
+    待っている駅: (()=>{ const p = (app.players || [])[app.currentPlayerIdx || 0];
+      return (p && p.pendingStation) ? p.pendingStation.name : null; })()
+  });
 })();
 </script>
 <script id="edogawa-v39-footer">
