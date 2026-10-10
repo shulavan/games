@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.9 (2026-10-10)';
+    window.__EDOGAWA_VERSION = 'ver1.0.11 (2026-10-10)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -25752,6 +25752,90 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     待っている駅: (()=>{ const p = (app.players || [])[app.currentPlayerIdx || 0];
       return (p && p.pendingStation) ? p.pendingStation.name : null; })()
   });
+})();
+</script>
+<script id="edogawa-v150">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.11　一度ことわった駅は、もう聞かないようにします
+  //
+  //  駅のそばのマスは何マスも続くため、「キャンセル」を選んでも
+  //  次の自分の番にまた同じ駅で
+  //  「🚉 ◯◯駅に乗車しますか？」と聞かれていました。
+  //
+  //  一度ことわった駅は、それ以上聞きません。
+  //  べつの駅のそばに進んだときは、その駅をあらためてご案内します。
+  // ──────────────────────────────────────────────────────────────
+  const NEAR_M = 240;          // 駅の中心から6マス（v80と同じ）
+
+  function nearStationName(player){
+    try{
+      const node = app.roadNetworkNodes && app.roadNetworkNodes[player.currentNodeIdx];
+      if(!node || typeof app.stationLinesAt !== 'function') return null;
+      const at = app.stationLinesAt(node.lat, node.lng, NEAR_M);
+      return (at && at.lines && at.lines.length) ? at.name : null;
+    }catch(e){ return null; }
+  }
+
+  // ① 「キャンセル」を押した駅を覚えます（本来の処理より先に受け取ります）
+  document.addEventListener('click', (ev)=>{
+    try{
+      const t = ev.target;
+      if(!t || !t.closest) return;
+      const b = t.closest('#edo-board-ask button[data-no]');
+      if(!b) return;
+      const cp = (app.players || [])[app.currentPlayerIdx];
+      if(cp && cp.pendingStation && cp.pendingStation.name){
+        cp.railDeclined = cp.pendingStation.name;
+      }
+    }catch(e){}
+  }, true);
+
+  // ② ことわった駅のそばに止まっても、案内を出しません
+  const outerLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(outerLand){
+    app.landOnSpot = function(player){
+      let skip = false;
+      try{
+        const nm = nearStationName(player);
+        if(nm){
+          if(player.railDeclined === nm) skip = true;
+          else player.railDeclined = null;      // べつの駅なので、あらためてご案内します
+        }
+      }catch(e){}
+      if(skip){
+        try{ player.pendingStation = null; }catch(e){}
+        try{ app.closeBoardAsk && app.closeBoardAsk(); }catch(e){}
+        // 駅の案内だけを飛ばして、ふつうのマスの出来事は行います
+        const plain = app.__origLandOnSpot || outerLand;
+        return plain.call(app, player);
+      }
+      return outerLand(player);
+    };
+  }
+
+  // ③ 実際に乗ったときは、覚えていたことわりは消します
+  const outerBoard = app.boardTrainNow ? app.boardTrainNow.bind(app) : null;
+  if(outerBoard){
+    app.boardTrainNow = function(player){
+      try{ if(player) player.railDeclined = null; }catch(e){}
+      return outerBoard(player);
+    };
+  }
+
+  window.__EDOGAWA_V150_INFO = ()=>{
+    const cp = (app.players || [])[app.currentPlayerIdx || 0] || {};
+    return {
+      ことわった駅: cp.railDeclined || null,
+      いまの駅: nearStationName(cp) || null,
+      待っている駅: cp.pendingStation ? cp.pendingStation.name : null,
+      乗車の案内: (()=>{ const el = document.getElementById('edo-board-ask');
+        return !!(el && el.classList.contains('show')); })()
+    };
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
