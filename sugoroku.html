@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.5 (2026-10-10)';
+    window.__EDOGAWA_VERSION = 'ver1.0.6 (2026-10-10)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -25257,6 +25257,252 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     金額ボタン: [...document.querySelectorAll('#boatrace-buy-screen .edo-bet-btn')].map(b=>({
       金額: (b.querySelector('.amt')||{}).textContent,
       払戻: (b.querySelector('.pv')||{}).textContent }))
+  });
+})();
+</script>
+<style id="edogawa-v147-style">
+  /* ① 予想屋ボタンをオレンジに */
+  #boatrace-betting-screen .edo-yosao-open{
+    background:linear-gradient(90deg,#f59e0b,#f97316) !important;
+    border-color:#fbbf24 !important; color:#0f172a !important; }
+
+  /* ② 予想屋の画面は、中身が変わっても大きさが変わらないようにします */
+  #boatrace-yosao-screen:not(.hidden){
+    display:flex !important; flex-direction:column; gap:10px;
+    height:min(86vh,780px); padding:16px; }
+  #boatrace-yosao-screen .edo-yosao-list{ flex:0 0 auto; }
+  /* 予想屋をえらんだあとも、一覧は出したままにします */
+  #boatrace-yosao-picker.hidden{ display:flex !important; }
+  /* キャラが登場する場所。えらぶ前も同じ高さをあけておきます */
+  #boatrace-yosao-stage{ flex:1 1 auto; min-height:150px; display:flex;
+    flex-direction:column; align-items:center; justify-content:center; }
+  #boatrace-yosao-result.hidden{ display:block !important; visibility:hidden; }
+  #boatrace-yosao-result{ width:100%; }
+  .edo-yosao-wait{ font-size:12px; font-weight:800; color:#64748b; }
+  #boatrace-yosao-icon{ font-size:52px; line-height:1.1; margin-top:8px; }
+  #boatrace-yosao-foot{ flex:0 0 auto; }
+
+  /* ④ 共通の開始モーダルに出すコース図 */
+  #edo-mini-common .edo-mc-map{ margin:10px 0 2px; }
+  #edo-mini-common .edo-mc-map-h{ display:flex; align-items:center; justify-content:space-between;
+    gap:8px; font-size:12px; font-weight:900; color:#fbbf24; margin-bottom:5px; }
+  #edo-mini-common .edo-mc-map-b{ font-size:10px; font-weight:800; color:#6ee7b7;
+    background:rgba(16,185,129,.16); border:1px solid rgba(16,185,129,.32);
+    border-radius:999px; padding:2px 8px; white-space:nowrap; }
+  #edo-mini-common .edo-mc-map img{ display:block; width:100%; max-width:320px; margin:0 auto;
+    border-radius:12px; border:1px solid rgba(148,163,184,.35); background:#0f172a; }
+</style>
+<script id="edogawa-v147">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.6 ①　「🔮 予想屋（￥100）」のボタンをオレンジ色にします
+  // ──────────────────────────────────────────────────────────────
+  function paintYosaoButton(){
+    const b = document.querySelector('#boatrace-betting-screen button[onclick*="openBoatRaceYosao"]');
+    if(!b || b.__edoV147) return;
+    b.__edoV147 = true;
+    b.classList.remove('bg-slate-800','hover:bg-slate-700','border-slate-700','text-amber-300');
+    b.classList.add('edo-yosao-open','font-black','shadow-md');
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.6 ②　予想屋の画面
+  //    ・一覧は選んだあとも出したままにします
+  //    ・一覧の下に、予想屋のキャラが登場する場所をあけておきます
+  //    ・中身が変わっても、枠の大きさは変わりません
+  // ──────────────────────────────────────────────────────────────
+  function buildStage(){
+    const sc = g('boatrace-yosao-screen'); if(!sc || sc.__edoV147Stage) return;
+    const res = g('boatrace-yosao-result'); if(!res) return;
+    sc.__edoV147Stage = true;
+    const stage = document.createElement('div');
+    stage.id = 'boatrace-yosao-stage';
+    res.parentNode.insertBefore(stage, res);
+    stage.appendChild(res);
+    const wait = document.createElement('div');
+    wait.id = 'boatrace-yosao-wait';
+    wait.className = 'edo-yosao-wait';
+    wait.textContent = '予想屋をえらぶと、ここに登場します';
+    stage.insertBefore(wait, res);
+  }
+  function showWait(on){
+    buildStage();
+    const w = g('boatrace-yosao-wait'); if(w) w.style.display = on ? '' : 'none';
+    const r = g('boatrace-yosao-result');
+    if(r) r.style.display = on ? 'none' : '';
+  }
+
+  const origOpenYosao = app.openBoatRaceYosao ? app.openBoatRaceYosao.bind(app) : null;
+  app.openBoatRaceYosao = function(){
+    const r = origOpenYosao ? origOpenYosao() : undefined;
+    buildStage(); showWait(true);
+    try{ g('boatrace-yosao-picker')?.classList.remove('hidden'); }catch(e){}
+    return r;
+  };
+
+  const origSelectYosao = app.selectBoatRaceYosao ? app.selectBoatRaceYosao.bind(app) : null;
+  app.selectBoatRaceYosao = function(emoji){
+    const r = origSelectYosao ? origSelectYosao(emoji) : undefined;
+    buildStage(); showWait(false);
+    try{ g('boatrace-yosao-picker')?.classList.remove('hidden'); }catch(e){}
+    try{ g('boatrace-yosao-result')?.classList.remove('hidden'); }catch(e){}
+    return r;
+  };
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.6 ③　競艇の結果に、前のレースの収支が残らないようにします
+  //    （v139で見た目を整えるときに目印の名前を消してしまい、
+  //      次のレースで新しい枠が足されて積み重なっていました）
+  // ──────────────────────────────────────────────────────────────
+  const origResult = app._renderBoatRaceResult ? app._renderBoatRaceResult.bind(app) : null;
+  if(origResult){
+    app._renderBoatRaceResult = function(){
+      const sc = g('boatrace-result-screen');
+      if(sc){
+        try{
+          sc.querySelectorAll('.edogawa-common-result-info, .edo-mpanel')
+            .forEach(el=>el.remove());
+        }catch(e){}
+      }
+      return origResult.apply(app, arguments);
+    };
+  }
+  // 整えたあとも目印を残しておきます（次のレースで見つけられるように）
+  setInterval(()=>{
+    try{
+      const sc = g('boatrace-result-screen'); if(!sc) return;
+      sc.querySelectorAll('.edo-mpanel').forEach(el=>{
+        if(!el.classList.contains('edogawa-common-result-info'))
+          el.classList.add('edogawa-common-result-info');
+      });
+    }catch(e){}
+  }, 400);
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.6 ④　出前バイクのコース図を、共通の開始モーダルに出します
+  //    ・ミニゲーム側の開始画面（タイトルや設定）は出しません
+  //    ・案内の読み上げが終わるまで、開始モーダルを出したままにします
+  // ──────────────────────────────────────────────────────────────
+  const HOLD_MS = 13000;
+  let lastMap = null, holdGame = null, holdTimer = null;
+
+  function putMap(){
+    if(!lastMap) return false;
+    const el = g('edo-mini-common');
+    if(!el || !el.classList.contains('show')) return false;
+    const box = el.querySelector('.edo-mc-box'); if(!box) return false;
+    // 結果モーダルに変わったあとは、コース図を出しません
+    const kicker = box.querySelector('.edo-mc-kicker');
+    if(kicker && !/ミニゲーム/.test(kicker.textContent || '')) return false;
+    let wrap = box.querySelector('.edo-mc-map');
+    if(wrap && wrap.__edoSrc === lastMap.png) return true;
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.className = 'edo-mc-map';
+      const rules = box.querySelector('.edo-mc-rules');
+      if(rules && rules.parentNode) rules.parentNode.insertBefore(wrap, rules.nextSibling);
+      else box.appendChild(wrap);
+    }
+    wrap.__edoSrc = lastMap.png;
+    wrap.innerHTML =
+      '<div class="edo-mc-map-h"><span>' + esc(lastMap.caption || 'コース図') + '</span>' +
+      (lastMap.badge ? '<span class="edo-mc-map-b">' + esc(lastMap.badge) + '</span>' : '') +
+      '</div><img alt="コース図" src="' + lastMap.png + '">';
+    return true;
+  }
+
+  function markWaiting(){
+    const el = g('edo-mini-common'); if(!el) return;
+    const box = el.querySelector('.edo-mc-box'); if(!box) return;
+    const bar = box.querySelector('.edo-mc-bar');
+    if(bar) bar.style.display = 'none';
+    const hint = box.querySelector('.edo-mc-hint');
+    if(hint) hint.textContent = '案内を聞いてからスタートします';
+  }
+
+  const origStartHide = app._miniCommonStartHide ? app._miniCommonStartHide.bind(app) : null;
+  app._miniCommonStartHide = function(){
+    if(holdGame){ markWaiting(); return; }     // 案内が終わるまで閉じません
+    return origStartHide ? origStartHide() : undefined;
+  };
+
+  function releaseHold(){
+    if(!holdGame) return;
+    holdGame = null;
+    clearTimeout(holdTimer); holdTimer = null;
+    try{ origStartHide && origStartHide(); }catch(e){}
+  }
+  function startHold(game){
+    holdGame = game;
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(releaseHold, HOLD_MS);
+  }
+
+  const origOpenMini = app.openRegionalMiniGame ? app.openRegionalMiniGame.bind(app) : null;
+  if(origOpenMini){
+    app.openRegionalMiniGame = function(game, p){
+      lastMap = null;
+      releaseHold();
+      try{
+        const el = g('edo-mini-common');
+        el && el.querySelectorAll('.edo-mc-map').forEach(x=>x.remove());
+      }catch(e){}
+      if(game === 'delivery') startHold(game);
+      return origOpenMini(game, p);
+    };
+  }
+  const origCloseMini = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
+  if(origCloseMini){
+    app.closeRegionalMiniGame = function(){
+      releaseHold();
+      lastMap = null;
+      return origCloseMini();
+    };
+  }
+
+  window.addEventListener('message', (ev)=>{
+    const d = ev.data;
+    if(!d || typeof d !== 'object') return;
+    if(d.type === 'EDOGAWA_MINI_MAP'){
+      lastMap = { png: String(d.png || ''), caption: d.caption, badge: d.badge };
+      if(!/^data:image\/(png|jpeg);base64,/.test(lastMap.png)){ lastMap = null; return; }
+      putMap();
+      return;
+    }
+    if(d.type === 'EDOGAWA_MINI_GUIDE_END'){ releaseHold(); return; }
+    if(d.type === 'EDOGAWA_MINIGAME_RESULT' || d.type === 'EDOGAWA_MINIGAME_CLOSE'){
+      releaseHold();
+      lastMap = null;                       // 結果のときはコース図を出しません
+      return;
+    }
+  });
+
+  // 開始モーダルが出た直後にコース図が届くこともあるので、少しの間ためします
+  setInterval(()=>{ try{ putMap(); }catch(e){} }, 300);
+
+  function boot(){ paintYosaoButton(); buildStage(); showWait(true); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+  setInterval(paintYosaoButton, 800);
+
+  window.__EDOGAWA_V147_INFO = ()=>({
+    予想屋ボタン: (()=>{ const b = document.querySelector('#boatrace-betting-screen button[onclick*="openBoatRaceYosao"]');
+      return b ? { オレンジ: b.classList.contains('edo-yosao-open'),
+        色: getComputedStyle(b).backgroundImage.slice(0,30) } : null; })(),
+    予想屋の枠: (()=>{ const s = g('boatrace-yosao-screen');
+      return s ? Math.round(s.getBoundingClientRect().height) : null; })(),
+    キャラ枠: (()=>{ const s = g('boatrace-yosao-stage');
+      return s ? Math.round(s.getBoundingClientRect().height) : null; })(),
+    一覧が見えている: (()=>{ const p = g('boatrace-yosao-picker');
+      return p ? getComputedStyle(p).display !== 'none' : null; })(),
+    結果の枠の数: document.querySelectorAll('#boatrace-result-screen .edogawa-common-result-info, #boatrace-result-screen .edo-mpanel').length,
+    コース図: !!document.querySelector('#edo-mini-common .edo-mc-map img'),
+    開始モーダルを待たせている: holdGame
   });
 })();
 </script>
