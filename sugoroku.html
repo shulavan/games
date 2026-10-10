@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.6 (2026-10-10)';
+    window.__EDOGAWA_VERSION = 'ver1.0.7 (2026-10-10)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -25504,6 +25504,107 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     コース図: !!document.querySelector('#edo-mini-common .edo-mc-map img'),
     開始モーダルを待たせている: holdGame
   });
+})();
+</script>
+<style id="edogawa-v148-style">
+  /* 準備中のマルチプレイは、灰色にして押せないようにします */
+  .edo-mp-off{ filter:grayscale(1); opacity:.45; pointer-events:none !important;
+    cursor:not-allowed; position:relative; }
+  .edo-mp-note{ display:block; font-size:10px; font-weight:800; color:#94a3b8;
+    line-height:1.45; margin-top:4px; }
+  .edo-mp-tag{ display:inline-block; font-size:9px; font-weight:900; color:#0f172a;
+    background:#94a3b8; border-radius:999px; padding:2px 8px; letter-spacing:.06em; }
+</style>
+<script id="edogawa-v148">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.7　マルチプレイは、当面おやすみにします
+  //
+  //  「動きが遅い」というご意見が多いため、トップページから
+  //  マルチプレイを始められないようにしました。
+  //  しくみ（Firebaseの通信・部屋・QRコードなど）はそのまま残してあるので、
+  //  下の ENABLED を true に変えるだけで、元どおり使えるようになります。
+  // ──────────────────────────────────────────────────────────────
+  const ENABLED = false;
+
+  app.multiplayEnabled = ENABLED;
+  if(ENABLED) { window.__EDOGAWA_V148_INFO = ()=>({ マルチプレイ: '利用できます' }); return; }
+
+  const WHY = 'マルチプレイは動作改善のため、ただいま準備中です。';
+
+  // ① トップページの「マルチプレイ4人対戦」のまとまりを灰色にします
+  function paintLobby(){
+    const btn = g('recruit-btn');
+    if(!btn) return;
+    const panel = btn.parentElement;
+    if(!panel || panel.__edoV148) return;
+    panel.__edoV148 = true;
+    panel.classList.add('edo-mp-off');
+    panel.setAttribute('aria-disabled', 'true');
+    try{ btn.disabled = true; btn.setAttribute('tabindex', '-1'); }catch(e){}
+
+    const badge = g('room-status-badge');
+    if(badge){
+      badge.textContent = '準備中';
+      badge.className = 'edo-mp-tag';
+    }
+    const note = panel.querySelector('p');
+    if(note){
+      note.className = 'edo-mp-note';
+      note.textContent = '動作改善のため、ただいま準備中です。ひとりで遊ぶ（CPU対戦）はこれまでどおりお楽しみいただけます。';
+    }
+  }
+
+  // ② 「前回の続き」の選択画面でも、マルチプレイは選べないようにします
+  function paintResumeChoice(){
+    const b = document.querySelector('#resume-choice-modal button[onclick*="resumeMultiplayerGame"]');
+    if(!b || b.__edoV148) return;
+    b.__edoV148 = true;
+    b.classList.add('edo-mp-off');
+    b.setAttribute('aria-disabled', 'true');
+    try{ b.disabled = true; }catch(e){}
+    const info = g('resume-mp-info');
+    if(info) info.textContent = '準備中';
+  }
+
+  // ③ ほかの入り口から呼ばれても始まらないようにします
+  ['onRecruitButton','openRecruitmentModal','resumeMultiplayerGame'].forEach(name=>{
+    const orig = (typeof app[name] === 'function') ? app[name].bind(app) : null;
+    if(!orig) return;
+    app['__edoOrig_' + name] = orig;          // しくみは残してあります
+    app[name] = function(){
+      try{ alert(WHY); }catch(e){}
+      try{ app.addLog && app.addLog('👥 ' + WHY); }catch(e){}
+      return undefined;
+    };
+  });
+
+  function boot(){ paintLobby(); paintResumeChoice(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+  setInterval(boot, 900);
+
+  window.__EDOGAWA_V148_INFO = ()=>{
+    const btn = g('recruit-btn');
+    const panel = btn ? btn.parentElement : null;
+    const b = document.querySelector('#resume-choice-modal button[onclick*="resumeMultiplayerGame"]');
+    return {
+      マルチプレイ: '準備中',
+      募集の枠: panel ? {
+        灰色: /grayscale/.test(getComputedStyle(panel).filter || ''),
+        押せない: getComputedStyle(panel).pointerEvents === 'none',
+        表示: (g('room-status-badge')||{}).textContent } : null,
+      続きの選択: b ? {
+        灰色: /grayscale/.test(getComputedStyle(b).filter || ''),
+        押せない: getComputedStyle(b).pointerEvents === 'none' } : null,
+      しくみは残っている: ['onRecruitButton','openRecruitmentModal','resumeMultiplayerGame']
+        .every(n=>typeof app['__edoOrig_' + n] === 'function')
+    };
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
