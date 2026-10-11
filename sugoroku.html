@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.11 (2026-10-10)';
+    window.__EDOGAWA_VERSION = 'ver1.0.12 (2026-10-11)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23992,7 +23992,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       color:{bg:'bg-emerald-500',border:'border-emerald-400',stroke:'#10b981'},
       path:[], pathIndex:0, currentNodeIdx:0, vehicle:null, skipTurn:false, wheelchairTurns:0,
       lottery:{renban:0,bara:0,tickets:[],history:{}} });
-    const p = mk(0,'検証プレイヤー',false);
+    const p = mk(0,'テストプレイ',false);   // 【ver1.0.12】6文字にして、ヘッダーで折り返さないようにします
     app.players = [p, mk(1,'CPU1',true), mk(2,'CPU2',true), mk(3,'CPU3',true)];
     app.currentPlayerIdx = 0;
     app.isMultiplayer = false; app.isHost = true; app.autoMode = false;
