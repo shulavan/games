@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.20 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.21 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -26674,6 +26674,256 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     アカウント情報: setupShown(),
     双六から開いた: !!app.__edoAcctFromGame
   });
+})();
+</script>
+<style id="edogawa-v154-style">
+  /* 古い購入モーダルには「.show」の指定が抜けていて、出しても見えませんでした。
+     いまは使っていませんが、万一のときのために足しておきます。 */
+  #edogawa-property-modal.show{ display:flex !important; }
+
+  /* ゴールしたときの不動産購入。
+     施設の説明はたてにスクロールし、下の「購入しますか？」はスクロールしません。 */
+  #facility-modal.edo-prop-mode > div{ display:flex; flex-direction:column; overflow:hidden; }
+  #facility-modal.edo-prop-mode #edo-prop-scroll{ flex:1 1 auto; overflow-y:auto; min-height:0;
+    -webkit-overflow-scrolling:touch; }
+  #edo-prop-foot{ flex:0 0 auto; border-top:1px solid rgba(245,158,11,.38);
+    background:#0b1222; padding:13px 14px 14px; border-radius:0 0 1rem 1rem; }
+  #edo-prop-foot .edo-pf-q{ font-size:19px; font-weight:900; color:#fbbf24;
+    text-align:center; line-height:1.35; }
+  #edo-prop-foot .edo-pf-nums{ margin-top:9px; display:flex; flex-direction:column;
+    align-items:center; gap:3px; }
+  #edo-prop-foot .edo-pf-row{ display:flex; align-items:baseline; gap:10px; }
+  #edo-prop-foot .edo-pf-k{ font-size:13px; font-weight:900; color:#94a3b8;
+    min-width:6.2em; text-align:right; }
+  #edo-prop-foot .edo-pf-v{ font-size:18px; font-weight:1000; white-space:nowrap;
+    min-width:7.5em; text-align:right; }
+  #edo-prop-foot .edo-pf-price{ color:#fde68a; }
+  #edo-prop-foot .edo-pf-inc{ color:#86efac; }
+  #edo-prop-foot .edo-pf-note{ margin-top:7px; font-size:11px; color:#94a3b8;
+    text-align:center; line-height:1.6; }
+  #edo-prop-foot .edo-pf-btns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+  #edo-prop-foot button{ padding:13px 8px; border-radius:14px; font-weight:900; font-size:15px;
+    border:1px solid; transition:.15s; }
+  #edo-prop-foot .edo-pf-cancel{ background:#1e293b; border-color:#475569; color:#e2e8f0; }
+  #edo-prop-foot .edo-pf-buy{ background:linear-gradient(180deg,#f59e0b,#d97706);
+    border-color:#fbbf24; color:#020617; }
+  #edo-prop-foot button:active{ transform:scale(.97); }
+</style>
+<script id="edogawa-v154">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const yen = (v)=>'￥' + Math.round(Number(v)||0).toLocaleString('ja-JP');
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.21　🏠 不動産の購入画面と、自分の番ごとの収入
+  //
+  //  【これまでの不具合】
+  //   ・購入のモーダルに「表示する」ための指定（.show）が抜けていたため、
+  //     ゴールしても購入画面が出ず、画面が止まったままになっていました。
+  //     （画面が閉じられないと、そのあとの処理が始まらないためです）
+  //   ・収入は全員ぶんが毎回入っていて、おしらせも出ていませんでした。
+  //
+  //  【ここで直すこと】
+  //   ① 購入は、ゴールした施設の詳細モーダルの下に固定のフッターで聞きます
+  //   ② 施設の説明はたてにスクロール、フッターはスクロールしません
+  //   ③ どこで失敗しても必ず次へ進めて、止まらないようにします
+  //   ④ 収入は「自分の番がきたとき」に1回だけ入り、🗨️でおしらせします
+  // ──────────────────────────────────────────────────────────────
+
+  function isMine(p){
+    if(!p || p.isCpu) return false;
+    return !app.myUid || p.uid === app.myUid;
+  }
+  function incomeOf(price){ return Math.floor((Number(price)||0) * 0.01); }
+
+  // 施設詳細の中身をスクロールさせるための入れものを、1度だけ作ります
+  function scrollBox(){
+    const modal = g('facility-modal'); if(!modal) return null;
+    const box = modal.firstElementChild; if(!box) return null;
+    let sc = box.querySelector('#edo-prop-scroll');
+    if(!sc){
+      sc = document.createElement('div');
+      sc.id = 'edo-prop-scroll';
+      const foot = g('edo-prop-foot');
+      if(foot && foot.parentNode === box) box.removeChild(foot);
+      while(box.firstChild) sc.appendChild(box.firstChild);
+      box.appendChild(sc);
+    }
+    return sc;
+  }
+
+  function footHtml(player, offer){
+    const inc  = incomeOf(offer.price);
+    const left = Math.max(0, Math.round(Number(player.money)||0) - Math.round(offer.price));
+    return '<div class="edo-pf-q">不動産を購入しますか？</div>' +
+      '<div class="edo-pf-nums">' +
+        '<div class="edo-pf-row"><span class="edo-pf-k">実勢価格</span>' +
+          '<span class="edo-pf-v edo-pf-price">' + yen(offer.price) + '</span></div>' +
+        '<div class="edo-pf-row"><span class="edo-pf-k">自ターン収入</span>' +
+          '<span class="edo-pf-v edo-pf-inc">＋' + yen(inc) + '</span></div>' +
+      '</div>' +
+      '<div class="edo-pf-note">自分の番がくるたびに、購入額の1%が収入になります。<br>' +
+        '購入後の所持金は ' + yen(left) + ' です。</div>' +
+      '<div class="edo-pf-btns">' +
+        '<button type="button" class="edo-pf-cancel" data-prop="no">キャンセル</button>' +
+        '<button type="button" class="edo-pf-buy" data-prop="yes">購入する</button>' +
+      '</div>';
+  }
+
+  function openUi(player, offer){
+    const dest = app.currentDestination ||
+      { name:offer.name, lat:offer.lat, lng:offer.lng, category:offer.category };
+    app.showFacilityDetail(dest, { heading:'🏁 ゴールした施設' });   // 3秒で閉じる指定は付けません
+    const modal = g('facility-modal');
+    if(!modal || modal.classList.contains('hidden')) return false;
+    const sc = scrollBox(); if(!sc) return false;
+    const box = sc.parentNode;
+    let f = g('edo-prop-foot');
+    if(!f){ f = document.createElement('div'); f.id = 'edo-prop-foot'; }
+    f.innerHTML = footHtml(player, offer);
+    box.appendChild(f);
+    modal.classList.add('edo-prop-mode');
+    try{ sc.scrollTop = 0; }catch(e){}
+    try{ app.clearModalAutoClose && app.clearModalAutoClose('facility'); }catch(e){}
+    return true;
+  }
+
+  function closeUi(){
+    const modal = g('facility-modal');
+    if(modal) modal.classList.remove('edo-prop-mode');
+    const f = g('edo-prop-foot'); if(f && f.parentNode) f.parentNode.removeChild(f);
+  }
+
+  // ① ゴールしたときに聞きます（どこで失敗しても必ず次へ進みます）
+  app._openPropertyOfferForGoal = function(player, continueFn){
+    let used = false;
+    const done = ()=>{ if(used) return; used = true;
+      try{ continueFn && continueFn(); }catch(e){ console.error('[v154]', e); } };
+
+    let offer = null;
+    try{ offer = app.getPropertyOffer(player); }catch(e){ console.warn('[v154]', e); }
+    if(!offer || !player){ done(); return; }
+
+    if(player.isCpu){
+      try{
+        player.money = (Number(player.money)||0) - offer.price;
+        player.properties = player.properties || [];
+        player.properties.push(Object.assign({}, offer, {purchasedAt: Date.now()}));
+        app.addLog && app.addLog('🏠 ' + player.name + ' が ' + offer.name + ' を ' +
+          yen(offer.price) + ' で購入！');
+        app.updateHUD && app.updateHUD();
+        app.scheduleProfilePersist && app.scheduleProfilePersist(player);
+      }catch(e){ console.error('[v154]', e); }
+      done(); return;
+    }
+
+    let ok = false;
+    try{ ok = openUi(player, offer); }catch(e){ console.error('[v154]', e); }
+    if(!ok){
+      try{ app.addLog && app.addLog('🏠 不動産の購入画面を出せなかったため、今回は見送りました。'); }catch(e){}
+      closeUi(); done(); return;
+    }
+    app.__propOffer = { player:player, offer:offer, done:done };
+
+    // 保険：画面が出ていないのに案内だけ残ってしまったときは、先へ進めます
+    setTimeout(function(){
+      const x = app.__propOffer;
+      if(!x || x.done !== done) return;
+      const m = g('facility-modal');
+      if(m && !m.classList.contains('hidden') && g('edo-prop-foot')) return;
+      app.__propOffer = null; closeUi(); done();
+    }, 2000);
+  };
+
+  app._closePropertyOffer = function(buy){
+    const x = app.__propOffer; app.__propOffer = null;
+    closeUi();
+    try{ app.closeFacilityModal && app.closeFacilityModal(); }catch(e){}
+    if(buy && x && x.player && x.offer && (Number(x.player.money)||0) >= x.offer.price){
+      try{
+        const p = x.player, o = x.offer;
+        p.money = (Number(p.money)||0) - o.price;
+        p.properties = p.properties || [];
+        p.properties.push(Object.assign({}, o, {purchasedAt: Date.now()}));
+        app.addLog && app.addLog('🏠 ' + p.name + ' が ' + o.name + ' を ' + yen(o.price) +
+          ' で購入！自分の番ごとに ＋' + yen(incomeOf(o.price)) + ' の収入になります。');
+        app.updateHUD && app.updateHUD();
+        app.scheduleProfilePersist && app.scheduleProfilePersist(p);
+        app._refreshAccountPanel && app._refreshAccountPanel();
+        app.saveGameState && app.saveGameState();
+      }catch(e){ console.error('[v154]', e); }
+    }
+    if(x && x.done) x.done();
+  };
+
+  // 「×」で閉じたときも、見送りとして次へ進めます
+  const origCloseFac = app.closeFacilityModal ? app.closeFacilityModal.bind(app) : null;
+  if(origCloseFac){
+    app.closeFacilityModal = function(){
+      const x = app.__propOffer;
+      const r = origCloseFac.apply(app, arguments);
+      if(x){ app.__propOffer = null; closeUi(); try{ x.done && x.done(); }catch(e){} }
+      return r;
+    };
+  }
+
+  document.addEventListener('click', function(ev){
+    const t = ev.target && ev.target.closest ? ev.target.closest('#edo-prop-foot button[data-prop]') : null;
+    if(!t) return;
+    ev.preventDefault(); ev.stopPropagation();
+    app._closePropertyOffer(t.dataset.prop === 'yes');
+  }, true);
+
+  // ④ 収入は「自分の番がきたとき」に1回だけ。ヘッダーの🗨️でおしらせします。
+  function incomeToast(p, gain, count){
+    const el = g('edogawa-stat-toast'); if(!el) return;
+    try{ clearTimeout(app._statToastTimer); }catch(e){}
+    el.innerHTML = '<span class="text-lg mr-1">💬</span><strong>' + esc(p.name) +
+      '</strong>は不動産' + count + '件の収入で ＋' + yen(gain) + ' を受け取った！';
+    el.classList.remove('hidden'); el.classList.remove('opacity-0'); el.classList.add('opacity-100');
+    app._statToastTimer = setTimeout(function(){
+      el.classList.add('opacity-0');
+      setTimeout(function(){ el.classList.add('hidden'); }, 250);
+    }, 3000);
+  }
+
+  app.applyPropertyIncome = function(){
+    try{
+      const list = app.players || [];
+      const p = list[app.currentPlayerIdx];           // 番がまわってきた人だけ
+      if(!p || !Array.isArray(p.properties) || !p.properties.length) return;
+      let gain = 0;
+      p.properties.forEach(function(x){ gain += incomeOf(x.price); });
+      if(gain <= 0) return;
+      p.money = (Number(p.money)||0) + gain;
+      app.addLog && app.addLog('🏠 ' + p.name + '：不動産収入 ＋' + yen(gain) +
+        '（' + p.properties.length + '件・購入額の1%）');
+      if(isMine(p)) incomeToast(p, gain, p.properties.length);
+      app.scheduleProfilePersist && app.scheduleProfilePersist(p);
+      app.updateHUD && app.updateHUD();
+    }catch(e){ console.error('[v154]', e); }
+  };
+
+  window.__EDOGAWA_V154_INFO = ()=>{
+    const m = g('facility-modal'), f = g('edo-prop-foot'), sc = g('edo-prop-scroll');
+    const num = (sel)=>{ const e = f ? f.querySelector(sel) : null; return e ? e.textContent : null; };
+    return {
+      聞いている: !!(app.__propOffer),
+      フッター: !!f,
+      見出し: f ? (f.querySelector('.edo-pf-q')||{}).textContent : null,
+      実勢価格: num('.edo-pf-price'),
+      自ターン収入: num('.edo-pf-inc'),
+      ボタン: f ? [].map.call(f.querySelectorAll('button'), b=>b.textContent.trim()) : [],
+      説明がスクロールする: !!(sc && m && m.classList.contains('edo-prop-mode') &&
+        getComputedStyle(sc).overflowY === 'auto'),
+      フッターはスクロールしない: !!(f && getComputedStyle(f).flexGrow === '0'),
+      おしらせ: (()=>{ const el = g('edogawa-stat-toast');
+        return el && !el.classList.contains('hidden') ? el.textContent : null; })()
+    };
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
