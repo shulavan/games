@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.18 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.19 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -25872,8 +25872,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-mini-map img{ display:block; width:100%; height:auto; }
   #edo-mini-map .edo-mm-pin{ position:absolute; transform:translate(-50%,-50%);
     font-size:15px; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.85); pointer-events:none; }
-  #edo-mini-map .edo-mm-me{ z-index:2; }
-  #edo-mini-map .edo-mm-goal{ z-index:3; }
+  /* 1P〜4Pの札。フッターのプレイヤー枠と同じ色にします。
+     重なったときは 1P がいちばん手前、つぎに 2P・3P・4P、🚩はいちばん奥です。 */
+  #edo-mini-map .edo-mm-p{ font-size:8px; font-weight:900; line-height:1;
+    color:#020617; padding:2px 3px; border-radius:4px; letter-spacing:-.02em;
+    border:1px solid rgba(2,6,23,.55); box-shadow:0 1px 3px rgba(0,0,0,.6);
+    text-shadow:none; white-space:nowrap; }
+  #edo-mini-map #edo-mm-p0{ z-index:5; }
+  #edo-mini-map #edo-mm-p1{ z-index:4; }
+  #edo-mini-map #edo-mm-p2{ z-index:3; }
+  #edo-mini-map #edo-mm-p3{ z-index:2; }
+  #edo-mini-map .edo-mm-goal{ z-index:1; }
   #edo-mini-map .edo-mm-ng{ padding:10px; font-size:10px; color:#94a3b8; text-align:center; }
 
   /* ステータス枠（縮小マップと同じ位置・同じ横幅） */
@@ -25943,11 +25952,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(el) return el;
     el = document.createElement('div');
     el.id = 'edo-mini-map';
+    // 🚩を先に、1P〜4Pをあとに置きます（重なり順はCSSのz-indexで決めています）
+    let pins = '<span id="edo-mm-goal" class="edo-mm-pin edo-mm-goal">🚩</span>';
+    for(let i = 0; i < 4; i++){
+      pins += '<span id="edo-mm-p' + i + '" class="edo-mm-pin edo-mm-p">' + (i + 1) + 'P</span>';
+    }
     el.innerHTML =
       '<div class="edo-mm-inner">' +
         '<img id="edo-mm-img" alt="江戸川区のちず" referrerpolicy="no-referrer" src="' + MAP_IMG + '">' +
-        '<span id="edo-mm-me" class="edo-mm-pin edo-mm-me">👤</span>' +
-        '<span id="edo-mm-goal" class="edo-mm-pin edo-mm-goal">🚩</span>' +
+        pins +
       '</div>';
     document.body.appendChild(el);
     const img = el.querySelector('#edo-mm-img');
@@ -25987,14 +26000,32 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const y = (WARD.north - lat) / (WARD.north - WARD.south);
     return { x: Math.max(0, Math.min(1, x)) * 100, y: Math.max(0, Math.min(1, y)) * 100 };
   }
+  // フッターのプレイヤー枠と同じ色を取り出します
+  function colorOf(p, i){
+    try{
+      const c = (app.playerColorOf && app.playerColorOf(p)) || p.color || null;
+      if(c && c.stroke) return c.stroke;
+    }catch(e){}
+    return ['#10b981', '#a855f7', '#f97316', '#06b6d4'][i % 4];
+  }
   function paintPins(){
     const el = g('edo-mini-map'); if(!el) return;
-    const me = g('edo-mm-me'), goal = g('edo-mm-goal');
-    const p = myPlayer();
-    const n = p ? nodeOf(p) : null;
-    if(me){
-      if(n){ const q = pct(n.lat, n.lng); me.style.left = q.x + '%'; me.style.top = q.y + '%'; me.style.display = ''; }
-      else me.style.display = 'none';
+    const goal = g('edo-mm-goal');
+    const list = app.players || [];
+    for(let i = 0; i < 4; i++){
+      const chip = g('edo-mm-p' + i); if(!chip) continue;
+      const pl = list[i];
+      const n = pl ? nodeOf(pl) : null;
+      if(!n){ chip.style.display = 'none'; continue; }
+      const q = pct(n.lat, n.lng);
+      chip.style.left = q.x + '%';
+      chip.style.top  = q.y + '%';
+      chip.style.background = colorOf(pl, i);
+      // ゲームから抜けた人は、うすく出します
+      let off = false;
+      try{ off = !!(app.isPlayerOffline && app.isPlayerOffline(pl)); }catch(e){}
+      chip.style.opacity = off ? '.35' : '1';
+      chip.style.display = '';
     }
     const d = app.currentDestination;
     if(goal){
@@ -26192,7 +26223,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       ステータスの枠: box(ps),
       ボタンの枠: box(tools),
       ちず: (g('edo-mm-img') || {}).src || null,
-      現在地: (()=>{ const m = g('edo-mm-me'); return m ? {left:m.style.left, top:m.style.top, 表示:m.style.display !== 'none'} : null; })(),
+      現在地: (()=>{ const m = g('edo-mm-p0'); return m ? {left:m.style.left, top:m.style.top, 表示:m.style.display !== 'none'} : null; })(),
+      プレイヤー: (()=>{
+        const out = [];
+        for(let i = 0; i < 4; i++){
+          const m = g('edo-mm-p' + i); if(!m) continue;
+          const st = getComputedStyle(m);
+          out.push({ 札:m.textContent, left:m.style.left, top:m.style.top,
+            表示:m.style.display !== 'none', 色:st.backgroundColor, 重なり順:Number(st.zIndex) });
+        }
+        return out;
+      })(),
+      目的地の重なり順: (()=>{ const m = g('edo-mm-goal'); return m ? Number(getComputedStyle(m).zIndex) : null; })(),
       目的地: (()=>{ const m = g('edo-mm-goal'); return m ? {left:m.style.left, top:m.style.top, 表示:m.style.display !== 'none'} : null; })(),
       メニューの説明: (()=>{ const p = document.querySelector('#edo-mp-panel p'); return p ? p.textContent : null; })()
     };
@@ -26569,6 +26611,67 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       return cp && cp.pendingPachinko ? cp.pendingPachinko.name : null; })(),
     ことわったお店: (()=>{ const cp = (app.players || [])[app.currentPlayerIdx];
       return cp ? (cp.pachiDeclined || null) : null; })()
+  });
+})();
+</script>
+<script id="edogawa-v153">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.19　「☰」→「アカウント設定」から戻る場所を直します
+  //    これまでは「キャンセル」「保存」のどちらを押しても、
+  //    トップページ（ロビー）を開く処理が走っていたため、
+  //    遊んでいる途中でもトップページに戻ってしまっていました。
+  //    双六の画面から開いたときは、双六の画面のまま閉じるようにします。
+  // ──────────────────────────────────────────────────────────────
+  function inGame(){
+    try{
+      const lobby = g('lobby-screen');
+      return !!(lobby && lobby.classList.contains('hidden'));
+    }catch(e){ return false; }
+  }
+  function setupShown(){
+    const su = g('edogawa-user-setup');
+    return !!(su && su.classList.contains('show'));
+  }
+
+  // 「アカウント設定」を双六の画面から開いたことを覚えておきます
+  const origOpenAcct = app.openAccountFromMenu;
+  if(typeof origOpenAcct === 'function'){
+    app.openAccountFromMenu = function(){
+      app.__edoAcctFromGame = inGame();
+      return origOpenAcct.apply(app, arguments);
+    };
+  }
+
+  // 双六の画面から開いていたときは、トップページを出さずに閉じるだけにします
+  const origLobby = app._enterLobbyAfterAuth ? app._enterLobbyAfterAuth.bind(app) : null;
+  if(origLobby){
+    app._enterLobbyAfterAuth = function(){
+      if(app.__edoAcctFromGame){
+        app.__edoAcctFromGame = false;
+        try{ g('edogawa-user-setup') && g('edogawa-user-setup').classList.remove('show'); }catch(e){}
+        try{ app._applyProfileToLobby && app._applyProfileToLobby(); }catch(e){}
+        try{ app._refreshAccountPanel && app._refreshAccountPanel(); }catch(e){}
+        try{ app.updateHUD && app.updateHUD(); }catch(e){}
+        return;
+      }
+      return origLobby.apply(app, arguments);
+    };
+  }
+
+  // 画面の外をタップして閉じたときなど、目印が残らないように片付けます
+  setInterval(function(){
+    try{ if(app.__edoAcctFromGame && !setupShown()) app.__edoAcctFromGame = false; }catch(e){}
+  }, 600);
+
+  window.__EDOGAWA_V153_INFO = ()=>({
+    双六の画面: inGame(),
+    アカウント情報: setupShown(),
+    双六から開いた: !!app.__edoAcctFromGame
   });
 })();
 </script>
