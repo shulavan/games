@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.19 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.20 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -25873,7 +25873,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-mini-map .edo-mm-pin{ position:absolute; transform:translate(-50%,-50%);
     font-size:15px; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.85); pointer-events:none; }
   /* 1P〜4Pの札。フッターのプレイヤー枠と同じ色にします。
-     重なったときは 1P がいちばん手前、つぎに 2P・3P・4P、🚩はいちばん奥です。 */
+     重なったときは 🚩（目的地）がいちばん手前、
+     つぎに 1P・2P・3P・4P の順に重なります。 */
   #edo-mini-map .edo-mm-p{ font-size:8px; font-weight:900; line-height:1;
     color:#020617; padding:2px 3px; border-radius:4px; letter-spacing:-.02em;
     border:1px solid rgba(2,6,23,.55); box-shadow:0 1px 3px rgba(0,0,0,.6);
@@ -25882,7 +25883,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-mini-map #edo-mm-p1{ z-index:4; }
   #edo-mini-map #edo-mm-p2{ z-index:3; }
   #edo-mini-map #edo-mm-p3{ z-index:2; }
-  #edo-mini-map .edo-mm-goal{ z-index:1; }
+  #edo-mini-map .edo-mm-goal{ z-index:6; }
   #edo-mini-map .edo-mm-ng{ padding:10px; font-size:10px; color:#94a3b8; text-align:center; }
 
   /* ステータス枠（縮小マップと同じ位置・同じ横幅） */
