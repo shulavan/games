@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.13 (2026-10-11)';
+    window.__EDOGAWA_VERSION = 'ver1.0.15 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -828,7 +828,7 @@
           <button id="resume-save-btn" onclick="EdogawaSugoroku.resumeSoloFromLobby()" class="hidden w-full flex-1 bg-gradient-to-b from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-bold py-3 px-2 rounded-2xl shadow-md active:scale-[0.98] transition flex flex-col items-center justify-center gap-0.5 text-center leading-tight">
             <span class="text-lg">💾</span>
             <span id="resume-save-label" class="text-[13px] font-black">前回の続きから遊ぶ</span>
-            <span id="resume-save-dest" class="hidden text-[11px] font-bold text-sky-50/95 leading-snug break-words px-0.5"></span>
+            <span id="resume-save-dest" class="hidden block w-full text-[11px] font-bold text-sky-50/95 leading-snug px-1 text-center whitespace-nowrap overflow-hidden text-ellipsis"></span>
             <span id="resume-save-stats" class="hidden text-[11px] font-black text-amber-200"></span>
           </button>
         </div>
@@ -1342,6 +1342,10 @@
         <button onclick="EdogawaSugoroku.closeMenuModal()" aria-label="閉じる"
           class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 text-lg leading-none active:scale-95 transition">×</button>
       </div>
+      <!-- 【ver1.0.14】メニューの先頭に「アカウント設定」を置きます -->
+      <button id="menu-account-btn" onclick="EdogawaSugoroku.openAccountFromMenu()" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
+        <span class="text-xl">👤</span><span class="text-sm font-bold text-slate-100">アカウント設定</span>
+      </button>
       <button onclick="EdogawaSugoroku.openSettingsModal()" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
         <span class="text-xl">⚙️</span><span class="text-sm font-bold text-slate-100">設定</span>
       </button>
@@ -1359,9 +1363,6 @@
       </button>
       <button onclick="EdogawaSugoroku.openDocModal('about')" class="w-full flex items-center gap-3 bg-slate-950/70 hover:bg-slate-800 border border-slate-800 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
         <span class="text-xl">🏛</span><span class="text-sm font-bold text-slate-100">運営元</span>
-      </button>
-      <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full flex items-center gap-3 bg-[#06C755]/15 hover:bg-[#06C755]/25 border border-[#06C755]/40 rounded-xl px-3 py-3 text-left active:scale-[0.98] transition">
-        <span class="text-xl">💬</span><span class="text-sm font-bold text-[#06C755]">LINEで紹介</span>
       </button>
       <p class="text-[10px] text-slate-500 text-center pt-1">©2026 江戸川双六 Produced by M.Tsuda</p>
     </div>
@@ -18406,7 +18407,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
 
   // ── お知らせ ──
-  const IMG = 'https://shulavan.github.io/img/metro7.jpg';
+  const IMG = 'https://shulavan.github.io/img/metro7.png';   // 【ver1.0.14】jpg → png
   function box(){
     let el = document.getElementById('edo-m7-notice');
     if(!el){ el=document.createElement('div'); el.id='edo-m7-notice'; document.body.appendChild(el); }
@@ -23847,7 +23848,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     box.innerHTML =
       '<div class="edo-dev-ttl">🔑 パスワード</div>' +
       '<input id="edo-dev-pw-in" class="edo-dev-pw" type="tel" inputmode="numeric" maxlength="3" ' +
-        'autocomplete="off" placeholder="・・・">' +
+        'autocomplete="off">' +
       '<div id="edo-dev-pw-ng" class="edo-dev-note" style="color:#fb7185;display:none">パスワードが違います。</div>' +
       '<div class="edo-dev-row">' +
         '<button type="button" class="edo-dev-btn" id="edo-dev-pw-cancel">キャンセル</button>' +
@@ -23885,6 +23886,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         '<span class="sub">全ミニゲームを、開始→プレイ→結果まで試せます</span></button>' +
       '<button type="button" class="edo-dev-btn" id="edo-dev-voice">🔊 読み上げテスト' +
         '<span class="sub">この端末で音声が出るかを確かめます</span></button>' +
+      // 【ver1.0.14】トップページでは準備中にしているマルチプレイを、ここからは試せます
+      '<button type="button" class="edo-dev-btn" id="edo-dev-mp">👥 マルチプレイ' +
+        '<span class="sub">準備中にしている参加者募集（QRコード）を、ここから開きます</span></button>' +
       '';
     devShow('edo-dev-menu-modal');
     g('edo-dev-rail').onclick = ()=>{ devHide('edo-dev-menu-modal');
@@ -23893,6 +23897,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     g('edo-dev-all').onclick = ()=>{ devHide('edo-dev-menu-modal'); openAllPosts(); };
     g('edo-dev-voice').onclick = ()=>openVoiceTest();
     g('edo-dev-mini').onclick = ()=>openMiniTest();
+    g('edo-dev-mp').onclick = ()=>{
+      devHide('edo-dev-menu-modal');
+      // 準備中にする前の処理が残してあるので、それを呼びます
+      const open = app.__edoOrig_onRecruitButton || app.__edoOrig_openRecruitmentModal
+                || app.onRecruitButton || app.openRecruitmentModal;
+      try{ open.call(app); }
+      catch(e){ alert('マルチプレイを開けませんでした。'); }
+    };
   }
 
 
@@ -23930,7 +23942,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     { t:'そのほか', items:[
       {k:'lottery_shop', ic:'🎫', n:'江戸川ジャンボ宝くじ　売り場'},
       {k:'lottery_draw', ic:'🎊', n:'江戸川ジャンボ宝くじ　抽選会'},
-      {k:'train',        ic:'🚃', n:'電車シミュレーター'}
+      {k:'train',        ic:'🚃', n:'電車シミュレーター'},
+      {k:'pachinko',     ic:'🎰', n:'CR Super EDOGAWA フィーバー'}
     ]}
   ];
 
@@ -24029,6 +24042,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }
       if(key === 'train'){
         app.startTrainRide(p, 'tozai', '西葛西', '葛西', ()=>restore());
+        return;
+      }
+      if(key === 'pachinko'){
+        const pl = (app.pachinkoPlaces || [])[0] || { name:'パチンコ店' };
+        app.finishTurn = ()=>restore();
+        app.startPachinkoGame(p, pl);
         return;
       }
       app.openRegionalMiniGame(key, p);
@@ -25836,6 +25855,688 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         return !!(el && el.classList.contains('show')); })()
     };
   };
+})();
+</script>
+<style id="edogawa-v151-style">
+  /* 前回の続きの目的地は、1行・中央寄せ・はみ出しは「…」 */
+  #resume-save-dest{ display:block !important; width:100%; text-align:center;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #resume-save-dest.hidden{ display:none !important; }
+
+  /* 縮小マップ枠とステータス枠は、ヘッダーのボタンの真下に同じ大きさで出します */
+  #edo-mini-map{ position:fixed; z-index:44; display:none;
+    border:1px solid rgba(56,189,248,.45); border-radius:14px; overflow:hidden;
+    background:rgba(15,23,42,.94); box-shadow:0 14px 36px rgba(0,0,0,.4); }
+  #edo-mini-map.show{ display:block; }
+  #edo-mini-map .edo-mm-inner{ position:relative; width:100%; }
+  #edo-mini-map img{ display:block; width:100%; height:auto; }
+  #edo-mini-map .edo-mm-pin{ position:absolute; transform:translate(-50%,-50%);
+    font-size:15px; line-height:1; text-shadow:0 1px 3px rgba(0,0,0,.85); pointer-events:none; }
+  #edo-mini-map .edo-mm-me{ z-index:2; }
+  #edo-mini-map .edo-mm-goal{ z-index:3; }
+  #edo-mini-map .edo-mm-ng{ padding:10px; font-size:10px; color:#94a3b8; text-align:center; }
+
+  /* ステータス枠（縮小マップと同じ位置・同じ横幅） */
+  #edogawa-player-status{ padding:9px !important; border-radius:14px !important; }
+  #edogawa-player-status .edo-ps-head{ display:flex; align-items:center; gap:6px; min-width:0; }
+  #edogawa-player-status .edo-ps-ava{ width:24px; height:24px; flex:0 0 auto; border-radius:50%;
+    background:#020617; border:1px solid rgba(56,189,248,.45); overflow:hidden;
+    display:flex; align-items:center; justify-content:center; font-size:14px; }
+  #edogawa-player-status .edo-ps-ava img{ width:100%; height:100%; object-fit:cover; }
+  #edogawa-player-status .edo-ps-name{ font-size:12px; font-weight:900; color:#fff;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
+  #edogawa-player-status .edo-ps-mlabel{ margin-top:6px; font-size:10px; font-weight:900;
+    color:#94a3b8; text-align:center; }
+  #edogawa-player-status .edo-ps-money{ font-size:15px; font-weight:1000; color:#fbbf24;
+    text-align:right; white-space:nowrap; line-height:1.25; }
+  #edogawa-player-status .edo-ps-stats{ margin-top:5px; border-top:1px solid rgba(148,163,184,.22);
+    padding-top:4px; display:flex; flex-direction:column; align-items:center; gap:1px; }
+  #edogawa-player-status .edo-ps-row{ display:flex; align-items:baseline; justify-content:center;
+    gap:8px; width:fit-content; min-width:92px; }
+  #edogawa-player-status .edo-ps-k{ font-size:11px; font-weight:900; color:#f1f5f9;
+    min-width:2.6em; text-align:center; }
+  #edogawa-player-status .edo-ps-v{ font-size:15px; font-weight:1000; color:#f8fafc;
+    min-width:2.6em; text-align:right; }
+</style>
+<script id="edogawa-v151">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.14 ①　グレーアウト中のマルチプレイの説明を短くします
+  // ──────────────────────────────────────────────────────────────
+  function shortenMpNote(){
+    const p = document.querySelector('#edo-mp-panel p');
+    if(!p || p.__edoV151) return;
+    if(/準備中です/.test(p.textContent || '')){ p.__edoV151 = true; p.textContent = '準備中'; }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.14 ②　☰メニューの「アカウント設定」
+  // ──────────────────────────────────────────────────────────────
+  app.openAccountFromMenu = function(){
+    try{ app.closeMenuModal && app.closeMenuModal(); }catch(e){}
+    setTimeout(()=>{ try{ app.openUserSetupModal && app.openUserSetupModal(); }catch(e){} }, 120);
+  };
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.14 ③　縮小マップ枠
+  //    ・ヘッダーの「♫」〜「☰」の真下に、同じ横幅で出します
+  //    ・現在地を 👤、目的地を 🚩 で重ねます
+  //    ・画面にさわると消え、「目的地」をタップすると また出ます
+  // ──────────────────────────────────────────────────────────────
+  const MAP_IMG = 'https://shulavan.github.io/img/map.png';
+  // map.png（832×1267）の絵地図に合わせて実測した四隅の緯度経度です。
+  // 絵地図に描かれている駅マーク11か所の位置を読み取り、最小二乗法で
+  // 「緯度経度 → 画像の位置」の対応を求めました（誤差は平均5.4ピクセル）。
+  // ずれていた場合は、この4つの数字を少し動かすと合わせられます。
+  const WARD = { west:139.830741, east:139.925727, south:35.633603, north:35.749442 };
+
+  function ensureMiniMap(){
+    let el = g('edo-mini-map');
+    if(el) return el;
+    el = document.createElement('div');
+    el.id = 'edo-mini-map';
+    el.innerHTML =
+      '<div class="edo-mm-inner">' +
+        '<img id="edo-mm-img" alt="江戸川区のちず" referrerpolicy="no-referrer" src="' + MAP_IMG + '">' +
+        '<span id="edo-mm-me" class="edo-mm-pin edo-mm-me">👤</span>' +
+        '<span id="edo-mm-goal" class="edo-mm-pin edo-mm-goal">🚩</span>' +
+      '</div>';
+    document.body.appendChild(el);
+    const img = el.querySelector('#edo-mm-img');
+    img.addEventListener('error', ()=>{
+      el.querySelector('.edo-mm-inner').innerHTML =
+        '<div class="edo-mm-ng">ちずを読み込めませんでした</div>';
+    });
+    return el;
+  }
+
+  // ヘッダーの道具ボタン（♫・全画面・☰）の真下にそろえます
+  function placeUnderTools(el){
+    if(!el) return false;
+    const tools = g('game-header-tools');
+    if(!tools) return false;
+    const r = tools.getBoundingClientRect();
+    if(!(r.width > 20)) return false;
+    el.style.left  = Math.round(r.left) + 'px';
+    el.style.width = Math.round(r.width) + 'px';
+    el.style.top   = Math.round(r.bottom + 6) + 'px';
+    el.style.right = 'auto';
+    return true;
+  }
+
+  function myPlayer(){
+    const ps = app.players || [];
+    return ps.find(p => p && !p.isCpu && (!app.myUid || p.uid === app.myUid)) || ps[0] || null;
+  }
+  function nodeOf(p){
+    try{
+      const n = app.roadNetworkNodes && app.roadNetworkNodes[p.currentNodeIdx];
+      return (n && isFinite(n.lat) && isFinite(n.lng)) ? n : null;
+    }catch(e){ return null; }
+  }
+  function pct(lat, lng){
+    const x = (lng - WARD.west) / (WARD.east - WARD.west);
+    const y = (WARD.north - lat) / (WARD.north - WARD.south);
+    return { x: Math.max(0, Math.min(1, x)) * 100, y: Math.max(0, Math.min(1, y)) * 100 };
+  }
+  function paintPins(){
+    const el = g('edo-mini-map'); if(!el) return;
+    const me = g('edo-mm-me'), goal = g('edo-mm-goal');
+    const p = myPlayer();
+    const n = p ? nodeOf(p) : null;
+    if(me){
+      if(n){ const q = pct(n.lat, n.lng); me.style.left = q.x + '%'; me.style.top = q.y + '%'; me.style.display = ''; }
+      else me.style.display = 'none';
+    }
+    const d = app.currentDestination;
+    if(goal){
+      if(d && isFinite(d.lat) && isFinite(d.lng)){
+        const q = pct(Number(d.lat), Number(d.lng));
+        goal.style.left = q.x + '%'; goal.style.top = q.y + '%'; goal.style.display = '';
+      } else goal.style.display = 'none';
+    }
+  }
+
+  function gameScreenOn(){
+    try{
+      const lobby = g('lobby-screen');
+      if(lobby && !lobby.classList.contains('hidden')) return false;
+      return !!(app.players && app.players.length);
+    }catch(e){ return false; }
+  }
+
+  app.showMiniMap = function(){
+    if(!gameScreenOn()) return;
+    const el = ensureMiniMap();
+    if(!placeUnderTools(el)) return;
+    hideStatus();                       // ステータス枠とは同じ場所なので、重ねません
+    paintPins();
+    el.classList.add('show');
+  };
+  app.hideMiniMap = function(){
+    const el = g('edo-mini-map');
+    if(el) el.classList.remove('show');
+  };
+  const miniMapShown = ()=>{ const el = g('edo-mini-map'); return !!(el && el.classList.contains('show')); };
+
+  // 画面にさわったら消します（地図を動かす・ボタン・サイコロ、どれでも）
+  document.addEventListener('pointerdown', (ev)=>{
+    if(!miniMapShown()) return;
+    try{ if(ev.target && ev.target.closest && ev.target.closest('#edo-mini-map')) return; }catch(e){}
+    app.hideMiniMap();
+  }, true);
+
+  // 「目的地」をタップすると、また出ます
+  function bindDestination(){
+    ['game-destination-badge','mobile-destination-badge'].forEach(id=>{
+      const b = g(id);
+      if(!b || b.__edoV151) return;
+      b.__edoV151 = true;
+      b.addEventListener('click', ()=>{ setTimeout(()=>{ try{ app.showMiniMap(); }catch(e){} }, 30); }, false);
+    });
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.14 ④　プレイヤーのステータス枠
+  //    ・縮小マップと同じ位置・同じ横幅にします
+  //    ・「移動◯マス」「ゴール◯回」はやめました
+  //    ・プレイヤー枠をタップしたときと、コマが動いている間だけ出します
+  // ──────────────────────────────────────────────────────────────
+  const clamp999 = (v)=>Math.max(0, Math.min(999, Math.round(Number(v) || 0)));
+
+  function statusHtml(p){
+    const s = p.stats || {};
+    const ava = (typeof app.avatarHtml === 'function') ? app.avatarHtml(p.avatar) : esc(p.avatar || '🙂');
+    const rows = [['知力', s.intelligence], ['財力', s.wealth], ['体力', s.stamina], ['運', s.luck]];
+    return '<div class="edo-ps-head">' +
+             '<span class="edo-ps-ava">' + ava + '</span>' +
+             '<span class="edo-ps-name">' + esc(p.name || '') + '</span>' +
+           '</div>' +
+           '<div class="edo-ps-mlabel">所持金</div>' +
+           '<div class="edo-ps-money">' + esc(app.formatMoney(p.money)) + '</div>' +
+           '<div class="edo-ps-stats">' +
+             rows.map(r=>'<div class="edo-ps-row"><span class="edo-ps-k">' + r[0] +
+               '</span><span class="edo-ps-v">' + clamp999(r[1]) + '</span></div>').join('') +
+           '</div>';
+  }
+
+  function showStatus(p){
+    if(!p) return;
+    const ps = g('edogawa-player-status'); if(!ps) return;
+    app.hideMiniMap();
+    placeUnderTools(ps);
+    ps.innerHTML = statusHtml(p);
+    ps.style.display = 'block';
+    app.__edoStatusFor = p.id;
+  }
+  function hideStatus(){
+    const ps = g('edogawa-player-status');
+    if(ps && ps.style.display !== 'none'){ ps.style.display = 'none'; ps.innerHTML = ''; }
+    app.__edoStatusFor = null;
+  }
+  app.showPlayerStatusPanel = showStatus;
+  const origClosePS = app.closePlayerStatus;
+  app.closePlayerStatus = function(){ hideStatus(); if(origClosePS) try{ origClosePS(); }catch(e){} };
+
+  // プレイヤー枠のタップ（これまでどおり panToPlayer から開きます）
+  const origPan = app.panToPlayer ? app.panToPlayer.bind(app) : null;
+  if(origPan){
+    app.panToPlayer = function(idx){
+      const r = origPan(idx);
+      try{ app.__edoStatusByTap = true; showStatus((app.players || [])[idx]); }catch(e){}
+      return r;
+    };
+  }
+
+  // コマが動いている間も出します（止まったら閉じます）
+  const origMove = app.movePlayerSteps ? app.movePlayerSteps.bind(app) : null;
+  if(origMove){
+    app.movePlayerSteps = function(player, totalSteps, stepDelay, silent){
+      app.__edoStatusByTap = false;
+      try{ if(player) showStatus(player); }catch(e){}
+      const r = origMove(player, totalSteps, stepDelay, silent);
+      const t0 = Date.now();
+      const watch = setInterval(()=>{
+        if(app.__edoStatusByTap){ clearInterval(watch); return; }
+        if(Date.now() - t0 > 1500 && !app.moveInterval){ clearInterval(watch); hideStatus(); }
+        if(Date.now() - t0 > 60000) clearInterval(watch);
+      }, 300);
+      return r;
+    };
+  }
+
+  // サイコロを振ったら、タップで出していた枠はいったん閉じます
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){
+    app.rollDice = function(){
+      app.__edoStatusByTap = false;
+      hideStatus();
+      app.hideMiniMap();
+      return origRoll.apply(app, arguments);
+    };
+  }
+
+  // 何かのモーダルが出たら閉じます
+  const MODALS = ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','boatrace-continue-modal',
+    'goal-modal','rocket-gift-modal','regional-mini-overlay','facility-modal','menu-modal',
+    'settings-modal','log-modal','property-modal','goal-list-modal','edo-menu-sheet'];
+  function anyModalOpen(){
+    for(const id of MODALS){
+      const el = g(id);
+      if(el && !el.classList.contains('hidden') && getComputedStyle(el).display !== 'none') return true;
+    }
+    const mc = g('edo-mini-common');
+    if(mc && mc.classList.contains('show')) return true;
+    const ga = document.querySelector('.goal-amida-overlay');
+    if(ga && getComputedStyle(ga).display !== 'none') return true;
+    return false;
+  }
+  function statusShown(){
+    const ps = g('edogawa-player-status');
+    return !!(ps && ps.style.display === 'block');
+  }
+
+  setInterval(()=>{
+    try{
+      shortenMpNote();
+      bindDestination();
+      if(statusShown()){
+        placeUnderTools(g('edogawa-player-status'));
+        if(anyModalOpen()){ hideStatus(); return; }
+      }
+      if(miniMapShown()){ placeUnderTools(g('edo-mini-map')); paintPins(); }
+    }catch(e){}
+  }, 250);
+
+  // ゲーム画面になったら、縮小マップを出します
+  const origStart = app.startGame ? app.startGame.bind(app) : null;
+  if(origStart){
+    app.startGame = async function(){
+      const r = await origStart.apply(app, arguments);
+      setTimeout(()=>{ try{ app.showMiniMap(); }catch(e){} }, 1200);
+      return r;
+    };
+  }
+  let wasLobby = true;
+  setInterval(()=>{
+    const on = gameScreenOn();
+    if(on && wasLobby){ wasLobby = false; setTimeout(()=>{ try{ app.showMiniMap(); }catch(e){} }, 600); }
+    if(!on) wasLobby = true;
+  }, 600);
+
+  function boot(){ shortenMpNote(); bindDestination(); ensureMiniMap(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.__EDOGAWA_V151_INFO = ()=>{
+    const el = g('edo-mini-map'), ps = g('edogawa-player-status'), tools = g('game-header-tools');
+    const box = (x)=>{ if(!x) return null; const r = x.getBoundingClientRect();
+      return {x:Math.round(r.left), y:Math.round(r.top), w:Math.round(r.width), h:Math.round(r.height)}; };
+    return {
+      縮小マップ: miniMapShown(),
+      縮小マップの枠: box(el),
+      ステータス: statusShown(),
+      ステータスの枠: box(ps),
+      ボタンの枠: box(tools),
+      ちず: (g('edo-mm-img') || {}).src || null,
+      現在地: (()=>{ const m = g('edo-mm-me'); return m ? {left:m.style.left, top:m.style.top, 表示:m.style.display !== 'none'} : null; })(),
+      目的地: (()=>{ const m = g('edo-mm-goal'); return m ? {left:m.style.left, top:m.style.top, 表示:m.style.display !== 'none'} : null; })(),
+      メニューの説明: (()=>{ const p = document.querySelector('#edo-mp-panel p'); return p ? p.textContent : null; })()
+    };
+  };
+})();
+</script>
+<style id="edogawa-v152-style">
+  /* 🎰 パチンコ店のアイコン */
+  .edo-pachi-icon{ background:none !important; border:0 !important; }
+  .edo-pachi-wrap{ display:flex; flex-direction:column; align-items:center; justify-content:center;
+    width:78px; height:78px; pointer-events:none; }
+  .edo-pachi-pin{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:17px; line-height:1; pointer-events:auto; cursor:pointer;
+    background:rgba(190,24,93,.30); border:2px solid #f472b6;
+    box-shadow:0 2px 8px rgba(0,0,0,.45); }
+  .edo-pachi-lbl{ margin-top:2px; max-width:76px; font-size:9px; font-weight:900; color:#fde68a;
+    text-align:center; line-height:1.15; text-shadow:0 1px 3px rgba(0,0,0,.9);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
+</style>
+<script id="edogawa-v152">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.14　🎰 パチンコ店
+  //    ① 地図に🎰を出し、タップで施設の詳細を見られるようにします
+  //    ② 🎰の近くに止まると、次の自分の番のはじめに
+  //       「近くに◯◯がありますが、1回休んで遊んでいきますか？」と聞きます
+  //    ③ 「はい」で「CR Super EDOGAWA フィーバー」を開きます
+  //       （開始・結果は双六の共通モーダル。玉は￥4,000＝1,000玉）
+  // ──────────────────────────────────────────────────────────────
+  const DATA_URL = 'https://shulavan.github.io/data/pachinko.json';
+  const NEAR_M   = 240;          // 駅と同じ「6マス」ぶん
+  const BUY_YEN  = 4000;         // 玉の購入金額（1玉＝￥4 → 1,000玉）
+
+  let places = null, loading = false, markers = [], markerMap = null;
+
+  function km(a, b){
+    const R = 6371, t = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * t, dLng = (b.lng - a.lng) * t;
+    const s = Math.sin(dLat/2)**2 +
+      Math.cos(a.lat*t) * Math.cos(b.lat*t) * Math.sin(dLng/2)**2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+  }
+
+  async function load(){
+    if(places || loading) return places;
+    loading = true;
+    try{
+      const res = await fetch(DATA_URL, { cache:'force-cache' });
+      const raw = await res.json();
+      places = (Array.isArray(raw) ? raw : []).map(r=>({
+        name: String(r['店舗名'] || '').trim(),
+        address: String(r['住所'] || '').trim(),
+        open: String(r['営業時間'] || '').trim(),
+        lat: Number(r['緯度']), lng: Number(r['経度']),
+        bike: String(r['駐輪場'] || '').trim(),
+        parking: String(r['駐車場'] || '').trim(),
+        emoji: '🎰', pachinko: true
+      })).filter(x=>x.name && isFinite(x.lat) && isFinite(x.lng));
+      app.pachinkoPlaces = places;
+    }catch(e){
+      console.warn('[v152] パチンコ店の一覧を読み込めませんでした', e);
+      places = [];
+      app.pachinkoPlaces = places;
+    }finally{ loading = false; }
+    return places;
+  }
+
+  // ① 地図に🎰を出します
+  function addMarkers(){
+    if(!app.map || !window.L || !places || !places.length) return;
+    if(markerMap === app.map && markers.length) return;
+    markers.forEach(m=>{ try{ app.map.removeLayer(m); }catch(e){} });
+    markers = [];
+    markerMap = app.map;
+    places.forEach(pl=>{
+      try{
+        const icon = L.divIcon({
+          className: 'edo-pachi-icon',
+          html: '<div class="edo-pachi-wrap"><div class="edo-pachi-pin">🎰</div>' +
+                '<div class="edo-pachi-lbl">' + esc(pl.name) + '</div></div>',
+          iconSize: [78, 78], iconAnchor: [39, 39]
+        });
+        const mk = L.marker([pl.lat, pl.lng], { icon, zIndexOffset: -90 }).addTo(app.map);
+        try{ mk.bindTooltip(pl.name, { direction:'top', offset:[0,-10] }); }catch(e){}
+        mk.on('click', ()=>{ try{ app.showFacilityDetail(pl, { heading:'🎰 パチンコ店' }); }catch(e){} });
+        markers.push(mk);
+      }catch(e){}
+    });
+  }
+
+  // 施設の詳細に「営業時間・駐輪場・駐車場」を出します
+  const origRows = app.facilityDetailRows ? app.facilityDetailRows.bind(app) : null;
+  if(origRows){
+    app.facilityDetailRows = function(info){
+      if(info && info.pachinko){
+        const rows = [];
+        if(info.open)    rows.push({ label:'営業時間', value: info.open, strong:true });
+        if(info.bike)    rows.push({ label:'駐輪場',   value: info.bike });
+        if(info.parking) rows.push({ label:'駐車場',   value: info.parking });
+        rows.push({ label:'遊び方', value:'近くのマスに止まると、次の番に「1回休んで遊ぶ」を選べます。' });
+        return rows;
+      }
+      return origRows(info);
+    };
+  }
+
+  // ② 近くの🎰をさがします
+  function nearPachinko(player){
+    if(!places || !places.length) return null;
+    try{
+      const n = app.roadNetworkNodes && app.roadNetworkNodes[player.currentNodeIdx];
+      if(!n) return null;
+      let best = null;
+      places.forEach(pl=>{
+        const d = km({lat:n.lat, lng:n.lng}, pl) * 1000;
+        if(d <= NEAR_M && (!best || d < best.d)) best = { place: pl, d: Math.round(d) };
+      });
+      return best;
+    }catch(e){ return null; }
+  }
+
+  const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
+
+  const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(origLand){
+    app.landOnSpot = function(player){
+      const r = origLand(player);
+      try{
+        if(isMine(player) && !player.isFlying){
+          const hit = nearPachinko(player);
+          if(hit && player.pachiDeclined !== hit.place.name){
+            player.pendingPachinko = { name: hit.place.name };
+          }else{
+            player.pendingPachinko = null;
+          }
+          if(hit && player.pachiDeclined && player.pachiDeclined !== hit.place.name){
+            player.pachiDeclined = null;      // べつのお店なので、あらためて聞きます
+          }
+        }
+      }catch(e){ console.warn('[v152]', e); }
+      return r;
+    };
+  }
+
+  // 次の自分の番のはじめに聞きます
+  function askBox(){
+    let el = g('edo-pachi-ask');
+    if(!el){ el = document.createElement('div'); el.id = 'edo-pachi-ask'; document.body.appendChild(el); }
+    return el;
+  }
+  app.closePachinkoAsk = function(){
+    const el = g('edo-pachi-ask');
+    if(el){ el.classList.remove('show'); el.innerHTML = ''; }
+  };
+  function openAsk(player, place){
+    const el = askBox();
+    el.className = '';                      // #edo-board-ask と同じ見た目を使います
+    el.id = 'edo-pachi-ask';
+    try{
+      const f = document.querySelector('footer[data-app="1"]');
+      const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
+      el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);z-index:46;' +
+        'width:min(340px,92vw);bottom:' + (h + 16) + 'px;display:block';
+    }catch(e){}
+    el.innerHTML = '<div class="edo-ask-box">' +
+      '<div class="edo-ask-t">🎰 ' + esc(place.name) + '</div>' +
+      '<div class="edo-ask-s">近くに' + esc(place.name) + 'がありますが、<br>' +
+        '1回休んで遊んでいきますか？<br>玉の購入は ￥' + BUY_YEN.toLocaleString('ja-JP') + '（1,000玉）です。</div>' +
+      '<div class="edo-ask-btns">' +
+        '<button type="button" data-no="1">いいえ</button>' +
+        '<button type="button" class="go" data-yes="1">遊ぶ</button>' +
+      '</div></div>';
+    el.classList.add('show');
+    el.onclick = (ev)=>{
+      const t = ev.target.closest ? ev.target.closest('button') : null;
+      if(!t) return;
+      if(t.dataset.no){
+        player.pachiDeclined = place.name;
+        player.pendingPachinko = null;
+        app.closePachinkoAsk();
+        return;
+      }
+      if(t.dataset.yes){
+        player.pendingPachinko = null;
+        app.closePachinkoAsk();
+        app.startPachinkoGame(player, place);
+      }
+    };
+  }
+  function refreshAsk(){
+    try{
+      const cp = (app.players || [])[app.currentPlayerIdx];
+      const el = g('edo-pachi-ask');
+      const shown = !!(el && el.classList.contains('show'));
+      if(!cp || !isMine(cp) || !cp.pendingPachinko){ if(shown) app.closePachinkoAsk(); return; }
+      if(app.isRolling || app.miniGameActive || app.boatRaceActive || cp.skipTurn){
+        if(shown) app.closePachinkoAsk(); return;
+      }
+      if(app.canActNow && !app.canActNow()){ if(shown) app.closePachinkoAsk(); return; }
+      if(shown) return;
+      const pl = (places || []).find(x=>x.name === cp.pendingPachinko.name);
+      if(pl) openAsk(cp, pl);
+    }catch(e){}
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); refreshAsk(); return r; }; }
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){
+    app.rollDice = function(){
+      try{
+        const cp = (app.players || [])[app.currentPlayerIdx];
+        if(cp) cp.pendingPachinko = null;     // 振ったら、その案内は終わりにします
+        app.closePachinkoAsk();
+      }catch(e){}
+      return origRoll.apply(app, arguments);
+    };
+  }
+
+  // ③ ゲームを開きます（開始・結果は双六の共通モーダル）
+  app.startPachinkoGame = function(player, place){
+    const overlay = g('regional-mini-overlay'), frame = g('regional-mini-frame'), title = g('regional-mini-title');
+    if(!overlay || !frame || !player) return false;
+
+    let done = false, payload = null, guard = null;
+    const money0 = Math.max(0, Math.round(Number(player.money) || 0));
+
+    const finish = ()=>{
+      if(done) return; done = true;
+      clearTimeout(guard);
+      window.removeEventListener('message', onMsg);
+      try{ frame.contentWindow && frame.contentWindow.postMessage({type:'EDOGAWA_MINIGAME_TEARDOWN'}, '*'); }catch(e){}
+      try{ frame.onload = null; frame.removeAttribute('srcdoc'); frame.src = 'about:blank'; }catch(e){}
+      overlay.classList.add('hidden');
+      app.miniGameActive = false;
+      app.regionalMiniGame = null;
+      app.__pachinkoActive = false;
+
+      const d = (payload && payload.pachinko) || {};
+      const gain = Math.max(0, Math.round(Number(payload && payload.delta) || 0));
+      player.money = Math.max(0, (Number(player.money) || 0) + gain);
+      try{ app.updateHUD && app.updateHUD(); }catch(e){}
+      try{ app.saveGameState && app.saveGameState(); }catch(e){}
+      try{ app.addLog && app.addLog('🎰 ' + player.name + '：' + place.name +
+        ' で パチンコ（玉購入 ￥' + BUY_YEN.toLocaleString('ja-JP') + ' ／ 換金 ＋￥' +
+        gain.toLocaleString('ja-JP') + '）'); }catch(e){}
+
+      const rows = [
+        { name:'玉購入金額',          text:'￥' + (d.spent != null ? Number(d.spent) : BUY_YEN).toLocaleString('ja-JP') },
+        { name:'ゲーム時間',          text: d.duration || '-' },
+        { name:'持ち玉数',            text:(Number(d.balls)  || 0).toLocaleString('ja-JP') + ' 玉' },
+        { name:'大当たり回数',        text:(Number(d.hits)   || 0).toLocaleString('ja-JP') + ' 回' },
+        { name:'スロット回転数',      text:(Number(d.spins)  || 0).toLocaleString('ja-JP') + ' 回' },
+        { name:'獲得玉数',            text:(Number(d.payout) || 0).toLocaleString('ja-JP') + ' 玉' },
+        { name:'等価交換（1玉→￥1）', text:'＋￥' + gain.toLocaleString('ja-JP') },
+        { name:'換金後所持金',        text:'￥' + Math.round(player.money).toLocaleString('ja-JP') }
+      ];
+      try{
+        app._miniCommonResultShow && app._miniCommonResultShow({
+          game:'pachinko', playerName: player.name, money: player.money, delta: gain - BUY_YEN, rows: rows
+        });
+        decorate('結果発表', 'CR Super EDOGAWA フィーバー');
+      }catch(e){}
+      // 共通の結果モーダルは5秒で自動的に閉じ、そのあと次の人の番にします
+      setTimeout(()=>{ try{ app.finishTurn && app.finishTurn(); }catch(e){} }, 5400);
+    };
+
+    function decorate(kicker, titleText, rulesHtml){
+      try{
+        const box = document.querySelector('#edo-mini-common .edo-mc-box');
+        if(!box) return;
+        const e = box.querySelector('.edo-mc-emoji'); if(e) e.textContent = '🎰';
+        const k = box.querySelector('.edo-mc-kicker'); if(k && kicker) k.textContent = kicker;
+        const t = box.querySelector('.edo-mc-title'); if(t) t.textContent = titleText;
+        if(rulesHtml){
+          const ul = box.querySelector('.edo-mc-rules');
+          if(ul) ul.innerHTML = rulesHtml;
+        }
+      }catch(e){}
+    }
+
+    const onMsg = (ev)=>{
+      const d = ev.data || {};
+      if(!d || d.game !== 'pachinko') return;
+      if(d.type === 'EDOGAWA_MINIGAME_RENDERED'){ g('regional-mini-loading')?.style.setProperty('display','none'); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard = setTimeout(finish, 900000); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_RESULT'){ payload = d; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_CLOSE'){ finish(); return; }
+    };
+    window.addEventListener('message', onMsg);
+    guard = setTimeout(finish, 900000);
+
+    // 玉の購入ぶんを、はじめに引きます
+    player.money = Math.max(0, money0 - BUY_YEN);
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+
+    app.miniGameActive = true;
+    // 共通のミニゲーム処理に横取りされないよう、regionalMiniGame は使いません
+    app.regionalMiniGame = null;
+    app.__pachinkoActive = true;
+    if(title) title.textContent = '🎰 CR Super EDOGAWA フィーバー';
+    g('regional-mini-loading')?.style.setProperty('display','flex');
+    frame.style.display = 'block';
+    overlay.classList.remove('hidden');
+    try{ frame.removeAttribute('srcdoc'); }catch(e){}
+    frame.onload = ()=>{
+      g('regional-mini-loading')?.style.setProperty('display','none');
+      try{ frame.contentWindow.postMessage({ type:'EDOGAWA_SET_MONEY', money: money0, playerName: player.name }, '*'); }catch(e){}
+    };
+    frame.src = 'minigames.html?game=pachinko&v=' + (window.__EDOGAWA_MINIGAMES_VER || '1');
+
+    // 開始モーダル（3秒で自動的に閉じます）
+    try{
+      app._miniCommonStartShow && app._miniCommonStartShow('pachinko', player);
+      decorate('ミニゲーム', 'CR Super EDOGAWA フィーバー',
+        '<li>玉購入は ￥' + BUY_YEN.toLocaleString('ja-JP') + '（1,000玉）になります</li>' +
+        '<li>ハンドルを長押しして玉を発射します。</li>' +
+        '<li>入賞するとスロットが回り、数字がそろうと確変です。</li>' +
+        '<li>残った玉は 1玉＝￥1 で換金します。</li>');
+    }catch(e){}
+    setTimeout(()=>{
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      const send = ()=>{ try{ frame.contentWindow.postMessage({type:'EDOGAWA_COMMON_MINIGAME_START', game:'pachinko'}, '*'); }catch(e){} };
+      send(); setTimeout(send, 300); setTimeout(send, 900);
+    }, 3000);
+    return true;
+  };
+
+  // 読み込みと地図への反映
+  function tick(){
+    if(!places && !loading){
+      try{ if(app.map) load().then(()=>addMarkers()); }catch(e){}
+    }else if(places){ addMarkers(); }
+  }
+  setInterval(tick, 1500);
+  setTimeout(tick, 1200);
+
+  window.__EDOGAWA_V152_INFO = ()=>({
+    お店の数: places ? places.length : null,
+    地図のアイコン: markers.length,
+    近くのお店: (()=>{ const cp = (app.players || [])[app.currentPlayerIdx];
+      if(!cp) return null; const h = nearPachinko(cp); return h ? (h.place.name + '（' + h.d + 'm）') : null; })(),
+    聞いている: (()=>{ const el = g('edo-pachi-ask'); return !!(el && el.classList.contains('show')); })(),
+    待っているお店: (()=>{ const cp = (app.players || [])[app.currentPlayerIdx];
+      return cp && cp.pendingPachinko ? cp.pendingPachinko.name : null; })(),
+    ことわったお店: (()=>{ const cp = (app.players || [])[app.currentPlayerIdx];
+      return cp ? (cp.pachiDeclined || null) : null; })()
+  });
 })();
 </script>
 <script id="edogawa-v39-footer">
