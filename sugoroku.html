@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.22 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.23 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -26699,9 +26699,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     };
   }
 
-  // 画面の外をタップして閉じたときなど、目印が残らないように片付けます
+  // 画面の外をタップして閉じたときなど、目印が残らないように片付けます。
+  // ただし「アカウント設定」を押してから画面が出るまでに少し間があるので、
+  // 一度ちゃんと開いたのを見とどけてから片付けます。
+  // （見とどけずに消すと、閉じたときに目印が無く、
+  //   トップページに戻ってしまうことがありました）
+  let sawSetup = false;
   setInterval(function(){
-    try{ if(app.__edoAcctFromGame && !setupShown()) app.__edoAcctFromGame = false; }catch(e){}
+    try{
+      if(!app.__edoAcctFromGame){ sawSetup = false; return; }
+      if(setupShown()){ sawSetup = true; return; }
+      if(sawSetup){ app.__edoAcctFromGame = false; sawSetup = false; }
+    }catch(e){}
   }, 600);
 
   window.__EDOGAWA_V153_INFO = ()=>({
@@ -26959,6 +26968,120 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         return el && !el.classList.contains('hidden') ? el.textContent : null; })()
     };
   };
+})();
+</script>
+<script id="edogawa-v155">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.23　★マス・▲マスの「順番」を、続きから遊んでも引き継ぎます
+  //
+  //  【これまで】
+  //   ★マスは 江戸川クイズ → 金魚すくい → 漢字 → 木の実 → 果実射撃 の順、
+  //   ▲マスの強制移動は 🚓警察 → 🚑病院 の順に、きちんと持ち回っていました。
+  //   （調べたところ、遊んでいる間の順番は正しく回っていました）
+  //
+  //   ところが、この「次は何番目か」という記憶だけが保存されていなかったため、
+  //   アプリを開き直して「前回の続きから遊ぶ」を選ぶと、
+  //   毎回いちばん最初（★＝江戸川クイズ／▲＝警察）に戻っていました。
+  //   そのため、遊び直すたびに クイズ・警察 ばかりに見えていました。
+  //
+  //  【修正】
+  //   ・順番の位置を保存して、続きから遊ぶときに元の位置から再開します
+  //   ・新しくゲームを始めるときは、毎回ちがう種類から始まるようにします
+  // ──────────────────────────────────────────────────────────────
+  const KEY = 'edogawa_rotation_v1';
+  const STAR_KINDS = ['quiz','kingyo','kanken','nuts','archery'];
+  const GREEN_ORDER = ['boat','canoe','wheel','tower'];
+
+  function save(){
+    try{
+      localStorage.setItem(KEY, JSON.stringify({
+        star:    Math.max(0, Math.floor(Number(app.starRotationIdx) || 0)) % STAR_KINDS.length,
+        forced:  app.greenForcedNext === 'hospital' ? 'hospital' : 'police',
+        special: GREEN_ORDER.indexOf(app.greenSpecialNext) >= 0 ? app.greenSpecialNext : 'boat'
+      }));
+    }catch(e){}
+  }
+  function load(){
+    try{
+      const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if(!o || typeof o !== 'object') return false;
+      if(Number.isFinite(o.star)) app.starRotationIdx = Math.max(0, Math.floor(o.star)) % STAR_KINDS.length;
+      if(o.forced === 'police' || o.forced === 'hospital') app.greenForcedNext = o.forced;
+      if(GREEN_ORDER.indexOf(o.special) >= 0) app.greenSpecialNext = o.special;
+      return true;
+    }catch(e){ return false; }
+  }
+  function shuffleStart(){
+    // 新しいゲームは、毎回ちがうところから始めます
+    app.starRotationIdx  = Math.floor(Math.random() * STAR_KINDS.length);
+    app.greenForcedNext  = Math.random() < 0.5 ? 'police' : 'hospital';
+    app.greenSpecialNext = GREEN_ORDER[Math.floor(Math.random() * GREEN_ORDER.length)];
+    save();
+  }
+
+  // 出すたびに、次の順番を覚えておきます
+  const origStar = app.resolveStarEvent ? app.resolveStarEvent.bind(app) : null;
+  if(origStar){
+    app.resolveStarEvent = function(){
+      const r = origStar.apply(app, arguments);
+      try{
+        save();
+        app.addLog && app.addLog('⭐ [★マス] ' +
+          ({quiz:'江戸川クイズ', kingyo:'金魚すくい', kanken:'漢字書き取り',
+            nuts:'木の実ドロボー', archery:'果実射撃'}[app.lastStarMiniGameKind] || 'ミニゲーム') +
+          '（つぎは「' +
+          ({quiz:'江戸川クイズ', kingyo:'金魚すくい', kanken:'漢字書き取り',
+            nuts:'木の実ドロボー', archery:'果実射撃'}[STAR_KINDS[(Number(app.starRotationIdx)||0) % STAR_KINDS.length]] || '') +
+          '」です）');
+      }catch(e){}
+      return r;
+    };
+  }
+  const origGreen = app.resolveGreenEvent ? app.resolveGreenEvent.bind(app) : null;
+  if(origGreen){
+    app.resolveGreenEvent = function(){
+      const r = origGreen.apply(app, arguments);
+      try{ save(); }catch(e){}
+      return r;
+    };
+  }
+  // ゲームを保存するたびに、順番も一緒に残します
+  const origSave = app.saveGameState ? app.saveGameState.bind(app) : null;
+  if(origSave){
+    app.saveGameState = function(){ const r = origSave.apply(app, arguments); try{ save(); }catch(e){} return r; };
+  }
+
+  // 続きから遊ぶときは、保存した位置から再開します
+  ['resumeSoloGame','_resumeMultiplayerAsHost'].forEach(function(name){
+    const orig = app[name] ? app[name].bind(app) : null;
+    if(!orig) return;
+    app[name] = async function(){
+      const r = await orig.apply(app, arguments);
+      try{ if(!load()) shuffleStart(); }catch(e){}
+      return r;
+    };
+  });
+
+  // 新しく始めるときは、毎回ちがう種類から
+  const origStart = app.startGame ? app.startGame.bind(app) : null;
+  if(origStart){
+    app.startGame = async function(){
+      const r = await origStart.apply(app, arguments);
+      try{ shuffleStart(); }catch(e){}
+      return r;
+    };
+  }
+
+  window.__EDOGAWA_V155_INFO = ()=>({
+    'つぎの★': STAR_KINDS[(Number(app.starRotationIdx)||0) % STAR_KINDS.length],
+    'つぎの▲強制移動': app.greenForcedNext === 'hospital' ? 'hospital' : 'police',
+    'つぎの▲ミニゲーム': app.greenSpecialNext || 'boat',
+    保存: (()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ return null; } })()
+  });
 })();
 </script>
 <script id="edogawa-v39-footer">
