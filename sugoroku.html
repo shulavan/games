@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.21 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.22 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -26181,10 +26181,42 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return !!(ps && ps.style.display === 'block');
   }
 
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.22　自分の番がきたら、縮小マップをもう一度出します
+  //    これまでは「ゲームを始めたとき」と「目的地ボタンを押したとき」
+  //    だけ出していたため、サイコロを振って消えたあとは、
+  //    次の自分の番になっても出ないままでした。
+  //    1つの番につき1回だけ出すので、画面にさわって消したあとに
+  //    勝手に出てくることはありません。
+  // ──────────────────────────────────────────────────────────────
+  let shownTurn = null, waitTurn = null, waitFrom = 0;
+  function turnKey(){ return String(app.currentPlayerIdx) + ':' + String(app.turnCount || 0); }
+  function isMyTurn(){
+    const cp = (app.players || [])[app.currentPlayerIdx];
+    if(!cp || cp.isCpu) return false;
+    return !app.myUid || cp.uid === app.myUid;
+  }
+  function autoShowForTurn(){
+    if(!gameScreenOn()){ shownTurn = null; waitTurn = null; return; }
+    if(!isMyTurn()) return;                       // 自分の番だけ出します
+    const key = turnKey();
+    if(shownTurn === key) return;                 // この番ではもう出しました
+    if(waitTurn !== key){ waitTurn = key; waitFrom = Date.now(); return; }
+    if(miniMapShown()){ shownTurn = key; return; }        // すでに出ています
+    if(Date.now() - waitFrom < 400) return;               // 画面が落ち着くのを待ちます
+    if(Date.now() - waitFrom > 12000){ shownTurn = key; return; }  // 出せないまま時間切れ
+    if(app.autoRollTimer){ shownTurn = key; return; }     // 自動で振る番は出しません
+    if(app.isRolling || app.miniGameActive || app.boatRaceActive) return;
+    if(anyModalOpen() || statusShown()) return;
+    shownTurn = key;
+    try{ app.showMiniMap(); }catch(e){}
+  }
+
   setInterval(()=>{
     try{
       shortenMpNote();
       bindDestination();
+      autoShowForTurn();
       if(statusShown()){
         placeUnderTools(g('edogawa-player-status'));
         if(anyModalOpen()){ hideStatus(); return; }
@@ -26237,7 +26269,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       })(),
       目的地の重なり順: (()=>{ const m = g('edo-mm-goal'); return m ? Number(getComputedStyle(m).zIndex) : null; })(),
       目的地: (()=>{ const m = g('edo-mm-goal'); return m ? {left:m.style.left, top:m.style.top, 表示:m.style.display !== 'none'} : null; })(),
-      メニューの説明: (()=>{ const p = document.querySelector('#edo-mp-panel p'); return p ? p.textContent : null; })()
+      メニューの説明: (()=>{ const p = document.querySelector('#edo-mp-panel p'); return p ? p.textContent : null; })(),
+      自分の番: isMyTurn(),
+      この番で出した: shownTurn,
+      いまの番: turnKey()
     };
   };
 })();
