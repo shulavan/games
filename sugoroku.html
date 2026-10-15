@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.16 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.18 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -25883,12 +25883,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     background:#020617; border:1px solid rgba(56,189,248,.45); overflow:hidden;
     display:flex; align-items:center; justify-content:center; font-size:14px; }
   #edogawa-player-status .edo-ps-ava img{ width:100%; height:100%; object-fit:cover; }
+  /* ニックネームは最大6文字なので、省略（…）せずに全部出します */
   #edogawa-player-status .edo-ps-name{ font-size:12px; font-weight:900; color:#fff;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
+    white-space:nowrap; overflow:visible; text-overflow:clip; flex:0 1 auto; }
+  /* 閉じる「✕」は置きません（枠外をタップすれば閉じます） */
+  #edogawa-player-status .edo-x-btn{ display:none !important; }
   #edogawa-player-status .edo-ps-mlabel{ margin-top:6px; font-size:10px; font-weight:900;
     color:#94a3b8; text-align:center; }
   #edogawa-player-status .edo-ps-money{ font-size:15px; font-weight:1000; color:#fbbf24;
-    text-align:right; white-space:nowrap; line-height:1.25; }
+    text-align:center; white-space:nowrap; line-height:1.25; }
   #edogawa-player-status .edo-ps-stats{ margin-top:5px; border-top:1px solid rgba(148,163,184,.22);
     padding-top:4px; display:flex; flex-direction:column; align-items:center; gap:1px; }
   #edogawa-player-status .edo-ps-row{ display:flex; align-items:baseline; justify-content:center;
@@ -26053,9 +26056,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const s = p.stats || {};
     const ava = (typeof app.avatarHtml === 'function') ? app.avatarHtml(p.avatar) : esc(p.avatar || '🙂');
     const rows = [['知力', s.intelligence], ['財力', s.wealth], ['体力', s.stamina], ['運', s.luck]];
+    // 見出しの行に、見えない「✕」をひとつだけ置いておきます。
+    // 以前のバージョンが「✕が無ければ付け足す」という作りになっているため、
+    // ここで先に置いておくと、✕が付け足されなくなります（＝✕は出ません）。
+    // そのおかげで名前の欄が押しつぶされず、6文字すべて表示できます。
     return '<div class="edo-ps-head">' +
              '<span class="edo-ps-ava">' + ava + '</span>' +
              '<span class="edo-ps-name">' + esc(p.name || '') + '</span>' +
+             '<button type="button" class="edo-x-btn" hidden aria-hidden="true" tabindex="-1"></button>' +
            '</div>' +
            '<div class="edo-ps-mlabel">所持金</div>' +
            '<div class="edo-ps-money">' + esc(app.formatMoney(p.money)) + '</div>' +
