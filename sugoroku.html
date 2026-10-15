@@ -249,7 +249,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.15 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.16 (2026-10-15)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23943,7 +23943,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       {k:'lottery_shop', ic:'🎫', n:'江戸川ジャンボ宝くじ　売り場'},
       {k:'lottery_draw', ic:'🎊', n:'江戸川ジャンボ宝くじ　抽選会'},
       {k:'train',        ic:'🚃', n:'電車シミュレーター'},
-      {k:'pachinko',     ic:'🎰', n:'CR Super EDOGAWA フィーバー'}
+      {k:'pachinko',     ic:'🎰', n:'CR EDOGAWA フィーバー'}
     ]}
   ];
 
@@ -26216,7 +26216,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //    ① 地図に🎰を出し、タップで施設の詳細を見られるようにします
   //    ② 🎰の近くに止まると、次の自分の番のはじめに
   //       「近くに◯◯がありますが、1回休んで遊んでいきますか？」と聞きます
-  //    ③ 「はい」で「CR Super EDOGAWA フィーバー」を開きます
+  //    ③ 「はい」で「CR EDOGAWA フィーバー」を開きます
   //       （開始・結果は双六の共通モーダル。玉は￥4,000＝1,000玉）
   // ──────────────────────────────────────────────────────────────
   const DATA_URL = 'https://shulavan.github.io/data/pachinko.json';
@@ -26351,8 +26351,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{
       const f = document.querySelector('footer[data-app="1"]');
       const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
-      el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);z-index:46;' +
-        'width:min(340px,92vw);bottom:' + (h + 16) + 'px;display:block';
+      // #edo-board-ask と同じ置きかたにします。
+      // 以前は枠を340pxにしていましたが、中の箱（.edo-ask-box）が380pxあるため
+      // 右へはみ出して「中央からずれて見える」状態になっていました。
+      // 左右いっぱいの枠にして、中身を中央ぞろえします。
+      el.style.cssText = 'position:fixed;left:10px;right:10px;z-index:2147483200;' +
+        'display:flex;justify-content:center;pointer-events:none;' +
+        'bottom:' + (h + 16) + 'px';
     }catch(e){}
     el.innerHTML = '<div class="edo-ask-box">' +
       '<div class="edo-ask-t">🎰 ' + esc(place.name) + '</div>' +
@@ -26419,6 +26424,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const finish = ()=>{
       if(done) return; done = true;
       clearTimeout(guard);
+      // 結果モーダルを見せている5秒のあいだに「ターンが止まった」と誤判定されて
+      // 二重に次の人へ進んでしまわないよう、見張りタイマーを止めます。
+      try{ clearTimeout(app.turnWatchdogTimer); app.turnWatchdogTimer = null; }catch(e){}
       window.removeEventListener('message', onMsg);
       try{ frame.contentWindow && frame.contentWindow.postMessage({type:'EDOGAWA_MINIGAME_TEARDOWN'}, '*'); }catch(e){}
       try{ frame.onload = null; frame.removeAttribute('srcdoc'); frame.src = 'about:blank'; }catch(e){}
@@ -26435,6 +26443,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{ app.addLog && app.addLog('🎰 ' + player.name + '：' + place.name +
         ' で パチンコ（玉購入 ￥' + BUY_YEN.toLocaleString('ja-JP') + ' ／ 換金 ＋￥' +
         gain.toLocaleString('ja-JP') + '）'); }catch(e){}
+      try{ app.addLog && app.addLog('💤 ' + player.name + ' はパチンコで1回休みです。'); }catch(e){}
 
       const rows = [
         { name:'玉購入金額',          text:'￥' + (d.spent != null ? Number(d.spent) : BUY_YEN).toLocaleString('ja-JP') },
@@ -26450,10 +26459,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         app._miniCommonResultShow && app._miniCommonResultShow({
           game:'pachinko', playerName: player.name, money: player.money, delta: gain - BUY_YEN, rows: rows
         });
-        decorate('結果発表', 'CR Super EDOGAWA フィーバー');
+        decorate('結果発表', 'CR EDOGAWA フィーバー');
       }catch(e){}
-      // 共通の結果モーダルは5秒で自動的に閉じ、そのあと次の人の番にします
-      setTimeout(()=>{ try{ app.finishTurn && app.finishTurn(); }catch(e){} }, 5400);
+      // 共通の結果モーダルは5秒で自動的に閉じ、そのあと次の人の番にします。
+      // 念のため、閉じ忘れがあってもここで片付けてから進めます。
+      setTimeout(()=>{
+        try{
+          const mc = g('edo-mini-common');
+          if(mc && mc.classList.contains('show')){ mc.classList.remove('show'); mc.innerHTML = ''; }
+        }catch(e){}
+        try{ app.finishTurn && app.finishTurn(); }catch(e){ console.warn('[v152]', e); }
+      }, 5400);
     };
 
     function decorate(kicker, titleText, rulesHtml){
@@ -26489,7 +26505,16 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     // 共通のミニゲーム処理に横取りされないよう、regionalMiniGame は使いません
     app.regionalMiniGame = null;
     app.__pachinkoActive = true;
-    if(title) title.textContent = '🎰 CR Super EDOGAWA フィーバー';
+    // ★このターンはパチンコで使います（サイコロは振りません）＝「1回休み」です。
+    //   このお誘いはサイコロを振る前に出るため、前のターンの終了処理が済んだまま
+    //   （turnSettled が true のまま）になっています。そのまま遊び終えると
+    //   finishTurn() が「もう終わっている」と判断して何もせず、
+    //   次の人の番に進まないまま画面が止まっていました。
+    //   江戸川競艇の「継続開催」と同じように、ここで振り出しに戻します。
+    app.isRolling = true;
+    app.turnSettled = false;
+    try{ app._armTurnWatchdog && app._armTurnWatchdog(); }catch(e){}
+    if(title) title.textContent = '🎰 CR EDOGAWA フィーバー';
     g('regional-mini-loading')?.style.setProperty('display','flex');
     frame.style.display = 'block';
     overlay.classList.remove('hidden');
@@ -26503,7 +26528,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     // 開始モーダル（3秒で自動的に閉じます）
     try{
       app._miniCommonStartShow && app._miniCommonStartShow('pachinko', player);
-      decorate('ミニゲーム', 'CR Super EDOGAWA フィーバー',
+      decorate('ミニゲーム', 'CR EDOGAWA フィーバー',
         '<li>玉購入は ￥' + BUY_YEN.toLocaleString('ja-JP') + '（1,000玉）になります</li>' +
         '<li>ハンドルを長押しして玉を発射します。</li>' +
         '<li>入賞するとスロットが回り、数字がそろうと確変です。</li>' +
