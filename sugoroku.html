@@ -209,12 +209,13 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '2';
+    window.__EDOGAWA_MINIGAMES_VER = '3';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
     window.__EDOGAWA_MINIGAME_LIST = ['amida','plane','mart','clinic','bus','toilet','lunch',
-      'hotel','kingyo','tower','wheel','canoe','delivery','kanken','hide','nuts','archery','train'];
+      'hotel','kingyo','tower','wheel','canoe','delivery','kanken','hide','nuts','archery','train',
+      'lottery','pachinko','fishing','fight'];
     window.__EDOGAWA_HAS_GAME = function(k){
       return window.__EDOGAWA_MINIGAME_LIST.indexOf(k) >= 0;
     };
@@ -249,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.23 (2026-10-15)';
+    window.__EDOGAWA_VERSION = 'ver1.0.25 (2026-10-20)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23943,7 +23944,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       {k:'lottery_shop', ic:'🎫', n:'江戸川ジャンボ宝くじ　売り場'},
       {k:'lottery_draw', ic:'🎊', n:'江戸川ジャンボ宝くじ　抽選会'},
       {k:'train',        ic:'🚃', n:'電車シミュレーター'},
-      {k:'pachinko',     ic:'🎰', n:'CR EDOGAWA フィーバー'}
+      {k:'pachinko',     ic:'🎰', n:'CR EDOGAWA フィーバー'},
+      {k:'fishing',      ic:'🎣', n:'えどがわ釣りスポット'},
+      {k:'fight',        ic:'🥊', n:'江戸川街道 闘魂ロード'}
     ]}
   ];
 
@@ -24048,6 +24051,16 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const pl = (app.pachinkoPlaces || [])[0] || { name:'パチンコ店' };
         app.finishTurn = ()=>restore();
         app.startPachinkoGame(p, pl);
+        return;
+      }
+      if(key === 'fishing'){
+        const sp = (app.fishingSpots || [])[0] || { name:'釣りスポット' };
+        app.finishTurn = ()=>restore();
+        app.startFishingGame(p, sp);
+        return;
+      }
+      if(key === 'fight'){
+        app.startFightGame(p, app.players[1], ()=>restore(), 'same');
         return;
       }
       app.openRegionalMiniGame(key, p);
@@ -27081,6 +27094,608 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     'つぎの▲強制移動': app.greenForcedNext === 'hospital' ? 'hospital' : 'police',
     'つぎの▲ミニゲーム': app.greenSpecialNext || 'boat',
     保存: (()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ return null; } })()
+  });
+})();
+</script>
+<style id="edogawa-v156-style">
+  /* 🎣 釣りスポット（地図のアイコン） */
+  .edo-fish-icon{ background:transparent; border:0; }
+  .edo-fish-wrap{ display:flex; flex-direction:column; align-items:center; pointer-events:none; }
+  .edo-fish-pin{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:17px; line-height:1; pointer-events:auto; cursor:pointer;
+    background:rgba(14,116,144,.32); border:2px solid #38bdf8;
+    box-shadow:0 2px 8px rgba(0,0,0,.45); }
+  .edo-fish-lbl{ margin-top:2px; max-width:76px; font-size:9px; font-weight:900; color:#bae6fd;
+    text-align:center; line-height:1.15; text-shadow:0 1px 3px rgba(0,0,0,.9);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; }
+
+  /* 🥊 闘魂ロードの開始モーダルは、うしろのゲームセンターの画面が見えるようにします */
+  #edo-mini-common.edo-mc-see{ background:rgba(2,6,23,.30) !important;
+    -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+  #edo-mini-common.edo-mc-see .edo-mc-box{ background:rgba(15,23,42,.90) !important; }
+  #edo-mini-common .edo-mc-vs{ margin:2px 0 8px; font-size:16px; font-weight:1000; color:#fde68a;
+    letter-spacing:.02em; }
+  #edo-mini-common .edo-mc-vs b{ color:#f87171; margin:0 .4em; }
+</style>
+<script id="edogawa-v156">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const yen = (v)=>{ v = Math.round(Number(v)||0); return (v < 0 ? '-￥' : '￥') + Math.abs(v).toLocaleString('ja-JP'); };
+  const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.24　新しいミニゲーム2つ
+  //    🎣 えどがわ釣りスポット … 釣りスポットの近くに止まると、次の番に「釣りしていく？」
+  //    🥊 江戸川街道 闘魂ロード … 同じマスに止まる／追いつくと、その場でバトル
+  // ──────────────────────────────────────────────────────────────
+
+  // 共通：ミニゲームの画面（iframe）を開いて閉じる道具
+  function openFrame(game, titleText, onMsg){
+    const overlay = g('regional-mini-overlay'), frame = g('regional-mini-frame'), title = g('regional-mini-title');
+    if(!overlay || !frame) return null;
+    if(title) title.textContent = titleText;
+    g('regional-mini-loading')?.style.setProperty('display','flex');
+    frame.style.display = 'block';
+    overlay.classList.remove('hidden');
+    try{ frame.removeAttribute('srcdoc'); }catch(e){}
+    const handler = (ev)=>{ const d = ev.data || {}; if(!d || d.game !== game) return; onMsg(d); };
+    window.addEventListener('message', handler);
+    frame.src = 'minigames.html?game=' + game + '&v=' + (window.__EDOGAWA_MINIGAMES_VER || '1');
+    return {
+      frame: frame,
+      post: (m)=>{ try{ frame.contentWindow && frame.contentWindow.postMessage(m, '*'); }catch(e){} },
+      close: ()=>{
+        window.removeEventListener('message', handler);
+        try{ frame.contentWindow && frame.contentWindow.postMessage({type:'EDOGAWA_MINIGAME_TEARDOWN'}, '*'); }catch(e){}
+        try{ frame.onload = null; frame.removeAttribute('srcdoc'); frame.src = 'about:blank'; }catch(e){}
+        overlay.classList.add('hidden');
+      }
+    };
+  }
+  // 共通モーダルの見出し・絵文字・ルールを、そのゲーム用に書きかえます
+  function decorate(emoji, kicker, titleText, playerHtml, rulesHtml){
+    try{
+      const box = document.querySelector('#edo-mini-common .edo-mc-box');
+      if(!box) return;
+      const e = box.querySelector('.edo-mc-emoji'); if(e) e.textContent = emoji;
+      const k = box.querySelector('.edo-mc-kicker'); if(k && kicker) k.textContent = kicker;
+      const t = box.querySelector('.edo-mc-title'); if(t) t.textContent = titleText;
+      if(playerHtml != null){
+        let pl = box.querySelector('.edo-mc-player');
+        if(!pl && t){ pl = document.createElement('div'); pl.className = 'edo-mc-player'; t.after(pl); }
+        if(pl) pl.innerHTML = playerHtml;
+      }
+      if(rulesHtml){ const ul = box.querySelector('.edo-mc-rules'); if(ul) ul.innerHTML = rulesHtml; }
+    }catch(e){}
+  }
+  function closeCommon(){
+    const mc = g('edo-mini-common');
+    if(mc){ mc.classList.remove('show','edo-mc-see'); mc.innerHTML = ''; }
+  }
+  // 「このターンはミニゲームで使います」と宣言します（パチンコと同じ考え方）
+  function claimTurn(){
+    app.isRolling = true;
+    app.turnSettled = false;
+    try{ app._armTurnWatchdog && app._armTurnWatchdog(); }catch(e){}
+  }
+  function stopWatchdog(){
+    try{ clearTimeout(app.turnWatchdogTimer); app.turnWatchdogTimer = null; }catch(e){}
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  //  🎣 えどがわ釣りスポット
+  // ══════════════════════════════════════════════════════════════
+  const FISH_URL = 'https://shulavan.github.io/data/fishing.json';
+  const FISH_NEAR_M = 240;                 // パチンコと同じ「6マス」ぶん
+  let spots = null, spotsLoading = false, fishMarkers = [], fishMarkerMap = null;
+
+  function km(a, b){
+    const R = 6371, t = Math.PI / 180;
+    const dLat = (b.lat - a.lat) * t, dLng = (b.lng - a.lng) * t;
+    const s = Math.sin(dLat/2)**2 + Math.cos(a.lat*t) * Math.cos(b.lat*t) * Math.sin(dLng/2)**2;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(s)));
+  }
+  function splitTargets(text){
+    const m = String(text || '').match(/主な対象魚[：:]\s*([^。]+)。?/);
+    return {
+      targets: m ? m[1].trim() : '',
+      note: String(text || '').replace(/主な対象魚[：:]\s*[^。]+。?/, '').trim()
+    };
+  }
+  async function loadSpots(){
+    if(spots || spotsLoading) return spots;
+    spotsLoading = true;
+    try{
+      const res = await fetch(FISH_URL, { cache:'force-cache' });
+      const raw = await res.json();
+      spots = (Array.isArray(raw) ? raw : []).map(r=>{
+        const sp = splitTargets(r['その他']);
+        return {
+          name: String(r['場所名'] || '').trim(),
+          address: String(r['住所'] || '').trim(),
+          lat: Number(r['緯度']), lng: Number(r['経度']),
+          info: sp.note, targets: sp.targets,
+          emoji: '🎣', fishing: true
+        };
+      }).filter(x=>x.name && isFinite(x.lat) && isFinite(x.lng));
+    }catch(e){
+      console.warn('[v156] 釣りスポットの一覧を読み込めませんでした', e);
+      spots = [];
+    }finally{ spotsLoading = false; app.fishingSpots = spots; }
+    return spots;
+  }
+  function addFishMarkers(){
+    if(!app.map || !window.L || !spots || !spots.length) return;
+    if(fishMarkerMap === app.map && fishMarkers.length) return;
+    fishMarkers.forEach(m=>{ try{ app.map.removeLayer(m); }catch(e){} });
+    fishMarkers = []; fishMarkerMap = app.map;
+    spots.forEach(sp=>{
+      try{
+        const icon = L.divIcon({
+          className: 'edo-fish-icon',
+          html: '<div class="edo-fish-wrap"><div class="edo-fish-pin">🎣</div>' +
+                '<div class="edo-fish-lbl">' + esc(sp.name) + '</div></div>',
+          iconSize: [78, 78], iconAnchor: [39, 39]
+        });
+        const mk = L.marker([sp.lat, sp.lng], { icon, zIndexOffset: -90 }).addTo(app.map);
+        try{ mk.bindTooltip(sp.name, { direction:'top', offset:[0,-10] }); }catch(e){}
+        mk.on('click', ()=>{ try{ app.showFacilityDetail(sp, { heading:'🎣 釣りスポット' }); }catch(e){} });
+        fishMarkers.push(mk);
+      }catch(e){}
+    });
+  }
+  // 施設の詳細に「主な対象魚・ポイント情報」を出します
+  const origRows = app.facilityDetailRows ? app.facilityDetailRows.bind(app) : null;
+  if(origRows){
+    app.facilityDetailRows = function(info){
+      if(info && info.fishing){
+        const rows = [];
+        if(info.targets) rows.push({ label:'対象魚', value: info.targets, strong:true });
+        if(info.info)    rows.push({ label:'ポイント', value: info.info });
+        rows.push({ label:'遊び方', value:'近くのマスに止まると、次の番に「1回休んで釣りをする」を選べます。' });
+        return rows;
+      }
+      return origRows(info);
+    };
+  }
+  function nearSpot(player){
+    if(!spots || !spots.length) return null;
+    try{
+      const n = app.roadNetworkNodes && app.roadNetworkNodes[player.currentNodeIdx];
+      if(!n) return null;
+      let best = null;
+      spots.forEach(sp=>{
+        const d = km({lat:n.lat, lng:n.lng}, sp) * 1000;
+        if(d <= FISH_NEAR_M && (!best || d < best.d)) best = { spot: sp, d: Math.round(d) };
+      });
+      return best;
+    }catch(e){ return null; }
+  }
+  // 止まったマスの近くに釣りスポットがあれば、次の自分の番に聞きます
+  const origLandFish = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(origLandFish){
+    app.landOnSpot = function(player){
+      const r = origLandFish(player);
+      try{
+        if(isMine(player) && !player.isFlying){
+          const hit = nearSpot(player);
+          if(hit && player.fishDeclined !== hit.spot.name) player.pendingFishing = { name: hit.spot.name };
+          else player.pendingFishing = null;
+          if(hit && player.fishDeclined && player.fishDeclined !== hit.spot.name) player.fishDeclined = null;
+        }
+      }catch(e){ console.warn('[v156]', e); }
+      return r;
+    };
+  }
+  function fishAskBox(){
+    let el = g('edo-fish-ask');
+    if(!el){ el = document.createElement('div'); el.id = 'edo-fish-ask'; document.body.appendChild(el); }
+    return el;
+  }
+  app.closeFishingAsk = function(){
+    const el = g('edo-fish-ask');
+    if(el){ el.classList.remove('show'); el.style.display = 'none'; el.innerHTML = ''; }
+  };
+  function openFishAsk(player, spot){
+    const el = fishAskBox();
+    try{
+      const f = document.querySelector('footer[data-app="1"]');
+      const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
+      // 駅の「乗車しますか？」・パチンコと同じ置きかた（画面の中央にそろえます）
+      el.style.cssText = 'position:fixed;left:10px;right:10px;z-index:2147483200;' +
+        'display:flex;justify-content:center;pointer-events:none;bottom:' + (h + 16) + 'px';
+    }catch(e){}
+    el.innerHTML = '<div class="edo-ask-box">' +
+      '<div class="edo-ask-t">🎣 ' + esc(spot.name) + '</div>' +
+      '<div class="edo-ask-s">近くで釣りができますが、釣りしていきますか？<br>' +
+        '釣りをすると1回休みです。1,000点＝￥1,000 で所持金になります。</div>' +
+      '<div class="edo-ask-btns">' +
+        '<button type="button" data-no="1">いいえ</button>' +
+        '<button type="button" class="go" data-yes="1">釣りをする</button>' +
+      '</div></div>';
+    el.classList.add('show');
+    el.onclick = (ev)=>{
+      const t = ev.target.closest ? ev.target.closest('button') : null;
+      if(!t) return;
+      if(t.dataset.no){
+        player.fishDeclined = spot.name; player.pendingFishing = null;
+        app.closeFishingAsk(); return;
+      }
+      if(t.dataset.yes){
+        player.pendingFishing = null; player.pendingPachinko = null;   // この番は釣りで使います
+        try{ app.closePachinkoAsk && app.closePachinkoAsk(); }catch(e){}
+        app.closeFishingAsk();
+        app.startFishingGame(player, spot);
+      }
+    };
+  }
+  function refreshFishAsk(){
+    try{
+      const cp = (app.players || [])[app.currentPlayerIdx];
+      const el = g('edo-fish-ask');
+      const shown = !!(el && el.classList.contains('show'));
+      const off = ()=>{ if(shown) app.closeFishingAsk(); };
+      if(!cp || !isMine(cp) || !cp.pendingFishing) return off();
+      if(app.isRolling || app.miniGameActive || app.boatRaceActive || cp.skipTurn) return off();
+      if(app.canActNow && !app.canActNow()) return off();
+      // パチンコのお誘いが出ているあいだは、そちらを先にします
+      const pa = g('edo-pachi-ask');
+      if(pa && pa.classList.contains('show')) return off();
+      if(shown) return;
+      const sp = (spots || []).find(x=>x.name === cp.pendingFishing.name);
+      if(sp) openFishAsk(cp, sp);
+    }catch(e){}
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); refreshFishAsk(); return r; }; }
+  setInterval(refreshFishAsk, 700);
+  const origRollFish = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRollFish){
+    app.rollDice = function(){
+      try{
+        const cp = (app.players || [])[app.currentPlayerIdx];
+        if(cp) cp.pendingFishing = null;
+        app.closeFishingAsk();
+      }catch(e){}
+      return origRollFish.apply(app, arguments);
+    };
+  }
+  // パチンコで遊ぶと決めたら、釣りのお誘いは取り消します
+  const origPachi = app.startPachinkoGame;
+  if(typeof origPachi === 'function'){
+    app.startPachinkoGame = function(player){
+      try{ if(player) player.pendingFishing = null; app.closeFishingAsk(); }catch(e){}
+      return origPachi.apply(app, arguments);
+    };
+  }
+
+  // 釣りを始めます（開始・結果は双六共通のモーダル）
+  app.startFishingGame = function(player, spot){
+    if(!player) return false;
+    let done = false, payload = null, guard = null, fr = null;
+    const finish = ()=>{
+      if(done) return; done = true;
+      clearTimeout(guard); stopWatchdog();
+      try{ fr && fr.close(); }catch(e){}
+      app.miniGameActive = false; app.regionalMiniGame = null; app.__fishingActive = false;
+
+      const res = (payload && payload.fishing) || { totalScore: 0, catches: [] };
+      const total = Math.round(Number(res.totalScore) || 0);
+      const before = Math.round(Number(player.money) || 0);
+      player.money = Math.max(0, before + total);         // 1,000点 ＝ ￥1,000
+      const delta = Math.round(player.money) - before;
+      try{ app.updateHUD && app.updateHUD(); }catch(e){}
+      try{ app.saveGameState && app.saveGameState(); }catch(e){}
+      try{ app.addLog && app.addLog('🎣 ' + player.name + '：' + ((spot && spot.name) || '釣りスポット') +
+        ' で釣り（' + total.toLocaleString('ja-JP') + '点 → ' + (delta >= 0 ? '＋' : '') + yen(delta) + '）'); }catch(e){}
+      try{ app.addLog && app.addLog('💤 ' + player.name + ' は釣りで1回休みです。'); }catch(e){}
+
+      const rows = [];
+      const list = Array.isArray(res.catches) ? res.catches : [];
+      if(!list.length) rows.push({ name:'釣果', text:'なし' });
+      list.forEach(c=>{
+        const pts = Math.round(Number(c.points) || 0);
+        rows.push({ name: (c.emoji || '🐟') + ' ' + (c.name || '') + '　×' + (Number(c.count) || 0),
+                    text: (pts >= 0 ? '＋' : '') + pts.toLocaleString('ja-JP') + ' 点' });
+      });
+      rows.push({ name:'合計点数', text: total.toLocaleString('ja-JP') + ' 点' });
+      rows.push({ name:'換金（1,000点＝￥1,000）', text: (delta >= 0 ? '＋' : '') + yen(delta) });
+      // 換金後の所持金は、結果モーダルのいちばん下に出ます
+      try{
+        app._miniCommonResultShow && app._miniCommonResultShow({
+          game:'fishing', playerName: player.name, money: player.money, delta: delta, rows: rows });
+        decorate('🎣', '結果発表', 'えどがわ釣りスポット', null, null);
+      }catch(e){}
+      setTimeout(()=>{
+        closeCommon();
+        try{ app.finishTurn && app.finishTurn(); }catch(e){ console.warn('[v156]', e); }
+      }, 5400);
+    };
+
+    claimTurn();                                   // この番は釣りで使います（1回休み）
+    app.miniGameActive = true;
+    app.regionalMiniGame = null;                   // 共通のミニゲーム処理に横取りされないように
+    app.__fishingActive = true;
+    fr = openFrame('fishing', '🎣 えどがわ釣りスポット', (d)=>{
+      if(d.type === 'EDOGAWA_MINIGAME_RENDERED'){ g('regional-mini-loading')?.style.setProperty('display','none'); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard = setTimeout(finish, 600000); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_RESULT'){ payload = d; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_CLOSE'){ finish(); }
+    });
+    if(!fr){ app.miniGameActive = false; app.__fishingActive = false; try{ app.finishTurn(); }catch(e){} return false; }
+    fr.frame.onload = ()=>{ g('regional-mini-loading')?.style.setProperty('display','none'); };
+    guard = setTimeout(finish, 600000);
+
+    try{
+      app._miniCommonStartShow && app._miniCommonStartShow('fishing', player);
+      decorate('🎣', 'ミニゲーム', 'えどがわ釣りスポット',
+        esc((spot && spot.name) || '') + '<br>' + esc(player.name) + ' の番',
+        '<li>スマホを振るか「投げる」ボタンで、釣り糸を投げよう！</li>' +
+        '<li>魚が掛かると、ブルブルとお知らせします。</li>' +
+        '<li>ゲージが<b style="color:#60a5fa">青</b>のときにリールを時計回りに回して巻こう。' +
+          '<b style="color:#f87171">赤</b>のときに巻くと糸が切れるぞ！</li>' +
+        '<li>制限時間は99秒。1,000点＝￥1,000 で所持金になります。</li>');
+    }catch(e){}
+    setTimeout(()=>{
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      const send = ()=>fr.post({ type:'EDOGAWA_COMMON_MINIGAME_START', game:'fishing' });
+      send(); setTimeout(send, 300); setTimeout(send, 900);
+    }, 3000);
+    return true;
+  };
+
+  function tickFish(){
+    if(!spots && !spotsLoading){ try{ if(app.map) loadSpots().then(()=>addFishMarkers()); }catch(e){} }
+    else if(spots) addFishMarkers();
+  }
+  setInterval(tickFish, 1500);
+  setTimeout(tickFish, 1300);
+
+  // ══════════════════════════════════════════════════════════════
+  //  🥊 江戸川街道 闘魂ロード
+  //    ・同じマスに止まったとき → バトルのあと、そのマスのイベント
+  //    ・コマが進む途中でほかの人に追いついたとき → バトルのあと、
+  //      残りのマスを進んで、止まったマスのイベント
+  //    ・1つの番につき1回まで。スタート地点・ゴールでは起きません
+  // ══════════════════════════════════════════════════════════════
+  const FIGHT_WIN = 50000, FIGHT_LOSE = -5000;
+  const turnKey = ()=>String(app.currentPlayerIdx) + ':' + String(app.turnCount || 0);
+  function offline(p){ try{ return !!(app.isPlayerOffline && app.isPlayerOffline(p)); }catch(e){ return false; } }
+  function canFightNow(player){
+    if(!player || app.isMultiplayer) return false;
+    if(player.isFlying) return false;
+    if(app.__fightTurnKey === turnKey()) return false;            // この番ではもう1回やりました
+    if(app.miniGameActive || app.boatRaceActive || app.__fightActive) return false;
+    if(app.__edoMiniTesting) return false;
+    return (app.players || []).length >= 2;
+  }
+  // ── ver1.0.25　同じ相手とは5ターン空けます ──
+  //   ターン数は画面左上の「◯ターン」（4人がひと回りして1ターン）です。
+  //   例：10ターン目に戦ったら、11〜15ターン目はその2人では起きず、16ターン目から また起きます。
+  //   覚えておく場所はプレイヤーの情報の中なので、「前回の続きから遊ぶ」でも引き継がれます。
+  const FIGHT_GAP_TURNS = 5;
+  const nowTurn = ()=>Math.max(0, Math.floor(Number(app.turnCount) || 0));
+  function lastFight(a, b){
+    try{
+      const x = a && a.fightLast && a.fightLast[String(b.id)];
+      const y = b && b.fightLast && b.fightLast[String(a.id)];
+      const v = Math.max(Number.isFinite(x) ? x : -Infinity, Number.isFinite(y) ? y : -Infinity);
+      return Number.isFinite(v) ? v : null;
+    }catch(e){ return null; }
+  }
+  function onCooldown(a, b){
+    const t = lastFight(a, b);
+    return t !== null && nowTurn() - t <= FIGHT_GAP_TURNS;
+  }
+  function markFight(a, b){
+    try{
+      const t = nowTurn();
+      a.fightLast = a.fightLast || {}; a.fightLast[String(b.id)] = t;
+      b.fightLast = b.fightLast || {}; b.fightLast[String(a.id)] = t;
+    }catch(e){}
+  }
+  app.__fightCooldown = (a, b)=>({ 前回: lastFight(a, b), 今: nowTurn(), 休み中: onCooldown(a, b),
+    つぎに戦える: lastFight(a, b) === null ? nowTurn() : lastFight(a, b) + FIGHT_GAP_TURNS + 1 });
+
+  function rivalAt(player, node){
+    if(node == null || node === 0 || node === app.goalNodeIdx) return null;
+    return (app.players || []).find(o=>o && o !== player && !o.isFlying && !offline(o) &&
+      o.currentNodeIdx === node && !onCooldown(player, o)) || null;
+  }
+
+  const origMove = app.movePlayerSteps ? app.movePlayerSteps.bind(app) : null;
+  if(origMove){
+    app.movePlayerSteps = function(player, totalSteps, stepDelay, silent){
+      try{
+        if(!silent && canFightNow(player)){
+          const path = app.normalizePathIndices ? app.normalizePathIndices(player.path) : (player.path || []);
+          const start = Math.max(0, Math.min(player.pathIndex || 0, path.length - 1));
+          const avail = Math.max(0, path.length - 1 - start);
+          const steps = Math.min(Math.max(0, Math.floor(totalSteps)), avail);
+          for(let k = 1; k <= steps; k++){
+            const node = path[start + k];
+            if(node === app.goalNodeIdx) break;                        // ゴールの手前まで
+            const other = rivalAt(player, node);
+            if(other){
+              app.__fightTurnKey = turnKey();
+              app.__fightPending = { player: player, other: other, remaining: steps - k,
+                stepDelay: stepDelay, how: (k < steps ? 'catch' : 'same') };
+              return origMove(player, k, stepDelay, silent);           // まずは相手のマスまで
+            }
+          }
+        }
+      }catch(e){ console.warn('[v156]', e); }
+      return origMove(player, totalSteps, stepDelay, silent);
+    };
+  }
+  // 「あと◯マス」は、バトルのあとに進むぶんも足して出します
+  const origCount = app.updateMoveCountdown ? app.updateMoveCountdown.bind(app) : null;
+  if(origCount){
+    app.updateMoveCountdown = function(player, left, total){
+      const f = app.__fightPending;
+      if(f && f.player === player && Number(total) > 0) return origCount(player, left + f.remaining, total + f.remaining);
+      return origCount(player, left, total);
+    };
+  }
+  const origLandFight = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(origLandFight){
+    app.landOnSpot = function(player){
+      const f = app.__fightPending;
+      if(f && f.player === player){
+        app.__fightPending = null;
+        const after = ()=>{
+          try{
+            if(f.remaining > 0) app.movePlayerSteps(player, f.remaining, f.stepDelay, false);
+            else origLandFight(player);
+          }catch(e){ console.error('[v156]', e); try{ origLandFight(player); }catch(_){} }
+        };
+        try{ app.startFightGame(player, f.other, after, f.how); }
+        catch(e){ console.error('[v156]', e); after(); }
+        return;
+      }
+      return origLandFight(player);
+    };
+  }
+
+  const FIGHT_TYPES = ['空手家','柔道家','レスラー','功夫女子','ボクサー','力士'];
+  const FIGHT_STAGES = ['繁華街','商店街','河川敷','学校','神社','工事現場'];
+  function fightReason(mover, other, how){
+    return how === 'catch'
+      ? esc(mover.name) + ' が ' + esc(other.name) + ' に追いついた！'
+      : esc(mover.name) + ' と ' + esc(other.name) + ' が同じマスで出会った！';
+  }
+  function applyFight(P1, P2, res){
+    const before = Math.round(Number(P1.money) || 0);
+    const pay = res.winner === 'player' ? FIGHT_WIN : res.winner === 'cpu' ? FIGHT_LOSE : 0;
+    P1.money = Math.max(0, before + pay);
+    const delta = Math.round(P1.money) - before;
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    const word = res.winner === 'player' ? 'の勝ち' : res.winner === 'cpu' ? 'の負け' : '：引き分け';
+    try{ app.addLog && app.addLog('🥊 ' + P1.name + ' vs ' + P2.name + '：' + P1.name + word +
+      (delta ? '（' + (delta > 0 ? '賞金 ＋' : '罰金 ') + yen(Math.abs(delta)).replace('-', '') + '）' : '')); }catch(e){}
+    const status = res.winner === 'player' ? 'WIN 👑' : res.winner === 'cpu' ? 'LOSE' : 'DRAW 🤝';
+    const rows = [
+      { name:'結果', text: status + (res.time ? '（' + res.time + '）' : '') },
+      { name: P1.name + ' のタイプ', text: res.p1Type || '-' },
+      { name: P1.name + ' のHP', text: res.p1Hp || '-' },
+      { name: P2.name + ' のタイプ', text: res.p2Type || '-' },
+      { name: P2.name + ' のHP', text: res.p2Hp || '-' }
+    ];
+    if(res.finishingMove) rows.push({ name:'決め技', text: res.finishingMove });
+    if(res.stage) rows.push({ name:'ステージ', text: res.stage });
+    rows.push({ name: res.winner === 'cpu' ? '罰金' : '賞金', text: delta === 0 ? 'なし' : ((delta > 0 ? '＋' : '') + yen(delta)) });
+    // 所持金は、結果モーダルのいちばん下に出ます
+    return { rows, delta };
+  }
+
+  app.startFightGame = function(mover, other, after, how){
+    const cont = (typeof after === 'function') ? after : ()=>{};
+    if(!mover || !other){ cont(); return false; }
+    markFight(mover, other);                       // この2人は、ここから5ターン空けます
+    // 人が入っていれば、その人が「あなた」側で遊びます
+    const P1 = isMine(mover) ? mover : isMine(other) ? other : mover;
+    const P2 = P1 === mover ? other : mover;
+    const human = isMine(P1);
+    const reason = fightReason(mover, other, how);
+
+    if(!human){
+      // CPUどうしは、その場で勝ち負けを決めて、結果だけ見せます
+      const r = Math.random();
+      const winner = r < 0.45 ? 'player' : r < 0.90 ? 'cpu' : 'draw';
+      const hp = ()=>Math.round(20 + Math.random() * 70);
+      const h1 = winner === 'cpu' ? 0 : hp(), h2 = winner === 'player' ? 0 : (winner === 'draw' ? h1 : hp());
+      const res = {
+        winner: winner, time: '0:' + String(30 + Math.floor(Math.random() * 60)).padStart(2, '0'),
+        p1Type: FIGHT_TYPES[Math.floor(Math.random() * FIGHT_TYPES.length)],
+        p2Type: FIGHT_TYPES[Math.floor(Math.random() * FIGHT_TYPES.length)],
+        p1Hp: h1 + '/100 (' + h1 + '%)', p2Hp: h2 + '/100 (' + h2 + '%)',
+        stage: FIGHT_STAGES[Math.floor(Math.random() * FIGHT_STAGES.length)]
+      };
+      const out = applyFight(P1, P2, res);
+      app.__fightActive = true; app.miniGameActive = true;
+      try{
+        app._miniCommonResultShow && app._miniCommonResultShow({
+          game:'fight', playerName: P1.name + ' VS ' + P2.name, money: P1.money, delta: out.delta, rows: out.rows });
+        decorate('🥊', '結果発表', '江戸川街道 闘魂ロード', reason, null);
+      }catch(e){}
+      setTimeout(()=>{
+        closeCommon();
+        app.__fightActive = false; app.miniGameActive = false;
+        cont();
+      }, 5400);
+      return true;
+    }
+
+    let done = false, payload = null, guard = null, fr = null;
+    const finish = ()=>{
+      if(done) return; done = true;
+      clearTimeout(guard);
+      try{ fr && fr.close(); }catch(e){}
+      app.miniGameActive = false; app.regionalMiniGame = null;
+      const res = (payload && payload.fight) || { winner:'draw' };
+      const out = applyFight(P1, P2, res);
+      try{
+        app._miniCommonResultShow && app._miniCommonResultShow({
+          game:'fight', playerName: P1.name + ' VS ' + P2.name, money: P1.money, delta: out.delta, rows: out.rows });
+        decorate('🥊', '結果発表', '江戸川街道 闘魂ロード', null, null);
+      }catch(e){}
+      setTimeout(()=>{
+        closeCommon();
+        app.__fightActive = false;
+        cont();
+      }, 5400);
+    };
+
+    app.__fightActive = true;
+    app.miniGameActive = true;
+    app.regionalMiniGame = null;
+    app.__fightOpenedAt = Date.now();
+    fr = openFrame('fight', '🥊 江戸川街道 闘魂ロード', (d)=>{
+      if(d.type === 'EDOGAWA_MINIGAME_RENDERED'){ g('regional-mini-loading')?.style.setProperty('display','none'); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard = setTimeout(finish, 600000); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_RESULT'){ payload = d; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_CLOSE'){ finish(); }
+    });
+    if(!fr){ app.__fightActive = false; app.miniGameActive = false; cont(); return false; }
+    const names = ()=>fr.post({ type:'EDOGAWA_FIGHT_NAMES', p1: P1.name, p2: P2.name });
+    fr.frame.onload = ()=>{ g('regional-mini-loading')?.style.setProperty('display','none'); names(); };
+    guard = setTimeout(finish, 600000);
+
+    // 新しく作った開始モーダル（うしろにゲームセンターの画面が見えます）
+    try{
+      app._miniCommonStartShow && app._miniCommonStartShow('fight', P1);
+      const mc = g('edo-mini-common'); if(mc) mc.classList.add('edo-mc-see');
+      decorate('🥊', 'ストリートファイト', '江戸川街道 闘魂ロード',
+        '<div class="edo-mc-vs">' + esc(P1.name) + '<b>VS</b>' + esc(P2.name) + '</div>',
+        '<li>' + reason + '</li>' +
+        '<li>パンチ・キック・つかみ・投げで、相手のHPを0にしよう。</li>' +
+        '<li>時間切れのときは、HPが多く残っているほうの勝ち。</li>' +
+        '<li>勝てば賞金 <b style="color:#86efac">￥50,000</b>、負けると罰金 <b style="color:#fca5a5">￥5,000</b>。</li>');
+    }catch(e){}
+    setTimeout(()=>{
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      const mc = g('edo-mini-common'); if(mc) mc.classList.remove('edo-mc-see');
+      names();
+      const send = ()=>fr.post({ type:'EDOGAWA_COMMON_MINIGAME_START', game:'fight' });
+      send(); setTimeout(send, 300); setTimeout(send, 900);
+    }, 3000);
+    return true;
+  };
+
+  window.__EDOGAWA_V156_INFO = ()=>({
+    釣りスポットの数: spots ? spots.length : null,
+    '地図の🎣': fishMarkers.length,
+    近くの釣りスポット: (()=>{ const cp = (app.players || [])[app.currentPlayerIdx];
+      if(!cp) return null; const h = nearSpot(cp); return h ? (h.spot.name + '（' + h.d + 'm）') : null; })(),
+    釣りのお誘い: (()=>{ const el = g('edo-fish-ask'); return !!(el && el.classList.contains('show')); })(),
+    待っている釣り: (()=>{ const cp = (app.players || [])[app.currentPlayerIdx]; return cp && cp.pendingFishing ? cp.pendingFishing.name : null; })(),
+    バトル待ち: app.__fightPending ? { 相手: app.__fightPending.other.name, 残り: app.__fightPending.remaining, how: app.__fightPending.how } : null,
+    バトル中: !!app.__fightActive,
+    この番でバトル済み: app.__fightTurnKey === turnKey()
   });
 })();
 </script>
