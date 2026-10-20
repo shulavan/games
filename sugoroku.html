@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '3';
+    window.__EDOGAWA_MINIGAMES_VER = '4';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.25 (2026-10-20)';
+    window.__EDOGAWA_VERSION = 'ver1.0.26 (2026-10-20)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -26523,6 +26523,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const finish = ()=>{
       if(done) return; done = true;
       clearTimeout(guard);
+      app.__customMiniQuit = null;
       // 結果モーダルを見せている5秒のあいだに「ターンが止まった」と誤判定されて
       // 二重に次の人へ進んでしまわないよう、見張りタイマーを止めます。
       try{ clearTimeout(app.turnWatchdogTimer); app.turnWatchdogTimer = null; }catch(e){}
@@ -26535,7 +26536,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       app.__pachinkoActive = false;
 
       const d = (payload && payload.pachinko) || {};
-      const gain = Math.max(0, Math.round(Number(payload && payload.delta) || 0));
+      let gain = Math.max(0, Math.round(Number(payload && payload.delta) || 0));
+      // 遊びはじめる前に「✕」で閉じたときは、玉の代金をそのまま返します
+      if(quitting && !payload){ gain = BUY_YEN; try{ app.addLog && app.addLog('🎰 遊ぶ前にやめたので、玉の代金 ￥' + BUY_YEN.toLocaleString('ja-JP') + ' を返しました。'); }catch(e){} }
       player.money = Math.max(0, (Number(player.money) || 0) + gain);
       try{ app.updateHUD && app.updateHUD(); }catch(e){}
       try{ app.saveGameState && app.saveGameState(); }catch(e){}
@@ -26585,6 +26588,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }catch(e){}
     }
 
+    // 【ver1.0.26】「✕」で閉じたとき：その時点の持ち玉を換金して終わります
+    let quitting = false;
+    app.__customMiniQuit = ()=>{
+      if(done) return;
+      quitting = true;
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      try{ frame.contentWindow && frame.contentWindow.postMessage({type:'EDOGAWA_FORCE_END', game:'pachinko'}, '*'); }catch(e){}
+      setTimeout(()=>{ if(!done) finish(); }, 1500);
+    };
     const onMsg = (ev)=>{
       const d = ev.data || {};
       if(!d || d.game !== 'pachinko') return;
@@ -27379,6 +27391,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const finish = ()=>{
       if(done) return; done = true;
       clearTimeout(guard); stopWatchdog();
+      app.__customMiniQuit = null;
       try{ fr && fr.close(); }catch(e){}
       app.miniGameActive = false; app.regionalMiniGame = null; app.__fishingActive = false;
 
@@ -27427,6 +27440,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     });
     if(!fr){ app.miniGameActive = false; app.__fishingActive = false; try{ app.finishTurn(); }catch(e){} return false; }
     fr.frame.onload = ()=>{ g('regional-mini-loading')?.style.setProperty('display','none'); };
+    // 「✕」で閉じたとき：そこまでに釣れた分で終わりにして、結果を出します
+    app.__customMiniQuit = ()=>{
+      if(done) return;
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      fr.post({ type:'EDOGAWA_FORCE_END', game:'fishing' });
+      setTimeout(()=>{ if(!done) finish(); }, 1500);       // 返事がなければ、釣果なしで終わります
+    };
     guard = setTimeout(finish, 600000);
 
     try{
@@ -27592,6 +27612,49 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return { rows, delta };
   }
 
+  // 【ver1.0.26】結果モーダルを、ゲームの結果画面と同じ「表」の形にします
+  //   上：WIN／LOSE／DRAW
+  //   表：列＝2人（勝った人の上に👑と試合時間）、行＝TYPE・HP
+  //   下：賞金（罰金）、決め技、ステージ（中央ぞろえ）
+  function fightTable(P1, P2, res, delta){
+    const st = res.winner === 'player' ? 'WIN' : res.winner === 'cpu' ? 'LOSE' : 'DRAW';
+    const cls = res.winner === 'player' ? 'win' : res.winner === 'cpu' ? 'lose' : 'draw';
+    const t = res.time ? '(' + esc(res.time) + ')' : '';
+    const crown1 = res.winner === 'player' ? '👑' + t : res.winner === 'draw' ? '🤝' + t : '';
+    const crown2 = res.winner === 'cpu' ? '👑' + t : '';
+    const pay = res.winner === 'player' ? '賞金：' + yen(Math.abs(delta || FIGHT_WIN))
+              : res.winner === 'cpu' ? '罰金：' + yen(Math.abs(delta || FIGHT_LOSE)).replace('-', '')
+              : '引き分け：賞金・罰金なし';
+    return '<div class="edo-ft-status ' + cls + '">' + st + '</div>' +
+      '<table class="edo-ft-table" aria-label="バトル結果"><thead><tr>' +
+        '<th class="lbl"></th>' +
+        '<th><div class="crown">' + crown1 + '</div><span>' + esc(P1.name) + '</span></th>' +
+        '<th><div class="crown">' + crown2 + '</div><span>' + esc(P2.name) + '</span></th>' +
+      '</tr></thead><tbody>' +
+        '<tr><th class="lbl">TYPE</th><td>' + esc(res.p1Type || '-') + '</td><td>' + esc(res.p2Type || '-') + '</td></tr>' +
+        '<tr><th class="lbl">HP</th><td>' + esc(res.p1Hp || '-') + '</td><td>' + esc(res.p2Hp || '-') + '</td></tr>' +
+      '</tbody></table>' +
+      '<div class="edo-ft-pay ' + cls + '">' + pay + '</div>' +
+      (res.finishingMove ? '<div class="edo-ft-detail">決め技：' + esc(res.finishingMove) + '</div>' : '') +
+      (res.stage ? '<div class="edo-ft-detail">ステージ：' + esc(res.stage) + '</div>' : '');
+  }
+  function showFightResult(P1, P2, res, out, reasonHtml){
+    try{
+      app._miniCommonResultShow && app._miniCommonResultShow({
+        game:'fight', playerName: P1.name + ' VS ' + P2.name, money: P1.money, delta: out.delta, rows: out.rows });
+      decorate('🥊', '結果発表', '江戸川街道 闘魂ロード', reasonHtml || null, null);
+      const box = document.querySelector('#edo-mini-common .edo-mc-box');
+      if(box){
+        const list = box.querySelector('.edo-mc-list');
+        const holder = document.createElement('div');
+        holder.className = 'edo-ft-wrap';
+        holder.innerHTML = fightTable(P1, P2, res, out.delta);
+        if(list) list.replaceWith(holder);
+        if(!reasonHtml){ const pl = box.querySelector('.edo-mc-player'); if(pl) pl.remove(); }
+      }
+    }catch(e){ console.warn('[v157]', e); }
+  }
+
   app.startFightGame = function(mover, other, after, how){
     const cont = (typeof after === 'function') ? after : ()=>{};
     if(!mover || !other){ cont(); return false; }
@@ -27615,13 +27678,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         p1Hp: h1 + '/100 (' + h1 + '%)', p2Hp: h2 + '/100 (' + h2 + '%)',
         stage: FIGHT_STAGES[Math.floor(Math.random() * FIGHT_STAGES.length)]
       };
+      res.finishingMove = ['正拳突き','一本背負い','張り手','アッパーカット','廻し蹴り','ジャーマンスープレックス'][Math.floor(Math.random() * 6)];
       const out = applyFight(P1, P2, res);
       app.__fightActive = true; app.miniGameActive = true;
-      try{
-        app._miniCommonResultShow && app._miniCommonResultShow({
-          game:'fight', playerName: P1.name + ' VS ' + P2.name, money: P1.money, delta: out.delta, rows: out.rows });
-        decorate('🥊', '結果発表', '江戸川街道 闘魂ロード', reason, null);
-      }catch(e){}
+      showFightResult(P1, P2, res, out, '<span style="font-size:12px;color:#94a3b8">' + reason + '（CPUどうしは自動で決まります）</span>');
       setTimeout(()=>{
         closeCommon();
         app.__fightActive = false; app.miniGameActive = false;
@@ -27634,21 +27694,30 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const finish = ()=>{
       if(done) return; done = true;
       clearTimeout(guard);
+      app.__customMiniQuit = null;
       try{ fr && fr.close(); }catch(e){}
       app.miniGameActive = false; app.regionalMiniGame = null;
       const res = (payload && payload.fight) || { winner:'draw' };
       const out = applyFight(P1, P2, res);
-      try{
-        app._miniCommonResultShow && app._miniCommonResultShow({
-          game:'fight', playerName: P1.name + ' VS ' + P2.name, money: P1.money, delta: out.delta, rows: out.rows });
-        decorate('🥊', '結果発表', '江戸川街道 闘魂ロード', null, null);
-      }catch(e){}
+      showFightResult(P1, P2, res, out, null);
       setTimeout(()=>{
         closeCommon();
         app.__fightActive = false;
         cont();
       }, 5400);
     };
+    // 「✕」で閉じたとき：試合はそこで終わり。賞金・罰金はなしで、そのまま先へ進みます
+    const quit = ()=>{
+      if(done) return; done = true;
+      clearTimeout(guard);
+      app.__customMiniQuit = null;
+      try{ fr && fr.close(); }catch(e){}
+      closeCommon();
+      app.miniGameActive = false; app.regionalMiniGame = null; app.__fightActive = false;
+      try{ app.addLog && app.addLog('🥊 ' + P1.name + ' vs ' + P2.name + '：バトルを途中でやめました（賞金・罰金なし）'); }catch(e){}
+      setTimeout(cont, 300);
+    };
+    app.__customMiniQuit = quit;
 
     app.__fightActive = true;
     app.miniGameActive = true;
@@ -27697,6 +27766,55 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     バトル中: !!app.__fightActive,
     この番でバトル済み: app.__fightTurnKey === turnKey()
   });
+})();
+</script>
+<style id="edogawa-v157-style">
+  /* 🥊 闘魂ロードの結果（表の形） */
+  #edo-mini-common .edo-ft-wrap{ margin:2px 0 10px; }
+  #edo-mini-common .edo-ft-status{ text-align:center; font-size:40px; font-weight:1000; letter-spacing:.12em;
+    line-height:1; margin:4px 0 12px; font-style:italic; }
+  #edo-mini-common .edo-ft-status.win{ color:#4ade80; text-shadow:0 0 10px #ff0055, 0 0 22px #ff0055; }
+  #edo-mini-common .edo-ft-status.lose{ color:#f87171; text-shadow:0 0 10px #7f1d1d, 0 0 22px #ef4444; }
+  #edo-mini-common .edo-ft-status.draw{ color:#fde047; text-shadow:0 0 10px #a16207, 0 0 22px #eab308; }
+  #edo-mini-common .edo-ft-table{ width:100%; table-layout:fixed; border-collapse:collapse; margin:0 0 10px; color:#f8fafc; }
+  #edo-mini-common .edo-ft-table th, #edo-mini-common .edo-ft-table td{ text-align:center; vertical-align:middle;
+    padding:9px 3px; border-bottom:1px solid rgba(100,116,139,.5); font-size:14px; }
+  #edo-mini-common .edo-ft-table thead th{ color:#67e8f9; font-weight:900; font-size:15px; }
+  #edo-mini-common .edo-ft-table th.lbl{ width:3.4em; color:#67e8f9; font-weight:900; font-size:12px; letter-spacing:.04em; }
+  #edo-mini-common .edo-ft-table .crown{ min-height:1.3em; color:#fde047; font-size:14px; font-weight:900; line-height:1.2; white-space:nowrap; }
+  #edo-mini-common .edo-ft-table span{ display:block; white-space:nowrap; overflow:hidden; text-overflow:clip; }
+  #edo-mini-common .edo-ft-table td{ font-variant-numeric:tabular-nums; font-size:13px; }
+  #edo-mini-common .edo-ft-pay{ text-align:center; font-size:19px; font-weight:1000; color:#fde047; margin:8px 0 6px;
+    text-shadow:0 0 12px rgba(250,204,21,.22); }
+  #edo-mini-common .edo-ft-pay.lose{ color:#fca5a5; }
+  #edo-mini-common .edo-ft-pay.draw{ color:#e2e8f0; }
+  #edo-mini-common .edo-ft-detail{ text-align:center; font-size:15px; color:#e2e8f0; margin-top:5px; overflow-wrap:anywhere; }
+</style>
+<script id="edogawa-v157">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ──────────────────────────────────────────────────────────────
+  //  ver1.0.26　ミニゲームの「✕」が、パチンコ・釣り・闘魂ロードで効かなかった件
+  //    「✕」は、ふつうのミニゲーム用の閉じる処理を呼んでいましたが、
+  //    この3つは別のしくみで開いているため、何も起きていませんでした。
+  //    それぞれのゲーム用の閉じかたを呼ぶようにします。
+  //      🥊 闘魂ロード … そこで終わり（賞金・罰金なし）、残りのマスを進みます
+  //      🎣 釣り　　　 … そこまでの釣果で終わり、結果を出します
+  //      🎰 パチンコ　 … その時点の持ち玉を換金して終わり、結果を出します
+  // ──────────────────────────────────────────────────────────────
+  const origClose = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
+  app.closeRegionalMiniGame = function(){
+    const q = app.__customMiniQuit;
+    if(typeof q === 'function' && app.__edoMiniQuit){
+      app.__edoMiniQuit = false;
+      try{ q(); }catch(e){ console.error('[v157]', e); }
+      return;
+    }
+    return origClose ? origClose.apply(app, arguments) : undefined;
+  };
+  window.__EDOGAWA_V157_INFO = ()=>({ 専用の閉じかた: typeof app.__customMiniQuit === 'function' });
 })();
 </script>
 <script id="edogawa-v39-footer">
