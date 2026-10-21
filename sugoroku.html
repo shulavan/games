@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '12';
+    window.__EDOGAWA_MINIGAMES_VER = '13';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.35 (2026-10-21)';
+    window.__EDOGAWA_VERSION = 'ver1.0.36 (2026-10-21)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -27916,6 +27916,752 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     else if(!g && held) release();
   }, 250);
   window.__EDOGAWA_V158_INFO = ()=>{ const s = snd(); return { 止め中: held, ゲーム: ownBgmGameOpen(), もどすBGM: pending || resumeType, 今のBGM: s && s.currentBgmType, 鳴っている: !!(s && s.bgmTimer) }; };
+})();
+</script>
+<style id="edogawa-v159-style">
+  /* フッターの下の段：「取得情報」を左、「目的地」を右に固定（追加された順番に関係なく） */
+  #edo-nearby-row #visited-pin-tool{ order:0; }
+  #edo-nearby-row #edo-game-menu-tool{ order:1; }
+  #edo-nearby-row #mobile-destination-badge{ order:2; margin-left:auto !important; }
+
+  /* 「アイテム」ボタン：サイコロを振るボタンの上。2つ合わせた高さ＝「あなたの番です」枠の高さ */
+  #visited-roll-stack{ align-self:stretch !important; justify-content:stretch !important; gap:6px !important; }
+  #visited-roll-stack > #edo-item-btn,
+  #visited-roll-stack > #roll-dice-btn{ flex:0 0 auto !important; height:calc(50% - 3px) !important; min-height:0 !important; width:100% !important; overflow:hidden;
+    padding-top:2px !important; padding-bottom:2px !important; }
+  #edo-item-btn{ display:flex; align-items:center; justify-content:center; gap:6px; border-radius:.75rem;
+    background:linear-gradient(90deg,#a21caf,#c026d3,#a21caf); color:#fff; font-weight:900; font-size:14px;
+    border:2px solid #f0abfc; box-shadow:0 4px 12px rgba(0,0,0,.35); position:relative; }
+  #edo-item-btn:active{ transform:scale(.97); }
+  #edo-item-btn.is-off{ filter:grayscale(.6) brightness(.75); }
+  #edo-item-btn .edo-item-badge{ position:absolute; top:50%; transform:translateY(-50%); right:6px; min-width:20px; height:20px; padding:0 5px;
+    border-radius:999px; background:#facc15; color:#0f172a; font-size:11px; font-weight:900; display:flex;
+    align-items:center; justify-content:center; border:2px solid #0f172a; }
+  body.edo-visited-only #edo-item-btn{ display:none !important; }
+
+  /* アイテム一覧（アイテムボタンの真上） */
+  #edo-item-list{ position:fixed; z-index:60; display:none; max-height:56vh; overflow-y:auto;
+    background:#0f172a; border:2px solid #e879f9; border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.6);
+    padding:8px; color:#f1f5f9; }
+  #edo-item-list.show{ display:block; }
+  #edo-item-list .edo-il-head{ font-size:12px; font-weight:900; color:#f0abfc; padding:2px 4px 6px; display:flex; justify-content:space-between; align-items:center; }
+  #edo-item-list .edo-il-close{ background:#1e293b; border:1px solid #334155; border-radius:8px; width:26px; height:26px; color:#cbd5e1; font-weight:900; }
+  #edo-item-list .edo-il-row{ display:flex; align-items:center; gap:8px; padding:8px 6px; border-top:1px solid #1e293b; }
+  #edo-item-list .edo-il-ic{ font-size:24px; line-height:1; width:30px; text-align:center; flex:0 0 auto; }
+  #edo-item-list .edo-il-tx{ flex:1 1 auto; min-width:0; }
+  #edo-item-list .edo-il-name{ font-size:14px; font-weight:900; }
+  #edo-item-list .edo-il-cnt{ color:#facc15; font-weight:900; margin-left:4px; }
+  #edo-item-list .edo-il-desc{ font-size:10px; color:#94a3b8; line-height:1.35; margin-top:2px; }
+  #edo-item-list .edo-il-use{ flex:0 0 auto; background:#c026d3; color:#fff; font-weight:900; font-size:12px;
+    border-radius:9px; padding:7px 10px; border:1px solid #f0abfc; }
+  #edo-item-list .edo-il-use:disabled{ background:#334155; border-color:#475569; color:#94a3b8; }
+  #edo-item-list .edo-il-empty{ font-size:12px; color:#94a3b8; padding:10px 6px; text-align:center; }
+  #edo-item-list .edo-il-note{ font-size:10px; color:#fbbf24; padding:4px 6px 2px; }
+  #edo-item-list .edo-il-eff{ font-size:11px; color:#e2e8f0; padding:3px 6px; }
+
+  /* アイテムを使ったときのお知らせ */
+  #edo-item-toast{ position:fixed; left:50%; top:22%; transform:translateX(-50%); z-index:95; display:none;
+    background:rgba(15,23,42,.96); border:2px solid #e879f9; color:#fff; border-radius:16px; padding:12px 16px;
+    font-weight:900; text-align:center; max-width:88vw; box-shadow:0 10px 30px rgba(0,0,0,.6); }
+  #edo-item-toast.show{ display:block; animation:edoItemPop .25s ease-out; }
+  #edo-item-toast .ic{ font-size:40px; line-height:1.1; display:block; }
+  #edo-item-toast .tx{ font-size:14px; line-height:1.5; white-space:pre-line; }
+  @keyframes edoItemPop{ from{ transform:translateX(-50%) scale(.85); opacity:0 } to{ transform:translateX(-50%) scale(1); opacity:1 } }
+
+  /* 地図の🚧・💣 */
+  .edo-item-mark{ background:transparent; border:0; }
+  .edo-item-mark .m{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:18px; background:rgba(15,23,42,.75); border:2px solid #f59e0b; box-shadow:0 2px 8px rgba(0,0,0,.5); }
+  .edo-item-mark .m.bomb{ border-color:#ef4444; }
+
+  /* 🌠 ほしにねがいを：全マスを★の見た目に */
+  body.edo-all-star .custom-spot-icon .spot-marker{ background:#facc15 !important; border-radius:9999px !important;
+    transform:none !important; color:transparent !important; position:relative; }
+  body.edo-all-star .custom-spot-icon .spot-marker::after{ content:'★'; position:absolute; inset:0; display:flex;
+    align-items:center; justify-content:center; color:#0f172a; font-size:11px; font-weight:900; }
+</style>
+<script id="edogawa-v159">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ════════════════════════════════════════════════════════════
+  //  ver1.0.36　アイテム
+  //   ・ゴール後の「江戸川あみだくじ」の景品4つのうち1つ（ランダムな場所）がアイテムになります
+  //     （中身は 🚧→💣→🌠→🧭→🧲→💤→🚀→🚕→🎁→📜→🚧… の順に1回ごとに変わります）
+  //   ・「アイテム」ボタン（サイコロを振るの上）から使います。1ターンに1つまで、サイコロを振る前に使えます
+  //   ・CPUは設定の「CPUのアイテム使用」がONのときだけ使います（既定はOFF）
+  // ════════════════════════════════════════════════════════════
+  const ITEMS = [
+    { id:'block',    ic:'🚧', n:'とおせんぼ',       d:'今いる場所を24ターンの間、全プレーヤーが通れなくなります。ここを通る予定の人は、自動で別のルートを探します。' },
+    { id:'bomb',     ic:'💣', n:'ばくだん',         d:'今いる場所に爆弾を仕掛けます。ここを通った人・止まった人は💥して、区内のどこかへ吹き飛ばされます。' },
+    { id:'star',     ic:'🌠', n:'ほしにねがいを',   d:'12ターンの間、全マスが★マスになります。' },
+    { id:'reverse',  ic:'🧭', n:'ほうこうおんち',   d:'全プレーヤーが8ターンの間、逆に進むようになります。' },
+    { id:'magnet',   ic:'🧲', n:'じしゃく',         d:'他の全プレーヤーを、自分のいる場所にジャンプさせて集合させます。' },
+    { id:'sleep',    ic:'💤', n:'こもりうた',       d:'自分自身が3回休みになります（このターンから）。' },
+    { id:'rocket',   ic:'🚀', n:'ロケット',         d:'ロケットに乗って、200マス以上はなれた区内のどこかへ飛んでいきます（このターンはおしまい）。' },
+    { id:'taxi',     ic:'🚕', n:'かしきりタクシー', d:'￥1,000,000 はらって、ゴールの近くまで一気に移動します（このターンはおしまい）。' },
+    { id:'present',  ic:'🎁', n:'プレゼント',       d:'他のプレーヤー全員に ￥1,000,000 プレゼント。自分は -￥3,000,000 になります。' },
+    { id:'treasure', ic:'📜', n:'たからのちず',     d:'区内のどこかにたからが埋まります。いつもの目的地へのルートで、たまたま近くを通ると ￥100,000,000！' }
+  ];
+  const byId = {}; ITEMS.forEach(it => byId[it.id] = it);
+  const strip = s => String(s || '').replace(/️/g, '');
+  const bySymbol = s => ITEMS.find(it => strip(it.ic) === strip(s)) || null;
+
+  const BLOCK_TURNS = 24, STAR_TURNS = 12, REVERSE_TURNS = 8;
+  const BLOCK_R = 45;          // とおせんぼ：この距離（m）以内のマスは通れません
+  const BOMB_R = 18;           // ばくだん：この距離（m）以内のマスを通ると💥
+  const TREASURE_R = 150;      // たからのちず：この距離（m）以内を通ると見つかります
+  const SQUARE_M = 40;         // 1マス＝およそ40m
+  const W_KEY = 'edogawa_items_world_v1';
+  const CPU_KEY = 'edogawa_cpu_items_v1';
+
+  let W = freshWorld();
+  function freshWorld(){ return { blocks:[], bombs:[], starUntil:0, reverseUntil:0, rot:0 }; }
+  const T = () => Math.max(0, Number(app.turnCount) || 0);
+  const starOn = () => T() < (Number(W.starUntil) || 0);
+  const reverseOn = () => T() < (Number(W.reverseUntil) || 0);
+  const activeBlocks = () => (W.blocks || []).filter(b => T() < b.until);
+  const cpuItemsOn = () => { try{ return localStorage.getItem(CPU_KEY) === 'on'; }catch(e){ return false; } };
+  const fmt = n => (n < 0 ? '-' : '') + '￥' + Math.abs(Math.round(n)).toLocaleString('ja-JP');
+  const dist = (a, b) => { try{ return app.haversineMeters(a, b); }catch(e){ return Infinity; } };
+  const nodeOf = p => p && app.roadNetworkNodes ? app.roadNetworkNodes[p.currentNodeIdx] : null;
+  const human = () => (app.players || []).find(p => p && !p.isCpu) || null;
+  const goalNode = () => app.roadNetworkNodes ? app.roadNetworkNodes[app.goalNodeIdx] : null;
+  const log = t => { try{ app.addLog && app.addLog(t); }catch(e){} };
+
+  function saveWorld(){ try{ localStorage.setItem(W_KEY, JSON.stringify(W)); }catch(e){} }
+  function loadWorld(){
+    try{
+      const o = JSON.parse(localStorage.getItem(W_KEY) || 'null');
+      if(o && typeof o === 'object'){ W = Object.assign(freshWorld(), o); return true; }
+    }catch(e){}
+    return false;
+  }
+
+  // ── お知らせ ──
+  let toastTimer = null;
+  function toast(ic, text, ms){
+    let el = document.getElementById('edo-item-toast');
+    if(!el){ el = document.createElement('div'); el.id = 'edo-item-toast'; document.body.appendChild(el); }
+    el.innerHTML = '<span class="ic"></span><span class="tx"></span>';
+    el.querySelector('.ic').textContent = ic; el.querySelector('.tx').textContent = text;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), ms || 3000);
+  }
+
+  // ── 持ち物 ──
+  function countOf(p, id){ return Math.max(0, Math.floor(Number(p && p.items && p.items[id]) || 0)); }
+  function total(p){ return ITEMS.reduce((s, it) => s + countOf(p, it.id), 0); }
+  function give(p, id, n){
+    if(!p || !byId[id]) return;
+    p.items = p.items || {};
+    p.items[id] = countOf(p, id) + (n || 1);
+  }
+  function take(p, id){ if(countOf(p, id) > 0){ p.items[id] = countOf(p, id) - 1; if(!p.items[id]) delete p.items[id]; return true; } return false; }
+
+  // ── 区内の場所（施設） ──
+  function places(){
+    const out = [];
+    try{
+      (app._facilityPoiGroups() || []).forEach(g => (g[0] || []).forEach(loc => {
+        if(loc && Number.isFinite(Number(loc.lat)) && Number.isFinite(Number(loc.lng)))
+          out.push({ lat:Number(loc.lat), lng:Number(loc.lng), name:loc.name || '江戸川区' });
+      }));
+    }catch(e){}
+    return out;
+  }
+  function randomPlace(from, minM){
+    const g = goalNode(), list = places().filter(pl => (!g || dist(pl, g) > 300));
+    if(!list.length) return null;
+    let far = from ? list.filter(pl => dist(pl, from) >= (minM || 0)) : list;
+    if(!far.length && from){ far = list.slice().sort((a, b) => dist(b, from) - dist(a, from)).slice(0, 10); }
+    return far[Math.floor(Math.random() * far.length)];
+  }
+
+  // ── コマの置き直し（その場所から目的地へのルートを作り直します） ──
+  async function relocate(player, loc){
+    let ok = false;
+    try{ ok = await app.buildPlayerOwnBranch(player, loc, app.currentDestination); }catch(e){ console.warn('[items]', e); }
+    try{
+      const n = nodeOf(player), mk = app.playerMarkers && app.playerMarkers[player.id];
+      if(mk && n) mk.setLatLng([n.lat, n.lng]);
+    }catch(e){}
+    try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); }catch(e){}
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    return ok;
+  }
+  function moveMarker(p){
+    try{ const n = nodeOf(p), mk = app.playerMarkers && app.playerMarkers[p.id]; if(mk && n) mk.setLatLng([n.lat, n.lng]); }catch(e){}
+  }
+
+  // ── ターンを「使う」宣言（このターンをアイテムで終える時） ──
+  function claimTurn(){
+    try{ app.cancelAutoRoll && app.cancelAutoRoll(); }catch(e){}
+    app.isRolling = true; app.turnSettled = false;
+    try{ app._armTurnWatchdog && app._armTurnWatchdog(); }catch(e){}
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  アイテムの効果
+  // ════════════════════════════════════════════════════════════
+  async function useItem(p, id, opts){
+    opts = opts || {};
+    const it = byId[id]; if(!p || !it || !take(p, id)) return { ok:false };
+    app.__itemUsedKey = T() + '-' + app.currentPlayerIdx;
+    const here = nodeOf(p);
+    const name = p.name || 'プレーヤー';
+    const tag = (opts.cpu ? '🤖 ' : '') + it.ic + ' ' + it.n;
+    let endsTurn = false;
+    try{ app.setPlayerIconState && app.setPlayerIconState(p, { bubbleText: it.ic + ' ' + it.n + '！' }); }catch(e){}
+
+    if(id === 'block'){
+      if(here) W.blocks.push({ lat:here.lat, lng:here.lng, until:T() + BLOCK_TURNS, by:p.id });
+      toast(it.ic, name + ' が とおせんぼ！\nこの場所は ' + BLOCK_TURNS + 'ターンのあいだ通れません');
+      log('🚧 [アイテム] ' + name + ' が とおせんぼを置きました（' + BLOCK_TURNS + 'ターン）。ここを通る人は別のルートを探します。');
+    } else if(id === 'bomb'){
+      if(here) W.bombs.push({ lat:here.lat, lng:here.lng, by:p.id, at:Date.now() });
+      toast(it.ic, name + ' が ばくだんを仕掛けた！\nここを通ると💥');
+      log('💣 [アイテム] ' + name + ' が ばくだんを仕掛けました。');
+    } else if(id === 'star'){
+      W.starUntil = Math.max(Number(W.starUntil) || 0, T() + STAR_TURNS);
+      toast(it.ic, 'ほしにねがいを！\n' + STAR_TURNS + 'ターンのあいだ、全マスが★マスに！');
+      log('🌠 [アイテム] ' + name + ' が ほしにねがいを！ ' + STAR_TURNS + 'ターンのあいだ全マスが★マスになります。');
+    } else if(id === 'reverse'){
+      W.reverseUntil = Math.max(Number(W.reverseUntil) || 0, T() + REVERSE_TURNS);
+      toast(it.ic, 'ほうこうおんち！\n全員 ' + REVERSE_TURNS + 'ターンのあいだ逆に進みます');
+      log('🧭 [アイテム] ' + name + ' が ほうこうおんち！ 全員 ' + REVERSE_TURNS + 'ターンのあいだ逆に進みます。');
+    } else if(id === 'magnet'){
+      (app.players || []).forEach(o => {
+        if(!o || o === p) return;
+        o.path = Array.isArray(p.path) ? p.path.slice() : [p.currentNodeIdx];
+        o.pathIndex = p.pathIndex || 0;
+        o.currentNodeIdx = p.currentNodeIdx;
+        moveMarker(o);
+      });
+      try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); }catch(e){}
+      toast(it.ic, 'じしゃく！\nみんなが ' + name + ' のところに集合！');
+      log('🧲 [アイテム] ' + name + ' が じしゃく！ 他の全員を自分の場所へ集めました。');
+    } else if(id === 'sleep'){
+      endsTurn = true;
+      p.itemSleep = 2;                                   // このターン＋あと2回
+      p.skipTurn = true; p.skipTurnType = null; p.skipTurnReason = '💤 こもりうたでぐっすり眠ってしまい（3回休みの1回目）';
+      log('💤 [アイテム] ' + name + ' が こもりうたで3回休みになりました。');
+      toast(it.ic, name + ' は こもりうたで\nぐっすり…（3回休み）');
+      app.isRolling = false;
+      setTimeout(() => { try{ app.rollDice(); }catch(e){ console.warn('[items]', e); } }, 900);
+    } else if(id === 'rocket'){
+      endsTurn = true; claimTurn();
+      const dest = randomPlace(here, 200 * SQUARE_M * 0.62);
+      toast(it.ic, name + ' はロケットで飛んでいった！', 2600);
+      log('🚀 [アイテム] ' + name + ' がロケットで飛びました' + (dest ? '（' + dest.name + 'の近くへ）' : '') + '。');
+      if(dest) await relocate(p, dest);
+      try{ app.panToCurrentPlayer && app.panToCurrentPlayer(); }catch(e){}
+      const r = app.remainingSquares ? app.remainingSquares(p) : null;
+      app.showEventModal('🚀 ロケット', name + ' はロケットに乗って「' + (dest ? dest.name : '区内のどこか') + '」の近くまで飛んでいった！',
+        r != null ? ('目的地まで あと' + r + 'マス') : null, { icon:'🚀', type:'yellow' });
+    } else if(id === 'taxi'){
+      const path = app.normalizePathIndices ? app.normalizePathIndices(p.path) : (p.path || []);
+      const target = Math.max(0, path.length - 1 - 8);
+      if(target <= (p.pathIndex || 0)){
+        give(p, id, 1); app.__itemUsedKey = null;
+        if(!opts.cpu) toast(it.ic, 'もうゴールのすぐ近くです。\nタクシーは使いませんでした');
+        return { ok:false };
+      }
+      endsTurn = true; claimTurn();
+      p.money = (Number(p.money) || 0) - 1000000;
+      p.path = path; p.pathIndex = target; p.currentNodeIdx = path[target];
+      moveMarker(p);
+      try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); }catch(e){}
+      try{ app.updateHUD && app.updateHUD(); }catch(e){}
+      try{ app.panToCurrentPlayer && app.panToCurrentPlayer(); }catch(e){}
+      try{ app.saveGameState && app.saveGameState(); }catch(e){}
+      log('🚕 [アイテム] ' + name + ' が かしきりタクシーでゴールの近くまで移動！（-￥1,000,000）');
+      app.showEventModal('🚕 かしきりタクシー', name + ' は かしきりタクシーで、ゴールの近くまで一気に移動した！',
+        '料金：-￥1,000,000（残 ' + (app.formatMoney ? app.formatMoney(p.money) : fmt(p.money)) + '）', { icon:'🚕', type:'yellow' });
+    } else if(id === 'present'){
+      (app.players || []).forEach(o => { if(o && o !== p) o.money = (Number(o.money) || 0) + 1000000; });
+      p.money = (Number(p.money) || 0) - 3000000;
+      try{ app.updateHUD && app.updateHUD(); }catch(e){}
+      toast(it.ic, name + ' から みんなへ プレゼント！\nみんな ＋￥1,000,000 ／ ' + name + ' -￥3,000,000');
+      log('🎁 [アイテム] ' + name + ' が プレゼント！ 他の全員に ＋￥1,000,000、自分は -￥3,000,000。');
+    } else if(id === 'treasure'){
+      const spot = randomPlace(here, 1500) || randomPlace(null, 0);
+      if(spot){
+        let hint = null; try{ hint = app.nearbyAreaName ? app.nearbyAreaName(spot.lat, spot.lng) : null; }catch(e){}
+        p.treasures = (p.treasures || []).concat([{ lat:spot.lat, lng:spot.lng, hint:hint || '江戸川区のどこか' }]);
+        toast(it.ic, 'たからのちずを広げた！\nヒント：' + (hint || '江戸川区のどこか') + 'のあたり');
+        log('📜 [アイテム] ' + name + ' が たからのちずを広げました。（ヒント：' + (hint || '江戸川区のどこか') + 'のあたり）');
+      }
+    }
+    saveWorld();
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    refresh(true);
+    return { ok:true, endsTurn };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  移動中の判定（とおせんぼ・ばくだん・たからのちず・ほうこうおんち）
+  // ════════════════════════════════════════════════════════════
+  function upcoming(player){
+    const path = app.normalizePathIndices ? app.normalizePathIndices(player.path) : (player.path || []);
+    const start = Math.max(0, Math.min(player.pathIndex || 0, path.length - 1));
+    return { path, start };
+  }
+  // これから通るルートに、とおせんぼがあるか（出発する場所のすぐそばは除きます）
+  function blockOnPath(player){
+    const blocks = activeBlocks(); if(!blocks.length) return null;
+    const g = goalNode(), { path, start } = upcoming(player);
+    const nodes = app.roadNetworkNodes || [];
+    const here = nodes[path[start]];
+    for(const b of blocks){
+      if(g && dist(b, g) < 80) continue;                         // ゴールそのものはふさげません
+      if(here && dist(here, b) < BLOCK_R) {                       // いまその場所にいる人は、まず離れるまで
+        let k = start + 1; while(k < path.length && nodes[path[k]] && dist(nodes[path[k]], b) < BLOCK_R) k++;
+        for(let i = k; i < path.length; i++){ const n = nodes[path[i]]; if(n && dist(n, b) < BLOCK_R) return b; }
+        continue;
+      }
+      for(let i = start + 1; i < path.length; i++){ const n = nodes[path[i]]; if(n && dist(n, b) < BLOCK_R) return b; }
+    }
+    return null;
+  }
+  async function osrmVia(a, v, b){
+    const url = 'https://router.project-osrm.org/route/v1/driving/' + a.lng + ',' + a.lat + ';' + v.lng + ',' + v.lat + ';' +
+      b.lng + ',' + b.lat + '?overview=full&geometries=geojson';
+    try{
+      const r = await fetch(url, { cache:'no-store' }); if(!r.ok) return null;
+      const j = await r.json(); const c = j && j.routes && j.routes[0] && j.routes[0].geometry && j.routes[0].geometry.coordinates;
+      return Array.isArray(c) && c.length > 1 ? c.map(x => ({ lat:x[1], lng:x[0] })) : null;
+    }catch(e){ return null; }
+  }
+  async function reroute(player, block){
+    const { path, start } = upcoming(player);
+    const nodes = app.roadNetworkNodes || [];
+    const from = nodes[path[start]], dest = app.currentDestination;
+    if(!from || !dest) return false;
+    // とおせんぼの前後のマスから、道の向きを出して、横へずらした点を経由します
+    let i0 = start; for(let i = start; i < path.length; i++){ const n = nodes[path[i]]; if(n && dist(n, block) < BLOCK_R){ i0 = i; break; } }
+    const pa = nodes[path[Math.max(start, i0 - 3)]] || from, pb = nodes[path[Math.min(path.length - 1, i0 + 3)]] || block;
+    const kx = 111320 * Math.cos(block.lat * Math.PI / 180), ky = 111320;
+    let dx = (pb.lng - pa.lng) * kx, dy = (pb.lat - pa.lat) * ky; const L = Math.hypot(dx, dy) || 1; dx /= L; dy /= L;
+    const saved = app.fetchStreetRouteOSRM;
+    for(const off of [260, -260, 450, -450, 700, -700]){
+      const via = { lat: block.lat + (dx * off) / ky, lng: block.lng + (-dy * off) / kx };
+      const pts = await osrmVia(from, via, dest); if(!pts) continue;
+      if(pts.some((q, idx) => idx > 3 && dist(q, block) < BLOCK_R)) continue;
+      let ok = false;
+      app.fetchStreetRouteOSRM = async () => pts;
+      try{ ok = await app.buildPlayerOwnBranch(player, from, dest); }catch(e){ ok = false; }
+      finally{ app.fetchStreetRouteOSRM = saved; }
+      if(ok){
+        moveMarker(player);
+        try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); }catch(e){}
+        log('🚧 ' + (player.name || '') + ' は とおせんぼを避けて、別のルートを進みます。');
+        return true;
+      }
+    }
+    log('🚧 ' + (player.name || '') + ' は とおせんぼを避けるルートが見つからず、近くまで進みます。');
+    return false;
+  }
+  // 進むマスの中に、ばくだん・たからがあるか
+  function scanAhead(player, steps, dir){
+    const { path, start } = upcoming(player);
+    const nodes = app.roadNetworkNodes || [];
+    const n = dir < 0 ? Math.min(steps, start) : Math.min(steps, path.length - 1 - start);
+    let bombAt = null, bomb = null, treasure = null;
+    for(let k = 1; k <= n; k++){
+      const nd = nodes[path[start + dir * k]]; if(!nd) continue;
+      if(!treasure) (player.treasures || []).forEach(t => { if(!treasure && dist(nd, t) < TREASURE_R) treasure = t; });
+      const bb = (W.bombs || []).find(b => dist(nd, b) < BOMB_R && !(goalNode() && dist(goalNode(), b) < 30));
+      if(bb){ bombAt = k; bomb = bb; break; }
+    }
+    return { n, bombAt, bomb, treasure };
+  }
+
+  // ほうこうおんち：うしろ向きに進みます
+  function moveBackward(player, steps, stepDelay){
+    const { path, start } = upcoming(player);
+    player.path = path;
+    const sc = scanAhead(player, steps, -1);
+    const n = sc.bombAt || sc.n;
+    if(sc.bomb) player.__itemBoom = sc.bomb;
+    if(sc.treasure) player.__itemTreasure = sc.treasure;
+    log('🧭 ' + (player.name || '') + ' は ほうこうおんちで ' + n + 'マス逆に進みます。');
+    const done = () => {
+      try{ app.clearUsedVehicle && app.clearUsedVehicle(player); }catch(e){}
+      try{ app.updateMoveCountdown && app.updateMoveCountdown(player, 0, 0); }catch(e){}
+      app._suppressNearby = false;
+      try{ app.showNearbyForCurrentPlayer && app.showNearbyForCurrentPlayer(); }catch(e){}
+      try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); }catch(e){}
+      try{ app.saveGameState && app.saveGameState(); }catch(e){}
+      setTimeout(() => app.landOnSpot(player), 300);
+    };
+    if(n <= 0){ done(); return; }
+    if(app.moveInterval){ clearInterval(app.moveInterval); app.moveInterval = null; }
+    let k = 0;
+    const iv = app.moveInterval = setInterval(() => {
+      try{
+        k++;
+        player.pathIndex = start - k; player.currentNodeIdx = path[start - k];
+        const nd = nodeOf(player), mk = app.playerMarkers && app.playerMarkers[player.id];
+        if(mk && nd){ mk.setLatLng([nd.lat, nd.lng]); try{ app.map && app.map.panTo([nd.lat, nd.lng], { animate:true, duration:0.2 }); }catch(e){} }
+        try{ sound.playTone(400 + k * 30, 'sine', 0.05, 0.05); }catch(e){}
+        try{ app.updateMoveCountdown && app.updateMoveCountdown(player, n - k, n); }catch(e){}
+      }catch(e){ console.warn('[items]', e); k = n; }
+      if(k >= n){ clearInterval(iv); if(app.moveInterval === iv) app.moveInterval = null; done(); }
+    }, stepDelay || 350);
+  }
+
+  const origMove = app.movePlayerSteps ? app.movePlayerSteps.bind(app) : null;
+  function forwardMove(player, steps, stepDelay, silent){
+    try{
+      const sc = scanAhead(player, steps, 1);
+      if(sc.treasure) player.__itemTreasure = sc.treasure;
+      if(sc.bomb){ player.__itemBoom = sc.bomb; return origMove(player, sc.bombAt, stepDelay, silent); }
+    }catch(e){ console.warn('[items]', e); }
+    return origMove(player, steps, stepDelay, silent);
+  }
+  if(origMove){
+    app.movePlayerSteps = function(player, totalSteps, stepDelay, silent){
+      if(!player || silent) return origMove(player, totalSteps, stepDelay, silent);
+      try{
+        const cp = (app.players || [])[app.currentPlayerIdx];
+        if(reverseOn() && cp === player) return moveBackward(player, totalSteps, stepDelay);
+        const blk = blockOnPath(player);
+        if(blk && !player.__itemRerouting){
+          player.__itemRerouting = true;
+          reroute(player, blk).catch(() => {}).then(() => {
+            player.__itemRerouting = false;
+            forwardMove(player, totalSteps, stepDelay, silent);
+          });
+          return;
+        }
+      }catch(e){ console.warn('[items]', e); }
+      return forwardMove(player, totalSteps, stepDelay, silent);
+    };
+  }
+
+  // 止まったとき：たから → ばくだん → ★マス化
+  async function explode(player){
+    const b = player.__itemBoom; player.__itemBoom = null;
+    W.bombs = (W.bombs || []).filter(x => x !== b && !(x.lat === b.lat && x.lng === b.lng));
+    saveWorld(); refresh(true);
+    try{ sound.playLandRed && sound.playLandRed(); }catch(e){}
+    toast('💥', 'ドカーン！\n' + (player.name || '') + ' は吹き飛ばされた！', 2600);
+    const dest = randomPlace(nodeOf(player), 1000);
+    if(dest) await relocate(player, dest);
+    try{ app.panToCurrentPlayer && app.panToCurrentPlayer(); }catch(e){}
+    log('💥 [ばくだん] ' + (player.name || '') + ' が ばくだんを踏んで、' + (dest ? dest.name + 'の近く' : '区内のどこか') + 'まで吹き飛ばされました！');
+    const r = app.remainingSquares ? app.remainingSquares(player) : null;
+    app.showEventModal('💥 ばくだん！', (player.name || '') + ' は ばくだんを踏んで「' + (dest ? dest.name : '区内のどこか') + '」の近くまで吹き飛ばされた！',
+      r != null ? ('目的地まで あと' + r + 'マス') : null, { icon:'💥', type:'red' });
+  }
+  const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(origLand){
+    app.landOnSpot = function(player){
+      try{
+        const t = player && player.__itemTreasure;
+        if(t){
+          player.__itemTreasure = null;
+          player.treasures = (player.treasures || []).filter(x => x !== t && !(x.lat === t.lat && x.lng === t.lng));
+          player.money = (Number(player.money) || 0) + 100000000;
+          try{ app.updateHUD && app.updateHUD(); }catch(e){}
+          toast('💰', '📜 たからを見つけた！\n' + (player.name || '') + ' ＋￥100,000,000！', 3500);
+          log('📜 [たからのちず] ' + (player.name || '') + ' が たからを見つけました！ ＋￥100,000,000');
+          try{ app.saveGameState && app.saveGameState(); }catch(e){}
+        }
+        if(player && player.__itemBoom){ explode(player).catch(e => { console.warn('[items]', e); try{ app.finishTurn(); }catch(_){} }); return; }
+        if(player && starOn()){
+          const nd = nodeOf(player);
+          if(nd && ['red', 'blue', 'green'].indexOf(nd.type) >= 0){
+            const keep = nd.type; nd.type = 'star';
+            try{ return origLand(player); } finally { nd.type = keep; }
+          }
+        }
+      }catch(e){ console.warn('[items]', e); }
+      return origLand(player);
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  サイコロの前：こもりうたの休み・CPUのアイテム使用
+  // ════════════════════════════════════════════════════════════
+  function pickCpuItem(p){
+    const own = ITEMS.filter(it => countOf(p, it.id) > 0 && it.id !== 'sleep');
+    if(!own.length) return null;
+    const r = app.remainingSquares ? app.remainingSquares(p) : null;
+    const ok = own.filter(it => !(it.id === 'taxi' && r != null && r <= 12) && !(it.id === 'present' && (Number(p.money) || 0) < 3000000));
+    if(!ok.length || Math.random() > 0.45) return null;     // 毎ターンは使いません
+    return ok[Math.floor(Math.random() * ok.length)].id;
+  }
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){
+    app.rollDice = function(){
+      try{
+        const cp = (app.players || [])[app.currentPlayerIdx];
+        if(cp && !app.isRolling && !app.miniGameActive && !app.boatRaceActive){
+          if((Number(cp.itemSleep) || 0) > 0 && !cp.skipTurn){
+            const left = Number(cp.itemSleep);
+            cp.itemSleep = left - 1;
+            cp.skipTurn = true; cp.skipTurnType = null;
+            cp.skipTurnReason = '💤 こもりうたでぐっすり眠っていて（3回休みの' + (4 - left) + '回目）';
+          } else if(cp.isCpu && cpuItemsOn() && total(cp) > 0 && app.__itemUsedKey !== (T() + '-' + app.currentPlayerIdx)){
+            app.__itemUsedKey = T() + '-' + app.currentPlayerIdx;
+            const id = pickCpuItem(cp);
+            if(id){
+              app.isRolling = true;                         // 使っている間に、もう一度サイコロが振られないように
+              useItem(cp, id, { cpu:true }).then(res => {
+                if(res && res.endsTurn) return;
+                app.isRolling = false;
+                setTimeout(() => { try{ origRoll(); }catch(e){} }, 1400);
+              }).catch(() => { app.isRolling = false; try{ origRoll(); }catch(e){} });
+              return;
+            }
+          }
+        }
+      }catch(e){ console.warn('[items]', e); }
+      return origRoll();
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  あみだくじ：景品の1つをアイテムに
+  // ════════════════════════════════════════════════════════════
+  const origStartAmida = app.startGoalAmida ? app.startGoalAmida.bind(app) : null;
+  if(origStartAmida){
+    app.startGoalAmida = function(player){
+      const willPlay = !!player && !app.goalAmidaPlayedThisLeg && !app.goalAmidaActive;
+      const r = origStartAmida.apply(app, arguments);
+      try{
+        if(willPlay && app.goalAmidaActive){
+          const it = ITEMS[(Math.floor(Number(W.rot) || 0)) % ITEMS.length];
+          W.rot = ((Math.floor(Number(W.rot) || 0)) + 1) % ITEMS.length; saveWorld();
+          app.__amidaOfferItem = it.id;
+          const t0 = Date.now();
+          const iv = setInterval(() => {
+            try{
+              const f = document.getElementById('goal-amida-frame');
+              f && f.contentWindow && f.contentWindow.postMessage({ type:'EDOGAWA_AMIDA_ITEM', item:{ symbol:it.ic, name:'アイテム！' + it.n } }, '*');
+            }catch(e){}
+            if(Date.now() - t0 > 6000 || !app.goalAmidaActive) clearInterval(iv);
+          }, 250);
+        }
+      }catch(e){ console.warn('[items]', e); }
+      return r;
+    };
+  }
+  const origFinAmida = app.finishGoalAmida ? app.finishGoalAmida.bind(app) : null;
+  if(origFinAmida){
+    app.finishGoalAmida = function(prize){
+      const it = bySymbol(prize);
+      if(!it) return origFinAmida.apply(app, arguments);
+      const p = (app.players || [])[app.goalAmidaPlayerId];
+      app.goalAmidaPlayerId = null;                          // 乗り物は渡しません（アイテムを渡します）
+      try{ origFinAmida(); }catch(e){ console.warn('[items]', e); }
+      if(p){
+        give(p, it.id, 1);
+        try{ app.setPlayerIconState && app.setPlayerIconState(p, { bubbleText: it.ic + ' ゲット！' }); }catch(e){}
+        log('🎁 [江戸川あみだくじ] ' + p.name + ' は アイテム「' + it.ic + ' ' + it.n + '」を獲得！（アイテムボタンから使えます）');
+        try{ app.saveGameState && app.saveGameState(); }catch(e){}
+        refresh(true);
+        try{ app.continueAfterGoalAmida(p); }catch(e){ console.warn('[items]', e); }
+      }
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  保存・続きから・新しいゲーム
+  // ════════════════════════════════════════════════════════════
+  const origSave = app.saveGameState ? app.saveGameState.bind(app) : null;
+  if(origSave){ app.saveGameState = function(){ const r = origSave.apply(app, arguments); if(!app.isMultiplayer) saveWorld(); return r; }; }
+  ['resumeSoloGame'].forEach(name => {
+    const o = app[name] ? app[name].bind(app) : null; if(!o) return;
+    app[name] = async function(){ const r = await o.apply(app, arguments); try{ if(!loadWorld()) W = freshWorld(); }catch(e){} clearMarks(); refresh(true); return r; };
+  });
+  const origStart = app.startGame ? app.startGame.bind(app) : null;
+  if(origStart){
+    app.startGame = async function(){
+      W = freshWorld(); saveWorld(); clearMarks();
+      const r = await origStart.apply(app, arguments);
+      try{ (app.players || []).forEach(p => { if(p){ p.items = {}; p.itemSleep = 0; p.treasures = []; } }); }catch(e){}
+      W = freshWorld(); saveWorld(); refresh(true);
+      return r;
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  地図の🚧・💣
+  // ════════════════════════════════════════════════════════════
+  let marks = [], marksMap = null, marksSig = '';
+  function clearMarks(){ marks.forEach(m => { try{ m.remove(); }catch(e){} }); marks = []; marksSig = ''; }
+  function syncMarks(){
+    if(!app.map || typeof L === 'undefined') return;
+    const list = activeBlocks().map(b => ['b', b.lat, b.lng]).concat((W.bombs || []).map(b => ['m', b.lat, b.lng]));
+    const sig = list.map(x => x.join(',')).join('|');
+    if(marksMap === app.map && sig === marksSig) return;
+    clearMarks(); marksMap = app.map; marksSig = sig;
+    list.forEach(x => {
+      try{
+        const ic = L.divIcon({ className:'edo-item-mark', html:'<div class="m' + (x[0] === 'm' ? ' bomb' : '') + '">' + (x[0] === 'm' ? '💣' : '🚧') + '</div>', iconSize:[30, 30], iconAnchor:[15, 15] });
+        marks.push(L.marker([x[1], x[2]], { icon:ic, zIndexOffset:300 }).addTo(app.map));
+      }catch(e){}
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  画面：アイテムボタン・一覧・設定
+  // ════════════════════════════════════════════════════════════
+  function canUseNow(p){
+    const cp = (app.players || [])[app.currentPlayerIdx];
+    if(!p || !cp || cp !== p || p.isCpu) return false;
+    if(app.isRolling || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive) return false;
+    if(app.__itemUsedKey === (T() + '-' + app.currentPlayerIdx)) return false;
+    if(!app.map || !(app.roadNetworkNodes || []).length) return false;
+    const vis = id => { const e = document.getElementById(id); return e && !e.classList.contains('hidden'); };
+    if(vis('event-modal') || vis('goal-modal')) return false;
+    return true;
+  }
+  function ensureButton(){
+    const stack = document.getElementById('visited-roll-stack'), roll = document.getElementById('roll-dice-btn');
+    if(!stack || !roll) return null;
+    let b = document.getElementById('edo-item-btn');
+    if(!b){
+      b = document.createElement('button'); b.id = 'edo-item-btn'; b.type = 'button';
+      b.innerHTML = '<span>🎒</span><span>アイテム</span><span class="edo-item-badge" style="display:none">0</span>';
+      b.onclick = (e) => { e.stopPropagation(); toggleList(); };
+      stack.insertBefore(b, roll);
+    } else if(b.nextElementSibling !== roll){ stack.insertBefore(b, roll); }
+    return b;
+  }
+  function effectsText(){
+    const out = [];
+    const t = T();
+    if(starOn()) out.push('🌠 全マス★：あと' + (W.starUntil - t) + 'ターン');
+    if(reverseOn()) out.push('🧭 逆に進む：あと' + (W.reverseUntil - t) + 'ターン');
+    const bl = activeBlocks(); if(bl.length) out.push('🚧 とおせんぼ：' + bl.length + 'か所（いちばん長いもので あと' + Math.max.apply(null, bl.map(b => b.until - t)) + 'ターン）');
+    if((W.bombs || []).length) out.push('💣 ばくだん：' + W.bombs.length + 'か所');
+    const h = human();
+    if(h && (Number(h.itemSleep) || 0) > 0) out.push('💤 ' + h.name + '：あと' + h.itemSleep + '回休み');
+    if(h && (h.treasures || []).length) h.treasures.forEach(tr => out.push('📜 たからのヒント：' + tr.hint + 'のあたり'));
+    return out;
+  }
+  function renderList(){
+    const el = document.getElementById('edo-item-list'); if(!el) return;
+    const p = human(); const can = canUseNow(p);
+    let html = '<div class="edo-il-head"><span>🎒 アイテム</span><button type="button" class="edo-il-close" aria-label="閉じる">✕</button></div>';
+    const own = ITEMS.filter(it => countOf(p, it.id) > 0);
+    if(!own.length) html += '<div class="edo-il-empty">アイテムはありません。<br>ゴール後の「江戸川あみだくじ」で手に入ります。</div>';
+    own.forEach(it => {
+      html += '<div class="edo-il-row"><span class="edo-il-ic">' + it.ic + '</span><span class="edo-il-tx"><span class="edo-il-name">' + it.n +
+        '</span><span class="edo-il-cnt">×' + countOf(p, it.id) + '</span><div class="edo-il-desc">' + it.d + '</div></span>' +
+        '<button type="button" class="edo-il-use" data-id="' + it.id + '"' + (can ? '' : ' disabled') + '>使う</button></div>';
+    });
+    if(own.length && !can) html += '<div class="edo-il-note">※ 自分の番で、サイコロを振る前に使えます（1ターンに1つまで）</div>';
+    const eff = effectsText();
+    if(eff.length) html += '<div class="edo-il-row" style="display:block"><div class="edo-il-name" style="font-size:12px;color:#f0abfc">いま効いているもの</div>' +
+      eff.map(t => '<div class="edo-il-eff">' + t + '</div>').join('') + '</div>';
+    el.innerHTML = html;
+    el.querySelector('.edo-il-close').onclick = (e) => { e.stopPropagation(); closeList(); };
+    el.querySelectorAll('.edo-il-use').forEach(btn => btn.onclick = async (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-id');
+      if(!canUseNow(p)) return;
+      closeList();
+      await useItem(p, id, {});
+    });
+  }
+  function placeList(){
+    const el = document.getElementById('edo-item-list'), b = document.getElementById('edo-item-btn');
+    if(!el || !b) return;
+    const r = b.getBoundingClientRect();
+    const w = Math.min(window.innerWidth - 16, Math.max(r.width, 300));
+    el.style.width = w + 'px';
+    el.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w)) + 'px';
+    el.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+  }
+  function toggleList(){ const el = document.getElementById('edo-item-list'); if(el && el.classList.contains('show')) closeList(); else openList(); }
+  function openList(){
+    let el = document.getElementById('edo-item-list');
+    if(!el){ el = document.createElement('div'); el.id = 'edo-item-list'; el.onclick = e => e.stopPropagation(); document.body.appendChild(el); }
+    renderList(); placeList(); el.classList.add('show');
+  }
+  function closeList(){ const el = document.getElementById('edo-item-list'); if(el) el.classList.remove('show'); }
+  document.addEventListener('click', (e) => {
+    const el = document.getElementById('edo-item-list');
+    if(el && el.classList.contains('show') && !el.contains(e.target) && e.target.id !== 'edo-item-btn' && !(e.target.closest && e.target.closest('#edo-item-btn'))) closeList();
+  }, true);
+
+  function ensureSetting(){
+    if(document.getElementById('settings-cpuitem-state')) return;
+    const sp = document.getElementById('settings-speech-state'); const btn = sp && sp.closest('button');
+    if(!btn) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = btn.className;
+    b.innerHTML = '<span class="text-left"><span class="text-sm font-bold text-slate-100">🎒 CPUのアイテム使用</span><br>' +
+      '<span class="text-[10px] text-slate-500">CPUもあみだくじで取ったアイテムを使う</span></span>' +
+      '<span id="settings-cpuitem-state" class="px-2.5 py-1 rounded-full text-[11px] font-black"></span>';
+    b.onclick = () => app.settingsToggleCpuItems();
+    btn.parentNode.insertBefore(b, btn.nextSibling);
+    paintSetting();
+  }
+  function paintSetting(){
+    const s = document.getElementById('settings-cpuitem-state'); if(!s) return;
+    const on = cpuItemsOn();
+    s.textContent = on ? 'ON' : 'OFF';
+    s.className = 'px-2.5 py-1 rounded-full text-[11px] font-black ' + (on ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-800 text-slate-400 border border-slate-700');
+  }
+  app.settingsToggleCpuItems = function(){
+    try{ localStorage.setItem(CPU_KEY, cpuItemsOn() ? 'off' : 'on'); }catch(e){}
+    paintSetting();
+  };
+
+  let lastEff = '';
+  function refresh(force){
+    try{
+      ensureSetting(); paintSetting();
+      const b = ensureButton();
+      const p = human();
+      if(b){
+        const n = total(p);
+        const badge = b.querySelector('.edo-item-badge');
+        if(badge){ badge.textContent = String(n); badge.style.display = n > 0 ? 'flex' : 'none'; }
+        b.classList.toggle('is-off', !(n > 0 && canUseNow(p)));
+      }
+      document.body.classList.toggle('edo-all-star', !!(app.map && starOn()));
+      // 期限が切れたとおせんぼを片づけます
+      const before = (W.blocks || []).length;
+      W.blocks = (W.blocks || []).filter(x => T() < x.until);
+      if(W.blocks.length !== before){ log('🚧 とおせんぼの期限が切れて、通れるようになりました。'); saveWorld(); }
+      const eff = (starOn() ? 's' : '') + (reverseOn() ? 'r' : '');
+      if(eff !== lastEff){
+        if(lastEff.indexOf('s') >= 0 && !starOn()) log('🌠 ほしにねがいを の効き目が終わりました。');
+        if(lastEff.indexOf('r') >= 0 && !reverseOn()) log('🧭 ほうこうおんち の効き目が終わりました。前に進みます。');
+        lastEff = eff;
+      }
+      syncMarks();
+      const el = document.getElementById('edo-item-list');
+      if(el && el.classList.contains('show') && force) { renderList(); placeList(); }
+    }catch(e){ console.warn('[items]', e); }
+  }
+  setInterval(() => refresh(false), 500);
+  window.addEventListener('resize', () => placeList());
+
+  // 点検用
+  window.__EDOGAWA_ITEMS = {
+    list: ITEMS.map(it => it.ic + it.n),
+    world: () => JSON.parse(JSON.stringify(W)),
+    setWorld: (o) => { W = Object.assign(freshWorld(), o || {}); saveWorld(); refresh(true); },
+    give: (pid, id, n) => { give((app.players || [])[pid], id, n || 1); refresh(true); },
+    items: (pid) => Object.assign({}, ((app.players || [])[pid] || {}).items || {}),
+    use: (pid, id) => useItem((app.players || [])[pid], id, {}),
+    canUse: () => canUseNow(human()),
+    blockOnPath: (pid) => !!blockOnPath((app.players || [])[pid]),
+    starOn, reverseOn, cpuOn: cpuItemsOn, open: openList, close: closeList,
+    nextAmidaItem: () => ITEMS[(Math.floor(Number(W.rot) || 0)) % ITEMS.length].id
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
