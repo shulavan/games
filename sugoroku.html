@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.36 (2026-10-21)';
+    window.__EDOGAWA_VERSION = 'ver1.1.0 (2026-10-21)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -27925,11 +27925,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-nearby-row #mobile-destination-badge{ order:2; margin-left:auto !important; }
 
   /* 「アイテム」ボタン：サイコロを振るボタンの上。2つ合わせた高さ＝「あなたの番です」枠の高さ */
-  #visited-roll-stack{ align-self:stretch !important; justify-content:stretch !important; gap:6px !important; }
-  #visited-roll-stack > #edo-item-btn,
-  #visited-roll-stack > #roll-dice-btn{ flex:0 0 auto !important; height:calc(50% - 3px) !important; min-height:0 !important; width:100% !important; overflow:hidden;
+  /* 【ver1.1.0】アイテムを持っていないときは、これまでどおり「サイコロを振る」だけ（ボタンも以前の大きさ） */
+  #edo-item-btn{ display:none !important; }
+  body.edo-has-items #edo-item-btn{ display:flex !important; }
+  body.edo-has-items #visited-roll-stack{ align-self:stretch !important; justify-content:stretch !important; gap:6px !important; }
+  body.edo-has-items #visited-roll-stack > #edo-item-btn,
+  body.edo-has-items #visited-roll-stack > #roll-dice-btn{ flex:0 0 auto !important; height:calc(50% - 3px) !important; min-height:0 !important; width:100% !important; overflow:hidden;
     padding-top:2px !important; padding-bottom:2px !important; }
-  #edo-item-btn{ display:flex; align-items:center; justify-content:center; gap:6px; border-radius:.75rem;
+  #edo-item-btn{ align-items:center; justify-content:center; gap:6px; border-radius:.75rem;
     background:linear-gradient(90deg,#a21caf,#c026d3,#a21caf); color:#fff; font-weight:900; font-size:14px;
     border:2px solid #f0abfc; box-shadow:0 4px 12px rgba(0,0,0,.35); position:relative; }
   #edo-item-btn:active{ transform:scale(.97); }
@@ -27937,7 +27940,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-item-btn .edo-item-badge{ position:absolute; top:50%; transform:translateY(-50%); right:6px; min-width:20px; height:20px; padding:0 5px;
     border-radius:999px; background:#facc15; color:#0f172a; font-size:11px; font-weight:900; display:flex;
     align-items:center; justify-content:center; border:2px solid #0f172a; }
-  body.edo-visited-only #edo-item-btn{ display:none !important; }
+  body.edo-visited-only #edo-item-btn, body.edo-visited-only.edo-has-items #edo-item-btn{ display:none !important; }
 
   /* アイテム一覧（アイテムボタンの真上） */
   #edo-item-list{ position:fixed; z-index:60; display:none; max-height:56vh; overflow-y:auto;
@@ -28629,6 +28632,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const badge = b.querySelector('.edo-item-badge');
         if(badge){ badge.textContent = String(n); badge.style.display = n > 0 ? 'flex' : 'none'; }
         b.classList.toggle('is-off', !(n > 0 && canUseNow(p)));
+      }
+      // 【ver1.1.0】アイテムを持っている間だけ「アイテム」ボタンを出します（使い切ったら消えます）
+      const has = total(p) > 0;
+      if(document.body.classList.contains('edo-has-items') !== has){
+        document.body.classList.toggle('edo-has-items', has);
+        if(!has) closeList();
       }
       document.body.classList.toggle('edo-all-star', !!(app.map && starOn()));
       // 期限が切れたとおせんぼを片づけます
