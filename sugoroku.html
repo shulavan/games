@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.0.33 (2026-10-21)';
+    window.__EDOGAWA_VERSION = 'ver1.0.34 (2026-10-21)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1631,13 +1631,32 @@
 
   <!-- Firebase SDK (ES module imports must live in their own module script, not inline in an
        onclick attribute — see window.FirebaseLib below, consumed throughout the main script). -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, runTransaction, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <script id="edogawa-firebase-lazy">
+  // 【ver1.0.34】Firebase SDK は、マルチプレイを始めるときだけ読み込みます。
+  //   ひとりプレイでは一切通信しません（以前は起動時に必ず読み込んでいました）。
+  //   initFirebase() の中で window.__edoLoadFirebase() を待ってから使います。
+  (function(){
+    var BASE = 'https://www.gstatic.com/firebasejs/11.6.1/';
+    window.__edoLoadFirebase = function(){
+      if (window.FirebaseLib) return Promise.resolve(window.FirebaseLib);
+      if (window.__edoFbPromise) return window.__edoFbPromise;
+      window.__edoFbPromise = Promise.all([
+        import(BASE + 'firebase-app.js'),
+        import(BASE + 'firebase-auth.js'),
+        import(BASE + 'firebase-firestore.js')
+      ]).then(function(m){
+        var A = m[0], U = m[1], F = m[2];
         window.FirebaseLib = {
-      initializeApp, getAuth, signInAnonymously, signInWithCustomToken, getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, runTransaction, collection,
-          };
+          initializeApp: A.initializeApp, getAuth: U.getAuth, signInAnonymously: U.signInAnonymously, signInWithCustomToken: U.signInWithCustomToken,
+          getFirestore: F.getFirestore, doc: F.doc, setDoc: F.setDoc, getDoc: F.getDoc, updateDoc: F.updateDoc,
+          onSnapshot: F.onSnapshot, runTransaction: F.runTransaction, collection: F.collection
+        };
+        try { window.EdogawaSugoroku && window.EdogawaSugoroku.__edoWrapFirebase && window.EdogawaSugoroku.__edoWrapFirebase(); } catch (e) {}
+        return window.FirebaseLib;
+      }).catch(function(e){ window.__edoFbPromise = null; throw e; });
+      return window.__edoFbPromise;
+    };
+  })();
   </script>
 
   <!-- MODAL: 江戸川競艇（黄マスの強制移動から発生するミニゲーム。sugoroku.htmlのUIに合わせて再構築） -->
@@ -3426,7 +3445,11 @@
         const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
         const hasRealConfig = !!(config && config.apiKey && config.projectId);
 
-        if (!hasRealConfig) {
+        // 【ver1.0.34】マルチプレイで使うときに、ここで初めて Firebase SDK を読み込みます
+        if (hasRealConfig && !window.FirebaseLib && window.__edoLoadFirebase) {
+          try { await window.__edoLoadFirebase(); } catch (e) { console.warn('Firebase SDK を読み込めませんでした:', e); }
+        }
+        if (!hasRealConfig || !window.FirebaseLib) {
           console.warn("Firebase未設定のため、複数端末でのリアルタイム参加同期は無効です（QR表示自体はローカルで動作します）。");
           this.myUid = this.myUid || ('user_' + Math.random().toString(36).substring(2, 8));
           this.db = null;
@@ -11861,7 +11884,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 })();
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 【ver1.0.34】Supabase SDK は「行ったところ」を使うときだけ読み込みます（waitForSupabaseSdk） -->
 <script>
 (function(){
   'use strict';
@@ -11944,7 +11967,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 
   const isSupabaseConfigured=()=>!!(SUPA_CFG?.url && SUPA_CFG?.publishableKey);
   const isMine=(entry)=>!!app.visitedSupabaseUser?.id && entry?.ownerUid===app.visitedSupabaseUser.id;
-  const waitForSupabaseSdk=async(timeoutMs=8000)=>{
+  const SUPABASE_SDK_URL='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  const loadSupabaseSdk=()=>{
+    if(window.supabase?.createClient || document.getElementById('edogawa-supabase-sdk')) return;
+    const sc=document.createElement('script'); sc.id='edogawa-supabase-sdk'; sc.src=SUPABASE_SDK_URL; sc.async=true;
+    sc.onerror=()=>{ try{ sc.remove(); }catch(_){} };   // 次に使うときに読み込みなおせるように
+    document.head.appendChild(sc);
+  };
+  const waitForSupabaseSdk=async(timeoutMs=12000)=>{
+    loadSupabaseSdk();
     const start=Date.now();
     while(Date.now()-start<timeoutMs){
       if(window.supabase?.createClient) return true;
@@ -11968,6 +11999,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         app.visitedSupabaseUser=data?.user||null;
       }
       if(!app.visitedSupabaseUser) throw new Error('Supabase匿名認証ユーザーを取得できませんでした。');
+      // 【ver1.0.34】「行ったところ」を使い始めたら、そこで初めて地図のピンを読み込みます
+      setTimeout(()=>{ try{ if(app.map) subscribeEntries().catch(()=>{}); }catch(_){} },0);
       return true;
     }catch(e){
       app.visitedSupabaseError=e;
@@ -12088,8 +12121,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     return url;
   }
 
+  let subscribing=false;
   async function subscribeEntries(){
-    if(app.visitedEntriesUnsubscribe)return;
+    if(app.visitedEntriesUnsubscribe||subscribing)return;
+    // 【ver1.0.34】まだ「行ったところ」を使っていない（接続していない）ときは、通信しません
+    if(!(app.visitedSupabase && app.visitedSupabaseUser)) return;
+    subscribing=true;
+    try{ await subscribeEntriesInner(); }finally{ subscribing=false; }
+  }
+  async function subscribeEntriesInner(){
     if(!(await ensureSupabase())) return;
     const load=async()=>{
       const {data,error}=await app.visitedSupabase.from(VISITED_TABLE).select('id,owner_uid,firebase_uid,owner_name,lat,lng,accuracy_meters,visit_date,note,photo_path,created_at,updated_at').order('created_at',{ascending:true});
@@ -12318,13 +12358,22 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const widget=document.getElementById('edogawa-lobby-visited');if(!widget)return;
     const countEl=document.getElementById('edogawa-lobby-visited-count');if(countEl)countEl.textContent=`投稿件数：${Array.isArray(app.visitedEntries)?app.visitedEntries.length:0}件`;
   }
+  const VISITED_COUNT_KEY='edogawa_visited_count_v1';
   app.refreshVisitedLobbyCount=async function(){
     const countEl=document.getElementById('edogawa-lobby-visited-count');
+    // 【ver1.0.34】「行ったところ」を使うまでは Supabase に接続しません。
+    //   件数は、前回取得した数（端末に保存）を表示します。
+    if(!(app.visitedSupabase && app.visitedSupabaseUser)){
+      let n=null; try{ const v=localStorage.getItem(VISITED_COUNT_KEY); if(v!==null && v!=='') n=Math.max(0,Number(v)||0); }catch(_){}
+      if(countEl) countEl.textContent = n===null ? '投稿件数：－件' : `投稿件数：${n.toLocaleString('ja-JP')}件`;
+      if(n!==null){ try{ updateVisitedToolLabel(n); }catch(_){} }
+      return n===null ? null : n;
+    }
     try{
       if(!(await ensureSupabase())){if(countEl)countEl.textContent='投稿件数：－件';return 0;}
       const {count,error}=await app.visitedSupabase.from(VISITED_TABLE).select('id',{count:'exact',head:true});
       if(error)throw error;
-      const n=Math.max(0,Number(count||0)); app.visitedEntryCount=n; updateVisitedToolLabel(n);
+      const n=Math.max(0,Number(count||0)); app.visitedEntryCount=n; updateVisitedToolLabel(n); try{ localStorage.setItem(VISITED_COUNT_KEY,String(n)); }catch(_){}
       if(countEl)countEl.textContent=`投稿件数：${n.toLocaleString('ja-JP')}件`;
       return n;
     }catch(e){console.warn('📌投稿件数取得失敗:',e);if(countEl)countEl.textContent='投稿件数：－件';return null;}
@@ -25041,12 +25090,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{
       const sb = app.visitedSupabase;
       const uid = app.visitedSupabaseUser && app.visitedSupabaseUser.id;
-      if(!sb || !uid){ paintLabels(Math.max(0, Number(all) || 0), all); return Number(all) || 0; }
+      if(!sb || !uid){
+        // 【ver1.0.34】未接続（「行ったところ」をまだ使っていない）ときは、前回取得した自分の件数を表示します
+        let mineC = 0; try{ mineC = Math.max(0, Number(localStorage.getItem('edogawa_visited_mine_v1')) || 0); }catch(_){}
+        paintLabels(mineC, all); return mineC;
+      }
       const {count, error} = await sb.from(TABLE)
         .select('id', {count:'exact', head:true})
         .eq('owner_uid', uid);
       if(error) throw error;
       const mine = Math.max(0, Number(count) || 0);
+      try{ localStorage.setItem('edogawa_visited_mine_v1', String(mine)); }catch(_){}
       paintLabels(mine, all);
       return mine;
     }catch(e){

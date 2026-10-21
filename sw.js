@@ -11,7 +11,7 @@
  * アプリを更新した時は、下の CACHE_VERSION の数字を1つ上げてアップロードしてください。
  * 次回起動時に古いキャッシュを破棄して新しいHTMLを取り込みます。
  */
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';   // ver1.0.34（Firebase・Supabase を必要時だけ読み込む版）
 const CACHE_NAME = `edogawa-sugoroku-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
