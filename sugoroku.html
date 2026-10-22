@@ -209,13 +209,13 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '13';
+    window.__EDOGAWA_MINIGAMES_VER = '14';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
     window.__EDOGAWA_MINIGAME_LIST = ['amida','plane','mart','clinic','bus','toilet','lunch',
       'hotel','kingyo','tower','wheel','canoe','delivery','kanken','hide','nuts','archery','train',
-      'lottery','pachinko','fishing','fight'];
+      'lottery','pachinko','fishing','fight','shiritori'];
     window.__EDOGAWA_HAS_GAME = function(k){
       return window.__EDOGAWA_MINIGAME_LIST.indexOf(k) >= 0;
     };
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.0 (2026-10-21)';
+    window.__EDOGAWA_VERSION = 'ver1.1.1 (2026-10-22)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23995,7 +23995,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       {k:'train',        ic:'🚃', n:'電車シミュレーター'},
       {k:'pachinko',     ic:'🎰', n:'CR EDOGAWA フィーバー'},
       {k:'fishing',      ic:'🎣', n:'えどがわ釣りスポット'},
-      {k:'fight',        ic:'🥊', n:'江戸川街道 闘魂ロード'}
+      {k:'fight',        ic:'🥊', n:'江戸川街道 闘魂ロード'},
+      {k:'shiritori',    ic:'🔤', n:'ガキんちょしりとり'}
     ]}
   ];
 
@@ -24110,6 +24111,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }
       if(key === 'fight'){
         app.startFightGame(p, app.players[1], ()=>restore(), 'same');
+        return;
+      }
+      if(key === 'shiritori'){
+        app.startShiritoriGame(p, app.players[1], ()=>restore(), 'same');
         return;
       }
       app.openRegionalMiniGame(key, p);
@@ -27626,7 +27631,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
             else origLandFight(player);
           }catch(e){ console.error('[v156]', e); try{ origLandFight(player); }catch(_){} }
         };
-        try{ app.startFightGame(player, f.other, after, f.how); }
+        try{ (app.startStreetBattle || app.startFightGame)(player, f.other, after, f.how); }
         catch(e){ console.error('[v156]', e); after(); }
         return;
       }
@@ -27809,6 +27814,133 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return true;
   };
 
+  // ════════════════════════════════════════════════════════════
+  //  【ver1.1.1】🔤 ガキんちょしりとり
+  //   ・闘魂ロードと同じく、プレーヤー同士のマスが重なったとき（追いついた・同じマス）に始まります
+  //   ・闘魂ロード → しりとり → 闘魂ロード … と交互に出ます（順番は保存して、続きからでも引き継ぎます）
+  //   ・人が入っていれば、その人が「あなた」側。相手は重なった双六のプレーヤーです
+  //   ・100点 ＝ ￥100 で所持金になります
+  // ════════════════════════════════════════════════════════════
+  const BATTLE_ROT_KEY = 'edogawa_battle_rot_v1';
+  function nextBattle(){
+    let k = 'fight';
+    try{ k = localStorage.getItem(BATTLE_ROT_KEY) === 'shiritori' ? 'shiritori' : 'fight'; }catch(e){}
+    try{ localStorage.setItem(BATTLE_ROT_KEY, k === 'fight' ? 'shiritori' : 'fight'); }catch(e){}
+    return k;
+  }
+  app.startStreetBattle = function(mover, other, after, how){
+    const k = nextBattle();
+    try{ app.addLog && app.addLog(k === 'fight' ? '🥊 江戸川街道 闘魂ロード が始まります！' : '🔤 ガキんちょしりとり が始まります！'); }catch(e){}
+    return k === 'shiritori' ? app.startShiritoriGame(mover, other, after, how) : app.startFightGame(mover, other, after, how);
+  };
+  app.__nextBattleKind = ()=>{ try{ return localStorage.getItem(BATTLE_ROT_KEY) === 'shiritori' ? 'shiritori' : 'fight'; }catch(e){ return 'fight'; } };
+
+  function shiritoriReason(mover, other, how){
+    return how === 'catch'
+      ? esc(mover.name) + ' が ' + esc(other.name) + ' に追いついた！'
+      : esc(mover.name) + ' と ' + esc(other.name) + ' が同じマスで出会った！';
+  }
+  function applyShiritori(P1, P2, res){
+    const sc = Math.max(0, Math.round(Number(res.score) || 0));
+    const before = Math.round(Number(P1.money) || 0);
+    P1.money = before + sc;                                   // 100点 ＝ ￥100
+    const delta = Math.round(P1.money) - before;
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    try{ app.addLog && app.addLog('🔤 ' + P1.name + ' vs ' + P2.name + '：ガキんちょしりとり ' +
+      (Number(res.cleared) || 0) + '枚・' + sc.toLocaleString('ja-JP') + '点（＋' + yen(delta) + '）'); }catch(e){}
+    const rows = [];
+    if(res.reason) rows.push({ name:'結果', text: res.reason });
+    rows.push({ name:'つないだ枚数', text: (Number(res.cleared) || 0) + ' / ' + (Number(res.total) || 60) + ' 枚' });
+    rows.push({ name:'お手つき', text: (Number(res.miss) || 0) + ' 回' });
+    rows.push({ name:'最終スコア', text: sc.toLocaleString('ja-JP') + ' 点' });
+    rows.push({ name:'換金（100点＝￥100）', text: '＋' + yen(delta) });
+    return { rows, delta };
+  }
+  function showShiritoriResult(P1, P2, res, out, reasonHtml){
+    try{
+      app._miniCommonResultShow && app._miniCommonResultShow({
+        game:'shiritori', playerName: P1.name + ' VS ' + P2.name, money: P1.money, delta: out.delta, rows: out.rows });
+      decorate('🔤', '結果発表', 'ガキんちょしりとり', reasonHtml || null, null);
+    }catch(e){ console.warn('[v1.1.1]', e); }
+  }
+
+  app.startShiritoriGame = function(mover, other, after, how){
+    const cont = (typeof after === 'function') ? after : ()=>{};
+    if(!mover || !other){ cont(); return false; }
+    markFight(mover, other);                       // 闘魂ロードと同じく、この2人は5ターン空けます
+    const P1 = isMine(mover) ? mover : isMine(other) ? other : mover;
+    const P2 = P1 === mover ? other : mover;
+    const human = isMine(P1);
+    const reason = shiritoriReason(mover, other, how);
+
+    if(!human){
+      // CPUどうしは、その場で結果を決めて、結果だけ見せます
+      const cleared = 4 + Math.floor(Math.random() * 30), miss = Math.floor(Math.random() * 4);
+      const sc = Math.max(0, 1000 + (cleared - 1) * 500 - miss * 100 + (cleared > 25 ? 100000 : 0));
+      const res = { score: sc, cleared: cleared, total: 60, miss: miss,
+        reason: ['制限時間切れ！','「ん」がついたため終了！','つながるパネルがないため終了！'][Math.floor(Math.random() * 3)] };
+      const out = applyShiritori(P1, P2, res);
+      app.__fightActive = true; app.miniGameActive = true;
+      showShiritoriResult(P1, P2, res, out, '<span style="font-size:12px;color:#94a3b8">' + reason + '（CPUどうしは自動で決まります）</span>');
+      setTimeout(()=>{ closeCommon(); app.__fightActive = false; app.miniGameActive = false; cont(); }, 5400);
+      return true;
+    }
+
+    let done = false, payload = null, guard = null, fr = null;
+    const finish = ()=>{
+      if(done) return; done = true;
+      clearTimeout(guard);
+      app.__customMiniQuit = null;
+      try{ fr && fr.close(); }catch(e){}
+      app.miniGameActive = false; app.regionalMiniGame = null;
+      const res = (payload && payload.shiritori) || { score: 0, cleared: 0, total: 60, miss: 0, reason: '' };
+      const out = applyShiritori(P1, P2, res);
+      showShiritoriResult(P1, P2, res, out, null);
+      setTimeout(()=>{ closeCommon(); app.__fightActive = false; cont(); }, 5400);
+    };
+    // 「✕」で閉じたとき：その時点の得点で結果を出します
+    app.__customMiniQuit = ()=>{ try{ fr && fr.post({ type:'EDOGAWA_FORCE_END', game:'shiritori' }); }catch(e){} setTimeout(finish, 1800); };
+
+    app.__fightActive = true;
+    app.miniGameActive = true;
+    app.regionalMiniGame = null;
+    fr = openFrame('shiritori', '🔤 ガキんちょしりとり', (d)=>{
+      if(d.type === 'EDOGAWA_MINIGAME_RENDERED'){ g('regional-mini-loading')?.style.setProperty('display','none'); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard = setTimeout(finish, 600000); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_RESULT'){ payload = d; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_CLOSE'){ finish(); }
+    });
+    if(!fr){ app.__fightActive = false; app.miniGameActive = false; cont(); return false; }
+    const setup = ()=>fr.post({ type:'EDOGAWA_SHIRITORI_SETUP',
+      opp: { name: P2.name, icon: (app.avatarPlain ? app.avatarPlain(P2.avatar) : (P2.avatar || '🙂')),
+             image: (app.avatarImageSrc ? app.avatarImageSrc(P2.avatar) : null) },
+      speech: app.speechEnabled !== false });
+    fr.frame.onload = ()=>{ g('regional-mini-loading')?.style.setProperty('display','none'); setup(); setTimeout(setup, 400); };
+    guard = setTimeout(finish, 600000);
+
+    try{
+      app._miniCommonStartShow && app._miniCommonStartShow('shiritori', P1);
+      decorate('🔤', 'しりとりバトル', 'ガキんちょしりとり',
+        '<div class="edo-mc-vs">' + esc(P1.name) + '<b>VS</b>' + esc(P2.name) + '</div>',
+        '<li>' + reason + '</li>' +
+        '<li>相手が決めた言葉の<b style="color:#fca5a5">最後の文字</b>から始まる絵文字パネルをタップ！</li>' +
+        '<li class="edo-shiri-rule"><span>濁点(ﾞ)半濁点(ﾟ)は無しです</span><span>小文字(っゃゅょ)もそのまま</span></li>' +
+        '<li>正解 <b style="color:#86efac">＋1,000点</b>／お手つき <b style="color:#fca5a5">-100点</b>／ヒントは3回まで</li>' +
+        '<li>100点＝<b style="color:#fde047">￥100</b> で所持金になります。</li>');
+      // ルールが多いので、開始モーダルは5秒出します（バーも5秒に合わせます）
+      const bi = document.querySelector('#edo-mini-common .edo-mc-bar i, #edo-mini-common .edo-bar i');
+      if(bi) bi.style.animationDuration = '5000ms';
+    }catch(e){}
+    setTimeout(()=>{
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      setup();
+      const send = ()=>fr.post({ type:'EDOGAWA_COMMON_MINIGAME_START', game:'shiritori' });
+      send(); setTimeout(send, 300); setTimeout(send, 900);
+    }, 5000);
+    return true;
+  };
+
   window.__EDOGAWA_V156_INFO = ()=>({
     釣りスポットの数: spots ? spots.length : null,
     '地図の🎣': fishMarkers.length,
@@ -27822,6 +27954,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   });
 })();
 </script>
+<style id="edogawa-v1-1-1-style">
+  /* 🔤 しりとりの大事なルール：大きく、各1行（折り返さない） */
+  #edo-mini-common li.edo-shiri-rule{ list-style:none; margin:8px 0 !important; padding:10px 6px !important;
+    border:2px solid #facc15; border-radius:12px; background:rgba(250,204,21,.12); text-align:center; }
+  #edo-mini-common li.edo-shiri-rule::before{ display:none !important; content:none !important; }
+  #edo-mini-common li.edo-shiri-rule span{ display:block; white-space:nowrap; font-weight:1000; color:#fde047;
+    font-size:min(18px, 4.6vw); line-height:1.55; letter-spacing:.01em; }
+</style>
 <style id="edogawa-v157-style">
   /* 🥊 闘魂ロードの結果（表の形） */
   #edo-mini-common .edo-ft-wrap{ margin:2px 0 10px; }
