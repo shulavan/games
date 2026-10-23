@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '17';
+    window.__EDOGAWA_MINIGAMES_VER = '19';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.4 (2026-10-22)';
+    window.__EDOGAWA_VERSION = 'ver1.1.6 (2026-10-23)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -2449,7 +2449,7 @@
           自分の陣地の数は、下のプレイヤーカードとゴール画面で確認できます。</p>
 
           <h4>江戸川ジャンボ宝くじ</h4>
-          <p>7ターンごとに宝くじ売り場が開きます。連番・バラを1枚￥300で買っておくと、数ターンあとの抽選会で6桁の当選番号が決まり、当たれば賞金がもらえます。</p>
+          <p>30ターンごとに宝くじ売り場が開きます。連番・バラを1枚￥300で買っておくと、数ターンあとの抽選会で6桁の当選番号が決まり、当たれば賞金がもらえます。</p>
 
           <h4>📌 行ったところを記憶</h4>
           <p>トップページの 📌 ボタンから、いま自分がいる場所（または地図でえらんだ場所）を、写真・日付・メモつきで記録できます。
@@ -20953,9 +20953,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 
   // ══════════════════════════════════════════════════════════════
   //  ① 江戸川ジャンボ宝くじ
-  //     7ターンごとに「購入画面」→ その7ターン後に「抽選画面」をくり返します
+  //     30ターンごとに「購入画面」→ その30ターン後に「抽選画面」をくり返します（ver1.1.6で7→30）
   // ══════════════════════════════════════════════════════════════
-  const LOTTERY_EVERY = 7;
+  const LOTTERY_EVERY = 30;   // 【ver1.1.6】7ターン → 30ターンごと（多すぎるとのご意見のため）
   app.lotteryEvery = LOTTERY_EVERY;
 
   app.lotteryStore = function(player){
@@ -21050,7 +21050,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ app.scheduleProfilePersist && app.scheduleProfilePersist(player); }catch(e){}
   };
 
-  // ── 7ターンごとの呼び出し ──
+  // ── 30ターンごとの呼び出し ──
   function myPlayer(){
     const ps = app.players || [];
     if(app.isMultiplayer) return ps.find(p=>p && p.uid && p.uid === app.myUid) || null;
@@ -27917,7 +27917,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const setup = ()=>fr.post({ type:'EDOGAWA_SHIRITORI_SETUP',
       opp: { name: P2.name, icon: (app.avatarPlain ? app.avatarPlain(P2.avatar) : (P2.avatar || '🙂')),
              image: (app.avatarImageSrc ? app.avatarImageSrc(P2.avatar) : null) },
-      speech: app.speechEnabled !== false });
+      speech: app.speechEnabled !== false, me: P1.name });
     fr.frame.onload = ()=>{ g('regional-mini-loading')?.style.setProperty('display','none'); setup(); setTimeout(setup, 400); };
     guard = setTimeout(finish, 600000);
 
@@ -28813,6 +28813,65 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     starOn, reverseOn, cpuOn: cpuItemsOn, open: openList, close: closeList,
     nextAmidaItem: () => ITEMS[(Math.floor(Number(W.rot) || 0)) % ITEMS.length].id
   };
+})();
+</script>
+<script id="edogawa-v160">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  // ════════════════════════════════════════════════════════════
+  //  ver1.1.6　▲マスのミニゲーム「競艇ばかり出る」件
+  //   調べたところ、順番（競艇 → カヌー → 観覧車 → 船堀タワー）そのものは正しく回っていました。
+  //   ただ、競艇だけは「全員強制参加」のため、CPUが▲で競艇を引いたときも、
+  //   あなたが毎回参加させられて、長いレース画面が出ていました。
+  //   ほかの3つは、CPUが引いたときはCPUの結果だけが短く出るので、
+  //   画面に出る回数は 競艇 ≒ ほかの4倍 になり、「競艇ばかり」に見えていました。
+  //   → CPUが引いた競艇も、ほかと同じく「CPUの結果だけ」を短く出すようにします。
+  //     （あなたが▲で競艇を引いたときは、これまでどおり全員参加のレースです）
+  // ════════════════════════════════════════════════════════════
+  const yen = v => { v = Math.round(Number(v) || 0); return (v < 0 ? '-￥' : '￥') + Math.abs(v).toLocaleString('ja-JP'); };
+  const orig = app.startBoatRaceEvent ? app.startBoatRaceEvent.bind(app) : null;
+  if(!orig) return;
+  app.startBoatRaceEvent = async function(forcedPlayer, continued){
+    const p = forcedPlayer || (app.players || [])[app.currentPlayerIdx];
+    const cpuOnly = p && !continued && !app.isMultiplayer && (p.isCpu || (app.isAutoPlayedPlayer && app.isAutoPlayedPlayer(p) && p.isCpu));
+    if(!cpuOnly) return orig.apply(app, arguments);
+    try{ app.adjustPlayerStat && app.adjustPlayerStat(p, 'luck', 10, false); }catch(e){}
+    const fee = 1000;
+    const boats = [1,2,3,4,5,6];
+    const first = boats[Math.floor(Math.random() * 6)];
+    let second = boats[Math.floor(Math.random() * 6)]; if(second === first) second = (first % 6) + 1;
+    const hit = Math.random() < 0.28;
+    const odds = hit ? (3 + Math.floor(Math.random() * 13)) : 0;
+    const pay = hit ? fee * odds : 0;
+    const delta = pay - fee;
+    p.money = (Number(p.money) || 0) + delta;
+    p.boatRaceCount = (Number(p.boatRaceCount) || 0);
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    try{ app.addLog && app.addLog('🚤 ' + p.name + '（CPU）：江戸川競艇 2連単 ' + first + '-' + second + ' ' + (hit ? '的中！（' + odds + '倍）' : 'はずれ') +
+      '（' + (delta >= 0 ? '＋' : '') + yen(delta) + '）'); }catch(e){}
+    app.miniGameActive = true;
+    try{
+      app._miniCommonResultShow && app._miniCommonResultShow({ game:'boat', playerName: p.name, money: p.money, delta: delta,
+        rows: [ { name:'参加費', text: '-' + yen(fee).replace('-', '') },
+                { name:'舟券（2連単）', text: first + '-' + second },
+                { name:'結果', text: hit ? '的中！（' + odds + '倍）' : 'はずれ' },
+                { name:'払戻金', text: hit ? '＋' + yen(pay) : 'なし' } ] });
+      const box = document.querySelector('#edo-mini-common .edo-mc-box');
+      if(box){
+        const e = box.querySelector('.edo-mc-emoji'); if(e) e.textContent = '🚤';
+        const t = box.querySelector('.edo-mc-title'); if(t) t.textContent = '江戸川競艇（CPU結果）';
+      }
+    }catch(e){ console.warn('[v160]', e); }
+    setTimeout(() => {
+      try{ const mc = document.getElementById('edo-mini-common'); if(mc){ mc.classList.remove('show'); } }catch(e){}
+      app.miniGameActive = false;
+      try{ app.finishTurn(); }catch(e){ console.warn('[v160]', e); }
+    }, 5400);
+    return true;
+  };
+  window.__EDOGAWA_V160_INFO = () => ({ 宝くじの周期: app.lotteryEvery });
 })();
 </script>
 <script id="edogawa-v39-footer">
