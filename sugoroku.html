@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '19';
+    window.__EDOGAWA_MINIGAMES_VER = '20';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.6 (2026-10-23)';
+    window.__EDOGAWA_VERSION = 'ver1.1.7 (2026-10-23)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -2429,7 +2429,7 @@
           <ul>
             <li>🚲 自転車（25%）／🚗 自動車（20%）／🚃 電車（15%）／🚅 新幹線（10%）…次のサイコロの目が倍になります。</li>
             <li>🚓 警察・🚑 病院（あわせて10%）…最寄りの交番・病院へ強制移動して1回休み。病院のあとは数ターン 🦽 になり、サイコロの目が1のままになります。</li>
-            <li>🎮 ミニゲーム（20%）…江戸川競艇 → 新左近川カヌー → 大観覧車 → 増築船堀タワー の順に出てきます。</li>
+            <li>🎮 ミニゲーム（20%）…江戸川競艇 → 新左近川カヌー → 大観覧車 → 増築船堀タワー の順に出てきます（3周ごとに 競艇 と カヌー の順番が入れ替わります）。競艇とカヌーは、だれが引いても全員参加です。</li>
             <li>ゴールまであと150マス以上なら ✈️ 飛行機、あと100マス以上なら 🚁 ヘリコプターが、ゴール1回につき1人だけ配られます（早い者勝ち）。空を飛ぶ乗り物は道路を無視して直線で進みます。</li>
           </ul>
 
@@ -3305,6 +3305,7 @@
       wheelCapThisLeg: 1,
       // 緑▲の特別イベントは競艇→カヌー→競艇→カヌー…と交互に発生
       greenSpecialNext: 'boat',
+      greenCycle: 0,
       boatRaceState: null,
       boatRaceActionSeq: 0,
       lastAppliedBoatRaceActionSeq: 0,
@@ -7318,7 +7319,13 @@
         // ── ② ミニゲーム 20% ──
         //    ミニゲームは「競艇 → カヌー → 大観覧車 → 船堀タワー」の順に持ち回り、
         //    1レグにつき各1回まで。使い切っている場合は乗り物になります。
-        const GREEN_ORDER = ['boat', 'canoe', 'wheel', 'tower'];
+        //    【ver1.1.7】3周ごとに 競艇 と カヌー の順番を入れ替えます
+        //      1～3周目：競艇 → カヌー → 観覧車 → タワー
+        //      4～6周目：カヌー → 競艇 → 観覧車 → タワー（以後くり返し）
+        const greenCycle = Math.max(0, Math.floor(Number(this.greenCycle) || 0));
+        const GREEN_ORDER = (Math.floor(greenCycle / 3) % 2 === 0)
+          ? ['boat', 'canoe', 'wheel', 'tower']
+          : ['canoe', 'boat', 'wheel', 'tower'];
         const greenAvail = {
           boat:  this.boatRaceEventsThisLeg < this.boatRaceCapThisLeg,
           canoe: this.canoeEventsThisLeg    < this.canoeCapThisLeg,
@@ -7335,7 +7342,17 @@
             const k = GREEN_ORDER[(startAt + i) % GREEN_ORDER.length];
             if (greenAvail[k]) { pick = k; break; }
           }
-          this.greenSpecialNext = GREEN_ORDER[(GREEN_ORDER.indexOf(pick) + 1) % GREEN_ORDER.length];
+          {
+            const ni = GREEN_ORDER.indexOf(pick) + 1;
+            if (ni >= GREEN_ORDER.length) {
+              // 1周したので、周回数を進めて次の周の順番の先頭へ
+              this.greenCycle = greenCycle + 1;
+              const c = this.greenCycle;
+              this.greenSpecialNext = (Math.floor(c / 3) % 2 === 0) ? 'boat' : 'canoe';
+            } else {
+              this.greenSpecialNext = GREEN_ORDER[ni];
+            }
+          }
           player.forcedMoveCount++;
 
           // 🏗️ 増築船堀タワー
@@ -27087,7 +27104,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       localStorage.setItem(KEY, JSON.stringify({
         star:    Math.max(0, Math.floor(Number(app.starRotationIdx) || 0)) % STAR_KINDS.length,
         forced:  app.greenForcedNext === 'hospital' ? 'hospital' : 'police',
-        special: GREEN_ORDER.indexOf(app.greenSpecialNext) >= 0 ? app.greenSpecialNext : 'boat'
+        special: GREEN_ORDER.indexOf(app.greenSpecialNext) >= 0 ? app.greenSpecialNext : 'boat',
+        cycle:   Math.max(0, Math.floor(Number(app.greenCycle) || 0))
       }));
     }catch(e){}
   }
@@ -27098,6 +27116,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(Number.isFinite(o.star)) app.starRotationIdx = Math.max(0, Math.floor(o.star)) % STAR_KINDS.length;
       if(o.forced === 'police' || o.forced === 'hospital') app.greenForcedNext = o.forced;
       if(GREEN_ORDER.indexOf(o.special) >= 0) app.greenSpecialNext = o.special;
+      app.greenCycle = Number.isFinite(o.cycle) ? Math.max(0, Math.floor(o.cycle)) : 0;
       return true;
     }catch(e){ return false; }
   }
@@ -27106,6 +27125,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     app.starRotationIdx  = Math.floor(Math.random() * STAR_KINDS.length);
     app.greenForcedNext  = Math.random() < 0.5 ? 'police' : 'hospital';
     app.greenSpecialNext = GREEN_ORDER[Math.floor(Math.random() * GREEN_ORDER.length)];
+    app.greenCycle = 0;
     save();
   }
 
@@ -27166,6 +27186,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     'つぎの★': STAR_KINDS[(Number(app.starRotationIdx)||0) % STAR_KINDS.length],
     'つぎの▲強制移動': app.greenForcedNext === 'hospital' ? 'hospital' : 'police',
     'つぎの▲ミニゲーム': app.greenSpecialNext || 'boat',
+    '▲ミニゲームの周回': app.greenCycle || 0,
     保存: (()=>{ try{ return JSON.parse(localStorage.getItem(KEY) || 'null'); }catch(e){ return null; } })()
   });
 })();
@@ -28819,59 +28840,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  // ════════════════════════════════════════════════════════════
-  //  ver1.1.6　▲マスのミニゲーム「競艇ばかり出る」件
-  //   調べたところ、順番（競艇 → カヌー → 観覧車 → 船堀タワー）そのものは正しく回っていました。
-  //   ただ、競艇だけは「全員強制参加」のため、CPUが▲で競艇を引いたときも、
-  //   あなたが毎回参加させられて、長いレース画面が出ていました。
-  //   ほかの3つは、CPUが引いたときはCPUの結果だけが短く出るので、
-  //   画面に出る回数は 競艇 ≒ ほかの4倍 になり、「競艇ばかり」に見えていました。
-  //   → CPUが引いた競艇も、ほかと同じく「CPUの結果だけ」を短く出すようにします。
-  //     （あなたが▲で競艇を引いたときは、これまでどおり全員参加のレースです）
-  // ════════════════════════════════════════════════════════════
-  const yen = v => { v = Math.round(Number(v) || 0); return (v < 0 ? '-￥' : '￥') + Math.abs(v).toLocaleString('ja-JP'); };
-  const orig = app.startBoatRaceEvent ? app.startBoatRaceEvent.bind(app) : null;
-  if(!orig) return;
-  app.startBoatRaceEvent = async function(forcedPlayer, continued){
-    const p = forcedPlayer || (app.players || [])[app.currentPlayerIdx];
-    const cpuOnly = p && !continued && !app.isMultiplayer && (p.isCpu || (app.isAutoPlayedPlayer && app.isAutoPlayedPlayer(p) && p.isCpu));
-    if(!cpuOnly) return orig.apply(app, arguments);
-    try{ app.adjustPlayerStat && app.adjustPlayerStat(p, 'luck', 10, false); }catch(e){}
-    const fee = 1000;
-    const boats = [1,2,3,4,5,6];
-    const first = boats[Math.floor(Math.random() * 6)];
-    let second = boats[Math.floor(Math.random() * 6)]; if(second === first) second = (first % 6) + 1;
-    const hit = Math.random() < 0.28;
-    const odds = hit ? (3 + Math.floor(Math.random() * 13)) : 0;
-    const pay = hit ? fee * odds : 0;
-    const delta = pay - fee;
-    p.money = (Number(p.money) || 0) + delta;
-    p.boatRaceCount = (Number(p.boatRaceCount) || 0);
-    try{ app.updateHUD && app.updateHUD(); }catch(e){}
-    try{ app.saveGameState && app.saveGameState(); }catch(e){}
-    try{ app.addLog && app.addLog('🚤 ' + p.name + '（CPU）：江戸川競艇 2連単 ' + first + '-' + second + ' ' + (hit ? '的中！（' + odds + '倍）' : 'はずれ') +
-      '（' + (delta >= 0 ? '＋' : '') + yen(delta) + '）'); }catch(e){}
-    app.miniGameActive = true;
-    try{
-      app._miniCommonResultShow && app._miniCommonResultShow({ game:'boat', playerName: p.name, money: p.money, delta: delta,
-        rows: [ { name:'参加費', text: '-' + yen(fee).replace('-', '') },
-                { name:'舟券（2連単）', text: first + '-' + second },
-                { name:'結果', text: hit ? '的中！（' + odds + '倍）' : 'はずれ' },
-                { name:'払戻金', text: hit ? '＋' + yen(pay) : 'なし' } ] });
-      const box = document.querySelector('#edo-mini-common .edo-mc-box');
-      if(box){
-        const e = box.querySelector('.edo-mc-emoji'); if(e) e.textContent = '🚤';
-        const t = box.querySelector('.edo-mc-title'); if(t) t.textContent = '江戸川競艇（CPU結果）';
-      }
-    }catch(e){ console.warn('[v160]', e); }
-    setTimeout(() => {
-      try{ const mc = document.getElementById('edo-mini-common'); if(mc){ mc.classList.remove('show'); } }catch(e){}
-      app.miniGameActive = false;
-      try{ app.finishTurn(); }catch(e){ console.warn('[v160]', e); }
-    }, 5400);
-    return true;
-  };
-  window.__EDOGAWA_V160_INFO = () => ({ 宝くじの周期: app.lotteryEvery });
+  // ver1.1.6 で入れた「CPUが引いた競艇はCPU結果だけ」は、ver1.1.7 で取りやめました。
+  //   競艇・カヌーはどちらも「全員強制参加」（CPUが引いても、あなたも参加）です。
+  //   偏りは「3周ごとに 競艇 と カヌー の順番を入れ替える」ことで調整します。
+  window.__EDOGAWA_V160_INFO = () => ({ 宝くじの周期: app.lotteryEvery, 周回: app.greenCycle || 0 });
 })();
 </script>
 <script id="edogawa-v39-footer">
