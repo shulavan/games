@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '20';
+    window.__EDOGAWA_MINIGAMES_VER = '22';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.7 (2026-10-23)';
+    window.__EDOGAWA_VERSION = 'ver1.1.9 (2026-10-24)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -23643,7 +23643,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   .edo-dev-btn.danger{ background:#4c0519; border-color:#9f1239; color:#fecdd3; text-align:center; }
   .edo-dev-btn .sub{ display:block; font-size:11px; font-weight:700; color:#94a3b8; margin-top:3px; }
   .edo-dev-row{ display:flex; gap:9px; margin-top:12px; }
-  .edo-dev-row .edo-dev-btn{ margin-top:0; }
+  .edo-dev-row .edo-dev-btn{ margin-top:0; text-align:center; justify-content:center; }   /* ver1.1.8 キャンセル等の文字を中央に */
   .edo-dev-item{ width:100%; display:flex; gap:10px; align-items:center; text-align:left;
     padding:10px; border-radius:14px; background:#111c33; border:1px solid #23324d; margin-bottom:8px; }
   .edo-dev-item .th{ flex:0 0 46px; width:46px; height:46px; border-radius:11px; object-fit:cover;
