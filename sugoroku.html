@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.11 (2026-10-24)';
+    window.__EDOGAWA_VERSION = 'ver1.1.12 (2026-10-24)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -858,7 +858,7 @@
     </div>
 
     <div class="relative z-10 text-center text-[11px] text-slate-500 pb-2 pt-3 leading-relaxed">
-      ©2026 江戸川双六 Produced by M.Tsuda<br>
+      ©2026 江戸川双六 Produced by M.Tsuda <span id="edo-footer-ver"></span><br>
       <span class="text-[10px] text-slate-600">
         <button onclick="EdogawaSugoroku.openDocModal('howto')" class="underline hover:text-slate-400">使い方</button>
         ・<button onclick="EdogawaSugoroku.openDocModal('terms')" class="underline hover:text-slate-400">利用規約・出典</button>
@@ -6726,8 +6726,8 @@
               </div>
               <div class="text-[11px] font-extrabold text-slate-200 truncate mt-1">${p.name}</div>
               <div class="text-[10px] font-bold ${p.money < 0 ? 'text-rose-400' : 'text-amber-400'}">${this.formatMoneyMan(p.money)}</div>
-              <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
               <div class="text-[9px] font-bold" style="color:${this.playerColorOf(p).stroke || '#f59e0b'}">🏁 ${Number(p.goals) || 0}ゴール</div>
+              <div data-player-remaining="${idx}" class="text-[9px] font-bold text-sky-300">${pRemaining === null ? '' : pRemaining}</div>
               ${offline ? '<div class="absolute top-1 left-1 px-1 rounded bg-slate-950/85 border border-slate-600 text-[8px] font-black text-slate-300">離脱</div>' : ''}
             </div>
           `;
@@ -28844,6 +28844,90 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //   競艇・カヌーはどちらも「全員強制参加」（CPUが引いても、あなたも参加）です。
   //   偏りは「3周ごとに 競艇 と カヌー の順番を入れ替える」ことで調整します。
   window.__EDOGAWA_V160_INFO = () => ({ 宝くじの周期: app.lotteryEvery, 周回: app.greenCycle || 0 });
+})();
+</script>
+<style id="edogawa-v161-style">
+  /* ════════════════════════════════════════════════════════════
+     ver1.1.12　ボタン枠デザインの共通化
+     ・タップして反応する所 … 「♫」「フルスクリーン」「≡」と同じボタン枠
+       （内側に白2px、外側に黒2px＋影）。背景色はそれぞれのまま。
+     ・タップしても反応しない枠 … 白い枠線をなくした枠（影だけ）。
+     ════════════════════════════════════════════════════════════ */
+  #lobby-visited-pin-top, #pwa-install-btn, #lobby-menu-btn,
+  #edogawa-account-panel .edo-account-avatar,
+  #start-game-btn, #resume-save-btn,
+  button[onclick="EdogawaSugoroku.shareGameViaLine()"],
+  #auto-mode-btn, #bgm-toggle-btn, button[onclick="EdogawaSugoroku.toggleFullscreen()"], #host-save-btn, #game-menu-btn,
+  #mobile-destination-badge, #game-destination-badge, #nearby-locate-btn,
+  #roll-dice-btn, #edo-item-btn, #edo-game-menu-tool,
+  #players-card-container > div,
+  .edo-btn-frame{
+    border: 2px solid #fff !important;
+    box-shadow: 0 0 0 2px #000, 0 2px 8px rgba(0,0,0,.4) !important;
+  }
+  /* もともと枠線の無かったボタンは、大きさが変わらないよう白線を内側の影で描きます（見た目は同じ） */
+  #start-game-btn, #resume-save-btn, button[onclick="EdogawaSugoroku.shareGameViaLine()"], #roll-dice-btn{
+    border: 0 !important;
+    box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #000, 0 2px 8px rgba(0,0,0,.4) !important;
+  }
+  /* 4人枠：いまの手番の人は、ボタン枠の外側を金色に光らせて分かるようにします */
+  #players-card-container > div.border-amber-400{
+    box-shadow: 0 0 0 2px #000, 0 0 0 4px #fbbf24, 0 0 12px rgba(251,191,36,.55) !important;
+  }
+  #game-turn-badge, #active-player-footer, #nearby-place-badge,
+  #edogawa-account-panel, #edo-mp-panel,
+  .edo-plain-frame{
+    border-color: transparent !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4) !important;
+  }
+  /* インストール済みのときは「📲」と「アプリとしてインストール」を出しません */
+  body.edo-app-installed #pwa-install-btn,
+  body.edo-app-installed button[onclick*="settingsOpenInstall"]{ display: none !important; }
+  #edo-footer-ver{ white-space: nowrap; }
+</style>
+<script id="edogawa-v161">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+
+  // ── ① トップのフッター「©2026 江戸川双六 Produced by M.Tsuda」の後ろにバージョン ──
+  function paintVersion(){
+    const el = document.getElementById('edo-footer-ver'); if(!el) return;
+    const m = String(window.__EDOGAWA_VERSION || '').match(/(\d+\.\d+\.\d+)/);
+    el.textContent = m ? 'v' + m[1] : '';
+  }
+
+  // ── ② アプリとしてインストール済みなら、📲 と メニューの「アプリとしてインストール」を隠す ──
+  //    ・アプリとして開いている（ホーム画面から起動）とき
+  //    ・このブラウザでインストールを済ませたとき（appinstalled を記録）
+  //    ※ブラウザから「インストールできます」の合図（beforeinstallprompt）が来たら、
+  //      アンインストールされたということなので、記録を消して再び表示します。
+  const KEY = 'edogawa_pwa_installed_v1';
+  const standalone = () => { try{ return app._isStandaloneApp ? app._isStandaloneApp() :
+      ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true); }catch(e){ return false; } };
+  const flagged = () => { try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; } };
+  function paintInstall(){
+    document.body && document.body.classList.toggle('edo-app-installed', standalone() || flagged());
+  }
+  window.addEventListener('appinstalled', () => { try{ localStorage.setItem(KEY, '1'); }catch(e){} paintInstall(); });
+  window.addEventListener('beforeinstallprompt', () => { try{ localStorage.removeItem(KEY); }catch(e){} paintInstall(); });
+  try{ const mq = matchMedia('(display-mode: standalone)'); mq.addEventListener && mq.addEventListener('change', paintInstall); }catch(e){}
+
+  // ── ③ トップの「ひとりで遊ぶ／マルチプレイ」を囲む枠・「江戸川区限定」の札は、タップしない枠なので白枠なし ──
+  function tagPlain(){
+    const sb = document.getElementById('start-game-btn');
+    const box = sb && sb.closest('.max-w-3xl'); if(box) box.classList.add('edo-plain-frame');
+    const pill = [...document.querySelectorAll('#lobby-screen div')].find(d => /^江戸川区限定/.test((d.textContent||'').trim()) && d.children.length <= 1);
+    if(pill) pill.classList.add('edo-plain-frame');
+  }
+  function run(){ paintVersion(); paintInstall(); tagPlain(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+  setTimeout(run, 1500);
+
+  window.__EDOGAWA_V161_INFO = () => ({
+    インストール済み: document.body.classList.contains('edo-app-installed'),
+    バージョン表示: (document.getElementById('edo-footer-ver')||{}).textContent
+  });
 })();
 </script>
 <script id="edogawa-v39-footer">
