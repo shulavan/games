@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.13 (2026-10-25)';
+    window.__EDOGAWA_VERSION = 'ver1.1.14 (2026-10-25)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -26567,6 +26567,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const el = g('edo-pachi-ask');
       const shown = !!(el && el.classList.contains('show'));
       if(!cp || !isMine(cp) || !cp.pendingPachinko){ if(shown) app.closePachinkoAsk(); return; }
+      // 【ver1.1.14】駅の「乗車しますか？」が先。駅をキャンセルしてから、パチンコのお誘いを出します
+      if(cp.pendingStation){ if(shown) app.closePachinkoAsk(); return; }
       if(app.isRolling || app.miniGameActive || app.boatRaceActive || cp.skipTurn){
         if(shown) app.closePachinkoAsk(); return;
       }
@@ -28121,7 +28123,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     border:2px solid #f0abfc; box-shadow:0 4px 12px rgba(0,0,0,.35); position:relative; }
   #edo-item-btn:active{ transform:scale(.97); }
   #edo-item-btn.is-off{ filter:grayscale(.6) brightness(.75); }
-  #edo-item-btn .edo-item-badge{ position:absolute; top:50%; transform:translateY(-50%); right:6px; min-width:20px; height:20px; padding:0 5px;
+  /* 【ver1.1.14】「🎒アイテム①」をひとかたまりで中央寄せ（個数は文字のすぐ後ろ） */
+  #edo-item-btn .edo-item-badge{ position:static; transform:none; margin-left:2px; min-width:20px; height:20px; padding:0 5px;
     border-radius:999px; background:#facc15; color:#0f172a; font-size:11px; font-weight:900; display:flex;
     align-items:center; justify-content:center; border:2px solid #0f172a; }
   body.edo-visited-only #edo-item-btn, body.edo-visited-only.edo-has-items #edo-item-btn{ display:none !important; }
@@ -28818,7 +28821,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         b.classList.toggle('is-off', !(n > 0 && canUseNow(p)));
       }
       // 【ver1.1.0】アイテムを持っている間だけ「アイテム」ボタンを出します（使い切ったら消えます）
-      const has = total(p) > 0;
+      // 【ver1.1.14】CPUの番のときは「アイテム」ボタンを出しません（自分の番だけ）
+      const cpNow = (app.players || [])[app.currentPlayerIdx];
+      const has = total(p) > 0 && !!cpNow && cpNow === p;
       if(document.body.classList.contains('edo-has-items') !== has){
         document.body.classList.toggle('edo-has-items', has);
         if(!has) closeList();
@@ -28949,6 +28954,96 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     インストール済み: document.body.classList.contains('edo-app-installed'),
     バージョン表示: (document.getElementById('edo-footer-ver')||{}).textContent
   });
+})();
+</script>
+<script id="edogawa-v162">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  // ════════════════════════════════════════════════════════════
+  //  ver1.1.14
+  //  ① 電車に乗ったら、そのターンは「電車で使った」ことにします
+  //     乗車の案内は自分の番のはじめ（サイコロを振る前）に出るため、ターンを「使用中」にしないまま
+  //     電車に乗っていました。到着後の finishTurn() が「もう終わっている」と判断して何もせず、
+  //     ターンが次の人へ進まない（止まったように見える）ことがありました。
+  //     パチンコのあとに駅のそばにいると、次の自分の番でこの状態になりやすかったです。
+  //     → 行き先を選んだ瞬間に、パチンコと同じく「このターンは使用中」にします。
+  //     → 行き先を選んだら、パチンコのお誘いは終わりにします（電車でこのターンを使うため）。
+  //  ② CPUの番の「◯◯の番です」は、「サイコロを振る」と同じ横幅で表示します。
+  // ════════════════════════════════════════════════════════════
+  const outerBoard = app.boardTrainNow ? app.boardTrainNow.bind(app) : null;
+  if(outerBoard){
+    app.boardTrainNow = function(player){
+      const origRide = app._openRailRide;
+      if(typeof origRide === 'function'){
+        app._openRailRide = function(pl, at, done){
+          app._openRailRide = origRide;
+          return origRide.call(app, pl, at, function(pick){
+            if(!pick) return done ? done(pick) : undefined;
+            const m0 = Number(pl && pl.money) || 0;
+            const keep = { rolling: app.isRolling, settled: app.turnSettled };
+            try{ if(pl) pl.pendingPachinko = null; app.closePachinkoAsk && app.closePachinkoAsk(); }catch(e){}
+            app.isRolling = true;
+            app.turnSettled = false;
+            try{ app._armTurnWatchdog && app._armTurnWatchdog(); }catch(e){}
+            let r;
+            try{ r = done ? done(pick) : undefined; }
+            finally{
+              // 運賃が足りないなどで乗らなかったときは、元に戻します
+              if((Number(pl && pl.money) || 0) === m0 && !app.miniGameActive){
+                app.isRolling = keep.rolling; app.turnSettled = keep.settled;
+                try{ clearTimeout(app.turnWatchdogTimer); app.turnWatchdogTimer = null; }catch(e){}
+                try{ app.updateHUD && app.updateHUD(); }catch(e){}
+              }
+            }
+            return r;
+          });
+        };
+      }
+      try{ return outerBoard(player); }
+      finally{ if(app._openRailRide !== origRide && typeof origRide === 'function') app._openRailRide = origRide; }
+    };
+  }
+
+  // ② 「◯◯の番です」の横幅＝「サイコロを振る」の横幅
+  let fixedW = 0;
+  function measure(){
+    const stack = document.getElementById('visited-roll-stack');
+    const roll = document.getElementById('roll-dice-btn');
+    if(!stack || !roll || !roll.offsetParent) return 0;
+    const c = roll.cloneNode(true);
+    c.id = ''; c.removeAttribute('onclick');
+    const lb = c.querySelector('span:last-child'); if(lb) lb.textContent = 'サイコロを振る';
+    c.style.cssText += ';position:absolute;visibility:hidden;left:-9999px;top:0;width:auto;flex:none';
+    stack.appendChild(c);
+    const w = Math.ceil(c.getBoundingClientRect().width);
+    c.remove();
+    return w;
+  }
+  function paintRollWidth(){
+    try{
+      const stack = document.getElementById('visited-roll-stack');
+      const roll = document.getElementById('roll-dice-btn');
+      if(!stack || !roll) return;
+      const lbl = (roll.querySelector('span:last-child') || roll).textContent || '';
+      const isTurnLabel = /の番です/.test(lbl);
+      if(!isTurnLabel && !stack.style.width && /^サイコロを振る$/.test(lbl.trim()) && roll.offsetParent){
+        // 自分の番の「サイコロを振る」の実際の横幅を覚えておきます
+        const w0 = Math.round(stack.getBoundingClientRect().width); if(w0 > 40) fixedW = w0;
+      }
+      if(isTurnLabel){
+        const w = fixedW || measure();
+        if(w){ fixedW = w; stack.style.width = w + 'px'; stack.style.flex = '0 0 ' + w + 'px'; }
+      }else if(stack.style.width){
+        stack.style.width = ''; stack.style.flex = '';
+      }
+    }catch(e){}
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); paintRollWidth(); return r; }; }
+  window.addEventListener('resize', ()=>{ fixedW = 0; paintRollWidth(); });
+
+  window.__EDOGAWA_V162_INFO = ()=>({ 番ですの横幅: fixedW });
 })();
 </script>
 <script id="edogawa-v39-footer">
