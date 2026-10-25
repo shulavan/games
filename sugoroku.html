@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '25';
+    window.__EDOGAWA_MINIGAMES_VER = '26';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.15 (2026-10-25)';
+    window.__EDOGAWA_VERSION = 'ver1.1.16 (2026-10-25)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -28931,15 +28931,42 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //    ※ブラウザから「インストールできます」の合図（beforeinstallprompt）が来たら、
   //      アンインストールされたということなので、記録を消して再び表示します。
   const KEY = 'edogawa_pwa_installed_v1';
-  const standalone = () => { try{ return app._isStandaloneApp ? app._isStandaloneApp() :
-      ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true); }catch(e){ return false; } };
+  // 【ver1.1.16】アプリで開いているときに双六マップ画面で「フルスクリーン」を押すと、
+  //   表示モードが standalone → fullscreen に変わり、「アプリではない」と判断して
+  //   「≡」→「設定」に「アプリとしてインストール」が出てしまっていました。
+  //   起動時にアプリで開いていたことを覚えておき、フルスクリーンにしても隠したままにします。
+  const SKEY = 'edogawa_app_mode_v1';
+  const mm = (q) => { try{ return !!(window.matchMedia && matchMedia(q).matches); }catch(e){ return false; } };
+  const fsApi = () => { try{ return !!(document.fullscreenElement || document.webkitFullscreenElement); }catch(e){ return false; } };
+  const appModeNow = () => {
+    try{
+      if(navigator.standalone === true) return true;
+      if(mm('(display-mode: standalone)') || mm('(display-mode: minimal-ui)') || mm('(display-mode: window-controls-overlay)')) return true;
+      if(mm('(display-mode: fullscreen)') && !fsApi()) return true;     // マニフェストが fullscreen のアプリ
+    }catch(e){}
+    return false;
+  };
+  const sessionApp = () => { try{ return sessionStorage.getItem(SKEY) === '1'; }catch(e){ return false; } };
+  const standalone = () => {
+    if(appModeNow()){ try{ sessionStorage.setItem(SKEY, '1'); localStorage.setItem(KEY, '1'); }catch(e){} return true; }
+    return sessionApp();
+  };
   const flagged = () => { try{ return localStorage.getItem(KEY) === '1'; }catch(e){ return false; } };
   function paintInstall(){
     document.body && document.body.classList.toggle('edo-app-installed', standalone() || flagged());
   }
   window.addEventListener('appinstalled', () => { try{ localStorage.setItem(KEY, '1'); }catch(e){} paintInstall(); });
-  window.addEventListener('beforeinstallprompt', () => { try{ localStorage.removeItem(KEY); }catch(e){} paintInstall(); });
-  try{ const mq = matchMedia('(display-mode: standalone)'); mq.addEventListener && mq.addEventListener('change', paintInstall); }catch(e){}
+  window.addEventListener('beforeinstallprompt', () => {
+    // ブラウザで開いていて「インストールできます」の合図が来たときだけ、記録を消します（アプリの中では消しません）
+    if(!sessionApp() && !appModeNow()){ try{ localStorage.removeItem(KEY); }catch(e){} }
+    paintInstall();
+  });
+  standalone();
+  ['(display-mode: standalone)','(display-mode: fullscreen)'].forEach(q => {
+    try{ const mq = matchMedia(q); mq.addEventListener && mq.addEventListener('change', paintInstall); }catch(e){}
+  });
+  document.addEventListener('fullscreenchange', paintInstall);
+  setInterval(paintInstall, 2000);
 
   // ── ③ トップの「ひとりで遊ぶ／マルチプレイ」を囲む枠・「江戸川区限定」の札は、タップしない枠なので白枠なし ──
   function tagPlain(){
