@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '24';
+    window.__EDOGAWA_MINIGAMES_VER = '25';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.12 (2026-10-24)';
+    window.__EDOGAWA_VERSION = 'ver1.1.13 (2026-10-25)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -27209,6 +27209,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-mini-common.edo-mc-see .edo-mc-box{ background:rgba(15,23,42,.90) !important; }
   #edo-mini-common .edo-mc-vs{ margin:2px 0 8px; font-size:16px; font-weight:1000; color:#fde68a;
     letter-spacing:.02em; }
+  #edo-mini-common .edo-shiri-win{ display:block; font-size:19px; font-weight:900; color:#fbbf24; white-space:nowrap; }
   #edo-mini-common .edo-mc-vs b{ color:#f87171; margin:0 .4em; }
 </style>
 <script id="edogawa-v156">
@@ -27873,19 +27874,37 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ app.addLog && app.addLog('🔤 ' + P1.name + ' vs ' + P2.name + '：ガキんちょしりとり ' +
       (Number(res.cleared) || 0) + '枚・' + sc.toLocaleString('ja-JP') + '点（＋' + yen(delta) + '）'); }catch(e){}
     const rows = [];
-    if(res.reason) rows.push({ name:'結果', text: res.reason });
+    // 【ver1.1.13】「結果」の行は出さず、上に「◯◯の勝利！」だけをシンプルに出します
     rows.push({ name:'つないだ枚数', text: (Number(res.cleared) || 0) + ' / ' + (Number(res.total) || 60) + ' 枚' });
     rows.push({ name:'お手つき', text: (Number(res.miss) || 0) + ' 回' });
     rows.push({ name:'最終スコア', text: sc.toLocaleString('ja-JP') + ' 点' });
     rows.push({ name:'換金（100点＝￥100）', text: '＋' + yen(delta) });
     return { rows, delta };
   }
-  function showShiritoriResult(P1, P2, res, out, reasonHtml){
+  // 【ver1.1.13】勝ち負けの判定（子のしりとりの終わり方から決めます）
+  //   勝ち：相手がつながるパネルがなく降参／全部のパネルを使った
+  //   負け：時間切れ／「ん」がついた／自分につながるパネルがない／途中でやめた
+  function shiritoriOutcome(res){
+    if(res && (res.outcome === 'win' || res.outcome === 'lose')) return res.outcome;
+    const r = String((res && res.reason) || '');
+    return /降参|あなたの勝利|全\d+枚クリア/.test(r) ? 'win' : 'lose';
+  }
+  function shiritoriWinLine(P1, P2, res){
+    const win = shiritoriOutcome(res) === 'win';
+    let pts = '';
+    if(win){
+      const m = String((res && res.reason) || '').match(/[+＋]\s*([\d,]+)\s*点/g);
+      if(m && m.length){ const v = m[m.length - 1].match(/([\d,]+)/)[1]; pts = ' (+' + v + '点)'; }
+    }
+    return esc((win ? P1 : P2).name) + 'の勝利！' + esc(pts);
+  }
+  function showShiritoriResult(P1, P2, res, out){
     try{
       app._miniCommonResultShow && app._miniCommonResultShow({
-        game:'shiritori', playerName: P1.name + ' VS ' + P2.name, money: P1.money, delta: out.delta, rows: out.rows });
-      decorate('🔤', '結果発表', 'ガキんちょしりとり', reasonHtml || null, null);
-    }catch(e){ console.warn('[v1.1.1]', e); }
+        game:'shiritori', playerName: null, money: P1.money, delta: out.delta, rows: out.rows });
+      decorate('🔤', '結果発表', 'ガキんちょしりとり',
+        '<span class="edo-shiri-win">' + shiritoriWinLine(P1, P2, res) + '</span>', null);
+    }catch(e){ console.warn('[v1.1.13]', e); }
   }
 
   app.startShiritoriGame = function(mover, other, after, how){
@@ -27900,12 +27919,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(!human){
       // CPUどうしは、その場で結果を決めて、結果だけ見せます
       const cleared = 4 + Math.floor(Math.random() * 30), miss = Math.floor(Math.random() * 4);
-      const sc = Math.max(0, 1000 + (cleared - 1) * 500 - miss * 100 + (cleared > 25 ? 100000 : 0));
-      const res = { score: sc, cleared: cleared, total: 60, miss: miss,
-        reason: ['制限時間切れ！','「ん」がついたため終了！','つながるパネルがないため終了！'][Math.floor(Math.random() * 3)] };
+      const win = cleared > 25;
+      const sc = Math.max(0, 1000 + (cleared - 1) * 500 - miss * 100 + (win ? 100000 : 0));
+      const res = { score: sc, cleared: cleared, total: 60, miss: miss, outcome: win ? 'win' : 'lose',
+        reason: win ? P2.name + 'がつながるパネルがなく降参！ (+100,000点)'
+                    : ['制限時間切れ！','「ん」がついたため終了！','つながるパネルがないため終了！'][Math.floor(Math.random() * 3)] };
       const out = applyShiritori(P1, P2, res);
       app.__fightActive = true; app.miniGameActive = true;
-      showShiritoriResult(P1, P2, res, out, '<span style="font-size:12px;color:#94a3b8">' + reason + '（CPUどうしは自動で決まります）</span>');
+      showShiritoriResult(P1, P2, res, out);
       setTimeout(()=>{ closeCommon(); app.__fightActive = false; app.miniGameActive = false; cont(); }, 5400);
       return true;
     }
@@ -27919,7 +27940,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       app.miniGameActive = false; app.regionalMiniGame = null;
       const res = (payload && payload.shiritori) || { score: 0, cleared: 0, total: 60, miss: 0, reason: '' };
       const out = applyShiritori(P1, P2, res);
-      showShiritoriResult(P1, P2, res, out, null);
+      showShiritoriResult(P1, P2, res, out);
       setTimeout(()=>{ closeCommon(); app.__fightActive = false; cont(); }, 5400);
     };
     // 「✕」で閉じたとき：その時点の得点で結果を出します
