@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.16 (2026-10-25)';
+    window.__EDOGAWA_VERSION = 'ver1.1.17 (2026-10-25)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -11415,7 +11415,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 
   app._refreshAccountPanel=function(){
     const panel=document.getElementById('edogawa-account-panel'); if(!panel)return;
-    const p=this.getUserProfile(); const s=p.stats||statsDefault; const showProp=Number(p.money)>10000000;
+    const p=this.getUserProfile(); const s=p.stats||statsDefault; const showProp=Array.isArray(p.properties)&&p.properties.length>0;   // 【ver1.1.17】不動産を持っていれば、所持金の横に件数を出します
     const av=(p.avatarType==='line'||p.avatarType==='photo')?this.avatarHtml(p.avatarValue,'w-full h-full object-cover'):esc(p.avatarValue||avDefault);
     const safeMoney=Math.floor(Number(p.money)||0).toLocaleString('ja-JP');
     const safeGoals=Math.floor(Number(p.goals)||0).toLocaleString('ja-JP');
@@ -28890,17 +28890,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #roll-dice-btn, #edo-item-btn, #edo-game-menu-tool,
   #players-card-container > div,
   .edo-btn-frame{
-    border: 2px solid #fff !important;
-    box-shadow: 0 0 0 2px #000, 0 2px 8px rgba(0,0,0,.4) !important;
+    /* 【ver1.1.17】白黒の枠 → ニューモーフィズム（やわらかい浮き出し）。押すとへこみます */
+    border-color: transparent !important;
+    box-shadow: var(--edo-nm-out) !important;
+    transition: box-shadow .18s ease, transform .12s ease, filter .18s ease !important;
   }
-  /* もともと枠線の無かったボタンは、大きさが変わらないよう白線を内側の影で描きます（見た目は同じ） */
   #start-game-btn, #resume-save-btn, button[onclick="EdogawaSugoroku.shareGameViaLine()"], #roll-dice-btn{
     border: 0 !important;
-    box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px #000, 0 2px 8px rgba(0,0,0,.4) !important;
-  }
-  /* 4人枠：いまの手番の人は、ボタン枠の外側を金色に光らせて分かるようにします */
-  #players-card-container > div.border-amber-400{
-    box-shadow: 0 0 0 2px #000, 0 0 0 4px #fbbf24, 0 0 12px rgba(251,191,36,.55) !important;
+    box-shadow: var(--edo-nm-out) !important;
   }
   #game-turn-badge, #active-player-footer, #nearby-place-badge,
   #edogawa-account-panel, #edo-mp-panel,
@@ -29138,6 +29135,187 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     };
   });
   window.__EDOGAWA_V163_INFO = ()=>({ 目的地にいちばん近い駅: destStation() });
+})();
+</script>
+<style id="edogawa-v164-style">
+  /* ════════════════════════════════════════════════════════════
+     ver1.1.17　デザインの刷新（マテリアルデザイン＋ニューモーフィズム）
+     ・タップできるボタン … ニューモーフィズム（浮き出し）＋押すとへこむ＋リップル（波紋）
+     ・メニューを開くボタン … 右下のフローティングアクションボタン（FAB）
+     ・4人のプレーヤー枠 … カード型UI（色のライン・やわらかい影）
+     ・上に出ていたお知らせ … 画面下のスナックバー
+     ════════════════════════════════════════════════════════════ */
+  :root{
+    --edo-nm-out: 5px 5px 12px rgba(0,0,0,.62), -4px -4px 10px rgba(148,163,184,.11), inset 1px 1px 0 rgba(255,255,255,.07);
+    --edo-nm-in:  inset 4px 4px 10px rgba(0,0,0,.58), inset -3px -3px 8px rgba(148,163,184,.10);
+    --edo-elev-2: 0 3px 6px rgba(0,0,0,.30), 0 8px 18px rgba(0,0,0,.34);
+    --edo-elev-3: 0 6px 12px rgba(0,0,0,.36), 0 14px 30px rgba(0,0,0,.40);
+  }
+  /* ── ① ボタン：ニューモーフィズム ── */
+  #lobby-visited-pin-top, #pwa-install-btn,
+  #edogawa-account-panel .edo-account-avatar,
+  #start-game-btn, #resume-save-btn, button[onclick="EdogawaSugoroku.shareGameViaLine()"],
+  #auto-mode-btn, #bgm-toggle-btn, button[onclick="EdogawaSugoroku.toggleFullscreen()"], #host-save-btn,
+  #mobile-destination-badge, #game-destination-badge, #nearby-locate-btn,
+  #roll-dice-btn, #edo-item-btn, #edo-game-menu-tool, #visited-pin-tool,
+  #menu-modal .space-y-2 > button, #settings-modal button.w-full,
+  .edo-ask-btns button, #edo-rail-modal .edo-rail-item, .edo-dev-btn, #edo-item-list button:not(.edo-il-close){
+    border-color: transparent !important;
+    box-shadow: var(--edo-nm-out) !important;
+    transition: box-shadow .18s ease, transform .12s ease, filter .18s ease !important;
+  }
+  #lobby-visited-pin-top:active, #pwa-install-btn:active,
+  #edogawa-account-panel .edo-account-avatar-button:active .edo-account-avatar,
+  #start-game-btn:active, #resume-save-btn:active, button[onclick="EdogawaSugoroku.shareGameViaLine()"]:active,
+  #auto-mode-btn:active, #bgm-toggle-btn:active, button[onclick="EdogawaSugoroku.toggleFullscreen()"]:active, #host-save-btn:active,
+  #mobile-destination-badge:active, #game-destination-badge:active, #nearby-locate-btn:active,
+  #roll-dice-btn:active, #edo-item-btn:active, #edo-game-menu-tool:active, #visited-pin-tool:active,
+  #menu-modal .space-y-2 > button:active, #settings-modal button.w-full:active,
+  .edo-ask-btns button:active, #edo-rail-modal .edo-rail-item:active, .edo-dev-btn:active, #edo-item-list button:not(.edo-il-close):active,
+  #players-card-container > div:active, .edo-btn-frame:active{
+    box-shadow: var(--edo-nm-in) !important;
+    transform: scale(.98);
+  }
+  /* メニュー・設定の項目は、少し余白をとってカードのように */
+  #menu-modal .space-y-2 > button, #settings-modal button.w-full{ border-radius: 14px !important; margin-bottom: 4px; }
+  #menu-modal > div, #settings-modal > div{ border-color: transparent !important; box-shadow: var(--edo-elev-3) !important; border-radius: 22px !important; }
+
+  /* ── ② リップル（波紋） ── */
+  .edo-rpl-host{ position:absolute; inset:0; border-radius:inherit; overflow:hidden; pointer-events:none; z-index:0; }
+  .edo-rpl{ position:absolute; border-radius:50%; transform:scale(0); opacity:.30; background:currentColor; pointer-events:none;
+    animation: edo-rpl .55s cubic-bezier(.2,.6,.3,1) forwards; }
+  @keyframes edo-rpl{ to{ transform:scale(1); opacity:0; } }
+
+  /* ── ③ フローティングアクションボタン（メニュー） ── */
+  body:not(.edo-fab-off) #lobby-menu-btn, body:not(.edo-fab-off) #game-menu-btn{ display:none !important; }
+  body.edo-visited-only #edo-fab-menu{ display:none !important; }   /* 「行ったところ」の画面では、これまでどおりメニューは出しません */
+  /* トップページのいちばん下（使い方・設定などのリンク）がFABに隠れないよう、下に余白をとります */
+  #lobby-screen{ padding-bottom: 96px !important; }
+  #edo-fab-menu{ position:fixed; right:16px; bottom:24px; z-index:60; width:56px; height:56px; border-radius:50%;
+    border:0; background:linear-gradient(145deg,#fbbf24,#f59e0b); color:#0f172a; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:4px; box-shadow: var(--edo-elev-3), inset 1px 1px 0 rgba(255,255,255,.35);
+    transition: transform .15s ease, box-shadow .15s ease, bottom .25s ease; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  #edo-fab-menu i{ display:block; width:20px; height:2.5px; border-radius:2px; background:currentColor; }
+  #edo-fab-menu:active{ transform:scale(.94); box-shadow: var(--edo-elev-2); }
+  #edo-fab-menu.edo-fab-hide{ transform:scale(0); pointer-events:none; }
+
+  /* ── ④ 4人のプレーヤー枠：カード型UI ── */
+  #players-card-container{ gap:8px !important; }
+  #players-card-container > div{
+    position:relative; overflow:hidden;
+    background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%) !important;
+    border-color: transparent !important; border-radius: 16px !important;
+    padding: 10px 8px 8px !important;
+    box-shadow: var(--edo-nm-out) !important;
+    transition: box-shadow .2s ease, transform .2s ease !important;
+  }
+  #players-card-container > div::before{ content:""; position:absolute; left:0; right:0; top:0; height:4px; background: var(--edo-pc, #64748b); }
+  #players-card-container > div.border-amber-400{
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 2px #fbbf24, var(--edo-elev-3) !important;
+  }
+
+  /* ── ⑤ お知らせ：スナックバー ── */
+  #edogawa-stat-toast{
+    top:auto !important; bottom: var(--edo-snack-bottom, 24px) !important; left:50% !important;
+    transform: translate(-50%, 0) !important;
+    width:auto !important; max-width: min(560px, calc(100vw - 32px)) !important; min-width: min(288px, calc(100vw - 32px)) !important;
+    background:#1f2937 !important; color:#f8fafc !important; border:0 !important; border-radius:10px !important;
+    padding:12px 16px !important; font-size:13.5px !important; line-height:1.5 !important;
+    white-space: normal !important; overflow: visible !important; text-align:left !important;
+    box-shadow: var(--edo-elev-3) !important; z-index: 2147483100 !important;
+    transition: opacity .22s ease, transform .22s ease !important;
+  }
+  #edogawa-stat-toast.opacity-0{ transform: translate(-50%, 16px) !important; }
+</style>
+<script id="edogawa-v164">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+
+  // ── ② リップル：タップできる所すべて（メニュー・設定の項目、各ボタン） ──
+  const TAP = 'button, [onclick], [role="button"], .edo-rail-item, a[href]';
+  document.addEventListener('pointerdown', (ev)=>{
+    try{
+      if(ev.button !== undefined && ev.button !== 0) return;
+      const t = ev.target && ev.target.closest ? ev.target.closest(TAP) : null;
+      if(!t || t.disabled) return;
+      if(t.closest('.leaflet-container') || t.closest('#dice-footer-container') || t.closest('.edo-no-ripple')) return;
+      const r = t.getBoundingClientRect();
+      if(r.width < 16 || r.height < 12) return;
+      const cs = getComputedStyle(t);
+      if(cs.display === 'inline' || cs.display === 'contents') return;
+      if(cs.position === 'static') t.style.position = 'relative';
+      const host = document.createElement('span'); host.className = 'edo-rpl-host';
+      const d = Math.ceil(Math.hypot(r.width, r.height)) * 2;
+      const dot = document.createElement('span'); dot.className = 'edo-rpl';
+      dot.style.width = dot.style.height = d + 'px';
+      dot.style.left = (ev.clientX - r.left - d / 2) + 'px';
+      dot.style.top  = (ev.clientY - r.top  - d / 2) + 'px';
+      host.appendChild(dot); t.appendChild(host);
+      setTimeout(()=>{ try{ host.remove(); }catch(e){} }, 650);
+    }catch(e){}
+  }, true);
+
+  // ── ③ フローティングアクションボタン（メニュー） ──
+  function footerH(){
+    const f = document.querySelector('footer[data-app="1"]');
+    if(!f) return 0;
+    const lobby = g('lobby-screen');
+    if(lobby && !lobby.classList.contains('hidden') && getComputedStyle(lobby).display !== 'none') return 0;
+    const r = f.getBoundingClientRect();
+    return (r.height > 0 && getComputedStyle(f).display !== 'none') ? Math.round(window.innerHeight - r.top) : 0;
+  }
+  function ensureFab(){
+    let b = g('edo-fab-menu');
+    if(!b){
+      b = document.createElement('button'); b.id = 'edo-fab-menu'; b.type = 'button';
+      b.setAttribute('aria-label', 'メニュー'); b.title = 'メニュー';
+      b.innerHTML = '<i></i><i></i><i></i>';
+      b.addEventListener('click', ()=>{ try{ app.openMenuModal && app.openMenuModal(); }catch(e){} });
+      document.body.appendChild(b);
+    }
+    return b;
+  }
+  function placeFab(){
+    const b = ensureFab();
+    const fh = footerH();
+    // スナックバーが出ている間は、FABをその上へよけます（マテリアルデザインの動き）
+    let lift = 0;
+    try{ const sb = g('edogawa-stat-toast');
+      if(sb && !sb.classList.contains('hidden') && !sb.classList.contains('opacity-0')) lift = Math.round(sb.getBoundingClientRect().height) + 12; }catch(e){}
+    b.style.bottom = ((fh ? fh + 12 : 24) + lift) + 'px';
+    // 認証画面・初回設定の間は出しません
+    const auth = g('edogawa-auth-screen');
+    const authOn = !!(auth && auth.classList.contains('show') && getComputedStyle(auth).display !== 'none');
+    b.classList.toggle('edo-fab-hide', authOn);
+    document.documentElement.style.setProperty('--edo-snack-bottom', (fh ? fh + 12 : 24) + 'px');
+  }
+
+  // ── ④ カード：プレーヤーの色のライン ──
+  function paintCards(){
+    try{
+      document.querySelectorAll('#players-card-container > div').forEach(c=>{
+        const tag = [...c.querySelectorAll('span')].find(s=>/^\dP$/.test((s.textContent||'').trim()));
+        if(tag){ const col = getComputedStyle(tag).backgroundColor; if(col) c.style.setProperty('--edo-pc', col); }
+      });
+    }catch(e){}
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); paintCards(); placeFab(); return r; }; }
+
+  function tick(){ placeFab(); paintCards(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tick); else tick();
+  setInterval(tick, 600);
+  try{ const sb0 = ()=>g('edogawa-stat-toast');
+    const mo = new MutationObserver(()=>placeFab());
+    const hook = ()=>{ const el = sb0(); if(el && !el.__edoObs){ el.__edoObs = true; mo.observe(el, { attributes:true, attributeFilter:['class'] }); } };
+    hook(); setInterval(hook, 2000); }catch(e){}
+  window.addEventListener('resize', tick);
+
+  window.__EDOGAWA_V164_INFO = ()=>{ const b = g('edo-fab-menu'); const r = b && b.getBoundingClientRect();
+    return { FAB: r ? { 右: Math.round(innerWidth - r.right), 下: Math.round(innerHeight - r.bottom), 大きさ: Math.round(r.width) } : null }; };
 })();
 </script>
 <script id="edogawa-v39-footer">
