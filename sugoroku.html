@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.14 (2026-10-25)';
+    window.__EDOGAWA_VERSION = 'ver1.1.15 (2026-10-25)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -27436,6 +27436,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const shown = !!(el && el.classList.contains('show'));
       const off = ()=>{ if(shown) app.closeFishingAsk(); };
       if(!cp || !isMine(cp) || !cp.pendingFishing) return off();
+      // 【ver1.1.15】駅の「乗車しますか？」が先。駅をキャンセルしてから、釣りのお誘いを出します
+      if(cp.pendingStation) return off();
       if(app.isRolling || app.miniGameActive || app.boatRaceActive || cp.skipTurn) return off();
       if(app.canActNow && !app.canActNow()) return off();
       // パチンコのお誘いが出ているあいだは、そちらを先にします
@@ -29044,6 +29046,71 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   window.addEventListener('resize', ()=>{ fixedW = 0; paintRollWidth(); });
 
   window.__EDOGAWA_V162_INFO = ()=>({ 番ですの横幅: fixedW });
+})();
+</script>
+<script id="edogawa-v163">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  // ════════════════════════════════════════════════════════════
+  //  ver1.1.15
+  //  ① 駅の「乗車しますか？」を最優先にします（パチンコ・釣りのお誘いはそのあと）
+  //     ・ミニゲーム（釣り・パチンコ）を始めたら、駅の案内は閉じて終わりにします
+  //       （そのターンはミニゲームで使うため。画面に残って重なることもなくなります）
+  //  ② 目的地にいちばん近い駅（全駅の中で）のそばに来たときは、乗車の案内を出しません
+  // ════════════════════════════════════════════════════════════
+  const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
+  function destStation(){
+    try{
+      const d = app.currentDestination; if(!d || !Number.isFinite(+d.lat) || !Number.isFinite(+d.lng)) return null;
+      const at = app.stationLinesAt ? app.stationLinesAt(+d.lat, +d.lng, 1e7) : null;   // 距離の制限なし＝全駅でいちばん近い駅
+      return at ? at.name : null;
+    }catch(e){ return null; }
+  }
+  function dropIfDestStation(p, withLog){
+    try{
+      if(!p || !p.pendingStation) return false;
+      const ds = destStation();
+      if(ds && p.pendingStation.name === ds){
+        p.pendingStation = null;
+        app.closeBoardAsk && app.closeBoardAsk();
+        if(withLog) try{ app.addLog && app.addLog('🚉 ' + ds + '駅は目的地にいちばん近い駅なので、乗車の案内は出しません。'); }catch(e){}
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  const outerLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(outerLand){
+    app.landOnSpot = function(player){
+      const r = outerLand.apply(app, arguments);
+      try{ if(isMine(player)) dropIfDestStation(player, true); }catch(e){}
+      return r;
+    };
+  }
+  function miniOpen(){
+    const ov = document.getElementById('regional-mini-overlay');
+    return !!(app.__fishingActive || app.__pachinkoActive || (ov && !ov.classList.contains('hidden')));
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){
+    app.updateHUD = function(){
+      try{ const cp = (app.players || [])[app.currentPlayerIdx]; if(isMine(cp)) dropIfDestStation(cp, false); }catch(e){}
+      const r = origHUD.apply(app, arguments);
+      try{ if(miniOpen()) app.closeBoardAsk && app.closeBoardAsk(); }catch(e){}
+      return r;
+    };
+  }
+  setInterval(()=>{ try{ if(miniOpen()){ const el = document.getElementById('edo-board-ask'); if(el && el.classList.contains('show')) app.closeBoardAsk(); } }catch(e){} }, 400);
+  ['startFishingGame', 'startPachinkoGame'].forEach(k=>{
+    const o = app[k];
+    if(typeof o !== 'function') return;
+    app[k] = function(player){
+      try{ if(player) player.pendingStation = null; app.closeBoardAsk && app.closeBoardAsk(); }catch(e){}
+      return o.apply(app, arguments);
+    };
+  });
+  window.__EDOGAWA_V163_INFO = ()=>({ 目的地にいちばん近い駅: destStation() });
 })();
 </script>
 <script id="edogawa-v39-footer">
