@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.27 (2026-10-27)';
+    window.__EDOGAWA_VERSION = 'ver1.1.28 (2026-10-27)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -877,11 +877,12 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   #bgm-icon.edo-bgm-off{ opacity:.55; }
   #bgm-icon.edo-bgm-off::after{ content:""; position:absolute; left:-2px; right:-2px; top:50%; height:2px; background:currentColor; transform:rotate(-40deg); }
   /* ② 縮小マップとステータスの枠は、半透明（うしろの地図がうっすら見えます） */
-  #edo-mini-map, #edogawa-player-status{ background: rgba(15,23,42,.72) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  /* 【ver1.1.28】透過率50％ */
+  #edo-mini-map, #edogawa-player-status{ background: rgba(15,23,42,.5) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   body[data-edo-theme]:not([data-edo-theme="black"]) #edo-mini-map,
   body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-player-status{
     background: var(--t-surf) !important;   /* 古い端末向け（半透明の指定が使えないとき） */
-    background: color-mix(in srgb, var(--t-surf) 72%, transparent) !important; }
+    background: color-mix(in srgb, var(--t-surf) 50%, transparent) !important; }
   /* ③ 「取得情報」のうしろの暗い幕をなくし、そのまま地図を見せます */
   #edo-menu-sheet{ background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
   /* ⑤ 【ver1.1.27】「ゴール達成一覧」「不動産」の一覧も、うしろの暗い幕をなくし、そのまま背景を見せます */
@@ -30197,6 +30198,134 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     near: (p)=>{ const h = nearTemple(p || myPlayer()); return h ? h.t.name + '（' + Math.round(h.d) + 'm）' : null; },
     temples: ()=>temples().map(t=>t.name)
   };
+})();
+</script>
+<style id="edogawa-v169-style">
+  /* ver1.1.28　アップデート情報（結果モーダルと同じ見た目・5秒で自動的に閉じます） */
+  #edo-update-notice{ position:fixed; inset:0; z-index:2147483350; display:none; align-items:center; justify-content:center; padding:16px;
+    background:rgba(2,6,23,.55); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+  #edo-update-notice.show{ display:flex; }
+  #edo-update-notice .un-box{ position:relative; width:min(420px,94vw); max-height:92vh; overflow-y:auto; box-sizing:border-box;
+    background:var(--t-surf, #0f172a); color:var(--t-text, #f8fafc); border:2px solid rgba(251,191,36,.55); border-radius:24px;
+    padding:18px 18px 16px; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.5); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;
+    animation:edo-un-in .28s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes edo-un-in{ from{opacity:0;transform:translateY(18px) scale(.94)} to{opacity:1;transform:none} }
+  #edo-update-notice .un-x{ position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:10px; border:0;
+    background:var(--t-surf2, #1e293b); color:var(--t-text, #e2e8f0); font-size:17px; font-weight:900; }
+  #edo-update-notice .un-emoji{ font-size:42px; line-height:1.1; margin-bottom:4px; }
+  #edo-update-notice .un-kicker{ font-size:13px; font-weight:900; letter-spacing:.18em; color:var(--t-accent, #fbbf24); margin-bottom:4px; }
+  #edo-update-notice .un-title{ font-size:20px; font-weight:900; line-height:1.3; margin-bottom:10px; }
+  #edo-update-notice .un-lead{ font-size:13px; font-weight:800; text-align:left; margin:0 2px 6px; }
+  #edo-update-notice .un-list{ text-align:left; background:var(--t-surf2, rgba(2,6,23,.6)); border-radius:14px; padding:10px 12px; }
+  #edo-update-notice .un-list div{ white-space:nowrap; overflow:hidden; font-size:14px; line-height:1.85; font-weight:700; }
+  #edo-update-notice .un-note{ font-size:11px; line-height:1.6; text-align:left; margin-top:8px; opacity:.85; }
+  #edo-update-notice .un-bar{ height:6px; border-radius:99px; background:rgba(148,163,184,.25); overflow:hidden; margin-top:12px; }
+  #edo-update-notice .un-bar i{ display:block; height:100%; width:100%; background:linear-gradient(90deg,#fbbf24,#f59e0b);
+    transform-origin:left center; animation:edo-un-run linear forwards; }
+  @keyframes edo-un-run{ from{transform:scaleX(1)} to{transform:scaleX(0)} }
+  #edo-update-notice .un-hint{ font-size:11px; margin-top:6px; opacity:.75; }
+</style>
+<script id="edogawa-v169">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  // ════════════════════════════════════════════════════════════
+  //  ver1.1.28　「前回の続きから遊ぶ」がある人にだけ、1回だけ
+  //   ① アップデート情報（5秒で自動的に閉じます）
+  //   ② そのあと「背景色の選択」（まだ背景色を選んだことがない人だけ）
+  // ════════════════════════════════════════════════════════════
+  const SOLO_KEY = 'edogawa_sugoroku_state';
+  const NOTICE_KEY = 'edogawa_update_notice_v1';
+  const THEME_ASK_KEY = 'edogawa_theme_prompted_v1';
+  const ls = {
+    get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+  };
+  // ページを開いた時点で、続きがあるかを確かめます（このあと続きを始めても判断が変わらないように）
+  let hasContinue = false;
+  try{
+    const raw = ls.get(SOLO_KEY);
+    if(raw){ const o = app._readSave ? app._readSave(SOLO_KEY) : JSON.parse(raw); hasContinue = !!o; }
+  }catch(e){ hasContinue = false; }
+  const needNotice = hasContinue && ls.get(NOTICE_KEY) !== '1';
+  const needTheme  = hasContinue && ls.get(THEME_ASK_KEY) !== '1' && !ls.get('edogawa_theme_v1');
+  if(!needNotice && !needTheme) { window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: 'なし', 背景色の選択: 'なし' }); return; }
+
+  const ITEMS = [
+    '・「背景色の選択」（青、赤、黄、緑、白）',
+    '・「御朱印帳」（寺社に近づくと発動）',
+    '・「縮小マップ」「ステータス」表示',
+    '・「アイテム」（あみだくじにて取得可能）',
+    '・目的地ゴール後「不動産購入」画面',
+    '・近づき発動「パチンコ」「釣り」ゲーム',
+    '・すれ違い対戦「闘魂ロード」「しりとり」',
+    '・マテリアルデザインの適用'
+  ];
+  const NOTE = '※ちなみにこの「江戸川双六」は「PHP」は使用しておらず、個人情報の扱いもございません。';
+  const MS = 5000;
+  let state = { notice: needNotice ? 'wait' : 'done', theme: needTheme ? 'wait' : 'done' };
+
+  // それぞれの行は改行しません。入りきらないときは、その行だけ文字を少し小さくします
+  function fitLines(box){
+    box.querySelectorAll('.un-list div').forEach(d=>{
+      let fs = 14; d.style.fontSize = fs + 'px';
+      while(d.scrollWidth > d.clientWidth + 1 && fs > 9){ fs -= .5; d.style.fontSize = fs + 'px'; }
+    });
+  }
+  function showNotice(done){
+    let m = g('edo-update-notice');
+    if(!m){ m = document.createElement('div'); m.id = 'edo-update-notice'; document.body.appendChild(m); }
+    const ver = String(window.__EDOGAWA_VERSION || '').replace(/\s*\(.*$/, '');
+    m.innerHTML = '<div class="un-box"><button type="button" class="un-x" aria-label="閉じる">✕</button>' +
+      '<div class="un-emoji">🎉</div><div class="un-kicker">アップデート情報</div>' +
+      '<div class="un-title">江戸川双六 ' + ver + '</div>' +
+      '<div class="un-lead">追加した機能は以下となります。</div>' +
+      '<div class="un-list">' + ITEMS.map(t=>'<div>' + t.replace(/[<>&]/g, '') + '</div>').join('') + '</div>' +
+      '<div class="un-note">' + NOTE + '</div>' +
+      '<div class="un-bar"><i style="animation-duration:' + MS + 'ms"></i></div><div class="un-hint">5秒後に自動で閉じます</div></div>';
+    m.classList.add('show');
+    ls.set(NOTICE_KEY, '1');           // 1回だけ（出した時点で記録します）
+    fitLines(m);
+    let closed = false;
+    const close = ()=>{ if(closed) return; closed = true; clearTimeout(t); m.classList.remove('show'); m.innerHTML = ''; done && done(); };
+    const t = setTimeout(close, MS);
+    m.onclick = (ev)=>{ if(ev.target.closest && ev.target.closest('.un-x')) close(); };
+  }
+  function showTheme(){
+    ls.set(THEME_ASK_KEY, '1');
+    if(ls.get('edogawa_theme_v1')) return;      // そのあいだに選んでいたら出しません
+    try{ app.openThemePicker && app.openThemePicker(); }catch(e){}
+  }
+  // トップページが出ていて、ほかの画面（ログイン・アカウント情報など）が開いていないときに出します
+  function ready(){
+    const lobby = g('lobby-screen');
+    if(!lobby || lobby.classList.contains('hidden') || getComputedStyle(lobby).display === 'none') return false;
+    const auth = g('edogawa-auth-screen');
+    if(auth && auth.classList.contains('show') && getComputedStyle(auth).display !== 'none') return false;
+    const setup = g('edogawa-user-setup');
+    if(setup && getComputedStyle(setup).display !== 'none') return false;
+    const busy = ['menu-modal','settings-modal','doc-modal','pwa-install-modal'].some(id=>{ const e = g(id); return e && !e.classList.contains('hidden'); });
+    if(busy) return false;
+    if(g('edo-theme-modal') && g('edo-theme-modal').classList.contains('show')) return false;
+    return true;
+  }
+  let tries = 0;
+  const iv = setInterval(()=>{
+    tries++;
+    if(tries > 600){ clearInterval(iv); return; }               // 5分たっても出せなければ、次回にします
+    if(state.notice === 'showing' || state.theme === 'showing') return;
+    if(!ready()) return;
+    if(state.notice === 'wait'){
+      state.notice = 'showing';
+      showNotice(()=>{ state.notice = 'done'; setTimeout(()=>{ if(state.theme === 'wait' && ready()){ state.theme = 'done'; showTheme(); } }, 400); });
+      return;
+    }
+    if(state.theme === 'wait'){ state.theme = 'done'; showTheme(); }
+    if(state.notice === 'done' && state.theme === 'done') clearInterval(iv);
+  }, 500);
+
+  window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: state.notice, 背景色の選択: state.theme });
 })();
 </script>
 <script id="edogawa-v39-footer">
