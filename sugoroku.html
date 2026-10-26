@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.21 (2026-10-26)';
+    window.__EDOGAWA_VERSION = 'ver1.1.22 (2026-10-26)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -29656,17 +29656,35 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         return NodeFilter.FILTER_ACCEPT; } });
       let n; while((n = walker.nextNode())) out.push(n);
     }
+    // 【ver1.1.22】色を書きかえる間は、その部品の「色がゆっくり変わる効果（transition）」を止めます。
+    //   止めずに書きかえていたため、元の黒系の色 ⇔ 背景色 の間を行き来する様子が見えて、
+    //   一定の間隔で白とグレーに点滅していました（ゴール達成一覧・しりとり など）。
+    function noTransition(els, fn){
+      const saved = [];
+      els.forEach(el=>{ saved.push([el, el.style.getPropertyValue('transition'), el.style.getPropertyPriority('transition')]);
+        el.style.setProperty('transition', 'none', 'important'); selfWrote.add(el); });
+      try{ fn(); }
+      finally{
+        // 新しい色を確定させてから、効果を元に戻します（ここで色が動かないように）
+        const win = doc.defaultView;
+        saved.forEach(([el])=>{ try{ win.getComputedStyle(el).backgroundColor; }catch(e){} });
+        saved.forEach(([el, v, pr])=>{ if(v) el.style.setProperty('transition', v, pr); else el.style.removeProperty('transition'); });
+      }
+    }
     function scan(){
       if(busy) return; busy = true;
       try{
         const k = themeKey(); const P = PAL[k];
-        // いったん元に戻してから、いまの色を読みなおします（状態で色が変わる部品のため）
-        touched.forEach(restore); touched.clear();
         if(!P || !doc.body) return;
+        // 【ver1.1.22】すでに色を合わせた部品は、まとめ直しでは触りません（点滅の原因だったため）。
+        //   状態が変わった部品は quick() がその場で合わせ直します。
+        touched.forEach(el=>{ if(!el.isConnected) touched.delete(el); });
         const list = [];
         collect(doc.body, list);
         if(opts.html) list.unshift(doc.documentElement);
-        planFor(list, P, k, true).forEach(([el,p,v])=>set(el,p,v));
+        const fresh = list.filter(el=>!el.__edoRc);
+        const plan = planFor(fresh, P, k, true);
+        if(plan.length){ const els = [...new Set(plan.map(x=>x[0]))]; noTransition(els, ()=>plan.forEach(([el,p,v])=>set(el,p,v))); }
       }catch(e){ console.warn('[v166]', e); }
       finally{ busy = false; }
     }
@@ -29690,8 +29708,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(list.length > 4000) return;   // とても大きいときは、あとのまとめ直しにまかせます
       busy = true;
       try{
-        list.forEach(el=>{ if(el.__edoRc){ restore(el); touched.delete(el); } });
-        planFor(list, P, k, false).forEach(([el,p,v])=>set(el,p,v));
+        const old = list.filter(el=>el.__edoRc);
+        noTransition(old, ()=>{
+          old.forEach(el=>{ restore(el); touched.delete(el); });
+          const plan = planFor(list, P, k, false);
+          const oldSet = new Set(old); const extra = plan.map(x=>x[0]).filter(el=>!oldSet.has(el));
+          // 新しく色をつける部品も、効果を止めてから
+          noTransition([...new Set(extra)], ()=>plan.forEach(([el,p,v])=>set(el,p,v)));
+        });
       }catch(e){ console.warn('[v166]', e); }
       finally{ busy = false; }
     }
