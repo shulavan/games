@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.24 (2026-10-26)';
+    window.__EDOGAWA_VERSION = 'ver1.1.25 (2026-10-26)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -21300,7 +21300,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         go:()=>{ app.closeGameMenuSheet(); app.openGoalList(); }},
       {ic:'🏠', t1:`不動産${props.length}件`, t2: props.length ? `毎ターン ＋${yen(income)}の収入` : 'まだ購入していません',
         go:()=>{ app.closeGameMenuSheet(); app.openPropertyList(); }},
-      {ic:'📿', t1:`御朱印${stamps}個`, t2:'区内の寺社でいただいた御朱印（御朱印帳を見る）',
+      {ic:'📿', t1:`御朱印${stamps}個`, t2:'御朱印帳を見る',
         go:()=>{ app.closeGameMenuSheet(); app.openGoshuinBook && app.openGoshuinBook(); }},
       {ic:'🎫', t1:'宝くじ購入枚数', t2:`連番 ${L.renban}枚　バラ ${L.bara}枚`, readonly:true}
     ];
@@ -29838,36 +29838,43 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-goshuin{ position:fixed; inset:0; z-index:2147483300; display:none; align-items:center; justify-content:center;
     padding:14px; background:rgba(15,10,5,.62); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
   #edo-goshuin.show{ display:flex; }
-  #edo-goshuin .gs-box{ width:min(440px,96vw); background:#fbf6ea; color:#3b2a1a; border-radius:20px; padding:14px 12px 12px;
-    box-shadow:0 18px 50px rgba(0,0,0,.5), inset 0 0 0 1px rgba(120,80,30,.18); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif; }
-  #edo-goshuin .gs-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 4px 8px; border-bottom:1px solid rgba(120,80,30,.2); }
-  #edo-goshuin .gs-title{ font-size:18px; font-weight:900; color:#7c2d12; letter-spacing:.06em; }
-  #edo-goshuin .gs-count{ font-size:12px; font-weight:800; color:#92400e; }
-  #edo-goshuin .gs-x{ width:36px; height:36px; border-radius:10px; border:0; background:#efe3c8; color:#5b3a1a; font-size:18px; font-weight:900; }
-  #edo-goshuin .gs-pages{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; margin-top:10px; scrollbar-width:none; }
+  /* 【ver1.1.25】御朱印帳の地の色は、選んだ背景色に合わせます（黒のときは濃紺） */
+  #edo-goshuin .gs-box{ width:min(440px,96vw); max-height:94vh; overflow:hidden; display:flex; flex-direction:column;
+    background:var(--t-surf, #0f172a); color:var(--t-text, #f8fafc); border-radius:20px; padding:14px 12px 12px;
+    box-shadow:0 18px 50px rgba(0,0,0,.5); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif; box-sizing:border-box; }
+  #edo-goshuin .gs-head{ display:flex; align-items:center; gap:8px; padding:0 2px 8px; border-bottom:1px solid var(--t-border, rgba(255,255,255,.15)); }
+  #edo-goshuin .gs-title{ font-size:18px; font-weight:900; color:var(--t-accent, #fbbf24); letter-spacing:.06em; white-space:nowrap; }
+  #edo-goshuin .gs-count{ margin-left:auto; text-align:right; font-size:12px; font-weight:800; color:var(--t-muted, #cbd5e1); white-space:nowrap; }
+  #edo-goshuin .gs-x{ flex:0 0 36px; width:36px; height:36px; border-radius:10px; border:0; background:var(--t-surf2, #1e293b); color:var(--t-text, #f8fafc); font-size:18px; font-weight:900; }
+  #edo-goshuin .gs-pages{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; margin-top:10px; scrollbar-width:none; min-height:0; }
   #edo-goshuin .gs-pages::-webkit-scrollbar{ display:none; }
-  #edo-goshuin .gs-page{ flex:0 0 100%; scroll-snap-align:start; display:grid; grid-template-columns:repeat(5,1fr); grid-template-rows:repeat(2,auto);
-    grid-auto-flow:column; gap:8px 6px; padding:6px 4px; box-sizing:border-box; }
-  #edo-goshuin .gs-slot{ display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; }
-  #edo-goshuin .gs-paper{ position:relative; width:100%; aspect-ratio:3/4; border-radius:8px; background:#fffdf6;
-    border:1px dashed rgba(120,80,30,.35); display:flex; align-items:center; justify-content:center; overflow:visible; }
-  #edo-goshuin .gs-no{ font-size:11px; font-weight:800; color:rgba(120,80,30,.45); }
-  #edo-goshuin .gs-name{ font-size:9px; line-height:1.2; color:#6b4f2a; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
-  #edo-goshuin .gs-dots{ display:flex; justify-content:center; gap:6px; margin-top:6px; }
-  #edo-goshuin .gs-dots i{ width:7px; height:7px; border-radius:50%; background:rgba(120,80,30,.25); }
-  #edo-goshuin .gs-dots i.on{ background:#b91c1c; }
-  #edo-goshuin .gs-msg{ min-height:20px; text-align:center; font-size:13px; font-weight:900; color:#7c2d12; margin-top:6px; }
-  #edo-goshuin .gs-ok{ display:block; width:100%; margin-top:8px; padding:12px; border:0; border-radius:14px; font-size:15px; font-weight:900;
-    background:linear-gradient(180deg,#f59e0b,#d97706); color:#1f1300; box-shadow:5px 5px 12px rgba(0,0,0,.18), -4px -4px 10px rgba(255,255,255,.7); }
+  /* 【ver1.1.25】5行×2列＝10個。縦1列の順（左の列の上から下 → 右の列の上から下） */
+  #edo-goshuin .gs-page{ flex:0 0 100%; scroll-snap-align:start; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(5,auto);
+    grid-auto-flow:column; gap:7px 8px; padding:4px 2px; box-sizing:border-box; }
+  #edo-goshuin .gs-slot{ display:flex; flex-direction:row; align-items:center; gap:8px; min-width:0; padding:5px 8px 5px 5px;
+    background:#fffdf6; border:1px dashed rgba(120,80,30,.35); border-radius:12px; }
+  #edo-goshuin .gs-paper{ position:relative; flex:0 0 clamp(52px, 8.4vh, 66px); width:clamp(52px, 8.4vh, 66px); height:clamp(52px, 8.4vh, 66px);
+    display:flex; align-items:center; justify-content:center; overflow:visible; }
+  #edo-goshuin .gs-no{ width:84%; height:84%; border-radius:50%; border:1.5px dashed rgba(120,80,30,.3); display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800; color:rgba(120,80,30,.45); }
+  #edo-goshuin .gs-name{ flex:1; min-width:0; font-size:11px; line-height:1.35; color:#6b4f2a; text-align:left;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; word-break:break-all; }
+  #edo-goshuin .gs-dots{ display:flex; justify-content:center; gap:6px; margin-top:8px; }
+  #edo-goshuin .gs-dots i{ width:7px; height:7px; border-radius:50%; background:currentColor; opacity:.3; }
+  #edo-goshuin .gs-dots i.on{ opacity:1; }
+  #edo-goshuin .gs-msg{ min-height:20px; text-align:center; font-size:13px; font-weight:900; color:var(--t-text, #f8fafc); margin-top:6px; }
+  #edo-goshuin .gs-ok{ display:block; width:100%; margin-top:8px; padding:12px; border:0; border-radius:14px; font-size:15px; font-weight:900; flex:0 0 auto;
+    background:linear-gradient(180deg,#f59e0b,#d97706); color:#1f1300; box-shadow:var(--edo-nm-out, 5px 5px 12px rgba(0,0,0,.4)); }
   /* 朱印（トップページの「江戸川区 非公認」のハンコと同じ作り：丸に二重線） */
   .edo-shuin{ width:84%; aspect-ratio:1; border-radius:50%; border:3px double #e11d48; color:#e11d48; display:flex; flex-direction:column;
     align-items:center; justify-content:center; line-height:1.05; font-weight:900; letter-spacing:.04em; background:transparent;
     font-family:"Shippori Mincho","Hiragino Mincho ProN",serif; box-sizing:border-box; mix-blend-mode:multiply; }
   .edo-shuin span{ display:block; white-space:nowrap; }
-  #edo-goshuin .gs-paper .edo-shuin{ font-size:12px; }
-  #edo-goshuin .gs-paper .edo-shuin.n2 span{ font-size:12px; }
-  #edo-goshuin .gs-paper .edo-shuin.n2.w2 span{ font-size:15px; }
+  #edo-goshuin .gs-paper .edo-shuin{ font-size:13px; }
+  #edo-goshuin .gs-paper .edo-shuin.n2 span{ font-size:13px; }
+  #edo-goshuin .gs-paper .edo-shuin.n2.w2 span{ font-size:16px; }
   #edo-goshuin .gs-paper .edo-shuin.n1 span{ font-size:15px; }
+  #edo-goshuin .gs-paper .edo-shuin.n1.w2 span, #edo-goshuin .gs-paper .edo-shuin.n1.w1 span{ font-size:19px; }
   #edo-goshuin .gs-paper.new .edo-shuin{ animation:edo-shuin-press .32s ease-out; }
   @keyframes edo-shuin-press{ 0%{ transform:var(--rot) scale(1.25); opacity:.6 } 60%{ transform:var(--rot) scale(.94); opacity:1 } 100%{ transform:var(--rot) scale(1) } }
   #edo-shuin-fly{ position:fixed; left:0; top:0; z-index:2147483301; pointer-events:none; width:200px; height:200px; font-size:30px; border-width:8px; display:none; }
@@ -30045,7 +30052,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const m = book();
     const n = ST.stamps.length;
     const pages = Math.max(1, Math.ceil(n / 10), highlight != null ? Math.floor(highlight / 10) + 1 : 1);
-    let html = '<div class="gs-box"><div class="gs-head"><div><div class="gs-title">📿 御朱印帳</div><div class="gs-count">' + n + '個（10個ごとに賞金）</div></div>' +
+    let html = '<div class="gs-box"><div class="gs-head"><div class="gs-title">📿 御朱印帳</div><div class="gs-count">' + n + '個（10個ごとに賞金）</div>' +
       '<button type="button" class="gs-x" aria-label="閉じる">✕</button></div><div class="gs-pages">';
     for(let p = 0; p < pages; p++){
       html += '<div class="gs-page">';
