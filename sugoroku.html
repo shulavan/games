@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.17 (2026-10-25)';
+    window.__EDOGAWA_VERSION = 'ver1.1.18 (2026-10-26)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -29156,6 +29156,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edogawa-account-panel .edo-account-avatar,
   #start-game-btn, #resume-save-btn, button[onclick="EdogawaSugoroku.shareGameViaLine()"],
   #auto-mode-btn, #bgm-toggle-btn, button[onclick="EdogawaSugoroku.toggleFullscreen()"], #host-save-btn,
+  #game-menu-btn, #lobby-menu-btn,
   #mobile-destination-badge, #game-destination-badge, #nearby-locate-btn,
   #roll-dice-btn, #edo-item-btn, #edo-game-menu-tool, #visited-pin-tool,
   #menu-modal .space-y-2 > button, #settings-modal button.w-full,
@@ -29168,6 +29169,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edogawa-account-panel .edo-account-avatar-button:active .edo-account-avatar,
   #start-game-btn:active, #resume-save-btn:active, button[onclick="EdogawaSugoroku.shareGameViaLine()"]:active,
   #auto-mode-btn:active, #bgm-toggle-btn:active, button[onclick="EdogawaSugoroku.toggleFullscreen()"]:active, #host-save-btn:active,
+  #game-menu-btn:active, #lobby-menu-btn:active,
   #mobile-destination-badge:active, #game-destination-badge:active, #nearby-locate-btn:active,
   #roll-dice-btn:active, #edo-item-btn:active, #edo-game-menu-tool:active, #visited-pin-tool:active,
   #menu-modal .space-y-2 > button:active, #settings-modal button.w-full:active,
@@ -29187,10 +29189,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   @keyframes edo-rpl{ to{ transform:scale(1); opacity:0; } }
 
   /* ── ③ フローティングアクションボタン（メニュー） ── */
-  body:not(.edo-fab-off) #lobby-menu-btn, body:not(.edo-fab-off) #game-menu-btn{ display:none !important; }
-  body.edo-visited-only #edo-fab-menu{ display:none !important; }   /* 「行ったところ」の画面では、これまでどおりメニューは出しません */
-  /* トップページのいちばん下（使い方・設定などのリンク）がFABに隠れないよう、下に余白をとります */
-  #lobby-screen{ padding-bottom: 96px !important; }
+  /* 【ver1.1.18】「≡」はこれまでどおりヘッダー右端に戻しました（FABは使いません）。
+     縮小マップ・ステータスの枠は「♫」〜「≡」の幅に合わせて出すため、≡が無いと狭く崩れていました */
+  #edo-fab-menu{ display:none !important; }
   #edo-fab-menu{ position:fixed; right:16px; bottom:24px; z-index:60; width:56px; height:56px; border-radius:50%;
     border:0; background:linear-gradient(145deg,#fbbf24,#f59e0b); color:#0f172a; display:flex; align-items:center; justify-content:center;
     flex-direction:column; gap:4px; box-shadow: var(--edo-elev-3), inset 1px 1px 0 rgba(255,255,255,.35);
@@ -29279,6 +29280,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return b;
   }
   function placeFab(){
+    // 【ver1.1.18】FABは使わないので作りません。スナックバーの位置だけ合わせます
+    const fh0 = footerH();
+    document.documentElement.style.setProperty('--edo-snack-bottom', (fh0 ? fh0 + 12 : 24) + 'px');
+    if(!g('edo-fab-menu')) return;
     const b = ensureFab();
     const fh = footerH();
     // スナックバーが出ている間は、FABをその上へよけます（マテリアルデザインの動き）
