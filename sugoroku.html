@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '26';
+    window.__EDOGAWA_MINIGAMES_VER = '27';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.20 (2026-10-26)';
+    window.__EDOGAWA_VERSION = 'ver1.1.21 (2026-10-26)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -757,8 +757,128 @@
     });
 })();
 </script>
-<style>#regional-mini-close{position:absolute;right:12px;top:12px;z-index:20;background:#f59e0b;color:#0f172a;font-weight:900;border-radius:10px;padding:8px 12px;box-shadow:0 4px 12px rgba(0,0,0,.35)} .regional-mini-shell{position:relative}</style></head>
+<style>#regional-mini-close{position:absolute;right:12px;top:12px;z-index:20;background:#f59e0b;color:#0f172a;font-weight:900;border-radius:10px;padding:8px 12px;box-shadow:0 4px 12px rgba(0,0,0,.35)} .regional-mini-shell{position:relative}</style>
+<script>(function(){try{var k=localStorage.getItem('edogawa_theme_v1');var bg={blue:'#4285F4',red:'#EA4335',yellow:'#FBBC05',green:'#34A853',white:'#f1f5f9'}[k];if(bg)document.documentElement.style.setProperty('background-color',bg,'important');}catch(e){}})();</script><style id="edogawa-v165-style">
+  /* ════════════════════════════════════════════════════════════
+     ver1.1.19　背景色の選択（6色）
+     黒（双六ブラック・いままでの色）／青／赤／黄／緑／白
+     背景・パネル・タイル・枠線・文字の色を、選んだ色に合わせて見やすく調整します
+     ════════════════════════════════════════════════════════════ */
+  body[data-edo-theme="blue"]{ --t-bg:#4285F4; --t-deep:#1f4fae; --t-surf:#2c66d6; --t-surf2:#3a74e3; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#ffe08a;
+    --edo-nm-out: 5px 5px 12px rgba(10,30,90,.45), -4px -4px 10px rgba(255,255,255,.22), inset 1px 1px 0 rgba(255,255,255,.18);
+    --edo-nm-in: inset 4px 4px 10px rgba(10,30,90,.45), inset -3px -3px 8px rgba(255,255,255,.22); }
+  body[data-edo-theme="red"]{ --t-bg:#EA4335; --t-deep:#a3271d; --t-surf:#c5362a; --t-surf2:#d64033; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#ffe08a;
+    --edo-nm-out: 5px 5px 12px rgba(90,10,5,.45), -4px -4px 10px rgba(255,255,255,.22), inset 1px 1px 0 rgba(255,255,255,.18);
+    --edo-nm-in: inset 4px 4px 10px rgba(90,10,5,.45), inset -3px -3px 8px rgba(255,255,255,.22); }
+  body[data-edo-theme="yellow"]{ --t-bg:#FBBC05; --t-deep:#fff4cc; --t-surf:#ffe48f; --t-surf2:#ffd75c; --t-text:#1f2937; --t-muted:#5a4630; --t-border:rgba(60,40,0,.22); --t-accent:#9a3412;
+    --edo-nm-out: 5px 5px 12px rgba(120,80,0,.35), -4px -4px 10px rgba(255,255,255,.55), inset 1px 1px 0 rgba(255,255,255,.18);
+    --edo-nm-in: inset 4px 4px 10px rgba(120,80,0,.35), inset -3px -3px 8px rgba(255,255,255,.55); }
+  body[data-edo-theme="green"]{ --t-bg:#34A853; --t-deep:#1d7337; --t-surf:#268c43; --t-surf2:#2f9a4c; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#fff3a3;
+    --edo-nm-out: 5px 5px 12px rgba(5,50,20,.45), -4px -4px 10px rgba(255,255,255,.22), inset 1px 1px 0 rgba(255,255,255,.18);
+    --edo-nm-in: inset 4px 4px 10px rgba(5,50,20,.45), inset -3px -3px 8px rgba(255,255,255,.22); }
+  body[data-edo-theme="white"]{ --t-bg:#f1f5f9; --t-deep:#ffffff; --t-surf:#ffffff; --t-surf2:#e8eef5; --t-text:#0f172a; --t-muted:#475569; --t-border:#cbd5e1; --t-accent:#b45309;
+    --edo-nm-out: 5px 5px 12px rgba(15,23,42,.18), -4px -4px 10px rgba(255,255,255,.95), inset 1px 1px 0 rgba(255,255,255,.18);
+    --edo-nm-in: inset 4px 4px 10px rgba(15,23,42,.18), inset -3px -3px 8px rgba(255,255,255,.95); }
+body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/70, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/80, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/85, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/90, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/92, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/95, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-black\/50, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-black\/60{ background-color: var(--t-deep) !important; }
+body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/80, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/85, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/90, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/95{ background-color: var(--t-surf) !important; }
+body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-800, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-800\/80, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-800\/60, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-700{ background-color: var(--t-surf2) !important; }
+body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-600, body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-700, body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-800, body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-800\/60, body[data-edo-theme]:not([data-edo-theme="black"]) .border-white\/20{ border-color: var(--t-border) !important; }
+body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-50, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-100, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-200, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-300{ color: var(--t-text) !important; }
+body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-500, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-600{ color: var(--t-muted) !important; }
+  /* ── 画面ごとの背景・枠 ── */
+  body[data-edo-theme]:not([data-edo-theme="black"]) #lobby-screen{ background: var(--t-bg) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #lobby-screen > .absolute.inset-0.z-\[1\]{ background: var(--t-bg) !important; opacity: .82; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel{ background: var(--t-surf) !important; color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-avatar{ background: var(--t-deep) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-name, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-stat span, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-stat b,
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-money-label, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-money-value,
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-goal-word, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-territory, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-property-inline{ color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-main-head, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-stat, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-money{ border-color: var(--t-border) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-mp-panel{ background: var(--t-deep) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #players-card-container > div{ background: var(--t-surf) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #players-card-container > div .text-slate-200{ color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #lobby-visited-pin-top{ background: var(--t-surf) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .box{ background: var(--t-surf) !important; border-color: var(--t-border) !important; color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .edo-nick-label, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .edo-nick-label span{ color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .edo-emoji-btn{ background: var(--t-deep) !important; border-color: var(--t-border) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup #edo-photo-pick{ background: var(--t-surf2) !important; border-color: var(--t-border) !important; color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-setup-cancel{ color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-box{ background: var(--t-surf) !important; border-color: var(--t-border) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-t{ color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-s{ color: var(--t-muted) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-btns button:not(.go){ background: var(--t-surf2) !important; color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-player-status, body[data-edo-theme]:not([data-edo-theme="black"]) #edo-mini-map{ background: var(--t-surf) !important; color: var(--t-text) !important; border-color: var(--t-border) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-rail-modal .edo-rail-item{ background: var(--t-surf2) !important; color: var(--t-text) !important; }
+  /* 明るい背景（黄・白）では、文字を濃い色に */
+  body[data-edo-theme="yellow"], body[data-edo-theme="white"]{ }
+  body[data-edo-theme="yellow"] .text-amber-300, body[data-edo-theme="yellow"] .text-amber-400, body[data-edo-theme="yellow"] .text-amber-200,
+  body[data-edo-theme="white"] .text-amber-300, body[data-edo-theme="white"] .text-amber-400, body[data-edo-theme="white"] .text-amber-200{ color: var(--t-accent) !important; }
+  body[data-edo-theme="yellow"] .text-emerald-300, body[data-edo-theme="yellow"] .text-emerald-400,
+  body[data-edo-theme="white"] .text-emerald-300, body[data-edo-theme="white"] .text-emerald-400{ color: #047857 !important; }
+  body[data-edo-theme="yellow"] .text-sky-300, body[data-edo-theme="white"] .text-sky-300{ color: #0369a1 !important; }
+  body[data-edo-theme="yellow"] #edogawa-account-panel *, body[data-edo-theme="white"] #edogawa-account-panel *{ text-shadow: none !important; }
+  body[data-edo-theme="yellow"] #edogawa-account-panel .edo-goal-num, body[data-edo-theme="white"] #edogawa-account-panel .edo-goal-num{ color: var(--t-accent) !important; }
+  body[data-edo-theme="yellow"] .gold-glow, body[data-edo-theme="white"] .gold-glow{
+    background-image: linear-gradient(90deg,#7c2d12,#b45309,#7c2d12) !important; filter: none !important; text-shadow: none !important; }
+  body[data-edo-theme="yellow"] #edogawa-user-setup input, body[data-edo-theme="white"] #edogawa-user-setup input{ color: #92400e !important; }
+  /* 色のある背景（青・赤・緑）では、同じ系統の色の文字を明るく */
+  body[data-edo-theme="green"] .text-emerald-300, body[data-edo-theme="green"] .text-emerald-400{ color: #ecfdf5 !important; }
+  body[data-edo-theme="blue"] .text-sky-300, body[data-edo-theme="blue"] .text-sky-400{ color: #e0f2fe !important; }
+  body[data-edo-theme="red"] .text-rose-300, body[data-edo-theme="red"] .text-rose-400, body[data-edo-theme="red"] .text-red-500{ color: #fff1f2 !important; }
+
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-game-menu-tool{ background: var(--t-surf) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .line-link-btn{ background:#06C755 !important; color:#ffffff !important; border-color:rgba(255,255,255,.4) !important; }
+  body[data-edo-theme="yellow"] .text-rose-300, body[data-edo-theme="yellow"] .text-rose-400,
+  body[data-edo-theme="white"] .text-rose-300, body[data-edo-theme="white"] .text-rose-400{ color:#be123c !important; }
+  /* 「江戸川区 非公認」のハンコ：赤い背景では白に */
+  body[data-edo-theme="red"] #lobby-screen .border-rose-500{ border-color:#ffffff !important; color:#ffffff !important; }
+  /* ── 背景色のボタン・選択画面 ── */
+  #edo-theme-pick{ padding:11px 14px; border-radius:12px; font-weight:800; font-size:12px; border:1px solid #475569; background:#1e293b; color:#e2e8f0;
+    box-shadow: var(--edo-nm-out); white-space:nowrap; }
+  #edo-theme-pick.picked{ background: var(--edo-pick-bg) !important; color: var(--edo-pick-fg) !important; border-color: rgba(255,255,255,.35) !important; }
+  #edo-theme-entry .edo-theme-dot{ width:26px; height:26px; border-radius:50%; flex:0 0 26px; border:2px solid rgba(255,255,255,.75); box-shadow:0 2px 6px rgba(0,0,0,.35); }
+  #edo-theme-modal{ position:fixed; inset:0; z-index:2147483400; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(2,6,23,.6); backdrop-filter:blur(6px); }
+  #edo-theme-modal.show{ display:flex; }
+  #edo-theme-modal .tbox{ width:min(380px,94vw); background:#0f172a; color:#f8fafc; border-radius:22px; padding:16px; box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+  #edo-theme-modal .thead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  #edo-theme-modal .thead b{ font-size:17px; color:#fbbf24; }
+  #edo-theme-modal .tclose{ width:34px; height:34px; border-radius:10px; background:#1e293b; color:#e2e8f0; border:0; font-size:18px; }
+  #edo-theme-modal .topt{ width:100%; display:flex; align-items:center; gap:12px; padding:10px 12px; margin-top:8px; border-radius:14px; border:0;
+    background:#1e293b; color:#f8fafc; text-align:left; box-shadow: 5px 5px 12px rgba(0,0,0,.55), -4px -4px 10px rgba(148,163,184,.10); }
+  #edo-theme-modal .topt:active{ box-shadow: inset 4px 4px 10px rgba(0,0,0,.55), inset -3px -3px 8px rgba(148,163,184,.10); }
+  #edo-theme-modal .topt .sw{ width:34px; height:34px; border-radius:50%; flex:0 0 34px; border:2px solid rgba(255,255,255,.8); box-shadow:0 2px 6px rgba(0,0,0,.4); }
+  #edo-theme-modal .topt .nm{ font-size:14px; font-weight:900; line-height:1.3; }
+  #edo-theme-modal .topt .sub{ display:block; font-size:11px; font-weight:700; color:#94a3b8; }
+  #edo-theme-modal .topt .ck{ margin-left:auto; font-size:18px; color:#34d399; visibility:hidden; }
+  #edo-theme-modal .topt.on{ outline:2px solid #fbbf24; }
+  #edo-theme-modal .topt.on .ck{ visibility:visible; }
+</style>
+<style id="edogawa-v166-style">
+  /* ver1.1.20　背景色を、画面の切りかわり・地図の読み込み中にも */
+  html{ background: var(--t-bg, #0f172a); }
+  body[data-edo-theme]:not([data-edo-theme="black"]){ background: var(--t-bg) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .leaflet-container,
+  body[data-edo-theme]:not([data-edo-theme="black"]) main[data-app="1"]{ background: var(--t-bg) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body{ color: var(--t-text) !important; }
+  /* ゲーム開始の演出中にかぶせる薄い幕も、黒ではなく背景色に合わせた明るさに */
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-intro-lock{ background: rgba(0,0,0,.06) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-amida-curtain,
+  body[data-edo-theme]:not([data-edo-theme="black"]) #regional-mini-loading{ background: var(--t-bg) !important; color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h5{ color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h4{ border-color: var(--t-border) !important; }
+  body[data-edo-theme="yellow"] .doc-body h4, body[data-edo-theme="white"] .doc-body h4{ color: var(--t-accent) !important; }
+</style>
+</head>
 <body class="h-full w-full bg-slate-900 text-slate-100 flex flex-col relative overflow-hidden">
+<script id="edogawa-theme-early">
+/* 【ver1.1.21】選んだ背景色を、ページを開いた最初の瞬間から使います（読み込み中に黒い画面を出さないため） */
+(function(){ try{
+  var k = localStorage.getItem('edogawa_theme_v1') || 'black';
+  var bg = { blue:'#4285F4', red:'#EA4335', yellow:'#FBBC05', green:'#34A853', white:'#f1f5f9' }[k];
+  if(bg){ document.documentElement.style.setProperty('background-color', bg, 'important'); }
+  if(document.body) document.body.setAttribute('data-edo-theme', k);
+}catch(e){} })();
+</script>
 
   <!-- LOBBY OVERLAY -->
   <div data-app="1" id="lobby-screen" class="absolute inset-0 z-50 bg-slate-950 flex flex-col justify-between p-4 sm:p-6 overflow-y-auto">
@@ -29323,101 +29443,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return { FAB: r ? { 右: Math.round(innerWidth - r.right), 下: Math.round(innerHeight - r.bottom), 大きさ: Math.round(r.width) } : null }; };
 })();
 </script>
-<style id="edogawa-v165-style">
-  /* ════════════════════════════════════════════════════════════
-     ver1.1.19　背景色の選択（6色）
-     黒（双六ブラック・いままでの色）／青／赤／黄／緑／白
-     背景・パネル・タイル・枠線・文字の色を、選んだ色に合わせて見やすく調整します
-     ════════════════════════════════════════════════════════════ */
-  body[data-edo-theme="blue"]{ --t-bg:#4285F4; --t-deep:#1f4fae; --t-surf:#2c66d6; --t-surf2:#3a74e3; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#ffe08a;
-    --edo-nm-out: 5px 5px 12px rgba(10,30,90,.45), -4px -4px 10px rgba(255,255,255,.22), inset 1px 1px 0 rgba(255,255,255,.18);
-    --edo-nm-in: inset 4px 4px 10px rgba(10,30,90,.45), inset -3px -3px 8px rgba(255,255,255,.22); }
-  body[data-edo-theme="red"]{ --t-bg:#EA4335; --t-deep:#a3271d; --t-surf:#c5362a; --t-surf2:#d64033; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#ffe08a;
-    --edo-nm-out: 5px 5px 12px rgba(90,10,5,.45), -4px -4px 10px rgba(255,255,255,.22), inset 1px 1px 0 rgba(255,255,255,.18);
-    --edo-nm-in: inset 4px 4px 10px rgba(90,10,5,.45), inset -3px -3px 8px rgba(255,255,255,.22); }
-  body[data-edo-theme="yellow"]{ --t-bg:#FBBC05; --t-deep:#fff4cc; --t-surf:#ffe48f; --t-surf2:#ffd75c; --t-text:#1f2937; --t-muted:#5a4630; --t-border:rgba(60,40,0,.22); --t-accent:#9a3412;
-    --edo-nm-out: 5px 5px 12px rgba(120,80,0,.35), -4px -4px 10px rgba(255,255,255,.55), inset 1px 1px 0 rgba(255,255,255,.18);
-    --edo-nm-in: inset 4px 4px 10px rgba(120,80,0,.35), inset -3px -3px 8px rgba(255,255,255,.55); }
-  body[data-edo-theme="green"]{ --t-bg:#34A853; --t-deep:#1d7337; --t-surf:#268c43; --t-surf2:#2f9a4c; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#fff3a3;
-    --edo-nm-out: 5px 5px 12px rgba(5,50,20,.45), -4px -4px 10px rgba(255,255,255,.22), inset 1px 1px 0 rgba(255,255,255,.18);
-    --edo-nm-in: inset 4px 4px 10px rgba(5,50,20,.45), inset -3px -3px 8px rgba(255,255,255,.22); }
-  body[data-edo-theme="white"]{ --t-bg:#f1f5f9; --t-deep:#ffffff; --t-surf:#ffffff; --t-surf2:#e8eef5; --t-text:#0f172a; --t-muted:#475569; --t-border:#cbd5e1; --t-accent:#b45309;
-    --edo-nm-out: 5px 5px 12px rgba(15,23,42,.18), -4px -4px 10px rgba(255,255,255,.95), inset 1px 1px 0 rgba(255,255,255,.18);
-    --edo-nm-in: inset 4px 4px 10px rgba(15,23,42,.18), inset -3px -3px 8px rgba(255,255,255,.95); }
-body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/70, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/80, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/85, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/90, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/92, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-950\/95, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-black\/50, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-black\/60{ background-color: var(--t-deep) !important; }
-body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/80, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/85, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/90, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-900\/95{ background-color: var(--t-surf) !important; }
-body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-800, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-800\/80, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-800\/60, body[data-edo-theme]:not([data-edo-theme="black"]) .bg-slate-700{ background-color: var(--t-surf2) !important; }
-body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-600, body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-700, body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-800, body[data-edo-theme]:not([data-edo-theme="black"]) .border-slate-800\/60, body[data-edo-theme]:not([data-edo-theme="black"]) .border-white\/20{ border-color: var(--t-border) !important; }
-body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-50, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-100, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-200, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-300{ color: var(--t-text) !important; }
-body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-500, body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-600{ color: var(--t-muted) !important; }
-  /* ── 画面ごとの背景・枠 ── */
-  body[data-edo-theme]:not([data-edo-theme="black"]) #lobby-screen{ background: var(--t-bg) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #lobby-screen > .absolute.inset-0.z-\[1\]{ background: var(--t-bg) !important; opacity: .82; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel{ background: var(--t-surf) !important; color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-avatar{ background: var(--t-deep) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-name, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-stat span, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-stat b,
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-money-label, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-money-value,
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-goal-word, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-territory, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-property-inline{ color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-main-head, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-stat, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-account-panel .edo-account-money{ border-color: var(--t-border) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-mp-panel{ background: var(--t-deep) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #players-card-container > div{ background: var(--t-surf) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #players-card-container > div .text-slate-200{ color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #lobby-visited-pin-top{ background: var(--t-surf) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .box{ background: var(--t-surf) !important; border-color: var(--t-border) !important; color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .edo-nick-label, body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .edo-nick-label span{ color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup .edo-emoji-btn{ background: var(--t-deep) !important; border-color: var(--t-border) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-user-setup #edo-photo-pick{ background: var(--t-surf2) !important; border-color: var(--t-border) !important; color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-setup-cancel{ color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-box{ background: var(--t-surf) !important; border-color: var(--t-border) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-t{ color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-s{ color: var(--t-muted) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .edo-ask-btns button:not(.go){ background: var(--t-surf2) !important; color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-player-status, body[data-edo-theme]:not([data-edo-theme="black"]) #edo-mini-map{ background: var(--t-surf) !important; color: var(--t-text) !important; border-color: var(--t-border) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-rail-modal .edo-rail-item{ background: var(--t-surf2) !important; color: var(--t-text) !important; }
-  /* 明るい背景（黄・白）では、文字を濃い色に */
-  body[data-edo-theme="yellow"], body[data-edo-theme="white"]{ }
-  body[data-edo-theme="yellow"] .text-amber-300, body[data-edo-theme="yellow"] .text-amber-400, body[data-edo-theme="yellow"] .text-amber-200,
-  body[data-edo-theme="white"] .text-amber-300, body[data-edo-theme="white"] .text-amber-400, body[data-edo-theme="white"] .text-amber-200{ color: var(--t-accent) !important; }
-  body[data-edo-theme="yellow"] .text-emerald-300, body[data-edo-theme="yellow"] .text-emerald-400,
-  body[data-edo-theme="white"] .text-emerald-300, body[data-edo-theme="white"] .text-emerald-400{ color: #047857 !important; }
-  body[data-edo-theme="yellow"] .text-sky-300, body[data-edo-theme="white"] .text-sky-300{ color: #0369a1 !important; }
-  body[data-edo-theme="yellow"] #edogawa-account-panel *, body[data-edo-theme="white"] #edogawa-account-panel *{ text-shadow: none !important; }
-  body[data-edo-theme="yellow"] #edogawa-account-panel .edo-goal-num, body[data-edo-theme="white"] #edogawa-account-panel .edo-goal-num{ color: var(--t-accent) !important; }
-  body[data-edo-theme="yellow"] .gold-glow, body[data-edo-theme="white"] .gold-glow{
-    background-image: linear-gradient(90deg,#7c2d12,#b45309,#7c2d12) !important; filter: none !important; text-shadow: none !important; }
-  body[data-edo-theme="yellow"] #edogawa-user-setup input, body[data-edo-theme="white"] #edogawa-user-setup input{ color: #92400e !important; }
-  /* 色のある背景（青・赤・緑）では、同じ系統の色の文字を明るく */
-  body[data-edo-theme="green"] .text-emerald-300, body[data-edo-theme="green"] .text-emerald-400{ color: #ecfdf5 !important; }
-  body[data-edo-theme="blue"] .text-sky-300, body[data-edo-theme="blue"] .text-sky-400{ color: #e0f2fe !important; }
-  body[data-edo-theme="red"] .text-rose-300, body[data-edo-theme="red"] .text-rose-400, body[data-edo-theme="red"] .text-red-500{ color: #fff1f2 !important; }
-
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-game-menu-tool{ background: var(--t-surf) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .line-link-btn{ background:#06C755 !important; color:#ffffff !important; border-color:rgba(255,255,255,.4) !important; }
-  body[data-edo-theme="yellow"] .text-rose-300, body[data-edo-theme="yellow"] .text-rose-400,
-  body[data-edo-theme="white"] .text-rose-300, body[data-edo-theme="white"] .text-rose-400{ color:#be123c !important; }
-  /* 「江戸川区 非公認」のハンコ：赤い背景では白に */
-  body[data-edo-theme="red"] #lobby-screen .border-rose-500{ border-color:#ffffff !important; color:#ffffff !important; }
-  /* ── 背景色のボタン・選択画面 ── */
-  #edo-theme-pick{ padding:11px 14px; border-radius:12px; font-weight:800; font-size:12px; border:1px solid #475569; background:#1e293b; color:#e2e8f0;
-    box-shadow: var(--edo-nm-out); white-space:nowrap; }
-  #edo-theme-pick.picked{ background: var(--edo-pick-bg) !important; color: var(--edo-pick-fg) !important; border-color: rgba(255,255,255,.35) !important; }
-  #edo-theme-entry .edo-theme-dot{ width:26px; height:26px; border-radius:50%; flex:0 0 26px; border:2px solid rgba(255,255,255,.75); box-shadow:0 2px 6px rgba(0,0,0,.35); }
-  #edo-theme-modal{ position:fixed; inset:0; z-index:2147483400; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(2,6,23,.6); backdrop-filter:blur(6px); }
-  #edo-theme-modal.show{ display:flex; }
-  #edo-theme-modal .tbox{ width:min(380px,94vw); background:#0f172a; color:#f8fafc; border-radius:22px; padding:16px; box-shadow: 0 18px 50px rgba(0,0,0,.55); }
-  #edo-theme-modal .thead{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  #edo-theme-modal .thead b{ font-size:17px; color:#fbbf24; }
-  #edo-theme-modal .tclose{ width:34px; height:34px; border-radius:10px; background:#1e293b; color:#e2e8f0; border:0; font-size:18px; }
-  #edo-theme-modal .topt{ width:100%; display:flex; align-items:center; gap:12px; padding:10px 12px; margin-top:8px; border-radius:14px; border:0;
-    background:#1e293b; color:#f8fafc; text-align:left; box-shadow: 5px 5px 12px rgba(0,0,0,.55), -4px -4px 10px rgba(148,163,184,.10); }
-  #edo-theme-modal .topt:active{ box-shadow: inset 4px 4px 10px rgba(0,0,0,.55), inset -3px -3px 8px rgba(148,163,184,.10); }
-  #edo-theme-modal .topt .sw{ width:34px; height:34px; border-radius:50%; flex:0 0 34px; border:2px solid rgba(255,255,255,.8); box-shadow:0 2px 6px rgba(0,0,0,.4); }
-  #edo-theme-modal .topt .nm{ font-size:14px; font-weight:900; line-height:1.3; }
-  #edo-theme-modal .topt .sub{ display:block; font-size:11px; font-weight:700; color:#94a3b8; }
-  #edo-theme-modal .topt .ck{ margin-left:auto; font-size:18px; color:#34d399; visibility:hidden; }
-  #edo-theme-modal .topt.on{ outline:2px solid #fbbf24; }
-  #edo-theme-modal .topt.on .ck{ visibility:visible; }
-</style>
+<!-- edogawa-v165-style は <head> へ移しました（ver1.1.21：最初から背景色で表示するため） -->
 <script id="edogawa-v165">
 (function(){
   'use strict';
@@ -29513,21 +29539,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   window.__EDOGAWA_V165_INFO = ()=>({ 背景色: current().n, 選んだことがある: !!saved() });
 })();
 </script>
-<style id="edogawa-v166-style">
-  /* ver1.1.20　背景色を、画面の切りかわり・地図の読み込み中にも */
-  html{ background: var(--t-bg, #0f172a); }
-  body[data-edo-theme]:not([data-edo-theme="black"]){ background: var(--t-bg) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .leaflet-container,
-  body[data-edo-theme]:not([data-edo-theme="black"]) main[data-app="1"]{ background: var(--t-bg) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body{ color: var(--t-text) !important; }
-  /* ゲーム開始の演出中にかぶせる薄い幕も、黒ではなく背景色に合わせた明るさに */
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-intro-lock{ background: rgba(0,0,0,.06) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-amida-curtain,
-  body[data-edo-theme]:not([data-edo-theme="black"]) #regional-mini-loading{ background: var(--t-bg) !important; color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h5{ color: var(--t-text) !important; }
-  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h4{ border-color: var(--t-border) !important; }
-  body[data-edo-theme="yellow"] .doc-body h4, body[data-edo-theme="white"] .doc-body h4{ color: var(--t-accent) !important; }
-</style>
+<!-- edogawa-v166-style は <head> へ移しました（ver1.1.21：最初から背景色で表示するため） -->
 <script id="edogawa-v166">
 (function(){
   'use strict';
@@ -29566,24 +29578,83 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   // ひとつの文書（本体・ミニゲームの中）ごとに、色を置きかえます
   function makeRecolor(doc, opts){
     const touched = new Set();
+    let selfWrote = new Set();   // 自分で色を書きかえた部品（その変化には反応しないため）
     let busy = false, timer = null, mo = null;
     const PROPS = ['background-color','background-image','color','border-color'];
     function restore(el){
       const o = el.__edoRc; if(!o) return;
       PROPS.forEach(p=>{ if(o[p] !== undefined){ if(o[p]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); } });
-      el.__edoRc = null;
+      el.__edoRc = null; selfWrote.add(el);
     }
     function set(el, p, v){
       if(!el.__edoRc) el.__edoRc = {};
       if(el.__edoRc[p] === undefined){ const cur = el.style.getPropertyValue(p); el.__edoRc[p] = cur ? [cur, el.style.getPropertyPriority(p)] : null; }
       el.style.setProperty(p, v, 'important');
-      touched.add(el);
+      touched.add(el); selfWrote.add(el);
     }
     function skipNode(el){
       const t = el.tagName;
       if(t === 'CANVAS' || t === 'IMG' || t === 'SVG' || t === 'svg' || t === 'VIDEO' || t === 'IFRAME' || t === 'SCRIPT' || t === 'STYLE' || t === 'PATH') return true;
       if(el.hasAttribute && el.hasAttribute('data-edo-norc')) return true;
       return false;
+    }
+    // 要素の一覧から、置きかえる色を決めます
+    function planFor(list, P, k, visCheck){
+      const win = doc.defaultView;
+      const plan = [];
+      // 文字の色は、うしろの背景が「黒系（置きかえる背景）」のときだけ変えます
+      // （オレンジ・緑などのボタンの上の白い文字は、そのまま）
+      const onDark = new Map();
+      const isOnDark = (el)=>{
+        if(!el || el === doc.documentElement) return true;
+        if(onDark.has(el)) return onDark.get(el);
+        const cs = win.getComputedStyle(el); let r;
+        const bi = cs.backgroundImage;
+        if(bi && bi !== 'none' && /gradient|url\(/.test(bi)){
+          const cols = (bi.match(/rgba?\([^)]+\)/g) || []).map(parse);
+          r = cols.length > 0 && cols.every(c=>darkNeutral(c) || (c && c.a < .05));
+        }else{
+          const c = parse(cs.backgroundColor);
+          if(c && c.a > .45) r = darkNeutral(c);
+          else r = isOnDark(el.parentElement);
+        }
+        onDark.set(el, r); return r;
+      };
+      for(const el of list){
+        if(visCheck && el.offsetParent === null && el.tagName !== 'BODY' && el.tagName !== 'HTML'){ const cs0 = win.getComputedStyle(el); if(cs0.position !== 'fixed' || cs0.display === 'none') continue; }
+        const cs = win.getComputedStyle(el);
+        const bg = parse(cs.backgroundColor);
+        // 「≡」の線のように、文字の色で塗っている部品（bg-current）はそのまま
+        if(darkNeutral(bg) && cs.backgroundColor !== cs.color){
+          const L = lum(bg); const col = (el.tagName === 'HTML' || el.tagName === 'BODY') ? P.bg : (L < .012 ? P.deep : (L < .03 ? P.surf : P.surf2));
+          plan.push([el,'background-color', withAlpha(col, bg.a < .98 ? Math.max(bg.a, .55) : 1)]);
+        }
+        const bi = cs.backgroundImage;
+        if(bi && bi !== 'none' && /gradient/.test(bi)){
+          const cols = (bi.match(/rgba?\([^)]+\)/g) || []).map(parse);
+          if(cols.length && cols.every(c=>darkNeutral(c) || (c && c.a < .05))){ plan.push([el,'background-image','none']); if(!darkNeutral(bg)) plan.push([el,'background-color', P.surf]); }
+        }
+        const fg = parse(cs.color);
+        if((lightNeutral(fg) || (P.accent && amberText(fg))) && isOnDark(el)){
+          if(lightNeutral(fg)) plan.push([el,'color', lum(fg) > .55 ? P.text : P.muted]);
+          else plan.push([el,'color', P.accent]);
+        }
+        if(parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderBottomWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0){
+          const bc = parse(cs.borderTopColor);
+          if(darkNeutral(bc) || (bc && lightNeutral(bc) && bc.a < .5)) plan.push([el,'border-color', P.border]);
+        }
+      }
+      return plan;
+    }
+    function collect(root, out){
+      if(!root || root.nodeType !== 1) return;
+      if(skipNode(root) || (opts.skipSubtree && opts.skipSubtree(root))) return;
+      out.push(root);
+      const walker = doc.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, { acceptNode(n){
+        if(skipNode(n)) return NodeFilter.FILTER_REJECT;
+        if(opts.skipSubtree && opts.skipSubtree(n)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT; } });
+      let n; while((n = walker.nextNode())) out.push(n);
     }
     function scan(){
       if(busy) return; busy = true;
@@ -29593,73 +29664,54 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         touched.forEach(restore); touched.clear();
         if(!P || !doc.body) return;
         const list = [];
-        const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT, { acceptNode(n){
-          if(skipNode(n)) return NodeFilter.FILTER_REJECT;
-          if(opts.skipSubtree && opts.skipSubtree(n)) return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT; } });
-        let n; while((n = walker.nextNode())) list.push(n);
-        list.unshift(doc.body); if(opts.html) list.unshift(doc.documentElement);
-        const win = doc.defaultView;
-        const plan = [];
-        // 文字の色は、うしろの背景が「黒系（置きかえる背景）」のときだけ変えます
-        // （オレンジ・緑などのボタンの上の白い文字は、そのまま）
-        const onDark = new Map();
-        const isOnDark = (el)=>{
-          if(!el || el === doc.documentElement) return true;
-          if(onDark.has(el)) return onDark.get(el);
-          const cs = win.getComputedStyle(el); let r;
-          const bi = cs.backgroundImage;
-          if(bi && bi !== 'none' && /gradient|url\(/.test(bi)){
-            const cols = (bi.match(/rgba?\([^)]+\)/g) || []).map(parse);
-            r = cols.length > 0 && cols.every(c=>darkNeutral(c) || (c && c.a < .05));
-          }else{
-            const c = parse(cs.backgroundColor);
-            if(c && c.a > .45) r = darkNeutral(c);
-            else r = isOnDark(el.parentElement);
-          }
-          onDark.set(el, r); return r;
-        };
-        for(const el of list){
-          if(el.offsetParent === null && el.tagName !== 'BODY' && el.tagName !== 'HTML'){ const cs0 = win.getComputedStyle(el); if(cs0.position !== 'fixed' || cs0.display === 'none') continue; }
-          const cs = win.getComputedStyle(el);
-          const bg = parse(cs.backgroundColor);
-          // 「≡」の線のように、文字の色で塗っている部品（bg-current）はそのまま
-          if(darkNeutral(bg) && cs.backgroundColor !== cs.color){
-            const L = lum(bg); const col = (el.tagName === 'HTML' || el.tagName === 'BODY') ? P.bg : (L < .012 ? P.deep : (L < .03 ? P.surf : P.surf2));
-            plan.push([el,'background-color', withAlpha(col, bg.a < .98 ? Math.max(bg.a, .55) : 1)]);
-          }
-          const bi = cs.backgroundImage;
-          if(bi && bi !== 'none' && /gradient/.test(bi)){
-            const cols = (bi.match(/rgba?\([^)]+\)/g) || []).map(parse);
-            if(cols.length && cols.every(c=>darkNeutral(c) || (c && c.a < .05))){ plan.push([el,'background-image','none']); if(!darkNeutral(bg)) plan.push([el,'background-color', P.surf]); }
-          }
-          const fg = parse(cs.color);
-          if((lightNeutral(fg) || (P.accent && amberText(fg))) && isOnDark(el)){
-            if(lightNeutral(fg)) plan.push([el,'color', lum(fg) > .55 ? P.text : P.muted]);
-            else plan.push([el,'color', P.accent]);
-          }
-          else if(darkNeutral(fg) && (k === 'blue' || k === 'red' || k === 'green')){
-            // 濃い文字が濃い背景（置きかえ前）に乗っていたものは、そのまま（ボタンの上の文字など）
-          }
-          if(parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderBottomWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0){
-            const bc = parse(cs.borderTopColor);
-            if(darkNeutral(bc) || (bc && lightNeutral(bc) && bc.a < .5)) plan.push([el,'border-color', P.border]);
-          }
-        }
-        mo && mo.disconnect();
-        plan.forEach(([el,p,v])=>set(el,p,v));
-        observe();
+        collect(doc.body, list);
+        if(opts.html) list.unshift(doc.documentElement);
+        planFor(list, P, k, true).forEach(([el,p,v])=>set(el,p,v));
       }catch(e){ console.warn('[v166]', e); }
       finally{ busy = false; }
     }
-    function later(){ clearTimeout(timer); timer = setTimeout(scan, 120); }
+    // 【ver1.1.21】開いた画面・切りかわった画面は、その場で（画面に出る前に）色を合わせます。
+    //   以前は少し待ってからまとめて直していたため、一瞬だけ黒い画面が見えていました。
+    function quick(ms){
+      if(busy) return;
+      const k = themeKey(); const P = PAL[k]; if(!P) return;
+      const roots = new Set();
+      for(const m of ms){
+        const t = m.target;
+        if(m.type === 'attributes' && m.attributeName === 'style' && selfWrote.has(t)) continue;
+        if(t && t.closest && t.closest('.leaflet-container')) continue;
+        if(m.type === 'childList'){ m.addedNodes.forEach(nd=>{ if(nd.nodeType === 1) roots.add(nd); }); }
+        else if(t && t.nodeType === 1) roots.add(t);
+      }
+      if(!roots.size) return;
+      // 入れ子になっているものは、外側だけにします
+      const rs = [...roots].filter(r=>{ for(const o of roots){ if(o !== r && o.contains && o.contains(r)) return false; } return true; });
+      const list = []; rs.forEach(r=>collect(r, list));
+      if(list.length > 4000) return;   // とても大きいときは、あとのまとめ直しにまかせます
+      busy = true;
+      try{
+        list.forEach(el=>{ if(el.__edoRc){ restore(el); touched.delete(el); } });
+        planFor(list, P, k, false).forEach(([el,p,v])=>set(el,p,v));
+      }catch(e){ console.warn('[v166]', e); }
+      finally{ busy = false; }
+    }
+    function later(){ clearTimeout(timer); timer = setTimeout(scan, 400); }
     function observe(){
       try{
         if(!mo) mo = new (doc.defaultView.MutationObserver)((ms)=>{
           // 地図の中（コマの移動など）の変化では、見なおしません
-          for(const m of ms){ const t = m.target; if(!(t && t.closest && t.closest('.leaflet-container'))){ later(); return; } }
+          let need = false;
+          for(const m of ms){
+            const t = m.target;
+            if(m.type === 'attributes' && m.attributeName === 'style' && selfWrote.has(t)) continue;
+            if(!(t && t.closest && t.closest('.leaflet-container'))){ need = true; break; }
+          }
+          const prev = selfWrote; selfWrote = new Set();
+          if(!need) return;
+          quick(ms.filter(m=>!(m.type === 'attributes' && m.attributeName === 'style' && prev.has(m.target))));      // 画面に出る前に、変わったところだけすぐ直します
+          later();        // 少しあとに、全体をもう一度見直します
         });
-        mo.observe(doc.body, { subtree:true, childList:true, attributes:true, attributeFilter:['class','hidden','open'] });
+        mo.observe(doc.body, { subtree:true, childList:true, attributes:true, attributeFilter:['class','hidden','open','style'] });
       }catch(e){}
     }
     observe(); scan();
@@ -29704,6 +29756,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   function tick(){ paintRoot(); startMain(); startFrames(); }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tick); else tick();
   setInterval(tick, 1200);
+  setInterval(startFrames, 150);   // ミニゲームの画面は、開いたらすぐ合わせます
   // 背景色を選び直したら、すぐ反映
   window.addEventListener('storage', tick);
   const oldPick = app.openThemePicker;

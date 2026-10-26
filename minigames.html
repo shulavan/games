@@ -23,6 +23,16 @@
      ・親（sugoroku.html）とは postMessage でやりとりします。
        同じドメインに置く必要があります（別ドメインだと連携できません）。
      ============================================================================ -->
+<script>
+/* 【江戸川双六 ver1.1.21】読み込み中の画面も、選んだ背景色にします（黒い画面をはさまないため） */
+(function(){ try{
+  var k = localStorage.getItem('edogawa_theme_v1') || 'black';
+  var c = { blue:['#4285F4','#ffffff'], red:['#EA4335','#ffffff'], yellow:['#FBBC05','#1f2937'], green:['#34A853','#ffffff'], white:['#f1f5f9','#0f172a'] }[k];
+  if(c){ var st = document.createElement('style');
+    st.textContent = 'html,body{background:' + c[0] + ' !important;color:' + c[1] + ' !important}#boot .s{color:' + c[1] + ' !important;opacity:.8}';
+    document.head.appendChild(st); }
+}catch(e){} })();
+</script>
 <style>
   html,body{margin:0;padding:0;height:100%;background:#020617;color:#e2e8f0;
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif}
