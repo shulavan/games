@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.26 (2026-10-27)';
+    window.__EDOGAWA_VERSION = 'ver1.1.27 (2026-10-27)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -884,6 +884,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
     background: color-mix(in srgb, var(--t-surf) 72%, transparent) !important; }
   /* ③ 「取得情報」のうしろの暗い幕をなくし、そのまま地図を見せます */
   #edo-menu-sheet{ background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  /* ⑤ 【ver1.1.27】「ゴール達成一覧」「不動産」の一覧も、うしろの暗い幕をなくし、そのまま背景を見せます */
+  #edo-list-modal{ background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  #edo-list-modal .edo-lm-box{ box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px var(--t-border, rgba(255,255,255,.08)) !important; }
   /* ④ 背景色の選択画面：選んだ背景色に合わせ、うしろの暗い幕はなくします */
   #edo-theme-modal{ background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
   #edo-theme-modal .tbox{ background: var(--t-surf, #0f172a) !important; color: var(--t-text, #f8fafc) !important;
