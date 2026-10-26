@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.19 (2026-10-26)';
+    window.__EDOGAWA_VERSION = 'ver1.1.20 (2026-10-26)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -29511,6 +29511,205 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   setInterval(tick, 700);
 
   window.__EDOGAWA_V165_INFO = ()=>({ 背景色: current().n, 選んだことがある: !!saved() });
+})();
+</script>
+<style id="edogawa-v166-style">
+  /* ver1.1.20　背景色を、画面の切りかわり・地図の読み込み中にも */
+  html{ background: var(--t-bg, #0f172a); }
+  body[data-edo-theme]:not([data-edo-theme="black"]){ background: var(--t-bg) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .leaflet-container,
+  body[data-edo-theme]:not([data-edo-theme="black"]) main[data-app="1"]{ background: var(--t-bg) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body{ color: var(--t-text) !important; }
+  /* ゲーム開始の演出中にかぶせる薄い幕も、黒ではなく背景色に合わせた明るさに */
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-intro-lock{ background: rgba(0,0,0,.06) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-amida-curtain,
+  body[data-edo-theme]:not([data-edo-theme="black"]) #regional-mini-loading{ background: var(--t-bg) !important; color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h5{ color: var(--t-text) !important; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h4{ border-color: var(--t-border) !important; }
+  body[data-edo-theme="yellow"] .doc-body h4, body[data-edo-theme="white"] .doc-body h4{ color: var(--t-accent) !important; }
+</style>
+<script id="edogawa-v166">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  // ════════════════════════════════════════════════════════════
+  //  ver1.1.20　背景色を「すべての画面」に
+  //   ・画面のどこかに残っている「黒系の背景・灰色の文字・黒系の枠線」を見つけて、
+  //     選んだ背景色に合わせた色へ置きかえます（あとから開く画面・ミニゲームの中も）。
+  //   ・地図・3Dのミニゲーム（カヌー・運転・闘魂ロード・釣り など）は、そのままにします。
+  // ════════════════════════════════════════════════════════════
+  const PAL = {
+    blue:   { bg:'#4285F4', deep:'#1f4fae', surf:'#2c66d6', surf2:'#3a74e3', text:'#ffffff', muted:'#ffffff', border:'rgba(255,255,255,.30)', accent:null },
+    red:    { bg:'#EA4335', deep:'#a3271d', surf:'#c5362a', surf2:'#d64033', text:'#ffffff', muted:'#ffffff', border:'rgba(255,255,255,.30)', accent:null },
+    yellow: { bg:'#FBBC05', deep:'#fff4cc', surf:'#ffe48f', surf2:'#ffd75c', text:'#1f2937', muted:'#5a4630', border:'rgba(60,40,0,.22)', accent:'#9a3412' },
+    green:  { bg:'#34A853', deep:'#1d7337', surf:'#268c43', surf2:'#2f9a4c', text:'#ffffff', muted:'#ffffff', border:'rgba(255,255,255,.30)', accent:null },
+    white:  { bg:'#f1f5f9', deep:'#ffffff', surf:'#ffffff', surf2:'#e8eef5', text:'#0f172a', muted:'#475569', border:'#cbd5e1', accent:'#b45309' }
+  };
+  // ミニゲームの中で色を合わせるのは、背景が「画面の地の色」になっているゲームだけです。
+  //   3D・お店や水そうなどの絵（場面）が背景のゲームは、元の色のままにします。
+  const THEME_GAMES = new Set(['shiritori','kanken','amida','lottery']);
+  const themeKey = ()=>{ try{ return localStorage.getItem('edogawa_theme_v1') || 'black'; }catch(e){ return 'black'; } };
+
+  const RX = /rgba?\(([^)]+)\)/;
+  function parse(c){ const m = RX.exec(c || ''); if(!m) return null; const a = m[1].split(',').map(x=>parseFloat(x)); return { r:a[0], g:a[1], b:a[2], a: a.length > 3 ? a[3] : 1 }; }
+  function lum(c){ const f = v=>{ v/=255; return v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); }; return .2126*f(c.r) + .7152*f(c.g) + .0722*f(c.b); }
+  const spread = c=>Math.max(c.r,c.g,c.b) - Math.min(c.r,c.g,c.b);
+  const darkNeutral  = c=>c && c.a > .04 && Math.max(c.r,c.g,c.b) <= 95 && spread(c) <= 50;
+  const lightNeutral = c=>c && c.a > .3 && Math.min(c.r,c.g,c.b) >= 120 && spread(c) <= 50;
+  const amberText    = c=>c && c.r >= 200 && c.g >= 120 && c.g <= 235 && c.b <= 160 && (c.r - c.b) >= 80;
+  function withAlpha(hex, a){
+    if(/^rgba/.test(hex)) return hex;
+    const h = hex.replace('#',''); const n = parseInt(h.length === 3 ? h.split('').map(x=>x+x).join('') : h, 16);
+    return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + (a == null ? 1 : a) + ')';
+  }
+
+  // ひとつの文書（本体・ミニゲームの中）ごとに、色を置きかえます
+  function makeRecolor(doc, opts){
+    const touched = new Set();
+    let busy = false, timer = null, mo = null;
+    const PROPS = ['background-color','background-image','color','border-color'];
+    function restore(el){
+      const o = el.__edoRc; if(!o) return;
+      PROPS.forEach(p=>{ if(o[p] !== undefined){ if(o[p]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); } });
+      el.__edoRc = null;
+    }
+    function set(el, p, v){
+      if(!el.__edoRc) el.__edoRc = {};
+      if(el.__edoRc[p] === undefined){ const cur = el.style.getPropertyValue(p); el.__edoRc[p] = cur ? [cur, el.style.getPropertyPriority(p)] : null; }
+      el.style.setProperty(p, v, 'important');
+      touched.add(el);
+    }
+    function skipNode(el){
+      const t = el.tagName;
+      if(t === 'CANVAS' || t === 'IMG' || t === 'SVG' || t === 'svg' || t === 'VIDEO' || t === 'IFRAME' || t === 'SCRIPT' || t === 'STYLE' || t === 'PATH') return true;
+      if(el.hasAttribute && el.hasAttribute('data-edo-norc')) return true;
+      return false;
+    }
+    function scan(){
+      if(busy) return; busy = true;
+      try{
+        const k = themeKey(); const P = PAL[k];
+        // いったん元に戻してから、いまの色を読みなおします（状態で色が変わる部品のため）
+        touched.forEach(restore); touched.clear();
+        if(!P || !doc.body) return;
+        const list = [];
+        const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_ELEMENT, { acceptNode(n){
+          if(skipNode(n)) return NodeFilter.FILTER_REJECT;
+          if(opts.skipSubtree && opts.skipSubtree(n)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT; } });
+        let n; while((n = walker.nextNode())) list.push(n);
+        list.unshift(doc.body); if(opts.html) list.unshift(doc.documentElement);
+        const win = doc.defaultView;
+        const plan = [];
+        // 文字の色は、うしろの背景が「黒系（置きかえる背景）」のときだけ変えます
+        // （オレンジ・緑などのボタンの上の白い文字は、そのまま）
+        const onDark = new Map();
+        const isOnDark = (el)=>{
+          if(!el || el === doc.documentElement) return true;
+          if(onDark.has(el)) return onDark.get(el);
+          const cs = win.getComputedStyle(el); let r;
+          const bi = cs.backgroundImage;
+          if(bi && bi !== 'none' && /gradient|url\(/.test(bi)){
+            const cols = (bi.match(/rgba?\([^)]+\)/g) || []).map(parse);
+            r = cols.length > 0 && cols.every(c=>darkNeutral(c) || (c && c.a < .05));
+          }else{
+            const c = parse(cs.backgroundColor);
+            if(c && c.a > .45) r = darkNeutral(c);
+            else r = isOnDark(el.parentElement);
+          }
+          onDark.set(el, r); return r;
+        };
+        for(const el of list){
+          if(el.offsetParent === null && el.tagName !== 'BODY' && el.tagName !== 'HTML'){ const cs0 = win.getComputedStyle(el); if(cs0.position !== 'fixed' || cs0.display === 'none') continue; }
+          const cs = win.getComputedStyle(el);
+          const bg = parse(cs.backgroundColor);
+          // 「≡」の線のように、文字の色で塗っている部品（bg-current）はそのまま
+          if(darkNeutral(bg) && cs.backgroundColor !== cs.color){
+            const L = lum(bg); const col = (el.tagName === 'HTML' || el.tagName === 'BODY') ? P.bg : (L < .012 ? P.deep : (L < .03 ? P.surf : P.surf2));
+            plan.push([el,'background-color', withAlpha(col, bg.a < .98 ? Math.max(bg.a, .55) : 1)]);
+          }
+          const bi = cs.backgroundImage;
+          if(bi && bi !== 'none' && /gradient/.test(bi)){
+            const cols = (bi.match(/rgba?\([^)]+\)/g) || []).map(parse);
+            if(cols.length && cols.every(c=>darkNeutral(c) || (c && c.a < .05))){ plan.push([el,'background-image','none']); if(!darkNeutral(bg)) plan.push([el,'background-color', P.surf]); }
+          }
+          const fg = parse(cs.color);
+          if((lightNeutral(fg) || (P.accent && amberText(fg))) && isOnDark(el)){
+            if(lightNeutral(fg)) plan.push([el,'color', lum(fg) > .55 ? P.text : P.muted]);
+            else plan.push([el,'color', P.accent]);
+          }
+          else if(darkNeutral(fg) && (k === 'blue' || k === 'red' || k === 'green')){
+            // 濃い文字が濃い背景（置きかえ前）に乗っていたものは、そのまま（ボタンの上の文字など）
+          }
+          if(parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderBottomWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0){
+            const bc = parse(cs.borderTopColor);
+            if(darkNeutral(bc) || (bc && lightNeutral(bc) && bc.a < .5)) plan.push([el,'border-color', P.border]);
+          }
+        }
+        mo && mo.disconnect();
+        plan.forEach(([el,p,v])=>set(el,p,v));
+        observe();
+      }catch(e){ console.warn('[v166]', e); }
+      finally{ busy = false; }
+    }
+    function later(){ clearTimeout(timer); timer = setTimeout(scan, 120); }
+    function observe(){
+      try{
+        if(!mo) mo = new (doc.defaultView.MutationObserver)((ms)=>{
+          // 地図の中（コマの移動など）の変化では、見なおしません
+          for(const m of ms){ const t = m.target; if(!(t && t.closest && t.closest('.leaflet-container'))){ later(); return; } }
+        });
+        mo.observe(doc.body, { subtree:true, childList:true, attributes:true, attributeFilter:['class','hidden','open'] });
+      }catch(e){}
+    }
+    observe(); scan();
+    return { scan, stop(){ try{ mo && mo.disconnect(); }catch(e){} touched.forEach(restore); touched.clear(); } };
+  }
+
+  // 本体
+  let main = null;
+  const skipMain = (n)=>{
+    const c = n.classList;
+    if(c && (c.contains('leaflet-container') || c.contains('leaflet-pane') || c.contains('leaflet-marker-icon'))) return n.id !== 'map';
+    if(n.id === 'dice-footer-container' || n.id === 'map') return n.id !== 'map' ? true : false;
+    return false;
+  };
+  function startMain(){
+    if(themeKey() === 'black'){ if(main){ main.stop(); main = null; } return; }
+    if(!main) main = makeRecolor(document, { skipSubtree: (n)=>{
+      if(n.id === 'dice-footer-container') return true;
+      const c = n.classList; if(c && (c.contains('leaflet-pane') || c.contains('leaflet-control-container'))) return true;
+      return false; } });
+    else main.scan();
+  }
+  // ミニゲーム（同じドメインの iframe）
+  const frames = new WeakMap();
+  function startFrames(){
+    const k = themeKey();
+    document.querySelectorAll('iframe').forEach(f=>{
+      let doc = null; try{ doc = f.contentDocument; }catch(e){ return; }
+      if(!doc || !doc.body) return;
+      let game = ''; try{ game = (new URL(f.contentWindow.location.href)).searchParams.get('game') || ''; }catch(e){}
+      const rec = frames.get(f);
+      const sameDoc = rec && rec.doc === doc;
+      if(k === 'black' || !THEME_GAMES.has(game) || !game){ if(rec){ try{ rec.r.stop(); }catch(e){} frames.delete(f); } return; }
+      if(sameDoc){ return; }
+      frames.set(f, { doc, r: makeRecolor(doc, { html:true }) });
+    });
+  }
+  function paintRoot(){
+    const k = themeKey();
+    try{ document.documentElement.style.setProperty('background-color', PAL[k] ? PAL[k].bg : '', PAL[k] ? 'important' : ''); if(!PAL[k]) document.documentElement.style.removeProperty('background-color'); }catch(e){}
+  }
+  function tick(){ paintRoot(); startMain(); startFrames(); }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tick); else tick();
+  setInterval(tick, 1200);
+  // 背景色を選び直したら、すぐ反映
+  window.addEventListener('storage', tick);
+  const oldPick = app.openThemePicker;
+  document.addEventListener('click', (ev)=>{ if(ev.target && ev.target.closest && ev.target.closest('#edo-theme-modal .topt')) setTimeout(()=>{ if(main){ main.stop(); main = null; } tick(); }, 50); }, true);
+
+  window.__EDOGAWA_V166_INFO = ()=>({ 背景色: themeKey(), 本体の置きかえ: !!main });
 })();
 </script>
 <script id="edogawa-v39-footer">
