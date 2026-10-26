@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.23 (2026-10-26)';
+    window.__EDOGAWA_VERSION = 'ver1.1.24 (2026-10-26)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -6204,6 +6204,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         // そのまま信用せず、OSRMが有効な道路ルートを返すことを必須にします。
         return place;
       },
+
+      // 【ver1.1.24】御朱印：寺社の一覧（データファイルの facilities.temples）
+      getTemplesShrines() { return TEMPLES_SHRINES; },
 
       getAllFacilityObjects() {
         const groups = [
@@ -21286,7 +21289,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const L = app.lotteryStore(p) || {renban:0,bara:0,tickets:[]};
     const posts = Math.max(0, Number(app.visitedEntryCount)||0);
     const props = Array.isArray(p.properties) ? p.properties : [];
-    const stamps = Array.isArray(p.goshuin) ? p.goshuin.length : 0;
+    const stamps = app.goshuinCount ? app.goshuinCount() : (Array.isArray(p.goshuin) ? p.goshuin.length : 0);
     const income = props.reduce((a,x)=>a + Math.floor((Number(x.price)||0)*0.01), 0);
 
     const items = [
@@ -21297,7 +21300,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         go:()=>{ app.closeGameMenuSheet(); app.openGoalList(); }},
       {ic:'🏠', t1:`不動産${props.length}件`, t2: props.length ? `毎ターン ＋${yen(income)}の収入` : 'まだ購入していません',
         go:()=>{ app.closeGameMenuSheet(); app.openPropertyList(); }},
-      {ic:'📿', t1:`御朱印${stamps}個`, t2:'区内の寺社でいただいた御朱印（準備中）', readonly:true},
+      {ic:'📿', t1:`御朱印${stamps}個`, t2:'区内の寺社でいただいた御朱印（御朱印帳を見る）',
+        go:()=>{ app.closeGameMenuSheet(); app.openGoshuinBook && app.openGoshuinBook(); }},
       {ic:'🎫', t1:'宝くじ購入枚数', t2:`連番 ${L.renban}枚　バラ ${L.bara}枚`, readonly:true}
     ];
     const box = el.querySelector('#edo-ms-items');
@@ -27693,6 +27697,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function offline(p){ try{ return !!(app.isPlayerOffline && app.isPlayerOffline(p)); }catch(e){ return false; } }
   function canFightNow(player){
     if(!player || app.isMultiplayer) return false;
+    // 【ver1.1.24】はじめての双六では、最初のゴールまで「闘魂ロード」「しりとり」のすれ違い対戦はしません
+    try{ if(!((app.goaledPlaces || []).length > 0)) return false; }catch(e){}
     if(player.isFlying) return false;
     if(app.__fightTurnKey === turnKey()) return false;            // この番ではもう1回やりました
     if(app.miniGameActive || app.boatRaceActive || app.__fightActive) return false;
@@ -29489,7 +29495,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // 選ぶ画面
   function openPicker(){
     let m = g('edo-theme-modal');
-    if(!m){ m = document.createElement('div'); m.id = 'edo-theme-modal'; document.body.appendChild(m); }
+    if(!m){ m = document.createElement('div'); m.id = 'edo-theme-modal'; m.setAttribute('data-edo-norc', '1'); document.body.appendChild(m); }
     const cur = current().k;
     m.innerHTML = '<div class="tbox"><div class="thead"><b>🎨 背景色の選択</b><button type="button" class="tclose" aria-label="閉じる">✕</button></div>' +
       THEMES.map(t=>'<button type="button" class="topt' + (t.k === cur ? ' on' : '') + '" data-k="' + t.k + '">' +
@@ -29511,7 +29517,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const pick = g('edo-photo-pick'); if(!pick) return;
     let b = g('edo-theme-pick');
     if(!b){
-      b = document.createElement('button'); b.type = 'button'; b.id = 'edo-theme-pick';
+      b = document.createElement('button'); b.type = 'button'; b.id = 'edo-theme-pick'; b.setAttribute('data-edo-norc', '1');
       b.addEventListener('click', (ev)=>{ ev.preventDefault(); openPicker(); });
       pick.insertAdjacentElement('afterend', b);
       paintButtons();
@@ -29525,7 +29531,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       e = document.createElement('button'); e.type = 'button'; e.id = 'edo-theme-entry';
       e.className = 'w-full flex items-center justify-between gap-3 bg-slate-950/70 border border-slate-800 rounded-xl px-3 py-3 active:scale-[0.98] transition';
       e.innerHTML = '<span class="text-left"><span class="text-sm font-bold text-slate-100">🎨 背景色の選択</span><br>' +
-        '<span class="edo-theme-now text-[10px] text-slate-500"></span></span><span class="edo-theme-dot"></span>';
+        '<span class="edo-theme-now text-[10px] text-slate-500"></span></span><span class="edo-theme-dot" data-edo-norc="1"></span>';
       e.addEventListener('click', openPicker);
       paintButtons();
     }
@@ -29823,6 +29829,336 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   document.addEventListener('click', (ev)=>{ if(ev.target && ev.target.closest && ev.target.closest('#edo-theme-modal .topt')) setTimeout(()=>{ if(main){ main.stop(); main = null; } tick(); }, 50); }, true);
 
   window.__EDOGAWA_V166_INFO = ()=>({ 背景色: themeKey(), 本体の置きかえ: !!main });
+})();
+</script>
+<style id="edogawa-v167-style">
+  /* ════════════════════════════════════════════════════════════
+     ver1.1.24　御朱印帳
+     ════════════════════════════════════════════════════════════ */
+  #edo-goshuin{ position:fixed; inset:0; z-index:2147483300; display:none; align-items:center; justify-content:center;
+    padding:14px; background:rgba(15,10,5,.62); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  #edo-goshuin.show{ display:flex; }
+  #edo-goshuin .gs-box{ width:min(440px,96vw); background:#fbf6ea; color:#3b2a1a; border-radius:20px; padding:14px 12px 12px;
+    box-shadow:0 18px 50px rgba(0,0,0,.5), inset 0 0 0 1px rgba(120,80,30,.18); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif; }
+  #edo-goshuin .gs-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 4px 8px; border-bottom:1px solid rgba(120,80,30,.2); }
+  #edo-goshuin .gs-title{ font-size:18px; font-weight:900; color:#7c2d12; letter-spacing:.06em; }
+  #edo-goshuin .gs-count{ font-size:12px; font-weight:800; color:#92400e; }
+  #edo-goshuin .gs-x{ width:36px; height:36px; border-radius:10px; border:0; background:#efe3c8; color:#5b3a1a; font-size:18px; font-weight:900; }
+  #edo-goshuin .gs-pages{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; margin-top:10px; scrollbar-width:none; }
+  #edo-goshuin .gs-pages::-webkit-scrollbar{ display:none; }
+  #edo-goshuin .gs-page{ flex:0 0 100%; scroll-snap-align:start; display:grid; grid-template-columns:repeat(5,1fr); grid-template-rows:repeat(2,auto);
+    grid-auto-flow:column; gap:8px 6px; padding:6px 4px; box-sizing:border-box; }
+  #edo-goshuin .gs-slot{ display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; }
+  #edo-goshuin .gs-paper{ position:relative; width:100%; aspect-ratio:3/4; border-radius:8px; background:#fffdf6;
+    border:1px dashed rgba(120,80,30,.35); display:flex; align-items:center; justify-content:center; overflow:visible; }
+  #edo-goshuin .gs-no{ font-size:11px; font-weight:800; color:rgba(120,80,30,.45); }
+  #edo-goshuin .gs-name{ font-size:9px; line-height:1.2; color:#6b4f2a; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+  #edo-goshuin .gs-dots{ display:flex; justify-content:center; gap:6px; margin-top:6px; }
+  #edo-goshuin .gs-dots i{ width:7px; height:7px; border-radius:50%; background:rgba(120,80,30,.25); }
+  #edo-goshuin .gs-dots i.on{ background:#b91c1c; }
+  #edo-goshuin .gs-msg{ min-height:20px; text-align:center; font-size:13px; font-weight:900; color:#7c2d12; margin-top:6px; }
+  #edo-goshuin .gs-ok{ display:block; width:100%; margin-top:8px; padding:12px; border:0; border-radius:14px; font-size:15px; font-weight:900;
+    background:linear-gradient(180deg,#f59e0b,#d97706); color:#1f1300; box-shadow:5px 5px 12px rgba(0,0,0,.18), -4px -4px 10px rgba(255,255,255,.7); }
+  /* 朱印（トップページの「江戸川区 非公認」のハンコと同じ作り：丸に二重線） */
+  .edo-shuin{ width:84%; aspect-ratio:1; border-radius:50%; border:3px double #e11d48; color:#e11d48; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; line-height:1.05; font-weight:900; letter-spacing:.04em; background:transparent;
+    font-family:"Shippori Mincho","Hiragino Mincho ProN",serif; box-sizing:border-box; mix-blend-mode:multiply; }
+  .edo-shuin span{ display:block; white-space:nowrap; }
+  #edo-goshuin .gs-paper .edo-shuin{ font-size:12px; }
+  #edo-goshuin .gs-paper .edo-shuin.n2 span{ font-size:12px; }
+  #edo-goshuin .gs-paper .edo-shuin.n2.w2 span{ font-size:15px; }
+  #edo-goshuin .gs-paper .edo-shuin.n1 span{ font-size:15px; }
+  #edo-goshuin .gs-paper.new .edo-shuin{ animation:edo-shuin-press .32s ease-out; }
+  @keyframes edo-shuin-press{ 0%{ transform:var(--rot) scale(1.25); opacity:.6 } 60%{ transform:var(--rot) scale(.94); opacity:1 } 100%{ transform:var(--rot) scale(1) } }
+  #edo-shuin-fly{ position:fixed; left:0; top:0; z-index:2147483301; pointer-events:none; width:200px; height:200px; font-size:30px; border-width:8px; display:none; }
+</style>
+<script id="edogawa-v167">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const esc = (v)=>String(v == null ? '' : v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const yen = (v)=>'￥' + Math.round(Number(v) || 0).toLocaleString('ja-JP');
+  // ════════════════════════════════════════════════════════════
+  //  ver1.1.24　御朱印
+  //   ・自分のコマが寺社の近く（6マス＝240m以内）に止まったら、次の自分の番のはじめに
+  //     「◯◯が近くにあります。御朱印をいただきますか？（￥1,000）」と聞きます（パチンコと同じ流れで1回休み）
+  //   ・同じ寺社の御朱印は1回だけ。10個ごとに賞金（10個→10万、20個→20万…）
+  //   ・御朱印帳：2行×5列＝10個で1ページ。縦1列ずつ順に押し、11個目からは横にスライドした次のページへ
+  // ════════════════════════════════════════════════════════════
+  const KEY = 'edogawa_goshuin_v1';
+  const FEE = 1000, NEAR_M = 240, PRIZE_STEP = 10, PRIZE_UNIT = 100000;
+
+  function load(){ try{ const o = JSON.parse(localStorage.getItem(KEY) || 'null'); if(o && Array.isArray(o.stamps)) return { stamps:o.stamps, prizes:Array.isArray(o.prizes) ? o.prizes : [] }; }catch(e){} return { stamps:[], prizes:[] }; }
+  function save(st){ try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){} }
+  let ST = load();
+  app.goshuinCount = ()=>ST.stamps.length;
+
+  // ハンコの文字（6文字まで）
+  //   ・6文字以下はそのまま（かっこ書きの地名などは外します）
+  //   ・こえるときは「寺」「神社」「稲荷神社」の順に、語尾から外して6文字以内になるものを使います
+  //   ・それでもこえるときは、先頭から6文字にします（語尾の文字を消します）
+  function stampLabel(name){
+    const base = String(name || '').replace(/\s*[（(][^）)]*[）)]\s*/g, '').replace(/\s+/g, '').trim();
+    if(base.length <= 6) return base;
+    let last = base;
+    for(const suf of ['寺', '神社', '稲荷神社']){
+      if(base.endsWith(suf)){ const c = base.slice(0, -suf.length); last = c; if(c.length <= 6) return c; }
+    }
+    return last.slice(0, 6);
+  }
+  // 改行のしかた：6文字→3/3、5文字→3/2、4文字→2/2、3文字以下→1行
+  function stampLines(label){
+    const a = Array.from(label);
+    if(a.length <= 3) return [a.join('')];
+    const k = Math.ceil(a.length / 2);
+    return [a.slice(0, k).join(''), a.slice(k).join('')];
+  }
+  function stampHtml(st, extraClass){
+    const lines = stampLines(st.label);
+    const rot = 'rotate(' + (Number(st.angle) || 0) + 'deg)';
+    const w = Math.max.apply(null, lines.map(l=>Array.from(l).length));
+    return '<div class="edo-shuin n' + lines.length + ' w' + w + ' ' + (extraClass || '') + '" style="--rot:' + rot + ';transform:' + rot + '">' +
+      lines.map(l=>'<span>' + esc(l) + '</span>').join('') + '</div>';
+  }
+  const randAngle = ()=>{ let a = 0; while(a === 0) a = Math.floor(Math.random() * 25) - 12; return a; };   // −12°〜＋12°（1度単位）
+
+  // ── 近くの寺社 ──
+  function km(a, b){ const R = 6371, t = Math.PI/180; const dLat = (b.lat-a.lat)*t, dLng = (b.lng-a.lng)*t;
+    const s = Math.sin(dLat/2)**2 + Math.cos(a.lat*t)*Math.cos(b.lat*t)*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.min(1, Math.sqrt(s))); }
+  const temples = ()=>{ try{ return (app.getTemplesShrines && app.getTemplesShrines()) || []; }catch(e){ return []; } };
+  const have = (name)=>ST.stamps.some(x=>x.name === name);
+  function nearTemple(player){
+    try{
+      const n = app.roadNetworkNodes && app.roadNetworkNodes[player.currentNodeIdx]; if(!n) return null;
+      let best = null;
+      temples().forEach(t=>{ if(!t || !Number.isFinite(+t.lat) || !Number.isFinite(+t.lng) || have(t.name)) return;
+        const d = km({lat:n.lat, lng:n.lng}, {lat:+t.lat, lng:+t.lng}) * 1000;
+        if(d <= NEAR_M && (!best || d < best.d)) best = { t, d };
+      });
+      return best;
+    }catch(e){ return null; }
+  }
+  const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
+  const myPlayer = ()=>(app.players || []).find(isMine) || null;
+  function syncPlayer(){ const p = myPlayer(); if(p) p.goshuin = ST.stamps.map(x=>({ name:x.name, label:x.label })); }
+
+  const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(origLand){
+    app.landOnSpot = function(player){
+      const r = origLand.apply(app, arguments);
+      try{
+        if(isMine(player) && !player.isFlying){
+          const hit = nearTemple(player);
+          if(hit && player.goshuinDeclined !== hit.t.name) player.pendingGoshuin = { name: hit.t.name };
+          else player.pendingGoshuin = null;
+          if(hit && player.goshuinDeclined && player.goshuinDeclined !== hit.t.name) player.goshuinDeclined = null;
+        }
+      }catch(e){ console.warn('[v167]', e); }
+      return r;
+    };
+  }
+
+  // ── 次の自分の番のはじめに聞きます（駅 → パチンコ → 釣り → 御朱印 の順） ──
+  function askBox(){ let el = g('edo-goshuin-ask'); if(!el){ el = document.createElement('div'); el.id = 'edo-goshuin-ask'; document.body.appendChild(el); } return el; }
+  app.closeGoshuinAsk = function(){ const el = g('edo-goshuin-ask'); if(el){ el.classList.remove('show'); el.style.display = 'none'; el.innerHTML = ''; } };
+  function openAsk(player, t){
+    const el = askBox();
+    try{ const f = document.querySelector('footer[data-app="1"]'); const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
+      el.style.cssText = 'position:fixed;left:10px;right:10px;z-index:2147483200;display:flex;justify-content:center;pointer-events:none;bottom:' + (h + 16) + 'px'; }catch(e){}
+    el.innerHTML = '<div class="edo-ask-box"><div class="edo-ask-t">📿 ' + esc(t.name) + '</div>' +
+      '<div class="edo-ask-s">' + esc(t.name) + 'が近くにあります。<br>御朱印をいただきますか？（' + yen(FEE) + '）<br>いただくと1回休みです。</div>' +
+      '<div class="edo-ask-btns"><button type="button" data-no="1">いいえ</button><button type="button" class="go" data-yes="1">いただく</button></div></div>';
+    el.classList.add('show');
+    el.onclick = (ev)=>{
+      const b = ev.target.closest ? ev.target.closest('button') : null; if(!b) return;
+      if(b.dataset.no){ player.goshuinDeclined = t.name; player.pendingGoshuin = null; app.closeGoshuinAsk(); return; }
+      if(b.dataset.yes){ player.pendingGoshuin = null; app.closeGoshuinAsk(); receive(player, t); }
+    };
+  }
+  function shown(id){ const e = g(id); return !!(e && e.classList.contains('show') && e.style.display !== 'none'); }
+  function refreshAsk(){
+    try{
+      const cp = (app.players || [])[app.currentPlayerIdx];
+      const isShown = shown('edo-goshuin-ask');
+      const off = ()=>{ if(isShown) app.closeGoshuinAsk(); };
+      if(!cp || !isMine(cp) || !cp.pendingGoshuin) return off();
+      if(app.isRolling || app.miniGameActive || app.boatRaceActive || cp.skipTurn) return off();
+      if(app.canActNow && !app.canActNow()) return off();
+      if(cp.pendingStation || cp.pendingPachinko || cp.pendingFishing) return off();
+      if(shown('edo-board-ask') || shown('edo-pachi-ask') || shown('edo-fish-ask')) return off();
+      if(have(cp.pendingGoshuin.name)){ cp.pendingGoshuin = null; return off(); }
+      if(isShown) return;
+      const t = temples().find(x=>x && x.name === cp.pendingGoshuin.name) || { name: cp.pendingGoshuin.name };
+      openAsk(cp, t);
+    }catch(e){}
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); refreshAsk(); syncPlayer(); return r; }; }
+  setInterval(refreshAsk, 700);
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){ app.rollDice = function(){ try{ const cp = (app.players || [])[app.currentPlayerIdx]; if(cp) cp.pendingGoshuin = null; app.closeGoshuinAsk(); }catch(e){} return origRoll.apply(app, arguments); }; }
+  // ほかのお誘い（パチンコ・釣り・電車）でこの番を使うときは、御朱印のお誘いは終わりにします
+  ['startPachinkoGame','startFishingGame','boardTrainNow'].forEach(k=>{
+    const o = app[k]; if(typeof o !== 'function') return;
+    app[k] = function(player){ try{ if(player) player.pendingGoshuin = null; app.closeGoshuinAsk(); }catch(e){} return o.apply(app, arguments); };
+  });
+
+  // ── 和太鼓「ドン♪」 ──
+  function drum(){
+    try{
+      if(typeof sound !== 'undefined' && sound && sound.isMuted) return;
+      let ctx = (typeof sound !== 'undefined' && sound && sound.ctx) || null;
+      if(!ctx){ const C = window.AudioContext || window.webkitAudioContext; if(!C) return; ctx = app.__edoDrumCtx || (app.__edoDrumCtx = new C()); }
+      if(ctx.state === 'suspended') ctx.resume().catch(()=>{});
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(), gn = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.45);
+      gn.gain.setValueAtTime(0.0001, t); gn.gain.exponentialRampToValueAtTime(0.95, t + 0.008); gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+      o.connect(gn); gn.connect(ctx.destination); o.start(t); o.stop(t + 0.95);
+      // 皮を打つ「パン」という音（短い雑音）
+      const len = Math.floor(ctx.sampleRate * 0.08), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for(let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/len, 3);
+      const ns = ctx.createBufferSource(), lp = ctx.createBiquadFilter(), ng = ctx.createGain();
+      ns.buffer = buf; lp.type = 'lowpass'; lp.frequency.value = 900; ng.gain.value = 0.55;
+      ns.connect(lp); lp.connect(ng); ng.connect(ctx.destination); ns.start(t);
+    }catch(e){}
+  }
+  function buzz(){ try{ navigator.vibrate && navigator.vibrate([70, 40, 110]); }catch(e){} }
+
+  // ── スナックバー（お知らせ） ──
+  function snack(html){
+    const el = g('edogawa-stat-toast'); if(!el) return;
+    try{ clearTimeout(app._statToastTimer); }catch(e){}
+    el.innerHTML = html;
+    el.classList.remove('hidden'); el.classList.remove('opacity-0'); el.classList.add('opacity-100');
+    app._statToastTimer = setTimeout(()=>{ el.classList.add('opacity-0'); setTimeout(()=>el.classList.add('hidden'), 250); }, 3600);
+  }
+
+  // ── 御朱印帳 ──
+  function book(){
+    let m = g('edo-goshuin');
+    if(!m){ m = document.createElement('div'); m.id = 'edo-goshuin'; m.setAttribute('data-edo-norc', '1'); document.body.appendChild(m); }
+    return m;
+  }
+  function renderBook(highlight){
+    const m = book();
+    const n = ST.stamps.length;
+    const pages = Math.max(1, Math.ceil(n / 10), highlight != null ? Math.floor(highlight / 10) + 1 : 1);
+    let html = '<div class="gs-box"><div class="gs-head"><div><div class="gs-title">📿 御朱印帳</div><div class="gs-count">' + n + '個（10個ごとに賞金）</div></div>' +
+      '<button type="button" class="gs-x" aria-label="閉じる">✕</button></div><div class="gs-pages">';
+    for(let p = 0; p < pages; p++){
+      html += '<div class="gs-page">';
+      for(let i = 0; i < 10; i++){
+        const idx = p * 10 + i, st = ST.stamps[idx];
+        html += '<div class="gs-slot" data-i="' + idx + '"><div class="gs-paper">' +
+          (st && idx !== highlight ? stampHtml(st) : '<span class="gs-no">' + (idx + 1) + '</span>') + '</div>' +
+          '<div class="gs-name">' + (st ? esc(String(st.name).replace(/\s*[（(][^）)]*[）)]\s*/g, '')) : '　') + '</div></div>';
+      }
+      html += '</div>';
+    }
+    html += '</div><div class="gs-dots">' + Array.from({length:pages}, (_, i)=>'<i data-p="' + i + '"></i>').join('') + '</div>' +
+      '<div class="gs-msg"></div><button type="button" class="gs-ok">閉じる</button></div>';
+    m.innerHTML = html;
+    const pg = m.querySelector('.gs-pages');
+    const paintDots = ()=>{ const i = Math.round(pg.scrollLeft / Math.max(1, pg.clientWidth)); m.querySelectorAll('.gs-dots i').forEach((d, k)=>d.classList.toggle('on', k === i)); };
+    pg.addEventListener('scroll', paintDots, { passive:true });
+    m.querySelectorAll('.gs-dots i').forEach(d=>d.addEventListener('click', ()=>{ pg.scrollTo({ left: Number(d.dataset.p) * pg.clientWidth, behavior:'smooth' }); }));
+    m.classList.add('show');
+    const goPage = (highlight != null) ? Math.floor(highlight / 10) : Math.max(0, pages - 1);
+    pg.scrollLeft = goPage * pg.clientWidth; paintDots();
+    return m;
+  }
+  let closeCb = null;
+  function closeBook(){ const m = g('edo-goshuin'); if(m){ m.classList.remove('show'); m.innerHTML = ''; } const cb = closeCb; closeCb = null; if(cb) cb(); }
+  app.openGoshuinBook = function(){
+    const m = renderBook(null);
+    m.onclick = (ev)=>{ if(ev.target === m || (ev.target.closest && (ev.target.closest('.gs-x') || ev.target.closest('.gs-ok')))) closeBook(); };
+  };
+
+  // ── 大きい朱印が、押す場所めがけてズームインします ──
+  function flyStamp(st, slotEl, done){
+    let fly = g('edo-shuin-fly');
+    if(!fly){ fly = document.createElement('div'); fly.id = 'edo-shuin-fly'; fly.setAttribute('data-edo-norc', '1'); document.body.appendChild(fly); }
+    const lines = stampLines(st.label);
+    fly.className = 'edo-shuin n' + lines.length + ' w' + Math.max.apply(null, lines.map(l=>Array.from(l).length)); fly.innerHTML = lines.map(l=>'<span>' + esc(l) + '</span>').join('');
+    fly.style.display = 'flex';
+    const paper = slotEl.querySelector('.gs-paper'); const r = paper.getBoundingClientRect();
+    const size = 200, endSize = r.width * .84, s1 = endSize / size;
+    const cx = window.innerWidth / 2 - size / 2, cy = window.innerHeight / 2 - size / 2;
+    const ex = r.left + r.width / 2 - size / 2, ey = r.top + r.height / 2 - size / 2;
+    const a = Number(st.angle) || 0;
+    const anim = fly.animate([
+      { transform:`translate(${cx}px,${cy}px) rotate(${a - 18}deg) scale(1.9)`, opacity:0 },
+      { transform:`translate(${cx}px,${cy}px) rotate(${a - 8}deg) scale(1.35)`, opacity:.95, offset:.35 },
+      { transform:`translate(${ex}px,${ey}px) rotate(${a}deg) scale(${s1 * 1.15})`, opacity:1, offset:.88 },
+      { transform:`translate(${ex}px,${ey}px) rotate(${a}deg) scale(${s1})`, opacity:1 }
+    ], { duration: 1100, easing:'cubic-bezier(.3,.7,.2,1)', fill:'forwards' });
+    anim.onfinish = ()=>{ fly.style.display = 'none'; try{ anim.cancel(); }catch(e){} done && done(); };
+  }
+
+  // ── 御朱印をいただく（このターンを使います＝1回休み） ──
+  function receive(player, t){
+    if(have(t.name)) return;
+    // パチンコと同じく、このターンは御朱印で使います
+    app.isRolling = true; app.turnSettled = false;
+    try{ app._armTurnWatchdog && app._armTurnWatchdog(); }catch(e){}
+    app.miniGameActive = true;
+    player.money = Math.max(0, (Number(player.money) || 0) - FEE);
+    const st = { name: t.name, label: stampLabel(t.name), angle: randAngle(), at: Date.now() };
+    ST.stamps.push(st); save(ST); syncPlayer();
+    const idx = ST.stamps.length - 1;
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    try{ app.saveGameState && app.saveGameState(); }catch(e){}
+    try{ app.addLog && app.addLog('📿 ' + player.name + '：' + t.name + ' で御朱印をいただきました（' + yen(FEE) + '）。1回休みです。'); }catch(e){}
+    const m = renderBook(idx);
+    const slot = m.querySelector('.gs-slot[data-i="' + idx + '"]');
+    const msg = m.querySelector('.gs-msg');
+    if(msg) msg.textContent = t.name + 'の御朱印';
+    let finished = false;
+    const finish = ()=>{
+      if(finished) return; finished = true;
+      app.miniGameActive = false;
+      try{ clearTimeout(app.turnWatchdogTimer); app.turnWatchdogTimer = null; }catch(e){}
+      try{ app.finishTurn && app.finishTurn(); }catch(e){ console.warn('[v167]', e); }
+    };
+    closeCb = finish;
+    m.onclick = (ev)=>{ if(ev.target.closest && (ev.target.closest('.gs-x') || ev.target.closest('.gs-ok'))) closeBook(); };
+    setTimeout(()=>{
+      const go = ()=>flyStamp(st, slot, ()=>{
+        const paper = slot.querySelector('.gs-paper');
+        paper.innerHTML = stampHtml(st); paper.classList.add('new');
+        buzz(); drum();
+        if(msg) msg.textContent = '🎉 ' + t.name + 'の御朱印をいただきました！';
+        prizeCheck(player);
+      });
+      // 押す場所がページの途中なら、そのページを見せてから
+      requestAnimationFrame(go);
+    }, 350);
+  }
+  function prizeCheck(player){
+    const n = ST.stamps.length;
+    if(n > 0 && n % PRIZE_STEP === 0 && ST.prizes.indexOf(n) < 0){
+      const prize = (n / PRIZE_STEP) * PRIZE_UNIT;
+      ST.prizes.push(n); save(ST);
+      const p = player || myPlayer();
+      if(p){ p.money = (Number(p.money) || 0) + prize; }
+      try{ app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+      try{ app.addLog && app.addLog('🎊 御朱印が' + n + '個になりました！ 賞金 ' + yen(prize) + ' をいただきました。'); }catch(e){}
+      setTimeout(()=>snack('<span class="text-lg mr-1">📿</span><strong>御朱印' + n + '個</strong>達成！ 賞金 <strong>' + yen(prize) + '</strong> をいただきました！'), 900);
+    }
+  }
+  syncPlayer();
+
+  window.__EDOGAWA_GOSHUIN = {
+    label: stampLabel, lines: stampLines,
+    state: ()=>({ 個数: ST.stamps.length, 賞金済み: ST.prizes.slice(), 御朱印: ST.stamps.map(x=>x.label + '(' + x.angle + '°)') }),
+    reset: ()=>{ ST = { stamps:[], prizes:[] }; save(ST); syncPlayer(); },
+    fill: (n)=>{ for(let i = 0; i < n; i++) ST.stamps.push({ name:'テスト寺' + (ST.stamps.length + 1), label: stampLabel('テスト寺' + (ST.stamps.length + 1)), angle: randAngle(), at: Date.now() }); save(ST); syncPlayer(); },
+    receive: (name)=>{ const p = (app.players || [])[app.currentPlayerIdx] || myPlayer(); receive(p, { name }); },
+    near: (p)=>{ const h = nearTemple(p || myPlayer()); return h ? h.t.name + '（' + Math.round(h.d) + 'm）' : null; },
+    temples: ()=>temples().map(t=>t.name)
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
