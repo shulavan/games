@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.25 (2026-10-26)';
+    window.__EDOGAWA_VERSION = 'ver1.1.26 (2026-10-27)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -868,6 +868,33 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h4{ border-color: var(--t-border) !important; }
   body[data-edo-theme="yellow"] .doc-body h4, body[data-edo-theme="white"] .doc-body h4{ color: var(--t-accent) !important; }
 </style>
+<style id="edogawa-v168-style">
+  /* ════════════ ver1.1.26 ════════════ */
+  /* ① ヘッダーの「♫」は文字なので、ほかのボタンの文字と同じ色にします（背景色に合わせて変わります） */
+  #game-header-tools #bgm-toggle-btn{ color: var(--t-text, #f1f5f9) !important; }
+  #game-header-tools #bgm-icon{ font-family: "Hiragino Sans","Noto Sans JP","Segoe UI Symbol",sans-serif; font-size:21px !important; font-weight:900;
+    color: inherit !important; position:relative; display:inline-block; }
+  #bgm-icon.edo-bgm-off{ opacity:.55; }
+  #bgm-icon.edo-bgm-off::after{ content:""; position:absolute; left:-2px; right:-2px; top:50%; height:2px; background:currentColor; transform:rotate(-40deg); }
+  /* ② 縮小マップとステータスの枠は、半透明（うしろの地図がうっすら見えます） */
+  #edo-mini-map, #edogawa-player-status{ background: rgba(15,23,42,.72) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-mini-map,
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edogawa-player-status{
+    background: var(--t-surf) !important;   /* 古い端末向け（半透明の指定が使えないとき） */
+    background: color-mix(in srgb, var(--t-surf) 72%, transparent) !important; }
+  /* ③ 「取得情報」のうしろの暗い幕をなくし、そのまま地図を見せます */
+  #edo-menu-sheet{ background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  /* ④ 背景色の選択画面：選んだ背景色に合わせ、うしろの暗い幕はなくします */
+  #edo-theme-modal{ background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  #edo-theme-modal .tbox{ background: var(--t-surf, #0f172a) !important; color: var(--t-text, #f8fafc) !important;
+    box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px var(--t-border, rgba(255,255,255,.08)) !important; }
+  #edo-theme-modal .thead b{ color: var(--t-accent, #fbbf24) !important; }
+  #edo-theme-modal .tclose{ background: var(--t-surf2, #1e293b) !important; color: var(--t-text, #e2e8f0) !important; }
+  #edo-theme-modal .topt{ background: var(--t-surf2, #1e293b) !important; color: var(--t-text, #f8fafc) !important; box-shadow: var(--edo-nm-out) !important; }
+  #edo-theme-modal .topt:active{ box-shadow: var(--edo-nm-in) !important; }
+  #edo-theme-modal .topt .sub{ color: var(--t-muted, #94a3b8) !important; opacity:.85; }
+  #edo-theme-modal .topt.on{ outline-color: var(--t-accent, #fbbf24) !important; }
+</style>
 </head>
 <body class="h-full w-full bg-slate-900 text-slate-100 flex flex-col relative overflow-hidden">
 <script id="edogawa-theme-early">
@@ -1024,7 +1051,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
     <!-- Quick Tools -->
     <div id="game-header-tools" class="flex items-center gap-2">
       <button id="bgm-toggle-btn" onclick="EdogawaSugoroku.toggleBGM()" class="sticker-btn p-2 bg-slate-900 text-amber-400 active:scale-95 transition rounded-lg flex items-center gap-1 text-xs font-bold" title="BGM ON/OFF">
-        <span id="bgm-icon">🎵</span> <span class="hidden sm:inline" id="bgm-label">BGM ON</span>
+        <span id="bgm-icon">♫︎</span> <span class="hidden sm:inline" id="bgm-label">BGM ON</span>
       </button>
       <button onclick="EdogawaSugoroku.toggleFullscreen()" class="sticker-btn p-2 bg-slate-900 text-slate-100 active:scale-95 transition rounded-lg" title="全画面モード">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
@@ -3621,7 +3648,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         const isMuted = sound.toggleMute();
         const icon = document.getElementById("bgm-icon");
         const label = document.getElementById("bgm-label");
-        if (icon) icon.textContent = isMuted ? "🔇" : "🎵";
+        // 【ver1.1.26】♫ は絵文字ではなく文字にして、背景色に合わせた文字色にします（消音のときは斜線）
+        if (icon) { icon.textContent = "♫\uFE0E"; icon.classList.toggle("edo-bgm-off", !!isMuted); }
         if (label) label.textContent = isMuted ? "BGM OFF" : "BGM ON";
       },
 
@@ -29495,11 +29523,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // 選ぶ画面
   function openPicker(){
     let m = g('edo-theme-modal');
-    if(!m){ m = document.createElement('div'); m.id = 'edo-theme-modal'; m.setAttribute('data-edo-norc', '1'); document.body.appendChild(m); }
+    if(!m){ m = document.createElement('div'); m.id = 'edo-theme-modal'; document.body.appendChild(m); }
     const cur = current().k;
     m.innerHTML = '<div class="tbox"><div class="thead"><b>🎨 背景色の選択</b><button type="button" class="tclose" aria-label="閉じる">✕</button></div>' +
       THEMES.map(t=>'<button type="button" class="topt' + (t.k === cur ? ' on' : '') + '" data-k="' + t.k + '">' +
-        '<span class="sw" style="background:' + t.c + '"></span>' +
+        '<span class="sw" data-edo-norc="1" style="background:' + t.c + '"></span>' +
         '<span><span class="nm">' + t.short + '（' + t.n + '）</span><span class="sub">' + t.code + (t.k === 'black' ? '・デフォルト' : '') + '</span></span>' +
         '<span class="ck">✔</span></button>').join('') + '</div>';
     m.onclick = (ev)=>{
