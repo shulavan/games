@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '27';
+    window.__EDOGAWA_MINIGAMES_VER = '28';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.22 (2026-10-26)';
+    window.__EDOGAWA_VERSION = 'ver1.1.23 (2026-10-26)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -29584,12 +29584,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     function restore(el){
       const o = el.__edoRc; if(!o) return;
       PROPS.forEach(p=>{ if(o[p] !== undefined){ if(o[p]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); } });
-      el.__edoRc = null; selfWrote.add(el);
+      el.__edoRc = null; el.__edoDarkBg = false; selfWrote.add(el);
     }
     function set(el, p, v){
       if(!el.__edoRc) el.__edoRc = {};
       if(el.__edoRc[p] === undefined){ const cur = el.style.getPropertyValue(p); el.__edoRc[p] = cur ? [cur, el.style.getPropertyPriority(p)] : null; }
       el.style.setProperty(p, v, 'important');
+      if(p === 'background-color' || p === 'background-image') el.__edoDarkBg = true;   // もとは黒系の背景だった印
       touched.add(el); selfWrote.add(el);
     }
     function skipNode(el){
@@ -29608,6 +29609,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const isOnDark = (el)=>{
         if(!el || el === doc.documentElement) return true;
         if(onDark.has(el)) return onDark.get(el);
+        // 【ver1.1.23】すでに背景色に塗りかえた部品は、もとが黒系なので「黒系の上」として扱います
+        //   （あとから中に入る文字＝しりとりのメッセージなど も、背景色に合った文字色にするため）
+        if(el.__edoDarkBg){ onDark.set(el, true); return true; }
         const cs = win.getComputedStyle(el); let r;
         const bi = cs.backgroundImage;
         if(bi && bi !== 'none' && /gradient|url\(/.test(bi)){
@@ -29625,7 +29629,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const cs = win.getComputedStyle(el);
         const bg = parse(cs.backgroundColor);
         // 「≡」の線のように、文字の色で塗っている部品（bg-current）はそのまま
-        if(darkNeutral(bg) && cs.backgroundColor !== cs.color){
+        if(darkNeutral(bg) && !(el.classList && el.classList.contains('bg-current'))){
           const L = lum(bg); const col = (el.tagName === 'HTML' || el.tagName === 'BODY') ? P.bg : (L < .012 ? P.deep : (L < .03 ? P.surf : P.surf2));
           plan.push([el,'background-color', withAlpha(col, bg.a < .98 ? Math.max(bg.a, .55) : 1)]);
         }
@@ -29643,6 +29647,33 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
           const bc = parse(cs.borderTopColor);
           if(darkNeutral(bc) || (bc && lightNeutral(bc) && bc.a < .5)) plan.push([el,'border-color', P.border]);
         }
+      }
+      return plan;
+    }
+    // 【ver1.1.23】文字が背景に埋もれていないかを確かめ、埋もれていれば文字色を調整します
+    //   （背景色を変えたことで、金色・水色・ピンク・赤などの文字が背景と近い色になることがあるため）
+    function contrastPlan(list){
+      const win = doc.defaultView; const plan = [];
+      const ratio = (a,b)=>{ const L1 = lum(a), L2 = lum(b); return (Math.max(L1,L2)+.05)/(Math.min(L1,L2)+.05); };
+      const effBg = (e)=>{ let p = e; while(p && p.nodeType === 1){ const cs = win.getComputedStyle(p);
+          if(cs.backgroundImage && cs.backgroundImage !== 'none') return null;
+          const c = parse(cs.backgroundColor); if(c && c.a > .6) return c; p = p.parentElement; }
+        return parse(win.getComputedStyle(doc.documentElement).backgroundColor); };
+      for(const el of list){
+        let has = false; for(const n of el.childNodes){ if(n.nodeType === 3 && /\S/.test(n.textContent)){ has = true; break; } }
+        if(!has) continue;
+        const cs = win.getComputedStyle(el);
+        if(cs.webkitTextFillColor && /rgba\(0, 0, 0, 0\)/.test(cs.webkitTextFillColor)) continue;
+        const fg = parse(cs.color); if(!fg || fg.a < .5) continue;
+        const bg = effBg(el); if(!bg) continue;
+        if(ratio(fg, bg) >= 3) continue;
+        const darken = lum(bg) > .3;
+        let c = { r:fg.r, g:fg.g, b:fg.b, a:1 };
+        for(let i = 0; i < 14 && ratio(c, bg) < 3.6; i++){
+          if(darken){ c = { r:c.r*.82, g:c.g*.82, b:c.b*.82, a:1 }; }
+          else { c = { r:c.r+(255-c.r)*.3, g:c.g+(255-c.g)*.3, b:c.b+(255-c.b)*.3, a:1 }; }
+        }
+        plan.push([el, 'color', 'rgb(' + Math.round(c.r) + ',' + Math.round(c.g) + ',' + Math.round(c.b) + ')']);
       }
       return plan;
     }
@@ -29685,6 +29716,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const fresh = list.filter(el=>!el.__edoRc);
         const plan = planFor(fresh, P, k, true);
         if(plan.length){ const els = [...new Set(plan.map(x=>x[0]))]; noTransition(els, ()=>plan.forEach(([el,p,v])=>set(el,p,v))); }
+        const cp = contrastPlan(fresh.filter(el=>el.offsetParent !== null || el.tagName === 'BODY'));
+        if(cp.length){ const els = [...new Set(cp.map(x=>x[0]))]; noTransition(els, ()=>cp.forEach(([el,p,v])=>set(el,p,v))); }
       }catch(e){ console.warn('[v166]', e); }
       finally{ busy = false; }
     }
@@ -29715,6 +29748,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
           const oldSet = new Set(old); const extra = plan.map(x=>x[0]).filter(el=>!oldSet.has(el));
           // 新しく色をつける部品も、効果を止めてから
           noTransition([...new Set(extra)], ()=>plan.forEach(([el,p,v])=>set(el,p,v)));
+          const cp = contrastPlan(list);
+          const extra2 = cp.map(x=>x[0]).filter(el=>!oldSet.has(el));
+          noTransition([...new Set(extra2)], ()=>cp.forEach(([el,p,v])=>set(el,p,v)));
         });
       }catch(e){ console.warn('[v166]', e); }
       finally{ busy = false; }
