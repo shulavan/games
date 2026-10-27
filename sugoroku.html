@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.28 (2026-10-27)';
+    window.__EDOGAWA_VERSION = 'ver1.1.29 (2026-10-27)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -30224,6 +30224,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     transform-origin:left center; animation:edo-un-run linear forwards; }
   @keyframes edo-un-run{ from{transform:scaleX(1)} to{transform:scaleX(0)} }
   #edo-update-notice .un-hint{ font-size:11px; margin-top:6px; opacity:.75; }
+  #edo-update-notice .un-checks{ display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-top:12px; padding:0 4px; }
+  #edo-update-notice .un-ck{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; cursor:pointer; }
+  #edo-update-notice .un-ck input{ width:20px; height:20px; accent-color:#f59e0b; margin:0; }
+  #edo-update-notice .un-close{ display:block; width:100%; margin-top:12px; padding:13px; border:0; border-radius:14px; font-size:16px; font-weight:900;
+    background:linear-gradient(180deg,#f59e0b,#d97706); color:#1f1300; box-shadow:var(--edo-nm-out, 5px 5px 12px rgba(0,0,0,.4)); }
+  #edo-update-notice .un-close:active{ box-shadow:var(--edo-nm-in, inset 4px 4px 10px rgba(0,0,0,.5)); transform:scale(.98); }
 </style>
 <script id="edogawa-v169">
 (function(){
@@ -30231,26 +30237,34 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const app = window.EdogawaSugoroku; if(!app) return;
   const g = (id)=>document.getElementById(id);
   // ════════════════════════════════════════════════════════════
-  //  ver1.1.28　「前回の続きから遊ぶ」がある人にだけ、1回だけ
-  //   ① アップデート情報（5秒で自動的に閉じます）
-  //   ② そのあと「背景色の選択」（まだ背景色を選んだことがない人だけ）
+  //  ver1.1.29　アップデート情報（「前回の続きから遊ぶ」がある人）
+  //   ・「閉じる」ボタンで閉じます。その上に「アプリインストールする」（最初はON・インストール済みなら出さない）
+  //     と「次回から表示しない」（最初はOFF）のチェックボックス
+  //   ・閉じたとき「アプリインストールする」がONなら：
+  //       Android など → そのままインストールを実行／iPhone・対応していないブラウザ → インストールの案内画面
+  //   ・今後のアップデート情報は、アプリをインストール済みで「次回から表示しない」がOFFの人に限り、5秒で自動的に閉じます
+  //   ・そのあと、今回限りの「背景色の選択」（まだ背景色を選んだことがない人だけ）
   // ════════════════════════════════════════════════════════════
   const SOLO_KEY = 'edogawa_sugoroku_state';
-  const NOTICE_KEY = 'edogawa_update_notice_v1';
+  const NOTICE_VER = 'v1.1.29';                       // アップデート情報を出す版（内容を変えたら、ここを変えます）
+  const SEEN_KEY = 'edogawa_update_notice_seen_v1';   // 最後に出した版
+  const OFF_KEY = 'edogawa_update_notice_off_v1';     // 「次回から表示しない」
+  const OLD_KEY = 'edogawa_update_notice_v1';         // ver1.1.28 で出したときの印
   const THEME_ASK_KEY = 'edogawa_theme_prompted_v1';
   const ls = {
     get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
     set(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
   };
-  // ページを開いた時点で、続きがあるかを確かめます（このあと続きを始めても判断が変わらないように）
   let hasContinue = false;
   try{
     const raw = ls.get(SOLO_KEY);
     if(raw){ const o = app._readSave ? app._readSave(SOLO_KEY) : JSON.parse(raw); hasContinue = !!o; }
   }catch(e){ hasContinue = false; }
-  const needNotice = hasContinue && ls.get(NOTICE_KEY) !== '1';
+  const seenBefore = !!ls.get(SEEN_KEY) || ls.get(OLD_KEY) === '1';      // 前にもアップデート情報を見たことがある
+  const needNotice = hasContinue && ls.get(OFF_KEY) !== '1' && ls.get(SEEN_KEY) !== NOTICE_VER;
   const needTheme  = hasContinue && ls.get(THEME_ASK_KEY) !== '1' && !ls.get('edogawa_theme_v1');
-  if(!needNotice && !needTheme) { window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: 'なし', 背景色の選択: 'なし' }); return; }
+  const installed = ()=>{ try{ return document.body.classList.contains('edo-app-installed') || (app._isStandaloneApp && app._isStandaloneApp()); }catch(e){ return false; } };
+  if(!needNotice && !needTheme){ window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: 'なし', 背景色の選択: 'なし' }); return; }
 
   const ITEMS = [
     '・「背景色の選択」（青、赤、黄、緑、白）',
@@ -30264,40 +30278,70 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   ];
   const NOTE = '※ちなみにこの「江戸川双六」は「PHP」は使用しておらず、個人情報の扱いもございません。';
   const MS = 5000;
-  let state = { notice: needNotice ? 'wait' : 'done', theme: needTheme ? 'wait' : 'done' };
+  let state = { notice: needNotice ? 'wait' : 'done', theme: needTheme ? 'wait' : 'done', how: '' };
 
-  // それぞれの行は改行しません。入りきらないときは、その行だけ文字を少し小さくします
   function fitLines(box){
     box.querySelectorAll('.un-list div').forEach(d=>{
       let fs = 14; d.style.fontSize = fs + 'px';
       while(d.scrollWidth > d.clientWidth + 1 && fs > 9){ fs -= .5; d.style.fontSize = fs + 'px'; }
     });
   }
+  // インストールの案内画面が閉じるまで待ちます
+  function waitInstallModal(done){
+    const m = g('pwa-install-modal');
+    const iv = setInterval(()=>{ if(!m || m.classList.contains('hidden')){ clearInterval(iv); done(); } }, 300);
+  }
+  function doInstall(done){
+    try{
+      if(app.deferredInstallPrompt && app.runInstallPrompt){
+        state.how = 'prompt';
+        Promise.resolve(app.runInstallPrompt()).catch(()=>{}).then(()=>setTimeout(done, 300));    // Android など：その場でインストール
+        return;
+      }
+      state.how = 'modal';
+      app.openInstallModal && app.openInstallModal();          // iPhone・対応していないブラウザ：案内画面
+      waitInstallModal(done);
+    }catch(e){ done(); }
+  }
   function showNotice(done){
     let m = g('edo-update-notice');
     if(!m){ m = document.createElement('div'); m.id = 'edo-update-notice'; document.body.appendChild(m); }
     const ver = String(window.__EDOGAWA_VERSION || '').replace(/\s*\(.*$/, '');
-    m.innerHTML = '<div class="un-box"><button type="button" class="un-x" aria-label="閉じる">✕</button>' +
+    const inst = installed();
+    const auto = inst && seenBefore;             // 今後のアップデート情報：インストール済み＆表示しないがOFFの人だけ自動で閉じる
+    m.innerHTML = '<div class="un-box">' +
       '<div class="un-emoji">🎉</div><div class="un-kicker">アップデート情報</div>' +
       '<div class="un-title">江戸川双六 ' + ver + '</div>' +
       '<div class="un-lead">追加した機能は以下となります。</div>' +
       '<div class="un-list">' + ITEMS.map(t=>'<div>' + t.replace(/[<>&]/g, '') + '</div>').join('') + '</div>' +
       '<div class="un-note">' + NOTE + '</div>' +
-      '<div class="un-bar"><i style="animation-duration:' + MS + 'ms"></i></div><div class="un-hint">5秒後に自動で閉じます</div></div>';
+      '<div class="un-checks">' +
+        (inst ? '' : '<label class="un-ck"><input type="checkbox" id="edo-un-install" checked><span>アプリインストールする</span></label>') +
+        '<label class="un-ck"><input type="checkbox" id="edo-un-off"><span>次回から表示しない</span></label>' +
+      '</div>' +
+      (auto ? '<div class="un-bar"><i style="animation-duration:' + MS + 'ms"></i></div><div class="un-hint">5秒後に自動で閉じます</div>' : '') +
+      '<button type="button" class="un-close">閉じる</button></div>';
     m.classList.add('show');
-    ls.set(NOTICE_KEY, '1');           // 1回だけ（出した時点で記録します）
+    ls.set(SEEN_KEY, NOTICE_VER);
     fitLines(m);
-    let closed = false;
-    const close = ()=>{ if(closed) return; closed = true; clearTimeout(t); m.classList.remove('show'); m.innerHTML = ''; done && done(); };
-    const t = setTimeout(close, MS);
-    m.onclick = (ev)=>{ if(ev.target.closest && ev.target.closest('.un-x')) close(); };
+    let closed = false, t = null;
+    const close = (byUser)=>{
+      if(closed) return; closed = true; clearTimeout(t);
+      const off = !!(g('edo-un-off') && g('edo-un-off').checked);
+      const wantInstall = !!(g('edo-un-install') && g('edo-un-install').checked);
+      if(off) ls.set(OFF_KEY, '1');
+      m.classList.remove('show'); m.innerHTML = '';
+      if(wantInstall && !installed()) doInstall(()=>done && done());
+      else done && done();
+    };
+    if(auto) t = setTimeout(()=>close(false), MS);
+    m.onclick = (ev)=>{ if(ev.target.closest && ev.target.closest('.un-close')) close(true); };
   }
   function showTheme(){
     ls.set(THEME_ASK_KEY, '1');
-    if(ls.get('edogawa_theme_v1')) return;      // そのあいだに選んでいたら出しません
+    if(ls.get('edogawa_theme_v1')) return;
     try{ app.openThemePicker && app.openThemePicker(); }catch(e){}
   }
-  // トップページが出ていて、ほかの画面（ログイン・アカウント情報など）が開いていないときに出します
   function ready(){
     const lobby = g('lobby-screen');
     if(!lobby || lobby.classList.contains('hidden') || getComputedStyle(lobby).display === 'none') return false;
@@ -30313,19 +30357,19 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   let tries = 0;
   const iv = setInterval(()=>{
     tries++;
-    if(tries > 600){ clearInterval(iv); return; }               // 5分たっても出せなければ、次回にします
+    if(tries > 600){ clearInterval(iv); return; }
     if(state.notice === 'showing' || state.theme === 'showing') return;
     if(!ready()) return;
     if(state.notice === 'wait'){
       state.notice = 'showing';
-      showNotice(()=>{ state.notice = 'done'; setTimeout(()=>{ if(state.theme === 'wait' && ready()){ state.theme = 'done'; showTheme(); } }, 400); });
+      showNotice(()=>{ state.notice = 'done'; });
       return;
     }
     if(state.theme === 'wait'){ state.theme = 'done'; showTheme(); }
     if(state.notice === 'done' && state.theme === 'done') clearInterval(iv);
-  }, 500);
+  }, 400);
 
-  window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: state.notice, 背景色の選択: state.theme });
+  window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: state.notice, 背景色の選択: state.theme, インストール: state.how });
 })();
 </script>
 <script id="edogawa-v39-footer">
