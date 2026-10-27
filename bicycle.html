@@ -24,6 +24,7 @@
             width: 100%;
             height: 100%;
             display: block;
+            background: linear-gradient(to bottom, #38bdf8 0%, #7dd3fc 45%, #94a3b8 70%, #64748b 100%);
         }
         .glass-panel {
             background: rgba(255, 255, 255, 0.45);
@@ -53,10 +54,6 @@
             font-style: italic;
             color: #091e42;
             font-weight: 900;
-        }
-        /* 背景グラデーション（上が空色、下がグレー） */
-        #game-canvas {
-            background: linear-gradient(to bottom, #38bdf8 0%, #7dd3fc 45%, #94a3b8 70%, #64748b 100%);
         }
     </style>
 </head>
@@ -89,20 +86,20 @@
             </div>
         </div>
 
-        <!-- Gyro Sensor Controls Helper Info (Moved to Footer) -->
-        <div id="gyro-indicator" class="mb-4 text-xs text-white bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/20 shadow-md">
-            📱 ジャイロ操作中（左右に傾けて操縦）
+        <!-- Gyro Sensor Controls Helper Info -->
+        <div id="gyro-indicator" class="mb-4 text-xs text-white bg-black/50 px-4 py-2 rounded-full backdrop-blur-md border border-white/20 shadow-md font-bold text-center">
+            📱 調整中：まっすぐを保ってください (自動計測中...)
         </div>
     </div>
 
     <!-- Screen Touch Controls for Fallback -->
-    <div id="touch-controls" class="absolute inset-0 flex z-0 pointer-events-auto opacity-0">
-        <div id="touch-left" class="w-1/2 h-full"></div>
-        <div id="touch-right" class="w-1/2 h-full"></div>
+    <div id="touch-controls" class="hidden absolute inset-0 flex z-0 pointer-events-none">
+        <div id="touch-left" class="w-1/2 h-full pointer-events-auto"></div>
+        <div id="touch-right" class="w-1/2 h-full pointer-events-auto"></div>
     </div>
 
     <!-- Start Overlay -->
-    <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-sky-400 via-sky-300 to-blue-500 z-20 p-6 text-center text-white">
+    <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-sky-400 via-sky-300 to-blue-500 z-30 p-6 text-center text-white">
         <div class="max-w-md w-full glass-panel p-8 rounded-3xl shadow-2xl flex flex-col items-center border border-white/50">
             <div class="text-6xl mb-3 animate-bounce">🚴💨</div>
             <h1 class="text-3xl mb-3 tracking-wide leading-tight">
@@ -114,6 +111,7 @@
             <!-- Instructions -->
             <div class="bg-white/50 rounded-2xl p-4 w-full text-left text-xs space-y-2 mb-6 border border-white/40 text-slate-900 shadow-inner">
                 <div class="flex items-center gap-2"><span class="text-lg">📲</span> <span><b>操作:</b> スマホを傾ける (キーボード左右キー / 画面左右)</span></div>
+                <div class="flex items-center gap-2"><span class="text-lg">🎯</span> <span><b>補正:</b> 最初の100mは直進！まっすぐ3秒キープで操作開始</span></div>
                 <div class="flex items-center gap-2"><span class="text-lg">🌊</span> <span><b>注意:</b> 道からはみ出て水路に落ちるとゲームオーバー！</span></div>
                 <div class="flex items-center gap-2"><span class="text-lg">🐢</span> <span><b>カメ:</b> 5秒間 低速走行 (+100pt)</span></div>
                 <div class="flex items-center gap-2"><span class="text-lg">❤️‍🔥</span> <span><b>ファイヤー:</b> 5秒間 高速ブースト (+300pt)</span></div>
@@ -121,14 +119,14 @@
             </div>
 
             <!-- Start Button -->
-            <button id="start-btn" class="w-full py-4 bg-yellow-400 hover:bg-yellow-300 active:scale-95 text-slate-900 font-black text-xl rounded-2xl shadow-xl transition-all border-b-4 border-yellow-600 pulse-text">
+            <button id="start-btn" type="button" class="w-full py-4 bg-yellow-400 hover:bg-yellow-300 active:scale-95 text-slate-900 font-black text-xl rounded-2xl shadow-xl transition-all border-b-4 border-yellow-600 pulse-text cursor-pointer">
                 ゲームスタート！
             </button>
         </div>
     </div>
 
     <!-- Game Result / GameOver Screen Overlay -->
-    <div id="gameover-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md z-30 p-6 text-center text-white">
+    <div id="gameover-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md z-40 p-6 text-center text-white">
         <div class="max-w-md w-full bg-white/10 glass-panel p-6 rounded-3xl shadow-2xl flex flex-col items-center border border-white/30">
             <div id="result-icon" class="text-5xl mb-1 animate-bounce">🏆</div>
             <h2 id="result-title" class="text-3xl font-black text-yellow-400 mb-1">GOAL FINISH!!</h2>
@@ -165,7 +163,7 @@
                 </div>
             </div>
 
-            <button id="restart-btn" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black text-lg rounded-2xl shadow-xl transition-all border-b-4 border-emerald-700">
+            <button id="restart-btn" type="button" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black text-lg rounded-2xl shadow-xl transition-all border-b-4 border-emerald-700 cursor-pointer">
                 もう一度プレイ！
             </button>
             <p class="text-xs text-gray-300 mt-3" id="auto-close-timer">※ 5秒後に自動でスタート画面に戻ります</p>
@@ -186,6 +184,10 @@
     let activeItem = null;
     let itemTimer = 0;
     let isAutoPilot = false;
+
+    // Calibration & Control State (100m straight run)
+    let isGyroActive = false;
+    let gyroStraightTimer = 0;
 
     // Finish Sequence Dynamics
     let finishAnimTimer = 0;
@@ -208,12 +210,16 @@
     const sound = {
         ctx: null,
         init() {
-            if (!this.ctx) {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx) this.ctx = new AudioCtx();
-            }
-            if (this.ctx && this.ctx.state === 'suspended') {
-                this.ctx.resume();
+            try {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            } catch(e) {
+                console.warn("Audio Context init error:", e);
             }
         },
         playItemGet(type) {
@@ -334,13 +340,11 @@
     function createBicycleModel() {
         const bikeGroup = new THREE.Group();
 
-        // Materials
         const frameMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.3, metalness: 0.7 });
         const metalMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9, roughness: 0.2 });
         const tireMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8 });
         const seatMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.5 });
         
-        // Rider Outfit
         const jerseyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 }); 
         const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.5 });  
         const helmetMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }); 
@@ -378,7 +382,6 @@
         bikeGroup.add(frontWheel);
         bikeGroup.userData.frontWheel = frontWheel;
 
-        // Frame
         const frameGeo = new THREE.CylinderGeometry(0.035, 0.035, 1.3);
         const tube1 = new THREE.Mesh(frameGeo, frameMat);
         tube1.position.set(0, 1.0, 0.1);
@@ -390,7 +393,6 @@
         tube2.rotation.x = -Math.PI / 6;
         bikeGroup.add(tube2);
 
-        // Handlebar
         const handlePost = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8), metalMat);
         handlePost.position.set(0, 1.15, 0.8);
         bikeGroup.add(handlePost);
@@ -400,12 +402,10 @@
         handleBar.rotation.z = Math.PI / 2;
         bikeGroup.add(handleBar);
 
-        // Seat
         const seat = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.08, 0.35), seatMat);
         seat.position.set(0, 1.25, -0.35);
         bikeGroup.add(seat);
 
-        // Crank Group
         const crankGroup = new THREE.Group();
         crankGroup.position.set(0, 0.65, 0);
 
@@ -424,7 +424,6 @@
         bikeGroup.add(crankGroup);
         bikeGroup.userData.crankGroup = crankGroup;
 
-        // Rider
         const riderGroup = new THREE.Group();
         
         const torso = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.6, 0.25), jerseyMat);
@@ -432,7 +431,6 @@
         torso.rotation.x = 0.25;
         riderGroup.add(torso);
 
-        // Head
         const headGroup = new THREE.Group();
         headGroup.position.set(0, 2.18, -0.1);
 
@@ -444,7 +442,6 @@
 
         riderGroup.add(headGroup);
 
-        // Arms
         const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.65);
         const leftArm = new THREE.Mesh(armGeo, jerseyMat);
         leftArm.position.set(-0.2, 1.75, 0.25);
@@ -456,7 +453,6 @@
         rightArm.rotation.x = -Math.PI / 3;
         riderGroup.add(rightArm);
 
-        // Legs
         const thighGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5);
         const leftThigh = new THREE.Mesh(thighGeo, pantsMat);
         leftThigh.position.set(-0.16, 1.3, -0.15);
@@ -490,7 +486,7 @@
 
         let w = 8, h = 6, d = 8;
 
-        if (typeIndex === 0) { // 1階建て
+        if (typeIndex === 0) { 
             w = 7; h = 4; d = 7;
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
@@ -500,7 +496,7 @@
             roof.position.y = h + 1.5;
             roof.rotation.y = Math.PI / 4;
             group.add(roof);
-        } else if (typeIndex === 1) { // 2階建て
+        } else if (typeIndex === 1) { 
             w = 8; h = 7; d = 8;
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
@@ -509,7 +505,7 @@
             const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.6, d + 0.6), roofMat);
             roof.position.y = h + 0.3;
             group.add(roof);
-        } else if (typeIndex === 2) { // 3階建て
+        } else if (typeIndex === 2) { 
             w = 8; h = 10; d = 9;
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
@@ -518,7 +514,7 @@
             const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, 0.5, d + 0.4), roofMat);
             roof.position.y = h + 0.25;
             group.add(roof);
-        } else if (typeIndex === 3) { // アパートデザイン
+        } else if (typeIndex === 3) { 
             w = 12; h = 8; d = 8;
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
@@ -527,7 +523,7 @@
             const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.5, d + 0.6), roofMat);
             roof.position.y = h + 0.25;
             group.add(roof);
-        } else { // 事務所デザイン
+        } else { 
             w = 10; h = 9; d = 10;
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
@@ -538,7 +534,6 @@
             group.add(roof);
         }
 
-        // 4面すべてにドア・窓・バルコニーを配置
         const sides = [
             { name: 'front', rotY: 0, pos: [0, 0, d / 2 + 0.06] },
             { name: 'back', rotY: Math.PI, pos: [0, 0, -d / 2 - 0.06] },
@@ -554,14 +549,12 @@
             const isWidthSide = (side.name === 'front' || side.name === 'back');
             const faceWidth = isWidthSide ? w : d;
 
-            // ドア (正面と背面)
             if (side.name === 'front' || side.name === 'back') {
                 const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.1), doorMat);
                 door.position.set(0, 1.1, 0);
                 sideGroup.add(door);
             }
 
-            // 窓・バルコニー (各面)
             const floors = Math.floor(h / 3);
             for (let f = 1; f <= floors; f++) {
                 const posY = f * 2.8;
@@ -587,7 +580,7 @@
         return group;
     }
 
-    // --- Procedural Track & Waterway Generator ---
+    // --- Track & Waterway ---
     let trackCurve = null;
     let roadMesh = null;
     let leftWaterMesh = null;
@@ -621,7 +614,9 @@
             let yOffset = 0;
             let width = 5.5 + Math.sin(i * 0.25) * 2.0;
 
-            currentAngleY += (Math.sin(i * 0.2) * 0.3);
+            if (i > 20) {
+                currentAngleY += (Math.sin(i * 0.2) * 0.3);
+            }
 
             if (i >= 110 && i <= 114) { 
                 yOffset = (i - 110) * 2.5;
@@ -689,7 +684,6 @@
             return roadGeo;
         }
 
-        // 道路沿いに途切れず沿う連続した水路メッシュを作成する
         function buildContinuousWaterGeometry(sideDirection) {
             const waterGeo = new THREE.BufferGeometry();
             const verts = [];
@@ -707,7 +701,6 @@
                 const widthIndex = Math.min(Math.floor(progress * numSegments), numSegments - 1);
                 const w = roadWidths[widthIndex] || 5;
 
-                // ジャンプ台エリア（114〜122）は水路を引かない
                 if (widthIndex >= 114 && widthIndex <= 122) {
                     verts.push(pt.x, pt.y - 0.2, pt.z, pt.x, pt.y - 0.2, pt.z);
                 } else {
@@ -763,7 +756,6 @@
         roadMesh.receiveShadow = true;
         scene.add(roadMesh);
 
-        // 水路マテリアルとメッシュ作成（左・右）
         const waterMat = new THREE.MeshStandardMaterial({ 
             color: 0x0284c7, 
             roughness: 0.1, 
@@ -785,7 +777,6 @@
     function buildEnvironment(subDivs, numSegments) {
         const upVector = new THREE.Vector3(0, 1, 0);
 
-        // 植木の幹と葉のジオメトリ・マテリアル
         const trunkGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.8, 8);
         const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
         const leavesGeo = new THREE.ConeGeometry(0.55, 1.4, 6);
@@ -826,7 +817,6 @@
             });
         }
 
-        // 建物の数（配置頻度）を1.5倍に増量（間隔を16 -> 10へ短縮）
         let houseIndex = 0;
         for (let i = 0; i < subDivs; i += 10) {
             const progress = i / (subDivs - 1);
@@ -931,24 +921,33 @@
     }
 
     // --- Controls ---
+    let isControlsSetup = false;
     function setupControls() {
-        window.addEventListener('deviceorientation', (e) => {
-            if (e.gamma !== null && e.gamma !== undefined) {
-                document.getElementById('gyro-indicator').classList.remove('hidden');
-                const tilt = e.gamma; 
-                gyroOffset = Math.max(-1, Math.min(1, tilt / 28));
-            }
-        });
+        if (isControlsSetup) return;
+        isControlsSetup = true;
+
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (e) => {
+                if (e.gamma !== null && e.gamma !== undefined) {
+                    const tilt = e.gamma; 
+                    gyroOffset = Math.max(-1, Math.min(1, tilt / 28));
+                }
+            }, true);
+        }
 
         const leftZone = document.getElementById('touch-left');
         const rightZone = document.getElementById('touch-right');
 
         if (leftZone && rightZone) {
-            leftZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = -0.85; });
+            leftZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = -0.85; }, {passive: false});
             leftZone.addEventListener('touchend', () => { gyroOffset = 0; });
+            leftZone.addEventListener('mousedown', () => { gyroOffset = -0.85; });
+            leftZone.addEventListener('mouseup', () => { gyroOffset = 0; });
 
-            rightZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = 0.85; });
+            rightZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = 0.85; }, {passive: false});
             rightZone.addEventListener('touchend', () => { gyroOffset = 0; });
+            rightZone.addEventListener('mousedown', () => { gyroOffset = 0.85; });
+            rightZone.addEventListener('mouseup', () => { gyroOffset = 0; });
         }
 
         window.addEventListener('keydown', (e) => {
@@ -1023,19 +1022,46 @@
         if (currentState !== STATE.PLAYING && currentState !== STATE.FINISHING) return;
 
         if (currentState === STATE.PLAYING) {
-            // 走行距離(m)を算出
             distance = Math.floor(playerProgress * 1000);
 
-            // 100mごとに段階的にスピードアップ（100mで1.2倍、200mで1.4倍... 1000m到達直前に最大3.0倍）
             const distanceTier = Math.min(10, Math.floor(distance / 100));
-            const distanceSpeedMultiplier = 1.0 + (distanceTier * 0.2); // 最大 1.0 + 2.0 = 3.0倍
+            const distanceSpeedMultiplier = 1.0 + (distanceTier * 0.2);
 
-            // ベース速度 × 100mごとの加速倍率 × アイテム効果倍率
             currentRunningSpeed = baseSpeed * distanceSpeedMultiplier * currentSpeedMultiplier * 0.00038;
             playerProgress += currentRunningSpeed;
 
             distance = Math.floor(playerProgress * 1000);
             document.getElementById('score-text').textContent = distance;
+
+            const gyroIndicator = document.getElementById('gyro-indicator');
+            if (distance < 100 && !isGyroActive) {
+                playerLateralPos += (0 - playerLateralPos) * 0.15;
+
+                if (Math.abs(gyroOffset) < 0.15) {
+                    gyroStraightTimer += delta;
+                } else {
+                    gyroStraightTimer = 0;
+                }
+
+                const remainTime = Math.max(0, 3.0 - gyroStraightTimer).toFixed(1);
+                if (gyroIndicator) {
+                    gyroIndicator.textContent = `📱 調整中：まっすぐ保持 (${remainTime}秒) または 100m走行後モード開始`;
+                }
+
+                if (gyroStraightTimer >= 3.0) {
+                    isGyroActive = true;
+                    if (gyroIndicator) {
+                        gyroIndicator.textContent = `📱 ジャイロ操作ON！ (左右に傾けて操縦)`;
+                    }
+                }
+            } else {
+                if (!isGyroActive) {
+                    isGyroActive = true;
+                    if (gyroIndicator) {
+                        gyroIndicator.textContent = `📱 ジャイロ操作ON！ (左右に傾けて操縦)`;
+                    }
+                }
+            }
 
             if (distance >= TARGET_DISTANCE) {
                 distance = TARGET_DISTANCE;
@@ -1076,7 +1102,7 @@
         if (currentState === STATE.PLAYING) {
             if (isAutoPilot) {
                 playerLateralPos += (0 - playerLateralPos) * 0.1;
-            } else {
+            } else if (isGyroActive) {
                 const steerSpeed = 0.22;
                 playerLateralPos += gyroOffset * steerSpeed;
             }
@@ -1152,7 +1178,7 @@
         bikeMatrix.makeBasis(sideVector, upVector, forwardVector);
         playerBike.quaternion.setFromRotationMatrix(bikeMatrix);
 
-        const bankAngle = (currentState === STATE.PLAYING) ? -gyroOffset * 0.28 : 0;
+        const bankAngle = (currentState === STATE.PLAYING && isGyroActive) ? -gyroOffset * 0.28 : 0;
         const bankQuat = new THREE.Quaternion().setFromAxisAngle(forwardVector, bankAngle);
         playerBike.quaternion.premultiply(bankQuat);
 
@@ -1281,6 +1307,7 @@
         document.getElementById('total-score').textContent = `${totalScore.toLocaleString()} pt`;
 
         document.getElementById('hud-container').classList.add('hidden');
+        document.getElementById('touch-controls').classList.add('hidden');
         document.getElementById('gameover-screen').classList.remove('hidden');
 
         if (autoCloseTimerId) clearTimeout(autoCloseTimerId);
@@ -1312,6 +1339,7 @@
         currentState = STATE.START;
         document.getElementById('gameover-screen').classList.add('hidden');
         document.getElementById('hud-container').classList.add('hidden');
+        document.getElementById('touch-controls').classList.add('hidden');
         document.getElementById('start-screen').classList.remove('hidden');
     }
 
@@ -1331,6 +1359,9 @@
         currentSpeedMultiplier = 1.0;
         isAutoPilot = false;
 
+        isGyroActive = false;
+        gyroStraightTimer = 0;
+
         finishAnimTimer = 0;
         currentRunningSpeed = 0;
         dismountProgress = 0;
@@ -1344,12 +1375,18 @@
         collectedItems = { TURTLE: 0, HEART: 0, STAR: 0 };
 
         document.getElementById('item-hud').classList.add('hidden');
+        const gyroIndicator = document.getElementById('gyro-indicator');
+        if (gyroIndicator) {
+            gyroIndicator.textContent = `📱 調整中：まっすぐを保ってください (自動計測中...)`;
+        }
+
         generateTrack();
 
         currentState = STATE.PLAYING;
-        document.getElementById('gameover-screen').classList.add('hidden');
         document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('gameover-screen').classList.add('hidden');
         document.getElementById('hud-container').classList.remove('hidden');
+        document.getElementById('touch-controls').classList.remove('hidden');
     }
 
     // --- Render Loop ---
@@ -1359,7 +1396,7 @@
         requestAnimationFrame(animate);
 
         const now = performance.now();
-        const delta = (now - lastTime) / 1000;
+        const delta = Math.min((now - lastTime) / 1000, 0.1);
         lastTime = now;
 
         cloudGroup.rotation.y += 0.0004;
@@ -1373,34 +1410,28 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    function startGameFlow() {
+    function handleStartButtonClick() {
         sound.init();
         setupControls();
-        resetGame();
-    }
 
-    const startBtn = document.getElementById('start-btn');
-    startBtn.addEventListener('click', () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
-                    startGameFlow();
-                })
-                .catch(() => {
-                    startGameFlow();
-                });
+                .then(() => { resetGame(); })
+                .catch(() => { resetGame(); });
         } else {
-            startGameFlow();
+            resetGame();
         }
-    });
+    }
 
+    document.getElementById('start-btn').addEventListener('click', handleStartButtonClick);
     document.getElementById('restart-btn').addEventListener('click', () => {
+        sound.init();
         resetGame();
     });
 
+    // Initial Setup
     generateTrack();
     animate();
-
-    </script>
+</script>
 </body>
 </html>
