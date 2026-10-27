@@ -24004,6 +24004,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       {k:'lottery_shop', ic:'🎫', n:'江戸川ジャンボ宝くじ　売り場'},
       {k:'lottery_draw', ic:'🎊', n:'江戸川ジャンボ宝くじ　抽選会'},
       {k:'train',        ic:'🚃', n:'電車シミュレーター'},
+      {k:'bicycle',      ic:'🚴', n:'爆走！親水緑道SeSeラギー'},
       {k:'pachinko',     ic:'🎰', n:'CR EDOGAWA フィーバー'},
       {k:'fishing',      ic:'🎣', n:'えどがわ釣りスポット'},
       {k:'fight',        ic:'🥊', n:'江戸川街道 闘魂ロード'},
@@ -24106,6 +24107,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }
       if(key === 'train'){
         app.startTrainRide(p, 'tozai', '西葛西', '葛西', ()=>restore());
+        return;
+      }
+      if(key === 'bicycle'){
+        // 【ver1.2.0】親水緑道の1本目の端から反対側の端へ（移動は検証用なのでしません）
+        const ends = app._greenwayTestEnds ? app._greenwayTestEnds() : null;
+        app.finishTurn = ()=>restore();
+        if(!ends || !app.startBicycleGame || !app.startBicycleGame(p, ends[0], ends[1])) restore();
         return;
       }
       if(key === 'pachinko'){
@@ -30392,6 +30400,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     }, 3000);
     return true;
   };
+
+  app._greenwayTestEnds = ()=>ENDS.length ? [ENDS[0], other(ENDS[0])] : null;   // 検証用「ミニゲーム確認」から使います
 
   window.__EDOGAWA_V170 = {
     ends: ()=>ENDS.map(e=>e.gw.n + (e.i ? '（終点）' : '（起点）')),
