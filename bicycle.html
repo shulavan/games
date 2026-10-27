@@ -110,7 +110,7 @@
 
             <!-- Instructions -->
             <div class="bg-white/50 rounded-2xl p-4 w-full text-left text-xs space-y-2 mb-6 border border-white/40 text-slate-900 shadow-inner">
-                <div class="flex items-center gap-2"><span class="text-lg">📲</span> <span><b>操作:</b> スマホを傾ける (キーボード左右キー / 画面左右)</span></div>
+                <div class="flex items-center gap-2"><span class="text-lg">📲</span> <span><b>操作:</b> スマホを左右に傾ける（ジャイロセンサー）</span></div>
                 <div class="flex items-center gap-2"><span class="text-lg">🎯</span> <span><b>補正:</b> 最初の100mは直進！まっすぐ3秒キープで操作開始</span></div>
                 <div class="flex items-center gap-2"><span class="text-lg">🌊</span> <span><b>注意:</b> 道からはみ出て水路に落ちるとゲームオーバー！</span></div>
                 <div class="flex items-center gap-2"><span class="text-lg">🐢</span> <span><b>カメ:</b> 5秒間 低速走行 (+100pt)</span></div>
@@ -191,8 +191,9 @@
 
     // Finish Sequence Dynamics
     let finishAnimTimer = 0;
+    const FINISH_ORBIT_DURATION = 5.2; // ゴール演出の水平カメラ移動時間
     let currentRunningSpeed = 0;
-    let dismountProgress = 0;
+    let finishGestureProgress = 0;
     let autoCloseTimerId = null;
 
     // Item Collection Counters
@@ -296,17 +297,16 @@
     const canvas = document.getElementById('game-canvas');
     const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.shadowMap.enabled = false; // mobile GPU負荷を抑えてフレーム落ちを軽減
 
     const scene = new THREE.Scene();
-    scene.background = null;
-    scene.fog = new THREE.FogExp2(0x7dd3fc, 0.002);
+    scene.background = new THREE.Color(0x87ceeb);
+    scene.fog = new THREE.Fog(0x87ceeb, 100, 430);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.05);
     scene.add(ambientLight);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
@@ -421,6 +421,18 @@
         pedalR.position.set(0.2, -0.25, 0);
         crankGroup.add(pedalR);
 
+        // 足先をペダルに固定。クランクと一緒に回るため、ペダルだけが空回りして見えない。
+        const shoeMat = new THREE.MeshStandardMaterial({ color: 0x202938, roughness: 0.75 });
+        const shoeGeo = new THREE.BoxGeometry(0.22, 0.11, 0.32);
+        const shoeL = new THREE.Mesh(shoeGeo, shoeMat);
+        shoeL.position.set(-0.2, 0.31, 0.03);
+        crankGroup.add(shoeL);
+        const shoeR = new THREE.Mesh(shoeGeo, shoeMat);
+        shoeR.position.set(0.2, -0.31, 0.03);
+        crankGroup.add(shoeR);
+        bikeGroup.userData.shoeL = shoeL;
+        bikeGroup.userData.shoeR = shoeR;
+
         bikeGroup.add(crankGroup);
         bikeGroup.userData.crankGroup = crankGroup;
 
@@ -434,11 +446,99 @@
         const headGroup = new THREE.Group();
         headGroup.position.set(0, 2.18, -0.1);
 
-        const helmetTop = new THREE.Mesh(new THREE.SphereGeometry(0.185, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2), helmetMat);
+        // 頭部を全面的に再構成：肌色の顔を前面に、黒髪を後頭部と側面に、白い自転車ヘルメットを上部に配置。
+        // 旧モデルの「黒い球に顔だけが埋まった」見え方を避けるため、顔と髪を前後で明確に分離する。
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xf2c6a5, roughness: 0.82 });
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0x172033, roughness: 0.72 });
+        const hairGlossMat = new THREE.MeshStandardMaterial({ color: 0x15171b, roughness: 0.76 });
+        const strapMat = new THREE.MeshStandardMaterial({ color: 0x30343b, roughness: 0.8 });
+        const helmetVentMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.5 });
+
+        // 黒髪の後頭部。顔より後ろに置いて、顔の周囲を黒い輪で囲まない。
+        const backHair = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 16), hairGlossMat);
+        backHair.scale.set(1.02, 1.08, 0.72);
+        backHair.position.set(0, -0.005, -0.045);
+        headGroup.add(backHair);
+
+        // 顔は肌色の大きな楕円体として独立させ、前面へはっきり出す。
+        const face = new THREE.Mesh(new THREE.SphereGeometry(0.14, 24, 18), skinMat);
+        face.scale.set(0.88, 1.08, 0.82);
+        face.position.set(0, -0.012, 0.045);
+        headGroup.add(face);
+
+        // 耳と左右の黒いもみあげで、ヘルメットの下から黒髪が見える形にする。
+        for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.032, 12, 10), skinMat);
+            ear.scale.set(0.72, 1.05, 0.72);
+            ear.position.set(side * 0.125, -0.025, 0.025);
+            headGroup.add(ear);
+
+            const sideHair = new THREE.Mesh(new THREE.SphereGeometry(0.052, 14, 12), hairGlossMat);
+            sideHair.scale.set(0.7, 1.42, 0.58);
+            sideHair.position.set(side * 0.108, -0.005, -0.005);
+            headGroup.add(sideHair);
+        }
+
+        // 額の生え際を少しだけ見せ、ヘルメットと黒髪の境目を自然にする。
+        const fringe = new THREE.Mesh(new THREE.SphereGeometry(0.105, 18, 12), hairGlossMat);
+        fringe.scale.set(0.94, 0.34, 0.23);
+        fringe.position.set(0, 0.086, 0.103);
+        headGroup.add(fringe);
+
+        // 白い自転車ヘルメット。上半球のシェルに前方の短いひさしを加える。
+        const helmetTop = new THREE.Mesh(
+            new THREE.SphereGeometry(0.175, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+            helmetMat
+        );
+        helmetTop.scale.set(1.08, 0.92, 1.12);
+        helmetTop.position.set(0, 0.092, -0.004);
         headGroup.add(helmetTop);
 
-        const hairBottom = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), hairMat);
-        headGroup.add(hairBottom);
+        const helmetBrim = new THREE.Mesh(new THREE.BoxGeometry(0.285, 0.022, 0.105), helmetMat);
+        helmetBrim.position.set(0, 0.096, 0.118);
+        helmetBrim.rotation.x = -0.08;
+        headGroup.add(helmetBrim);
+
+        // 小さな通気口を入れて、白い丸帽子ではなく自転車用ヘルメットと分かる形にする。
+        for (const ventZ of [-0.045, 0.005, 0.048]) {
+            const vent = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.006, 0.026), helmetVentMat);
+            vent.position.set(0, 0.224 - Math.abs(ventZ) * 0.25, ventZ);
+            vent.rotation.x = -0.22;
+            headGroup.add(vent);
+        }
+
+        // 目、眉、鼻、笑顔を顔の前面に配置。黒い頭部に穴を開けたような表現にはしない。
+        for (const eyeX of [-0.043, 0.043]) {
+            const brow = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.007, 0.006), hairGlossMat);
+            brow.position.set(eyeX, 0.044, 0.153);
+            brow.rotation.z = eyeX < 0 ? -0.08 : 0.08;
+            headGroup.add(brow);
+
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.012, 10, 8), eyeMat);
+            eye.position.set(eyeX, 0.014, 0.157);
+            headGroup.add(eye);
+        }
+
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 10), skinMat);
+        nose.scale.set(0.75, 0.9, 0.85);
+        nose.position.set(0, -0.018, 0.16);
+        headGroup.add(nose);
+
+        const smileCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-0.026, -0.064, 0.151),
+            new THREE.Vector3(0, -0.074, 0.16),
+            new THREE.Vector3(0.026, -0.064, 0.151)
+        ]);
+        const smile = new THREE.Mesh(new THREE.TubeGeometry(smileCurve, 8, 0.004, 6, false), eyeMat);
+        headGroup.add(smile);
+
+        // ヘルメットのあごひもを左右に追加し、頭部に装着していることを明確にする。
+        for (const side of [-1, 1]) {
+            const strap = new THREE.Mesh(new THREE.BoxGeometry(0.009, 0.105, 0.009), strapMat);
+            strap.position.set(side * 0.105, -0.095, 0.064);
+            strap.rotation.z = side * -0.24;
+            headGroup.add(strap);
+        }
 
         riderGroup.add(headGroup);
 
@@ -452,6 +552,28 @@
         rightArm.position.set(0.2, 1.75, 0.25);
         rightArm.rotation.x = -Math.PI / 3;
         riderGroup.add(rightArm);
+
+        // 片手の👍サイン。手のひらと立てた親指を別パーツにして、横からも判別できる形にする。
+        const handGroup = new THREE.Group();
+        const handPalm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.085), skinMat);
+        handPalm.position.set(0, 0.11, 0);
+        handGroup.add(handPalm);
+        const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.17, 0.075), skinMat);
+        thumb.position.set(0.105, 0.235, 0);
+        thumb.rotation.z = -0.12;
+        handGroup.add(thumb);
+        const fingerMat = skinMat;
+        for (const fingerX of [-0.055, 0, 0.055]) {
+            const finger = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.095, 0.07), fingerMat);
+            finger.position.set(fingerX, 0.055, 0.025);
+            handGroup.add(finger);
+        }
+        handGroup.visible = false;
+        riderGroup.add(handGroup);
+
+        bikeGroup.userData.headGroup = headGroup;
+        bikeGroup.userData.rightArm = rightArm;
+        bikeGroup.userData.thumbHand = handGroup;
 
         const thighGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5);
         const leftThigh = new THREE.Mesh(thighGeo, pantsMat);
@@ -473,6 +595,16 @@
     const playerBike = createBicycleModel();
     scene.add(playerBike);
 
+    // 街並みの下地。空と地面を分離し、遠景まで地面が続くようにする。
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(1800, 1800),
+        new THREE.MeshStandardMaterial({ color: 0x6b9b58, roughness: 1 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.55;
+    ground.receiveShadow = false;
+    scene.add(ground);
+
     // --- House & Environment Generator ---
     const houseColors = [0x8B5A2B, 0x222222, 0x87CEEB, 0xFFFDD0, 0xEEDC82];
 
@@ -482,7 +614,9 @@
         const roofMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
         const windowMat = new THREE.MeshStandardMaterial({ color: 0xbfdbfe, roughness: 0.2 });
         const doorMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
-        const balconyMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4 });
+        const balconyMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.55 });
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 });
+        const sillMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7 });
 
         let w = 8, h = 6, d = 8;
 
@@ -562,10 +696,21 @@
                 const winLeft = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.08), windowMat);
                 winLeft.position.set(-faceWidth / 4, posY, 0);
                 sideGroup.add(winLeft);
-
+                const frameL = new THREE.Mesh(new THREE.BoxGeometry(1.34, 1.34, 0.07), frameMat);
+                frameL.position.set(-faceWidth / 4, posY, -0.025);
+                sideGroup.add(frameL);
                 const winRight = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.08), windowMat);
                 winRight.position.set(faceWidth / 4, posY, 0);
                 sideGroup.add(winRight);
+                const frameR = new THREE.Mesh(new THREE.BoxGeometry(1.34, 1.34, 0.07), frameMat);
+                frameR.position.set(faceWidth / 4, posY, -0.025);
+                sideGroup.add(frameR);
+                const sillL = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.16), sillMat);
+                sillL.position.set(-faceWidth / 4, posY - 0.68, 0.04);
+                sideGroup.add(sillL);
+                const sillR = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.08, 0.16), sillMat);
+                sillR.position.set(faceWidth / 4, posY - 0.68, 0.04);
+                sideGroup.add(sillR);
 
                 if (f >= 2) {
                     const balcony = new THREE.Mesh(new THREE.BoxGeometry(faceWidth * 0.7, 0.7, 0.8), balconyMat);
@@ -777,12 +922,24 @@
     function buildEnvironment(subDivs, numSegments) {
         const upVector = new THREE.Vector3(0, 1, 0);
 
-        const trunkGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.8, 8);
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
-        const leavesGeo = new THREE.ConeGeometry(0.55, 1.4, 6);
-        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6, flatShading: true });
+        const trunkGeo = new THREE.CylinderGeometry(0.12, 0.17, 0.9, 7);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x70452a, roughness: 1 });
+        const foliageMats = [0x267344,0x39834a,0x557f35,0x2f6b48,0x6b8e3b,0x226644,0x4f8a55,0x3b7040,0x708c43,0x287653]
+            .map(color => new THREE.MeshStandardMaterial({ color, roughness: 0.9, flatShading: true }));
+        const foliageGeos = [
+            new THREE.SphereGeometry(0.72, 7, 5),
+            new THREE.ConeGeometry(0.72, 1.8, 7),
+            new THREE.BoxGeometry(1.15, 1.15, 1.15),
+            new THREE.DodecahedronGeometry(0.72, 0),
+            new THREE.SphereGeometry(0.62, 6, 4),
+            new THREE.ConeGeometry(0.85, 1.4, 5),
+            new THREE.OctahedronGeometry(0.72),
+            new THREE.SphereGeometry(0.75, 8, 5),
+            new THREE.BoxGeometry(1.0, 1.35, 1.0),
+            new THREE.DodecahedronGeometry(0.85, 1)
+        ];
 
-        for (let i = 0; i < subDivs; i += 3) {
+        for (let i = 0; i < subDivs; i += 8) {
             const progress = i / (subDivs - 1);
             const pt = trackCurve.getPointAt(progress);
             const tangent = trackCurve.getTangentAt(progress).normalize();
@@ -801,9 +958,11 @@
                 trunk.castShadow = true;
                 treeGroup.add(trunk);
 
-                const leaves = new THREE.Mesh(leavesGeo, leavesMat);
-                leaves.position.y = 1.3;
-                leaves.castShadow = true;
+                const variant = Math.floor(Math.random() * 10);
+                const leaves = new THREE.Mesh(foliageGeos[variant], foliageMats[variant]);
+                leaves.position.y = 1.35 + Math.random() * 0.18;
+                const scale = 0.78 + Math.random() * 0.55;
+                leaves.scale.set(scale, scale * (0.85 + Math.random() * 0.45), scale);
                 treeGroup.add(leaves);
 
                 const treePos = pt.clone().addScaledVector(side, dir * (w / 2 + 1.6));
@@ -818,7 +977,7 @@
         }
 
         let houseIndex = 0;
-        for (let i = 0; i < subDivs; i += 10) {
+        for (let i = 0; i < subDivs; i += 20) {
             const progress = i / (subDivs - 1);
             const pt = trackCurve.getPointAt(progress);
             const tangent = trackCurve.getTangentAt(progress).normalize();
@@ -935,28 +1094,7 @@
             }, true);
         }
 
-        const leftZone = document.getElementById('touch-left');
-        const rightZone = document.getElementById('touch-right');
 
-        if (leftZone && rightZone) {
-            leftZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = -0.85; }, {passive: false});
-            leftZone.addEventListener('touchend', () => { gyroOffset = 0; });
-            leftZone.addEventListener('mousedown', () => { gyroOffset = -0.85; });
-            leftZone.addEventListener('mouseup', () => { gyroOffset = 0; });
-
-            rightZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = 0.85; }, {passive: false});
-            rightZone.addEventListener('touchend', () => { gyroOffset = 0; });
-            rightZone.addEventListener('mousedown', () => { gyroOffset = 0.85; });
-            rightZone.addEventListener('mouseup', () => { gyroOffset = 0; });
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'a') gyroOffset = -0.9;
-            if (e.key === 'ArrowRight' || e.key === 'd') gyroOffset = 0.9;
-        });
-        window.addEventListener('keyup', (e) => {
-            if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) gyroOffset = 0;
-        });
     }
 
     // --- Item Countdown Timers ---
@@ -1028,7 +1166,7 @@
             const distanceSpeedMultiplier = 1.0 + (distanceTier * 0.2);
 
             currentRunningSpeed = baseSpeed * distanceSpeedMultiplier * currentSpeedMultiplier * 0.00038;
-            playerProgress += currentRunningSpeed;
+            playerProgress += currentRunningSpeed * delta * 60;
 
             distance = Math.floor(playerProgress * 1000);
             document.getElementById('score-text').textContent = distance;
@@ -1069,7 +1207,7 @@
                 
                 currentState = STATE.FINISHING;
                 finishAnimTimer = 0;
-                dismountProgress = 0;
+                finishGestureProgress = 0;
                 activeItem = null;
                 document.getElementById('item-hud').classList.add('hidden');
                 sound.playItemGet('STAR');
@@ -1078,24 +1216,41 @@
             finishAnimTimer += delta;
 
             if (finishAnimTimer < 1.8) {
+                // ゴール直後は自転車をゆっくり停止させる。
                 currentRunningSpeed = THREE.MathUtils.lerp(currentRunningSpeed, 0, delta * 3.0);
-                playerProgress += currentRunningSpeed;
+                playerProgress += currentRunningSpeed * delta * 60;
             } else {
                 currentRunningSpeed = 0;
-                dismountProgress = Math.min(1.0, dismountProgress + delta * 1.2);
+            }
 
-                if (playerBike.userData.riderGroup) {
-                    const rider = playerBike.userData.riderGroup;
-                    rider.position.x = -dismountProgress * 0.85;
-                    rider.position.y = -dismountProgress * 0.45;
-                    rider.rotation.z = dismountProgress * 0.28;
-                    rider.rotation.y = dismountProgress * 0.35;
-                }
+            // 降車はせずサドルに乗った姿勢を保つ。カメラが横へ回る終盤に、
+            // 顔をカメラ側へ向け、右手を持ち上げて👍サインを作る。
+            const gestureRaw = THREE.MathUtils.clamp(
+                (finishAnimTimer - 2.0) / (FINISH_ORBIT_DURATION - 2.0), 0, 1
+            );
+            finishGestureProgress = gestureRaw * gestureRaw * (3 - 2 * gestureRaw);
+            const headGroup = playerBike.userData.headGroup;
+            const rightArm = playerBike.userData.rightArm;
+            const thumbHand = playerBike.userData.thumbHand;
 
-                if (dismountProgress >= 1.0 && finishAnimTimer > 3.2) {
-                    showResultModal(true);
-                    return;
-                }
+            if (headGroup) {
+                headGroup.rotation.y = -1.32 * finishGestureProgress;
+            }
+            if (rightArm && thumbHand) {
+                const shoulderStart = new THREE.Vector3(0.2, 1.9125, -0.031);
+                const wristStart = new THREE.Vector3(0.2, 1.5875, 0.531);
+                const shoulderTarget = new THREE.Vector3(0.2, 1.93, 0.02);
+                const wristTarget = new THREE.Vector3(0.45, 2.39, 0.30);
+                const shoulder = shoulderStart.lerp(shoulderTarget, finishGestureProgress);
+                const wrist = wristStart.lerp(wristTarget, finishGestureProgress);
+                const armVector = wrist.clone().sub(shoulder);
+                const armLength = armVector.length();
+                rightArm.position.copy(shoulder).add(wrist).multiplyScalar(0.5);
+                rightArm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), armVector.normalize());
+                rightArm.scale.set(1, armLength / 0.65, 1);
+                thumbHand.position.copy(wrist);
+                thumbHand.rotation.set(0, -Math.PI / 2 * finishGestureProgress, 0);
+                thumbHand.visible = finishGestureProgress > 0.36;
             }
         }
 
@@ -1187,16 +1342,16 @@
             playerBike.quaternion.premultiply(pitchQuat);
         }
 
-        if (currentRunningSpeed > 0) {
-            pedalAngle += currentRunningSpeed * 600;
+        if (currentState === STATE.PLAYING && isGrounded && currentRunningSpeed > 0.000001) {
+            pedalAngle += currentRunningSpeed * delta * 600 * 60;
 
             if (playerBike.userData.crankGroup) {
                 playerBike.userData.crankGroup.rotation.x = pedalAngle;
             }
 
             if (playerBike.userData.frontWheel && playerBike.userData.rearWheel) {
-                playerBike.userData.frontWheel.rotation.x += currentRunningSpeed * 450;
-                playerBike.userData.rearWheel.rotation.x += currentRunningSpeed * 450;
+                playerBike.userData.frontWheel.rotation.x += currentRunningSpeed * delta * 450 * 60;
+                playerBike.userData.rearWheel.rotation.x += currentRunningSpeed * delta * 450 * 60;
             }
 
             if (playerBike.userData.leftThigh && playerBike.userData.rightThigh) {
@@ -1209,24 +1364,43 @@
         const camHeight = 2.8;
 
         if (currentState === STATE.FINISHING) {
-            const duration = 3.0;
-            const progressRatio = Math.min(1.0, finishAnimTimer / duration);
+            // 頭上から見下ろさず、後方から横側へ時計回りに回り込む。
+            // 最後は自転車とプレーヤーが横向きに見えるサイドアングルで止める。
+            const rawProgress = Math.min(1.0, finishAnimTimer / FINISH_ORBIT_DURATION);
+            const progressRatio = rawProgress * rawProgress * (3 - 2 * rawProgress);
+            const orbitAngle = progressRatio * (Math.PI / 2);
+            const orbitRadius = 5.3;
+            const orbitHeight = THREE.MathUtils.lerp(2.6, 1.8, progressRatio);
 
-            const orbitAngle = progressRatio * Math.PI; 
-            const orbitRadius = 4.5;
-            const orbitHeight = 1.6;
-
-            const camOffsetX = Math.sin(orbitAngle) * orbitRadius;
-            const camOffsetZ = Math.cos(orbitAngle) * orbitRadius;
-
-            const targetCamPos = finalPos.clone()
-                .addScaledVector(forwardVector, camOffsetZ)
-                .addScaledVector(sideVector, camOffsetX)
+            // 後方(-forward)から左側(-side)へ回る時計回りの水平軌道。
+            const camOffsetSide = -Math.sin(orbitAngle) * orbitRadius;
+            const camOffsetForward = -Math.cos(orbitAngle) * orbitRadius;
+            const orbitCamPos = finalPos.clone()
+                .addScaledVector(forwardVector, camOffsetForward)
+                .addScaledVector(sideVector, camOffsetSide)
                 .add(new THREE.Vector3(0, orbitHeight, 0));
 
-            const targetLookAt = finalPos.clone().add(new THREE.Vector3(0, 1.2, 0));
+            const bikeLookAt = finalPos.clone().add(new THREE.Vector3(0, 1.2, 0));
+            const sideCameraPos = finalPos.clone()
+                .addScaledVector(sideVector, -5.5)
+                .addScaledVector(forwardVector, 0.95)
+                .add(new THREE.Vector3(0, 1.85, 0));
+            const playerLookAt = finalPos.clone()
+                .addScaledVector(forwardVector, 0.02)
+                .add(new THREE.Vector3(0, 1.58, 0));
 
-            camera.position.lerp(targetCamPos, 0.15);
+            // 最後の区間だけ少し前方へ寄せ、顔をこちらへ向けた表情と👍が見える位置へ。
+            const captureBlendRaw = THREE.MathUtils.clamp((progressRatio - 0.72) / 0.28, 0, 1);
+            const captureBlend = captureBlendRaw * captureBlendRaw * (3 - 2 * captureBlendRaw);
+            const targetCamPos = orbitCamPos.clone().lerp(sideCameraPos, captureBlend);
+            const targetLookAt = bikeLookAt.clone().lerp(playerLookAt, captureBlend);
+
+            if (rawProgress >= 1) {
+                // 結果モーダル直前の最終フレームを横向きアングルに固定する。
+                camera.position.copy(targetCamPos);
+            } else {
+                camera.position.lerp(targetCamPos, 1 - Math.exp(-delta * 3.5));
+            }
             camera.lookAt(targetLookAt);
         } else {
             const targetCamPos = finalPos.clone()
@@ -1258,6 +1432,11 @@
             });
 
             updateItemTimer(delta);
+        }
+
+        // 横向きの撮影位置・顔向き・👍ポーズが完成してから結果モーダルを開く。
+        if (currentState === STATE.FINISHING && finishGestureProgress >= 1.0 && finishAnimTimer >= FINISH_ORBIT_DURATION) {
+            showResultModal(true);
         }
     }
 
@@ -1307,7 +1486,6 @@
         document.getElementById('total-score').textContent = `${totalScore.toLocaleString()} pt`;
 
         document.getElementById('hud-container').classList.add('hidden');
-        document.getElementById('touch-controls').classList.add('hidden');
         document.getElementById('gameover-screen').classList.remove('hidden');
 
         if (autoCloseTimerId) clearTimeout(autoCloseTimerId);
@@ -1339,7 +1517,6 @@
         currentState = STATE.START;
         document.getElementById('gameover-screen').classList.add('hidden');
         document.getElementById('hud-container').classList.add('hidden');
-        document.getElementById('touch-controls').classList.add('hidden');
         document.getElementById('start-screen').classList.remove('hidden');
     }
 
@@ -1364,12 +1541,25 @@
 
         finishAnimTimer = 0;
         currentRunningSpeed = 0;
-        dismountProgress = 0;
+        finishGestureProgress = 0;
 
         if (playerBike.userData.riderGroup) {
             const rider = playerBike.userData.riderGroup;
             rider.position.set(0, 0, 0);
             rider.rotation.set(0, 0, 0);
+        }
+        if (playerBike.userData.headGroup) {
+            playerBike.userData.headGroup.rotation.set(0, 0, 0);
+        }
+        if (playerBike.userData.rightArm) {
+            const arm = playerBike.userData.rightArm;
+            arm.position.set(0.2, 1.75, 0.25);
+            arm.rotation.set(-Math.PI / 3, 0, 0);
+            arm.scale.set(1, 1, 1);
+        }
+        if (playerBike.userData.thumbHand) {
+            playerBike.userData.thumbHand.visible = false;
+            playerBike.userData.thumbHand.rotation.set(0, 0, 0);
         }
 
         collectedItems = { TURTLE: 0, HEART: 0, STAR: 0 };
@@ -1386,7 +1576,6 @@
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('gameover-screen').classList.add('hidden');
         document.getElementById('hud-container').classList.remove('hidden');
-        document.getElementById('touch-controls').classList.remove('hidden');
     }
 
     // --- Render Loop ---
@@ -1396,7 +1585,7 @@
         requestAnimationFrame(animate);
 
         const now = performance.now();
-        const delta = Math.min((now - lastTime) / 1000, 0.1);
+        const delta = Math.min((now - lastTime) / 1000, 0.05);
         lastTime = now;
 
         cloudGroup.rotation.y += 0.0004;
@@ -1407,6 +1596,7 @@
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
