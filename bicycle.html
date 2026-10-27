@@ -66,28 +66,31 @@
     <canvas id="game-canvas"></canvas>
 
     <!-- UI Overlay: HUD Header -->
-    <div id="hud-container" class="hidden absolute top-0 left-0 w-full p-4 flex flex-col items-center justify-start pointer-events-none z-10">
-        <!-- Main Score / Distance -->
-        <div class="bg-slate-900/50 text-white font-extrabold text-3xl px-6 py-2 rounded-full shadow-xl border border-white/30 backdrop-blur-md flex items-center gap-2">
-            <span class="text-yellow-400 text-2xl">🚴</span>
-            <span id="score-text">0</span> <span class="text-sm font-normal text-gray-200">m</span>
-        </div>
-
-        <!-- Active Item Countdown Display -->
-        <div id="item-hud" class="hidden mt-3 bg-white/95 shadow-2xl rounded-2xl p-3 border-2 border-amber-400 flex items-center gap-3 min-w-[240px] transition-all duration-300 transform scale-100">
-            <div id="item-icon" class="text-4xl animate-bounce">🌟</div>
-            <div class="flex-1">
-                <div id="item-name" class="font-black text-xs text-gray-800 uppercase tracking-wider">AUTO-PILOT (SAFE)</div>
-                <!-- Progress Bar -->
-                <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden mt-1 shadow-inner">
-                    <div id="item-progress" class="bg-amber-500 h-full rounded-full transition-all duration-75" style="width: 100%;"></div>
-                </div>
+    <div id="hud-container" class="hidden absolute top-0 left-0 w-full h-full p-4 flex flex-col items-center justify-between pointer-events-none z-10">
+        <!-- Top Container -->
+        <div class="flex flex-col items-center">
+            <!-- Main Score / Distance -->
+            <div class="bg-slate-900/50 text-white font-extrabold text-3xl px-6 py-2 rounded-full shadow-xl border border-white/30 backdrop-blur-md flex items-center gap-2">
+                <span class="text-yellow-400 text-2xl">🚴</span>
+                <span id="score-text">0</span> <span class="text-sm font-normal text-gray-200">m</span>
             </div>
-            <div id="item-timer" class="font-black text-2xl text-slate-800 w-12 text-right">5.0</div>
+
+            <!-- Active Item Countdown Display -->
+            <div id="item-hud" class="hidden mt-3 bg-white/95 shadow-2xl rounded-2xl p-3 border-2 border-amber-400 flex items-center gap-3 min-w-[240px] transition-all duration-300 transform scale-100">
+                <div id="item-icon" class="text-4xl animate-bounce">🌟</div>
+                <div class="flex-1">
+                    <div id="item-name" class="font-black text-xs text-gray-800 uppercase tracking-wider">AUTO-PILOT (SAFE)</div>
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 h-3 rounded-full overflow-hidden mt-1 shadow-inner">
+                        <div id="item-progress" class="bg-amber-500 h-full rounded-full transition-all duration-75" style="width: 100%;"></div>
+                    </div>
+                </div>
+                <div id="item-timer" class="font-black text-2xl text-slate-800 w-12 text-right">5.0</div>
+            </div>
         </div>
 
-        <!-- Gyro Sensor Controls Helper Info -->
-        <div id="gyro-indicator" class="mt-2 text-xs text-white bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/20 shadow-md">
+        <!-- Gyro Sensor Controls Helper Info (Moved to Footer) -->
+        <div id="gyro-indicator" class="mb-4 text-xs text-white bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/20 shadow-md">
             📱 ジャイロ操作中（左右に傾けて操縦）
         </div>
     </div>
@@ -511,42 +514,75 @@
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
             group.add(body);
+
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.4, 0.5, d + 0.4), roofMat);
+            roof.position.y = h + 0.25;
+            group.add(roof);
         } else if (typeIndex === 3) { // アパートデザイン
             w = 12; h = 8; d = 8;
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
             group.add(body);
+
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.5, d + 0.6), roofMat);
+            roof.position.y = h + 0.25;
+            group.add(roof);
         } else { // 事務所デザイン
             w = 10; h = 9; d = 10;
             const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
             body.position.y = h / 2;
             group.add(body);
+
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.5, d + 0.6), roofMat);
+            roof.position.y = h + 0.25;
+            group.add(roof);
         }
 
-        // ドア
-        const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.1), doorMat);
-        door.position.set(0, 1.1, d / 2 + 0.06);
-        group.add(door);
+        // 4面すべてにドア・窓・バルコニーを配置
+        const sides = [
+            { name: 'front', rotY: 0, pos: [0, 0, d / 2 + 0.06] },
+            { name: 'back', rotY: Math.PI, pos: [0, 0, -d / 2 - 0.06] },
+            { name: 'left', rotY: -Math.PI / 2, pos: [-w / 2 - 0.06, 0, 0] },
+            { name: 'right', rotY: Math.PI / 2, pos: [w / 2 + 0.06, 0, 0] }
+        ];
 
-        // 窓・ベランダ
-        const floors = Math.floor(h / 3);
-        for (let f = 1; f <= floors; f++) {
-            const posY = f * 2.8;
+        sides.forEach((side) => {
+            const sideGroup = new THREE.Group();
+            sideGroup.position.set(side.pos[0], side.pos[1], side.pos[2]);
+            sideGroup.rotation.y = side.rotY;
 
-            const winLeft = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), windowMat);
-            winLeft.position.set(-w / 4, posY, d / 2 + 0.06);
-            group.add(winLeft);
+            const isWidthSide = (side.name === 'front' || side.name === 'back');
+            const faceWidth = isWidthSide ? w : d;
 
-            const winRight = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), windowMat);
-            winRight.position.set(w / 4, posY, d / 2 + 0.06);
-            group.add(winRight);
-
-            if (f >= 2) {
-                const balcony = new THREE.Mesh(new THREE.BoxGeometry(w * 0.8, 0.7, 0.8), balconyMat);
-                balcony.position.set(0, posY - 0.7, d / 2 + 0.4);
-                group.add(balcony);
+            // ドア (正面と背面)
+            if (side.name === 'front' || side.name === 'back') {
+                const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.1), doorMat);
+                door.position.set(0, 1.1, 0);
+                sideGroup.add(door);
             }
-        }
+
+            // 窓・バルコニー (各面)
+            const floors = Math.floor(h / 3);
+            for (let f = 1; f <= floors; f++) {
+                const posY = f * 2.8;
+
+                const winLeft = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.08), windowMat);
+                winLeft.position.set(-faceWidth / 4, posY, 0);
+                sideGroup.add(winLeft);
+
+                const winRight = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.08), windowMat);
+                winRight.position.set(faceWidth / 4, posY, 0);
+                sideGroup.add(winRight);
+
+                if (f >= 2) {
+                    const balcony = new THREE.Mesh(new THREE.BoxGeometry(faceWidth * 0.7, 0.7, 0.8), balconyMat);
+                    balcony.position.set(0, posY - 0.7, 0.35);
+                    sideGroup.add(balcony);
+                }
+            }
+
+            group.add(sideGroup);
+        });
 
         return group;
     }
@@ -554,6 +590,8 @@
     // --- Procedural Track & Waterway Generator ---
     let trackCurve = null;
     let roadMesh = null;
+    let leftWaterMesh = null;
+    let rightWaterMesh = null;
     let trackPoints = [];
     let roadWidths = [];
     let itemObjects = [];
@@ -561,6 +599,8 @@
 
     function generateTrack() {
         if (roadMesh) scene.remove(roadMesh);
+        if (leftWaterMesh) scene.remove(leftWaterMesh);
+        if (rightWaterMesh) scene.remove(rightWaterMesh);
         itemObjects.forEach(item => scene.remove(item.mesh));
         sceneryObjects.forEach(obj => scene.remove(obj));
         itemObjects = [];
@@ -607,7 +647,7 @@
         trackPoints = trackCurve.getPoints(subDivs);
         roadWidths = widths;
 
-        function buildRoadAndWaterGeometry() {
+        function buildRoadGeometry() {
             const roadGeo = new THREE.BufferGeometry();
             const roadVerts = [];
             const roadUvs = [];
@@ -649,6 +689,49 @@
             return roadGeo;
         }
 
+        // 道路沿いに途切れず沿う連続した水路メッシュを作成する
+        function buildContinuousWaterGeometry(sideDirection) {
+            const waterGeo = new THREE.BufferGeometry();
+            const verts = [];
+            const uvs = [];
+            const indices = [];
+            const upVector = new THREE.Vector3(0, 1, 0);
+            const waterWidth = 1.0;
+
+            for (let i = 0; i < subDivs; i++) {
+                const progress = i / (subDivs - 1);
+                const pt = trackCurve.getPointAt(progress).clone();
+                const tangent = trackCurve.getTangentAt(progress).normalize();
+                const side = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+
+                const widthIndex = Math.min(Math.floor(progress * numSegments), numSegments - 1);
+                const w = roadWidths[widthIndex] || 5;
+
+                // ジャンプ台エリア（114〜122）は水路を引かない
+                if (widthIndex >= 114 && widthIndex <= 122) {
+                    verts.push(pt.x, pt.y - 0.2, pt.z, pt.x, pt.y - 0.2, pt.z);
+                } else {
+                    const innerEdge = pt.clone().addScaledVector(side, sideDirection * (w / 2 + 0.1)).add(new THREE.Vector3(0, -0.15, 0));
+                    const outerEdge = pt.clone().addScaledVector(side, sideDirection * (w / 2 + 0.1 + waterWidth)).add(new THREE.Vector3(0, -0.15, 0));
+                    verts.push(innerEdge.x, innerEdge.y, innerEdge.z, outerEdge.x, outerEdge.y, outerEdge.z);
+                }
+
+                uvs.push(0, progress * 100, 1, progress * 100);
+
+                if (i < subDivs - 1) {
+                    const base = i * 2;
+                    indices.push(base, base + 1, base + 2);
+                    indices.push(base + 1, base + 3, base + 2);
+                }
+            }
+
+            waterGeo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+            waterGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+            waterGeo.setIndex(indices);
+            waterGeo.computeVertexNormals();
+            return waterGeo;
+        }
+
         const roadCanvas = document.createElement('canvas');
         roadCanvas.width = 256;
         roadCanvas.height = 256;
@@ -675,10 +758,25 @@
             side: THREE.DoubleSide
         });
 
-        const roadGeo = buildRoadAndWaterGeometry();
+        const roadGeo = buildRoadGeometry();
         roadMesh = new THREE.Mesh(roadGeo, roadMat);
         roadMesh.receiveShadow = true;
         scene.add(roadMesh);
+
+        // 水路マテリアルとメッシュ作成（左・右）
+        const waterMat = new THREE.MeshStandardMaterial({ 
+            color: 0x0284c7, 
+            roughness: 0.1, 
+            metalness: 0.1,
+            transparent: true, 
+            opacity: 0.85,
+            side: THREE.DoubleSide
+        });
+
+        leftWaterMesh = new THREE.Mesh(buildContinuousWaterGeometry(-1), waterMat);
+        rightWaterMesh = new THREE.Mesh(buildContinuousWaterGeometry(1), waterMat);
+        scene.add(leftWaterMesh);
+        scene.add(rightWaterMesh);
 
         buildEnvironment(subDivs, numSegments);
         spawnItemsOnTrack(numSegments);
@@ -689,11 +787,9 @@
 
         // 植木の幹と葉のジオメトリ・マテリアル
         const trunkGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.8, 8);
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 }); // 茶色の幹
-        const leavesGeo = new THREE.ConeGeometry(0.55, 1.4, 6); // ▲（コーン状）の葉っぱ
-        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6, flatShading: true }); // 緑色
-
-        const waterMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, transparent: true, opacity: 0.85 });
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
+        const leavesGeo = new THREE.ConeGeometry(0.55, 1.4, 6);
+        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6, flatShading: true });
 
         for (let i = 0; i < subDivs; i += 3) {
             const progress = i / (subDivs - 1);
@@ -707,7 +803,6 @@
             const w = roadWidths[wIndex] || 5;
 
             [-1, 1].forEach(dir => {
-                // 植木のグループ作成 (茶色の幹 + 三角錐▲の緑の葉)
                 const treeGroup = new THREE.Group();
                 
                 const trunk = new THREE.Mesh(trunkGeo, trunkMat);
@@ -720,28 +815,20 @@
                 leaves.castShadow = true;
                 treeGroup.add(leaves);
 
-                const treePos = pt.clone().addScaledVector(side, dir * (w / 2 + 1.2));
+                const treePos = pt.clone().addScaledVector(side, dir * (w / 2 + 1.6));
                 treeGroup.position.copy(treePos);
                 
-                // 道路の傾きに引っ張られず、世界座標のY軸に対して常にまっすぐ垂直に立たせる
-                // （Y軸回転のみ進行方向に向かせる）
                 const angleY = Math.atan2(tangent.x, tangent.z);
                 treeGroup.rotation.set(0, angleY, 0);
 
                 scene.add(treeGroup);
                 sceneryObjects.push(treeGroup);
-
-                const waterPos = pt.clone().addScaledVector(side, dir * (w / 2 + 0.5));
-                const waterMesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.2, 3.0), waterMat);
-                waterMesh.position.copy(waterPos).add(new THREE.Vector3(0, -0.2, 0));
-                waterMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
-                scene.add(waterMesh);
-                sceneryObjects.push(waterMesh);
             });
         }
 
+        // 建物の数（配置頻度）を1.5倍に増量（間隔を16 -> 10へ短縮）
         let houseIndex = 0;
-        for (let i = 0; i < subDivs; i += 16) {
+        for (let i = 0; i < subDivs; i += 10) {
             const progress = i / (subDivs - 1);
             const pt = trackCurve.getPointAt(progress);
             const tangent = trackCurve.getTangentAt(progress).normalize();
@@ -757,7 +844,7 @@
                 const type = houseIndex % 5;
                 const bldg = createBuildingMesh(type, color);
 
-                const bldgPos = pt.clone().addScaledVector(side, dir * (w / 2 + 12.0));
+                const bldgPos = pt.clone().addScaledVector(side, dir * (w / 2 + 9.5));
                 bldgPos.y = pt.y;
                 bldg.position.copy(bldgPos);
 
@@ -936,7 +1023,15 @@
         if (currentState !== STATE.PLAYING && currentState !== STATE.FINISHING) return;
 
         if (currentState === STATE.PLAYING) {
-            currentRunningSpeed = baseSpeed * currentSpeedMultiplier * 0.00038;
+            // 走行距離(m)を算出
+            distance = Math.floor(playerProgress * 1000);
+
+            // 100mごとに段階的にスピードアップ（100mで1.2倍、200mで1.4倍... 1000m到達直前に最大3.0倍）
+            const distanceTier = Math.min(10, Math.floor(distance / 100));
+            const distanceSpeedMultiplier = 1.0 + (distanceTier * 0.2); // 最大 1.0 + 2.0 = 3.0倍
+
+            // ベース速度 × 100mごとの加速倍率 × アイテム効果倍率
+            currentRunningSpeed = baseSpeed * distanceSpeedMultiplier * currentSpeedMultiplier * 0.00038;
             playerProgress += currentRunningSpeed;
 
             distance = Math.floor(playerProgress * 1000);
