@@ -209,13 +209,13 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '28';
+    window.__EDOGAWA_MINIGAMES_VER = '29';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
     window.__EDOGAWA_MINIGAME_LIST = ['amida','plane','mart','clinic','bus','toilet','lunch',
       'hotel','kingyo','tower','wheel','canoe','delivery','kanken','hide','nuts','archery','train',
-      'lottery','pachinko','fishing','fight','shiritori'];
+      'lottery','pachinko','fishing','fight','shiritori','bicycle'];
     window.__EDOGAWA_HAS_GAME = function(k){
       return window.__EDOGAWA_MINIGAME_LIST.indexOf(k) >= 0;
     };
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.1.29 (2026-10-27)';
+    window.__EDOGAWA_VERSION = 'ver1.2.0 (2026-10-27)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -2587,6 +2587,11 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
           <h4>★ 黄マスのミニゲーム</h4>
           <p>江戸川クイズ → 金魚すくい → 江戸川漢字検定 → ガキんちょ木の実ドロボー → 江戸川弓道場 の順にまわります。
           江戸川クイズは女性アナウンサーが問題を読み上げます。読み上げ中に答えを選んでおくと、読み終わった時点でその答えで判定します。</p>
+
+          <h4>🌳 親水緑道の端（自転車ゲーム）</h4>
+          <p>地図の緑の線（親水緑道）の両端に 🌳 があります。🌳 の近くに止まると、次の自分の番のはじめに「親水緑道の端まで移動しますか？」と聞かれます。
+          「移動する」を選ぶと自転車ゲーム「爆走！親水緑道SeSeラギー」（スマホを左右に傾けて操作）で走り、100点＝￥100 で所持金に加算。
+          そのあと反対側の端へ移動して、のりもの「🚲 自転車」がもらえます。はじめての双六では、最初のゴールのあとから使えます。</p>
 
           <h4>ゴールしたあと</h4>
           <p>だれかがゴールすると順位とご祝儀が決まり、目的地のジャンルに合ったミニゲーム（ホテル・バス・トイレ・給食・マート・診療所など）で遊んだあと、
@@ -11254,7 +11259,7 @@ if(window.EdogawaSugoroku)window.EdogawaSugoroku._updateFullscreenClass();
  const NEW_GAMES=new Set(['delivery','hide','kanken']);
  const META={delivery:{title:'🛵 江戸川出前ライダー',icon:'🛵'},hide:{title:'🏢 江戸川区新庁舎 かくれんぼ',icon:'🏢'},kanken:{title:'漢 いきなり漢字書き取りテスト',icon:'漢'}};
  const oldGoal=app.getGoalMiniGameKey?app.getGoalMiniGameKey.bind(app):null;
- app.getGoalMiniGameKey=function(c){if(c==='飲食店')return'delivery';if(c==='公共・スポーツ施設')return'hide';return oldGoal?oldGoal(c):null;};
+ /* getGoalMiniGameKey：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
  app.resolveStarEvent=function(p){if(!p)return;/* ★マス：タワーと大観覧車は▲マスへ移したので外し、木の実ドロボーと果実射撃を追加 *//* 【v125】ランダムだと出ない種類があったので、必ず順番に持ち回ります */const a=['quiz','kingyo','kanken','nuts','archery'];if(typeof this.starRotationIdx!=='number')this.starRotationIdx=0;const k=a[this.starRotationIdx%a.length];this.starRotationIdx=(this.starRotationIdx+1)%a.length;this.lastStarMiniGameKind=k;this.miniGameActive=true;this.activeMiniGamePlayerId=p.id;if(k==='quiz')this.startQuizInvite(p);else if(k==='kingyo')this.startKingyoInvite(p);else this.openRegionalMiniGame(k,p);};
  const oldOpen=app.openRegionalMiniGame?app.openRegionalMiniGame.bind(app):null;
  app.openRegionalMiniGame=function(game,player){
@@ -11942,7 +11947,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 
   // Mini-game stats: new games + regional games. Award once when the first result for the game arrives.
   const oldIntegrated=app.applyIntegratedMiniGameResult?.bind(app);if(oldIntegrated){app.applyIntegratedMiniGameResult=function(data){const st=this.regionalMiniGame;const first=st&&!st.statsAwarded;const r=oldIntegrated(data);if(first&&st&&st.statsAwarded!==true){st.statsAwarded=true;const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));if(p)this.awardMiniGameStats(p);}return r;};}
-  const oldRegional=app.applyRegionalMiniGameResult?.bind(app);if(oldRegional){app.applyRegionalMiniGameResult=function(data){const st=this.regionalMiniGame;const first=st&&!st.statsAwarded;const r=oldRegional(data);if(first&&st&&!st.statsAwarded){st.statsAwarded=true;if(st.game==='canoe'&&Array.isArray(data.results)){data.results.forEach(x=>{const p=this.players?.find(q=>Number(q.id)===Number(x.id));if(p)this.awardMiniGameStats(p);});}else{const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));if(p)this.awardMiniGameStats(p);}}return r;};}
+  const oldRegional=app.applyRegionalMiniGameResult?.bind(app);if(oldRegional){/* applyRegionalMiniGameResult：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */}
   const oldAnswer=app.answerQuiz?.bind(app);if(oldAnswer){app.answerQuiz=function(...a){const p=this.players?.find(x=>Number(x.id)===Number(this.activeQuizPlayerId));const r=oldAnswer(...a);if(p){const key=`${this.turnCount}:${this.currentPlayerIdx}:${this.activeQuizPlayerId}`;if(this._quizStatsAwardedKey!==key){this._quizStatsAwardedKey=key;this.awardMiniGameStats(p);}}return r;};}
   const oldFinishBoat=app.finishBoatRaceGame?.bind(app);if(oldFinishBoat){app.finishBoatRaceGame=async function(...a){const participants=Array.isArray(this.players)?this.players.slice():[];participants.forEach(x=>this.awardMiniGameStats?.(x));return oldFinishBoat(...a);};}
 
@@ -11976,7 +11981,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 
   // Account/profile data should be included in room recruitment and guest joins.
   app._roomAccount=function(){const p=this.getUserProfile();return {money:p.money,goals:p.goals,movedSquares:p.movedSquares,stats:p.stats,properties:p.properties,authProvider:p.authProvider,lineUserId:p.lineUserId,avatar:p.avatarValue};};
-  const oldOpenRecruit=app.openRecruitmentModal?.bind(app); if(oldOpenRecruit){app.openRecruitmentModal=async function(...a){const r=await oldOpenRecruit(...a);if(this.recruitmentPlayers?.[0])Object.assign(this.recruitmentPlayers[0],this._roomAccount());return r;};}
+  const oldOpenRecruit=app.openRecruitmentModal?.bind(app); if(oldOpenRecruit){/* openRecruitmentModal：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */}
   const oldForce=app.forceStartMultiplayer?.bind(app); if(oldForce){app.forceStartMultiplayer=async function(...a){const p=this.recruitmentPlayers?.find(x=>x.uid===this.myUid);if(p)Object.assign(p,this._roomAccount());return oldForce(...a);};}
   const oldConfirmGuest=app.confirmGuestNickname?.bind(app); if(oldConfirmGuest){app.confirmGuestNickname=function(...a){const p=this.getUserProfile();p.nickname=cleanNickname(document.getElementById('guest-nickname-input')?.value,p.nickname);this.saveUserProfile();return oldConfirmGuest(...a);};}
 
@@ -12796,90 +12801,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     return false;
   };
 
-  // Keep the existing property-purchase wrapper and all non-public goal mini-games,
-  // but make the public-facility route a single final, deterministic branch.
-  const prevGoal=typeof app.startPostGoalMiniGameThenAmida==='function'
-    ? app.startPostGoalMiniGameThenAmida.bind(app) : null;
-  app.startPostGoalMiniGameThenAmida=function(player){
-    if(!player){this.startGoalAmida?.(player);return;}
-    if(!isPublicGoal()){
-      if(prevGoal)return prevGoal(player);
-      return this.startGoalAmida?.(player);
-    }
-
-    // Public facilities are not property-eligible, so there is no property modal
-    // to interrupt this branch. CPU gets the result modal directly; human players
-    // get the real embedded 3D game (or its v34 WebGL fallback).
-    this._pendingGoalAmidaPlayer=player;
-    this.miniGameActive=true;
-    this.activeMiniGamePlayerId=player.id;
-    this._v34HideLaunchToken=(this._v34HideLaunchToken||0)+1;
-    const token=this._v34HideLaunchToken;
-    clearTimeout(this._v34HideWatchdog);
-
-    if(player.isCpu || this.isPlayerOffline?.(player)){
-      try{
-        if(typeof this.startIntegratedCpuMiniGame==='function'){
-          this.startIntegratedCpuMiniGame('hide',player);
-          return;
-        }
-      }catch(e){console.error('[v34] CPU hide result failed',e);}
-      // Absolute fallback: always produce a result modal instead of leaving the turn locked.
-      try{
-        this.regionalMiniGame={game:'hide',playerId:player.id,done:false,integrated:true,cpuResultOnly:true};
-        this.applyIntegratedMiniGameResult({type:'EDOGAWA_MINIGAME_RESULT',game:'hide',score:100,delta:10000,prize:10000,success:true,detail:'区長を発見！クリア賞金 ¥10,000'});
-        return;
-      }catch(e){
-        this._pendingGoalAmidaPlayer=null;this.miniGameActive=false;this.activeMiniGamePlayerId=null;
-        this.startGoalAmida?.(player);return;
-      }
-    }
-
-    if(!window.__EDOGAWA_HAS_GAME('hide')){
-      this._pendingGoalAmidaPlayer=null;this.miniGameActive=false;this.activeMiniGamePlayerId=null;
-      this.startGoalAmida?.(player);return;
-    }
-    const launch=()=>{
-      if(token!==this._v34HideLaunchToken)return;
-      try{
-        this.openRegionalMiniGame('hide',player);
-      }catch(e){
-        console.error('[v34] hide launch exception',e);
-        this._v34HideFail?.(player,e);
-      }
-    };
-    this._v34HideFail=(p,e)=>{
-      if(token!==this._v34HideLaunchToken)return;
-      clearTimeout(this._v34HideWatchdog);
-      this._v34HideLaunchToken++;
-      this._pendingGoalAmidaPlayer=null;
-      this.miniGameActive=false;this.activeMiniGamePlayerId=null;
-      try{this.closeIntegratedMiniGameResult?.(true);}catch(_){ }
-      try{this.closeRegionalMiniGame?.();}catch(_){ }
-      this.addLog?.('⚠️ 江戸川区新庁舎かくれんぼを起動できなかったため、あみだくじへ進みます。');
-      setTimeout(()=>this.startGoalAmida?.(p),120);
-    };
-    setTimeout(launch,120);
-    // The embedded v34 hide game sends READY (3D or fallback). Waiting on READY rather
-    // than a fixed delay prevents a mobile device from being left in a locked turn.
-    this._v34HideReady=false;
-    const onMessage=(e)=>{
-      const d=e.data||{};
-      if(d.game!=='hide')return;
-      if(d.type==='EDOGAWA_MINIGAME_READY'){
-        this._v34HideReady=true;
-        clearTimeout(this._v34HideWatchdog);
-        window.removeEventListener('message',onMessage);
-      }
-    };
-    window.addEventListener('message',onMessage);
-    this._v34HideWatchdog=setTimeout(()=>{
-      window.removeEventListener('message',onMessage);
-      if(token!==this._v34HideLaunchToken||this._v34HideReady)return;
-      console.error('[v34] hide READY timeout');
-      this._v34HideFail?.(player,new Error('READY timeout'));
-    },15000);
-  };
+  /* startPostGoalMiniGameThenAmida：ここにあった古い版は、あとの版（edogawa-v39-minigame-controller）で置きかえられていたため削除（ver1.2.0） */
 
   // Diagnostics for the next real-play check.
   window.__EDOGAWA_PUBLIC_FACILITY_MINIGAME_DIAGNOSTICS=function(){
@@ -15761,30 +15683,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // 着地時の処理も、複数路線に対応した形に差し替えます
   const origLand2 = app.landOnSpot ? app.landOnSpot.bind(app) : null;
   const rawLand = app.__rawLandOnSpot || null;
-  app.landOnSpot = function(player){
-    try{
-      const node=this.roadNetworkNodes && this.roadNetworkNodes[player.currentNodeIdx];
-      const at = node ? app.stationLinesAt(node.lat, node.lng, 120) : null;
-      const isMine = !player.isCpu && (!this.myUid || player.uid===this.myUid);
-      if (at && at.lines.length && isMine && !player.isFlying) {
-        app._openRailRide(player, at, (pick)=>{
-          if(!pick){ app.__origLandOnSpot(player); return; }
-          const f=app.railFare(pick.line, at.name, pick.to);
-          if(!f || (Number(player.money)||0) < f.fare){ app.__origLandOnSpot(player); return; }
-          player.money = Math.max(0, (Number(player.money)||0) - f.fare);
-          this.addLog(`🚃 ${player.name}：${LINES[pick.line].name} ${at.name}駅 → ${pick.to}駅（運賃 ¥${f.fare.toLocaleString('ja-JP')}／約${f.km}km）`);
-          this.updateHUD && this.updateHUD();
-          this.scheduleProfilePersist && this.scheduleProfilePersist(player);
-          const dest=ST[pick.to];
-          Promise.resolve(this.teleportPlayer(player, {name:pick.to+'駅', lat:dest.lat, lng:dest.lng}))
-            .then(()=>{ this.finishTurn(); this.panToCurrentPlayer && this.panToCurrentPlayer(); })
-            .catch(()=>{ this.finishTurn(); });
-        });
-        return;
-      }
-    }catch(e){ console.error('[v73]', e); }
-    return app.__origLandOnSpot(player);
-  };
+  /* landOnSpot：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
 
   window.__EDOGAWA_METRO7_INFO = () => ({
     駅: M7.stations, 全長km: M7.totalKm, 開通ターン: M7.openTurns,
@@ -17164,43 +17063,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   // 「乗車」を押したときに、いまの駅乗車画面を開きます
-  app.boardTrainNow = function(player){
-    const ps = player && player.pendingStation; if(!ps) return;
-    const at = app.stationLinesAt ? app.stationLinesAt(ps.lat, ps.lng, NEAR_M) : null;
-    if(!at || !at.lines.length){ player.pendingStation=null; return; }
-    player.pendingStation = null;
-    app._openRailRide(player, at, (pick)=>{
-      if(!pick){ app.updateHUD && app.updateHUD(); return; }
-      const f = app.railFare(pick.line, at.name, pick.to);
-      if(!f || (Number(player.money)||0) < f.fare){ app.updateHUD && app.updateHUD(); return; }
-      player.money = Math.max(0, (Number(player.money)||0) - f.fare);
-      app.addLog && app.addLog(`🚃 ${player.name}：${LINES[pick.line].name} ${at.name}駅 → ${pick.to}駅（運賃 ¥${f.fare.toLocaleString('ja-JP')}／約${f.km}km）`);
-      app.updateHUD && app.updateHUD();
-
-      const arrive = (prize, detail)=>{
-        if(prize>0){
-          player.money = (Number(player.money)||0) + prize;
-          app.addLog && app.addLog(`🎖 ${player.name}：運転ボーナス ＋¥${prize.toLocaleString('ja-JP')}（${detail||''}）`);
-        }
-        try{
-          if(!player.isFlying && !(player.wheelchairTurns>0)){
-            player.vehicle = { emoji:'🚃', name:'電車', mult:4 };
-            app.addLog && app.addLog(`🚃 ${player.name}：運転おつかれさまでした！　次のサイコロは【🚃 電車（4倍）】です。`);
-            app.setPlayerIconState && app.setPlayerIconState(player, {});
-          }
-        }catch(e){}
-        app.updateHUD && app.updateHUD();
-        app.scheduleProfilePersist && app.scheduleProfilePersist(player);
-        const dest = ST[pick.to];
-        Promise.resolve(app.teleportPlayer(player, {name:pick.to+'駅', lat:dest.lat, lng:dest.lng}))
-          .then(()=>{ app.finishTurn(); app.panToCurrentPlayer && app.panToCurrentPlayer(); })
-          .catch(()=>{ app.finishTurn(); });
-      };
-      const drivable = app.startTrainRide && ['tozai','shinjuku','sobu','keiyo','keisei','metro7'].indexOf(pick.line)>=0;
-      if(drivable) app.startTrainRide(player, pick.line, at.name, pick.to, arrive);
-      else arrive(0,'');
-    });
-  };
+  /* boardTrainNow：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
 
   // 止まった場所が駅のそばなら、覚えておくだけにします（その場では聞きません）
   const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
@@ -18925,30 +18788,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //    これまでは mpFindRoom を呼ぶたびに humans を1つ増やしていたため、
   //    1人目が「マルチプレイ」を何度か押しただけで満室あつかいになり、
   //    2人目が別の部屋に回されていました。
-  app.mpFindRoom = async function(forceNew){
-    const ref = roomRefOf('__lobby_v1');
-    return await FB().runTransaction(app.db, async (tx)=>{
-      const snap = await tx.get(ref);
-      const now = Date.now();
-      let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
-        .filter(r => r && r.roomId && (now - (r.updatedAt || 0) < ROOM_FRESH_MS));
-      let target = null;
-      if(!forceNew){
-        const open = rooms.filter(r => (r.humans || 0) < 4);
-        open.sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0));   // いちばん新しい部屋へ
-        target = open[0] || null;
-      }
-      let isNew = false;
-      if(!target){
-        target = { roomId: 'room_' + Math.floor(100000 + Math.random()*900000), humans: 0, updatedAt: now };
-        rooms.push(target); isNew = true;
-      }
-      target.updatedAt = now;                 // ← humans はここでは増やしません
-      if(rooms.length > 20) rooms = rooms.slice(-20);
-      tx.set(ref, { rooms: rooms, updatedAt: now });
-      return { roomId: target.roomId, isNew: isNew, humans: target.humans || 0 };
-    });
-  };
+  /* mpFindRoom：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
 
   // 実際の人数をロビーに書き戻し、遊んでいる間は部屋を新しく見せ続けます
   app.mpTouchLobby = async function(humans){
@@ -19086,11 +18926,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   app.railHasDestination = hasDestination;
   const origRide = app._openRailRide ? app._openRailRide.bind(app) : null;
   if(origRide){
-    app._openRailRide = function(player, at, done){
-      // 「行ける駅がありません。」だけの枠は、押すところが無く邪魔になるだけなので出しません。
-      if(!hasDestination(at)){ if(done) done(null); return; }
-      return origRide(player, at, done);
-    };
+    /* _openRailRide：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
   }
 
   window.__EDOGAWA_V90_INFO = ()=>{
@@ -26233,10 +26069,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return true;
   }
 
-  function myPlayer(){
-    const ps = app.players || [];
-    return ps.find(p => p && !p.isCpu && (!app.myUid || p.uid === app.myUid)) || ps[0] || null;
-  }
+  /* myPlayer：使われていないので削除（ver1.2.0） */
   function nodeOf(p){
     try{
       const n = app.roadNetworkNodes && app.roadNetworkNodes[p.currentNodeIdx];
@@ -27437,6 +27270,22 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function stopWatchdog(){
     try{ clearTimeout(app.turnWatchdogTimer); app.turnWatchdogTimer = null; }catch(e){}
   }
+  // 【ver1.2.0】お誘いの枠（駅の「乗車しますか？」と同じ置きかた）。フッターの上、画面の中央にそろえます
+  function askBox(id){
+    let el = g(id);
+    if(!el){ el = document.createElement('div'); el.id = id; document.body.appendChild(el); }
+    try{
+      const f = document.querySelector('footer[data-app="1"]');
+      const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
+      el.style.cssText = 'position:fixed;left:10px;right:10px;z-index:2147483200;' +
+        'display:flex;justify-content:center;pointer-events:none;bottom:' + (h + 16) + 'px';
+    }catch(e){}
+    return el;
+  }
+  const shownAsk = (id)=>{ const e = g(id); return !!(e && e.classList.contains('show') && e.style.display !== 'none'); };
+  // 【ver1.2.0】ほかのミニゲーム（御朱印・自転車）でも使えるように、共通の道具を出しておきます
+  app._edoMini = { openFrame, decorate, closeCommon, claimTurn, stopWatchdog, askBox, shown: shownAsk,
+    esc, yen, isMine, km: (a, b)=>km(a, b) };
 
   // ══════════════════════════════════════════════════════════════
   //  🎣 えどがわ釣りスポット
@@ -27543,24 +27392,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       return r;
     };
   }
-  function fishAskBox(){
-    let el = g('edo-fish-ask');
-    if(!el){ el = document.createElement('div'); el.id = 'edo-fish-ask'; document.body.appendChild(el); }
-    return el;
-  }
   app.closeFishingAsk = function(){
     const el = g('edo-fish-ask');
     if(el){ el.classList.remove('show'); el.style.display = 'none'; el.innerHTML = ''; }
   };
   function openFishAsk(player, spot){
-    const el = fishAskBox();
-    try{
-      const f = document.querySelector('footer[data-app="1"]');
-      const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
-      // 駅の「乗車しますか？」・パチンコと同じ置きかた（画面の中央にそろえます）
-      el.style.cssText = 'position:fixed;left:10px;right:10px;z-index:2147483200;' +
-        'display:flex;justify-content:center;pointer-events:none;bottom:' + (h + 16) + 'px';
-    }catch(e){}
+    const el = askBox('edo-fish-ask');
     el.innerHTML = '<div class="edo-ask-box">' +
       '<div class="edo-ask-t">🎣 ' + esc(spot.name) + '</div>' +
       '<div class="edo-ask-s">近くで釣りができますが、釣りしていきますか？<br>' +
@@ -29346,18 +29183,6 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     animation: edo-rpl .55s cubic-bezier(.2,.6,.3,1) forwards; }
   @keyframes edo-rpl{ to{ transform:scale(1); opacity:0; } }
 
-  /* ── ③ フローティングアクションボタン（メニュー） ── */
-  /* 【ver1.1.18】「≡」はこれまでどおりヘッダー右端に戻しました（FABは使いません）。
-     縮小マップ・ステータスの枠は「♫」〜「≡」の幅に合わせて出すため、≡が無いと狭く崩れていました */
-  #edo-fab-menu{ display:none !important; }
-  #edo-fab-menu{ position:fixed; right:16px; bottom:24px; z-index:60; width:56px; height:56px; border-radius:50%;
-    border:0; background:linear-gradient(145deg,#fbbf24,#f59e0b); color:#0f172a; display:flex; align-items:center; justify-content:center;
-    flex-direction:column; gap:4px; box-shadow: var(--edo-elev-3), inset 1px 1px 0 rgba(255,255,255,.35);
-    transition: transform .15s ease, box-shadow .15s ease, bottom .25s ease; cursor:pointer; -webkit-tap-highlight-color:transparent; }
-  #edo-fab-menu i{ display:block; width:20px; height:2.5px; border-radius:2px; background:currentColor; }
-  #edo-fab-menu:active{ transform:scale(.94); box-shadow: var(--edo-elev-2); }
-  #edo-fab-menu.edo-fab-hide{ transform:scale(0); pointer-events:none; }
-
   /* ── ④ 4人のプレーヤー枠：カード型UI ── */
   #players-card-container{ gap:8px !important; }
   #players-card-container > div{
@@ -29426,33 +29251,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const r = f.getBoundingClientRect();
     return (r.height > 0 && getComputedStyle(f).display !== 'none') ? Math.round(window.innerHeight - r.top) : 0;
   }
-  function ensureFab(){
-    let b = g('edo-fab-menu');
-    if(!b){
-      b = document.createElement('button'); b.id = 'edo-fab-menu'; b.type = 'button';
-      b.setAttribute('aria-label', 'メニュー'); b.title = 'メニュー';
-      b.innerHTML = '<i></i><i></i><i></i>';
-      b.addEventListener('click', ()=>{ try{ app.openMenuModal && app.openMenuModal(); }catch(e){} });
-      document.body.appendChild(b);
-    }
-    return b;
-  }
   function placeFab(){
-    // 【ver1.1.18】FABは使わないので作りません。スナックバーの位置だけ合わせます
-    const fh0 = footerH();
-    document.documentElement.style.setProperty('--edo-snack-bottom', (fh0 ? fh0 + 12 : 24) + 'px');
-    if(!g('edo-fab-menu')) return;
-    const b = ensureFab();
+    // スナックバー（お知らせ）をフッターのすぐ上に出します（ver1.1.18 で FAB はなくしました）
     const fh = footerH();
-    // スナックバーが出ている間は、FABをその上へよけます（マテリアルデザインの動き）
-    let lift = 0;
-    try{ const sb = g('edogawa-stat-toast');
-      if(sb && !sb.classList.contains('hidden') && !sb.classList.contains('opacity-0')) lift = Math.round(sb.getBoundingClientRect().height) + 12; }catch(e){}
-    b.style.bottom = ((fh ? fh + 12 : 24) + lift) + 'px';
-    // 認証画面・初回設定の間は出しません
-    const auth = g('edogawa-auth-screen');
-    const authOn = !!(auth && auth.classList.contains('show') && getComputedStyle(auth).display !== 'none');
-    b.classList.toggle('edo-fab-hide', authOn);
     document.documentElement.style.setProperty('--edo-snack-bottom', (fh ? fh + 12 : 24) + 'px');
   }
 
@@ -29477,8 +29278,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     hook(); setInterval(hook, 2000); }catch(e){}
   window.addEventListener('resize', tick);
 
-  window.__EDOGAWA_V164_INFO = ()=>{ const b = g('edo-fab-menu'); const r = b && b.getBoundingClientRect();
-    return { FAB: r ? { 右: Math.round(innerWidth - r.right), 下: Math.round(innerHeight - r.bottom), 大きさ: Math.round(r.width) } : null }; };
+  window.__EDOGAWA_V164_INFO = ()=>({ スナックバーの位置: getComputedStyle(document.documentElement).getPropertyValue('--edo-snack-bottom') });
 })();
 </script>
 <!-- edogawa-v165-style は <head> へ移しました（ver1.1.21：最初から背景色で表示するため） -->
@@ -29999,12 +29799,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   // ── 次の自分の番のはじめに聞きます（駅 → パチンコ → 釣り → 御朱印 の順） ──
-  function askBox(){ let el = g('edo-goshuin-ask'); if(!el){ el = document.createElement('div'); el.id = 'edo-goshuin-ask'; document.body.appendChild(el); } return el; }
   app.closeGoshuinAsk = function(){ const el = g('edo-goshuin-ask'); if(el){ el.classList.remove('show'); el.style.display = 'none'; el.innerHTML = ''; } };
   function openAsk(player, t){
-    const el = askBox();
-    try{ const f = document.querySelector('footer[data-app="1"]'); const h = f ? Math.round(f.getBoundingClientRect().height) : 204;
-      el.style.cssText = 'position:fixed;left:10px;right:10px;z-index:2147483200;display:flex;justify-content:center;pointer-events:none;bottom:' + (h + 16) + 'px'; }catch(e){}
+    const el = app._edoMini.askBox('edo-goshuin-ask');
     el.innerHTML = '<div class="edo-ask-box"><div class="edo-ask-t">📿 ' + esc(t.name) + '</div>' +
       '<div class="edo-ask-s">' + esc(t.name) + 'が近くにあります。<br>御朱印をいただきますか？（' + yen(FEE) + '）<br>いただくと1回休みです。</div>' +
       '<div class="edo-ask-btns"><button type="button" data-no="1">いいえ</button><button type="button" class="go" data-yes="1">いただく</button></div></div>';
@@ -30015,7 +29812,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(b.dataset.yes){ player.pendingGoshuin = null; app.closeGoshuinAsk(); receive(player, t); }
     };
   }
-  function shown(id){ const e = g(id); return !!(e && e.classList.contains('show') && e.style.display !== 'none'); }
+  const shown = app._edoMini.shown;
   function refreshAsk(){
     try{
       const cp = (app.players || [])[app.currentPlayerIdx];
@@ -30246,7 +30043,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //   ・そのあと、今回限りの「背景色の選択」（まだ背景色を選んだことがない人だけ）
   // ════════════════════════════════════════════════════════════
   const SOLO_KEY = 'edogawa_sugoroku_state';
-  const NOTICE_VER = 'v1.1.29';                       // アップデート情報を出す版（内容を変えたら、ここを変えます）
+  const NOTICE_VER = 'v1.2.0';                       // アップデート情報を出す版（内容を変えたら、ここを変えます）
   const SEEN_KEY = 'edogawa_update_notice_seen_v1';   // 最後に出した版
   const OFF_KEY = 'edogawa_update_notice_off_v1';     // 「次回から表示しない」
   const OLD_KEY = 'edogawa_update_notice_v1';         // ver1.1.28 で出したときの印
@@ -30272,6 +30069,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     '・「縮小マップ」「ステータス」表示',
     '・「アイテム」（あみだくじにて取得可能）',
     '・目的地ゴール後「不動産購入」画面',
+    '・親水緑道「自転車」ゲームで端まで移動',
     '・近づき発動「パチンコ」「釣り」ゲーム',
     '・すれ違い対戦「闘魂ロード」「しりとり」',
     '・マテリアルデザインの適用'
@@ -30370,6 +30168,238 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }, 400);
 
   window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: state.notice, 背景色の選択: state.theme, インストール: state.how });
+})();
+</script>
+<style id="edogawa-v170-style">
+  /* ver1.2.0　🌳 親水緑道の端（自転車ゲーム「爆走！親水緑道SeSeラギー」の入口） */
+  .edo-gwend-icon{ background:transparent; border:0; }
+  .edo-gwend-pin{ width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:16px; line-height:1; cursor:pointer; background:rgba(21,128,61,.35); border:2px solid #4ade80;
+    box-shadow:0 2px 8px rgba(0,0,0,.45); }
+  body.edo-gw-locked .edo-gwend-pin{ filter:grayscale(.6); opacity:.75; }
+</style>
+<script id="edogawa-v170">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const M = app._edoMini; if(!M) return;                 // v156 の共通の道具（ミニゲームの画面・共通モーダル）
+  const g = (id)=>document.getElementById(id);
+  const { esc, yen, isMine, km } = M;
+  // ════════════════════════════════════════════════════════════
+  //  ver1.2.0　🚴 爆走！親水緑道SeSeラギー
+  //   ・親水緑道（緑の線）の両端に「🌳」を置きます
+  //   ・自分のコマが🌳の近く（6マス＝240m以内）に止まったら、次の自分の番のはじめに
+  //     「親水緑道の端まで移動しますか？」と聞きます（駅の「乗車しますか？」と同じ流れ）
+  //   ・「移動する」→ 自転車ゲーム → 反対側の端へ移動して、のりもの「🚲 自転車」をもらえます
+  //   ・100点＝￥100 で所持金に加算。はじめての双六では、最初のゴールまでは起動しません
+  // ════════════════════════════════════════════════════════════
+  const NEAR_M = 240;
+  const GAME = 'bicycle', TITLE = '爆走！親水緑道SeSeラギー';
+  const ENDS = [];                                      // { gw, i(0=始点/1=終点), lat, lng }
+  (window.__EDOGAWA_GREENWAYS || []).forEach((gw, k)=>{
+    if(!gw || gw.k !== '緑道' || !Array.isArray(gw.g) || gw.g.length < 2) return;
+    const a = gw.g[0], b = gw.g[gw.g.length - 1];
+    ENDS.push({ k, gw, i:0, lat:a[0], lng:a[1] }, { k, gw, i:1, lat:b[0], lng:b[1] });
+  });
+  const other = (e)=>ENDS.find(x=>x.k === e.k && x.i !== e.i);
+  const lenKm = (gw)=>{ let t = 0; for(let i = 0; i < gw.g.length - 1; i++) t += km({lat:gw.g[i][0], lng:gw.g[i][1]}, {lat:gw.g[i+1][0], lng:gw.g[i+1][1]}); return t; };
+  const unlocked = ()=>{ try{ return (app.goaledPlaces || []).length > 0; }catch(e){ return false; } };
+  const enabled = ()=>{ try{ return !app.greenwaysEnabled || app.greenwaysEnabled(); }catch(e){ return true; } };
+  const endId = (e)=>e.k + ':' + e.i;
+  const endById = (id)=>ENDS.find(e=>endId(e) === id) || null;
+
+  // ── 地図の🌳 ──
+  let marks = [], markMap = null, markOn = null;
+  function drawMarks(){
+    if(!app.map || !window.L) return;
+    const on = enabled();
+    if(markMap === app.map && markOn === on) return;
+    marks.forEach(m=>{ try{ (markMap || app.map).removeLayer(m); }catch(e){} });
+    marks = []; markMap = app.map; markOn = on;
+    if(!on) return;
+    ENDS.forEach(e=>{
+      try{
+        const icon = L.divIcon({ className:'edo-gwend-icon', html:'<div class="edo-gwend-pin">🌳</div>', iconSize:[28,28], iconAnchor:[14,14] });
+        const mk = L.marker([e.lat, e.lng], { icon, zIndexOffset:-80 }).addTo(app.map);
+        try{ mk.bindTooltip(e.gw.n + '（' + (e.i ? '終点' : '起点') + '）', { direction:'top', offset:[0,-10] }); }catch(err){}
+        mk.on('click', ()=>{ try{ app._showGreenwayDetail && app._showGreenwayDetail(e.gw); }catch(err){} });
+        marks.push(mk);
+      }catch(err){}
+    });
+  }
+  function tick(){ drawMarks(); try{ document.body.classList.toggle('edo-gw-locked', !unlocked()); }catch(e){} }
+  setInterval(tick, 1500); setTimeout(tick, 1200);
+
+  function nearEnd(player){
+    try{
+      const n = app.roadNetworkNodes && app.roadNetworkNodes[player.currentNodeIdx]; if(!n) return null;
+      let best = null;
+      ENDS.forEach(e=>{ const d = km({lat:n.lat, lng:n.lng}, e) * 1000; if(d <= NEAR_M && (!best || d < best.d)) best = { e, d }; });
+      return best;
+    }catch(e){ return null; }
+  }
+  const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
+  if(origLand){
+    app.landOnSpot = function(player){
+      const r = origLand.apply(app, arguments);
+      try{
+        if(isMine(player)){
+          const hit = (!player.isFlying && unlocked() && enabled()) ? nearEnd(player) : null;
+          const id = hit ? endId(hit.e) : null;
+          player.pendingGreenway = (hit && player.greenwayDeclined !== id) ? { id, name: hit.e.gw.n } : null;
+          if(player.greenwayDeclined && player.greenwayDeclined !== id) player.greenwayDeclined = null;
+        }
+      }catch(e){ console.warn('[v170]', e); }
+      return r;
+    };
+  }
+
+  // ── 次の自分の番のはじめに聞きます（駅 → パチンコ → 釣り → 御朱印 → 親水緑道 の順） ──
+  const ASK = 'edo-gw-ask';
+  app.closeGreenwayAsk = function(){ const el = g(ASK); if(el){ el.classList.remove('show'); el.style.display = 'none'; el.innerHTML = ''; } };
+  function openAsk(player, e){
+    const el = M.askBox(ASK);
+    const to = other(e);
+    el.innerHTML = '<div class="edo-ask-box"><div class="edo-ask-t">🌳 親水緑道の端まで移動しますか？</div>' +
+      '<div class="edo-ask-s">' + esc(e.gw.n) + 'を🚴自転車で走って、反対側の端（約' + lenKm(e.gw).toFixed(1) + 'km）まで移動します。<br>' +
+      '100点＝￥100 で所持金になり、着いたら のりもの「🚲 自転車」がもらえます。</div>' +
+      '<div class="edo-ask-btns"><button type="button" data-no="1">キャンセル</button><button type="button" class="go" data-yes="1">移動する</button></div></div>';
+    el.classList.add('show');
+    el.onclick = (ev)=>{
+      const b = ev.target.closest ? ev.target.closest('button') : null; if(!b) return;
+      if(b.dataset.no){ player.greenwayDeclined = endId(e); player.pendingGreenway = null; app.closeGreenwayAsk(); return; }
+      if(b.dataset.yes){
+        // iPhone：ジャイロ（傾き）を使う許可は、ボタンを押したこの瞬間にしか聞けません
+        try{ const D = window.DeviceOrientationEvent; if(D && typeof D.requestPermission === 'function') D.requestPermission().catch(()=>{}); }catch(err){}
+        player.pendingGreenway = null; app.closeGreenwayAsk();
+        if(to) app.startBicycleGame(player, e, to);
+      }
+    };
+  }
+  const OTHERS = ['edo-board-ask','edo-pachi-ask','edo-fish-ask','edo-goshuin-ask'];
+  function refreshAsk(){
+    try{
+      const cp = (app.players || [])[app.currentPlayerIdx];
+      const isShown = M.shown(ASK);
+      const off = ()=>{ if(isShown) app.closeGreenwayAsk(); };
+      if(!cp || !isMine(cp) || !cp.pendingGreenway) return off();
+      if(!unlocked() || !enabled()) return off();
+      if(app.isRolling || app.miniGameActive || app.boatRaceActive || cp.skipTurn) return off();
+      if(app.canActNow && !app.canActNow()) return off();
+      if(cp.pendingStation || cp.pendingPachinko || cp.pendingFishing || cp.pendingGoshuin) return off();
+      if(OTHERS.some(M.shown)) return off();
+      if(isShown) return;
+      const e = endById(cp.pendingGreenway.id);
+      if(!e){ cp.pendingGreenway = null; return off(); }
+      openAsk(cp, e);
+    }catch(e){}
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); refreshAsk(); return r; }; }
+  setInterval(refreshAsk, 700);
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){ app.rollDice = function(){ try{ const cp = (app.players || [])[app.currentPlayerIdx]; if(cp) cp.pendingGreenway = null; app.closeGreenwayAsk(); }catch(e){} return origRoll.apply(app, arguments); }; }
+  // ほかのお誘い（パチンコ・釣り・電車・御朱印）でこの番を使うときは、親水緑道のお誘いは終わりにします
+  ['startPachinkoGame','startFishingGame','boardTrainNow'].forEach(k=>{
+    const o = app[k]; if(typeof o !== 'function') return;
+    app[k] = function(player){ try{ if(player) player.pendingGreenway = null; app.closeGreenwayAsk(); }catch(e){} return o.apply(app, arguments); };
+  });
+
+  // ── 自転車ゲーム（開始・結果は双六共通のモーダル） ──
+  const ITEM_ROWS = [ ['TURTLE','🐢 カメ',100], ['HEART','❤️‍🔥 ファイヤー',300], ['STAR','🌟 スター',500] ];
+  app.startBicycleGame = function(player, from, to){
+    if(!player || !from || !to) return false;
+    let done = false, payload = null, guard = null, fr = null;
+    const finish = ()=>{
+      if(done) return; done = true;
+      clearTimeout(guard); M.stopWatchdog();
+      app.__customMiniQuit = null;
+      try{ fr && fr.close(); }catch(e){}
+      app.miniGameActive = false; app.regionalMiniGame = null; app.__bicycleActive = false;
+
+      const r = (payload && payload.bicycle) || { completed:false, distance:0, baseScore:0, items:{}, totalScore:0 };
+      const items = r.items || {};
+      const total = Math.max(0, Math.round(Number(r.totalScore) || 0));
+      const prize = Math.floor(total / 100) * 100;                      // 100点 ＝ ￥100
+      const before = Math.round(Number(player.money) || 0);
+      player.money = before + prize;
+      try{ app.addLog && app.addLog('🚴 ' + player.name + '：' + from.gw.n + 'を自転車で走りました（' + (r.completed ? '完走' : r.quit ? '途中で終了' : '水路に落下') +
+        '・' + (Number(r.distance) || 0).toLocaleString('ja-JP') + 'm・' + total.toLocaleString('ja-JP') + '点 → ＋' + yen(prize) + '）'); }catch(e){}
+
+      const rows = [
+        { name:'走行距離', text: (Number(r.distance) || 0).toLocaleString('ja-JP') + ' m ／ 1,000 m' },
+        { name: r.completed ? '🏆 完走ボーナス' : '🌊 距離点（1m＝10点）', text: (Number(r.baseScore) || 0).toLocaleString('ja-JP') + ' 点' }
+      ];
+      ITEM_ROWS.forEach(([key, label, pt])=>{
+        const n = Math.max(0, Math.floor(Number(items[key]) || 0));
+        rows.push({ name: label + '（' + pt + '点）×' + n, text: '＋' + (n * pt).toLocaleString('ja-JP') + ' 点' });
+      });
+      rows.push({ name:'合計点数', text: total.toLocaleString('ja-JP') + ' 点' });
+      rows.push({ name:'換金（100点＝￥100）', text: '＋' + yen(prize) });
+      try{
+        app._miniCommonResultShow && app._miniCommonResultShow({ game:GAME, playerName: player.name, money: player.money, delta: prize, rows });
+        M.decorate('🚴', '結果発表', TITLE, esc(player.name) + '　' + (r.completed ? '🏆 完走！' : r.quit ? '🚏 途中で終了' : '🌊 水路に落ちてしまった！'), null);
+      }catch(e){}
+      try{ app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+
+      setTimeout(()=>{
+        M.closeCommon();
+        // 反対側の端へ移動して、のりもの「🚲 自転車」
+        try{
+          if(!player.isFlying && !(player.wheelchairTurns > 0)){
+            player.vehicle = { emoji:'🚲', name:'自転車', mult:2 };
+            app.addLog && app.addLog('🚲 ' + player.name + '：' + from.gw.n + 'の端に着きました！　次のサイコロは【🚲 自転車（2倍）】です。');
+            app.setPlayerIconState && app.setPlayerIconState(player, {});
+          }
+        }catch(e){}
+        try{ app.updateHUD && app.updateHUD(); app.scheduleProfilePersist && app.scheduleProfilePersist(player); }catch(e){}
+        Promise.resolve(app.teleportPlayer(player, { name: from.gw.n, lat: to.lat, lng: to.lng, type:'🌳' }))
+          .then(()=>{ app.finishTurn(); app.panToCurrentPlayer && app.panToCurrentPlayer(); })
+          .catch(()=>{ app.finishTurn(); });
+      }, 5400);
+    };
+
+    M.claimTurn();
+    app.miniGameActive = true; app.regionalMiniGame = null; app.__bicycleActive = true;
+    fr = M.openFrame(GAME, '🚴 ' + TITLE, (d)=>{
+      if(d.type === 'EDOGAWA_MINIGAME_RENDERED'){ g('regional-mini-loading')?.style.setProperty('display','none'); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard = setTimeout(finish, 600000); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_RESULT'){ payload = d; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_CLOSE'){ finish(); }
+    });
+    if(!fr){ app.miniGameActive = false; app.__bicycleActive = false; try{ app.finishTurn(); }catch(e){} return false; }
+    fr.frame.onload = ()=>{ g('regional-mini-loading')?.style.setProperty('display','none'); };
+    // 「✕」で閉じたとき：そこまでの距離で終わりにします
+    app.__customMiniQuit = ()=>{
+      if(done) return;
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      fr.post({ type:'EDOGAWA_FORCE_END', game:GAME });
+      setTimeout(()=>{ if(!done) finish(); }, 1500);
+    };
+    guard = setTimeout(finish, 600000);
+    try{
+      app._miniCommonStartShow && app._miniCommonStartShow(GAME, player);
+      M.decorate('🚴', 'ミニゲーム', TITLE, esc(from.gw.n) + '<br>' + esc(player.name) + ' の番',
+        '<li>スマホを左右に傾けて（ジャイロ）ハンドル操作。1,000m走ればゴール！</li>' +
+        '<li>最初の100mは直進。まっすぐ3秒キープで操作開始。水路に落ちるとそこで終わり。</li>' +
+        '<li>🐢カメ 低速＋100点／❤️‍🔥ファイヤー 加速＋300点／🌟スター 自動運転＋500点</li>' +
+        '<li>100点＝￥100 で所持金に。ゴール後は反対側の端へ移動して「🚲 自転車」がもらえます。</li>');
+    }catch(e){}
+    setTimeout(()=>{
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      const send = ()=>fr.post({ type:'EDOGAWA_COMMON_MINIGAME_START', game:GAME });
+      send(); setTimeout(send, 300); setTimeout(send, 900);
+    }, 3000);
+    return true;
+  };
+
+  window.__EDOGAWA_V170 = {
+    ends: ()=>ENDS.map(e=>e.gw.n + (e.i ? '（終点）' : '（起点）')),
+    near: (p)=>{ const h = nearEnd(p || (app.players || [])[app.currentPlayerIdx]); return h ? endId(h.e) + ' ' + h.e.gw.n + '（' + Math.round(h.d) + 'm）' : null; },
+    unlocked, marks: ()=>marks.length,
+    start: (id)=>{ const e = endById(id) || ENDS[0]; const p = (app.players || [])[app.currentPlayerIdx]; return app.startBicycleGame(p, e, other(e)); },
+    endsRaw: ()=>ENDS.map(e=>({ id:endId(e), lat:e.lat, lng:e.lng }))
+  };
 })();
 </script>
 <script id="edogawa-v39-footer">
