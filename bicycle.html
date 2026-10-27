@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D Gyro Bicycle Runner</title>
+    <title>爆走！親水緑道SeSeラギー</title>
     <!-- Tailwind CSS for UI -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js Library -->
@@ -26,10 +26,10 @@
             display: block;
         }
         .glass-panel {
-            background: rgba(255, 255, 255, 0.35);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
         .pulse-text {
             animation: pulse 1.5s infinite;
@@ -37,6 +37,26 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: scale(1); }
             50% { opacity: 0.88; transform: scale(1.03); }
+        }
+        .title-bakusou {
+            display: inline-block;
+            color: #ef4444;
+            transform: rotate(-5deg);
+            font-weight: 900;
+        }
+        .title-ryokudou {
+            font-family: "Hiragino Mincho ProN", "Yu Mincho", "MS PMincho", serif;
+            font-weight: 800;
+            color: #059669;
+        }
+        .title-seseragi {
+            font-style: italic;
+            color: #091e42;
+            font-weight: 900;
+        }
+        /* 背景グラデーション（上が空色、下がグレー） */
+        #game-canvas {
+            background: linear-gradient(to bottom, #38bdf8 0%, #7dd3fc 45%, #94a3b8 70%, #64748b 100%);
         }
     </style>
 </head>
@@ -82,132 +102,81 @@
     <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-sky-400 via-sky-300 to-blue-500 z-20 p-6 text-center text-white">
         <div class="max-w-md w-full glass-panel p-8 rounded-3xl shadow-2xl flex flex-col items-center border border-white/50">
             <div class="text-6xl mb-3 animate-bounce">🚴💨</div>
-            <h1 class="text-3xl font-black mb-2 tracking-wide text-shadow">3D CYCLING RUNNER</h1>
-            <p class="text-sm text-sky-950 font-semibold mb-6">曲がりくねった美しい3Dコースを疾走しよう！<br>道路に合わせて自然に走るリアル操縦！</p>
+            <h1 class="text-3xl mb-3 tracking-wide leading-tight">
+                <span class="title-bakusou">爆走！</span><span class="title-ryokudou">親水緑道</span><br>
+                <span class="title-seseragi">SeSeラギー</span>
+            </h1>
+            <p class="text-xs text-sky-950 font-bold mb-6">緑と水路に囲まれた親水緑道を疾走しよう！<br>水路に落ちないように慎重かつ豪快に操縦！</p>
 
             <!-- Instructions -->
-            <div class="bg-white/40 rounded-2xl p-4 w-full text-left text-xs space-y-2 mb-6 border border-white/30 text-slate-900">
-                <div class="flex items-center gap-2"><span class="text-lg">📲</span> <span><b>操作:</b> スマホを左右に傾ける (キーボード左右キー / 画面左右タップ)</span></div>
-                <div class="flex items-center gap-2"><span class="text-lg">🐢</span> <span><b>カメ:</b> 5秒間 速度1/2（安全低速走行）</span></div>
-                <div class="flex items-center gap-2"><span class="text-lg">❤️‍🔥</span> <span><b>ファイヤー:</b> 5秒間 速度1.5倍（高速ブースト）</span></div>
-                <div class="flex items-center gap-2"><span class="text-lg">🌟</span> <span><b>スター:</b> 5秒間 自動運転（落ちない安全モード）</span></div>
+            <div class="bg-white/50 rounded-2xl p-4 w-full text-left text-xs space-y-2 mb-6 border border-white/40 text-slate-900 shadow-inner">
+                <div class="flex items-center gap-2"><span class="text-lg">📲</span> <span><b>操作:</b> スマホを傾ける (キーボード左右キー / 画面左右)</span></div>
+                <div class="flex items-center gap-2"><span class="text-lg">🌊</span> <span><b>注意:</b> 道からはみ出て水路に落ちるとゲームオーバー！</span></div>
+                <div class="flex items-center gap-2"><span class="text-lg">🐢</span> <span><b>カメ:</b> 5秒間 低速走行 (+100pt)</span></div>
+                <div class="flex items-center gap-2"><span class="text-lg">❤️‍🔥</span> <span><b>ファイヤー:</b> 5秒間 高速ブースト (+300pt)</span></div>
+                <div class="flex items-center gap-2"><span class="text-lg">🌟</span> <span><b>スター:</b> 5秒間 自動運転 (+500pt)</span></div>
             </div>
 
             <!-- Start Button -->
             <button id="start-btn" class="w-full py-4 bg-yellow-400 hover:bg-yellow-300 active:scale-95 text-slate-900 font-black text-xl rounded-2xl shadow-xl transition-all border-b-4 border-yellow-600 pulse-text">
                 ゲームスタート！
             </button>
-            <p class="text-xs text-white/90 mt-3">※スマホのジャイロセンサーアクセス許可を求める場合があります</p>
         </div>
     </div>
 
-    <!-- Game Over Screen Overlay -->
+    <!-- Game Result / GameOver Screen Overlay -->
     <div id="gameover-screen" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md z-30 p-6 text-center text-white">
-        <div class="max-w-md w-full bg-white/10 glass-panel p-8 rounded-3xl shadow-2xl flex flex-col items-center border border-red-400/40">
-            <div class="text-6xl mb-2 animate-bounce">💥</div>
-            <h2 class="text-3xl font-black text-red-400 mb-1">GAME OVER</h2>
-            <p class="text-sm text-gray-200 mb-6">コースから脱落してしまった！</p>
+        <div class="max-w-md w-full bg-white/10 glass-panel p-6 rounded-3xl shadow-2xl flex flex-col items-center border border-white/30">
+            <div id="result-icon" class="text-5xl mb-1 animate-bounce">🏆</div>
+            <h2 id="result-title" class="text-3xl font-black text-yellow-400 mb-1">GOAL FINISH!!</h2>
+            <p id="result-subtitle" class="text-xs text-gray-200 mb-4">1,000mを完走しました！</p>
 
-            <div class="bg-black/40 rounded-2xl p-4 w-full mb-6 border border-white/10 space-y-2">
-                <div class="flex justify-between text-gray-300 text-sm">
+            <!-- Score Summary Card -->
+            <div class="bg-black/50 rounded-2xl p-4 w-full mb-5 border border-white/20 text-left text-xs space-y-2">
+                <div class="flex justify-between items-center text-gray-200 border-b border-white/10 pb-1.5">
                     <span>走行距離:</span>
-                    <span id="final-score" class="text-yellow-400 font-bold text-xl">0 m</span>
+                    <span id="res-dist" class="font-bold text-white text-sm">1000 m</span>
                 </div>
-                <div class="flex justify-between text-gray-300 text-sm border-t border-white/10 pt-2">
-                    <span>ベスト記録:</span>
-                    <span id="high-score" class="text-emerald-400 font-bold text-xl">0 m</span>
+                <div class="flex justify-between items-center text-gray-200">
+                    <span>ベース得点:</span>
+                    <span id="res-base-score" class="font-bold text-yellow-300">20,000 pt</span>
+                </div>
+                <div class="border-t border-white/10 pt-1.5 space-y-1">
+                    <div class="text-gray-300 font-semibold mb-1">獲得アイテム内訳:</div>
+                    <div class="flex justify-between text-gray-300 pl-2">
+                        <span>🐢 カメ (100pt × <span id="cnt-turtle">0</span>)</span>
+                        <span id="score-turtle" class="font-bold text-white">+0 pt</span>
+                    </div>
+                    <div class="flex justify-between text-gray-300 pl-2">
+                        <span>❤️‍🔥 ファイヤー (300pt × <span id="cnt-heart">0</span>)</span>
+                        <span id="score-heart" class="font-bold text-white">+0 pt</span>
+                    </div>
+                    <div class="flex justify-between text-gray-300 pl-2">
+                        <span>🌟 スター (500pt × <span id="cnt-star">0</span>)</span>
+                        <span id="score-star" class="font-bold text-white">+0 pt</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-white text-base font-black border-t-2 border-yellow-400/80 pt-2 mt-2">
+                    <span>総合スコア:</span>
+                    <span id="total-score" class="text-yellow-400 text-xl font-extrabold">0 pt</span>
                 </div>
             </div>
 
-            <button id="restart-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black text-xl rounded-2xl shadow-xl transition-all border-b-4 border-emerald-700">
+            <button id="restart-btn" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black text-lg rounded-2xl shadow-xl transition-all border-b-4 border-emerald-700">
                 もう一度プレイ！
             </button>
+            <p class="text-xs text-gray-300 mt-3" id="auto-close-timer">※ 5秒後に自動でスタート画面に戻ります</p>
         </div>
     </div>
 
-    <script>
-    /**
-     * 3D Bicycle Gyro Game Engine
-     * Web Audio Synthesizer
-     */
-    class SoundEngine {
-        constructor() {
-            this.ctx = null;
-        }
-
-        init() {
-            if (!this.ctx) {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                this.ctx = new AudioCtx();
-            }
-        }
-
-        playTone(freq, duration, type = 'sine', volume = 0.1) {
-            if (!this.ctx) return;
-            try {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(volume, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + duration);
-            } catch (e) {}
-        }
-
-        playJump() {
-            if (!this.ctx) return;
-            try {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(500, this.ctx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.3);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.3);
-            } catch (e) {}
-        }
-
-        playItemGet(itemType) {
-            if (!this.ctx) return;
-            if (itemType === 'TURTLE') {
-                this.playTone(200, 0.2, 'sawtooth', 0.15);
-                setTimeout(() => this.playTone(150, 0.3, 'sawtooth', 0.15), 100);
-            } else if (itemType === 'HEART') {
-                this.playTone(400, 0.1, 'sine', 0.2);
-                setTimeout(() => this.playTone(600, 0.1, 'sine', 0.2), 80);
-                setTimeout(() => this.playTone(800, 0.2, 'triangle', 0.2), 160);
-            } else if (itemType === 'STAR') {
-                [523, 659, 783, 1046].forEach((f, i) => {
-                    setTimeout(() => this.playTone(f, 0.15, 'sine', 0.15), i * 70);
-                });
-            }
-        }
-
-        playGameOver() {
-            if (!this.ctx) return;
-            [300, 250, 200, 150].forEach((f, i) => {
-                setTimeout(() => this.playTone(f, 0.25, 'sawtooth', 0.2), i * 120);
-            });
-        }
-    }
-
-    const sound = new SoundEngine();
-
+<script>
     // --- Global Game State ---
-    const STATE = { START: 0, PLAYING: 1, GAMEOVER: 2 };
+    const STATE = { START: 0, PLAYING: 1, FINISHING: 2, GAMEOVER: 3 };
     let currentState = STATE.START;
 
     let distance = 0;
-    let highScore = localStorage.getItem('bicycle_runner_highscore') || 0;
-    let baseSpeed = 0.65;
+    const TARGET_DISTANCE = 1000;
+    let baseSpeed = 0.32;
     let currentSpeedMultiplier = 1.0;
     let gyroOffset = 0;
     let playerLateralPos = 0;
@@ -215,31 +184,123 @@
     let itemTimer = 0;
     let isAutoPilot = false;
 
+    // Finish Sequence Dynamics
+    let finishAnimTimer = 0;
+    let currentRunningSpeed = 0;
+    let dismountProgress = 0;
+    let autoCloseTimerId = null;
+
+    // Item Collection Counters
+    let collectedItems = { TURTLE: 0, HEART: 0, STAR: 0 };
+
     // Airborne & Physics
     let isGrounded = true;
     let verticalVelocity = 0;
     let playerYOffset = 0;
-    const gravity = 0.025;
+    let hasJumpedOnCurrentRamp = false;
+    const gravity = 0.022;
     let pedalAngle = 0;
+
+    // --- Simple WebAudio Sound Synth ---
+    const sound = {
+        ctx: null,
+        init() {
+            if (!this.ctx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) this.ctx = new AudioCtx();
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        },
+        playItemGet(type) {
+            if (!this.ctx) return;
+            try {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                const now = this.ctx.currentTime;
+                let freq = 600;
+                if (type === 'HEART') freq = 800;
+                if (type === 'STAR') freq = 1000;
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.15);
+            } catch(e) {}
+        },
+        playJump() {
+            if (!this.ctx) return;
+            try {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const now = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.2);
+            } catch(e) {}
+        },
+        playThud() {
+            if (!this.ctx) return;
+            try {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const now = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.linearRampToValueAtTime(40, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.1);
+            } catch(e) {}
+        },
+        playGameOver() {
+            if (!this.ctx) return;
+            try {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const now = this.ctx.currentTime;
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.4);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.4);
+            } catch(e) {}
+        }
+    };
 
     // --- Three.js Setup ---
     const canvas = document.getElementById('game-canvas');
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x38bdf8); // Sky blue
-    scene.fog = new THREE.FogExp2(0x7dd3fc, 0.005);
+    scene.background = null;
+    scene.fog = new THREE.FogExp2(0x7dd3fc, 0.002);
 
     const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
     dirLight.position.set(40, 80, 40);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 1024;
@@ -266,29 +327,29 @@
     }
     scene.add(cloudGroup);
 
-    // --- Procedural Bicycle Model Generator with Rider & Pedals ---
+    // --- Procedural Bicycle Model Generator ---
     function createBicycleModel() {
         const bikeGroup = new THREE.Group();
 
         // Materials
-        const frameMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.3, metalness: 0.7 }); // Blue frame
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.3, metalness: 0.7 });
         const metalMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9, roughness: 0.2 });
         const tireMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8 });
         const seatMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.5 });
-        const riderMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 }); // Orange Jersey
-        const helmetMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.2 }); // Yellow Helmet
+        
+        // Rider Outfit
+        const jerseyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 }); 
+        const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.5 });  
+        const helmetMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }); 
+        const hairMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 });   
 
-        // Wheels: Perfectly aligned longitudinally (along Z axis)
         function createWheel() {
             const wheelGroup = new THREE.Group();
-            
-            // Torus tire oriented longitudinally (rotated on Y-axis by 90 deg)
             const tireGeo = new THREE.TorusGeometry(0.65, 0.08, 12, 24);
             const tire = new THREE.Mesh(tireGeo, tireMat);
             tire.rotation.y = Math.PI / 2;
             wheelGroup.add(tire);
 
-            // Spokes in vertical longitudinal plane
             const spokeMat = new THREE.LineBasicMaterial({ color: 0x9ca3af });
             const spokeGeo = new THREE.BufferGeometry();
             const pos = [];
@@ -314,9 +375,8 @@
         bikeGroup.add(frontWheel);
         bikeGroup.userData.frontWheel = frontWheel;
 
-        // Frame Tubes
+        // Frame
         const frameGeo = new THREE.CylinderGeometry(0.035, 0.035, 1.3);
-        
         const tube1 = new THREE.Mesh(frameGeo, frameMat);
         tube1.position.set(0, 1.0, 0.1);
         tube1.rotation.x = Math.PI / 4;
@@ -342,7 +402,7 @@
         seat.position.set(0, 1.25, -0.35);
         bikeGroup.add(seat);
 
-        // Pedal Crank Group
+        // Crank Group
         const crankGroup = new THREE.Group();
         crankGroup.position.set(0, 0.65, 0);
 
@@ -361,43 +421,52 @@
         bikeGroup.add(crankGroup);
         bikeGroup.userData.crankGroup = crankGroup;
 
-        // Rider Body
+        // Rider
         const riderGroup = new THREE.Group();
         
-        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.6, 0.25), riderMat);
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.6, 0.25), jerseyMat);
         torso.position.set(0, 1.7, -0.2);
         torso.rotation.x = 0.25;
         riderGroup.add(torso);
 
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), helmetMat);
-        head.position.set(0, 2.18, -0.1);
-        riderGroup.add(head);
+        // Head
+        const headGroup = new THREE.Group();
+        headGroup.position.set(0, 2.18, -0.1);
+
+        const helmetTop = new THREE.Mesh(new THREE.SphereGeometry(0.185, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2), helmetMat);
+        headGroup.add(helmetTop);
+
+        const hairBottom = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), hairMat);
+        headGroup.add(hairBottom);
+
+        riderGroup.add(headGroup);
 
         // Arms
         const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.65);
-        const leftArm = new THREE.Mesh(armGeo, riderMat);
+        const leftArm = new THREE.Mesh(armGeo, jerseyMat);
         leftArm.position.set(-0.2, 1.75, 0.25);
         leftArm.rotation.x = -Math.PI / 3;
         riderGroup.add(leftArm);
 
-        const rightArm = new THREE.Mesh(armGeo, riderMat);
+        const rightArm = new THREE.Mesh(armGeo, jerseyMat);
         rightArm.position.set(0.2, 1.75, 0.25);
         rightArm.rotation.x = -Math.PI / 3;
         riderGroup.add(rightArm);
 
         // Legs
         const thighGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.5);
-        const leftThigh = new THREE.Mesh(thighGeo, riderMat);
+        const leftThigh = new THREE.Mesh(thighGeo, pantsMat);
         leftThigh.position.set(-0.16, 1.3, -0.15);
         riderGroup.add(leftThigh);
         bikeGroup.userData.leftThigh = leftThigh;
 
-        const rightThigh = new THREE.Mesh(thighGeo, riderMat);
+        const rightThigh = new THREE.Mesh(thighGeo, pantsMat);
         rightThigh.position.set(0.16, 1.3, -0.15);
         riderGroup.add(rightThigh);
         bikeGroup.userData.rightThigh = rightThigh;
 
         bikeGroup.add(riderGroup);
+        bikeGroup.userData.riderGroup = riderGroup;
         bikeGroup.scale.set(0.75, 0.75, 0.75);
         return bikeGroup;
     }
@@ -405,17 +474,97 @@
     const playerBike = createBicycleModel();
     scene.add(playerBike);
 
-    // --- Procedural Track / Road Generator ---
+    // --- House & Environment Generator ---
+    const houseColors = [0x8B5A2B, 0x222222, 0x87CEEB, 0xFFFDD0, 0xEEDC82];
+
+    function createBuildingMesh(typeIndex, colorHex) {
+        const group = new THREE.Group();
+        const wallMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.6 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 });
+        const windowMat = new THREE.MeshStandardMaterial({ color: 0xbfdbfe, roughness: 0.2 });
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.8 });
+        const balconyMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4 });
+
+        let w = 8, h = 6, d = 8;
+
+        if (typeIndex === 0) { // 1階建て
+            w = 7; h = 4; d = 7;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+            body.position.y = h / 2;
+            group.add(body);
+
+            const roof = new THREE.Mesh(new THREE.ConeGeometry(6, 3, 4), roofMat);
+            roof.position.y = h + 1.5;
+            roof.rotation.y = Math.PI / 4;
+            group.add(roof);
+        } else if (typeIndex === 1) { // 2階建て
+            w = 8; h = 7; d = 8;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+            body.position.y = h / 2;
+            group.add(body);
+
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.6, d + 0.6), roofMat);
+            roof.position.y = h + 0.3;
+            group.add(roof);
+        } else if (typeIndex === 2) { // 3階建て
+            w = 8; h = 10; d = 9;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+            body.position.y = h / 2;
+            group.add(body);
+        } else if (typeIndex === 3) { // アパートデザイン
+            w = 12; h = 8; d = 8;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+            body.position.y = h / 2;
+            group.add(body);
+        } else { // 事務所デザイン
+            w = 10; h = 9; d = 10;
+            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), wallMat);
+            body.position.y = h / 2;
+            group.add(body);
+        }
+
+        // ドア
+        const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.1), doorMat);
+        door.position.set(0, 1.1, d / 2 + 0.06);
+        group.add(door);
+
+        // 窓・ベランダ
+        const floors = Math.floor(h / 3);
+        for (let f = 1; f <= floors; f++) {
+            const posY = f * 2.8;
+
+            const winLeft = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), windowMat);
+            winLeft.position.set(-w / 4, posY, d / 2 + 0.06);
+            group.add(winLeft);
+
+            const winRight = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), windowMat);
+            winRight.position.set(w / 4, posY, d / 2 + 0.06);
+            group.add(winRight);
+
+            if (f >= 2) {
+                const balcony = new THREE.Mesh(new THREE.BoxGeometry(w * 0.8, 0.7, 0.8), balconyMat);
+                balcony.position.set(0, posY - 0.7, d / 2 + 0.4);
+                group.add(balcony);
+            }
+        }
+
+        return group;
+    }
+
+    // --- Procedural Track & Waterway Generator ---
     let trackCurve = null;
     let roadMesh = null;
     let trackPoints = [];
     let roadWidths = [];
     let itemObjects = [];
+    let sceneryObjects = [];
 
     function generateTrack() {
         if (roadMesh) scene.remove(roadMesh);
         itemObjects.forEach(item => scene.remove(item.mesh));
+        sceneryObjects.forEach(obj => scene.remove(obj));
         itemObjects = [];
+        sceneryObjects = [];
 
         const points = [];
         const widths = [];
@@ -434,18 +583,12 @@
 
             currentAngleY += (Math.sin(i * 0.2) * 0.3);
 
-            // Special Track Features
-            if (i >= 50 && i <= 65) { // Loop
-                const loopIndex = i - 50;
-                const loopAngle = (loopIndex / 15) * Math.PI * 2;
-                yOffset = (1 - Math.cos(loopAngle)) * 12;
-                width = 5.0;
-            } else if (i >= 110 && i <= 114) { // Jump Ramp
-                yOffset = (i - 110) * 3.0;
-            } else if (i > 114 && i <= 122) { // Air Gap
-                yOffset = -15;
+            if (i >= 110 && i <= 114) { 
+                yOffset = (i - 110) * 2.5;
+            } else if (i > 114 && i <= 122) { 
+                yOffset = -2.5;
             } else {
-                yOffset = Math.sin(i * 0.12) * 3.5; // Smooth undulating terrain
+                yOffset = Math.sin(i * 0.12) * 3.5;
             }
 
             const forward = new THREE.Vector3(
@@ -464,67 +607,61 @@
         trackPoints = trackCurve.getPoints(subDivs);
         roadWidths = widths;
 
-        // Custom Ribbon Road Geometry
-        const roadGeo = new THREE.BufferGeometry();
-        const roadVerts = [];
-        const roadUvs = [];
-        const roadIndices = [];
+        function buildRoadAndWaterGeometry() {
+            const roadGeo = new THREE.BufferGeometry();
+            const roadVerts = [];
+            const roadUvs = [];
+            const roadIndices = [];
+            const upVector = new THREE.Vector3(0, 1, 0);
 
-        const upVector = new THREE.Vector3(0, 1, 0);
+            for (let i = 0; i < subDivs; i++) {
+                const progress = i / (subDivs - 1);
+                const pt = trackCurve.getPointAt(progress).clone();
+                const tangent = trackCurve.getTangentAt(progress).normalize();
+                const side = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
 
-        for (let i = 0; i < subDivs; i++) {
-            const progress = i / (subDivs - 1);
-            const pt = trackCurve.getPointAt(progress);
-            const tangent = trackCurve.getTangentAt(progress).normalize();
+                const widthIndex = Math.min(Math.floor(progress * numSegments), numSegments - 1);
+                let w = (roadWidths[widthIndex] || 5);
 
-            const side = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+                if (widthIndex >= 114 && widthIndex <= 122) {
+                    const vLeft = pt.clone();
+                    const vRight = pt.clone();
+                    roadVerts.push(vLeft.x, vLeft.y, vLeft.z, vRight.x, vRight.y, vRight.z);
+                } else {
+                    const vLeft = pt.clone().addScaledVector(side, -w / 2);
+                    const vRight = pt.clone().addScaledVector(side, w / 2);
+                    roadVerts.push(vLeft.x, vLeft.y, vLeft.z, vRight.x, vRight.y, vRight.z);
+                }
 
-            const widthIndex = Math.min(Math.floor(progress * numSegments), numSegments - 1);
-            const w = roadWidths[widthIndex] || 5;
+                roadUvs.push(0, progress * 60, 1, progress * 60);
 
-            if (widthIndex >= 114 && widthIndex <= 122) {
-                // Gap Section
-                const vLeft = pt.clone();
-                const vRight = pt.clone();
-                roadVerts.push(vLeft.x, vLeft.y, vLeft.z, vRight.x, vRight.y, vRight.z);
-            } else {
-                const vLeft = pt.clone().addScaledVector(side, -w / 2);
-                const vRight = pt.clone().addScaledVector(side, w / 2);
-                roadVerts.push(vLeft.x, vLeft.y, vLeft.z, vRight.x, vRight.y, vRight.z);
+                if (i < subDivs - 1) {
+                    const base = i * 2;
+                    roadIndices.push(base, base + 1, base + 2);
+                    roadIndices.push(base + 1, base + 3, base + 2);
+                }
             }
 
-            roadUvs.push(0, progress * 60, 1, progress * 60);
-
-            if (i < subDivs - 1) {
-                const base = i * 2;
-                roadIndices.push(base, base + 1, base + 2);
-                roadIndices.push(base + 1, base + 3, base + 2);
-            }
+            roadGeo.setAttribute('position', new THREE.Float32BufferAttribute(roadVerts, 3));
+            roadGeo.setAttribute('uv', new THREE.Float32BufferAttribute(roadUvs, 2));
+            roadGeo.setIndex(roadIndices);
+            roadGeo.computeVertexNormals();
+            return roadGeo;
         }
 
-        roadGeo.setAttribute('position', new THREE.Float32BufferAttribute(roadVerts, 3));
-        roadGeo.setAttribute('uv', new THREE.Float32BufferAttribute(roadUvs, 2));
-        roadGeo.setIndex(roadIndices);
-        roadGeo.computeVertexNormals();
-
-        // Canvas Texture: Green Checkered Stripe with Sharp White Center & Side Lines
         const roadCanvas = document.createElement('canvas');
         roadCanvas.width = 256;
         roadCanvas.height = 256;
         const ctx = roadCanvas.getContext('2d');
         
-        // Dark & Light Green Checkered Stripes
-        ctx.fillStyle = '#22c55e'; // Bright Green
+        ctx.fillStyle = '#22c55e';
         ctx.fillRect(0, 0, 256, 256);
-        ctx.fillStyle = '#15803d'; // Dark Green
+        ctx.fillStyle = '#15803d';
         ctx.fillRect(0, 0, 256, 128);
 
-        // Side Lines (White)
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, 12, 256);
         ctx.fillRect(244, 0, 12, 256);
-
-        // Center Stripe Line (Bright White)
         ctx.fillRect(120, 0, 16, 256);
 
         const roadTex = new THREE.CanvasTexture(roadCanvas);
@@ -538,19 +675,110 @@
             side: THREE.DoubleSide
         });
 
+        const roadGeo = buildRoadAndWaterGeometry();
         roadMesh = new THREE.Mesh(roadGeo, roadMat);
         roadMesh.receiveShadow = true;
         scene.add(roadMesh);
 
+        buildEnvironment(subDivs, numSegments);
         spawnItemsOnTrack(numSegments);
     }
 
-    // --- Items & Obstacles Spawn ---
+    function buildEnvironment(subDivs, numSegments) {
+        const upVector = new THREE.Vector3(0, 1, 0);
+
+        // 植木の幹と葉のジオメトリ・マテリアル
+        const trunkGeo = new THREE.CylinderGeometry(0.12, 0.15, 0.8, 8);
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 }); // 茶色の幹
+        const leavesGeo = new THREE.ConeGeometry(0.55, 1.4, 6); // ▲（コーン状）の葉っぱ
+        const leavesMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6, flatShading: true }); // 緑色
+
+        const waterMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, transparent: true, opacity: 0.85 });
+
+        for (let i = 0; i < subDivs; i += 3) {
+            const progress = i / (subDivs - 1);
+            const pt = trackCurve.getPointAt(progress);
+            const tangent = trackCurve.getTangentAt(progress).normalize();
+            const side = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+
+            const wIndex = Math.min(Math.floor(progress * numSegments), numSegments - 1);
+            if (wIndex >= 114 && wIndex <= 122) continue;
+
+            const w = roadWidths[wIndex] || 5;
+
+            [-1, 1].forEach(dir => {
+                // 植木のグループ作成 (茶色の幹 + 三角錐▲の緑の葉)
+                const treeGroup = new THREE.Group();
+                
+                const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+                trunk.position.y = 0.4;
+                trunk.castShadow = true;
+                treeGroup.add(trunk);
+
+                const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                leaves.position.y = 1.3;
+                leaves.castShadow = true;
+                treeGroup.add(leaves);
+
+                const treePos = pt.clone().addScaledVector(side, dir * (w / 2 + 1.2));
+                treeGroup.position.copy(treePos);
+                
+                // 道路の傾きに引っ張られず、世界座標のY軸に対して常にまっすぐ垂直に立たせる
+                // （Y軸回転のみ進行方向に向かせる）
+                const angleY = Math.atan2(tangent.x, tangent.z);
+                treeGroup.rotation.set(0, angleY, 0);
+
+                scene.add(treeGroup);
+                sceneryObjects.push(treeGroup);
+
+                const waterPos = pt.clone().addScaledVector(side, dir * (w / 2 + 0.5));
+                const waterMesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.2, 3.0), waterMat);
+                waterMesh.position.copy(waterPos).add(new THREE.Vector3(0, -0.2, 0));
+                waterMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), tangent);
+                scene.add(waterMesh);
+                sceneryObjects.push(waterMesh);
+            });
+        }
+
+        let houseIndex = 0;
+        for (let i = 0; i < subDivs; i += 16) {
+            const progress = i / (subDivs - 1);
+            const pt = trackCurve.getPointAt(progress);
+            const tangent = trackCurve.getTangentAt(progress).normalize();
+            const side = new THREE.Vector3().crossVectors(tangent, upVector).normalize();
+
+            const wIndex = Math.min(Math.floor(progress * numSegments), numSegments - 1);
+            if (wIndex >= 114 && wIndex <= 122) continue;
+
+            const w = roadWidths[wIndex] || 5;
+
+            [-1, 1].forEach(dir => {
+                const color = houseColors[houseIndex % houseColors.length];
+                const type = houseIndex % 5;
+                const bldg = createBuildingMesh(type, color);
+
+                const bldgPos = pt.clone().addScaledVector(side, dir * (w / 2 + 12.0));
+                bldgPos.y = pt.y;
+                bldg.position.copy(bldgPos);
+
+                const roadMatrix = new THREE.Matrix4();
+                roadMatrix.makeBasis(side, upVector, tangent);
+                bldg.quaternion.setFromRotationMatrix(roadMatrix);
+
+                scene.add(bldg);
+                sceneryObjects.push(bldg);
+
+                houseIndex++;
+            });
+        }
+    }
+
+    // --- Items Spawn ---
     function spawnItemsOnTrack(numSegments) {
         const itemTypes = ['TURTLE', 'HEART', 'STAR', 'CONE'];
 
         for (let i = 6; i < numSegments - 6; i += 3) {
-            if (i >= 110 && i <= 124) continue; // Skip air gap
+            if (i >= 110 && i <= 124) continue;
 
             const progress = i / numSegments;
             const pt = trackCurve.getPointAt(progress);
@@ -603,7 +831,7 @@
             const mat = new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.1, emissive: 0x665500 });
             const star = new THREE.Mesh(starGeo, mat);
             group.add(star);
-        } else if (type === 'CONE') { // Red Cone / Marker
+        } else if (type === 'CONE') {
             const coneGeo = new THREE.ConeGeometry(0.4, 1.0, 12);
             const mat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 });
             const cone = new THREE.Mesh(coneGeo, mat);
@@ -615,10 +843,10 @@
         return group;
     }
 
-    // --- Controls & Gyroscope Sensors ---
+    // --- Controls ---
     function setupControls() {
         window.addEventListener('deviceorientation', (e) => {
-            if (e.gamma !== null) {
+            if (e.gamma !== null && e.gamma !== undefined) {
                 document.getElementById('gyro-indicator').classList.remove('hidden');
                 const tilt = e.gamma; 
                 gyroOffset = Math.max(-1, Math.min(1, tilt / 28));
@@ -628,11 +856,13 @@
         const leftZone = document.getElementById('touch-left');
         const rightZone = document.getElementById('touch-right');
 
-        leftZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = -0.85; });
-        leftZone.addEventListener('touchend', () => { gyroOffset = 0; });
+        if (leftZone && rightZone) {
+            leftZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = -0.85; });
+            leftZone.addEventListener('touchend', () => { gyroOffset = 0; });
 
-        rightZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = 0.85; });
-        rightZone.addEventListener('touchend', () => { gyroOffset = 0; });
+            rightZone.addEventListener('touchstart', (e) => { e.preventDefault(); gyroOffset = 0.85; });
+            rightZone.addEventListener('touchend', () => { gyroOffset = 0; });
+        }
 
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'a') gyroOffset = -0.9;
@@ -643,9 +873,13 @@
         });
     }
 
-    // --- Item Effects & Countdown Timers ---
+    // --- Item Countdown Timers ---
     function activateItem(type) {
-        if (type === 'CONE') return; // Cones are visual obstacles
+        if (type === 'CONE') return;
+
+        if (collectedItems[type] !== undefined) {
+            collectedItems[type]++;
+        }
 
         activeItem = type;
         itemTimer = 5.0;
@@ -695,169 +929,324 @@
         document.getElementById('item-progress').style.width = `${percent}%`;
     }
 
-    // --- Physics & Precise Track Frame Orienting ---
+    // --- Physics & Game Loop ---
     let playerProgress = 0.001;
 
     function updateGame(delta) {
-        if (currentState !== STATE.PLAYING) return;
+        if (currentState !== STATE.PLAYING && currentState !== STATE.FINISHING) return;
 
-        // Advance along track
-        const speed = baseSpeed * currentSpeedMultiplier * 0.00038;
-        playerProgress += speed;
+        if (currentState === STATE.PLAYING) {
+            currentRunningSpeed = baseSpeed * currentSpeedMultiplier * 0.00038;
+            playerProgress += currentRunningSpeed;
 
-        if (playerProgress >= 0.99) {
-            playerProgress = 0.01;
-            generateTrack();
+            distance = Math.floor(playerProgress * 1000);
+            document.getElementById('score-text').textContent = distance;
+
+            if (distance >= TARGET_DISTANCE) {
+                distance = TARGET_DISTANCE;
+                document.getElementById('score-text').textContent = distance;
+                
+                currentState = STATE.FINISHING;
+                finishAnimTimer = 0;
+                dismountProgress = 0;
+                activeItem = null;
+                document.getElementById('item-hud').classList.add('hidden');
+                sound.playItemGet('STAR');
+            }
+        } else if (currentState === STATE.FINISHING) {
+            finishAnimTimer += delta;
+
+            if (finishAnimTimer < 1.8) {
+                currentRunningSpeed = THREE.MathUtils.lerp(currentRunningSpeed, 0, delta * 3.0);
+                playerProgress += currentRunningSpeed;
+            } else {
+                currentRunningSpeed = 0;
+                dismountProgress = Math.min(1.0, dismountProgress + delta * 1.2);
+
+                if (playerBike.userData.riderGroup) {
+                    const rider = playerBike.userData.riderGroup;
+                    rider.position.x = -dismountProgress * 0.85;
+                    rider.position.y = -dismountProgress * 0.45;
+                    rider.rotation.z = dismountProgress * 0.28;
+                    rider.rotation.y = dismountProgress * 0.35;
+                }
+
+                if (dismountProgress >= 1.0 && finishAnimTimer > 3.2) {
+                    showResultModal(true);
+                    return;
+                }
+            }
         }
 
-        distance = Math.floor(playerProgress * 3200);
-        document.getElementById('score-text').textContent = distance;
-
-        // Lateral steering
-        if (isAutoPilot) {
-            playerLateralPos += (0 - playerLateralPos) * 0.1;
-        } else {
-            const steerSpeed = 0.22;
-            playerLateralPos += gyroOffset * steerSpeed;
+        if (currentState === STATE.PLAYING) {
+            if (isAutoPilot) {
+                playerLateralPos += (0 - playerLateralPos) * 0.1;
+            } else {
+                const steerSpeed = 0.22;
+                playerLateralPos += gyroOffset * steerSpeed;
+            }
         }
 
-        // --- Track Point and Forward Tangent ---
-        const pt = trackCurve.getPointAt(playerProgress);
+        const pt = trackCurve.getPointAt(Math.min(0.999, playerProgress));
         const aheadProgress = Math.min(0.999, playerProgress + 0.002);
         const ptAhead = trackCurve.getPointAt(aheadProgress);
         const forwardVector = ptAhead.clone().sub(pt).normalize();
 
-        // Stable World Coordinate Basis (Prevents camera flipping)
         const worldUp = new THREE.Vector3(0, 1, 0);
         const sideVector = new THREE.Vector3().crossVectors(worldUp, forwardVector).normalize();
         if (sideVector.lengthSq() < 0.0001) sideVector.set(1, 0, 0);
         
         const upVector = new THREE.Vector3().crossVectors(forwardVector, sideVector).normalize();
 
-        // Segment & Gap Jump Check
         const segIndex = Math.min(Math.floor(playerProgress * 200), 199);
         const currentRoadWidth = roadWidths[segIndex] || 5;
 
-        if (segIndex >= 110 && segIndex <= 122) {
-            if (isGrounded && segIndex <= 114) {
+        const isOverGap = (segIndex > 114 && segIndex <= 122);
+        
+        if (segIndex >= 110 && segIndex <= 114) {
+            if (!hasJumpedOnCurrentRamp && isGrounded && currentState === STATE.PLAYING) {
                 isGrounded = false;
-                verticalVelocity = 0.42;
+                hasJumpedOnCurrentRamp = true;
+                verticalVelocity = 0.45;
                 sound.playJump();
+            }
+        } else if (segIndex > 124) {
+            hasJumpedOnCurrentRamp = false;
+        }
+
+        const isOffRoad = Math.abs(playerLateralPos) > (currentRoadWidth / 2);
+
+        if (isGrounded && currentState === STATE.PLAYING) {
+            if (isOffRoad || (isOverGap && !hasJumpedOnCurrentRamp)) {
+                isGrounded = false;
+                verticalVelocity = -0.15;
             }
         }
 
+        let jumpPitchAngle = 0;
         if (!isGrounded) {
             verticalVelocity -= gravity;
             playerYOffset += verticalVelocity;
 
-            if (playerYOffset <= 0 && segIndex > 122) {
+            jumpPitchAngle = Math.max(-0.4, Math.min(0.3, verticalVelocity * 0.7));
+
+            if (verticalVelocity <= 0 && playerYOffset <= 0 && !isOverGap && !isOffRoad) {
                 playerYOffset = 0;
                 verticalVelocity = 0;
                 isGrounded = true;
+
+                sound.playThud();
+                if (navigator.vibrate) {
+                    navigator.vibrate([120, 40, 100]);
+                }
             }
         }
 
-        // Check Fall Off Track
-        const isOffRoad = Math.abs(playerLateralPos) > (currentRoadWidth / 2 + 0.2);
-        if ((isOffRoad && isGrounded) || (playerYOffset < -12)) {
-            triggerGameOver();
+        if (playerYOffset < -3.5) {
+            showResultModal(false);
             return;
         }
 
-        // Calculate Final Position on Track
         const finalPos = pt.clone()
             .addScaledVector(sideVector, playerLateralPos)
             .addScaledVector(upVector, 0.1 + playerYOffset);
 
         playerBike.position.copy(finalPos);
 
-        // Set Bike Quaternion based on forward and up vector
         const bikeMatrix = new THREE.Matrix4();
         bikeMatrix.makeBasis(sideVector, upVector, forwardVector);
         playerBike.quaternion.setFromRotationMatrix(bikeMatrix);
 
-        // Bank/Lean Angle on Curve Turns
-        const bankAngle = -gyroOffset * 0.28;
+        const bankAngle = (currentState === STATE.PLAYING) ? -gyroOffset * 0.28 : 0;
         const bankQuat = new THREE.Quaternion().setFromAxisAngle(forwardVector, bankAngle);
         playerBike.quaternion.premultiply(bankQuat);
 
-        // Pedaling & Wheel Rotation Animation
-        pedalAngle += speed * 600;
-
-        if (playerBike.userData.crankGroup) {
-            playerBike.userData.crankGroup.rotation.x = pedalAngle;
+        if (!isGrounded) {
+            const pitchQuat = new THREE.Quaternion().setFromAxisAngle(sideVector, jumpPitchAngle);
+            playerBike.quaternion.premultiply(pitchQuat);
         }
 
-        if (playerBike.userData.frontWheel && playerBike.userData.rearWheel) {
-            playerBike.userData.frontWheel.rotation.x += speed * 450;
-            playerBike.userData.rearWheel.rotation.x += speed * 450;
+        if (currentRunningSpeed > 0) {
+            pedalAngle += currentRunningSpeed * 600;
+
+            if (playerBike.userData.crankGroup) {
+                playerBike.userData.crankGroup.rotation.x = pedalAngle;
+            }
+
+            if (playerBike.userData.frontWheel && playerBike.userData.rearWheel) {
+                playerBike.userData.frontWheel.rotation.x += currentRunningSpeed * 450;
+                playerBike.userData.rearWheel.rotation.x += currentRunningSpeed * 450;
+            }
+
+            if (playerBike.userData.leftThigh && playerBike.userData.rightThigh) {
+                playerBike.userData.leftThigh.rotation.x = Math.sin(pedalAngle) * 0.35;
+                playerBike.userData.rightThigh.rotation.x = Math.sin(pedalAngle + Math.PI) * 0.35;
+            }
         }
 
-        if (playerBike.userData.leftThigh && playerBike.userData.rightThigh) {
-            playerBike.userData.leftThigh.rotation.x = Math.sin(pedalAngle) * 0.35;
-            playerBike.userData.rightThigh.rotation.x = Math.sin(pedalAngle + Math.PI) * 0.35;
-        }
-
-        // --- Fixed Camera Position: Always keeps bicycle centered at bottom ---
         const camDistance = 5.5;
         const camHeight = 2.8;
 
-        const targetCamPos = finalPos.clone()
-            .sub(forwardVector.clone().multiplyScalar(camDistance))
-            .add(new THREE.Vector3(0, camHeight, 0));
+        if (currentState === STATE.FINISHING) {
+            const duration = 3.0;
+            const progressRatio = Math.min(1.0, finishAnimTimer / duration);
 
-        const targetLookAt = finalPos.clone()
-            .add(forwardVector.clone().multiplyScalar(3.5))
-            .add(new THREE.Vector3(0, 0.8, 0));
+            const orbitAngle = progressRatio * Math.PI; 
+            const orbitRadius = 4.5;
+            const orbitHeight = 1.6;
 
-        camera.position.lerp(targetCamPos, 0.18);
-        camera.lookAt(targetLookAt);
+            const camOffsetX = Math.sin(orbitAngle) * orbitRadius;
+            const camOffsetZ = Math.cos(orbitAngle) * orbitRadius;
 
-        // Item Pickup Collision Logic
-        itemObjects.forEach(item => {
-            if (!item.taken && item.mesh) {
-                item.mesh.rotation.y += 0.03;
+            const targetCamPos = finalPos.clone()
+                .addScaledVector(forwardVector, camOffsetZ)
+                .addScaledVector(sideVector, camOffsetX)
+                .add(new THREE.Vector3(0, orbitHeight, 0));
 
-                if (Math.abs(item.progress - playerProgress) < 0.008) {
-                    const distToItem = playerBike.position.distanceTo(item.mesh.position);
-                    if (distToItem < 2.0) {
-                        item.taken = true;
-                        scene.remove(item.mesh);
-                        activateItem(item.type);
-                    }
-                }
-            }
-        });
+            const targetLookAt = finalPos.clone().add(new THREE.Vector3(0, 1.2, 0));
 
-        updateItemTimer(delta);
-    }
+            camera.position.lerp(targetCamPos, 0.15);
+            camera.lookAt(targetLookAt);
+        } else {
+            const targetCamPos = finalPos.clone()
+                .sub(forwardVector.clone().multiplyScalar(camDistance))
+                .add(new THREE.Vector3(0, camHeight, 0));
 
-    // --- Game Reset & Loops ---
-    function triggerGameOver() {
-        currentState = STATE.GAMEOVER;
-        sound.playGameOver();
+            const targetLookAt = finalPos.clone()
+                .add(forwardVector.clone().multiplyScalar(3.5))
+                .add(new THREE.Vector3(0, 0.8, 0));
 
-        if (distance > highScore) {
-            highScore = distance;
-            localStorage.setItem('bicycle_runner_highscore', highScore);
+            camera.position.lerp(targetCamPos, 0.18);
+            camera.lookAt(targetLookAt);
         }
 
-        document.getElementById('final-score').textContent = `${distance} m`;
-        document.getElementById('high-score').textContent = `${highScore} m`;
+        if (currentState === STATE.PLAYING) {
+            itemObjects.forEach(item => {
+                if (!item.taken && item.mesh) {
+                    item.mesh.rotation.y += 0.03;
+
+                    if (Math.abs(item.progress - playerProgress) < 0.008) {
+                        const distToItem = playerBike.position.distanceTo(item.mesh.position);
+                        if (distToItem < 2.0) {
+                            item.taken = true;
+                            scene.remove(item.mesh);
+                            activateItem(item.type);
+                        }
+                    }
+                }
+            });
+
+            updateItemTimer(delta);
+        }
+    }
+
+    // --- Result Modal & Game Over Logic ---
+    function showResultModal(isCompleted) {
+        currentState = STATE.GAMEOVER;
+
+        if (!isCompleted) {
+            sound.playGameOver();
+        }
+
+        const iconEl = document.getElementById('result-icon');
+        const titleEl = document.getElementById('result-title');
+        const subtitleEl = document.getElementById('result-subtitle');
+
+        if (isCompleted) {
+            iconEl.textContent = '🏆';
+            titleEl.textContent = 'GOAL FINISH!!';
+            titleEl.className = 'text-3xl font-black text-yellow-400 mb-1';
+            subtitleEl.textContent = '見事に1,000mを完走しました！';
+        } else {
+            iconEl.textContent = '🌊';
+            titleEl.textContent = 'GAME OVER';
+            titleEl.className = 'text-3xl font-black text-blue-400 mb-1';
+            subtitleEl.textContent = '水路に落ちてしまった！';
+        }
+
+        let baseScore = isCompleted ? 20000 : distance * 10;
+
+        const turtleScore = collectedItems.TURTLE * 100;
+        const heartScore = collectedItems.HEART * 300;
+        const starScore = collectedItems.STAR * 500;
+        const totalScore = baseScore + turtleScore + heartScore + starScore;
+
+        document.getElementById('res-dist').textContent = `${distance} m`;
+        document.getElementById('res-base-score').textContent = `${baseScore.toLocaleString()} pt`;
+
+        document.getElementById('cnt-turtle').textContent = collectedItems.TURTLE;
+        document.getElementById('score-turtle').textContent = `+${turtleScore.toLocaleString()} pt`;
+
+        document.getElementById('cnt-heart').textContent = collectedItems.HEART;
+        document.getElementById('score-heart').textContent = `+${heartScore.toLocaleString()} pt`;
+
+        document.getElementById('cnt-star').textContent = collectedItems.STAR;
+        document.getElementById('score-star').textContent = `+${starScore.toLocaleString()} pt`;
+
+        document.getElementById('total-score').textContent = `${totalScore.toLocaleString()} pt`;
 
         document.getElementById('hud-container').classList.add('hidden');
         document.getElementById('gameover-screen').classList.remove('hidden');
+
+        if (autoCloseTimerId) clearTimeout(autoCloseTimerId);
+
+        let countdown = 5;
+        const timerTextEl = document.getElementById('auto-close-timer');
+        if (timerTextEl) timerTextEl.textContent = `※ ${countdown}秒後に自動でスタート画面に戻ります`;
+
+        const countInterval = setInterval(() => {
+            countdown--;
+            if (countdown > 0 && timerTextEl) {
+                timerTextEl.textContent = `※ ${countdown}秒後に自動でスタート画面に戻ります`;
+            } else {
+                clearInterval(countInterval);
+            }
+        }, 1000);
+
+        autoCloseTimerId = setTimeout(() => {
+            clearInterval(countInterval);
+            showStartScreen();
+        }, 5000);
+    }
+
+    function showStartScreen() {
+        if (autoCloseTimerId) {
+            clearTimeout(autoCloseTimerId);
+            autoCloseTimerId = null;
+        }
+        currentState = STATE.START;
+        document.getElementById('gameover-screen').classList.add('hidden');
+        document.getElementById('hud-container').classList.add('hidden');
+        document.getElementById('start-screen').classList.remove('hidden');
     }
 
     function resetGame() {
+        if (autoCloseTimerId) {
+            clearTimeout(autoCloseTimerId);
+            autoCloseTimerId = null;
+        }
+
         playerProgress = 0.001;
         playerLateralPos = 0;
         playerYOffset = 0;
         verticalVelocity = 0;
         isGrounded = true;
+        hasJumpedOnCurrentRamp = false;
         activeItem = null;
         currentSpeedMultiplier = 1.0;
         isAutoPilot = false;
+
+        finishAnimTimer = 0;
+        currentRunningSpeed = 0;
+        dismountProgress = 0;
+
+        if (playerBike.userData.riderGroup) {
+            const rider = playerBike.userData.riderGroup;
+            rider.position.set(0, 0, 0);
+            rider.rotation.set(0, 0, 0);
+        }
+
+        collectedItems = { TURTLE: 0, HEART: 0, STAR: 0 };
 
         document.getElementById('item-hud').classList.add('hidden');
         generateTrack();
@@ -889,22 +1278,24 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    document.getElementById('start-btn').addEventListener('click', () => {
+    function startGameFlow() {
         sound.init();
+        setupControls();
+        resetGame();
+    }
 
+    const startBtn = document.getElementById('start-btn');
+    startBtn.addEventListener('click', () => {
         if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(permissionState => {
-                    setupControls();
-                    resetGame();
+                    startGameFlow();
                 })
                 .catch(() => {
-                    setupControls();
-                    resetGame();
+                    startGameFlow();
                 });
         } else {
-            setupControls();
-            resetGame();
+            startGameFlow();
         }
     });
 
