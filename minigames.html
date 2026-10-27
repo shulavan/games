@@ -29,7 +29,7 @@
 /* 【江戸川双六 ver1.1.21】読み込み中の画面も、選んだ背景色にします（黒い画面をはさまないため） */
 (function(){ try{
   var k = localStorage.getItem('edogawa_theme_v1') || 'black';
-  var c = { blue:['#4285F4','#ffffff'], red:['#EA4335','#ffffff'], yellow:['#FBBC05','#1f2937'], green:['#34A853','#ffffff'], white:['#f1f5f9','#0f172a'] }[k];
+  var c = { blue:['#4285F4','#ffffff'], red:['#EA4335','#ffffff'], yellow:['#FBBC05','#1f2937'], green:['#2F9E4C','#ffffff'], white:['#f1f5f9','#0f172a'] }[k];
   if(c){ var st = document.createElement('style');
     st.textContent = 'html,body{background:' + c[0] + ' !important;color:' + c[1] + ' !important}#boot .s{color:' + c[1] + ' !important;opacity:.8}';
     document.head.appendChild(st); }

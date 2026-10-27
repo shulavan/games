@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '29';
+    window.__EDOGAWA_MINIGAMES_VER = '30';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -758,7 +758,7 @@
 })();
 </script>
 <style>#regional-mini-close{position:absolute;right:12px;top:12px;z-index:20;background:#f59e0b;color:#0f172a;font-weight:900;border-radius:10px;padding:8px 12px;box-shadow:0 4px 12px rgba(0,0,0,.35)} .regional-mini-shell{position:relative}</style>
-<script>(function(){try{var k=localStorage.getItem('edogawa_theme_v1');var bg={blue:'#4285F4',red:'#EA4335',yellow:'#FBBC05',green:'#34A853',white:'#f1f5f9'}[k];if(bg)document.documentElement.style.setProperty('background-color',bg,'important');}catch(e){}})();</script><style id="edogawa-v165-style">
+<script>(function(){try{var k=localStorage.getItem('edogawa_theme_v1');var bg={blue:'#4285F4',red:'#EA4335',yellow:'#FBBC05',green:'#2F9E4C',white:'#f1f5f9'}[k];if(bg)document.documentElement.style.setProperty('background-color',bg,'important');}catch(e){}})();</script><style id="edogawa-v165-style">
   /* ════════════════════════════════════════════════════════════
      ver1.1.19　背景色の選択（6色）
      黒（双六ブラック・いままでの色）／青／赤／黄／緑／白
@@ -773,7 +773,7 @@
   body[data-edo-theme="yellow"]{ --t-bg:#FBBC05; --t-deep:#fff4cc; --t-surf:#ffe48f; --t-surf2:#ffd75c; --t-text:#1f2937; --t-muted:#5a4630; --t-border:rgba(60,40,0,.22); --t-accent:#9a3412;
     --edo-nm-out: 5px 5px 12px rgba(120,80,0,.35), -4px -4px 10px rgba(255,255,255,.55), inset 1px 1px 0 rgba(255,255,255,.18);
     --edo-nm-in: inset 4px 4px 10px rgba(120,80,0,.35), inset -3px -3px 8px rgba(255,255,255,.55); }
-  body[data-edo-theme="green"]{ --t-bg:#34A853; --t-deep:#1d7337; --t-surf:#268c43; --t-surf2:#2f9a4c; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#fff3a3;
+  body[data-edo-theme="green"]{ --t-bg:#2F9E4C; --t-deep:#1d7337; --t-surf:#268c43; --t-surf2:#2a9147; --t-text:#ffffff; --t-muted:#ffffff; --t-border:rgba(255,255,255,.30); --t-accent:#fff3a3;
     --edo-nm-out: 5px 5px 12px rgba(5,50,20,.45), -4px -4px 10px rgba(255,255,255,.22), inset 1px 1px 0 rgba(255,255,255,.18);
     --edo-nm-in: inset 4px 4px 10px rgba(5,50,20,.45), inset -3px -3px 8px rgba(255,255,255,.22); }
   body[data-edo-theme="white"]{ --t-bg:#f1f5f9; --t-deep:#ffffff; --t-surf:#ffffff; --t-surf2:#e8eef5; --t-text:#0f172a; --t-muted:#475569; --t-border:#cbd5e1; --t-accent:#b45309;
@@ -832,6 +832,10 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   body[data-edo-theme="white"] .text-rose-300, body[data-edo-theme="white"] .text-rose-400{ color:#be123c !important; }
   /* 「江戸川区 非公認」のハンコ：赤い背景では白に */
   body[data-edo-theme="red"] #lobby-screen .border-rose-500{ border-color:#ffffff !important; color:#ffffff !important; }
+  /* 【ver1.2.0】緑の背景では、赤いハンコが沈んで見えるので白に */
+  body[data-edo-theme="green"] #lobby-screen .border-rose-500{ border-color:#ffffff !important; color:#ffffff !important; }
+  /* 【ver1.2.0】LINEの緑のボタン：白い文字に影をつけて、どの背景色でも読みやすく */
+  .bg-\[\#06C755\], .line-link-btn{ text-shadow: 0 1px 2px rgba(0,0,0,.35); }
   /* ── 背景色のボタン・選択画面 ── */
   #edo-theme-pick{ padding:11px 14px; border-radius:12px; font-weight:800; font-size:12px; border:1px solid #475569; background:#1e293b; color:#e2e8f0;
     box-shadow: var(--edo-nm-out); white-space:nowrap; }
@@ -867,6 +871,20 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h5{ color: var(--t-text) !important; }
   body[data-edo-theme]:not([data-edo-theme="black"]) .doc-body h4{ border-color: var(--t-border) !important; }
   body[data-edo-theme="yellow"] .doc-body h4, body[data-edo-theme="white"] .doc-body h4{ color: var(--t-accent) !important; }
+</style>
+<style id="edogawa-v171-style">
+  /* ════════════ ver1.2.0　赤マス・青マス・★マスのカード ════════════
+     カードは どの背景色でも もとの濃い赤・紺・茶のグラデーションのままなので、
+     中の文字・枠も もとの白・金色にもどします（背景色が黄・白のとき、文字だけ濃い色になり読めなかったため） */
+  body[data-edo-theme] #event-modal-card:is(.event-card-red,.event-card-blue,.event-card-yellow){ color:#f8fafc !important; }
+  body[data-edo-theme] #event-modal-card:is(.event-card-red,.event-card-blue,.event-card-yellow) #event-modal-title{ color:#fbbf24 !important; }
+  body[data-edo-theme] #event-modal-card:is(.event-card-red,.event-card-blue,.event-card-yellow) #event-modal-desc{ color:#f1f5f9 !important; }
+  body[data-edo-theme] #event-modal-card:is(.event-card-red,.event-card-blue,.event-card-yellow) #event-modal-extra{
+    background:rgba(2,6,23,.6) !important; border-color:rgba(255,255,255,.14) !important; color:#fcd34d !important; }
+  body[data-edo-theme] #event-modal-card:is(.event-card-red,.event-card-blue,.event-card-yellow) #event-modal-avatar{
+    background:rgba(2,6,23,.7) !important; border-color:rgba(255,255,255,.25) !important; }
+  body[data-edo-theme] #event-modal-card:is(.event-card-red,.event-card-blue,.event-card-yellow) .edo-x-btn{
+    background:rgba(2,6,23,.55) !important; color:#f8fafc !important; border-color:rgba(255,255,255,.25) !important; }
 </style>
 <style id="edogawa-v168-style">
   /* ════════════ ver1.1.26 ════════════ */
@@ -905,7 +923,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
 /* 【ver1.1.21】選んだ背景色を、ページを開いた最初の瞬間から使います（読み込み中に黒い画面を出さないため） */
 (function(){ try{
   var k = localStorage.getItem('edogawa_theme_v1') || 'black';
-  var bg = { blue:'#4285F4', red:'#EA4335', yellow:'#FBBC05', green:'#34A853', white:'#f1f5f9' }[k];
+  var bg = { blue:'#4285F4', red:'#EA4335', yellow:'#FBBC05', green:'#2F9E4C', white:'#f1f5f9' }[k];
   if(bg){ document.documentElement.style.setProperty('background-color', bg, 'important'); }
   if(document.body) document.body.setAttribute('data-edo-theme', k);
 }catch(e){} })();
@@ -29208,8 +29226,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   /* ── ⑤ お知らせ：スナックバー ── */
+  /* 【ver1.2.0】フッターのボタン（サイコロを振る など）と重なるため、ヘッダーの位置に出します */
   #edogawa-stat-toast{
-    top:auto !important; bottom: var(--edo-snack-bottom, 24px) !important; left:50% !important;
+    top: calc(env(safe-area-inset-top, 0px) + 10px) !important; bottom:auto !important; left:50% !important;
     transform: translate(-50%, 0) !important;
     width:auto !important; max-width: min(560px, calc(100vw - 32px)) !important; min-width: min(288px, calc(100vw - 32px)) !important;
     background:#1f2937 !important; color:#f8fafc !important; border:0 !important; border-radius:10px !important;
@@ -29218,7 +29237,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     box-shadow: var(--edo-elev-3) !important; z-index: 2147483100 !important;
     transition: opacity .22s ease, transform .22s ease !important;
   }
-  #edogawa-stat-toast.opacity-0{ transform: translate(-50%, 16px) !important; }
+  #edogawa-stat-toast.opacity-0{ transform: translate(-50%, -16px) !important; }
 </style>
 <script id="edogawa-v164">
 (function(){
@@ -29301,7 +29320,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     { k:'blue',   short:'青', n:'海浜公園の海風',   c:'#4285F4', fg:'#ffffff', code:'#4285F4' },
     { k:'red',    short:'赤', n:'赤い江戸川金魚',   c:'#EA4335', fg:'#ffffff', code:'#EA4335' },
     { k:'yellow', short:'黄', n:'最勝寺目黄不動',   c:'#FBBC05', fg:'#1f2937', code:'#FBBC05' },
-    { k:'green',  short:'緑', n:'緑ある親水公園',   c:'#34A853', fg:'#ffffff', code:'#34A853' },
+    { k:'green',  short:'緑', n:'緑ある親水公園',   c:'#2F9E4C', fg:'#ffffff', code:'#2F9E4C' },
     { k:'white',  short:'白', n:'白い展望塔船',     c:'#ffffff', fg:'#0f172a', code:'#FFFFFF' }
   ];
   const byKey = (k)=>THEMES.find(t=>t.k === k) || null;
@@ -29400,7 +29419,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     blue:   { bg:'#4285F4', deep:'#1f4fae', surf:'#2c66d6', surf2:'#3a74e3', text:'#ffffff', muted:'#ffffff', border:'rgba(255,255,255,.30)', accent:null },
     red:    { bg:'#EA4335', deep:'#a3271d', surf:'#c5362a', surf2:'#d64033', text:'#ffffff', muted:'#ffffff', border:'rgba(255,255,255,.30)', accent:null },
     yellow: { bg:'#FBBC05', deep:'#fff4cc', surf:'#ffe48f', surf2:'#ffd75c', text:'#1f2937', muted:'#5a4630', border:'rgba(60,40,0,.22)', accent:'#9a3412' },
-    green:  { bg:'#34A853', deep:'#1d7337', surf:'#268c43', surf2:'#2f9a4c', text:'#ffffff', muted:'#ffffff', border:'rgba(255,255,255,.30)', accent:null },
+    green:  { bg:'#2F9E4C', deep:'#1d7337', surf:'#268c43', surf2:'#2a9147', text:'#ffffff', muted:'#ffffff', border:'rgba(255,255,255,.30)', accent:null },
     white:  { bg:'#f1f5f9', deep:'#ffffff', surf:'#ffffff', surf2:'#e8eef5', text:'#0f172a', muted:'#475569', border:'#cbd5e1', accent:'#b45309' }
   };
   // ミニゲームの中で色を合わせるのは、背景が「画面の地の色」になっているゲームだけです。
@@ -29430,12 +29449,21 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     function restore(el){
       const o = el.__edoRc; if(!o) return;
       PROPS.forEach(p=>{ if(o[p] !== undefined){ if(o[p]) el.style.setProperty(p, o[p][0], o[p][1]); else el.style.removeProperty(p); } });
-      el.__edoRc = null; el.__edoDarkBg = false; selfWrote.add(el);
+      el.__edoRc = null; el.__edoSet = null; el.__edoDarkBg = false; selfWrote.add(el);
     }
+    // 【ver1.2.0】ゲームが自分で色を書きかえた（タイマーの色など）か。書きかえられていたら、こちらの記録は捨てて合わせ直します
+    //   （以前は「自分で書いた部品の変化」として見のがしていたため、1秒ごとに色が戻ったり直ったりしていました）
+    function drifted(el){
+      const o = el.__edoSet; if(!o) return false;
+      for(const p in o){ if(el.style.getPropertyValue(p) !== o[p] || el.style.getPropertyPriority(p) !== 'important') return true; }
+      return false;
+    }
+    function forget(el){ el.__edoRc = null; el.__edoSet = null; el.__edoDarkBg = false; touched.delete(el); }
     function set(el, p, v){
       if(!el.__edoRc) el.__edoRc = {};
       if(el.__edoRc[p] === undefined){ const cur = el.style.getPropertyValue(p); el.__edoRc[p] = cur ? [cur, el.style.getPropertyPriority(p)] : null; }
       el.style.setProperty(p, v, 'important');
+      (el.__edoSet || (el.__edoSet = {}))[p] = el.style.getPropertyValue(p);
       if(p === 'background-color' || p === 'background-image') el.__edoDarkBg = true;   // もとは黒系の背景だった印
       touched.add(el); selfWrote.add(el);
     }
@@ -29443,7 +29471,22 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const t = el.tagName;
       if(t === 'CANVAS' || t === 'IMG' || t === 'SVG' || t === 'svg' || t === 'VIDEO' || t === 'IFRAME' || t === 'SCRIPT' || t === 'STYLE' || t === 'PATH') return true;
       if(el.hasAttribute && el.hasAttribute('data-edo-norc')) return true;
+      if(ownColored(el)){ restoreInside(el); return true; }
       return false;
+    }
+    // 【ver1.2.0】赤マス・青マス・★マスのカードのように「色つきのグラデーション」で塗られた部品は、
+    //   もとの色（濃い赤・紺・茶）のまま表示されるので、中の文字も もとの白・金色のままにします。
+    //   （背景色が黄・白のとき、中の文字だけ濃い色に変わって読めなくなっていました）
+    function ownColored(el){
+      const c = el.getAttribute && el.getAttribute('class');
+      if(!c || !/gradient|event-card-/.test(c)) return false;
+      const bi = doc.defaultView.getComputedStyle(el).backgroundImage;
+      if(!bi || bi === 'none' || !/gradient/.test(bi)) return false;
+      const cols = (bi.match(/rgba?\([^)]+\)/g) || []).map(parse);
+      return cols.some(x=>x && x.a > .3 && !darkNeutral(x));
+    }
+    function restoreInside(root){
+      touched.forEach(el=>{ if(root === el || root.contains(el)){ restore(el); touched.delete(el); } });
     }
     // 要素の一覧から、置きかえる色を決めます
     function planFor(list, P, k, visCheck){
@@ -29513,6 +29556,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const fg = parse(cs.color); if(!fg || fg.a < .5) continue;
         const bg = effBg(el); if(!bg) continue;
         if(ratio(fg, bg) >= 3) continue;
+        // 【ver1.2.0】LINEの緑のボタンの白い文字は、灰色にすると かえって読みにくいので そのまま（影をつけて読みやすくしています）
+        if(lum(fg) > .75 && bg.r < 40 && bg.g > 170 && bg.b < 120) continue;
         const darken = lum(bg) > .3;
         let c = { r:fg.r, g:fg.g, b:fg.b, a:1 };
         for(let i = 0; i < 14 && ratio(c, bg) < 3.6; i++){
@@ -29575,7 +29620,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const roots = new Set();
       for(const m of ms){
         const t = m.target;
-        if(m.type === 'attributes' && m.attributeName === 'style' && selfWrote.has(t)) continue;
+        if(m.type === 'attributes' && m.attributeName === 'style' && selfWrote.has(t) && !drifted(t)) continue;
         if(t && t.closest && t.closest('.leaflet-container')) continue;
         if(m.type === 'childList'){ m.addedNodes.forEach(nd=>{ if(nd.nodeType === 1) roots.add(nd); }); }
         else if(t && t.nodeType === 1) roots.add(t);
@@ -29587,6 +29632,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(list.length > 4000) return;   // とても大きいときは、あとのまとめ直しにまかせます
       busy = true;
       try{
+        list.forEach(el=>{ if(el.__edoRc && drifted(el)) forget(el); });
         const old = list.filter(el=>el.__edoRc);
         noTransition(old, ()=>{
           old.forEach(el=>{ restore(el); touched.delete(el); });
@@ -29609,12 +29655,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
           let need = false;
           for(const m of ms){
             const t = m.target;
-            if(m.type === 'attributes' && m.attributeName === 'style' && selfWrote.has(t)) continue;
+            if(m.type === 'attributes' && m.attributeName === 'style' && selfWrote.has(t) && !drifted(t)) continue;
             if(!(t && t.closest && t.closest('.leaflet-container'))){ need = true; break; }
           }
           const prev = selfWrote; selfWrote = new Set();
           if(!need) return;
-          quick(ms.filter(m=>!(m.type === 'attributes' && m.attributeName === 'style' && prev.has(m.target))));      // 画面に出る前に、変わったところだけすぐ直します
+          quick(ms.filter(m=>!(m.type === 'attributes' && m.attributeName === 'style' && prev.has(m.target) && !drifted(m.target))));      // 画面に出る前に、変わったところだけすぐ直します
           later();        // 少しあとに、全体をもう一度見直します
         });
         mo.observe(doc.body, { subtree:true, childList:true, attributes:true, attributeFilter:['class','hidden','open','style'] });
@@ -29649,10 +29695,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(!doc || !doc.body) return;
       let game = ''; try{ game = (new URL(f.contentWindow.location.href)).searchParams.get('game') || ''; }catch(e){}
       const rec = frames.get(f);
-      const sameDoc = rec && rec.doc === doc;
+      // 【ver1.2.0】minigames.html は「よみこみ中…」の画面を出したあと、同じ文書の中身をゲームに書きかえます（document.write）。
+      //   書きかえの前に見はりを始めると、古い body を見はったままになり、色が合わないことがありました。body が変わったら見はり直します。
+      const sameDoc = rec && rec.doc === doc && rec.body === doc.body;
+      if(rec && !sameDoc){ try{ rec.r.stop(); }catch(e){} frames.delete(f); }
       if(k === 'black' || !THEME_GAMES.has(game) || !game){ if(rec){ try{ rec.r.stop(); }catch(e){} frames.delete(f); } return; }
       if(sameDoc){ return; }
-      frames.set(f, { doc, r: makeRecolor(doc, { html:true }) });
+      frames.set(f, { doc, body: doc.body, r: makeRecolor(doc, { html:true }) });
     });
   }
   function paintRoot(){
