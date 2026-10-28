@@ -1,0 +1,62 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>江戸川双六 3D地図テスト</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+ html,body,#map{margin:0;height:100%;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;background:#0f172a}
+ #ui{position:fixed;left:8px;right:8px;bottom:calc(30px + env(safe-area-inset-bottom));z-index:5;display:flex;flex-direction:column;gap:6px}
+ .row{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+ .row button{flex:0 0 auto;border:0;border-radius:10px;padding:8px 11px;font-weight:800;font-size:12px;background:rgba(15,23,42,.88);color:#f8fafc;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+ .row button.on{background:#f59e0b;color:#1f1300}
+ #info{position:fixed;left:8px;top:calc(8px + env(safe-area-inset-top));z-index:5;background:rgba(15,23,42,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 9px;border-radius:9px;line-height:1.5}
+ .pl{width:42px;height:42px;border-radius:50%;background:#10b981;border:4px solid #fff;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 0 3px #0f172a,0 6px 14px rgba(0,0,0,.45)}
+</style></head><body>
+<div id="map"></div>
+<div id="info"></div>
+<div id="ui">
+ <div class="row" id="st"></div>
+ <div class="row" id="opt"></div>
+</div>
+<script>
+// 地面：地理院タイル（標準地図／淡色地図）　建物：3D都市モデル（PLATEAU）東京23区 2020年度（CC BY 4.0）
+const ST={'西葛西':[35.664567,139.859254],'葛西':[35.663582,139.873137],'船堀':[35.683828,139.863996],'一之江':[35.685954,139.882621],'瑞江':[35.693457,139.897727],'篠崎':[35.706003,139.903832],'平井':[35.706591,139.842656],'新小岩':[35.717192,139.858331],'小岩':[35.733161,139.881643],'京成小岩':[35.74248,139.883254],'江戸川':[35.737862,139.895478],'葛西臨海公園':[35.644193,139.862162],'区役所':[35.706785,139.868333],'平井大橋':[35.7155,139.8470]};
+const TH={黒:'#0f172a',青:'#4285F4',赤:'#EA4335',黄:'#FBBC05',緑:'#2F9E4C',白:'#94a3b8'};
+const S={ground:'pale',theme:'黒',pitch:30,zoom:18,minH:0,b3d:true};
+const map=new maplibregl.Map({container:'map',center:[139.859254,35.664567],zoom:S.zoom,pitch:S.pitch,bearing:0,maxPitch:70,antialias:true,
+ attributionControl:{compact:true,customAttribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>｜3D都市モデル（Project PLATEAU）国土交通省（CC BY 4.0）'},
+ style:{version:8,sources:{
+  std:{type:'raster',tiles:['https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png'],tileSize:256,maxzoom:18},
+  pale:{type:'raster',tiles:['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],tileSize:256,maxzoom:18},
+  plateau:{type:'vector',tiles:['https://raw.githubusercontent.com/indigo-lab/plateau-tokyo23ku-building-mvt-2020/main/{z}/{x}/{y}.pbf'],minzoom:10,maxzoom:16}},
+ layers:[{id:'bg',type:'background',paint:{'background-color':'#e5e7eb'}},
+  {id:'std',type:'raster',source:'std',layout:{visibility:'none'}},
+  {id:'pale',type:'raster',source:'pale'},
+  {id:'b3d',type:'fill-extrusion',source:'plateau','source-layer':'bldg',filter:['>=',['coalesce',['get','measuredHeight'],0],0],
+   paint:{'fill-extrusion-color':TH.黒,'fill-extrusion-opacity':.5,'fill-extrusion-height':['coalesce',['get','measuredHeight'],0]}}]}});
+const pl=document.createElement('div');pl.className='pl';pl.textContent='🧑‍🦱';
+const me=new maplibregl.Marker({element:pl}).setLngLat([139.859254,35.664567]).addTo(map);
+function btn(row,label,on,fn){const b=document.createElement('button');b.textContent=label;if(on)b.classList.add('on');b.onclick=()=>{fn();[...row.children].forEach(x=>x.dataset.g===b.dataset.g&&x.classList.remove('on'));b.classList.add('on');};return b;}
+const st=document.getElementById('st');
+Object.keys(ST).forEach((n,i)=>{const b=btn(st,n,i===0,()=>{const p=ST[n];me.setLngLat([p[1],p[0]]);map.jumpTo({center:[p[1],p[0]]});});b.dataset.g='s';st.appendChild(b);});
+const opt=document.getElementById('opt');
+const add=(g,label,on,fn)=>{const b=btn(opt,label,on,fn);b.dataset.g=g;opt.appendChild(b);};
+add('g','淡色地図',true,()=>{map.setLayoutProperty('pale','visibility','visible');map.setLayoutProperty('std','visibility','none');});
+add('g','標準地図',false,()=>{map.setLayoutProperty('std','visibility','visible');map.setLayoutProperty('pale','visibility','none');});
+Object.keys(TH).forEach((k,i)=>add('t',k,i===0,()=>map.setPaintProperty('b3d','fill-extrusion-color',TH[k])));
+add('p','傾き0',false,()=>map.easeTo({pitch:0}));add('p','傾き30',true,()=>map.easeTo({pitch:30}));add('p','傾き55',false,()=>map.easeTo({pitch:55}));
+add('h','全部立体',true,()=>map.setFilter('b3d',['>=',['coalesce',['get','measuredHeight'],0],0]));
+add('h','15m以上',false,()=>map.setFilter('b3d',['>=',['coalesce',['get','measuredHeight'],0],15]));
+add('h','立体なし',false,()=>map.setFilter('b3d',['>=',['coalesce',['get','measuredHeight'],0],9999]));
+const info=document.getElementById('info');
+// 建物データの読み込み状況（うまく出ないときの手がかり）
+const B={ok:0,err:0,msg:''};
+map.on('data',e=>{ if(e.sourceId==='plateau' && e.dataType==='source' && e.tile){ B.ok++; upd(); } });
+map.on('error',e=>{ const m=String((e&&e.error&&e.error.message)||e&&e.error||''); if(/plateau|pbf|githubusercontent|Worker|worker/i.test(m) || (e&&e.sourceId==='plateau')){ B.err++; B.msg=m.slice(0,60); upd(); } });
+const upd=()=>{
+  let n=0; try{ n=map.queryRenderedFeatures({layers:['b3d']}).length; }catch(e){}
+  info.innerHTML='ズーム '+map.getZoom().toFixed(1)+'／傾き '+Math.round(map.getPitch())+'°／向き '+Math.round(map.getBearing())+'°（2本指で回転・傾け）<br>'+
+    '建物：画面に '+n+' 棟（タイル '+B.ok+'／エラー '+B.err+'）'+(B.msg?'<br>'+B.msg.replace(/[<>&]/g,''):'');
+};
+map.on('move',upd);map.on('load',upd);map.on('idle',upd);
+</script></body></html>
