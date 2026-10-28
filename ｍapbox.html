@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mapbox 3D Walk Game</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- FontAwesome for UI Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+        /* Custom UI Glassmorphism style */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        /* Virtual Joystick Styling */
+        #joystick-container {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            touch-action: none;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #joystick-stick {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #38bdf8, #0284c7);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            position: absolute;
+            pointer-events: none;
+            transition: transform 0.05s linear;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white">
+
+    <!-- Map container -->
+    <div id="map"></div>
+
+    <!-- UI Overlay: Top Stats Bar -->
+    <div class="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
+        <!-- Score & Coins counter -->
+        <div class="glass-panel px-4 py-2 rounded-2xl flex items-center space-x-3 pointer-events-auto shadow-lg">
+            <div class="w-9 h-9 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 font-bold">
+                <i class="fa-solid fa-coins text-lg"></i>
+            </div>
+            <div>
+                <div class="text-xs text-slate-300 font-medium">コイン獲得数</div>
+                <div id="score-val" class="text-xl font-black text-yellow-400 leading-none">0 / 5</div>
+            </div>
+        </div>
+
+        <!-- Location Badge / Action button -->
+        <div class="glass-panel px-3 py-2 rounded-2xl flex items-center space-x-2 pointer-events-auto shadow-lg">
+            <button id="recenter-btn" class="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-xl transition flex items-center justify-center">
+                <i class="fa-solid fa-location-crosshairs"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- UI Overlay: Instructions Banner -->
+    <div id="instruction-box" class="absolute top-20 left-1/2 transform -translate-x-1/2 z-10 glass-panel px-4 py-2 rounded-xl text-xs text-center text-slate-200 pointer-events-none transition-opacity duration-500 shadow-md">
+        <i class="fa-solid fa-hand-pointer mr-1 text-blue-400"></i> 左下のジョイスティックで街を歩き回ろう！
+    </div>
+
+    <!-- Virtual Joystick for Touch Devices -->
+    <div id="joystick-container">
+        <div id="joystick-stick"></div>
+    </div>
+
+    <!-- Game Complete Modal -->
+    <div id="win-modal" class="hidden absolute inset-0 z-30 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-3xl max-w-sm w-full text-center shadow-2xl border border-yellow-500/30">
+            <div class="w-16 h-16 bg-yellow-500/20 text-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-400/40">
+                <i class="fa-solid fa-trophy text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white mb-1">コンプリート！</h2>
+            <p class="text-slate-300 text-sm mb-6">街に散らばるすべてのコインを集めました！</p>
+            <button id="restart-btn" class="w-full py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 font-bold rounded-xl shadow-lg transition transform active:scale-95">
+                もう一度遊ぶ
+            </button>
+        </div>
+    </div>
+
+    <!-- Error/Token Warning Modal -->
+    <div id="error-banner" class="hidden absolute bottom-4 right-4 left-4 sm:left-auto z-40 bg-red-900/90 border border-red-500/50 text-white p-3 rounded-2xl backdrop-blur-md text-xs shadow-xl flex items-start space-x-3 max-w-md">
+        <i class="fa-solid fa-triangle-exclamation text-red-400 text-lg mt-0.5 shrink-0"></i>
+        <div>
+            <div class="font-bold text-red-200 mb-0.5">Mapbox 読み込み警告</div>
+            <div class="text-red-300/90 leading-tight">Mapboxトークンの利用制限またはスタイルの取得に失敗しました。ご自身のMapbox Access Tokenに置き換えてお試しください。</div>
+        </div>
+    </div>
+
+    <script>
+        // Mapbox Access Token (User Provided)
+        mapboxgl.accessToken = 'Pk.eyJ1Ijoic2h1bGF2YW4iLCJhIjoiY212cmhleTVrMDl5aDJ5cHQ0ZWo1cDh2biJ9.qhlYIO7G0wp5ZR9CA3Wyqw';
+
+        // Tokyo Station Start Coordinates
+        const START_COORD = [139.767125, 35.681236];
+
+        // Map setup with 3D buildings enabled
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/standard', // 3D Standard style with dynamic lighting & models
+            center: START_COORD,
+            zoom: 18.2,
+            pitch: 65, // Tilt camera for immersive 3D perspective
+            bearing: -20,
+            antialias: true
+        });
+
+        // Map Error Handling
+        map.on('error', (e) => {
+            console.warn('Mapbox error:', e);
+            const errBanner = document.getElementById('error-banner');
+            if (errBanner) errBanner.classList.remove('hidden');
+        });
+
+        // Game State Variables
+        let playerCoord = [...START_COORD];
+        let playerRotation = 0; // in degrees
+        let moveSpeed = 0.00003; // Latitude/Longitude offset per tick
+        let score = 0;
+        const totalCoins = 5;
+
+        // Joystick Input Vector
+        let inputDir = { x: 0, y: 0 };
+        let isJoystickActive = false;
+
+        // Key states for Keyboard controls (Desktop support)
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, w: false, s: false, a: false, d: false };
+
+        // Coins data array [lng, lat, collected: boolean, mesh]
+        const coinsData = [
+            { lng: 139.767400, lat: 35.681400, collected: false },
+            { lng: 139.766800, lat: 35.681100, collected: false },
+            { lng: 139.767000, lat: 35.681600, collected: false },
+            { lng: 139.767600, lat: 35.681000, collected: false },
+            { lng: 139.766600, lat: 35.681400, collected: false },
+        ];
+
+        // Three.js Custom Mapbox Layer Definition
+        let customLayer = {
+            id: '3d-game-layer',
+            type: 'custom',
+            renderingMode: '3d',
+
+            onAdd: function (map, gl) {
+                this.camera = new THREE.Camera();
+                this.scene = new THREE.Scene();
+                this.map = map;
+
+                // Lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+                this.scene.add(ambientLight);
+
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(50, 100, 50);
+                this.scene.add(dirLight);
+
+                // --- Ground Platform Fallback (Ensures visual terrain if map tiles fail) ---
+                const groundGeo = new THREE.CircleGeometry(200, 32);
+                const groundMat = new THREE.MeshBasicMaterial({ 
+                    color: 0x1e293b, 
+                    transparent: true, 
+                    opacity: 0.3, 
+                    side: THREE.DoubleSide 
+                });
+                this.groundMesh = new THREE.Mesh(groundGeo, groundMat);
+                this.scene.add(this.groundMesh);
+
+                // --- Build Player Character (Robot/Avatar style) ---
+                this.playerGroup = new THREE.Group();
+
+                // Character Body
+                const bodyGeo = new THREE.CylinderGeometry(2, 1.5, 6, 8);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.3 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.y = 3;
+                this.playerGroup.add(body);
+
+                // Character Head
+                const headGeo = new THREE.SphereGeometry(2, 16, 16);
+                const headMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1 });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.y = 7;
+                this.playerGroup.add(head);
+
+                // Character Visor/Eyes (for orientation reference)
+                const eyeGeo = new THREE.BoxGeometry(2.2, 0.8, 1);
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+                const eye = new THREE.Mesh(eyeGeo, eyeMat);
+                eye.position.set(0, 7.2, 1.4);
+                this.playerGroup.add(eye);
+
+                // Add Player to Scene
+                this.scene.add(this.playerGroup);
+
+                // --- Build Collectible Coins ---
+                const coinGeo = new THREE.CylinderGeometry(2.5, 2.5, 0.6, 16);
+                const coinMat = new THREE.MeshStandardMaterial({
+                    color: 0xeab308,
+                    metalness: 0.8,
+                    roughness: 0.2
+                });
+
+                coinsData.forEach(coin => {
+                    const mesh = new THREE.Mesh(coinGeo, coinMat);
+                    mesh.rotation.x = Math.PI / 2; // Standing coin
+                    this.scene.add(mesh);
+                    coin.mesh = mesh;
+                });
+
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: map.getCanvas(),
+                    context: gl,
+                    antialiasing: true
+                });
+                this.renderer.autoClear = false;
+            },
+
+            render: function (gl, matrix) {
+                // Update Player Position in Three.js World Space using Mercator conversion
+                const modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
+                    playerCoord,
+                    0
+                );
+
+                // Scale factor for Mapbox coordinate system
+                const scale = modelAsMercatorCoordinate.meterInMercatorCoordinateUnits();
+
+                // Compute Matrix for Player Position & Rotation
+                const rotationMatrix = new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(playerRotation));
+                const scaleMatrix = new THREE.Matrix4().makeScale(scale, scale, scale);
+
+                const transformMatrix = new THREE.Matrix4()
+                    .fromArray(matrix)
+                    .translate(new THREE.Vector3(
+                        modelAsMercatorCoordinate.x,
+                        modelAsMercatorCoordinate.y,
+                        modelAsMercatorCoordinate.z
+                    ))
+                    .multiply(rotationMatrix)
+                    .multiply(scaleMatrix);
+
+                this.playerGroup.matrixAutoUpdate = false;
+                this.playerGroup.matrix = transformMatrix;
+
+                // Ground plane position calculation
+                const groundTransform = new THREE.Matrix4()
+                    .fromArray(matrix)
+                    .translate(new THREE.Vector3(modelAsMercatorCoordinate.x, modelAsMercatorCoordinate.y, modelAsMercatorCoordinate.z))
+                    .multiply(scaleMatrix);
+                this.groundMesh.matrixAutoUpdate = false;
+                this.groundMesh.matrix = groundTransform;
+
+                // Render and animate Coins
+                const time = Date.now() * 0.003;
+                coinsData.forEach(coin => {
+                    if (coin.collected) {
+                        if (coin.mesh.visible) coin.mesh.visible = false;
+                        return;
+                    }
+
+                    const coinMercator = mapboxgl.MercatorCoordinate.fromLngLat([coin.lng, coin.lat], 1.5 + Math.sin(time * 2) * 0.5);
+                    const coinScale = coinMercator.meterInMercatorCoordinateUnits();
+
+                    const coinTransform = new THREE.Matrix4()
+                        .fromArray(matrix)
+                        .translate(new THREE.Vector3(coinMercator.x, coinMercator.y, coinMercator.z))
+                        .multiply(new THREE.Matrix4().makeRotationZ(time)) // Spin effect
+                        .multiply(new THREE.Matrix4().makeScale(coinScale, coinScale, coinScale));
+
+                    coin.mesh.matrixAutoUpdate = false;
+                    coin.mesh.matrix = coinTransform;
+                });
+
+                this.renderer.resetState();
+                this.renderer.render(this.scene, this.camera);
+                this.map.triggerRepaint();
+            }
+        };
+
+        // Initialize Map and Layers
+        map.on('load', () => {
+            // Add custom 3D layer to Mapbox
+            map.addLayer(customLayer);
+            
+            // Start Game Logic Loop
+            requestAnimationFrame(gameLoop);
+            
+            // Hide instruction banner after 5 seconds
+            setTimeout(() => {
+                const box = document.getElementById('instruction-box');
+                if (box) box.style.opacity = '0';
+            }, 5000);
+        });
+
+        // Main Game Update Loop
+        function gameLoop() {
+            let dx = 0;
+            let dy = 0;
+
+            // Handle Joystick Input
+            if (isJoystickActive) {
+                dx = inputDir.x;
+                dy = -inputDir.y; // Invert touch Y axis
+            }
+
+            // Handle Keyboard Input (Desktop fallback)
+            if (keys.ArrowUp || keys.w) dy += 1;
+            if (keys.ArrowDown || keys.s) dy -= 1;
+            if (keys.ArrowLeft || keys.a) dx -= 1;
+            if (keys.ArrowRight || keys.d) dx += 1;
+
+            if (dx !== 0 || dy !== 0) {
+                // Normalize speed for diagonal movement
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const normX = dx / length;
+                const normY = dy / length;
+
+                // Adjust movement angle relative to map camera bearing
+                const bearingRad = THREE.MathUtils.degToRad(map.getBearing());
+                const moveAngle = Math.atan2(normX, normY) - bearingRad;
+
+                // Calculate displacement in Lat/Lng
+                const deltaLng = Math.sin(moveAngle) * moveSpeed;
+                const deltaLat = Math.cos(moveAngle) * moveSpeed;
+
+                playerCoord[0] += deltaLng;
+                playerCoord[1] += deltaLat;
+
+                // Update Player Heading Direction
+                playerRotation = THREE.MathUtils.radToDeg(moveAngle) + 180;
+
+                // Camera follows player smooth transition
+                map.easeTo({
+                    center: playerCoord,
+                    duration: 0,
+                    easing: (t) => t
+                });
+
+                // Check collision with coins
+                checkCoinCollisions();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Collision Detection System
+        function checkCoinCollisions() {
+            coinsData.forEach(coin => {
+                if (coin.collected) return;
+
+                // Distance calculation (Euclidean approximation for small area)
+                const dLng = playerCoord[0] - coin.lng;
+                const dLat = playerCoord[1] - coin.lat;
+                const distance = Math.sqrt(dLng * dLng + dLat * dLat);
+
+                // Collision Threshold (~3-4 meters)
+                if (distance < 0.00015) {
+                    coin.collected = true;
+                    score++;
+                    updateScoreUI();
+                }
+            });
+        }
+
+        function updateScoreUI() {
+            const scoreEl = document.getElementById('score-val');
+            scoreEl.innerText = `${score} / ${totalCoins}`;
+
+            if (score >= totalCoins) {
+                setTimeout(() => {
+                    document.getElementById('win-modal').classList.remove('hidden');
+                }, 300);
+            }
+        }
+
+        // --- Virtual Joystick Controller Logic ---
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickStick = document.getElementById('joystick-stick');
+        const maxRadius = 40;
+
+        function handleTouchMove(evt) {
+            evt.preventDefault();
+            const touch = evt.touches ? evt.touches[0] : evt;
+            const rect = joystickContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            let deltaX = touch.clientX - centerX;
+            let deltaY = touch.clientY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distance > maxRadius) {
+                deltaX = (deltaX / distance) * maxRadius;
+                deltaY = (deltaY / distance) * maxRadius;
+            }
+
+            joystickStick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+            inputDir.x = deltaX / maxRadius;
+            inputDir.y = deltaY / maxRadius;
+            isJoystickActive = true;
+        }
+
+        function handleTouchEnd() {
+            joystickStick.style.transform = `translate(0px, 0px)`;
+            inputDir = { x: 0, y: 0 };
+            isJoystickActive = false;
+        }
+
+        // Joystick Event Listeners (Touch & Mouse support)
+        joystickContainer.addEventListener('touchstart', (e) => { isJoystickActive = true; handleTouchMove(e); });
+        window.addEventListener('touchmove', (e) => { if (isJoystickActive) handleTouchMove(e); }, { passive: false });
+        window.addEventListener('touchend', handleTouchEnd);
+
+        joystickContainer.addEventListener('mousedown', (e) => { isJoystickActive = true; handleTouchMove(e); });
+        window.addEventListener('mousemove', (e) => { if (isJoystickActive) handleTouchMove(e); });
+        window.addEventListener('mouseup', handleTouchEnd);
+
+        // Keyboard Controls Setup
+        window.addEventListener('keydown', (e) => { if (e.key in keys) keys[e.key] = true; });
+        window.addEventListener('keyup', (e) => { if (e.key in keys) keys[e.key] = false; });
+
+        // Recenter Button Action
+        document.getElementById('recenter-btn').addEventListener('click', () => {
+            map.flyTo({
+                center: playerCoord,
+                zoom: 18.2,
+                pitch: 60,
+                essential: true
+            });
+        });
+
+        // Restart Game Action
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            playerCoord = [...START_COORD];
+            score = 0;
+            coinsData.forEach(c => c.collected = false);
+            updateScoreUI();
+            document.getElementById('win-modal').classList.add('hidden');
+            map.flyTo({ center: playerCoord, zoom: 18.2, pitch: 60 });
+        });
+    </script>
+</body>
+</html>
