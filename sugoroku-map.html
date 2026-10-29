@@ -30477,17 +30477,20 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 </script>
 <style id="edogawa-v172-style">
   /* ════════════ ver1.2.1　地図まわり ════════════ */
-  /* 地図の出典：いちばん手前に、読みやすい白い札で（施設アイコンの下に隠れてぼやけていたため） */
-  #map-credit-btn.edo-map-credit{ position:fixed !important; z-index:45 !important; top:calc(env(safe-area-inset-top, 0px) + 4px) !important;
-    background:rgba(255,255,255,.88) !important; color:#334155 !important; text-shadow:none !important;
-    padding:1px 5px !important; border-radius:5px !important; font-size:8px !important; line-height:1.35 !important; }
+  /* 地図の出典：いちばん手前に。目立たせないよう、薄い灰色の小さな文字・背景なし。
+     「◯ターン」の左はし・「現在地」の上はしにそろえ、ボタンと重ならない幅に1行で（文字の大きさは下のスクリプトで調整） */
+  #map-credit-btn.edo-map-credit{ position:fixed !important; z-index:45 !important; background:transparent !important;
+    color:#9ca3af !important; text-shadow:0 0 1px #fff, 0 0 2px rgba(255,255,255,.8) !important; padding:0 !important; border:0 !important; border-radius:0 !important;
+    line-height:1.2 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:clip !important; }
   /* 視点切替ボタン（👀／👟）。双六の画面ではメニュー（≡）の代わりに出します（📌モードでは≡のまま） */
   body:not(.edo-visited-only) #game-header-tools > #game-menu-btn{ display:none !important; }
   body.edo-visited-only #edo-view-btn{ display:none !important; }
-  #edo-view-btn .edo-view-emo{ display:block; font-size:31px; line-height:1;
+  /* ボタンは「♫」「全画面」と同じ見た目。絵文字だけ白い縁取り */
+  #game-header-tools > #edo-view-btn{ border-color:transparent !important; box-shadow:var(--edo-nm-out) !important; }
+  #game-header-tools > #edo-view-btn:active{ box-shadow:var(--edo-nm-in) !important; }
+  #edo-view-btn .edo-view-emo{ display:block; font-size:26px; line-height:1;
     font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
-    filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff); }
-  #edo-view-btn.on{ outline:2px solid #f59e0b; outline-offset:1px; }
+    filter: drop-shadow(.7px 0 0 #fff) drop-shadow(-.7px 0 0 #fff) drop-shadow(0 .7px 0 #fff) drop-shadow(0 -.7px 0 #fff); }
   /* 視点切替中の地図（いままでの地図の上に重ねます。ヘッダー・フッターはその上） */
   #edo-view3d{ position:fixed; z-index:15; touch-action:none; background:#e5e7eb; overflow:hidden; }
   #edo-view3d .maplibregl-canvas{ outline:none; }
@@ -30513,7 +30516,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const TILES = 'https://raw.githubusercontent.com/indigo-lab/plateau-tokyo23ku-building-mvt-2020/main/{z}/{x}/{y}.pbf';
   const CREDIT = '3D都市モデル（<a href="https://www.mlit.go.jp/plateau/" target="_blank" rel="noopener">Project PLATEAU</a>）国土交通省';
   const COLORS = { black:'#64748b', blue:'#4285F4', red:'#EA4335', yellow:'#FBBC05', green:'#2F9E4C', white:'#94a3b8' };
-  const DEST_COLOR = '#dc2626';
+  const DEST_RED = '#dc2626', DEST_BLUE = '#2563eb';
+  const destColor = ()=>themeKey() === 'red' ? DEST_BLUE : DEST_RED;   // 背景色が赤のときだけ、目的地は青系に
   const PALE = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
   const STD  = 'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png';
   const MIN_ZOOM = 15;
@@ -30548,7 +30552,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function targets(){
     const out = [];
     const d = app.currentDestination;
-    if(d && Number.isFinite(+d.lat) && Number.isFinite(+d.lng)) out.push({ key:'d:' + (+d.lat).toFixed(6) + ',' + (+d.lng).toFixed(6), lat:+d.lat, lng:+d.lng, c:DEST_COLOR });
+    if(d && Number.isFinite(+d.lat) && Number.isFinite(+d.lng)) out.push({ key:'d:' + (+d.lat).toFixed(6) + ',' + (+d.lng).toFixed(6), lat:+d.lat, lng:+d.lng, c:destColor() });
     (app.players || []).forEach(p=>{
       const col = (p && p.color && p.color.stroke) || '#f59e0b';
       (Array.isArray(p && p.properties) ? p.properties : []).forEach(o=>{
@@ -30607,7 +30611,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       { id:'b3d', type:'fill-extrusion', source:'plateau', 'source-layer':'bldg', minzoom: minzoom,
         paint:{ 'fill-extrusion-color': color(), 'fill-extrusion-opacity': .5, 'fill-extrusion-height': h, 'fill-extrusion-base': 0 } },
       { id:'b3d-sp', type:'fill-extrusion', source:'plateau', 'source-layer':'bldg', minzoom: minzoom, filter:['in', ['get','建物ID'], ['literal', []]],
-        paint:{ 'fill-extrusion-color': DEST_COLOR, 'fill-extrusion-opacity': 1, 'fill-extrusion-height': h, 'fill-extrusion-base': 0 } },
+        paint:{ 'fill-extrusion-color': destColor(), 'fill-extrusion-opacity': 1, 'fill-extrusion-height': h, 'fill-extrusion-base': 0 } },
       { id:'b3d-cube', type:'fill-extrusion', source:'cubes', minzoom: minzoom,
         paint:{ 'fill-extrusion-color': ['get','c'], 'fill-extrusion-opacity': 1, 'fill-extrusion-height': ['get','h'], 'fill-extrusion-base': 0 } }
     ];
@@ -30637,7 +30641,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const ids = pairs.map(x=>x[0]);
       ml.setFilter('b3d', ids.length ? ['!', ['in', ['get','建物ID'], ['literal', ids]]] : null);
       ml.setFilter('b3d-sp', ids.length ? ['in', ['get','建物ID'], ['literal', ids]] : ['in', ['get','建物ID'], ['literal', []]]);
-      if(ids.length) ml.setPaintProperty('b3d-sp', 'fill-extrusion-color', ['match', ['get','建物ID']].concat(...pairs, [DEST_COLOR]));
+      if(ids.length) ml.setPaintProperty('b3d-sp', 'fill-extrusion-color', ['match', ['get','建物ID']].concat(...pairs, [destColor()]));
       ml.setPaintProperty('b3d', 'fill-extrusion-color', color());
       const src = ml.getSource('cubes'); if(src) src.setData({ type:'FeatureCollection', features:cubes });
     }catch(e){ console.warn('[v172] 建物の色', e); }
@@ -30700,30 +30704,47 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
 
   // ── 出典はいちばん手前に（ヘッダーの中から外に出します） ──
-  function liftCredit(){ const c = g('map-credit-btn'); if(c && c.parentNode !== document.body) document.body.appendChild(c); }
-  setTimeout(liftCredit, 300); setInterval(liftCredit, 3000);
+  function liftCredit(){ const c = g('map-credit-btn'); if(c && c.parentNode !== document.body){ document.body.appendChild(c); c.setAttribute('data-edo-norc', '1'); }
+    if(c && c.style.getPropertyValue('color')){ c.style.removeProperty('color'); c.__edoRc = null; }   // 背景色に合わせた文字色は使いません
+    placeCredit(); }
+  // 「◯ターン」の左はし・「現在地」の上はしにそろえ、ボタン（現在地・♫など）と重ならない幅で1行に
+  function placeCredit(){
+    try{
+      const c = g('map-credit-btn'), tb = g('game-turn-badge'); if(!c || !tb) return;
+      const rt = tb.getBoundingClientRect(); if(!(rt.width > 0)) return;
+      const nh = g('edo-nearby-head'), tools = g('game-header-tools');
+      let top = Math.max(2, rt.top - 14), right = window.innerWidth - 8;
+      // 「現在地」の札（中身の大きさで測ります。外枠は幅0のことがあるため）
+      let rn = null;
+      if(nh && nh.offsetParent !== null){
+        [nh].concat([...nh.querySelectorAll('*')]).forEach(e=>{ const q = e.getBoundingClientRect();
+          if(q.width > 8 && q.height > 8){ rn = rn ? { top:Math.min(rn.top, q.top), left:Math.min(rn.left, q.left) } : { top:q.top, left:q.left }; } });
+      }
+      if(rn){ top = Math.round(rn.top); right = rn.left - 6; }
+      else if(nh){ const q = nh.getBoundingClientRect(); if(q.top > 0) top = Math.round(q.top);       // 「現在地」が出ていないときも、同じ高さに
+        if(tools){ const r2 = tools.getBoundingClientRect(); if(r2.width > 0) right = r2.left - 6; } }
+      else if(tools){ const r2 = tools.getBoundingClientRect(); if(r2.width > 0) right = r2.left - 6; }
+      const w = Math.max(40, Math.floor(right - rt.left));
+      const set = (k, v)=>c.style.setProperty(k, v, 'important');
+      set('left', Math.round(rt.left) + 'px'); set('top', top + 'px'); set('right', 'auto'); set('max-width', w + 'px');
+      // 入りきらないときは、短い書き方にします（6pxより小さくはしません）
+      const full = (c.textContent || '').trim();
+      if(!c.dataset.full || (full !== c.dataset.full && !/^地理院タイル・3D都市モデル/.test(full))) c.dataset.full = full;
+      const texts = [c.dataset.full, '地理院タイル・3D都市モデル（国交省）・出典', '地理院タイル・3D都市モデル・出典', '地理院タイル・PLATEAU・出典'];
+      for(let i = 0; i < texts.length; i++){
+        if(c.textContent !== texts[i]) c.textContent = texts[i];
+        let fs = 9; set('font-size', fs + 'px');
+        while(c.scrollWidth > w && fs > 6){ fs -= .5; set('font-size', fs + 'px'); }
+        if(c.scrollWidth <= w) break;
+      }
+    }catch(e){}
+  }
+  setTimeout(liftCredit, 300); setInterval(liftCredit, 1000); window.addEventListener('resize', placeCredit);
   // 📌モードなど、地図が出ていない画面では出典も隠します（ヘッダーと同じ見え方に）
   setInterval(()=>{ try{ const c = g('map-credit-btn'), h = document.querySelector('header[data-app="1"]');
     if(c && h){ const vis = getComputedStyle(h).display !== 'none' && h.offsetParent !== null; c.style.display = vis ? '' : 'none'; } }catch(e){} }, 700);
 
-  // ── メニュー（≡）は「取得情報」の中から開けるようにします ──
-  const origSheet = app.openGameMenuSheet;
-  if(typeof origSheet === 'function'){
-    app.openGameMenuSheet = function(){
-      const r = origSheet.apply(app, arguments);
-      try{
-        const box = g('edo-ms-items');
-        if(box && !box.querySelector('.edo-ms-menu')){
-          const b = document.createElement('button'); b.type = 'button'; b.className = 'edo-ms-item edo-ms-menu';
-          b.innerHTML = '<span class="edo-ms-ic">≡</span><span class="edo-ms-tx"><span class="edo-ms-t1">メニュー</span>' +
-            '<span class="edo-ms-t2">設定・背景色・使い方・利用規約など</span></span><span class="edo-ms-ar">›</span>';
-          b.onclick = ()=>{ app.closeGameMenuSheet && app.closeGameMenuSheet(); app.openMenuModal && app.openMenuModal(); };
-          box.appendChild(b);
-        }
-      }catch(e){}
-      return r;
-    };
-  }
+  // 【ver1.2.1】メニュー（≡）はトップページから開きます（ゲーム中はほとんど使わないため）
 
   // ════════════════════════════════════════════════════════════
   //  ④ 視点切替（👀 → 👟）
@@ -30768,11 +30789,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function enterView(){
     if(VM) return;
     const map = app.map, host = g('map'), p = me();
-    if(!map || !host || !p){ return; }
+    if(!map || !host){ return; }
     if(!can()){ snack('この端末では視点切替を使えません'); return; }
-    const mk = app.playerMarkers && app.playerMarkers[p.id];
-    const n = app.roadNetworkNodes && app.roadNetworkNodes[p.currentNodeIdx];
-    const c = mk ? mk.getLatLng() : (n ? L.latLng(n.lat, n.lng) : map.getCenter());
+    // 【ver1.2.1】いま地図に映っている場所（中心）で視点を切りかえます（自分のコマの位置でも、動かした先でも）
+    const c = map.getCenter();
     const z0 = map.getZoom() - 1;                     // Leaflet（256px）→ MapLibre（512px）
     const { lines, marks } = collect(map, c);
     const r = host.getBoundingClientRect();
@@ -30832,8 +30852,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(!VM) return;
     const v = VM; VM = null; setBtn(false);
     try{ v.ml.easeTo({ pitch:0, bearing:0, zoom:v.z0, center:[v.c.lng, v.c.lat], duration:300 }); }catch(e){}
-    // 地図は、自分のコマの真上（いつもの見え方）にもどします
-    try{ app.map && app.map.setView(v.c, app.map.getZoom(), { animate:false }); }catch(e){}
+    // 地図は、その場所の真上からの見え方（いつもの見え方）にもどります
     setTimeout(()=>{ try{ v.ml.remove(); }catch(e){} try{ v.box.remove(); }catch(e){} }, 330);
   }
   app.toggleViewMode = function(){ if(VM) exitView(); else enterView(); };
