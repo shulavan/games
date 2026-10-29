@@ -30795,16 +30795,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const c = map.getCenter();
     const z0 = map.getZoom() - 1;                     // Leaflet（256px）→ MapLibre（512px）
     const { lines, marks } = collect(map, c);
+    const vmMarks = [];
     const r = host.getBoundingClientRect();
     const box = document.createElement('div'); box.id = 'edo-view3d'; box.setAttribute('data-edo-norc', '1');
     box.style.left = r.left + 'px'; box.style.top = r.top + 'px'; box.style.width = r.width + 'px'; box.style.height = r.height + 'px';
     host.parentNode.insertBefore(box, host.nextSibling);
+    paintSky(box);
     const lineLayers = lines.map((x, i)=>({ id:'ln' + i, type:'line', source:'lines', filter:['==', ['get','i'], i], layout:{ 'line-cap':'round', 'line-join':'round' },
       paint: Object.assign({ 'line-color': x.color, 'line-width': x.w, 'line-opacity': x.o }, x.dash && x.dash.length ? { 'line-dasharray': x.dash.map(v=>Math.max(.1, v / Math.max(1, x.w))) } : {}) }));
     const sources = Object.assign({ base:{ type:'raster', tiles:[basemapUrl()], tileSize:256, maxzoom:18 },
       lines:{ type:'geojson', data:{ type:'FeatureCollection', features: lines.map((x, i)=>({ type:'Feature', properties:{ i }, geometry:{ type:'LineString', coordinates:x.c } })) } } },
       enabled() ? buildingSources() : {});
-    const layers = [{ id:'bg', type:'background', paint:{ 'background-color':'#e5e7eb' } }, { id:'base', type:'raster', source:'base' }]
+    const layers = [{ id:'base', type:'raster', source:'base' }]
       .concat(enabled() ? buildingLayers(MIN_ZOOM) : []).concat(lineLayers);
     let ml;
     try{
@@ -30819,11 +30821,65 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const wrap = document.createElement('div'); wrap.className = 'edo-vm-wrap'; wrap.style.width = k.w + 'px'; wrap.style.height = k.h + 'px'; wrap.appendChild(el);
       wrap.addEventListener('click', (ev)=>{ ev.stopPropagation(); try{ k.l.fire('click'); }catch(e){} });
       new maplibregl.Marker({ element: wrap, anchor:'top-left', offset:[-k.anc[0], -k.anc[1]] }).setLngLat([k.p.lng, k.p.lat]).addTo(ml);
+      vmMarks.push({ wrap, ll:[k.p.lng, k.p.lat] });
     });
+    // 地平線より上（空）に来たマス・コマ・アイコンは隠します（遠くのものが空に浮いて見えるため）
+    const hideSky = ()=>{
+      try{
+        const tr = ml.transform, hz = tr.height / 2 - tr.getHorizon() + 14;
+        vmMarks.forEach(m=>{ const p = ml.project(m.ll); const sky = ml.getPitch() > 0 && p.y < hz;
+          if(m.sky !== sky){ m.sky = sky; m.wrap.style.visibility = sky ? 'hidden' : ''; } });
+      }catch(e){}
+    };
+    ml.on('render', hideSky);
     VM = { ml, box, c, z0, idx: app.currentPlayerIdx, cam:{ pitch:0, bearing:0, zoom:z0 } };
     bindGestures(VM);
     setBtn(true);
-    snack('<span class="text-lg mr-1">👀</span><strong>視点切替モードに変更しました</strong><br>スワイプで視点を変更することができます');
+    snack('<span class="text-lg mr-1">👀</span><strong>視点切替モードに変更しました</strong><br>スワイプやピンチズームで視点を変更することができます');
+  }
+  // ── 空（傾けたときだけ見えます）。自分の番がくるたび（1ターンごと）に 曇り → 青空 → 曇り → 夜空 ──
+  const SKY_ORDER = ['cloudy', 'blue', 'cloudy', 'night'];
+  const skyKind = ()=>SKY_ORDER[Math.max(0, Math.floor(Number(app.turnCount) || 0)) % SKY_ORDER.length];
+  const skyCache = {};
+  function rnd(seed){ let x = seed >>> 0; return ()=>{ x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; }
+  function cloud(ctx, x, y, s, col, a){
+    ctx.fillStyle = col; ctx.globalAlpha = a;
+    [[0,0,1],[.8,.15,.75],[-.8,.2,.7],[.35,-.35,.7],[-.35,-.3,.65],[1.4,.35,.5],[-1.4,.4,.5]].forEach(([dx,dy,r])=>{
+      ctx.beginPath(); ctx.arc(x + dx*s, y + dy*s, r*s, 0, Math.PI*2); ctx.fill(); });
+    ctx.globalAlpha = 1;
+  }
+  function skyImage(kind, w, h){
+    const key = kind + ':' + w + 'x' + h; if(skyCache[key]) return skyCache[key];
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const ctx = cv.getContext('2d');
+    const R = rnd(kind === 'night' ? 7 : kind === 'blue' ? 3 : 5);
+    const gr = ctx.createLinearGradient(0, 0, 0, h);
+    if(kind === 'blue'){ gr.addColorStop(0, '#2f7fe0'); gr.addColorStop(.55, '#7cb8f2'); gr.addColorStop(1, '#d6ebfb'); }
+    else if(kind === 'night'){ gr.addColorStop(0, '#060b1f'); gr.addColorStop(.6, '#101a3a'); gr.addColorStop(1, '#27345c'); }
+    else { gr.addColorStop(0, '#7c8592'); gr.addColorStop(.6, '#a3abb6'); gr.addColorStop(1, '#cfd4da'); }
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
+    if(kind === 'night'){
+      for(let i = 0; i < Math.round(w * h / 1800); i++){
+        const x = R() * w, y = R() * h * .9, r = R() < .9 ? .6 + R() * .7 : 1.3 + R() * .6;
+        ctx.globalAlpha = .45 + R() * .55; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+        if(r > 1.4){ ctx.globalAlpha = .35; ctx.fillRect(x - r*3, y - .4, r*6, .8); ctx.fillRect(x - .4, y - r*3, .8, r*6); }   // きらり
+      }
+      ctx.globalAlpha = 1;
+    }else if(kind === 'blue'){
+      for(let i = 0; i < 7; i++) cloud(ctx, R() * w, h * (.12 + R() * .6), 14 + R() * 22, '#ffffff', .85);
+    }else{
+      for(let i = 0; i < 16; i++) cloud(ctx, R() * w, h * (.05 + R() * .75), 20 + R() * 30, R() < .5 ? '#6b7280' : '#c3c8cf', .45 + R() * .3);
+    }
+    return (skyCache[key] = cv.toDataURL('image/png'));
+  }
+  function paintSky(box){
+    try{
+      const w = Math.max(200, Math.round(box.clientWidth)), h = Math.max(200, Math.round(box.clientHeight * .6));
+      const kind = skyKind();
+      box.style.backgroundColor = kind === 'night' ? '#27345c' : kind === 'blue' ? '#d6ebfb' : '#cfd4da';
+      box.style.backgroundImage = 'url(' + skyImage(kind, w, h) + ')';
+      box.style.backgroundRepeat = 'no-repeat'; box.style.backgroundPosition = 'top center'; box.style.backgroundSize = '100% 60%';
+      box.dataset.sky = kind;
+    }catch(e){}
   }
   function bindGestures(v){
     const ptr = new Map(); let pinch = null;
@@ -30877,7 +30933,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   window.__EDOGAWA_V172 = ()=>({ 設定: enabled() ? 'ON' : 'OFF', 表示中: !!layer, 色: color(), 地図: basemapUrl() === STD ? '標準地図' : '淡色地図', 使える: can(), 止めた: failed,
     建物の数: (()=>{ try{ return layer.getMaplibreMap().queryRenderedFeatures({ layers:['b3d'] }).length; }catch(e){ return 0; } })(),
     色つき: (()=>{ try{ const ml = layer.getMaplibreMap(); return { 建物: ml.queryRenderedFeatures({ layers:['b3d-sp'] }).length, 立方体: ml.queryRenderedFeatures({ layers:['b3d-cube'] }).length, 解決: spec ? [...spec.st.res.entries()] : [] }; }catch(e){ return null; } })(),
-    視点切替: VM ? { 傾き: Math.round(VM.ml.getPitch()), 向き: Math.round(VM.ml.getBearing()), ズーム: +VM.ml.getZoom().toFixed(2), 中心: VM.ml.getCenter() } : null });
+    空: skyKind(), 視点切替: VM ? { 傾き: Math.round(VM.ml.getPitch()), 向き: Math.round(VM.ml.getBearing()), ズーム: +VM.ml.getZoom().toFixed(2), 中心: VM.ml.getCenter() } : null });
   window.__EDOGAWA_V172_TEST = { targets, findBuilding, get vm(){ return VM; } };
 })();
 </script>
