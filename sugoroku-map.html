@@ -30937,6 +30937,168 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   window.__EDOGAWA_V172_TEST = { targets, findBuilding, get vm(){ return VM; } };
 })();
 </script>
+<style id="edogawa-v173-style">
+  /* ════════════ ver1.2.1　取得情報：所持金の推移グラフ ════════════ */
+  .edo-ms-box{ max-height:94vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #edo-money-chart{ margin:0 0 12px; padding:10px 10px 6px; border-radius:16px; background:rgba(2,6,23,.6); border:1px solid #1e293b; }
+  body[data-edo-theme]:not([data-edo-theme="black"]) #edo-money-chart{ background:var(--t-surf) !important; border-color:var(--t-border) !important; }
+  #edo-money-chart .mc-head{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin:0 2px 6px; }
+  #edo-money-chart .mc-t{ font-size:13px; font-weight:900; color:var(--t-text, #e2e8f0); }
+  #edo-money-chart .mc-t small{ font-size:10px; font-weight:700; opacity:.75; margin-left:4px; }
+  #edo-money-chart .mc-now{ font-size:11px; font-weight:800; color:var(--t-muted, #94a3b8); white-space:nowrap; }
+  #edo-money-chart .mc-now b{ color:var(--t-text, #f8fafc); font-size:13px; }
+  #edo-money-chart .mc-body{ display:flex; align-items:stretch; }
+  #edo-money-chart .mc-y{ flex:0 0 44px; position:relative; }
+  #edo-money-chart .mc-y span{ position:absolute; right:4px; transform:translateY(-50%); font-size:9px; font-weight:700; color:var(--t-muted, #94a3b8); white-space:nowrap; }
+  #edo-money-chart .mc-scroll{ flex:1 1 auto; min-width:0; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+  #edo-money-chart svg{ display:block; }
+  #edo-money-chart svg text{ font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif; font-weight:700; }
+  #edo-money-chart .mc-legend{ display:flex; gap:12px; justify-content:flex-end; margin:4px 2px 0; font-size:9.5px; font-weight:700; color:var(--t-muted, #94a3b8); }
+  #edo-money-chart .mc-legend i{ display:inline-block; vertical-align:middle; margin-right:3px; }
+  #edo-money-chart .mc-empty{ font-size:11px; font-weight:700; color:var(--t-muted, #94a3b8); padding:18px 4px; text-align:center; }
+</style>
+<script id="edogawa-v173">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  // ════════════════════════════════════════════════════════════
+  //  ver1.2.1　取得情報のいちばん上に「所持金の推移」グラフ（単位：千円）
+  //   ・自分の番がくるたびに、その時点の所持金を記録（プレイヤーの情報に入れるので「続きから」でも残ります）
+  //   ・次の自分の番1回分の予測を点線で（直近5回の増減の平均。不動産の購入額は除いて計算）
+  //   ・20回分までは横幅に収めて表示。それより多いときは横にスライドして過去を見られます（最初は最新を表示）
+  //   ・不動産を購入したターンは、購入額の棒グラフを同じ位置に重ねます
+  // ════════════════════════════════════════════════════════════
+  const MAX_KEEP = 600, FIT_N = 20, H = 150, PAD_T = 14, PAD_B = 20;
+  const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
+  const me = ()=>(app.players || []).find(isMine) || null;
+  const k = (yen)=>Math.round((Number(yen) || 0) / 1000);              // 千円
+  const fmt = (v)=>Math.round(v).toLocaleString('ja-JP');
+
+  // ── 記録 ──
+  function record(){
+    try{
+      const p = me(); if(!p || app.isMultiplayer) return;
+      if((app.players || [])[app.currentPlayerIdx] !== p) return;
+      if(app.isRolling) return;
+      const t = Math.max(0, Math.floor(Number(app.turnCount) || 0));
+      const h = Array.isArray(p.moneyHist) ? p.moneyHist : (p.moneyHist = []);
+      const last = h[h.length - 1];
+      if(last && last.t === t) return;                                   // この番はもう記録しました
+      // 前の番のあいだに買った不動産を、前の番の棒グラフに
+      if(last){
+        const since = Number(last.at) || 0;
+        const list = (Array.isArray(p.properties) ? p.properties : []).filter(o=>o && o.histT == null && Number(o.purchasedAt) > since);
+        const buy = list.reduce((a, o)=>a + (Number(o.price) || 0), 0);
+        list.forEach(o=>{ o.histT = last.t; });                          // 2回数えないように印をつけます
+        if(buy > 0) last.b = (last.b || 0) + k(buy);
+      }
+      h.push({ t, m: k(p.money), at: Date.now() });
+      if(h.length > MAX_KEEP) h.splice(0, h.length - MAX_KEEP);
+    }catch(e){ console.warn('[v173]', e); }
+  }
+  setInterval(record, 800);
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); try{ record(); }catch(e){} return r; }; }
+  // 新しい双六では、記録をはじめから
+  const origStart = app.startGame;
+  if(typeof origStart === 'function'){
+    app.startGame = async function(){ const before = app.players; const r = await origStart.apply(app, arguments); try{ if(app.players !== before){ const p = me(); if(p) p.moneyHist = []; record(); } }catch(e){} return r; };
+  }
+
+  // ── 次の番の予測 ──
+  function predict(h){
+    if(!h.length) return null;
+    const n = h.length, last = h[n - 1];
+    const ds = [];
+    for(let i = Math.max(1, n - 5); i < n; i++) ds.push(h[i].m - h[i - 1].m + (h[i - 1].b || 0));   // 購入額は除く
+    if(!ds.length){
+      const p = me(); const inc = (Array.isArray(p && p.properties) ? p.properties : []).reduce((a, o)=>a + Math.floor((Number(o.price) || 0) * 0.01), 0);
+      return last.m + k(inc);
+    }
+    return Math.round(last.m + ds.reduce((a, b)=>a + b, 0) / ds.length);
+  }
+
+  // ── 描画 ──
+  function render(host){
+    const p = me();
+    // 線の色：明るい背景色（黄・白）では濃いオレンジ、ほかは金色
+    let th = 'black'; try{ th = localStorage.getItem('edogawa_theme_v1') || 'black'; }catch(e){}
+    const LC = /^(yellow|white)$/.test(th) ? '#c2410c' : '#f59e0b';
+    const h = (p && Array.isArray(p.moneyHist)) ? p.moneyHist.slice() : [];
+    // いまの所持金（記録のあとに増減していれば、それも表示）
+    const nowK = p ? k(p.money) : 0;
+    const pred = predict(h);
+    let html = '<div class="mc-head"><div class="mc-t">💰 所持金の推移<small>（千円）</small></div>' +
+      '<div class="mc-now">いま <b>' + fmt(nowK) + '</b>' + (pred != null ? '　次の番の予測 ' + fmt(pred) : '') + '</div></div>';
+    if(!h.length){ host.innerHTML = html + '<div class="mc-empty">自分の番がくるたびに記録します</div>'; return; }
+    const n = h.length, cols = n + 1;                                     // 予測のぶん1つ多く
+    // 先に枠だけ置いて、グラフを描ける幅を測ります
+    host.innerHTML = html + '<div class="mc-body"><div class="mc-y"></div><div class="mc-scroll"></div></div>';
+    const sc0 = host.querySelector('.mc-scroll');
+    const viewW = Math.max(160, Math.floor((sc0 && sc0.clientWidth) || 280));
+    const step = cols <= FIT_N ? viewW / Math.max(1, cols - 1 + .6) : viewW / FIT_N;
+    const W = cols <= FIT_N ? viewW : Math.ceil(step * (cols - 1) + step * .6 + 8);
+    const x = (i)=>Math.round((i + .3) * step * 10) / 10 + (cols <= FIT_N ? 0 : 4);
+    const vals = h.map(o=>o.m).concat(pred != null ? [pred] : []);
+    let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if(hi - lo < 20){ hi += 10; lo -= 10; }
+    const padv = (hi - lo) * .12; lo -= padv; hi += padv;
+    const plotH = H - PAD_T - PAD_B;
+    const y = (v)=>Math.round((PAD_T + (hi - v) / (hi - lo) * plotH) * 10) / 10;
+    const bmax = Math.max.apply(null, h.map(o=>o.b || 0).concat([0]));
+    let svg = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-label="所持金の推移">';
+    // 目盛り線
+    const ticks = [hi - padv, (hi + lo) / 2, lo + padv];
+    ticks.forEach(v=>{ svg += '<line x1="0" x2="' + W + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="currentColor" stroke-opacity=".12" stroke-width="1"/>'; });
+    // 棒グラフ（不動産の購入額）：線の目盛りとは別に、高さはグラフの45％までで比べます
+    h.forEach((o, i)=>{
+      if(!(o.b > 0) || !bmax) return;
+      const bh = Math.max(4, o.b / bmax * plotH * .45), bw = Math.max(6, Math.min(16, step * .55));
+      svg += '<rect x="' + (x(i) - bw / 2) + '" y="' + (PAD_T + plotH - bh) + '" width="' + bw + '" height="' + bh + '" rx="2" fill="#3b82f6" fill-opacity=".55"/>' +
+        '<text x="' + x(i) + '" y="' + (PAD_T + plotH - bh - 3) + '" font-size="8.5" text-anchor="middle" fill="#60a5fa">🏠' + fmt(o.b) + '</text>';
+    });
+    // 折れ線
+    const pts = h.map((o, i)=>x(i) + ',' + y(o.m)).join(' ');
+    if(n > 1) svg += '<polyline points="' + pts + '" fill="none" stroke="' + LC + '" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>';
+    // 予測（点線）
+    if(pred != null){
+      svg += '<line x1="' + x(n - 1) + '" y1="' + y(h[n - 1].m) + '" x2="' + x(n) + '" y2="' + y(pred) + '" stroke="' + LC + '" stroke-width="2.2" stroke-dasharray="4 4" stroke-linecap="round"/>' +
+        '<circle cx="' + x(n) + '" cy="' + y(pred) + '" r="3.4" fill="none" stroke="' + LC + '" stroke-width="1.8"/>';
+    }
+    h.forEach((o, i)=>{ svg += '<circle cx="' + x(i) + '" cy="' + y(o.m) + '" r="' + (i === n - 1 ? 3.8 : 2.6) + '" fill="' + LC + '"/>'; });
+    // 横軸（ターン）
+    const every = cols <= FIT_N ? Math.max(1, Math.ceil(cols / 8)) : 2;
+    h.forEach((o, i)=>{ if(i % every === 0 || i === n - 1)
+      svg += '<text x="' + x(i) + '" y="' + (H - 6) + '" font-size="8.5" text-anchor="middle" fill="currentColor" fill-opacity=".6">' + o.t + '</text>'; });
+    if(pred != null) svg += '<text x="' + x(n) + '" y="' + (H - 6) + '" font-size="8.5" text-anchor="middle" fill="currentColor" fill-opacity=".6">予測</text>';
+    svg += '</svg>';
+    const yl = ticks.map(v=>'<span style="top:' + y(v) + 'px">' + fmt(v) + '</span>').join('');
+    html += '<div class="mc-body"><div class="mc-y" style="height:' + H + 'px">' + yl + '</div><div class="mc-scroll"><div class="mc-svg" style="color:var(--t-text,#e2e8f0)">' + svg + '</div></div></div>' +
+      '<div class="mc-legend"><span><i style="width:14px;height:2px;background:' + LC + '"></i>所持金</span>' +
+      '<span><i style="width:14px;height:0;border-top:2px dashed ' + LC + '"></i>次の番の予測</span>' +
+      (bmax ? '<span><i style="width:8px;height:8px;background:rgba(59,130,246,.55);border-radius:2px"></i>不動産の購入額</span>' : '') + '</div>';
+    host.innerHTML = html;
+    const sc = host.querySelector('.mc-scroll'); if(sc) sc.scrollLeft = sc.scrollWidth;      // 最新を表示
+  }
+
+  const origSheet = app.openGameMenuSheet;
+  if(typeof origSheet === 'function'){
+    app.openGameMenuSheet = function(){
+      const r = origSheet.apply(app, arguments);
+      try{
+        record();
+        const items = g('edo-ms-items'); if(!items) return r;
+        let host = g('edo-money-chart');
+        if(!host){ host = document.createElement('div'); host.id = 'edo-money-chart'; host.setAttribute('data-edo-norc', '1'); items.parentNode.insertBefore(host, items); }
+        render(host);
+      }catch(e){ console.warn('[v173]', e); }
+      return r;
+    };
+  }
+  window.__EDOGAWA_V173 = { record, predict: ()=>{ const p = me(); return predict((p && p.moneyHist) || []); }, hist: ()=>{ const p = me(); return p ? p.moneyHist : null; } };
+})();
+</script>
 <script id="edogawa-v39-footer">
 
 (function(){
