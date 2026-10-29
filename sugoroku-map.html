@@ -1083,6 +1083,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         <span>💾</span> <span class="hidden sm:inline">保存終了</span>
       </button>
       <!-- メニュー（設定・使い方・利用規約・プライバシーポリシー・運営元） -->
+      <!-- 【ver1.2.1】視点切替（👀／👟）。双六の画面ではメニュー（≡）の場所に出します -->
+      <button id="edo-view-btn" type="button" onclick="EdogawaSugoroku.toggleViewMode()" title="視点切替" aria-label="視点切替"
+        class="sticker-btn p-2 bg-slate-900 active:scale-95 transition rounded-lg"><span class="edo-view-emo">👀</span></button>
       <button id="game-menu-btn" onclick="EdogawaSugoroku.openMenuModal()" title="メニュー" aria-label="メニュー"
         class="sticker-btn p-2 bg-slate-900 text-slate-100 active:scale-95 transition rounded-lg flex flex-col items-center justify-center gap-[3px]">
         <span class="block w-4 h-[2px] bg-current rounded"></span>
@@ -2706,6 +2709,11 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
           <h5>地図・地理データ</h5>
           <div class="doc-src" id="doc-basemap-credit">
             地図画像：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル（国土地理院）</a>
+          </div>
+          <div class="doc-src">
+            建物の3D表示：<a href="https://www.mlit.go.jp/plateau/" target="_blank" rel="noopener">3D都市モデル（Project PLATEAU）</a>東京都23区（2020年度・国土交通省）
+            （<a href="https://creativecommons.org/licenses/by/4.0/deed.ja" target="_blank" rel="noopener">CC BY 4.0</a>）を加工して作成。
+            タイル化：<a href="https://github.com/indigo-lab/plateau-tokyo23ku-building-mvt-2020" target="_blank" rel="noopener">indigo-lab/plateau-tokyo23ku-building-mvt-2020</a>
           </div>
           <div class="doc-src">
             地名・住所の検索：<a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim</a>（OpenStreetMap Foundation）／
@@ -4917,7 +4925,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       // 地図の左下に出す出典表記を、使っているタイルに合わせる
       _applyMapCredit() {
         const el = document.getElementById('map-credit-btn');
-        if (el) el.textContent = `${ACTIVE_BASEMAP.credit} ・出典`;
+        if (el) el.textContent = `${ACTIVE_BASEMAP.credit}・3D都市モデル（国土交通省）・出典`;
         const doc = document.getElementById('doc-basemap-credit');
         if (doc) {
           doc.innerHTML = `地図画像：<a href="${ACTIVE_BASEMAP.creditUrl}" target="_blank" rel="noopener">${ACTIVE_BASEMAP.credit}</a>`;
@@ -4995,7 +5003,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
           iconSize: [78, 78],
           iconAnchor: [39, 39]
         });
-        const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100 }).addTo(this.map);
+        // 【ver1.2.1】施設のアイコンと名前は、マス・ルートの線より下（いちばん後ろ）に出します
+        const marker = L.marker([loc.lat, loc.lng], { icon, zIndexOffset: -100, pane: this._poiPane ? this._poiPane(this.map) : 'markerPane' }).addTo(this.map);
         marker.bindTooltip(loc.name, { direction: 'top', offset: [0, -10] });
         // タップすると施設の詳細（写真・ホームページ・住所・電話）を表示する
         try {
@@ -26469,7 +26478,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
                 '<div class="edo-pachi-lbl">' + esc(pl.name) + '</div></div>',
           iconSize: [78, 78], iconAnchor: [39, 39]
         });
-        const mk = L.marker([pl.lat, pl.lng], { icon, zIndexOffset: -90 }).addTo(app.map);
+        const mk = L.marker([pl.lat, pl.lng], { icon, zIndexOffset: -90, pane: app._poiPane ? app._poiPane(app.map) : 'markerPane' }).addTo(app.map);
         try{ mk.bindTooltip(pl.name, { direction:'top', offset:[0,-10] }); }catch(e){}
         mk.on('click', ()=>{ try{ app.showFacilityDetail(pl, { heading:'🎰 パチンコ店' }); }catch(e){} });
         markers.push(mk);
@@ -27373,7 +27382,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
                 '<div class="edo-fish-lbl">' + esc(sp.name) + '</div></div>',
           iconSize: [78, 78], iconAnchor: [39, 39]
         });
-        const mk = L.marker([sp.lat, sp.lng], { icon, zIndexOffset: -90 }).addTo(app.map);
+        const mk = L.marker([sp.lat, sp.lng], { icon, zIndexOffset: -90, pane: app._poiPane ? app._poiPane(app.map) : 'markerPane' }).addTo(app.map);
         try{ mk.bindTooltip(sp.name, { direction:'top', offset:[0,-10] }); }catch(e){}
         mk.on('click', ()=>{ try{ app.showFacilityDetail(sp, { heading:'🎣 釣りスポット' }); }catch(e){} });
         fishMarkers.push(mk);
@@ -30282,7 +30291,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     ENDS.forEach(e=>{
       try{
         const icon = L.divIcon({ className:'edo-gwend-icon', html:'<div class="edo-gwend-pin">🌳</div>', iconSize:[28,28], iconAnchor:[14,14] });
-        const mk = L.marker([e.lat, e.lng], { icon, zIndexOffset:-80 }).addTo(app.map);
+        const mk = L.marker([e.lat, e.lng], { icon, zIndexOffset:-80, pane: app._poiPane ? app._poiPane(app.map) : 'markerPane' }).addTo(app.map);
         try{ mk.bindTooltip(e.gw.n + '（' + (e.i ? '終点' : '起点') + '）', { direction:'top', offset:[0,-10] }); }catch(err){}
         mk.on('click', ()=>{ try{ app._showGreenwayDetail && app._showGreenwayDetail(e.gw); }catch(err){} });
         marks.push(mk);
@@ -30466,71 +30475,212 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
 })();
 </script>
+<style id="edogawa-v172-style">
+  /* ════════════ ver1.2.1　地図まわり ════════════ */
+  /* 地図の出典：いちばん手前に、読みやすい白い札で（施設アイコンの下に隠れてぼやけていたため） */
+  #map-credit-btn.edo-map-credit{ position:fixed !important; z-index:45 !important; top:calc(env(safe-area-inset-top, 0px) + 4px) !important;
+    background:rgba(255,255,255,.88) !important; color:#334155 !important; text-shadow:none !important;
+    padding:1px 5px !important; border-radius:5px !important; font-size:8px !important; line-height:1.35 !important; }
+  /* 視点切替ボタン（👀／👟）。双六の画面ではメニュー（≡）の代わりに出します（📌モードでは≡のまま） */
+  body:not(.edo-visited-only) #game-header-tools > #game-menu-btn{ display:none !important; }
+  body.edo-visited-only #edo-view-btn{ display:none !important; }
+  #edo-view-btn .edo-view-emo{ display:block; font-size:31px; line-height:1;
+    font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+    filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff); }
+  #edo-view-btn.on{ outline:2px solid #f59e0b; outline-offset:1px; }
+  /* 視点切替中の地図（いままでの地図の上に重ねます。ヘッダー・フッターはその上） */
+  #edo-view3d{ position:fixed; z-index:15; touch-action:none; background:#e5e7eb; overflow:hidden; }
+  #edo-view3d .maplibregl-canvas{ outline:none; }
+  #edo-view3d .edo-vm-wrap{ pointer-events:auto; }
+</style>
 <script id="edogawa-v172">
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
   // ════════════════════════════════════════════════════════════
-  //  ver1.2.1　地図の建物を3Dで表示（傾けない、いままでの真上からの地図のまま）
-  //   ・建物：3D都市モデル（Project PLATEAU）東京都23区 2020年度（国土交通省・CC BY 4.0）の高さ（measuredHeight）
-  //   ・色：選んでいる背景色、50％の透過（黒のときは地図が暗くなりすぎないよう、少し明るい灰色）
-  //   ・地図（地理院タイル）の上、緑道・ルートの線・マス・コマの下に重ねます
-  //   ・設定の「🏢 建物の3D表示」でON/OFF（最初はON）
+  //  ver1.2.1　地図
+  //   ① 建物の3D表示（いままでの真上からの地図のまま）
+  //      建物：3D都市モデル（Project PLATEAU）東京都23区 2020年度（国土交通省・CC BY 4.0）の高さ
+  //      色：背景色・50％の透過（黒のときは少し明るい灰色）
+  //      目的地の建物は赤、不動産を買った建物はそのプレーヤーの色（どちらも透過なし）。
+  //      建物が無い場所には、仮の立方体を置きます
+  //   ② 背景色が「赤」「黄」のときは、地図を「標準地図」に（ほかは淡色地図）
+  //   ③ 施設のアイコンと名前は、マス・ルートの線より下（いちばん後ろ）
+  //   ④ 視点切替（👀）：自分のコマを中心に、上下スワイプで傾き、左右スワイプで回転、ピンチで拡大縮小
   // ════════════════════════════════════════════════════════════
   const KEY = 'edogawa_bldg3d_v1';
   const TILES = 'https://raw.githubusercontent.com/indigo-lab/plateau-tokyo23ku-building-mvt-2020/main/{z}/{x}/{y}.pbf';
   const CREDIT = '3D都市モデル（<a href="https://www.mlit.go.jp/plateau/" target="_blank" rel="noopener">Project PLATEAU</a>）国土交通省';
   const COLORS = { black:'#64748b', blue:'#4285F4', red:'#EA4335', yellow:'#FBBC05', green:'#2F9E4C', white:'#94a3b8' };
-  const MIN_ZOOM = 15;            // これより引いた地図では出しません（建物が多すぎて重くなるため）
+  const DEST_COLOR = '#dc2626';
+  const PALE = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
+  const STD  = 'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png';
+  const MIN_ZOOM = 15;
+  const CUBE_HALF_M = 7, CUBE_H = 15, NEAR_M = 8;
   const enabled = ()=>{ try{ return localStorage.getItem(KEY) !== 'off'; }catch(e){ return true; } };
   const themeKey = ()=>{ try{ return localStorage.getItem('edogawa_theme_v1') || 'black'; }catch(e){ return 'black'; } };
   const color = ()=>COLORS[themeKey()] || COLORS.black;
+  const basemapUrl = ()=>(/^(red|yellow)$/.test(themeKey()) ? STD : PALE);
   let glOk = null;
   function webgl(){ if(glOk !== null) return glOk; try{ const c = document.createElement('canvas'); glOk = !!(c.getContext('webgl2') || c.getContext('webgl')); }catch(e){ glOk = false; } return glOk; }
   const can = ()=>!!(window.maplibregl && window.L && L.maplibreGL && webgl());
+  const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
+  const me = ()=>(app.players || []).find(isMine) || null;
 
-  let layer = null, onMap = null, lastColor = null, failed = false;
-  function remove(){
-    try{ if(layer && onMap) onMap.removeLayer(layer); }catch(e){}
-    layer = null; onMap = null; lastColor = null;
-  }
-  function add(map){
-    if(!map.getPane('edo3dPane')){
-      const pn = map.createPane('edo3dPane');
-      pn.style.zIndex = 350;               // 地図（200）の上、緑道（399）・線（400）・マス・コマの下
-      pn.style.pointerEvents = 'none';
-    }
-    const c = color();
-    layer = L.maplibreGL({
-      pane: 'edo3dPane', interactive: false, attribution: CREDIT, fadeDuration: 0, renderWorldCopies: false,
-      style: { version: 8, sources: { plateau: { type:'vector', tiles:[TILES], minzoom:10, maxzoom:16 } },
-        layers: [ { id:'b3d', type:'fill-extrusion', source:'plateau', 'source-layer':'bldg', minzoom: MIN_ZOOM,
-          paint: { 'fill-extrusion-color': c, 'fill-extrusion-opacity': .5,
-                   'fill-extrusion-height': ['coalesce', ['get','measuredHeight'], 0], 'fill-extrusion-base': 0 } } ] }
+  // ── ③ 施設アイコンの層（地図の建物 350 の上、緑道 399・ルートの線 400・マス 600 の下） ──
+  app._poiPane = function(map){
+    map = map || app.map;
+    try{ if(map && !map.getPane('edoPoiPane')){ const p = map.createPane('edoPoiPane'); p.style.zIndex = 360; } }catch(e){ return 'markerPane'; }
+    return 'edoPoiPane';
+  };
+
+  // ── ② 背景色が赤・黄のときは標準地図 ──
+  function syncBasemap(){
+    const want = basemapUrl();
+    [app.map, app.lobbyMap].forEach(m=>{
+      const r = m && m.__edoRaster;
+      if(r && r._url && /cyberjapandata\.gsi\.go\.jp\/xyz\//.test(r._url) && r._url !== want){ try{ r.setUrl(want); }catch(e){} }
     });
-    layer.addTo(map);
-    onMap = map; lastColor = c;
+  }
+
+  // ── 目的地・不動産の建物 ──
+  function targets(){
+    const out = [];
+    const d = app.currentDestination;
+    if(d && Number.isFinite(+d.lat) && Number.isFinite(+d.lng)) out.push({ key:'d:' + (+d.lat).toFixed(6) + ',' + (+d.lng).toFixed(6), lat:+d.lat, lng:+d.lng, c:DEST_COLOR });
+    (app.players || []).forEach(p=>{
+      const col = (p && p.color && p.color.stroke) || '#f59e0b';
+      (Array.isArray(p && p.properties) ? p.properties : []).forEach(o=>{
+        if(o && Number.isFinite(+o.lat) && Number.isFinite(+o.lng)) out.push({ key:'p:' + (+o.lat).toFixed(6) + ',' + (+o.lng).toFixed(6), lat:+o.lat, lng:+o.lng, c:col });
+      });
+    });
+    // 同じ場所が重なったら、目的地（赤）を優先
+    const seen = new Set(); return out.filter(t=>{ const k = t.key.slice(2); if(seen.has(k)) return false; seen.add(k); return true; });
+  }
+  function inRing(pt, ring){
+    let inside = false;
+    for(let i = 0, j = ring.length - 1; i < ring.length; j = i++){
+      const xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+      if(((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi)) inside = !inside;
+    }
+    return inside;
+  }
+  function distM(pt, ring){       // 点から輪郭までのおおよその距離（m）
+    const kx = 111320 * Math.cos(pt[1] * Math.PI / 180), ky = 110540; let best = Infinity;
+    for(let i = 0; i < ring.length - 1; i++){
+      const ax = (ring[i][0] - pt[0]) * kx, ay = (ring[i][1] - pt[1]) * ky, bx = (ring[i+1][0] - pt[0]) * kx, by = (ring[i+1][1] - pt[1]) * ky;
+      const dx = bx - ax, dy = by - ay, L2 = dx*dx + dy*dy; let t = L2 ? -(ax*dx + ay*dy) / L2 : 0; t = Math.max(0, Math.min(1, t));
+      const x = ax + t*dx, y = ay + t*dy; best = Math.min(best, Math.hypot(x, y));
+    }
+    return best;
+  }
+  function findBuilding(ml, t){
+    let feats = [];
+    try{ feats = ml.querySourceFeatures('plateau', { sourceLayer:'bldg' }); }catch(e){ return undefined; }
+    const pt = [t.lng, t.lat]; let near = null, nearD = Infinity;
+    for(const f of feats){
+      const gm = f.geometry; if(!gm) continue;
+      const polys = gm.type === 'Polygon' ? [gm.coordinates] : gm.type === 'MultiPolygon' ? gm.coordinates : [];
+      for(const poly of polys){
+        const ring = poly[0]; if(!ring || ring.length < 4) continue;
+        const id = f.properties && f.properties['建物ID']; if(!id) continue;
+        if(inRing(pt, ring)) return id;
+        const d = distM(pt, ring); if(d < nearD){ nearD = d; near = id; }
+      }
+    }
+    return nearD <= NEAR_M ? near : null;
+  }
+  function cube(t){
+    const dLat = CUBE_HALF_M / 110540, dLng = CUBE_HALF_M / (111320 * Math.cos(t.lat * Math.PI / 180));
+    return { type:'Feature', properties:{ c:t.c, h:CUBE_H }, geometry:{ type:'Polygon', coordinates:[[
+      [t.lng - dLng, t.lat - dLat], [t.lng + dLng, t.lat - dLat], [t.lng + dLng, t.lat + dLat], [t.lng - dLng, t.lat + dLat], [t.lng - dLng, t.lat - dLat]]] } };
+  }
+  // 建物の層（地図の上に重ねる層・視点切替の地図で共通）
+  function buildingSources(){
+    return { plateau:{ type:'vector', tiles:[TILES], minzoom:10, maxzoom:16 },
+             cubes:{ type:'geojson', data:{ type:'FeatureCollection', features:[] } } };
+  }
+  function buildingLayers(minzoom){
+    const h = ['coalesce', ['get','measuredHeight'], 0];
+    return [
+      { id:'b3d', type:'fill-extrusion', source:'plateau', 'source-layer':'bldg', minzoom: minzoom,
+        paint:{ 'fill-extrusion-color': color(), 'fill-extrusion-opacity': .5, 'fill-extrusion-height': h, 'fill-extrusion-base': 0 } },
+      { id:'b3d-sp', type:'fill-extrusion', source:'plateau', 'source-layer':'bldg', minzoom: minzoom, filter:['in', ['get','建物ID'], ['literal', []]],
+        paint:{ 'fill-extrusion-color': DEST_COLOR, 'fill-extrusion-opacity': 1, 'fill-extrusion-height': h, 'fill-extrusion-base': 0 } },
+      { id:'b3d-cube', type:'fill-extrusion', source:'cubes', minzoom: minzoom,
+        paint:{ 'fill-extrusion-color': ['get','c'], 'fill-extrusion-opacity': 1, 'fill-extrusion-height': ['get','h'], 'fill-extrusion-base': 0 } }
+    ];
+  }
+  // 目的地・不動産の色をつけます（地図に映っている建物から探し、無ければ仮の立方体）
+  function paintSpecial(ml, st){
+    try{ if(!ml || !ml.style || !ml.getLayer('b3d')) return; }catch(e){ return; }   // 地図を閉じたあと
+    const ts = targets();
+    let b = null; try{ b = ml.getBounds(); }catch(e){}
+    const loaded = (typeof ml.areTilesLoaded === 'function') ? ml.areTilesLoaded() : true;
+    ts.forEach(t=>{
+      if(st.res.has(t.key)) return;
+      if(!b || !b.contains([t.lng, t.lat]) || !loaded || ml.getZoom() < MIN_ZOOM) return;
+      const id = findBuilding(ml, t);
+      if(id !== undefined) st.res.set(t.key, id);       // null＝建物なし（仮の立方体）
+    });
+    const pairs = [], cubes = [];
+    ts.forEach(t=>{
+      if(!st.res.has(t.key)) return;
+      const id = st.res.get(t.key);
+      if(id){ if(!pairs.some(x=>x[0] === id)) pairs.push([id, t.c]); }
+      else cubes.push(cube(t));
+    });
+    const sig = JSON.stringify([pairs, cubes.map(c=>c.geometry.coordinates[0][0].concat(c.properties.c)), color()]);
+    if(sig === st.sig) return; st.sig = sig;
+    try{
+      const ids = pairs.map(x=>x[0]);
+      ml.setFilter('b3d', ids.length ? ['!', ['in', ['get','建物ID'], ['literal', ids]]] : null);
+      ml.setFilter('b3d-sp', ids.length ? ['in', ['get','建物ID'], ['literal', ids]] : ['in', ['get','建物ID'], ['literal', []]]);
+      if(ids.length) ml.setPaintProperty('b3d-sp', 'fill-extrusion-color', ['match', ['get','建物ID']].concat(...pairs, [DEST_COLOR]));
+      ml.setPaintProperty('b3d', 'fill-extrusion-color', color());
+      const src = ml.getSource('cubes'); if(src) src.setData({ type:'FeatureCollection', features:cubes });
+    }catch(e){ console.warn('[v172] 建物の色', e); }
+  }
+  function watchSpecial(ml){
+    const st = { res:new Map(), sig:'' };
+    let tm = null;
+    const run = ()=>{ clearTimeout(tm); tm = setTimeout(()=>paintSpecial(ml, st), 120); };
+    ml.on('idle', run); ml.on('sourcedata', (e)=>{ if(e.sourceId === 'plateau' && e.isSourceLoaded) run(); });
+    return { st, run };
+  }
+
+  // ── ① 地図の上に重ねる3Dの建物 ──
+  let layer = null, onMap = null, failed = false, spec = null;
+  function remove(){ try{ if(layer && onMap) onMap.removeLayer(layer); }catch(e){} layer = null; onMap = null; spec = null; }
+  function add(map){
+    if(!map.getPane('edo3dPane')){ const pn = map.createPane('edo3dPane'); pn.style.zIndex = 350; pn.style.pointerEvents = 'none'; }
+    layer = L.maplibreGL({ pane:'edo3dPane', interactive:false, attribution:CREDIT, fadeDuration:0, renderWorldCopies:false,
+      style:{ version:8, sources: buildingSources(), layers: buildingLayers(MIN_ZOOM) } });
+    layer.addTo(map); onMap = map;
     try{
       const ml = layer.getMaplibreMap();
       ml.on('error', (e)=>{ console.warn('[v172] 建物の3D表示', e && e.error || e); });
       ml.on('webglcontextlost', ()=>{ failed = true; remove(); });
+      spec = watchSpecial(ml);
     }catch(e){}
   }
+  let lastTargets = '';
   function sync(){
     try{
+      syncBasemap();
       const map = app.map;
       if(!map || failed || !enabled() || !can()){ if(layer) remove(); return; }
-      if(layer && onMap !== map) remove();           // 新しい双六で地図が作り直されたとき
+      if(layer && onMap !== map) remove();
       if(!layer){ add(map); return; }
-      const c = color();
-      if(c !== lastColor){ layer.getMaplibreMap().setPaintProperty('b3d', 'fill-extrusion-color', c); lastColor = c; }
+      const tk = JSON.stringify(targets().map(t=>t.key + t.c)) + color();
+      if(tk !== lastTargets){ lastTargets = tk; if(spec){ spec.st.sig = ''; spec.run(); } }
     }catch(e){ console.warn('[v172]', e); }
   }
   setInterval(sync, 1500); setTimeout(sync, 800);
   window.addEventListener('storage', sync);
   document.addEventListener('click', (ev)=>{ if(ev.target && ev.target.closest && ev.target.closest('#edo-theme-modal .topt')) setTimeout(sync, 80); }, true);
 
-  // ── 設定のON/OFF ──
   app.buildings3dEnabled = enabled;
   app.settingsToggleBuildings3d = function(){
     const on = !enabled();
@@ -30542,20 +30692,174 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   app.refreshSettingsModal = function(){
     const r = origRefresh ? origRefresh.apply(app, arguments) : undefined;
     try{
-      const el = document.getElementById('settings-bldg3d-state');
-      if(el){
-        const on = enabled();
-        el.textContent = on ? 'ON' : 'OFF';
-        el.className = 'px-2.5 py-1 rounded-full text-[11px] font-black ' + (on
-          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-          : 'bg-slate-700/40 text-slate-400 border border-slate-600');
-      }
+      const el = g('settings-bldg3d-state');
+      if(el){ const on = enabled(); el.textContent = on ? 'ON' : 'OFF';
+        el.className = 'px-2.5 py-1 rounded-full text-[11px] font-black ' + (on ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-slate-700/40 text-slate-400 border border-slate-600'); }
     }catch(e){}
     return r;
   };
 
-  window.__EDOGAWA_V172 = ()=>({ 設定: enabled() ? 'ON' : 'OFF', 表示中: !!layer, 色: lastColor, 使える: can(), 止めた: failed,
-    建物の数: (()=>{ try{ return layer.getMaplibreMap().queryRenderedFeatures({ layers:['b3d'] }).length; }catch(e){ return 0; } })() });
+  // ── 出典はいちばん手前に（ヘッダーの中から外に出します） ──
+  function liftCredit(){ const c = g('map-credit-btn'); if(c && c.parentNode !== document.body) document.body.appendChild(c); }
+  setTimeout(liftCredit, 300); setInterval(liftCredit, 3000);
+  // 📌モードなど、地図が出ていない画面では出典も隠します（ヘッダーと同じ見え方に）
+  setInterval(()=>{ try{ const c = g('map-credit-btn'), h = document.querySelector('header[data-app="1"]');
+    if(c && h){ const vis = getComputedStyle(h).display !== 'none' && h.offsetParent !== null; c.style.display = vis ? '' : 'none'; } }catch(e){} }, 700);
+
+  // ── メニュー（≡）は「取得情報」の中から開けるようにします ──
+  const origSheet = app.openGameMenuSheet;
+  if(typeof origSheet === 'function'){
+    app.openGameMenuSheet = function(){
+      const r = origSheet.apply(app, arguments);
+      try{
+        const box = g('edo-ms-items');
+        if(box && !box.querySelector('.edo-ms-menu')){
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'edo-ms-item edo-ms-menu';
+          b.innerHTML = '<span class="edo-ms-ic">≡</span><span class="edo-ms-tx"><span class="edo-ms-t1">メニュー</span>' +
+            '<span class="edo-ms-t2">設定・背景色・使い方・利用規約など</span></span><span class="edo-ms-ar">›</span>';
+          b.onclick = ()=>{ app.closeGameMenuSheet && app.closeGameMenuSheet(); app.openMenuModal && app.openMenuModal(); };
+          box.appendChild(b);
+        }
+      }catch(e){}
+      return r;
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ④ 視点切替（👀 → 👟）
+  // ════════════════════════════════════════════════════════════
+  let VM = null;
+  function snack(html){
+    const el = g('edogawa-stat-toast'); if(!el) return;
+    try{ clearTimeout(app._statToastTimer); }catch(e){}
+    el.innerHTML = html;
+    el.classList.remove('hidden'); el.classList.remove('opacity-0'); el.classList.add('opacity-100');
+    app._statToastTimer = setTimeout(()=>{ el.classList.add('opacity-0'); setTimeout(()=>el.classList.add('hidden'), 250); }, 3600);
+  }
+  function setBtn(on){
+    const b = g('edo-view-btn'); if(!b) return;
+    b.classList.toggle('on', !!on);
+    const e = b.querySelector('.edo-view-emo'); if(e) e.textContent = on ? '👟' : '👀';
+  }
+  function collect(map, center){
+    const lines = [], marks = [];
+    const near = (ll)=>map.distance(ll, center) < 2500;
+    map.eachLayer(l=>{
+      try{
+        if(l instanceof L.Polyline && !(l instanceof L.Polygon)){
+          const op = l.options; if(op.opacity === 0 || l === layer) return;
+          const ll = l.getLatLngs(); const segs = Array.isArray(ll[0]) ? ll : [ll];
+          segs.forEach(sg=>{ if(sg.length > 1 && sg.some(near)) lines.push({ c: sg.map(p=>[p.lng, p.lat]), color: op.color || '#3388ff', w: op.weight || 3,
+            o: op.opacity == null ? 1 : op.opacity, dash: op.dashArray ? String(op.dashArray).split(/[ ,]+/).map(Number).filter(n=>n > 0) : null }); });
+        }else if(l instanceof L.Marker && l._icon && near(l.getLatLng())){
+          const el = l._icon, cs = getComputedStyle(el);
+          if(cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return;
+          const ic = (l.options.icon && l.options.icon.options) || {};
+          const r = el.getBoundingClientRect();
+          const a = ic.iconAnchor ? (ic.iconAnchor.x != null ? [ic.iconAnchor.x, ic.iconAnchor.y] : ic.iconAnchor) : [r.width/2, r.height/2];
+          const pane = l.options.pane || 'markerPane';
+          marks.push({ l, p: l.getLatLng(), html: el.outerHTML, w: r.width || ic.iconSize && ic.iconSize[0] || 20, h: r.height || ic.iconSize && ic.iconSize[1] || 20,
+            anc: a, z: (pane === 'edoPoiPane' ? -100000 : 0) + (parseInt(el.style.zIndex, 10) || 0) });
+        }
+      }catch(e){}
+    });
+    return { lines, marks };
+  }
+  function enterView(){
+    if(VM) return;
+    const map = app.map, host = g('map'), p = me();
+    if(!map || !host || !p){ return; }
+    if(!can()){ snack('この端末では視点切替を使えません'); return; }
+    const mk = app.playerMarkers && app.playerMarkers[p.id];
+    const n = app.roadNetworkNodes && app.roadNetworkNodes[p.currentNodeIdx];
+    const c = mk ? mk.getLatLng() : (n ? L.latLng(n.lat, n.lng) : map.getCenter());
+    const z0 = map.getZoom() - 1;                     // Leaflet（256px）→ MapLibre（512px）
+    const { lines, marks } = collect(map, c);
+    const r = host.getBoundingClientRect();
+    const box = document.createElement('div'); box.id = 'edo-view3d'; box.setAttribute('data-edo-norc', '1');
+    box.style.left = r.left + 'px'; box.style.top = r.top + 'px'; box.style.width = r.width + 'px'; box.style.height = r.height + 'px';
+    host.parentNode.insertBefore(box, host.nextSibling);
+    const lineLayers = lines.map((x, i)=>({ id:'ln' + i, type:'line', source:'lines', filter:['==', ['get','i'], i], layout:{ 'line-cap':'round', 'line-join':'round' },
+      paint: Object.assign({ 'line-color': x.color, 'line-width': x.w, 'line-opacity': x.o }, x.dash && x.dash.length ? { 'line-dasharray': x.dash.map(v=>Math.max(.1, v / Math.max(1, x.w))) } : {}) }));
+    const sources = Object.assign({ base:{ type:'raster', tiles:[basemapUrl()], tileSize:256, maxzoom:18 },
+      lines:{ type:'geojson', data:{ type:'FeatureCollection', features: lines.map((x, i)=>({ type:'Feature', properties:{ i }, geometry:{ type:'LineString', coordinates:x.c } })) } } },
+      enabled() ? buildingSources() : {});
+    const layers = [{ id:'bg', type:'background', paint:{ 'background-color':'#e5e7eb' } }, { id:'base', type:'raster', source:'base' }]
+      .concat(enabled() ? buildingLayers(MIN_ZOOM) : []).concat(lineLayers);
+    let ml;
+    try{
+      ml = new maplibregl.Map({ container: box, center:[c.lng, c.lat], zoom:z0, pitch:0, bearing:0, maxPitch:85, minZoom:14, maxZoom:20,
+        interactive:false, attributionControl:false, fadeDuration:0, renderWorldCopies:false, style:{ version:8, sources, layers } });
+    }catch(e){ box.remove(); snack('視点切替を開けませんでした'); return; }
+    if(enabled()) watchSpecial(ml);
+    marks.sort((a, b)=>a.z - b.z).forEach(k=>{
+      const w = document.createElement('div'); w.innerHTML = k.html; const el = w.firstChild; if(!el) return;
+      el.style.transform = ''; el.style.marginLeft = '0'; el.style.marginTop = '0'; el.style.position = 'relative'; el.style.left = '0'; el.style.top = '0';
+      el.style.width = k.w + 'px'; el.style.height = k.h + 'px';
+      const wrap = document.createElement('div'); wrap.className = 'edo-vm-wrap'; wrap.style.width = k.w + 'px'; wrap.style.height = k.h + 'px'; wrap.appendChild(el);
+      wrap.addEventListener('click', (ev)=>{ ev.stopPropagation(); try{ k.l.fire('click'); }catch(e){} });
+      new maplibregl.Marker({ element: wrap, anchor:'top-left', offset:[-k.anc[0], -k.anc[1]] }).setLngLat([k.p.lng, k.p.lat]).addTo(ml);
+    });
+    VM = { ml, box, c, z0, idx: app.currentPlayerIdx, cam:{ pitch:0, bearing:0, zoom:z0 } };
+    bindGestures(VM);
+    setBtn(true);
+    snack('<span class="text-lg mr-1">👀</span><strong>視点切替モードに変更しました</strong><br>スワイプで視点を変更することができます');
+  }
+  function bindGestures(v){
+    const ptr = new Map(); let pinch = null;
+    const apply = ()=>{ v.cam.pitch = Math.max(0, Math.min(85, v.cam.pitch)); v.cam.zoom = Math.max(14, Math.min(20, v.cam.zoom));
+      v.cam.bearing = ((v.cam.bearing % 360) + 360) % 360;
+      v.ml.jumpTo({ center:[v.c.lng, v.c.lat], pitch:v.cam.pitch, bearing:v.cam.bearing, zoom:v.cam.zoom }); };
+    const dist = ()=>{ const a = [...ptr.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
+    v.box.addEventListener('pointerdown', (e)=>{
+      if(e.target.closest && e.target.closest('.edo-vm-wrap')) return;
+      ptr.set(e.pointerId, { x:e.clientX, y:e.clientY }); try{ v.box.setPointerCapture(e.pointerId); }catch(er){}
+      if(ptr.size === 2) pinch = { d: dist(), z: v.cam.zoom };
+    });
+    v.box.addEventListener('pointermove', (e)=>{
+      const p = ptr.get(e.pointerId); if(!p) return;
+      const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+      if(ptr.size >= 2 && pinch){ const d = dist(); if(pinch.d > 0) v.cam.zoom = pinch.z + Math.log2(d / pinch.d); }
+      else if(ptr.size === 1){ v.cam.pitch -= dy * 0.35; v.cam.bearing -= dx * 0.4; }
+      apply();
+    });
+    const up = (e)=>{ ptr.delete(e.pointerId); if(ptr.size < 2) pinch = null; };
+    v.box.addEventListener('pointerup', up); v.box.addEventListener('pointercancel', up);
+    v.box.addEventListener('wheel', (e)=>{ e.preventDefault(); v.cam.zoom -= e.deltaY * 0.002; apply(); }, { passive:false });
+    v.apply = apply;
+  }
+  function exitView(){
+    if(!VM) return;
+    const v = VM; VM = null; setBtn(false);
+    try{ v.ml.easeTo({ pitch:0, bearing:0, zoom:v.z0, center:[v.c.lng, v.c.lat], duration:300 }); }catch(e){}
+    // 地図は、自分のコマの真上（いつもの見え方）にもどします
+    try{ app.map && app.map.setView(v.c, app.map.getZoom(), { animate:false }); }catch(e){}
+    setTimeout(()=>{ try{ v.ml.remove(); }catch(e){} try{ v.box.remove(); }catch(e){} }, 330);
+  }
+  app.toggleViewMode = function(){ if(VM) exitView(); else enterView(); };
+  app.exitViewMode = exitView;
+  // 👀／👟 以外のボタンを押したら、いつもの見え方にもどしてから、そのボタンの動作をします
+  document.addEventListener('click', (e)=>{
+    if(!VM) return;
+    const t = e.target; if(!t || !t.closest) return;
+    if(t.closest('#edo-view-btn') || VM.box.contains(t)) return;
+    if(t.closest('button, a, [onclick], [role="button"], #players-card-container > div, #edo-mini-map, #edogawa-player-status')) exitView();
+  }, true);
+  // サイコロを振ったとき・ほかの人の番になったとき・地図が隠れたときも、もどします
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){ app.rollDice = function(){ try{ exitView(); }catch(e){} return origRoll.apply(app, arguments); }; }
+  setInterval(()=>{
+    if(!VM) return;
+    const host = g('map');
+    if(app.isRolling || app.currentPlayerIdx !== VM.idx || !host || host.offsetParent === null || !app.map) exitView();
+  }, 400);
+  window.addEventListener('resize', ()=>{ if(VM){ const r = g('map').getBoundingClientRect(); Object.assign(VM.box.style, { left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px' }); try{ VM.ml.resize(); }catch(e){} } });
+
+  window.__EDOGAWA_V172 = ()=>({ 設定: enabled() ? 'ON' : 'OFF', 表示中: !!layer, 色: color(), 地図: basemapUrl() === STD ? '標準地図' : '淡色地図', 使える: can(), 止めた: failed,
+    建物の数: (()=>{ try{ return layer.getMaplibreMap().queryRenderedFeatures({ layers:['b3d'] }).length; }catch(e){ return 0; } })(),
+    色つき: (()=>{ try{ const ml = layer.getMaplibreMap(); return { 建物: ml.queryRenderedFeatures({ layers:['b3d-sp'] }).length, 立方体: ml.queryRenderedFeatures({ layers:['b3d-cube'] }).length, 解決: spec ? [...spec.st.res.entries()] : [] }; }catch(e){ return null; } })(),
+    視点切替: VM ? { 傾き: Math.round(VM.ml.getPitch()), 向き: Math.round(VM.ml.getBearing()), ズーム: +VM.ml.getZoom().toFixed(2), 中心: VM.ml.getCenter() } : null });
+  window.__EDOGAWA_V172_TEST = { targets, findBuilding, get vm(){ return VM; } };
 })();
 </script>
 <script id="edogawa-v39-footer">
