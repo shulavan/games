@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.2.7 (2026-10-30)';
+    window.__EDOGAWA_VERSION = 'ver1.2.8 (2026-10-30)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -30846,6 +30846,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     ml.on('render', hideSky);
     VM = { ml, box, c, z0, idx: app.currentPlayerIdx, cam:{ pitch:0, bearing:0, zoom:z0 } };
     bindGestures(VM);
+    // 【ver1.2.8】👀 をタップしたら、地図を30度かたむけます（そこからスワイプで変えられます）
+    VM.cam.pitch = 30;
+    try{ ml.easeTo({ pitch:30, duration:450 }); }catch(e){ try{ VM.apply && VM.apply(); }catch(_){} }
     setBtn(true);
     snack('<span class="text-lg mr-1">👀</span><strong>視点切替モードに変更しました</strong><br>スワイプやピンチズームで視点を変更することができます');
   }
@@ -31179,8 +31182,38 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const SHARE_IMG = { white:'https://shulavan.github.io/img/shareWhite.png', black:'https://shulavan.github.io/img/shareBlack.png' };
   const pad = (n)=>String(n).padStart(4, '0');
   const slotId = (n)=>PREFIX + pad(n);
-  const cfg = ()=>Object.assign({ debug:0, config:{ iceServers:[ { urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' } ] } },
-    window.__EDOGAWA_PEER_CONFIG || {});
+  // 【ver1.2.8】ちがう回線どうし（スマホの回線と家のWi-Fiなど）でもつながるように、中継サーバー（TURN）も使います
+  //   ・Open Relay Project（Metered が無料で公開している TURN サーバー。月20GBまで）
+  //     公開されている共通の合言葉から、24時間だけ使えるユーザー名とパスワードをこの端末で作ります
+  //   ・自分のアカウント（無料）を作ったときは、TURN_API_URL に「https://◯◯.metered.live/api/v1/turn/credentials?apiKey=…」を入れると、そちらを使います
+  const TURN_API_URL = '';
+  const TURN_HOST = 'staticauth.openrelay.metered.ca', TURN_SECRET = 'openrelayprojectsecret';
+  const STUN = [ { urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' } ];
+  const TURN = { list:[], at:0 };
+  async function makeTurn(){
+    try{
+      if(TURN_API_URL){
+        const r = await fetch(TURN_API_URL); const j = await r.json();
+        if(Array.isArray(j) && j.length){ TURN.list = j; TURN.at = Date.now(); return; }
+      }
+      if(!(window.crypto && crypto.subtle)) return;
+      const user = (Math.floor(Date.now() / 1000) + 86400) + ':edogawa-sugoroku';
+      const te = new TextEncoder();
+      const key = await crypto.subtle.importKey('raw', te.encode(TURN_SECRET), { name:'HMAC', hash:'SHA-1' }, false, ['sign']);
+      const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, te.encode(user)));
+      let bin = ''; sig.forEach(b=>{ bin += String.fromCharCode(b); });
+      TURN.list = [{ urls:[ 'turn:' + TURN_HOST + ':80', 'turn:' + TURN_HOST + ':80?transport=tcp', 'turn:' + TURN_HOST + ':443', 'turns:' + TURN_HOST + ':443?transport=tcp' ],
+        username:user, credential:btoa(bin) }];
+      TURN.at = Date.now();
+    }catch(e){ console.warn('[v174] turn', e && e.message); }
+  }
+  makeTurn();
+  setInterval(()=>{ if(Date.now() - TURN.at > 6 * 3600000) makeTurn(); }, 600000);
+  const cfg = ()=>{
+    const o = Object.assign({ debug:0, config:{ iceServers: STUN.concat(TURN.list) } }, window.__EDOGAWA_PEER_CONFIG || {});
+    if(window.__EDOGAWA_PEER_CONFIG && !window.__EDOGAWA_PEER_CONFIG.config) o.config = { iceServers: STUN.concat(TURN.list) };
+    return o;
+  };
   const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
   const now = ()=>Date.now();
 
@@ -31645,6 +31678,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
           if(r.ok && r.msg.type === 'joinNg') break;                    // 満席・NG → ほかの双六へ
           const sec = Math.max(0, Math.ceil((until - now()) / 1000));
           paint((r.why === 'none' ? '双六 ' + pad(prefer) + ' は、いま参加者を受け付けていません。<br>ホストの人が双六の画面を開くのを待っています' :
+            r.why === 'noopen' ? '双六 ' + pad(prefer) + ' は見つかりましたが、通信がつながりません。<br>ホストの人に双六の画面を開いたままにしてもらってください' :
             'ホストの人の画面につながりません。<br>ホストの人に、双六の画面を開いてもらってください') +
             '<br><span style="opacity:.75">（もう一度つないでいます・' + tries + '回目／のこり' + sec + '秒）</span>');
           await sleep(r.why === 'none' ? 4000 : 1500);
@@ -31861,6 +31895,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(img && img.getAttribute('src') !== want) img.setAttribute('src', want);
   }
   async function share(){
+    // 【ver1.2.8】参加を受け付ける準備（0001 などの番号）ができていなければ、先に準備します
+    if(R.role !== 'host' || !R.peer || R.peer.destroyed){
+      snack('👥 参加を受け付ける準備をしています…', 2500);
+      try{ if(R.role === 'none' && !R.claiming) await claimSlot(R.slot || 0); }catch(e){}
+      for(let i = 0; i < 20 && R.claiming; i++) await sleep(250);
+      if(R.role !== 'host'){ snack('⚠️ 参加を受け付ける準備ができませんでした。通信を確認して、もう一度シェアしてください', 5000); return; }
+    }else if(R.peer.disconnected){ try{ R.peer.reconnect(); }catch(e){} }
     const url = shareUrl();
     const text = R.slot ? '江戸川双六でいっしょに遊ぼう！ この双六（' + pad(R.slot) + '）に参加できます。' : '江戸川双六でいっしょに遊ぼう！';
     try{
