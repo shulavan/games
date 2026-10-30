@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.2.12 (2026-10-30)';
+    window.__EDOGAWA_VERSION = 'ver1.3.0 (2026-10-30)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -28177,11 +28177,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //   ・そのあと、今回限りの「背景色の選択」（まだ背景色を選んだことがない人だけ）
   // ════════════════════════════════════════════════════════════
   const SOLO_KEY = 'edogawa_sugoroku_state';
-  const NOTICE_VER = 'v1.2.0';                       // アップデート情報を出す版（内容を変えたら、ここを変えます）
+  const NOTICE_VER = 'v1.3.0';                       // アップデート情報を出す版（内容を変えたら、ここを変えます）
   const SEEN_KEY = 'edogawa_update_notice_seen_v1';   // 最後に出した版
   const OFF_KEY = 'edogawa_update_notice_off_v1';     // 「次回から表示しない」
   const OLD_KEY = 'edogawa_update_notice_v1';         // ver1.1.28 で出したときの印
-  const THEME_ASK_KEY = 'edogawa_theme_prompted_v1';
+  const THEME_ASK_KEY = 'edogawa_theme_prompted_v130';   // 【ver1.3.0】今回もう一度だけ聞きます（v1.2.0 は edogawa_theme_prompted_v1）
   const ls = {
     get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
     set(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
@@ -28193,11 +28193,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }catch(e){ hasContinue = false; }
   const seenBefore = !!ls.get(SEEN_KEY) || ls.get(OLD_KEY) === '1';      // 前にもアップデート情報を見たことがある
   const needNotice = hasContinue && ls.get(OFF_KEY) !== '1' && ls.get(SEEN_KEY) !== NOTICE_VER;
-  const needTheme  = hasContinue && ls.get(THEME_ASK_KEY) !== '1' && !ls.get('edogawa_theme_v1');
+  const themeNow = ls.get('edogawa_theme_v1');
+  const needTheme  = hasContinue && ls.get(THEME_ASK_KEY) !== '1' && (!themeNow || themeNow === 'black');   // 背景色を変えていない人（黒のまま）
   const installed = ()=>{ try{ return document.body.classList.contains('edo-app-installed') || (app._isStandaloneApp && app._isStandaloneApp()); }catch(e){ return false; } };
   if(!needNotice && !needTheme){ window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: 'なし', 背景色の選択: 'なし' }); return; }
 
   const ITEMS = [
+    '・「マルチプレイ」対応（シェア対戦可能）',
+    '・「3D建物」視点切替モード',
+    '・「取得情報」のグラフ、獲得バッチ',
     '・「背景色の選択」（青、赤、黄、緑、白）',
     '・「御朱印帳」（寺社に近づくと発動）',
     '・「縮小マップ」「ステータス」表示',
@@ -28271,7 +28275,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
   function showTheme(){
     ls.set(THEME_ASK_KEY, '1');
-    if(ls.get('edogawa_theme_v1')) return;
+    const t = ls.get('edogawa_theme_v1'); if(t && t !== 'black') return;
     try{ app.openThemePicker && app.openThemePicker(); }catch(e){}
   }
   function ready(){
@@ -32279,6 +32283,79 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ if(app._peer && app._peer.role() === 'guest'){ const m = g('guest-waiting-modal'); if(m && !m.classList.contains('hidden')) m.classList.add('hidden'); } }catch(e){}
   }, 1000);
   window.__EDOGAWA_V176 = ()=>({ 最初のゴール済み: unlocked(), ターン表示: (g('game-turn-badge') || {}).innerText, オート表示: (g('auto-mode-btn') || {}).innerText });
+})();
+</script>
+<script id="edogawa-v177">
+// ════════════════════════════════════════════════════════════
+//  ver1.3.0
+//   ① BGMが消えたままにならないようにします（マルチプレイのミニゲーム後・ゴール後など）
+//      ・ミニゲームやゴールの画面が閉じているのに、ミニゲームやゴールのBGMのまま／BGMが止まったまま
+//        になっていたら、地図のBGMにもどします
+//      ・ほかのアプリやミニゲームの音で、音の部品（AudioContext）が止まっていたら、タップしたときに動かしなおします
+//   ② 全画面モードが外れたときは、次にどこかをタップしたとき（サイコロを振るなど）に全画面へもどします
+//      （全画面ボタンで自分で外したときは、もどしません）
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = (id)=>document.getElementById(id);
+  const snd = ()=>{ try{ return (typeof sound !== 'undefined') ? sound : null; }catch(e){ return null; } };
+  const shown = (id, cls)=>{ const e = g(id); if(!e) return false; return cls ? e.classList.contains(cls) : !e.classList.contains('hidden'); };
+  const inGame = ()=>{ const l = g('lobby-screen'); return !!l && l.classList.contains('hidden'); };
+
+  // ── ① BGM ──
+  function ctxWake(){
+    const s = snd(); if(!s || s.isMuted) return;
+    try{ if(!s.ctx || s.ctx.state !== 'running') s.init(); }catch(e){}
+  }
+  let wrongSince = 0;
+  function bgmWatch(){
+    const s = snd(); if(!s || s.isMuted || document.hidden) return;
+    if(window.__EDOGAWA_BGM_HOLD) return;                                // 自分のBGMを持つミニゲーム（闘魂ロード・パチンコ）のあいだ
+    if(!inGame()){ if(!s.bgmTimer && s.currentBgmType) try{ s.playBGM(s.currentBgmType); }catch(e){} return; }
+    const mini = shown('regional-mini-overlay') || shown('goal-amida-overlay') || shown('edo-mini-common', 'show') ||
+                 shown('edo-relay-play', 'show') || shown('edo-fight-remote', 'show') || shown('edo-spect', 'show') || !!app.miniGameActive;
+    const goal = shown('goal-modal');
+    const want = (mini || goal) ? null : 'map';                          // ミニゲーム・ゴールの画面のあいだは、そのまま
+    if(!s.bgmTimer){ try{ s.playBGM(want || s.currentBgmType || 'map'); }catch(e){} wrongSince = 0; return; }
+    if(want && s.currentBgmType !== want){
+      if(!wrongSince) wrongSince = Date.now();
+      if(Date.now() - wrongSince > 2500){ wrongSince = 0; try{ s.playBGM(want); }catch(e){} }
+    }else wrongSince = 0;
+  }
+  setInterval(bgmWatch, 1000);
+
+  // ── ② 全画面 ──
+  const FS = { want:false, userOff:false, at:0 };
+  const fsEl = ()=>document.fullscreenElement || document.webkitFullscreenElement || null;
+  const standalone = ()=>{ try{ return (app._isStandaloneApp && app._isStandaloneApp()) || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches; }catch(e){ return false; } };
+  const canFs = ()=>!!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+  const origTry = app.tryFullscreen;
+  if(typeof origTry === 'function') app.tryFullscreen = function(){ FS.want = true; FS.userOff = false; return origTry.apply(this, arguments); };
+  const origToggle = app.toggleFullscreen;
+  if(typeof origToggle === 'function') app.toggleFullscreen = function(){
+    if(fsEl()){ FS.want = false; FS.userOff = true; } else { FS.want = true; FS.userOff = false; FS.at = Date.now(); }
+    return origToggle.apply(this, arguments);
+  };
+  document.addEventListener('fullscreenchange', ()=>{ if(fsEl()){ FS.want = true; FS.userOff = false; } });
+  function fsBack(ev){
+    if(!FS.want || FS.userOff || fsEl() || standalone() || !canFs()) return;
+    if(Date.now() - FS.at < 600) return;                                    // 続けて何度も呼ばないように
+    if(ev && ev.target && ev.target.closest && ev.target.closest('button[onclick="EdogawaSugoroku.toggleFullscreen()"]')) return;
+    FS.at = Date.now();
+    try{
+      const d = document.documentElement;
+      const r = d.requestFullscreen ? d.requestFullscreen() : d.webkitRequestFullscreen();
+      if(r && r.catch) r.catch(()=>{});
+      setTimeout(()=>{ try{ app._updateFullscreenClass && app._updateFullscreenClass(); }catch(e){} }, 300);
+    }catch(e){}
+  }
+  function onTap(ev){ ctxWake(); fsBack(ev); }
+  document.addEventListener('click', onTap, true);
+  document.addEventListener('touchend', onTap, true);
+
+  window.__EDOGAWA_V177 = ()=>{ const s = snd(); return { BGM: s && s.currentBgmType, 鳴っている: !!(s && s.bgmTimer), 音: s && s.ctx && s.ctx.state, 全画面にもどす: FS.want && !FS.userOff, 全画面: !!fsEl() }; };
+  window.__EDOGAWA_V177_TEST = { FS, bgmWatch, fsBack };
 })();
 </script>
 <script id="edogawa-v39-footer">
