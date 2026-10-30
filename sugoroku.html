@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.2.9 (2026-10-30)';
+    window.__EDOGAWA_VERSION = 'ver1.2.10 (2026-10-30)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -31179,7 +31179,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // ════════════════════════════════════════════════════════════
   const PREFIX = 'edogawa-sugoroku-';
   const MAX_SLOT = 30, PROBE_N = 10;
-  const ASK_MS = 10000, JOIN_TOTAL_MS = 30000, AFK_MS = 30000, HOST_LOST_MS = 12000;
+  const ASK_MS = 10000, JOIN_TOTAL_MS = 30000, AFK_MS = 30000, HOST_LOST_MS = 25000;   // 【ver1.2.10】12秒 → 25秒（閲覧モードの映像などが届いているあいだは「つながっている」とみなします）
   const PEER_LIB = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
   const SOLO_KEY = 'edogawa_sugoroku_state';
   const SHARE_IMG = { white:'https://shulavan.github.io/img/shareWhite.png', black:'https://shulavan.github.io/img/shareBlack.png' };
@@ -31235,8 +31235,71 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function profile(){
     let a = null; try{ a = app.getUserProfile && app.getUserProfile(); }catch(e){}
     let name = (a && a.nickname) || ''; try{ if(!name) name = localStorage.getItem('edogawa_sugoroku_nickname') || ''; }catch(e){}
-    return { name: name || 'ゲスト', avatar: (a && a.avatarValue) || '🙂' };
+    let av = (a && a.avatarValue) || '🙂';
+    if(av === 'photo:local'){ av = PH.mine ? 'photo:u:' + myUid() : '🙂'; }
+    return { name: name || 'ゲスト', avatar: av, photo: av.indexOf('photo:u:') === 0 ? PH.mine : undefined };
   }
+  // ════════════════════════════════════════════════════════════
+  //  【ver1.2.10】写真アイコンを、ほかの端末にも届けます
+  //   ・写真はこの端末にしか保存していないため（印「photo:local」だけを送っていた）、
+  //     ほかの人の画面では写真が出ていませんでした
+  //   ・参加のときに小さくした写真（96×96）をいっしょに送り、ホストから全員へ配ります
+  //   ・盤面では「photo:u:<端末ID>」の印にして、届いた写真で表示します
+  // ════════════════════════════════════════════════════════════
+  const PH_KEY = 'edogawa_mp_photos_v1';
+  const PH = { map:{}, mine:null, src:null };
+  try{ PH.map = JSON.parse(localStorage.getItem(PH_KEY) || '{}') || {}; }catch(e){ PH.map = {}; }
+  app.__edoPhotos = PH.map;
+  const okPhoto = (d)=>typeof d === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(d) && d.length < 80000;
+  function savePhotos(){
+    try{
+      const keep = new Set((app.players || []).map(p=>p && p.uid)); keep.add(myUid());
+      Object.keys(PH.map).forEach(k=>{ if(!keep.has(k) && Object.keys(PH.map).length > 8) delete PH.map[k]; });
+      localStorage.setItem(PH_KEY, JSON.stringify(PH.map));
+    }catch(e){}
+  }
+  function makeMine(){
+    let src = null; try{ src = app.getAvatarPhoto && app.getAvatarPhoto(); }catch(e){}
+    if(!src){ PH.mine = null; PH.src = null; return Promise.resolve(); }
+    if(src === PH.src && PH.mine) return Promise.resolve();
+    return new Promise((res)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        try{
+          const c = document.createElement('canvas'); c.width = c.height = 96;
+          c.getContext('2d').drawImage(img, 0, 0, 96, 96);
+          PH.mine = c.toDataURL('image/jpeg', 0.75); PH.src = src;
+          PH.map[myUid()] = PH.mine; savePhotos();
+        }catch(e){}
+        res();
+      };
+      img.onerror = ()=>res();
+      img.src = src;
+    });
+  }
+  makeMine(); setInterval(makeMine, 5000);
+  function addPhotos(m){
+    let n = 0;
+    Object.keys(m || {}).forEach(k=>{ if(okPhoto(m[k]) && PH.map[k] !== m[k]){ PH.map[k] = m[k]; n++; } });
+    if(!n) return;
+    savePhotos();
+    (app.players || []).forEach(p=>{ if(p && String(p.avatar || '').indexOf('photo:u:') === 0) refreshIcon(p); });
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+  }
+  // 盤面で送るとき、自分の写真の印（photo:local）は、端末IDつきの印にします
+  const wireAv = (p)=>p && p.avatar === 'photo:local' ? (PH.mine ? 'photo:u:' + p.uid : '🙂') : (p ? p.avatar : '');
+  // 印から写真を取り出して表示します
+  const resolveAv = (v)=>{
+    const x = String(v == null ? '' : v);
+    if(x.indexOf('photo:u:') !== 0) return v;
+    const k = x.slice(8);
+    return PH.map[k] || (k === myUid() && app.getAvatarPhoto && app.getAvatarPhoto()) || '🙂';
+  };
+  ['avatarMarkup', 'avatarHtml', 'avatarImageSrc', '_isImageAvatar', 'avatarPlain'].forEach(k=>{
+    const f = app[k]; if(typeof f !== 'function') return;
+    app[k] = function(v, ...a){ return f.call(this, resolveAv(v), ...a); };
+  });
+  app.__edoResolveAvatar = resolveAv;
   const avatarHtml = (v)=>{ try{ if(app.avatarMarkup) return app.avatarMarkup(v, 'w-full h-full object-cover rounded-full'); }catch(e){} return esc(v || '🙂'); };
 
   // ── 送受信（JSONで送ります。大きいものは小さく分けて送り、受け取った側でつなぎ直します） ──
@@ -31248,9 +31311,38 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const id = Math.random().toString(36).slice(2, 10), n = Math.ceil(s.length / PART);
     for(let i = 0; i < n; i++) conn.send({ type:'part', id, i, n, s: s.slice(i * PART, (i + 1) * PART) });
   }
+  // 【ver1.2.10】送りきれていない量（バイト）。閲覧モードの映像がたまりすぎないように使います
+  function loadOf(conn){
+    try{ if(!conn) return 0; const dc = conn.dataChannel; return ((dc && dc.bufferedAmount) || 0) + ((conn.bufferSize || 0) * 4200); }catch(e){ return 0; }
+  }
+  function loadOut(){
+    if(R.role === 'host'){ let m = 0; R.conns.forEach(e=>{ m = Math.max(m, loadOf(e.conn)); }); return m; }
+    return loadOf(R.hostConn);
+  }
+  // 閲覧モードの映像（sp：画面の動き、spC：ゲームの絵）は、相手への送りがつまっているときは送りません
+  //   ・絵（spC）は、つまっていたら飛ばすだけ（次の絵で追いつきます）
+  //   ・画面の動き（sp）を飛ばしたときは、つまりがとれたら、最初から（全体の画面を）送りなおします
+  const SP_SOFT = 256 * 1024, SP_HARD = 1024 * 1024;
+  function spGate(m, st, conn, recUid, target){
+    if(!m || (m.type !== 'sp' && m.type !== 'spC')) return true;
+    const l = loadOf(conn);
+    if(st.spLost === m.sid){
+      if(l > SP_SOFT) return false;
+      st.spLost = null;
+      // 見る人に「最初から」を知らせて、記録している人に全体の画面をたのみます
+      try{ send(conn, { type:'bus', from:recUid, to:target, m:{ type:'spReset', sid:m.sid } }); }catch(e){}
+      if(recUid === myUid()) busDispatch({ type:'spSync', sid:m.sid }, target);
+      else { const r = R.conns.get(recUid); if(r) try{ send(r.conn, { type:'bus', from:target, to:recUid, m:{ type:'spSync', sid:m.sid } }); }catch(e){} }
+      return false;
+    }
+    if(m.type === 'spC') return l <= SP_SOFT;
+    if(l > SP_HARD){ st.spLost = m.sid; return false; }
+    return true;
+  }
   function onMsg(conn, fn){
     const buf = {};
     conn.on('data', (d)=>{
+      conn.__seen = Date.now();                                      // 【ver1.2.10】何か届いたら「つながっている」とみなします（分割の途中でも）
       if(!d) return;
       if(d.type === 'part'){
         const b = buf[d.id] || (buf[d.id] = { n:d.n, got:0, parts:[] });
@@ -31375,6 +31467,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       return;
     }
     if(d.type === 'join' || d.type === 'rejoin'){
+      if(d.uid && okPhoto(d.photo)){ PH.map[d.uid] = d.photo; savePhotos(); }
+      delete d.photo;
       const back = d.type === 'rejoin' ? (app.players || []).find(p=>p.remoteHuman && p.uid === d.uid) : null;
       if(back){ accept(conn, d, back); return; }                  // 引き継ぎのあと、もどってきた人はそのまま
       if(!freeSeats()){ send(conn, { type:'joinNg', why:'full' }); return; }
@@ -31446,6 +31540,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     refreshIcon(p);
     try{ app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
     send(conn, { type:'joinOk', uid:d.uid, slot:R.slot, snap:snapshot(), hostUid:myUid() });
+    // 【ver1.2.10】写真アイコンを配ります（参加した人へは全員分、ほかの人へは参加した人の分）
+    try{
+      const all = {}; (app.players || []).forEach(x=>{ if(x && PH.map[x.uid]) all[x.uid] = PH.map[x.uid]; });
+      if(PH.mine) all[myUid()] = PH.mine;
+      if(Object.keys(all).length) send(conn, { type:'photos', map:all });
+      if(PH.map[d.uid]) broadcast({ type:'photos', map:{ [d.uid]:PH.map[d.uid] } }, d.uid);
+    }catch(e){}
     if(!back){
       try{ app.addLog && app.addLog('👥 ' + p.name + ' がマルチプレイで参加しました（CPUと交代）'); }catch(e){}
       snack(iconHtml(p.avatar) + '<strong>' + esc(p.name) + '</strong>が参加しました');
@@ -31494,7 +31595,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{
         if(R.role === 'host' && !app.isMultiplayer){
           const o = options || {}; const cp = (app.players || [])[app.currentPlayerIdx];
-          app.lastEventForSync = { title, desc, extra: extra || null, icon:o.icon || null, type:o.type || null, reasonIcon:o.reasonIcon || null, avatar: cp ? cp.avatar : null };
+          app.lastEventForSync = { title, desc, extra: extra || null, icon:o.icon || null, type:o.type || null, reasonIcon:o.reasonIcon || null, avatar: cp ? wireAv(cp) : null };
           app.eventSeq = (app.eventSeq || 0) + 1;
         }
       }catch(e){}
@@ -31511,7 +31612,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     }
     st.players.forEach(sp=>{
       const lp = (app.players || []).find(x=>x.id === sp.id) || {};
-      sp.uid = lp.uid; sp.remoteHuman = !!lp.remoteHuman; sp.joinedAt = lp.joinedAt || 0; sp.human = !lp.isCpu || !!lp.remoteHuman;
+      sp.uid = lp.uid; sp.avatar = wireAv(Object.assign({}, sp, { uid:lp.uid })); sp.remoteHuman = !!lp.remoteHuman; sp.joinedAt = lp.joinedAt || 0; sp.human = !lp.isCpu || !!lp.remoteHuman;
     });
     st.__mp = { hostUid: myUid(), slot: R.slot };
     return st;
@@ -31519,7 +31620,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // 毎回送る盤面（軽いもの）
   function lightState(){
     const P = (app.players || []).map(p=>({
-      uid:p.uid, name:p.name, avatar:p.avatar, human: !p.isCpu || !!p.remoteHuman, joinedAt:p.joinedAt || 0, host: !p.isCpu && !p.remoteHuman,
+      uid:p.uid, name:p.name, avatar:wireAv(p), human: !p.isCpu || !!p.remoteHuman, joinedAt:p.joinedAt || 0, host: !p.isCpu && !p.remoteHuman,
       money:p.money, currentNodeIdx:p.currentNodeIdx, path:p.path || [], pathIndex:p.pathIndex || 0, vehicle:p.vehicle || null,
       skipTurn:!!p.skipTurn, wheelchairTurns:p.wheelchairTurns || 0, forcedMoveCount:p.forcedMoveCount || 0, rocketBoost:!!p.rocketBoost,
       boatRaceContinue:!!p.boatRaceContinue, boatRaceContinueCount:p.boatRaceContinueCount || 0,
@@ -31559,7 +31660,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       });
     }
     // 返事のない人は抜けたことにします
-    R.conns.forEach((e, uid)=>{ if(now() - e.seen > HOST_LOST_MS) guestLeft(uid); });
+    R.conns.forEach((e, uid)=>{ if(now() - Math.max(e.seen || 0, e.conn.__seen || 0) > HOST_LOST_MS) guestLeft(uid); });
     // 参加した人の番で、30秒たったらCPUと同じく自動で進めます
     const cp = (app.players || [])[app.currentPlayerIdx];
     if(cp && cp.remoteHuman && R.turnKey === app.currentPlayerIdx + ':' + app.turnCount && now() - R.turnAt >= AFK_MS && !app.isRolling){ try{ app.updateHUD(); }catch(e){} }
@@ -31648,10 +31749,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         else alert('通信できませんでした。しばらく経ってからやり直してください。');
         return;
       }
+      await makeMine();
       const pf = profile();
       const attempt = async (n)=>{
         setWaitSub('双六 <b>' + pad(n) + '</b> に参加をお願いしています…<br>（ホストの返事を待っています）');
-        const r = await connectTo(peer, slotId(n), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar }, ['joinOk', 'joinNg'],
+        const r = await connectTo(peer, slotId(n), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar, photo:pf.photo }, ['joinOk', 'joinNg'],
           Math.min(ASK_MS + 5000, Math.max(3000, JOIN_TOTAL_MS - (now() - (attempt.t1 || t0)))));
         R.log.push([now() % 1000000, 'join', n, r.ok ? r.msg.type : r.why]); if(R.log.length > 60) R.log.shift();
         if(cancelled){ try{ r.conn && r.conn.close(); }catch(e){} return 'cancel'; }
@@ -31672,7 +31774,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         paint('ホストの人の画面に「参加希望」の確認が出ます。<br>ホストの人が双六の画面を開いていないときは、開くまで待ちます（最大3分）');
         while(!cancelled && !other && now() < until){
           tries++;
-          const r = await connectTo(peer, slotId(prefer), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar }, ['joinOk', 'joinNg'],
+          const r = await connectTo(peer, slotId(prefer), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar, photo:pf.photo }, ['joinOk', 'joinNg'],
             Math.max(3000, until - now()), 12000);
           R.log.push([now() % 1000000, 'join', prefer, r.ok ? r.msg.type : r.why]); if(R.log.length > 60) R.log.shift();
           if(cancelled || other){ try{ r.conn && r.conn.close(); }catch(e){} break; }
@@ -31761,6 +31863,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     });
   }
   function guestMsg(d){
+    if(d.type === 'photos'){ addPhotos(d.map); return; }
     if(d.type === 'state' && d.gs){
       if(Array.isArray(d.gs.boardNodes)) R.board = d.gs.boardNodes; else d.gs.boardNodes = R.board || app.roadNetworkNodes || [];
       R.lastStateAt = now(); R.lastGs = d.gs; R.hostUid = d.gs.hostUid || R.hostUid;
@@ -31796,7 +31899,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(R.role !== 'guest') return;
     try{ send(R.hostConn, { type:'ping' }); }catch(e){}
     if(R.lastGs && !R.lastGs.rolling && app.isRolling && !app.rollRequestTimeout){ app.isRolling = false; }
-    if(now() - R.lastStateAt > HOST_LOST_MS) hostGone();
+    const hc = R.hostConn;
+    if(now() - Math.max(R.lastStateAt, (hc && hc.__seen) || 0) > HOST_LOST_MS) hostGone();
   }
 
   // ════════════════════════════════════════════════════════════
@@ -31816,15 +31920,28 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(!first || first.uid === R.uid) becomeHostFromGuest(host);
     else waitRejoin(host);
   }
+  // 【ver1.2.10】CPUにもどる席は「CPU1」ではなく、固定のCPU（呑んべぇ社長・イルカヒロシ・親方舟大工）のうち、いまいない人にします
+  function fixedCpuFor(p){
+    const F = window.__EDOGAWA_FIXED_CPUS || [];
+    const used = new Set((app.players || []).filter(x=>x && x !== p).map(x=>x.name));
+    return F.find(c=>!used.has(c.name)) || F[Math.max(0, Math.min(F.length - 1, (p.id || 1) - 1))] || { name:'CPU' + (p.id + 1), avatar:'🤖' };
+  }
+  function asFixedCpu(p){
+    const c = fixedCpuFor(p);
+    p.name = c.name; p.avatar = c.avatar;
+    if(c.stats) p.stats = Object.assign({}, c.stats);   // 所持金はこの双六の続きなので、そのままにします
+    return c;
+  }
+  app.__edoFixedCpuFor = fixedCpuFor;
   function toSolo(oldHost){
     app.isMultiplayer = false; app.isHost = false; app.myUid = null;
     (app.players || []).forEach(p=>{
       if(p.uid === R.uid){ p.isCpu = false; p.remoteHuman = false; return; }
       if(oldHost && p.uid === oldHost.uid){                          // 抜けたホストの席は CPU に
-        p.isCpu = true; p.remoteHuman = false; p.name = 'CPU' + (p.id + 1); p.avatar = '🤖'; p.cpuOrig = null;
+        p.isCpu = true; p.remoteHuman = false; asFixedCpu(p); p.cpuOrig = null;
         p.uid = 'cpu' + p.id + '-' + Math.random().toString(36).slice(2, 8); refreshIcon(p); return;
       }
-      if(p.__human){ p.isCpu = true; p.remoteHuman = true; p.cpuOrig = p.cpuOrig || { name:'CPU' + (p.id + 1), avatar:'🤖' }; return; }   // もどってくるのを待ちます
+      if(p.__human){ p.isCpu = true; p.remoteHuman = true; if(!p.cpuOrig){ const c = fixedCpuFor(p); p.cpuOrig = { name:c.name, avatar:c.avatar }; } return; }   // もどってくるのを待ちます
       p.isCpu = true;
     });
     try{ app.isRolling = false; app.miniGameActive = false; app.cancelAutoRoll && app.cancelAutoRoll(); }catch(e){}
@@ -31862,7 +31979,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       await sleep(3000);
       try{
         const pf = profile();
-        const r = await connectTo(peer, slotId(slot), { type:'rejoin', uid:myUid(), name:pf.name, avatar:pf.avatar }, ['joinOk', 'joinNg'], 8000);
+        const r = await connectTo(peer, slotId(slot), { type:'rejoin', uid:myUid(), name:pf.name, avatar:pf.avatar, photo:pf.photo }, ['joinOk', 'joinNg'], 8000);
         if(r.ok && r.msg.type === 'joinOk'){
           R.role = 'none';
           await becomeGuest(peer, r.conn, r.msg);
@@ -31992,7 +32109,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const from = d.from || viaUid;
     if(R.role === 'host'){
       if(d.to === '*'){
-        R.conns.forEach((e, uid)=>{ if(uid !== from) try{ send(e.conn, d); }catch(_){} });
+        R.conns.forEach((e, uid)=>{ if(uid !== from && spGate(d.m, e, e.conn, from, uid)) try{ send(e.conn, d); }catch(_){} });
         busDispatch(d.m, from); return;
       }
       if(d.to === myUid()){ busDispatch(d.m, from); return; }
@@ -32017,8 +32134,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     },
     all(m){
       const env = { type:'bus', from:myUid(), to:'*', m };
-      if(R.role === 'host') R.conns.forEach((e)=>{ try{ send(e.conn, env); }catch(_){} });
-      else if(R.role === 'guest' && R.hostConn) send(R.hostConn, env);
+      if(R.role === 'host') R.conns.forEach((e, uid)=>{ if(spGate(m, e, e.conn, myUid(), uid)) try{ send(e.conn, env); }catch(_){} });
+      else if(R.role === 'guest' && R.hostConn){ R.hostSt = R.hostSt || {}; if(spGate(m, R.hostSt, R.hostConn, myUid(), '*')) send(R.hostConn, env); }
     },
     on(type, fn){ R.B[type] = fn; },
     // ver1.2.3：映像を送る（ホスト → 参加した人）
@@ -32034,7 +32151,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     touch(){ R.turnAt = now(); },
     onState(fn){ R.onState.push(fn); },
     kick(){ R.sentAt = 0; },
-    snack, iconHtml, esc, avatarHtml,
+    snack, iconHtml, esc, avatarHtml, wireAv, load: loadOut, loadOf,
     playerByUid: (uid)=>(app.players || []).find(p=>p && p.uid === uid) || null,
     // その席を、この端末の人が遊んでいるか
     isLocal: (p)=>!!p && (R.role === 'guest' ? p.uid === myUid() : (!p.isCpu && !p.remoteHuman)),
@@ -32570,7 +32687,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     };
     const myAvatar = ()=>{
       const p = bus.role() === 'guest' ? bus.playerByUid(bus.me()) : (app.players || []).find(x=>x && !x.isCpu && !x.remoteHuman);
-      return p ? p.avatar : '';
+      return p ? (bus.wireAv ? bus.wireAv(p) : p.avatar) : '';
     };
     function titleNow(game){
       if(game === 'amida') return '🏯 江戸川あみだくじ';
@@ -32595,7 +32712,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     function stopRec(){
       const r = SP.rec; if(!r) return;
       SP.rec = null;
-      clearInterval(r.tick);
+      clearInterval(r.tick); clearInterval(r.cvTick);
       try{ r.stop && r.stop(); }catch(e){}
       try{ flush(r); }catch(e){}
       bus.all({ type:'spEnd', sid:r.sid });
@@ -32625,14 +32742,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{
         const d = win.document; r.doc = d;
         if(!win.rrweb){ const s = d.createElement('script'); s.textContent = SP.libText; (d.head || d.documentElement).appendChild(s); }
+        // 【ver1.2.10】ゲームの絵（canvas）は rrweb では記録しません（スマホでは1秒に1MB近くになり、参加した人が落ちていました）
+        //   かわりに、下の canvasTick で小さなJPEG（長い辺360px・1秒に2コマ・変わったときだけ）にして送ります
         r.stop = win.rrweb.record({
           emit(e){ r.buf.push(e); if(r.buf.length > 60) flush(r); },
-          recordCanvas:true,
-          sampling:{ canvas:4, mousemove:false, mouseInteraction:false, scroll:200, media:800, input:'last' },
-          dataURLOptions:{ type:'image/webp', quality:0.45 },
+          recordCanvas:false,
+          sampling:{ mousemove:false, mouseInteraction:false, scroll:200, media:800, input:'last' },
           slimDOMOptions:'all', inlineStylesheet:true, collectFonts:false, recordCrossOriginIframes:false
         });
         r.rec = win.rrweb.record;
+        r.last = {};
+        r.cvTick = setInterval(()=>canvasTick(r), CV_MS);
       }catch(e){ console.warn('[v175] rrweb record', e); }
       r.tick = setInterval(()=>{
         if(SP.rec !== r) return;
@@ -32642,7 +32762,58 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         flush(r);
       }, 200);
     }
-    bus.on('spSync', (m)=>{ const r = SP.rec; if(r && r.sid === m.sid) try{ r.rec && r.rec.takeFullSnapshot(true); }catch(e){} });
+    // 見る人から「最初から」をたのまれたら、全体の画面を送りなおします（2秒に1回まで）
+    bus.on('spSync', (m)=>{
+      const r = SP.rec; if(!r || r.sid !== m.sid || !r.rec) return;
+      if(now() - (r.syncAt || 0) < 2000){ if(!r.syncLater) r.syncLater = setTimeout(()=>{ r.syncLater = null; bus.on && SP.sync(r); }, 2000); return; }
+      SP.sync(r);
+    });
+    SP.sync = function(r){
+      if(SP.rec !== r) return;
+      r.syncAt = now();
+      try{ r.rec.takeFullSnapshot(true); }catch(e){}
+      r.last = {};                                   // 絵も送りなおします
+      flush(r);
+    };
+    // ── ゲームの絵（canvas）を小さくして送ります ──
+    const CV_MS = 500, CV_MAX = 320, CV_Q = 0.5;
+    function bgOf(el){
+      try{
+        const w = el.ownerDocument.defaultView;
+        for(let e = el; e && e.nodeType === 1; e = e.parentElement){
+          const c = w.getComputedStyle(e).backgroundColor;
+          if(c && c !== 'transparent' && !/rgba\([^)]*,\s*0\)$/.test(c)) return c;
+        }
+      }catch(e){}
+      return '#000';
+    }
+    function canvasTick(r){
+      if(SP.rec !== r || !r.doc || !r.win) return;
+      if(bus.load && bus.load() > 256 * 1024) return;       // 送りがつまっているときは休みます
+      let list = []; try{ list = Array.from(r.doc.querySelectorAll('canvas')); }catch(e){ return; }
+      const mirror = r.win.rrweb && r.win.rrweb.record && r.win.rrweb.record.mirror;
+      if(!mirror) return;
+      list.forEach(c=>{
+        try{
+          if(!c.width || !c.height || c.width * c.height < 6000) return;
+          if(!c.offsetWidth && !c.offsetHeight) return;           // 見えていない
+          const id = mirror.getId(c); if(!(id > 0)) return;
+          const k = Math.min(1, CV_MAX / Math.max(c.width, c.height));
+          const w = Math.max(1, Math.round(c.width * k)), h = Math.max(1, Math.round(c.height * k));
+          const t = r.tmp || (r.tmp = document.createElement('canvas'));
+          t.width = w; t.height = h;
+          const x = t.getContext('2d');
+          // すきとおった部分があるときは、WebP（すきとおったまま送れる）を使います。WebPが使えない端末では、うしろの色でぬってから JPEG にします
+          if(SP.webp == null){ try{ SP.webp = t.toDataURL('image/webp', 0.5).indexOf('data:image/webp') === 0; }catch(e){ SP.webp = false; } }
+          let d;
+          if(SP.webp){ x.clearRect(0, 0, w, h); x.drawImage(c, 0, 0, w, h); d = t.toDataURL('image/webp', CV_Q); }
+          else{ x.fillStyle = bgOf(c); x.fillRect(0, 0, w, h); x.drawImage(c, 0, 0, w, h); d = t.toDataURL('image/jpeg', CV_Q); }
+          if(r.last[id] === d) return;
+          r.last[id] = d;
+          bus.all({ type:'spC', sid:r.sid, id, d });
+        }catch(e){}
+      });
+    }
 
     // ── 見る側 ──
     function ui(){
@@ -32692,18 +32863,37 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       v.ended = true;
       setTimeout(()=>{
         if(SP.view[sid] !== v) return;
-        try{ v.rep && v.rep.pause(); }catch(e){}
+        try{ v.rep && v.rep.pause(); v.rep && v.rep.destroy && v.rep.destroy(); }catch(e){}
         delete SP.view[sid];
         const root = document.querySelector('#edo-spect .sp-root'); if(root && !cur()) root.innerHTML = '';
         paint();
       }, 1500);
+    }
+    // 【ver1.2.10】見る側：たまった記録でスマホが重くならないように、ときどき作りなおします
+    const REBUILD_N = 2500, REBUILD_MS = 90000;
+    function newRep(v){
+      const root = ui().querySelector('.sp-root');
+      try{ v.rep && v.rep.pause(); v.rep && v.rep.destroy && v.rep.destroy(); }catch(e){}
+      try{ v.rep && v.rep.destroy && v.rep.destroy(); }catch(e){}
+      root.innerHTML = '';
+      v.rep = new window.rrweb.Replayer([], { root, liveMode:true, mouseTail:false, UNSAFE_replayCanvas:true, useVirtualDom:false, showWarning:false, showDebug:false, triggerFocus:false, speed:1 });
+      v.rep.startLive((v.q[0] && v.q[0].timestamp ? v.q[0].timestamp : now()) - 900);
+      v.n = 0; v.repAt = now(); v.waitFull = false; v.gap = false; v.asked = false;
+      v.started = true; paint();
+      // 届いている絵をかきなおします
+      setTimeout(()=>{ Object.keys(v.cv || {}).forEach(id=>drawCv(v, id, v.cv[id])); }, 120);
+    }
+    function askFull(v){
+      if(v.askAt && now() - v.askAt < 6000) return;
+      v.askAt = now(); v.asked = true;
+      bus.to(v.from, { type:'spSync', sid:v.sid });
     }
     async function feed(m, from){
       let v = SP.view[m.sid];
       if(!v){
         // ほかの中継は終わりにします（同時に見るのは1つだけ）
         Object.keys(SP.view).forEach(k=>{ if(k !== m.sid) endView(k); });
-        v = SP.view[m.sid] = { sid:m.sid, from, name:m.n || '', avatar:m.a || '', title:m.t || 'ミニゲーム', game:m.g, q:[], rep:null, started:false, min:false, asked:false };
+        v = SP.view[m.sid] = { sid:m.sid, from, name:m.n || '', avatar:m.a || '', title:m.t || 'ミニゲーム', game:m.g, q:[], rep:null, started:false, min:false, asked:false, cv:{}, n:0 };
         const root = ui().querySelector('.sp-root'); root.innerHTML = '';
         paint();
         loadLib();
@@ -32711,26 +32901,49 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       (m.evs || []).forEach(e=>v.q.push(e));
       if(!(await loadLib())) return;
       if(SP.view[m.sid] !== v) return;
-      if(!v.rep){
+      if(!v.rep || v.waitFull){
         const fi = v.q.findIndex(e=>e.type === 2);
         if(fi < 0){
-          if(v.q.length && !v.asked){ v.asked = true; bus.to(from, { type:'spSync', sid:m.sid }); }
-          return;
+          if(!v.rep || v.gap){
+            // 全体の画面がまだ届いていません。たのんで待ちます（とちゅうの動きは使えないので捨てます）
+            if(v.q.length) askFull(v);
+            if(v.q.length > 400) v.q.splice(0, v.q.length - 50);
+            return;
+          }
+          // 作りなおしを待つあいだは、いまの再生を続けます
+          if(now() - (v.askAt || 0) > 6000) askFull(v);
+        }else{
+          let mi = -1; for(let i = fi; i >= 0; i--) if(v.q[i].type === 4){ mi = i; break; }
+          const before = v.q.splice(0, mi >= 0 ? mi : fi);
+          if(v.rep && !v.gap) before.forEach(e=>{ try{ v.rep.addEvent(e); }catch(err){} });
+          try{ newRep(v); }catch(e){ console.warn('[v175] replayer', e); v.rep = null; return; }
         }
-        let mi = -1; for(let i = fi; i >= 0; i--) if(v.q[i].type === 4){ mi = i; break; }
-        const start = v.q.splice(0, mi >= 0 ? mi : fi);
-        void start;
-        const root = ui().querySelector('.sp-root'); root.innerHTML = '';
-        try{
-          v.rep = new window.rrweb.Replayer([], { root, liveMode:true, mouseTail:false, UNSAFE_replayCanvas:true, showWarning:false, showDebug:false, triggerFocus:false, speed:1 });
-          v.rep.startLive((v.q[0] && v.q[0].timestamp ? v.q[0].timestamp : now()) - 900);
-          v.started = true; paint();
-        }catch(e){ console.warn('[v175] replayer', e); v.rep = null; return; }
       }
       const q = v.q.splice(0);
       q.forEach(e=>{ try{ v.rep.addEvent(e); }catch(err){} });
+      v.n += q.length;
       if(q.some(e=>e.type === 4 || e.type === 2)) setTimeout(()=>fit(v), 60);
+      if(!v.waitFull && (v.n > REBUILD_N || now() - (v.repAt || 0) > REBUILD_MS)){ v.waitFull = true; askFull(v); }
     }
+    // ゲームの絵（canvas）をかきます
+    function drawCv(v, id, d){
+      try{
+        if(!v.rep || !v.rep.getMirror) return;
+        const c = v.rep.getMirror().getNode(Number(id));
+        if(!c || !c.getContext) return;
+        const img = new Image();
+        img.onload = ()=>{ try{ const x = c.getContext('2d'); if(!x) return; x.clearRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height); }catch(e){} };
+        img.src = d;
+      }catch(e){}
+    }
+    bus.on('spC', (m, from)=>{
+      if(from === bus.me()) return;
+      const v = SP.view[m.sid]; if(!v) return;
+      v.cv[m.id] = m.d;
+      drawCv(v, m.id, m.d);
+    });
+    // とちゅうが抜けたときは、全体の画面が届くまで待ちます
+    bus.on('spReset', (m)=>{ const v = SP.view[m.sid]; if(!v) return; v.waitFull = true; v.gap = true; v.q.length = 0; v.askAt = now(); });
     bus.on('sp', (m, from)=>{
       if(from === bus.me()) return;
       // 自分がいっしょに遊んでいる（カヌー・しりとり・闘魂ロードなど）ときは、中継は出しません
@@ -32742,7 +32955,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     // 自分が遊びはじめたら、見ている中継は閉じます（その中継は、もう出しません）
     SP.ignored = new Set();
     SP.hideAll = function(){
-      Object.keys(SP.view).forEach(k=>{ SP.ignored.add(k); const v = SP.view[k]; try{ v.rep && v.rep.pause(); }catch(e){} delete SP.view[k]; });
+      Object.keys(SP.view).forEach(k=>{ SP.ignored.add(k); const v = SP.view[k]; try{ v.rep && v.rep.pause(); v.rep && v.rep.destroy && v.rep.destroy(); }catch(e){} delete SP.view[k]; });
       const root = document.querySelector('#edo-spect .sp-root'); if(root) root.innerHTML = '';
       paint();
     };
@@ -32915,7 +33128,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       cfg(); setTimeout(cfg, 800);
       viewers(s).forEach(u=>{
         const side = s.p1Remote && u === s.p1.uid ? 'p1' : s.p2Remote && u === s.p2.uid ? 'p2' : null;
-        bus.to(u, { type:'fgOpen', sid:s.sid, side, n1:s.p1.name, n2:s.p2.name, a1:s.p1.avatar, a2:s.p2.avatar });
+        bus.to(u, { type:'fgOpen', sid:s.sid, side, n1:s.p1.name, n2:s.p2.name, a1:(bus.wireAv ? bus.wireAv(s.p1) : s.p1.avatar), a2:(bus.wireAv ? bus.wireAv(s.p2) : s.p2.avatar) });
       });
       // 10秒たっても返事がなければ、代わりに戦います
       s.tm = setTimeout(()=>{ if(s.p1Remote && !s.acked[s.p1.uid]) fallback(s, 'p1'); if(s.p2Remote && !s.acked[s.p2.uid]) fallback(s, 'p2'); }, 10000);
