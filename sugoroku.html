@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.2.6 (2026-10-29)';
+    window.__EDOGAWA_VERSION = 'ver1.2.7 (2026-10-30)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -26100,8 +26100,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(!tools) return false;
     const r = tools.getBoundingClientRect();
     if(!(r.width > 20)) return false;
-    el.style.left  = Math.round(r.left) + 'px';
-    el.style.width = Math.round(r.width) + 'px';
+    // 【ver1.2.7】横はばは、右から3つ分のボタン（♫・全画面・👀）にそろえます（シェアボタンの分は入れません）
+    let left = r.left;
+    try{
+      const btns = [...tools.children].filter(b=>{ const q = b.getBoundingClientRect(); return q.width > 0 && q.height > 0 && getComputedStyle(b).display !== 'none'; });
+      if(btns.length > 3) left = btns[btns.length - 3].getBoundingClientRect().left;
+    }catch(e){}
+    el.style.left  = Math.round(left) + 'px';
+    el.style.width = Math.round(r.right - left) + 'px';
     el.style.top   = Math.round(r.bottom + 6) + 'px';
     el.style.right = 'auto';
     return true;
@@ -31143,6 +31149,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     animation:edo-ja-run linear forwards; }
   #edo-join-wait button{ width:100%; padding:11px; border:0; border-radius:12px; font-weight:900; font-size:14px;
     background:var(--t-surf2, #1e293b); color:var(--t-text, #e2e8f0); }
+  #edo-join-wait button.jw-b2{ margin-bottom:8px; background:#0ea5e9 !important; color:#fff !important; }
   /* トップページのマルチプレイ（参加できる双六があるとき） */
   #edo-mp-panel.edo-mp-live #recruit-btn{ animation:edo-mp-pulse 1.6s ease-in-out infinite; }
   @keyframes edo-mp-pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(244,63,94,.55) } 50%{ box-shadow:0 0 0 10px rgba(244,63,94,0) } }
@@ -31245,16 +31252,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     });
   }
   // 相手につないで、最初の返事を待ちます
-  function connectTo(peer, id, first, waitType, ms){
+  function connectTo(peer, id, first, waitType, ms, openMs){
     return new Promise((res)=>{
-      let done = false, conn = null;
-      const fin = (v)=>{ if(done) return; done = true; clearTimeout(tm); try{ peer.off('error', onErr); }catch(e){} res(v); };
+      let done = false, conn = null, opened = false;
+      const fin = (v)=>{ if(done) return; done = true; clearTimeout(tm); clearTimeout(otm); try{ peer.off('error', onErr); }catch(e){} res(v); };
+      // 【ver1.2.7】相手につながらないまま（ホストの画面が裏にある等）なら、早めにあきらめて、やり直せるようにします
+      const otm = openMs ? setTimeout(()=>{ if(!opened){ try{ conn && conn.close(); }catch(e){} fin({ ok:false, why:'noopen' }); } }, openMs) : null;
       const onErr = (e)=>{ if(e && e.type === 'peer-unavailable' && String(e.message || '').indexOf(id) >= 0) fin({ ok:false, why:'none' }); };
       const tm = setTimeout(()=>{ try{ conn && conn.close(); }catch(e){} fin({ ok:false, why:'timeout' }); }, ms);
       peer.on('error', onErr);
       try{ conn = peer.connect(id, { reliable:true, serialization:'json' }); }catch(e){ return fin({ ok:false, why:'error' }); }
       conn.__q = [];                                                   // 返事のあとに届いたものは、あとで渡します
-      conn.on('open', ()=>{ try{ send(conn, first); }catch(e){ fin({ ok:false, why:'error' }); } });
+      conn.on('open', ()=>{ opened = true; try{ send(conn, first); }catch(e){ fin({ ok:false, why:'error' }); } });
       onMsg(conn, (d)=>{ if(!done && d && waitType.indexOf(d.type) >= 0) fin({ ok:true, conn, msg:d }); else if(done && conn.__h) conn.__h(d); else conn.__q.push(d); });
       conn.on('error', ()=>fin({ ok:false, why:'error' }));
       conn.on('close', ()=>fin({ ok:false, why:'closed' }));
@@ -31353,6 +31362,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // 参加希望（ホストの画面）：10秒で返事がなければNG
   function nextAsk(){
     if(R.asking) return;
+    // 【ver1.2.7】ホストの画面が裏にある（LINEなどを開いている）ときは、10秒の確認を始めません。画面にもどったら出します
+    if(document.hidden && R.askQ.length){ R.askWait = true; return; }
     const it = R.askQ.shift(); if(!it) return;
     R.log.push([now() % 1000000, 'ask', it.conn.open, freeSeats()]);
     if(!it.conn.open || !freeSeats()){ try{ send(it.conn, { type:'joinNg', why:'full' }); }catch(e){} return nextAsk(); }
@@ -31526,16 +31537,19 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(!el){ el = document.createElement('div'); el.id = 'edo-join-wait'; document.body.appendChild(el); }
     return el;
   }
-  function showWait(title, sub, ms, btn, onBtn){
+  function showWait(title, sub, ms, btn, onBtn, btn2, onBtn2){
     const el = waitBox();
     el.innerHTML = '<div class="jw-box"><div class="jw-e">👥</div><div class="jw-t">' + esc(title) + '</div><div class="jw-s">' + sub + '</div>' +
       (ms ? '<div class="jw-bar"><i style="animation-duration:' + ms + 'ms"></i></div>' : '<div style="height:10px"></div>') +
-      '<button type="button">' + esc(btn || 'キャンセル') + '</button></div>';
+      (btn2 ? '<button type="button" class="jw-b2">' + esc(btn2) + '</button>' : '') +
+      '<button type="button" class="jw-b1">' + esc(btn || 'キャンセル') + '</button></div>';
     el.classList.add('show');
-    el.querySelector('button').onclick = ()=>{ try{ onBtn && onBtn(); }catch(e){} hideWait(); };
+    el.querySelector('.jw-b1').onclick = ()=>{ try{ onBtn && onBtn(); }catch(e){} hideWait(); };
+    const b2 = el.querySelector('.jw-b2'); if(b2) b2.onclick = ()=>{ try{ onBtn2 && onBtn2(); }catch(e){} };
   }
   const setWaitSub = (html)=>{ const s = document.querySelector('#edo-join-wait .jw-s'); if(s) s.innerHTML = html; };
   const hideWait = ()=>{ const el = g('edo-join-wait'); if(el){ el.classList.remove('show'); el.innerHTML = ''; } };
+  const PREFER_MS = 180000;                                          // ver1.2.7：シェアされた双六は、最大3分まで待ちます
 
   let probePeer = null;
   async function getProbePeer(){
@@ -31602,7 +31616,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const attempt = async (n)=>{
         setWaitSub('双六 <b>' + pad(n) + '</b> に参加をお願いしています…<br>（ホストの返事を待っています）');
         const r = await connectTo(peer, slotId(n), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar }, ['joinOk', 'joinNg'],
-          Math.min(ASK_MS + 5000, Math.max(3000, JOIN_TOTAL_MS - (now() - t0))));
+          Math.min(ASK_MS + 5000, Math.max(3000, JOIN_TOTAL_MS - (now() - (attempt.t1 || t0)))));
         R.log.push([now() % 1000000, 'join', n, r.ok ? r.msg.type : r.why]); if(R.log.length > 60) R.log.shift();
         if(cancelled){ try{ r.conn && r.conn.close(); }catch(e){} return 'cancel'; }
         if(r.ok && r.msg.type === 'joinOk'){ hideWait(); await becomeGuest(peer, r.conn, r.msg); return 'ok'; }
@@ -31611,13 +31625,40 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       };
       const tried = new Set();
       // シェアされた番号があれば、まずそこへ。満席・NGなら、ほかの双六をさがします
-      if(prefer){ tried.add(prefer); const a = await attempt(prefer); if(a !== 'ng') return; }
+      // 【ver1.2.7】ホストの人がLINEなどに切りかえていて双六の画面が裏にあると、ホストは返事ができません。
+      //   シェアされた双六は、ホストの人が双六の画面にもどるまで（最大3分）つなぎ直して待ちます
+      if(prefer){
+        tried.add(prefer);
+        let other = false, tries = 0;
+        const until = now() + PREFER_MS;
+        const paint = (sub)=>showWait('双六 ' + pad(prefer) + ' に参加をお願いしています', sub, 0, 'キャンセル', ()=>{ cancelled = true; },
+          'ほかの双六をさがす', ()=>{ other = true; });
+        paint('ホストの人の画面に「参加希望」の確認が出ます。<br>ホストの人が双六の画面を開いていないときは、開くまで待ちます（最大3分）');
+        while(!cancelled && !other && now() < until){
+          tries++;
+          const r = await connectTo(peer, slotId(prefer), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar }, ['joinOk', 'joinNg'],
+            Math.max(3000, until - now()), 12000);
+          R.log.push([now() % 1000000, 'join', prefer, r.ok ? r.msg.type : r.why]); if(R.log.length > 60) R.log.shift();
+          if(cancelled || other){ try{ r.conn && r.conn.close(); }catch(e){} break; }
+          if(r.ok && r.msg.type === 'joinOk'){ hideWait(); await becomeGuest(peer, r.conn, r.msg); return; }
+          try{ r.conn && r.conn.close(); }catch(e){}
+          if(r.ok && r.msg.type === 'joinNg') break;                    // 満席・NG → ほかの双六へ
+          const sec = Math.max(0, Math.ceil((until - now()) / 1000));
+          paint((r.why === 'none' ? '双六 ' + pad(prefer) + ' は、いま参加者を受け付けていません。<br>ホストの人が双六の画面を開くのを待っています' :
+            'ホストの人の画面につながりません。<br>ホストの人に、双六の画面を開いてもらってください') +
+            '<br><span style="opacity:.75">（もう一度つないでいます・' + tries + '回目／のこり' + sec + '秒）</span>');
+          await sleep(r.why === 'none' ? 4000 : 1500);
+        }
+        if(cancelled) return;
+        showWait('参加できる双六をさがしています', 'しばらくお待ちください…', JOIN_TOTAL_MS, 'キャンセル', ()=>{ cancelled = true; });
+      }
+      const t1 = now(); attempt.t1 = t1;
       // トップページで少し前に調べた結果があれば、それを使います（さがす時間を短くするため）
       let found = (now() - R.probe.at < 25000 && R.probe.rooms.length) ? R.probe.rooms.slice() : null;
       if(!found){ setWaitSub('参加できる双六をさがしています…'); found = await probe(Array.from({ length:PROBE_N }, (_, i)=>i + 1).filter(n=>!tried.has(n))); }
       for(const r of found.filter(r=>r.seats > 0 && !tried.has(r.slot))){
         if(cancelled) return;
-        if(now() - t0 > JOIN_TOTAL_MS - 2000) break;
+        if(now() - t1 > JOIN_TOTAL_MS - 2000) break;
         tried.add(r.slot);
         const a = await attempt(r.slot); if(a !== 'ng') return;
       }
@@ -31874,6 +31915,19 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ R.hostConn && R.hostConn.close(); }catch(e){}
     R.hostConn = null; R.role = 'none'; R.slot = 0; app.isMultiplayer = false; app.myUid = null;
   }
+  // 【ver1.2.7】双六の画面にもどったとき：通信がとぎれていたらつなぎ直し、待っていた参加希望を出します
+  function wakeHost(){
+    if(R.role !== 'host') return;
+    try{
+      if(R.peer && !R.peer.destroyed && R.peer.disconnected && now() - (R.recAt || 0) > 2000){ R.recAt = now(); R.peer.reconnect(); }
+      else if(R.peer && R.peer.destroyed){ const slot = R.slot; R.peer = null; R.role = 'none'; claimSlot(slot); }
+    }catch(e){}
+    if(!document.hidden && R.askQ.length && !R.asking){ R.askWait = false; nextAsk(); }
+  }
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) setTimeout(wakeHost, 300); });
+  window.addEventListener('online', ()=>setTimeout(wakeHost, 500));
+  window.addEventListener('focus', ()=>setTimeout(wakeHost, 300));
+  setInterval(()=>{ if(R.role === 'host' && !document.hidden) wakeHost(); }, 3000);
   window.addEventListener('pagehide', ()=>{ try{ if(R.role === 'host') R.peer && R.peer.destroy(); if(R.role === 'guest') R.hostConn && R.hostConn.close(); }catch(e){} });
 
   // ════════════════════════════════════════════════════════════
@@ -31948,7 +32002,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   window.__EDOGAWA_V174 = ()=>({ 役割: R.role, 番号: R.slot ? pad(R.slot) : null, 参加者: [...R.conns.keys()], 空き席: freeSeats(), 記録: R.log.slice(-12),
     参加できる双六: R.probe.rooms, サーバー: R.serverDown ? '通信できない' : 'OK', エラー: R.err, uid: R.uid || null, 引き継ぎ中: R.migrating,
     プレイヤー: (app.players || []).map(p=>({ id:p.id, name:p.name, cpu:!!p.isCpu, remote:!!p.remoteHuman, uid:p.uid })) });
-  window.__EDOGAWA_V174_TEST = { R, startJoin, lobbyProbe, share, shareUrl, hostGone };
+  window.__EDOGAWA_V174_TEST = { R, startJoin, lobbyProbe, share, shareUrl, hostGone, wakeHost };
 })();
 </script>
 <script id="edogawa-v175">
