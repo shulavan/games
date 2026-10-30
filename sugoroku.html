@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.2.10 (2026-10-30)';
+    window.__EDOGAWA_VERSION = 'ver1.2.12 (2026-10-30)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1078,10 +1078,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       <button onclick="EdogawaSugoroku.toggleFullscreen()" class="sticker-btn p-2 bg-slate-900 text-slate-100 active:scale-95 transition rounded-lg" title="全画面モード">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
       </button>
-      <!-- マルチプレイのホストのみ表示：ゲームを保存して終了 -->
-      <button id="host-save-btn" onclick="EdogawaSugoroku.openHostSaveModal()" class="sticker-btn hidden p-2 bg-slate-900 text-amber-300 active:scale-95 transition rounded-lg flex items-center gap-1 text-xs font-bold" title="ゲームを保存して終了">
-        <span>💾</span> <span class="hidden sm:inline">保存終了</span>
-      </button>
+      <!-- 【ver1.2.12】「保存終了」ボタン（これまでの方式のマルチプレイ）は削除しました -->
       <!-- メニュー（設定・使い方・利用規約・プライバシーポリシー・運営元） -->
       <!-- 【ver1.2.1】視点切替（👀／👟）。双六の画面ではメニュー（≡）の場所に出します -->
       <button id="edo-view-btn" type="button" onclick="EdogawaSugoroku.toggleViewMode()" title="視点切替" aria-label="視点切替"
@@ -1173,107 +1170,14 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   <div id="ad-slot" data-app="1" class="shrink-0 w-full flex items-center justify-center overflow-hidden"></div>
 
   <!-- MODAL: HOST RECRUITMENT QR MODAL (USER A) -->
-  <div data-app="1" id="host-recruitment-modal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-5 text-center shadow-2xl space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-        <h3 class="font-mincho font-bold text-amber-400 text-base flex items-center gap-1.5">
-          <span>👥</span> <span>参加者募集中</span>
-        </h3>
-        <button onclick="EdogawaSugoroku.closeRecruitmentModal()" class="text-slate-400 hover:text-white text-sm font-bold">✕</button>
-      </div>
-
-      <div class="flex flex-col items-center justify-center space-y-2">
-        <div id="modal-qrcode-container" class="bg-white p-2.5 rounded-xl shadow-lg"></div>
-        <p class="text-xs text-slate-300 font-medium">
-          スマホのカメラで上のQRコードを撮影して参加してください
-        </p>
-        <button id="modal-line-share-btn" onclick="EdogawaSugoroku.shareRoomViaLine()" class="w-full bg-[#06C755] hover:bg-[#05b34c] text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-md">
-          <span>💬</span> <span>LINEで招待リンクを送る（遠方の友達にも！）</span>
-        </button>
-      </div>
-
-      <div id="modal-firebase-warning" class="hidden text-[11px] text-amber-300 bg-amber-950/40 border border-amber-800/50 rounded-lg p-2 text-left leading-relaxed">
-        ⚠️ 現在サーバー未設定のため、この端末内でのプレビュー表示のみです。他の端末の参加人数は自動反映されません（コード内のFIREBASE_CONFIGを設定すると有効になります）。
-      </div>
-
-      <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 space-y-2">
-        <div class="flex items-center justify-between text-xs">
-          <span class="text-slate-400 font-bold">現在の参加人数:</span>
-          <span id="modal-participant-count" class="text-amber-400 font-extrabold text-sm">1名</span>
-        </div>
-        <div id="modal-participant-list" class="flex items-center justify-center gap-2 pt-1">
-          <!-- Dynamically filled with player avatars -->
-        </div>
-        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-800">
-          <span class="text-slate-400">自動開始まで:</span>
-          <div class="flex items-center gap-1.5">
-            <span id="modal-countdown-badge" class="px-2.5 py-0.5 bg-amber-500 text-slate-950 font-black rounded-full text-xs animate-pulse">30秒</span>
-            <button id="modal-countdown-toggle-btn" onclick="EdogawaSugoroku.toggleHostCountdown()" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold rounded-full text-[10px] transition">⏸ 一時停止</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <button id="modal-force-start-btn" onclick="EdogawaSugoroku.forceStartMultiplayer()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg active:scale-95 transition text-sm">
-          🚀 今すぐ強制開始
-        </button>
-        <button onclick="EdogawaSugoroku.closeRecruitmentModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-semibold py-2 rounded-xl text-xs transition">
-          募集を取り消す
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- 【ver1.2.12】host-recruitment-modal（これまでの方式のマルチプレイ）は削除しました -->
 
   <!-- MODAL: GUEST WAITING MODAL (USER B, C - NON-INTERACTIVE) -->
-  <div data-app="1" id="guest-waiting-modal" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
-    <div class="max-w-xs w-full space-y-5">
-
-      <div id="guest-nickname-screen" class="space-y-4">
-        <span class="text-4xl">🎲</span>
-        <h3 class="font-mincho text-xl font-bold text-amber-400">江戸川双六に参加</h3>
-        <p class="text-xs text-slate-300 leading-relaxed">あなたのニックネームを入力してください</p>
-        <input type="text" id="guest-nickname-input" maxlength="6" placeholder="ニックネーム（6文字以内）" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-amber-300 text-center focus:outline-none focus:border-amber-500 font-bold">
-        <button onclick="EdogawaSugoroku.confirmGuestNickname()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black py-3 rounded-xl shadow-lg active:scale-95 transition">参加する</button>
-      </div>
-
-      <div id="guest-waiting-wrapper" class="hidden space-y-5">
-        <div class="relative flex justify-center items-center">
-          <div class="w-20 h-20 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
-          <div class="absolute text-3xl animate-bounce">⏳</div>
-        </div>
-
-        <div class="space-y-2">
-          <h3 class="font-mincho text-xl font-bold text-amber-400">招待者が準備してます</h3>
-          <p class="text-xs text-slate-300 leading-relaxed">
-            ホストがゲームを開始するまでこのままお待ちください。
-          </p>
-        </div>
-
-        <div id="guest-waiting-normal" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
-          <div class="text-[11px] text-slate-400">現在の参加状況</div>
-          <div id="guest-participant-count" class="text-lg font-extrabold text-amber-300">参加人数 1名</div>
-          <div id="guest-participant-list" class="flex justify-center gap-2 pt-1"></div>
-          <div class="text-[10px] text-slate-500 pt-2 border-t border-slate-800/80">
-            カウントダウン終了またはホストの操作で自動開始します (<span id="guest-countdown-seconds" class="text-amber-400 font-bold">30</span>s)
-          </div>
-        </div>
-
-        <div id="guest-waiting-error" class="hidden bg-rose-950/40 border border-rose-800/50 rounded-2xl p-4 text-xs text-rose-200 leading-relaxed"></div>
-      </div>
-    </div>
-  </div>
+  <!-- 【ver1.2.12】guest-waiting-modal（これまでの方式のマルチプレイ）は削除しました -->
 
   <!-- OVERLAY: WAITING WHILE HOST RESOLVES GOAL / NEXT DESTINATION -->
   <!-- OVERLAY: HOST WAITING FOR GUESTS TO CATCH UP (goal transitions / group mini-games) -->
-  <div data-app="1" id="host-wait-guests-overlay" class="hidden fixed inset-0 z-[65] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6 text-center select-none pointer-events-auto">
-    <div class="max-w-xs w-full space-y-4 bg-slate-900 border border-amber-500/40 rounded-2xl p-5">
-      <div class="relative flex justify-center items-center">
-        <div class="w-14 h-14 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin"></div>
-      </div>
-      <h3 class="font-mincho text-base font-bold text-amber-400">他の参加者の反映を待っています…</h3>
-      <p class="text-xs text-slate-300 leading-relaxed">通信のタイムラグにより、他の端末がまだ現在の状態に追いついていない可能性があります。少しだけお待ちください。</p>
-    </div>
-  </div>
+  <!-- 【ver1.2.12】host-wait-guests-overlay（これまでの方式のマルチプレイ）は削除しました -->
 
   <div data-app="1" id="mp-goal-wait-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-6 text-center select-none pointer-events-auto">
     <div class="max-w-xs space-y-3">
@@ -1614,30 +1518,10 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   </div>
 
   <!-- MODAL: ホストの「保存して終了」確認 -->
-  <div data-app="1" id="mp-save-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
-      <div class="text-5xl">💾</div>
-      <h3 class="font-mincho text-base font-bold text-amber-400 leading-relaxed">
-        ゲームを保存し、終了します。<br>宜しいですか？
-      </h3>
-      <p class="text-xs text-slate-400 leading-relaxed">（このゲームの続きを参加者にも送ります）</p>
-      <div class="grid grid-cols-2 gap-3">
-        <button onclick="EdogawaSugoroku.closeHostSaveModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-3 rounded-xl transition">キャンセル</button>
-        <button onclick="EdogawaSugoroku.confirmHostSaveAndExit()" class="bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">保存して終了</button>
-      </div>
-    </div>
-  </div>
+  <!-- 【ver1.2.12】mp-save-modal は削除しました -->
 
   <!-- MODAL: 参加者への「ホストが保存して終了しました」通知 -->
-  <div data-app="1" id="mp-saved-notice-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
-      <div class="text-5xl">💾</div>
-      <p id="mp-saved-notice-text" class="text-sm text-slate-100 font-bold leading-relaxed"></p>
-      <button onclick="EdogawaSugoroku.closeSavedNoticeAndGoTop()" class="w-full bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
-        閉じる
-      </button>
-    </div>
-  </div>
+  <!-- 【ver1.2.12】mp-saved-notice-modal は削除しました -->
 
   <!-- MODAL: 「前回の続き」がソロとマルチの両方ある時の選択 -->
   <div data-app="1" id="resume-choice-modal" class="hidden fixed inset-0 z-[80] bg-slate-950/92 backdrop-blur-md flex items-center justify-center p-4">
@@ -1659,16 +1543,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   </div>
 
   <!-- MODAL: ホスト不在でマルチプレイを開始できない -->
-  <div data-app="1" id="host-absent-modal" class="hidden fixed inset-0 z-[85] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-rose-500/40 rounded-2xl max-w-sm w-full p-6 text-center shadow-2xl space-y-4">
-      <div class="text-5xl">📵</div>
-      <p id="host-absent-text" class="text-sm text-slate-100 font-bold leading-relaxed"></p>
-      <p class="text-[11px] text-slate-400 leading-relaxed">ホストがゲームを再開したら、もう一度お試しください。</p>
-      <button onclick="EdogawaSugoroku.closeHostAbsentModal()" class="w-full bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl shadow-md active:scale-[0.98] transition">
-        閉じる
-      </button>
-    </div>
-  </div>
+  <!-- 【ver1.2.12】host-absent-modal（これまでの方式のマルチプレイ）は削除しました -->
 
   <!-- OVERLAY: ホスト接続の確認中 -->
   <div data-app="1" id="host-check-overlay" class="hidden fixed inset-0 z-[86] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-3">
@@ -2030,12 +1905,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   </div>
 
   <script>
-    // ▼▼▼ マルチプレイ（複数端末でのQR参加受付）を有効にするには、ここに実際のFirebaseプロジェクトの設定を貼り付けてください ▼▼▼
-    // 1. https://console.firebase.google.com/ で新規プロジェクトを作成
-    // 2. 「Firestore Database」を作成（テストモードで可）
-    // 3. 「Authentication」→「Sign-in method」で「匿名」を有効化
-    // 4. プロジェクト設定 → マイアプリ → ウェブアプリを追加し、表示された設定値を下に貼り付け
-    // ※ここが空欄のままだと、QRコードの表示自体は行われますが、別端末との人数同期はできません（同一端末内のプレビューのみ）。
+    // ▼▼▼ Firebase の設定（【ver1.2.12】「友達紹介」の人数を数えるのにだけ使います。マルチプレイは PeerJS です） ▼▼▼
     const FIREBASE_CONFIG = {
       apiKey: "AIzaSyD7OYQuzzjapkb-Kt2nHVbyi3u2ng0zo8E",
       authDomain: "edogawa-sugoroku.firebaseapp.com",
@@ -3570,34 +3440,15 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
 
         // Check URL parameters for Room Joining (Guest Mode)
         const urlParams = new URLSearchParams(window.location.search);
-        let joinRoomId = urlParams.get('room');
-        // 【ver1.2.9】?room=0001 のような番号は、いまのマルチプレイ（PeerJS）の双六です。これまでの方式（Firebase）では扱いません
-        if (joinRoomId && /^\d{1,4}$/.test(joinRoomId)) joinRoomId = null;
-
-        if (joinRoomId) {
-          this.pendingJoinRoomId = joinRoomId;
-          this.applyCachedNickname();
-          const guestModal = document.getElementById("guest-waiting-modal");
-          if (guestModal) guestModal.classList.remove("hidden");
-          const nicknameInput = document.getElementById("guest-nickname-input");
-          const cached = localStorage.getItem("edogawa_sugoroku_nickname");
-          if (nicknameInput && cached) nicknameInput.value = cached;
-        } else {
-          this.checkNickname();
-        }
+        // 【ver1.2.12】?room= は、いまのマルチプレイ（PeerJS）の双六番号です（参加はマルチプレイの係が行います）
+        void urlParams;
+        this.checkNickname();
       },
 
       // ゲストがニックネームを入力してから参加フローに進む（従来は「ゲスト1」のような
       // 自動採番の名前で即参加していたが、自分の名前を選べるようにする）。
-      confirmGuestNickname() {
-        const input = document.getElementById("guest-nickname-input");
-        const nickname = (input?.value || "").trim().slice(0, 6) || "ゲスト";
-        localStorage.setItem("edogawa_sugoroku_nickname", nickname);
-        this.myGuestNickname = nickname;
-        document.getElementById("guest-nickname-screen")?.classList.add("hidden");
-        document.getElementById("guest-waiting-wrapper")?.classList.remove("hidden");
-        this.initFirebase().then(() => this.joinRoomAsGuest(this.pendingJoinRoomId));
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      confirmGuestNickname() {},
 
       applyCachedNickname() {
         const cached = localStorage.getItem("edogawa_sugoroku_nickname");
@@ -3628,49 +3479,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         if (modal) modal.classList.add("hidden");
       },
 
-      async initFirebase() {
-        if (this.firebaseInitAttempted) return;
-        this.firebaseInitAttempted = true;
-
-        const config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : FIREBASE_CONFIG;
-        const hasRealConfig = !!(config && config.apiKey && config.projectId);
-
-        // 【ver1.0.34】マルチプレイで使うときに、ここで初めて Firebase SDK を読み込みます
-        if (hasRealConfig && !window.FirebaseLib && window.__edoLoadFirebase) {
-          try { await window.__edoLoadFirebase(); } catch (e) { console.warn('Firebase SDK を読み込めませんでした:', e); }
-        }
-        if (!hasRealConfig || !window.FirebaseLib) {
-          console.warn("Firebase未設定のため、複数端末でのリアルタイム参加同期は無効です（QR表示自体はローカルで動作します）。");
-          this.myUid = this.myUid || ('user_' + Math.random().toString(36).substring(2, 8));
-          this.db = null;
-          this.storage = null;
-          this.firebaseReady = false;
-          return;
-        }
-
-        try {
-          const app = window.FirebaseLib.initializeApp(config);
-          const db = window.FirebaseLib.getFirestore(app);
-          this.auth = window.FirebaseLib.getAuth(app);
-
-          let cred;
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            cred = await window.FirebaseLib.signInWithCustomToken(this.auth, __initial_auth_token);
-          } else {
-            cred = await window.FirebaseLib.signInAnonymously(this.auth);
-          }
-          this.myUid = cred.user.uid;
-          this.db = db;
-          this.storage = null;
-          this.firebaseReady = true;
-        } catch(e) {
-          console.warn("Firebase Init Fallback Mode:", e);
-          this.myUid = this.myUid || ('user_' + Math.random().toString(36).substring(2, 8));
-          this.db = null;
-          this.storage = null;
-          this.firebaseReady = false;
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      async initFirebase() { return false; },
 
       tryFullscreen() {
         try {
@@ -3748,110 +3558,11 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       },
 
       // --- MULTIPLAYER ROOM RECRUITMENT LOGIC ---
-      async openRecruitmentModal(opts = {}) {
-        // マルチプレイの続きが残っている時は、消してしまう前に確認する
-        if (!opts.force && this._hasSave(MP_SAVE_KEY)) {
-          this.openRestartConfirm('multi');
-          return;
-        }
-        // Show the modal & QR code immediately — never let a backend problem
-        // (missing/invalid Firebase project) prevent the button from doing anything.
-        await this.initFirebase();
-        this.isHost = true;
-        this.isMultiplayer = false;
-        this.gameStateVersion = 0;
-        this.lastAppliedEventSeq = 0;
-        this.eventSeq = 0;
-        this.awaitingGoalSelection = null;
-        this.roomId = 'room_' + Math.floor(100000 + Math.random() * 900000);
-        this.countdownVal = 30;
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      openRecruitmentModal() {},
 
-        const account = (typeof this._roomAccount === 'function') ? this._roomAccount() : {};
-        const pName = account.nickname || document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
-        localStorage.setItem("edogawa_sugoroku_nickname", pName);
-        const initialPlayers = [
-          { uid: this.myUid, name: pName, avatar: account.avatar || this.selectedAvatar, isHost: true, isCpu: false, ...account }
-        ];
-        this.recruitmentPlayers = initialPlayers;
-
-        // Generate QR Code URL
-        const joinUrl = `${window.location.origin}${window.location.pathname}?room=${this.roomId}`;
-        this.currentJoinUrl = joinUrl;
-        const qrContainer = document.getElementById("modal-qrcode-container");
-        if (qrContainer) {
-          qrContainer.innerHTML = "";
-          try {
-            new QRCode(qrContainer, {
-              text: joinUrl,
-              width: 140,
-              height: 140,
-              colorDark: "#0f172a",
-              colorLight: "#ffffff"
-            });
-          } catch(e) {
-            qrContainer.innerHTML = "<div class='text-xs text-slate-500 p-4'>[QR Code Error]</div>";
-          }
-        }
-
-        this.updateRecruitmentUI(initialPlayers, this.countdownVal);
-        const warningBox = document.getElementById("modal-firebase-warning");
-        if (warningBox) warningBox.classList.toggle("hidden", !!this.firebaseReady);
-
-        document.getElementById("host-recruitment-modal").classList.remove("hidden");
-        this.startHostCountdown();
-
-        // Best-effort: sync the room via Firestore so other devices can join.
-        // Any failure here must never break the UI that's already showing.
-        if (this.db) {
-          try {
-            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            await window.FirebaseLib.setDoc(roomRef, {
-              roomId: this.roomId,
-              hostUid: this.myUid,
-              status: 'waiting',
-              countdown: this.countdownVal,
-              players: initialPlayers,
-              createdAt: Date.now(),
-              hostPresence: Date.now(),
-              presence: {},
-              guestAcks: {},
-              savedGame: null
-            });
-
-            this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
-              if (!snapshot.exists()) return;
-              this.handleRoomSnapshot(snapshot.data());
-            }, (err) => console.error("Room Snapshot Error:", err));
-
-            // ホストの在席（心拍）を送り始める。参加者が後から戻ってきた時の
-            // 「ホストがいるか」の判定に使われる。
-            this._startPresenceHeartbeat();
-          } catch(e) {
-            console.error("ルーム作成に失敗しました。この端末内プレビューのみで続行します:", e);
-            this.db = null;
-            if (warningBox) warningBox.classList.remove("hidden");
-          }
-        }
-      },
-
-      updateRecruitmentUI(playersList, countdown) {
-        const countBadge = document.getElementById("modal-participant-count");
-        if (countBadge) countBadge.textContent = `参加人数 ${playersList.length}名`;
-
-        const listContainer = document.getElementById("modal-participant-list");
-        if (listContainer) {
-          listContainer.innerHTML = playersList.map(p => `
-            <div class="w-8 h-8 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-sm shadow">
-              ${this.avatarHtml ? this.avatarHtml(p.avatar) : p.avatar}
-            </div>
-          `).join("");
-        }
-
-        const countdownBadge = document.getElementById("modal-countdown-badge");
-        if (countdownBadge && typeof countdown === 'number') {
-          countdownBadge.textContent = `${countdown}秒`;
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      updateRecruitmentUI() {},
 
       // LINEアプリ（またはLINE公式のWeb共有）を開き、招待URLを遠方の友達にも送れるようにする。
       // トップページの「LINEで紹介」ボタン。部屋への招待ではなく、
@@ -3863,346 +3574,39 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
       },
 
-      shareRoomViaLine() {
-        const url = this.currentJoinUrl || `${window.location.origin}${window.location.pathname}?room=${this.roomId || ''}`;
-        const text = encodeURIComponent(`江戸川双六、一緒に遊びませんか？🎲\n下のリンクから参加できます！\n${url}`);
-        window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      shareRoomViaLine() {},
 
       // ホストが30秒の自動開始カウントダウンを一時停止／再開できるようにする。
       // 遠方の友達がLINEリンク経由で参加するのを待ちたい時などに使う。
-      toggleHostCountdown() {
-        const btn = document.getElementById('modal-countdown-toggle-btn');
-        if (this.countdownTimer) {
-          clearInterval(this.countdownTimer);
-          this.countdownTimer = null;
-          if (btn) { btn.textContent = '▶ 再開する'; }
-          this.addLog('⏸ ホストがカウントダウンを一時停止しました。');
-        } else {
-          this.startHostCountdown();
-          if (btn) { btn.textContent = '⏸ 一時停止'; }
-          this.addLog('▶ ホストがカウントダウンを再開しました。');
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      toggleHostCountdown() {},
 
-      startHostCountdown() {
-        if (this.countdownTimer) clearInterval(this.countdownTimer);
-        this.countdownTimer = setInterval(async () => {
-          this.countdownVal--;
-          const countdownBadge = document.getElementById("modal-countdown-badge");
-          if (countdownBadge) countdownBadge.textContent = `${this.countdownVal}秒`;
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      startHostCountdown() {},
 
-          // Sync countdown to Firestore (best-effort, never blocks the local timer)
-          if (this.db && this.roomId) {
-            try {
-              const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-              await window.FirebaseLib.updateDoc(roomRef, { countdown: this.countdownVal });
-            } catch(e) { /* ignore — local countdown still drives forceStart below */ }
-          }
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      closeRecruitmentModal() {},
 
-          if (this.countdownVal <= 0) {
-            clearInterval(this.countdownTimer);
-            await this.forceStartMultiplayer();
-          }
-        }, 1000);
-      },
-
-      closeRecruitmentModal() {
-        if (this.countdownTimer) clearInterval(this.countdownTimer);
-        if (this.roomUnsubscribe) this.roomUnsubscribe();
-        document.getElementById("host-recruitment-modal").classList.add("hidden");
-      },
-
-      async forceStartMultiplayer() {
-        if (this.countdownTimer) clearInterval(this.countdownTimer);
-
-        const pName = document.getElementById("player-name-input")?.value?.trim() || "プレイヤー1";
-        localStorage.setItem("edogawa_sugoroku_nickname", pName);
-        let currentPlayers = this.recruitmentPlayers && this.recruitmentPlayers.length
-          ? this.recruitmentPlayers
-          : [{ uid: this.myUid, name: pName, avatar: this.selectedAvatar, isHost: true }];
-
-        if (this.db && this.roomId) {
-          try {
-            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            const snap = await window.FirebaseLib.getDoc(roomRef);
-            if (snap.exists() && snap.data().players && snap.data().players.length) {
-              currentPlayers = snap.data().players;
-            }
-          } catch(e) {
-            console.error("最新の参加者一覧の取得に失敗。手元の情報で開始します:", e);
-          }
-        }
-
-        // Fill remaining slots with CPU up to 4 players
-        const usedCpuNames = new Set();
-        const usedCpuAvatars = new Set();
-        const finalPlayers = [...currentPlayers];
-
-        let cpuIdx = 1;
-        // 空いている席は、固定のCPU3名で埋めます
-        while (finalPlayers.length < 4) {
-          const seed = cpuSeed(Math.min(cpuIdx, FIXED_CPUS.length - 1));
-          finalPlayers.push({
-            uid: `cpu_${cpuIdx}`,
-            ...seed,
-            isCpu: true
-          });
-          cpuIdx++;
-        }
-
-        // Update room status in Firestore so all connected guests start simultaneously
-        if (this.db && this.roomId) {
-          try {
-            const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            await window.FirebaseLib.updateDoc(roomRef, {
-              status: 'playing',
-              finalPlayers: finalPlayers
-            });
-            // The host's own onSnapshot listener above will pick this up and start the game.
-          } catch(e) {
-            console.error("開始通知の送信に失敗。この端末のみでゲームを開始します:", e);
-            this.startMultiplayerGameSession(finalPlayers);
-          }
-        } else {
-          this.startMultiplayerGameSession(finalPlayers);
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      async forceStartMultiplayer() {},
 
       // --- GUEST JOIN LOGIC (USER B, C) ---
-      async joinRoomAsGuest(roomId) {
-        await this.ensureGameDataReady();
-        this.roomId = roomId;
-        this.isHost = false;
-        this.isMultiplayer = false;
-        this.gameStateVersion = 0;
-        this.lastAppliedEventSeq = 0;
-        this.awaitingGoalSelection = null;
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      async joinRoomAsGuest() {},
 
-        const guestModal = document.getElementById("guest-waiting-modal");
-        if (guestModal) guestModal.classList.remove("hidden");
-
-        await this.initFirebase();
-
-        const showGuestError = (msg) => {
-          const normalBox = document.getElementById("guest-waiting-normal");
-          const errorBox = document.getElementById("guest-waiting-error");
-          if (normalBox) normalBox.classList.add("hidden");
-          if (errorBox) {
-            errorBox.textContent = msg;
-            errorBox.classList.remove("hidden");
-          }
-        };
-
-        if (!this.db) {
-          showGuestError("⚠️ サーバー未設定のため、ホストの端末とリアルタイム同期できません。ホスト側でFIREBASE_CONFIGの設定が必要です。");
-          return;
-        }
-
-        try {
-          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          const snap = await window.FirebaseLib.getDoc(roomRef);
-
-          if (!snap.exists()) {
-            showGuestError("招待ルームが見つかりませんでした。QRコードを再度読み込んでください。");
-            return;
-          }
-
-          const data = snap.data();
-          let players = data.players || [];
-          if (data.hostUid) this.hostUidForSave = data.hostUid;
-          const hostNameFromRoom = (data.savedGame && data.savedGame.hostName) ||
-            (players.find(p => p.uid === data.hostUid)?.name) ||
-            ((data.finalPlayers || []).find(p => p.uid === data.hostUid)?.name) || 'ホスト';
-
-          // 途中参加・再参加（すでに開始済み／保存済みの部屋）では、ホストの端末が
-          // 動いているかを先に確認する。ホストがいないとゲームは進行できないため、
-          // マップ画面には入らずトップページに戻す。
-          if (data.status === 'playing' || data.status === 'saved') {
-            document.getElementById("host-check-overlay")?.classList.remove("hidden");
-            const alive = await this._isHostAlive(this.roomId);
-            document.getElementById("host-check-overlay")?.classList.add("hidden");
-            if (!alive) {
-              this._showHostAbsent(hostNameFromRoom);
-              return;
-            }
-          }
-
-          // 参加者追加はread→updateDocではなくFirestore transactionで原子的に行う。
-          // 2～3人が同時にQRから参加しても、最後の書込みが前の参加者を消さない。
-          try {
-            const joinResult = await window.FirebaseLib.runTransaction(this.db, async (tx) => {
-              const latestSnap = await tx.get(roomRef);
-              if (!latestSnap.exists()) throw new Error('ROOM_NOT_FOUND');
-              const latest = latestSnap.data();
-              if (latest.status !== 'waiting') return { data: latest, added: false };
-
-              const latestPlayers = Array.isArray(latest.players) ? latest.players.slice() : [];
-              if (latestPlayers.some(p => p.uid === this.myUid)) return { data: latest, added: false };
-              if (latestPlayers.length >= 4) throw new Error('ROOM_FULL');
-
-              const roomAccount = (typeof this._roomAccount === 'function') ? this._roomAccount() : {};
-              const myGuestName = this.myGuestNickname || roomAccount.nickname || `ゲスト ${latestPlayers.length + 1}`;
-              const availableAvatars = AVATAR_LIST.filter(a => !latestPlayers.some(p => p.avatar === a));
-              const myAvatar = roomAccount.avatar || availableAvatars[0] || '🧑';
-              latestPlayers.push({ uid: this.myUid, name: myGuestName, avatar: myAvatar, isCpu: false, ...roomAccount });
-              tx.update(roomRef, { players: latestPlayers });
-              return { data: { ...latest, players: latestPlayers }, added: true };
-            });
-            data = joinResult.data;
-            players = Array.isArray(data.players) ? data.players : [];
-          } catch (e) {
-            if (e && e.message === 'ROOM_FULL') {
-              showGuestError("この部屋はすでに満員です（最大4名）。");
-            } else if (e && e.message === 'ROOM_NOT_FOUND') {
-              showGuestError("招待ルームが見つかりませんでした。QRコードを再度読み込んでください。");
-            } else {
-              throw e;
-            }
-            return;
-          }
-
-          // 自分の在席（心拍）を送り始める。ホスト側でグレーアウト判定に使われる。
-          this._startPresenceHeartbeat();
-
-          // Real-time listener for countdown, start signal, and (once playing) live game state
-          this.roomUnsubscribe = window.FirebaseLib.onSnapshot(roomRef, (snapshot) => {
-            if (!snapshot.exists()) return;
-            const currentData = snapshot.data();
-
-            if (currentData.status === 'waiting') {
-              this.updateGuestWaitingUI(currentData.players || [], currentData.countdown);
-              return;
-            }
-
-            if (currentData.status === 'playing' && guestModal && !guestModal.classList.contains("hidden")) {
-              guestModal.classList.add("hidden");
-            }
-
-            this.handleRoomSnapshot(currentData);
-          }, (err) => console.error("Guest Snapshot Error:", err));
-        } catch(e) {
-          console.error("Failed to join room:", e);
-          showGuestError("参加処理に失敗しました。ネットワーク環境をご確認のうえ、もう一度QRコードを読み込んでください。");
-        }
-      },
-
-      updateGuestWaitingUI(playersList, countdown) {
-        const countText = document.getElementById("guest-participant-count");
-        if (countText) countText.textContent = `参加人数 ${playersList.length}名`;
-
-        const listContainer = document.getElementById("guest-participant-list");
-        if (listContainer) {
-          listContainer.innerHTML = playersList.map(p => `
-            <div class="w-8 h-8 rounded-full bg-slate-800 border border-amber-400/60 flex items-center justify-center text-sm shadow">
-              ${this.avatarHtml ? this.avatarHtml(p.avatar) : p.avatar}
-            </div>
-          `).join("");
-        }
-
-        const secElem = document.getElementById("guest-countdown-seconds");
-        if (secElem && typeof countdown === 'number') {
-          secElem.textContent = countdown;
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      updateGuestWaitingUI() {},
 
       // --- SHARED REALTIME ROOM HANDLER (host & guest) ---
       // This single handler processes every Firestore snapshot for the room, both during
       // the lobby ("waiting") phase and throughout the actual game ("playing" phase), so the
       // multiplayer game state stays continuously synced instead of only being read once at start.
-      handleRoomSnapshot(data) {
-        // 各端末の心拍を記録（離脱＝グレーアウト判定に使う）
-        this._trackPresence(data.presence);
-        if (data.guestAcks && typeof data.guestAcks === 'object') this.guestAcks = data.guestAcks;
-        if (data.hostUid) this.hostUidForSave = data.hostUid;
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      handleRoomSnapshot() {},
 
-        // ホストが「保存して終了」した通知（参加者側）
-        if (data.status === 'saved' && data.savedGame && !this.isHost) {
-          this._handleRemoteSavedGame(data.savedGame);
-          return;
-        }
-
-        if (data.status === 'waiting') {
-          if (this.isHost) {
-            this.recruitmentPlayers = data.players || this.recruitmentPlayers;
-            this.updateRecruitmentUI(this.recruitmentPlayers, data.countdown);
-          }
-          return;
-        }
-
-        if (data.status === 'playing') {
-          if (!this.isMultiplayer) {
-            // First time we see 'playing' on this device — boot the shared session.
-            this.startMultiplayerGameSession(data.finalPlayers || (data.gameState && data.gameState.players));
-          }
-          if (data.gameState) {
-            this.applyRemoteGameState(data.gameState);
-          }
-          if (this.isHost && data.gameState && data.gameState.pendingRoll) {
-            this.handlePendingRollRequest(data.gameState.pendingRoll);
-          }
-          if (this.isHost && data.boatRaceAction) {
-            this.handleBoatRaceAction(data.boatRaceAction);
-          }
-          if (this.isHost && data.pendingBoatRaceStart) {
-            this._handlePendingBoatRaceStart(data.pendingBoatRaceStart);
-          }
-        }
-      },
-
-      startMultiplayerGameSession(finalPlayersData) {
-        document.getElementById("host-recruitment-modal").classList.add("hidden");
-        document.getElementById("guest-waiting-modal").classList.add("hidden");
-        // NOTE: intentionally do NOT unsubscribe from the room listener here — multiplayer
-        // needs to keep receiving live game-state updates for the rest of the session.
-
-        this.isMultiplayer = true;
-        this.mpSessionStartedAt = Date.now();
-        this.savedGameHandled = false;
-        this._startPresenceHeartbeat();
-
-        this.players = finalPlayersData.map((p, idx) => ({
-          id: idx,
-          uid: p.uid,
-          name: p.name,
-          avatar: p.avatar,
-          color: PLAYER_COLORS[idx % PLAYER_COLORS.length],
-          money: Number.isFinite(p.money) ? p.money : INITIAL_MONEY,
-          pos: 0,
-          vehicle: null,
-          skipTurn: false,
-          wheelchairTurns: 0,
-          forcedMoveCount: 0,
-          isCpu: p.isCpu || false,
-          goals: Number.isFinite(p.goals) ? p.goals : 0,
-          movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
-          stats: {
-            intelligence: Number.isFinite(p.stats?.intelligence) ? p.stats.intelligence : 100,
-            wealth: Number.isFinite(p.stats?.wealth) ? p.stats.wealth : 100,
-            stamina: Number.isFinite(p.stats?.stamina) ? p.stats.stamina : 100,
-            luck: Number.isFinite(p.stats?.luck) ? p.stats.luck : 100
-          },
-          properties: Array.isArray(p.properties) ? p.properties : []
-        }));
-
-        document.getElementById("lobby-screen").classList.add("hidden");
-        sound.playBGM('map');
-        this.initMap();
-
-        if (this.isHost) {
-          // The host is the single source of truth: it generates the board & random
-          // square layout once, then broadcasts it so every device sees the identical board.
-          this.setupBoard(EDOGAWA_START, this._mpGoal || FIRST_GOAL).then(() => {
-            this.updateHUD();
-            this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
-          });
-        } else {
-          // Guests never generate their own board (that would produce a different layout
-          // per device) — they wait here for the host's board to arrive via Firestore.
-          this.addLog("🎮 ゲーム開始！ホストが盤面を準備しています…");
-          this.updateHUD();
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      startMultiplayerGameSession() {},
 
       // --- MULTIPLAYER STATE SYNC (host → Firestore → all guests) ---
       canActNow() {
@@ -4214,75 +3618,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         return cp.uid === this.myUid;
       },
 
-      async syncGameStateToRoom() {
-        if (!this.isMultiplayer || !this.isHost || !this.db || !this.roomId) return;
-
-        this.gameStateVersion = (this.gameStateVersion || 0) + 1;
-        const payload = {
-          version: this.gameStateVersion,
-          turnCount: this.turnCount,
-          currentPlayerIdx: this.currentPlayerIdx,
-          destination: this.currentDestination ? {
-            name: this.currentDestination.name,
-            lat: this.currentDestination.lat,
-            lng: this.currentDestination.lng
-          } : null,
-          goalNodeIdx: this.goalNodeIdx,
-          boardNodes: this.roadNetworkNodes || [],
-          players: this.players.map(p => ({
-            uid: p.uid,
-            money: p.money,
-            currentNodeIdx: p.currentNodeIdx,
-            path: p.path || [],
-            pathIndex: p.pathIndex || 0,
-            vehicle: p.vehicle || null,
-            skipTurn: !!p.skipTurn,
-            wheelchairTurns: p.wheelchairTurns || 0,
-            forcedMoveCount: p.forcedMoveCount || 0,
-            rocketBoost: !!p.rocketBoost,
-            boatRaceContinue: !!p.boatRaceContinue,
-            boatRaceContinueCount: p.boatRaceContinueCount || 0,
-            goals: Number.isFinite(p.goals) ? p.goals : 0,
-            movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
-            stats: p.stats || {intelligence:100,wealth:100,stamina:100,luck:100},
-            properties: Array.isArray(p.properties) ? p.properties : []
-          })),
-          pendingRoll: null,
-          awaitingGoalSelection: this.awaitingGoalSelection || null,
-          lastEvent: this.lastEventForSync || null,
-          eventSeq: this.eventSeq || 0,
-          lastDiceValue: this.lastDiceValueForSync || null,
-          rocketGiftEventSeq: this.rocketGiftEventSeq || 0,
-          boatRace: this.boatRaceState || null,
-          quiz: this.quizSyncState || null,
-          kingyo: this.kingyoSyncState || null,
-          goaledPlaces: this.goaledPlaces || [],
-          territory: this.territory || {}
-        };
-
-        const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-        // 同時に複数のsyncが発生してもFirestoreへの書込みを直列化し、
-        // 古いversionが新しいversionを後から上書きする競合を防ぐ。
-        this._roomSyncPending = payload;
-        if (this._roomSyncInFlight) return this._roomSyncInFlight;
-
-        this._roomSyncInFlight = (async () => {
-          try {
-            while (this._roomSyncPending) {
-              const latest = this._roomSyncPending;
-              this._roomSyncPending = null;
-              try {
-                await window.FirebaseLib.updateDoc(roomRef, { gameState: latest });
-              } catch (e) {
-                console.error("ゲーム状態の同期に失敗しました:", e);
-              }
-            }
-          } finally {
-            this._roomSyncInFlight = null;
-          }
-        })();
-        return this._roomSyncInFlight;
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      async syncGameStateToRoom() {},
 
       async handlePendingRollRequest(pendingRoll) {
         if (this.isRolling) return;
@@ -4291,28 +3628,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         this.rollDice();
       },
 
-      async requestRollFromHost() {
-        if (!this.db || !this.roomId) { this.isRolling = false; return; }
-        try {
-          const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          await window.FirebaseLib.updateDoc(roomRef, {
-            'gameState.pendingRoll': { uid: this.myUid, ts: Date.now() }
-          });
-          // Safety net: if the host never responds (dropped message, backgrounded tab, etc.)
-          // release the lock after a while so the player can just tap the dice again,
-          // instead of being stuck forever.
-          if (this.rollRequestTimeout) clearTimeout(this.rollRequestTimeout);
-          this.rollRequestTimeout = setTimeout(() => {
-            if (this.isRolling) {
-              this.isRolling = false;
-              this.updateHUD();
-            }
-          }, 10000);
-        } catch(e) {
-          console.error("サイコロのリクエスト送信に失敗しました:", e);
-          this.isRolling = false;
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      requestRollFromHost() { this.isRolling = false; try { this.updateHUD(); } catch (_) {} },
 
       applyRemoteGameState(gs) {
         if (!gs) return;
@@ -4481,60 +3798,15 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
 
       // ゲスト側：現在反映済みのバージョンをFirestoreへACKする。
       // 同一versionの重複書込みを捨て、短時間に複数versionが届いた場合は最新だけを送る。
-      async _sendGuestAck(version) {
-        if (!this.db || !this.roomId || !this.myUid) return;
-        const next = Number(version) || 0;
-        this.guestAcks = this.guestAcks || {};
-        this.guestAcks[this.myUid] = Math.max(Number(this.guestAcks[this.myUid] || 0), next);
-        if (next <= Number(this._lastGuestAckSent || 0)) return;
-        this._pendingGuestAck = Math.max(Number(this._pendingGuestAck || 0), next);
-        if (this._guestAckInFlight) return this._guestAckInFlight;
-
-        this._guestAckInFlight = (async () => {
-          try {
-            while (this._pendingGuestAck) {
-              const ackVersion = this._pendingGuestAck;
-              this._pendingGuestAck = 0;
-              if (ackVersion <= Number(this._lastGuestAckSent || 0)) continue;
-              const roomRef = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-              try {
-                await window.FirebaseLib.updateDoc(roomRef, { [`guestAcks.${this.myUid}`]: ackVersion });
-                this._lastGuestAckSent = ackVersion;
-              } catch (e) { /* best-effort; next snapshot may retry */ }
-            }
-          } finally {
-            this._guestAckInFlight = null;
-          }
-        })();
-        return this._guestAckInFlight;
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _sendGuestAck() {},
 
       // ホスト側：ゴール後の次の盤面生成や、全員参加のミニゲーム開始など「みんなが揃って
       // からでないと不自然になる」瞬間の前に呼ぶ。通信のタイムラグでゲストが前の状態の
       // アニメーション途中のまま次の状態が来てしまう事故を防ぐ。繋がっていないゲストや
       // 応答のないゲストで永久に待ち続けないよう、必ずタイムアウトする。
-      async waitForGuestsToCatchUp(timeoutMs = 3000) {
-        if (!this.isMultiplayer || !this.isHost || !this.db || !this.roomId) return;
-        const overlay = document.getElementById("host-wait-guests-overlay");
-        const targetVersion = this.gameStateVersion;
-        const guestUids = this.players.filter(p => !p.isCpu && p.uid !== this.myUid && !this.isPlayerOffline(p)).map(p => p.uid);
-        if (!guestUids.length) return;
-        this.guestAcks = this.guestAcks || {};
-
-        const start = performance.now();
-        let shown = false;
-        while (performance.now() - start < timeoutMs) {
-          const allCaughtUp = guestUids.every(uid => (this.guestAcks[uid] || 0) >= targetVersion);
-          if (allCaughtUp) break;
-          if (!shown && performance.now() - start >= 650 && overlay) {
-            overlay.classList.remove("hidden");
-            shown = true;
-            this.addLog("⏳ 他の参加者の反映を待っています…");
-          }
-          await new Promise(res => setTimeout(res, 100));
-        }
-        if (overlay) overlay.classList.add("hidden");
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      async waitForGuestsToCatchUp() {},
 
       // Mirrors the host's own dice-spin + step-by-step walk on a guest's screen, instead of
       // instantly snapping the token to its final position. `onComplete` fires once the token
@@ -4720,10 +3992,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       },
 
       // マルチプレイのボタン。続きがあれば再開、なければ参加者募集。
-      onRecruitButton() {
-        if (this._hasSave(MP_SAVE_KEY)) return this.resumeMultiplayerGame();
-        return this.openRecruitmentModal();
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      onRecruitButton() {},
 
       async startGame(opts = {}) {
         // 前回の続きが残っている時は、消してしまう前に確認する
@@ -4764,6 +4034,18 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         await this.setupBoard(EDOGAWA_START, FIRST_GOAL);
         this.updateHUD();
         this.addLog("🎮 江戸川双六が開幕しました！スタート地点：西葛西駅");
+      },
+
+      // 【ver1.2.11】保存データの中で「この端末の人」の席をさがします
+      //   マルチプレイで参加した人は4番目などの席にいるため、1番目を自分とみなすと、
+      //   自分の名前が1番目にも付き（重複）、自分の席がCPUになって勝手に進んでいました
+      __edoHumanSeat(players) {
+        const list = Array.isArray(players) ? players.filter(Boolean) : [];
+        let uid = null; try { uid = localStorage.getItem('edogawa_mp_uid_v1'); } catch (_) {}
+        return (uid && list.find(x => x.uid === uid))
+            || list.find(x => x.isCpu === false && !x.remoteHuman)
+            || list.find(x => x.isCpu === false)
+            || list[0] || null;
       },
 
       // 「ひとりで遊ぶ」の続きから再開（マルチプレイの再開は resumeMultiplayerGame）
@@ -4812,7 +4094,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
           // 所持金・ステータス・進行位置などのゲーム進行値は保存データをそのまま使用する。
           try{
             const account=(typeof this.getUserProfile==='function') ? this.getUserProfile() : null;
-            const human=this.players.find(x=>x && x.isCpu===false) || this.players[0];
+            const human=this.__edoHumanSeat(this.players);
             if(account && human){
               human.name=account.nickname;
               human.avatar=account.avatarValue || human.avatar;
@@ -4822,9 +4104,19 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
 
           // 念のため各プレイヤーの保存値を正規化。既存のセーブデータを壊さず、
           // 新しいプロパティだけ安全な初期値を補完する。
+          // 【ver1.2.11】人間の席は「この端末の人」の席です（マルチプレイのあとは1番目とはかぎりません）
+          const me = this.__edoHumanSeat(this.players);
           this.players.forEach((p, i) => {
             p.id = Number.isInteger(p.id) ? p.id : i;
-            p.isCpu = i !== 0 ? true : !!p.isCpu;
+            p.isCpu = p !== me;
+            if (p.remoteHuman || p.cpuOrig) {               // マルチプレイで別の人がいた席は、CPUにもどします
+              if (p !== me && p.cpuOrig) { p.name = p.cpuOrig.name; p.avatar = p.cpuOrig.avatar; }
+              p.remoteHuman = false; delete p.cpuOrig; delete p.joinedAt;
+            }
+            // 以前の版で自分の名前が付いてしまったCPUの席（重複）は、固定のCPUにもどします
+            if (p !== me && me && p.name === me.name && typeof this.__edoFixedCpuFor === 'function') {
+              const c = this.__edoFixedCpuFor(p); p.name = c.name; p.avatar = c.avatar; if (c.stats) p.stats = { ...c.stats };
+            }
             p.avatar = p.avatar || (i === 0 ? this.selectedAvatar : "🧑");
             p.money = Number.isFinite(p.money) ? p.money : INITIAL_MONEY;
             p.path = this.normalizePathIndices(p.path || []);
@@ -9360,10 +8652,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         { emoji: "🤖", name: "AIロボ予想", style: "odds" }
       ],
 
-      _boatRaceRoomRef() {
-        if (!this.db || !this.roomId || !window.FirebaseLib) return null;
-        return window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _boatRaceRoomRef() { return null; },
 
       _showBoatRaceScreen(screenId) {
         const modal = document.getElementById('boatrace-modal');
@@ -9513,13 +8803,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         if (!this.isMultiplayer || this.isHost) {
           return this.handleBoatRaceAction(payload);
         }
-        const ref = this._boatRaceRoomRef();
-        if (!ref) return;
-        try {
-          await window.FirebaseLib.updateDoc(ref, { boatRaceAction: payload });
-        } catch (e) {
-          console.error('競艇操作の送信に失敗:', e);
-        }
+        return;   // 参加した人の舟券は、マルチプレイ（PeerJS）の係がホストへ送ります
       },
 
       // continued=true は「引続き遊ぶ」を選んだ2回目以降の開催。
@@ -10333,48 +9617,12 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         }
       },
 
-      async _requestBoatRaceContinueFromHost(player) {
-        if (!this.db || !this.roomId || !window.FirebaseLib) { this.isRolling = false; this.updateHUD(); return; }
-        try {
-          const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          await window.FirebaseLib.updateDoc(ref, {
-            pendingBoatRaceStart: { playerId: player.id, uid: this.myUid, ts: Date.now() }
-          });
-        } catch (e) {
-          console.error('競艇開催の依頼に失敗しました:', e);
-          this.isRolling = false;
-          this.updateHUD();
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _requestBoatRaceContinueFromHost() { this.isRolling = false; try { this.updateHUD(); } catch (_) {} },
 
       // ホスト側：ゲストからの「引き続き競艇で遊ぶ」依頼を受けて開催する
-      async _handlePendingBoatRaceStart(req) {
-        if (!req || !this.isHost) return;
-        if (req.ts === this._lastBoatRaceStartTs) return;
-        this._lastBoatRaceStartTs = req.ts;
-        if (this.boatRaceActive) return;
-
-        const player = (typeof req.playerId === 'number' ? this._boatRacePlayerById(req.playerId) : null) ||
-                       this.players.find(p => p.uid === req.uid);
-        if (!player) return;
-        if (this.players[this.currentPlayerIdx] !== player) return; // その人の手番でなければ無視
-
-        player.boatRaceContinue = false;
-        this.isRolling = true;
-        this.turnSettled = false;
-        this._armTurnWatchdog();
-        try {
-          const started = await this.startBoatRaceEvent(player, true);
-          if (started === false) this.finishTurn();
-        } catch (e) {
-          console.error('競艇の継続開催に失敗しました:', e);
-          this.finishTurn();
-        }
-        try {
-          const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-          await window.FirebaseLib.updateDoc(ref, { pendingBoatRaceStart: null });
-        } catch (e) { /* ベストエフォート */ }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _handlePendingBoatRaceStart() {},
 
       // ============================================================
       // PWA（ホーム画面アプリ化）
@@ -10883,45 +10131,14 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       // 端末ごとの時計のズレに影響されないよう、書かれた時刻そのものではなく
       // 「自分の端末で、その値を最初に見た時刻」を基準にしている。
       // ============================================================
-      _startPresenceHeartbeat() {
-        clearInterval(this.presenceTimer);
-        const beat = async () => {
-          if (!this.db || !this.roomId || !this.myUid || !window.FirebaseLib) return;
-          try {
-            const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            const patch = { [`presence.${this.myUid}`]: Date.now() };
-            if (this.isHost) patch.hostPresence = Date.now();
-            await window.FirebaseLib.updateDoc(ref, patch);
-          } catch (e) { /* ベストエフォート */ }
-        };
-        beat();
-        this.presenceTimer = setInterval(beat, 8000);
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _startPresenceHeartbeat() {},
 
-        // 離脱表示（グレーアウト）を定期的に見直す
-        clearInterval(this.presenceUiTimer);
-        this.presenceUiTimer = setInterval(() => {
-          if (!this.isMultiplayer) return;
-          this.updateHUD();
-        }, 5000);
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _stopPresenceHeartbeat() {},
 
-      _stopPresenceHeartbeat() {
-        clearInterval(this.presenceTimer);
-        clearInterval(this.presenceUiTimer);
-        this.presenceTimer = null;
-        this.presenceUiTimer = null;
-      },
-
-      _trackPresence(presenceMap) {
-        if (!presenceMap) return;
-        const now = Date.now();
-        this.presenceSeen = this.presenceSeen || {};
-        Object.keys(presenceMap).forEach(uid => {
-          const val = presenceMap[uid];
-          const prev = this.presenceSeen[uid];
-          if (!prev || prev.val !== val) this.presenceSeen[uid] = { val, at: now };
-        });
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _trackPresence() {},
 
       // 「離脱した（画面を閉じた）参加者」かどうか。CPU・自分自身は常にfalse。
       isPlayerOffline(player) {
@@ -10944,101 +10161,21 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       // ============================================================
       // マルチプレイ：ホストの「保存して終了」
       // ============================================================
-      openHostSaveModal() {
-        if (!this.isMultiplayer || !this.isHost) return;
-        document.getElementById('mp-save-modal')?.classList.remove('hidden');
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      openHostSaveModal() {},
 
-      closeHostSaveModal() {
-        document.getElementById('mp-save-modal')?.classList.add('hidden');
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      closeHostSaveModal() {},
 
-      _buildMultiplayerSaveState(asHost) {
-        const hostPlayer = this.players.find(p => p.uid === (this.isHost ? this.myUid : this.hostUidForSave)) ||
-                           this.players.find(p => !p.isCpu) || this.players[0];
-        return {
-          mode: 'multiplayer',
-          savedAt: Date.now(),
-          isHost: !!asHost,
-          myUid: this.myUid || null,
-          roomId: this.roomId || null,
-          hostUid: this.isHost ? (this.myUid || null) : (this.hostUidForSave || null),
-          hostName: hostPlayer ? hostPlayer.name : 'ホスト',
-          coordinateDataVersion: 3,
-          players: this.players.map(p => ({
-            id: p.id, uid: p.uid || null, name: p.name, avatar: p.avatar, isCpu: !!p.isCpu,
-            money: p.money, goals: Number.isFinite(p.goals) ? p.goals : 0, movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
-            stats: p.stats || {intelligence:100,wealth:100,stamina:100,luck:100}, properties: Array.isArray(p.properties) ? p.properties : [],
-            path: p.path || [], pathIndex: p.pathIndex || 0,
-            currentNodeIdx: p.currentNodeIdx, vehicle: p.vehicle || null,
-            skipTurn: !!p.skipTurn, skipTurnType: p.skipTurnType || null, skipTurnReason: p.skipTurnReason || null,
-            wheelchairTurns: p.wheelchairTurns || 0, forcedMoveCount: p.forcedMoveCount || 0,
-            boatRaceCount: p.boatRaceCount || 0, isFlying: !!p.isFlying, rocketBoost: !!p.rocketBoost,
-            boatRaceContinue: !!p.boatRaceContinue, boatRaceContinueCount: p.boatRaceContinueCount || 0
-          })),
-          turnCount: this.turnCount,
-          currentPlayerIdx: this.currentPlayerIdx,
-          currentDestination: this.currentDestination,
-          roadNetworkNodes: this.roadNetworkNodes,
-          goalNodeIdx: this.goalNodeIdx,
-          specialEventUsed: !!this.specialEventUsed,
-          recentDestinationNames: this.recentDestinationNames || [],
-          helicopterGrantedThisLeg: !!this.helicopterGrantedThisLeg,
-          planeGrantedThisLeg: !!this.planeGrantedThisLeg,
-          goaledPlaces: this.goaledPlaces || [],
-          territory: this.territory || {}
-        };
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _buildMultiplayerSaveState() { return null; },
 
-      async confirmHostSaveAndExit() {
-        if (!this.isMultiplayer || !this.isHost) return;
-        this.closeHostSaveModal();
-
-        const state = this._buildMultiplayerSaveState(true);
-        try {
-          localStorage.setItem(MP_SAVE_KEY, JSON.stringify(state));
-        } catch (e) {
-          console.error('マルチプレイの保存に失敗しました:', e);
-          alert('保存に失敗しました（端末の保存容量が不足している可能性があります）。');
-          return;
-        }
-
-        // 参加者の端末にも「保存して終了した」ことと続きのデータを届ける
-        if (this.db && this.roomId && window.FirebaseLib) {
-          try {
-            const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            await window.FirebaseLib.updateDoc(ref, {
-              status: 'saved',
-              savedGame: { hostName: state.hostName, hostUid: state.hostUid, at: Date.now(), state }
-            });
-          } catch (e) {
-            console.error('参加者への保存通知に失敗しました:', e);
-          }
-        }
-
-        this.addLog('💾 ホストがゲームを保存して終了しました。');
-        this._goToTopPage();
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      confirmHostSaveAndExit() {},
 
       // 参加者側：ホストが保存して終了した通知を受け取った時
-      _handleRemoteSavedGame(savedGame) {
-        if (!savedGame || this.savedGameHandled) return;
-        this.savedGameHandled = true;
-
-        const state = savedGame.state;
-        if (state) {
-          const mine = { ...state, isHost: false, myUid: this.myUid || null, hostUid: savedGame.hostUid || state.hostUid || null };
-          try { localStorage.setItem(MP_SAVE_KEY, JSON.stringify(mine)); } catch (e) { console.error('続きの保存に失敗:', e); }
-        }
-
-        this._stopPresenceHeartbeat();
-        this.cancelAutoRoll();
-        const text = document.getElementById('mp-saved-notice-text');
-        if (text) {
-          text.textContent = `${savedGame.hostName || 'ホスト'}（ホスト）がゲームを保存して終了しました。\n（次回は「前回の続きから遊ぶ」からスタートできます）`;
-        }
-        document.getElementById('mp-saved-notice-modal')?.classList.remove('hidden');
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _handleRemoteSavedGame() {},
 
       closeSavedNoticeAndGoTop() {
         document.getElementById('mp-saved-notice-modal')?.classList.add('hidden');
@@ -11080,38 +10217,16 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         document.getElementById('resume-choice-modal')?.classList.add('hidden');
       },
 
-      closeHostAbsentModal() {
-        document.getElementById('host-absent-modal')?.classList.add('hidden');
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      closeHostAbsentModal() {},
 
-      _showHostAbsent(hostName) {
-        const el = document.getElementById('host-absent-text');
-        if (el) el.textContent = `${hostName || 'ホスト'}（ホスト）が不在なのでゲームを開始できません`;
-        document.getElementById('host-check-overlay')?.classList.add('hidden');
-        document.getElementById('guest-waiting-modal')?.classList.add('hidden');
-        document.getElementById('lobby-screen')?.classList.remove('hidden');
-        document.getElementById('host-absent-modal')?.classList.remove('hidden');
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _showHostAbsent() {},
 
       // ホストが「今この瞬間も動いているか」を、時計のズレに依存せず判定する。
       // ホストは4秒ごとに hostPresence を書き換えるので、少し待って値が変わったかを見る。
-      async _isHostAlive(roomId, waitMs = 7000) {
-        if (!this.db || !roomId || !window.FirebaseLib) return false;
-        try {
-          const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', roomId);
-          const s1 = await window.FirebaseLib.getDoc(ref);
-          if (!s1.exists()) return false;
-          const p1 = s1.data().hostPresence || 0;
-          if (!p1) return false;
-          await new Promise(res => setTimeout(res, waitMs));
-          const s2 = await window.FirebaseLib.getDoc(ref);
-          const p2 = (s2.exists() && s2.data().hostPresence) || 0;
-          return p2 > p1;
-        } catch (e) {
-          console.warn('ホストの在席確認に失敗:', e);
-          return false;
-        }
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      _isHostAlive() { return false; },
 
       // 「前回の続きから遊ぶ」ボタンの入口。保存が2種類あれば選択モーダルを出す。
       resumeGame() {
@@ -11130,130 +10245,11 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         return this.resumeSoloGame();
       },
 
-      async resumeMultiplayerGame() {
-        this.closeResumeChoiceModal();
-        await this.ensureGameDataReady();
-        const save = this._readSave(MP_SAVE_KEY);
-        if (!save) { alert('マルチプレイの保存データが見つかりませんでした。'); return; }
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      resumeMultiplayerGame() { try { localStorage.removeItem(MP_SAVE_KEY); } catch (_) {} return this.resumeSoloGame(); },
 
-        await this.initFirebase();
-
-        if (save.isHost) {
-          await this._resumeMultiplayerAsHost(save);
-        } else {
-          // 参加者はホストが起動していないと再開できない
-          document.getElementById('host-check-overlay')?.classList.remove('hidden');
-          const alive = await this._isHostAlive(save.roomId);
-          document.getElementById('host-check-overlay')?.classList.add('hidden');
-          if (!alive) { this._showHostAbsent(save.hostName); return; }
-          this.myGuestNickname = localStorage.getItem('edogawa_sugoroku_nickname') || this.myGuestNickname;
-          await this.joinRoomAsGuest(save.roomId);
-        }
-      },
-
-      async _resumeMultiplayerAsHost(save) {
-        this.tryFullscreen();
-        this.isMultiplayer = true;
-        this.isHost = true;
-        this.roomId = save.roomId || ('room_' + Math.floor(100000 + Math.random() * 900000));
-        this.isRolling = false;
-        this.turnSettled = true;
-        this.miniGameActive = false;
-        this.boatRaceActive = false;
-        this.savedGameHandled = false;
-        this.gameStateVersion = 0;
-        this.eventSeq = 0;
-        this.lastAppliedEventSeq = 0;
-        this.awaitingGoalSelection = null;
-        this.presenceSeen = {};
-        this.mpSessionStartedAt = Date.now();
-
-        this.currentPlayerIdx = Number.isInteger(save.currentPlayerIdx) ? save.currentPlayerIdx : 0;
-        this.turnCount = Number.isInteger(save.turnCount) ? save.turnCount : 1;
-        this.currentDestination = save.currentDestination;
-        this.roadNetworkNodes = save.roadNetworkNodes || [];
-        this.goalNodeIdx = Number.isInteger(save.goalNodeIdx) ? save.goalNodeIdx : null;
-        this.specialEventUsed = !!save.specialEventUsed;
-        this.recentDestinationNames = Array.isArray(save.recentDestinationNames) ? save.recentDestinationNames : [];
-        this.helicopterGrantedThisLeg = !!save.helicopterGrantedThisLeg;
-        this.planeGrantedThisLeg = !!save.planeGrantedThisLeg;
-        this.goaledPlaces = Array.isArray(save.goaledPlaces) ? save.goaledPlaces : [];
-        this.territory = (save.territory && typeof save.territory === 'object') ? save.territory : {};
-
-        // ホストの端末IDは再ログインで変わることがあるため、保存時のホストUIDを今のUIDに置き換える。
-        const savedHostUid = save.hostUid;
-        this.players = (save.players || []).map((p, i) => ({
-          id: Number.isInteger(p.id) ? p.id : i,
-          uid: (savedHostUid && p.uid === savedHostUid) ? (this.myUid || p.uid) : p.uid,
-          name: p.name, avatar: p.avatar || '🧑',
-          color: PLAYER_COLORS[i % PLAYER_COLORS.length],
-          money: Number.isFinite(p.money) ? p.money : INITIAL_MONEY,
-          goals: Number.isFinite(p.goals) ? p.goals : 0,
-          movedSquares: Number.isFinite(p.movedSquares) ? p.movedSquares : 0,
-          stats: { intelligence: Number.isFinite(p.stats?.intelligence) ? p.stats.intelligence : 100, wealth: Number.isFinite(p.stats?.wealth) ? p.stats.wealth : 100, stamina: Number.isFinite(p.stats?.stamina) ? p.stats.stamina : 100, luck: Number.isFinite(p.stats?.luck) ? p.stats.luck : 100 },
-          properties: Array.isArray(p.properties) ? p.properties : [],
-          path: this.normalizePathIndices(p.path || []),
-          pathIndex: Number.isInteger(p.pathIndex) ? p.pathIndex : 0,
-          currentNodeIdx: Number.isInteger(p.currentNodeIdx) ? p.currentNodeIdx : 0,
-          vehicle: p.vehicle || null,
-          skipTurn: !!p.skipTurn, skipTurnType: p.skipTurnType || null, skipTurnReason: p.skipTurnReason || null,
-          wheelchairTurns: p.wheelchairTurns || 0, forcedMoveCount: p.forcedMoveCount || 0,
-          boatRaceCount: p.boatRaceCount || 0, isFlying: !!p.isFlying, rocketBoost: !!p.rocketBoost,
-          boatRaceContinue: !!p.boatRaceContinue, boatRaceContinueCount: p.boatRaceContinueCount || 0,
-          isCpu: !!p.isCpu
-        }));
-
-        document.getElementById('lobby-screen').classList.add('hidden');
-        sound.playBGM('map');
-        this.initMap();
-
-        const startNodeIdx = this.players[0]?.currentNodeIdx ?? 0;
-        this.renderBoardVisuals(this.roadNetworkNodes, startNodeIdx, this.goalNodeIdx, this.currentDestination);
-
-        this.playerMarkers.forEach(m => m && this.map.removeLayer(m));
-        this.playerMarkers = [];
-        this.players.forEach(p => {
-          const node = this.roadNetworkNodes[p.currentNodeIdx];
-          if (!node) return;
-          const marker = L.marker([node.lat, node.lng], { icon: this.createPlayerIcon(p, ''), zIndexOffset: 1000 }).addTo(this.map);
-          this.playerMarkers[p.id] = marker;
-        });
-        this.updatePlayerRoutes();
-        this.updateHUD();
-        this.panToCurrentPlayer();
-        this.addLog(`💾 前回の続き（マルチプレイ）から再開しました。目的地：${this.currentDestination?.name || '-'}`);
-        this.addLog('👥 参加者が戻ってくるまでは、離脱中の人の手番は自動で進みます。');
-
-        // 参加者が同じ部屋に戻ってこられるよう、部屋を「プレイ中」で作り直す
-        if (this.db && window.FirebaseLib) {
-          try {
-            const ref = window.FirebaseLib.doc(this.db, 'artifacts', this.appId, 'public', 'data', 'rooms', this.roomId);
-            const roster = this.players.map(p => ({ uid: p.uid, name: p.name, avatar: p.avatar, isCpu: !!p.isCpu, money: p.money, goals: p.goals || 0, movedSquares: p.movedSquares || 0, stats: p.stats || {intelligence:100,wealth:100,stamina:100,luck:100}, properties: Array.isArray(p.properties) ? p.properties : [] }));
-            await window.FirebaseLib.setDoc(ref, {
-              roomId: this.roomId,
-              hostUid: this.myUid,
-              status: 'playing',
-              resumedAt: Date.now(),
-              hostPresence: Date.now(),
-              presence: {},
-              guestAcks: {},
-              players: roster,
-              finalPlayers: roster,
-              savedGame: null,
-              boatRaceAction: null
-            });
-            if (this.roomUnsubscribe) { try { this.roomUnsubscribe(); } catch (e) {} }
-            this.roomUnsubscribe = window.FirebaseLib.onSnapshot(ref, (snap) => {
-              if (!snap.exists()) return;
-              this.handleRoomSnapshot(snap.data());
-            }, (err) => console.error('Room Snapshot Error:', err));
-            await this.syncGameStateToRoom();
-          } catch (e) {
-            console.error('部屋の再作成に失敗しました（この端末だけで続行します）:', e);
-          }
-        }
-        this._startPresenceHeartbeat();
-      },
+      // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
+      async _resumeMultiplayerAsHost() {},
 
       toggleFullscreen() {
         if (!document.fullscreenElement) {
@@ -11461,7 +10457,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
         try{
           const st=JSON.parse(raw);
           if(st && Array.isArray(st.players)){
-            const human=st.players.find(x=>x && x.isCpu===false) || st.players[0];
+            const human=(app.__edoHumanSeat ? app.__edoHumanSeat(st.players) : null) || st.players.find(x=>x && x.isCpu===false) || st.players[0];
             if(human){ human.name=p.nickname; human.avatar=p.avatarValue; }
             localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(st));
           }
@@ -11669,10 +10665,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   app._enterLobbyAfterAuth=function(){
     this._hideAuthScreen(); document.getElementById('lobby-screen')?.classList.remove('hidden');
     this._applyProfileToLobby(); this._refreshAccountPanel(); this.checkSaveData?.();
-    // Continue pending QR-room join after onboarding.
-    let room=this.pendingJoinRoomId || new URLSearchParams(location.search).get('room');
-    if(room && /^\d{1,4}$/.test(String(room))) room=null;   // 【ver1.2.9】PeerJS の双六番号は、これまでの方式では扱いません
-    if(room && !this._joinStartedAfterAuth){ this._joinStartedAfterAuth=true; this.pendingJoinRoomId=room; setTimeout(()=>this.joinRoomAsGuest?.(room),250); }
+    // 【ver1.2.12】これまでの方式（QRコードの部屋）への参加はなくしました。?room= はマルチプレイ（PeerJS）の係が使います
   };
 
   app._applyProfileToLobby=function(){
@@ -17274,331 +16267,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const origCloseMini = app.closeRegionalMiniGame ? app.closeRegionalMiniGame.bind(app) : null;
   if(origCloseMini) app.closeRegionalMiniGame = function(...a){ disarmEscape(); clearTimeout(hideStartTimer); return origCloseMini(...a); };
 
-  // ============================================================
-  // ② マルチプレイ：飛び入り参加
-  // ============================================================
-  const LOBBY_ID = '__lobby_v1';
-  const ROOM_TTL_MS = 3 * 3600 * 1000;      // 3時間さわられていない部屋は消します
-  const MAX_HUMANS = 4;
-
-  function FB(){ return window.FirebaseLib; }
-  function roomRefOf(id){
-    return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id);
-  }
-  function lobbyRef(){ return roomRefOf(LOBBY_ID); }
-
-  // 同じ種から同じ並びを作る乱数（全員の画面で同じ配置にするため）
-  function rng(seed){
-    let t = (seed >>> 0) || 1;
-    return function(){
-      t += 0x6D2B79F5;
-      let x = t;
-      x = Math.imul(x ^ (x >>> 15), x | 1);
-      x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
-      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-  app._mpRng = rng;
-
-  function meSeat(){
-    const acc = (typeof app._roomAccount === 'function') ? app._roomAccount() : {};
-    const prof = (typeof app.getUserProfile === 'function') ? app.getUserProfile() : null;
-    const name = (prof && prof.nickname) || app.myGuestNickname ||
-      (typeof localStorage!=='undefined' ? localStorage.getItem('edogawa_sugoroku_nickname') : '') || 'プレイヤー';
-    return {
-      uid: app.myUid,
-      name: String(name).slice(0, 12),
-      avatar: acc.avatar || app.selectedAvatar || '🧑',
-      isCpu: false,
-      money: Number.isFinite(acc.money) ? acc.money : 1000000,
-      stats: acc.stats || {intelligence:100,wealth:100,stamina:100,luck:100},
-      properties: Array.isArray(acc.properties) ? acc.properties : [],
-      goals: 0,                                  // ゴール数（陣地）は持ち込みません
-      movedSquares: 0,
-      authProvider: acc.authProvider || null,
-      lineUserId: acc.lineUserId || null
-    };
-  }
-  function cpuSeats(){
-    return FIXED.map((c,i)=>({
-      uid: 'cpu_'+i, name: c.name, avatar: c.avatar, isCpu: true,
-      money: c.money, stats: {...c.stats}, properties: [], goals: 0, movedSquares: 0
-    }));
-  }
-  app._mpMeSeat = meSeat;
-  app._mpCpuSeats = cpuSeats;
-
-  // ── 空いている部屋をさがす（見つからなければ作る） ──
-  app.mpFindRoom = async function(forceNew){
-    const ref = lobbyRef();
-    return await FB().runTransaction(app.db, async (tx)=>{
-      const snap = await tx.get(ref);
-      const now = Date.now();
-      let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
-        .filter(r => r && r.roomId && (now - (r.updatedAt || 0) < ROOM_TTL_MS));
-      let target = forceNew ? null : rooms.find(r => (r.humans || 0) < MAX_HUMANS);
-      let isNew = false;
-      if(!target){
-        target = { roomId: 'room_' + Math.floor(100000 + Math.random()*900000), humans: 0, updatedAt: now };
-        rooms.push(target);
-        isNew = true;
-      }
-      target.humans = (target.humans || 0) + 1;
-      target.updatedAt = now;
-      if(rooms.length > 40) rooms = rooms.slice(-40);
-      tx.set(ref, { rooms: rooms, updatedAt: now });
-      return { roomId: target.roomId, isNew: isNew, humans: target.humans };
-    });
-  };
-
-  // ── 部屋の席をとる（CPUと入れ替わる） ──
-  app.mpTakeSeat = async function(roomId){
-    const ref = roomRefOf(roomId);
-    const me = meSeat();
-    return await FB().runTransaction(app.db, async (tx)=>{
-      const snap = await tx.get(ref);
-      if(!snap || !snap.exists()){
-        const seed = Math.floor(Math.random() * 1000000000);
-        const finalPlayers = [me].concat(cpuSeats());
-        tx.set(ref, {
-          roomId: roomId, mode: 'dropin', seed: seed, status: 'playing',
-          finalPlayers: finalPlayers, players: finalPlayers,
-          hostUid: app.myUid, hostPresence: Date.now(),
-          createdAt: Date.now(), updatedAt: Date.now(),
-          presence: {}, guestAcks: {}, joinQueue: [], savedGame: null
-        });
-        return { created: true, seat: 0, seed: seed, finalPlayers: finalPlayers };
-      }
-      const d = snap.data();
-      const fp = Array.isArray(d.finalPlayers) ? d.finalPlayers.slice() : [];
-      const mine = fp.findIndex(p => p && p.uid === app.myUid);
-      if(mine >= 0) return { created:false, rejoin:true, seat:mine, seed:d.seed, finalPlayers:fp };
-      const idx = fp.findIndex(p => p && p.isCpu);
-      if(idx < 0) return { full: true };
-      fp[idx] = me;
-      const queue = (Array.isArray(d.joinQueue) ? d.joinQueue : []).concat([{ uid: app.myUid, seat: idx, at: Date.now() }]);
-      tx.update(ref, { finalPlayers: fp, players: fp, joinQueue: queue, updatedAt: Date.now() });
-      return { created:false, seat: idx, seed: d.seed, finalPlayers: fp };
-    });
-  };
-
-  // ── 待ち画面 ──
-  function wait(show, text, sub, onCancel){
-    let el = document.getElementById('edo-mp-wait');
-    if(!el){ el=document.createElement('div'); el.id='edo-mp-wait'; document.body.appendChild(el); }
-    if(!show){ el.classList.remove('show'); el.innerHTML=''; return; }
-    el.innerHTML = `<div class="edo-mp-box">
-      <div class="edo-mp-dots">👥</div>
-      <div class="edo-mp-t">${esc(text)}</div>
-      <div class="edo-mp-s">${sub||''}</div>
-      ${onCancel ? '<button type="button" class="edo-mp-btn" data-cancel="1">やめる</button>' : ''}
-    </div>`;
-    el.classList.add('show');
-    el.onclick = (ev)=>{ if(ev.target.closest('[data-cancel]')){ wait(false); onCancel && onCancel(); } };
-  }
-  app._mpWait = wait;
-
-  // ── 西葛西駅にいちばん近いマスへ置きます ──
-  app.mpPlaceAtStart = function(player){
-    try{
-      const ST = app.RAIL_STATIONS || {};
-      const s = ST['西葛西'];
-      const nodes = app.roadNetworkNodes || [];
-      if(!s || !nodes.length) return false;
-      let best = 0, bd = Infinity;
-      nodes.forEach((n,i)=>{
-        if(!n) return;
-        const dy=(n.lat-s.lat)*111000, dx=(n.lng-s.lng)*91000;
-        const d = dx*dx+dy*dy;
-        if(d < bd){ bd = d; best = i; }
-      });
-      player.currentNodeIdx = best;
-      player.pathIndex = best;
-      player.pos = best;
-      player.path = player.path || [];
-      return true;
-    }catch(e){ return false; }
-  };
-
-  // ── CPUを、それらしくバラバラに置きます ──
-  app.mpScatterCpus = function(seed){
-    const nodes = app.roadNetworkNodes || [];
-    if(!nodes.length) return 0;
-    const r = rng(seed || 1);
-    let n = 0;
-    (app.players||[]).forEach(p=>{
-      if(!p || !p.isCpu) return;
-      const idx = Math.max(1, Math.floor(r() * Math.floor(nodes.length * 0.8)));
-      p.currentNodeIdx = idx; p.pathIndex = idx; p.pos = idx;
-      p.goals = 1 + Math.floor(r() * 3);            // すでに何回かゴールしている状態
-      p.movedSquares = idx + Math.floor(r() * 120);
-      n++;
-    });
-    return n;
-  };
-
-  // ── 人間が入ってきたら、CPUと入れ替えて西葛西駅に置きます ──
-  app.mpProcessJoinQueue = function(data){
-    if(!app.isHost || !data) return 0;
-    const q = Array.isArray(data.joinQueue) ? data.joinQueue : [];
-    const fp = Array.isArray(data.finalPlayers) ? data.finalPlayers : [];
-    app._mpJoined = app._mpJoined || {};
-    let n = 0;
-    q.forEach(j=>{
-      if(!j || !j.uid || app._mpJoined[j.uid]) return;
-      if(j.uid === app.myUid){ app._mpJoined[j.uid] = true; return; }
-      const src = fp[j.seat]; if(!src) return;
-      const p = (app.players||[])[j.seat]; if(!p) return;
-      app._mpJoined[j.uid] = true;
-      p.uid = src.uid; p.name = src.name; p.avatar = src.avatar; p.isCpu = false;
-      if(Number.isFinite(src.money)) p.money = src.money;
-      if(Array.isArray(src.properties)) p.properties = src.properties;
-      if(src.stats) p.stats = Object.assign({}, p.stats, src.stats);
-      p.goals = 0; p.vehicle = null; p.skipTurn = false; p.wheelchairTurns = 0;
-      app.mpPlaceAtStart(p);
-      app.addLog && app.addLog(`👥 ${p.name} さんが参加しました（西葛西駅からスタート）`);
-      n++;
-    });
-    if(n){
-      app.updateHUD && app.updateHUD();
-      app.renderPlayers && app.renderPlayers();
-      app.syncGameStateToRoom && app.syncGameStateToRoom();
-    }
-    return n;
-  };
-  const origSnap = app.handleRoomSnapshot ? app.handleRoomSnapshot.bind(app) : null;
-  if(origSnap){
-    app.handleRoomSnapshot = function(data){
-      const r = origSnap(data);
-      try{ if(data && data.mode === 'dropin') app.mpProcessJoinQueue(data); }catch(e){ console.error('[v82]', e); }
-      return r;
-    };
-  }
-
-  // ── 「マルチプレイ」を押したときの動き ──
-  app.quickJoinMultiplayer = async function(opts){
-    opts = opts || {};
-    if(!opts.force && app._hasSave && app._hasSave((window.__EDOGAWA_SAVE_KEYS && window.__EDOGAWA_SAVE_KEYS.multi) || 'edogawa_sugoroku_mp_state')){
-      // 続きがあるときは、これまでどおり確認します
-      if(app.openRestartConfirm){ app.openRestartConfirm('multi'); return; }
-    }
-    if(app.__mpJoining) return;
-    app.__mpJoining = true;
-    let cancelled = false;
-    wait(true, '部屋をさがしています…', 'すでに進んでいるゲームに入ります。<br>あなたは西葛西駅からのスタートです。',
-      ()=>{ cancelled = true; app.__mpJoining = false; });
-    try{
-      await app.ensureGameDataReady();
-      await app.initFirebase();
-      if(cancelled) return;
-
-      if(!app.db || !FB()){
-        // 通信が使えないときは、その場で同じ形の対戦を始めます
-        wait(false);
-        app.addLog && app.addLog('👥 通信が使えないため、この端末だけで対戦します。');
-        return app.mpStartLocal();
-      }
-
-      let found = await app.mpFindRoom(false);
-      let seat = await app.mpTakeSeat(found.roomId);
-      if(seat && seat.full){
-        found = await app.mpFindRoom(true);           // 満席だったので新しい部屋を作ります
-        seat = await app.mpTakeSeat(found.roomId);
-      }
-      if(cancelled) return;
-      if(!seat || seat.full) throw new Error('NO_SEAT');
-
-      app.roomId = found.roomId;
-      app.isHost = !!seat.created;
-      app.hostUidForSave = app.myUid;
-      app.gameStateVersion = 0;
-      app.lastAppliedEventSeq = 0;
-      app.eventSeq = 0;
-      app._mpSeed = seat.seed || 1;
-      app._mpSeat = seat.seat;
-
-      // 部屋の変化を受け取り続けます
-      try{ app.roomUnsubscribe && app.roomUnsubscribe(); }catch(e){}
-      const ref = roomRefOf(app.roomId);
-      app.roomUnsubscribe = FB().onSnapshot(ref, (snapshot)=>{
-        if(!snapshot || !snapshot.exists()) return;
-        app.handleRoomSnapshot(snapshot.data());
-      }, (err)=>console.error('[v82] snapshot', err));
-      app._startPresenceHeartbeat && app._startPresenceHeartbeat();
-
-      if(seat.created){
-        wait(true, 'ゲームに入っています…', '進行中のゲームに飛び込みます。');
-        app.startMultiplayerGameSession(seat.finalPlayers);
-        await app.mpAfterBoardReady(true);
-      }else{
-        wait(true, 'ゲームに入っています…', 'いまの状況を受け取っています。');
-        // 席は取れたので、あとは部屋の状態が届いたら始まります
-        setTimeout(()=>{ wait(false); }, 6000);
-      }
-    }catch(e){
-      console.error('[v82] quickJoin', e);
-      wait(false);
-      app.addLog && app.addLog('👥 部屋に入れませんでした。この端末だけで対戦します。');
-      app.mpStartLocal();
-    }finally{
-      app.__mpJoining = false;
-      setTimeout(()=>wait(false), 500);
-    }
-  };
-
-  // 盤面ができたら、CPUを散らして自分を西葛西駅へ置きます
-  app.mpAfterBoardReady = async function(isNew){
-    for(let i=0;i<60;i++){
-      if((app.roadNetworkNodes||[]).length) break;
-      await new Promise(r=>setTimeout(r,300));
-    }
-    if(!(app.roadNetworkNodes||[]).length) { wait(false); return false; }
-    if(isNew) app.mpScatterCpus(app._mpSeed);
-    const me = (app.players||[]).find(p=>p && !p.isCpu && p.uid===app.myUid) || (app.players||[])[0];
-    if(me) app.mpPlaceAtStart(me);
-    app.updateHUD && app.updateHUD();
-    app.renderPlayers && app.renderPlayers();
-    app.panToCurrentPlayer && app.panToCurrentPlayer();
-    if(app.isHost) app.syncGameStateToRoom && app.syncGameStateToRoom();
-    wait(false);
-    return true;
-  };
-
-  // 通信が使えないときの、同じ形の対戦
-  app.mpStartLocal = async function(){
-    app.roomId = null; app.isHost = true;
-    app._mpSeed = Math.floor(Math.random()*1000000000);
-    app.startMultiplayerGameSession([meSeat()].concat(cpuSeats()));
-    return app.mpAfterBoardReady(true);
-  };
-
-  // ── 入口をつけかえます（ホスト募集・QRは使いません） ──
-  app.onRecruitButton = function(){
-    if(app._hasSave && app._hasSave((window.__EDOGAWA_SAVE_KEYS && window.__EDOGAWA_SAVE_KEYS.multi) || 'edogawa_sugoroku_mp_state') && app.resumeMultiplayerGame){
-      return app.resumeMultiplayerGame();
-    }
-    return app.quickJoinMultiplayer();
-  };
-  app.openRecruitmentModal = function(){ return app.quickJoinMultiplayer({force:true}); };
-
-  // 画面の文言も合わせます
-  function paintEntry(){
-    try{
-      const box = document.getElementById('recruit-caption');
-      if(box) box.textContent = 'マルチプレイ4人対戦';
-    }catch(e){}
-    ['modal-qrcode-container','modal-join-url','host-recruitment-modal'].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el && id==='host-recruitment-modal') el.classList.add('hidden');
-    });
-  }
-  paintEntry();
-
-  window.__EDOGAWA_MP_INFO = ()=>({
-    部屋: app.roomId, 席: app._mpSeat, 進行役: !!app.isHost, 種: app._mpSeed,
-    人数: (app.players||[]).length,
-    顔ぶれ: (app.players||[]).map(p=>({名:p.name, CPU:!!p.isCpu, マス:p.currentNodeIdx, ゴール:p.goals}))
-  });
+  // 【ver1.2.12】② マルチプレイ（これまでの方式・Firebase）は削除しました
 })();
 </script>
 
@@ -17681,314 +16350,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   /* 「駅と線路の調整」は今は使わないので隠します（機能は残しています） */
   #edo-railset-entry{ display:none !important; }
 </style>
-<script id="edogawa-v85">
-(function(){
-  'use strict';
-  const app = window.EdogawaSugoroku; if(!app) return;
-  const FB = ()=>window.FirebaseLib;
-  const HOST_DEAD_MS = 45000;          // 45秒さわられていない進行役は「いない」とみなします
-  const ROOM_FRESH_MS = 10 * 60 * 1000; // ロビーに残す部屋の寿命（10分）
-
-  function roomRefOf(id){
-    return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id);
-  }
-  function km(a,b){
-    if(!a||!b) return 1e9;
-    const dy=(b.lat-a.lat)*111, dx=(b.lng-a.lng)*91;
-    return Math.sqrt(dx*dx+dy*dy);
-  }
-
-  // ── 目的地を部屋ごとにランダムで決めます ──
-  app.mpPickRandomGoal = function(seed){
-    const r = app._mpRng ? app._mpRng(seed || Math.floor(Math.random()*1e9)) : Math.random;
-    const start = window.__EDOGAWA_START_LOC;
-    const first = window.__EDOGAWA_FIRST_GOAL;
-    let pool = [];
-    try{ pool = (app.getAllFacilityObjects() || []); }catch(e){}
-    const ok = pool.filter(x => x && x.name && isFinite(x.lat) && isFinite(x.lng)
-      && (!first || x.name !== first.name)
-      && (!start || x.name !== start.name)
-      && (!start || (km(start, x) > 0.8 && km(start, x) < 6)));
-    if(!ok.length) return first || null;
-    const pick = ok[Math.floor(r() * ok.length)];
-    return { name: pick.name, lat: pick.lat, lng: pick.lng, emoji: pick.emoji, address: pick.address || '' };
-  };
-
-  // ── 部屋さがし（古い部屋は捨てます） ──
-  const origFind = app.mpFindRoom ? app.mpFindRoom.bind(app) : null;
-  app.mpFindRoom = async function(forceNew){
-    const ref = roomRefOf('__lobby_v1');
-    return await FB().runTransaction(app.db, async (tx)=>{
-      const snap = await tx.get(ref);
-      const now = Date.now();
-      let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
-        .filter(r => r && r.roomId && (now - (r.updatedAt || 0) < ROOM_FRESH_MS));
-      let target = forceNew ? null : rooms.find(r => (r.humans || 0) < 4);
-      let isNew = false;
-      if(!target){
-        target = { roomId: 'room_' + Math.floor(100000 + Math.random()*900000), humans: 0, updatedAt: now };
-        rooms.push(target);
-        isNew = true;
-      }
-      target.humans = (target.humans || 0) + 1;
-      target.updatedAt = now;
-      if(rooms.length > 20) rooms = rooms.slice(-20);
-      tx.set(ref, { rooms: rooms, updatedAt: now });
-      return { roomId: target.roomId, isNew: isNew, humans: target.humans };
-    });
-  };
-
-  // ── 席をとる（進行役がいない部屋なら、自分が進行役になります） ──
-  app.mpTakeSeat = async function(roomId){
-    const ref = roomRefOf(roomId);
-    const me = app._mpMeSeat();
-    return await FB().runTransaction(app.db, async (tx)=>{
-      const snap = await tx.get(ref);
-      const now = Date.now();
-      if(!snap || !snap.exists()){
-        const seed = Math.floor(Math.random() * 1000000000);
-        const goal = app.mpPickRandomGoal(seed);
-        const finalPlayers = [me].concat(app._mpCpuSeats());
-        tx.set(ref, {
-          roomId: roomId, mode: 'dropin', seed: seed, goal: goal, status: 'playing',
-          finalPlayers: finalPlayers, players: finalPlayers,
-          hostUid: app.myUid, hostPresence: now,
-          createdAt: now, updatedAt: now,
-          presence: {}, guestAcks: {}, joinQueue: [], savedGame: null
-        });
-        return { created:true, host:true, seat:0, seed:seed, goal:goal, finalPlayers:finalPlayers };
-      }
-      const d = snap.data();
-      const hostAlive = (now - Number(d.hostPresence || 0)) < HOST_DEAD_MS;
-      const fp = Array.isArray(d.finalPlayers) ? d.finalPlayers.slice() : [];
-      const seed = d.seed || Math.floor(Math.random()*1000000000);
-      const goal = d.goal || app.mpPickRandomGoal(seed);
-
-      let seat = fp.findIndex(p => p && p.uid === app.myUid);
-      let rejoin = seat >= 0;
-      if(seat < 0){
-        seat = fp.findIndex(p => p && p.isCpu);
-        if(seat < 0) return { full: true };
-        fp[seat] = me;
-      }else{
-        fp[seat] = me;                      // 入り直しのときは中身を新しくします
-      }
-      const patch = { finalPlayers: fp, players: fp, updatedAt: now, seed: seed, goal: goal };
-      if(!rejoin){
-        patch.joinQueue = (Array.isArray(d.joinQueue) ? d.joinQueue : []).concat([{ uid: app.myUid, seat: seat, at: now }]);
-      }
-      // 進行役がいない部屋なら、自分が引き継ぎます（誰も盤面を作らない状態を防ぎます）
-      const takeover = !hostAlive;
-      if(takeover){ patch.hostUid = app.myUid; patch.hostPresence = now; patch.joinQueue = []; }
-      tx.update(ref, patch);
-      return { created:false, host:takeover, takeover:takeover, rejoin:rejoin,
-               seat:seat, seed:seed, goal:goal, finalPlayers:fp };
-    });
-  };
-
-  // ── 「マルチプレイ」を押したとき ──
-  app.quickJoinMultiplayer = async function(opts){
-    opts = opts || {};
-    const KEY = (window.__EDOGAWA_SAVE_KEYS && window.__EDOGAWA_SAVE_KEYS.multi) || 'edogawa_sugoroku_mp_state';
-    if(!opts.force && app._hasSave && app._hasSave(KEY) && app.openRestartConfirm){
-      app.openRestartConfirm('multi'); return;
-    }
-    if(app.__mpJoining) return;
-    app.__mpJoining = true;
-    let cancelled = false;
-    app._mpWait(true, '部屋をさがしています…',
-      'すでに進んでいるゲームに入ります。<br>あなたは西葛西駅からのスタートです。',
-      ()=>{ cancelled = true; app.__mpJoining = false; });
-    try{
-      await app.ensureGameDataReady();
-      await app.initFirebase();
-      if(cancelled) return;
-      if(!app.db || !FB()){
-        app._mpWait(false);
-        app.addLog && app.addLog('👥 通信が使えないため、この端末だけで対戦します。');
-        return app.mpStartLocal();
-      }
-
-      let found = await app.mpFindRoom(false);
-      let seat = await app.mpTakeSeat(found.roomId);
-      if(seat && seat.full){
-        found = await app.mpFindRoom(true);
-        seat = await app.mpTakeSeat(found.roomId);
-      }
-      if(cancelled) return;
-      if(!seat || seat.full) throw new Error('NO_SEAT');
-
-      app.roomId = found.roomId;
-      app.isHost = !!seat.host;
-      if(seat.host) app._mpHostSince = Date.now();
-      app.hostUidForSave = app.myUid;
-      app.gameStateVersion = 0;
-      app.lastAppliedEventSeq = 0;
-      app.eventSeq = 0;
-      app._mpSeed = seat.seed || 1;
-      app._mpSeat = seat.seat;
-      app._mpGoal = seat.goal || null;
-      app._mpJoinedAt = Date.now();
-      app._mpLastHostPresence = Date.now();
-      app._mpJoined = {};
-
-      try{ app.roomUnsubscribe && app.roomUnsubscribe(); }catch(e){}
-      const ref = roomRefOf(app.roomId);
-      app.roomUnsubscribe = FB().onSnapshot(ref, (snapshot)=>{
-        if(!snapshot || !snapshot.exists()) return;
-        app.handleRoomSnapshot(snapshot.data());
-      }, (err)=>console.error('[v85] snapshot', err));
-      app._startPresenceHeartbeat && app._startPresenceHeartbeat();
-      app.mpWatchHost();
-      app.mpWatchBoard();
-
-      if(seat.host){
-        app._mpWait(true, 'ゲームに入っています…', '進行中のゲームに飛び込みます。');
-        if(seat.takeover) app.addLog && app.addLog('👥 進行役がいなかったので、引き継ぎました。');
-        app.startMultiplayerGameSession(seat.finalPlayers);
-        await app.mpAfterBoardReady(true);
-      }else{
-        app._mpWait(true, 'ゲームに入っています…', 'いまの状況を受け取っています。');
-        setTimeout(()=>{ app._mpWait(false); }, 6000);
-      }
-    }catch(e){
-      console.error('[v85] quickJoin', e);
-      app.__mpLastError = (e && e.message) || String(e);   // v89：あとで理由を確認できるように残します
-      app._mpWait(false);
-      app.addLog && app.addLog('👥 部屋に入れませんでした。この端末だけで対戦します。');
-      app.mpStartLocal();
-    }finally{
-      app.__mpJoining = false;
-      setTimeout(()=>app._mpWait(false), 500);
-    }
-  };
-
-  // ── 進行役の見張り（いなくなったら引き継ぎます） ──
-  app.mpWatchHost = function(){
-    clearInterval(app.__mpHostWatch);
-    app.__mpHostWatch = setInterval(async ()=>{
-      try{
-        if(!app.isMultiplayer || !app.db || !app.roomId) return;
-        if(app.isHost) return;
-        const last = Number(app._mpLastHostPresence || 0);
-        if(Date.now() - last < HOST_DEAD_MS) return;
-        await app.mpBecomeHost();
-      }catch(e){ console.error('[v85] watch', e); }
-    }, 6000);
-  };
-
-  app.mpBecomeHost = async function(){
-    if(app.isHost || !app.db || !app.roomId) return false;
-    // 人間のうち、いちばん席が早い人が引き継ぎます（全員が同時に名乗り出ないように）
-    const humans = (app.players||[]).filter(p => p && !p.isCpu && p.uid);
-    if(!humans.length || humans[0].uid !== app.myUid) return false;
-    const ref = roomRefOf(app.roomId);
-    let got = false;
-    try{
-      got = await FB().runTransaction(app.db, async (tx)=>{
-        const snap = await tx.get(ref);
-        if(!snap || !snap.exists()) return false;
-        const d = snap.data();
-        if((Date.now() - Number(d.hostPresence || 0)) < HOST_DEAD_MS) return false;
-        tx.update(ref, { hostUid: app.myUid, hostPresence: Date.now(), joinQueue: [], updatedAt: Date.now() });
-        return true;
-      });
-    }catch(e){ return false; }
-    if(!got) return false;
-    app.isHost = true;
-    app._mpHostSince = Date.now();
-    app._mpJoined = {};
-    app.addLog && app.addLog('👥 進行役がいなくなったので、引き継ぎました。');
-    app._startPresenceHeartbeat && app._startPresenceHeartbeat();
-    if(!(app.roadNetworkNodes||[]).length){
-      await app.setupBoard(window.__EDOGAWA_START_LOC, app._mpGoal || window.__EDOGAWA_FIRST_GOAL);
-      await app.mpAfterBoardReady(true);
-    }else{
-      app.syncGameStateToRoom && app.syncGameStateToRoom();
-    }
-    return true;
-  };
-
-  // 部屋の様子から、進行役の生死を記録します
-  const origSnap = app.handleRoomSnapshot ? app.handleRoomSnapshot.bind(app) : null;
-  if(origSnap){
-    app.handleRoomSnapshot = function(data){
-      try{
-        if(data){
-          if(Number(data.hostPresence)) app._mpLastHostPresence = Number(data.hostPresence);
-          if(data.goal && !app._mpGoal) app._mpGoal = data.goal;
-          if(data.seed && !app._mpSeed) app._mpSeed = data.seed;
-          // 進行役が他の人に移っていて、その人がちゃんと生きているときだけ降ります
-          if(data.hostUid && data.hostUid !== app.myUid && app.isHost && data.mode === 'dropin'
-             && (Date.now() - Number(data.hostPresence || 0)) < HOST_DEAD_MS
-             && (Date.now() - Number(app._mpHostSince || 0)) > 15000){
-            app.isHost = false;
-          }
-          // 参加者から「盤面をもう一度」と言われたら送り直します
-          if(app.isHost && data.resyncAt && data.resyncAt !== app.__mpLastResync){
-            app.__mpLastResync = data.resyncAt;
-            setTimeout(()=>{ try{ app.syncGameStateToRoom && app.syncGameStateToRoom(); }catch(e){} }, 300);
-          }
-        }
-      }catch(e){}
-      return origSnap(data);
-    };
-  }
-
-  // ── 盤面が届かないときは、進行役に送り直してもらいます ──
-  app.mpRequestResync = async function(){
-    if(!app.db || !app.roomId || app.isHost) return false;
-    try{
-      await FB().updateDoc(roomRefOf(app.roomId), { resyncAt: Date.now(), resyncBy: app.myUid });
-      return true;
-    }catch(e){ return false; }
-  };
-  let resyncTimer = null;
-  app.mpWatchBoard = function(){
-    clearInterval(resyncTimer);
-    resyncTimer = setInterval(()=>{
-      if(!app.isMultiplayer || app.isHost) return;
-      if((app.roadNetworkNodes||[]).length) return;
-      if(Date.now() - Number(app._mpJoinedAt||0) < 6000) return;
-      app.addLog && app.addLog('👥 盤面を受け取れていないので、もう一度お願いしています…');
-      app.mpRequestResync();
-    }, 7000);
-  };
-
-  // 盤面ができるまで、しっかり待ってから配置します
-  app.mpAfterBoardReady = async function(isNew){
-    for(let i=0;i<80;i++){
-      if((app.roadNetworkNodes||[]).length > 2 && Number.isFinite(app.goalNodeIdx)) break;
-      await new Promise(r=>setTimeout(r,300));
-    }
-    if(!((app.roadNetworkNodes||[]).length > 2)){ app._mpWait(false); return false; }
-    await new Promise(r=>setTimeout(r,900));      // 盤面の初期配置が終わるのを待ちます
-    if(isNew) app.mpScatterCpus(app._mpSeed);
-    const me = (app.players||[]).find(p=>p && !p.isCpu && p.uid===app.myUid) || (app.players||[])[0];
-    if(me) app.mpPlaceAtStart(me);
-    app.updateHUD && app.updateHUD();
-    app.renderPlayers && app.renderPlayers();
-    app.panToCurrentPlayer && app.panToCurrentPlayer();
-    if(app.isHost) app.syncGameStateToRoom && app.syncGameStateToRoom();
-    app._mpWait(false);
-    return true;
-  };
-
-  window.__EDOGAWA_MP_INFO = ()=>({
-    部屋: app.roomId, 席: app._mpSeat, 進行役: !!app.isHost, 種: app._mpSeed,
-    目的地: app._mpGoal ? app._mpGoal.name : null,
-    進行役の最終確認: app._mpLastHostPresence ? new Date(app._mpLastHostPresence).toLocaleTimeString('ja-JP') : null,
-    マスの数: (app.roadNetworkNodes||[]).length,
-    顔ぶれ: (app.players||[]).map(p=>({名:p.name, CPU:!!p.isCpu, マス:p.currentNodeIdx, ゴール:p.goals}))
-  });
-  // 困ったときに、この端末の部屋を捨てて入り直すための逃げ道
-  window.__EDOGAWA_MP_RESET = async ()=>{
-    try{ app.roomUnsubscribe && app.roomUnsubscribe(); }catch(e){}
-    try{ await FB().setDoc(roomRefOf('__lobby_v1'), { rooms: [], updatedAt: Date.now() }); }catch(e){}
-    return 'ロビーを空にしました。もう一度「マルチプレイ」を押してください。';
-  };
-})();
-</script>
+<!-- 【ver1.2.12】edogawa-v85（これまでの方式のマルチプレイ）は削除しました -->
 
 
 
@@ -18774,124 +17136,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 
 
 
-<!-- ============================================================================
-     v89: マルチプレイ（2人目が同じ部屋に入れない／目的地がカラオケ固定）の修正
-     ============================================================================ -->
-<script id="edogawa-v89-mp">
-(function(){
-  'use strict';
-  const app = window.EdogawaSugoroku; if(!app) return;
-  const FB = ()=>window.FirebaseLib;
-  const ROOM_FRESH_MS = 30 * 60 * 1000;   // ロビーに残す部屋の寿命（10分→30分）
-  const LOBBY_BEAT_MS = 60 * 1000;        // 遊んでいる間、1分ごとに部屋を新しく見せます
-  function roomRefOf(id){ return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id); }
-  function km(a,b){ if(!a||!b) return 1e9;
-    const dy=(b.lat-a.lat)*111, dx=(b.lng-a.lng)*91; return Math.sqrt(dx*dx+dy*dy); }
-
-  // ── ① 目的地：カラオケ酔処「ゆう」は選ばないようにします ──
-  const FIRST = ()=>window.__EDOGAWA_FIRST_GOAL || null;
-  app.mpPickRandomGoal = function(seed){
-    const r = app._mpRng ? app._mpRng(seed || Math.floor(Math.random()*1e9)) : Math.random;
-    const start = window.__EDOGAWA_START_LOC, first = FIRST();
-    let pool = [];
-    try{ pool = (app.getAllFacilityObjects() || []); }catch(e){}
-    const base = pool.filter(x => x && x.name && isFinite(x.lat) && isFinite(x.lng)
-      && (!first || x.name !== first.name)
-      && (!start || x.name !== start.name));
-    // まずは「スタートから0.8〜6km」で探し、見つからなければ距離の条件をゆるめます
-    let ok = base.filter(x => !start || (km(start,x) > 0.8 && km(start,x) < 6));
-    if(!ok.length) ok = base.filter(x => !start || km(start,x) > 0.3);
-    if(!ok.length) ok = base;
-    if(!ok.length){
-      // 施設データがまだ読めていないときの保険。ここでカラオケに戻ると、
-      // 2人とも同じ「カラオケ酔処「ゆう」」になってしまっていました。
-      const alt = (app.RAIL_STATIONS && Object.keys(app.RAIL_STATIONS)
-        .filter(n => !app.RAIL_STATIONS[n].plan && (!start || n !== start.name))) || [];
-      if(alt.length){
-        const n = alt[Math.floor(r() * alt.length)], s = app.RAIL_STATIONS[n];
-        return { name: n, lat: s.lat, lng: s.lng, emoji: '🚉', address: '' };
-      }
-      return first || null;
-    }
-    const p = ok[Math.floor(r() * ok.length)];
-    return { name: p.name, lat: p.lat, lng: p.lng, emoji: p.emoji, address: p.address || '' };
-  };
-
-  // ── ② 部屋さがし：「押した回数」ではなく「実際に座っている人数」で判断します ──
-  //    これまでは mpFindRoom を呼ぶたびに humans を1つ増やしていたため、
-  //    1人目が「マルチプレイ」を何度か押しただけで満室あつかいになり、
-  //    2人目が別の部屋に回されていました。
-  /* mpFindRoom：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
-
-  // 実際の人数をロビーに書き戻し、遊んでいる間は部屋を新しく見せ続けます
-  app.mpTouchLobby = async function(humans){
-    if(!app.db || !app.roomId || !FB()) return false;
-    const n = Number.isFinite(humans) ? humans
-      : (app.players||[]).filter(p => p && !p.isCpu && p.uid).length;
-    try{
-      const ref = roomRefOf('__lobby_v1');
-      await FB().runTransaction(app.db, async (tx)=>{
-        const snap = await tx.get(ref);
-        const now = Date.now();
-        let rooms = (snap && snap.exists() ? (snap.data().rooms || []) : [])
-          .filter(r => r && r.roomId && (now - (r.updatedAt||0) < ROOM_FRESH_MS));
-        const i = rooms.findIndex(r => r.roomId === app.roomId);
-        if(i >= 0){ rooms[i].humans = Math.max(0, Math.min(4, n)); rooms[i].updatedAt = now; }
-        else rooms.push({ roomId: app.roomId, humans: Math.max(0, Math.min(4, n)), updatedAt: now });
-        tx.set(ref, { rooms: rooms, updatedAt: now });
-      });
-      return true;
-    }catch(e){ return false; }
-  };
-  clearInterval(app.__mpLobbyBeat);
-  app.__mpLobbyBeat = setInterval(()=>{ try{ app.mpTouchLobby(); }catch(e){} }, LOBBY_BEAT_MS);
-
-  // ── ③ 部屋に入ったら、人数をロビーに反映します ──
-  const origJoin = app.quickJoinMultiplayer ? app.quickJoinMultiplayer.bind(app) : null;
-  if(origJoin){
-    app.quickJoinMultiplayer = async function(opts){
-      app.__mpLastError = null;
-      const r = await origJoin(opts);
-      try{ if(app.roomId) await app.mpTouchLobby(); }catch(e){}
-      return r;
-    };
-  }
-  // 人間が入ってきたときも、人数を書き戻します
-  const origQueue = app.mpProcessJoinQueue ? app.mpProcessJoinQueue.bind(app) : null;
-  if(origQueue){
-    app.mpProcessJoinQueue = function(data){
-      const n = origQueue(data);
-      if(n){ try{ app.mpTouchLobby(); }catch(e){} }
-      return n;
-    };
-  }
-
-  // ── ④ ひとりになったときは、目的地を決め直し、理由も残します ──
-  const origLocal = app.mpStartLocal ? app.mpStartLocal.bind(app) : null;
-  if(origLocal){
-    app.mpStartLocal = function(){
-      // ここで目的地を決め直さないと、ひとり対戦はいつも
-      // 「カラオケ酔処「ゆう」」になってしまいます。
-      try{ app._mpGoal = app.mpPickRandomGoal(Math.floor(Math.random()*1e9)) || app._mpGoal; }catch(e){}
-      try{
-        const why = app.__mpLastError ? `\n（原因：${String(app.__mpLastError).slice(0,120)}）` : '';
-        app.addLog && app.addLog('👥 部屋に入れなかったため、この端末だけで対戦します。' + why.replace(/\n/g,''));
-      }catch(e){}
-      return origLocal();
-    };
-  }
-
-  window.__EDOGAWA_MP_WHY = ()=>({
-    部屋: app.roomId || null,
-    通信: !!app.db,
-    自分のID: app.myUid || null,
-    進行役: !!app.isHost,
-    目的地: app._mpGoal ? app._mpGoal.name : null,
-    直前のエラー: app.__mpLastError ? String(app.__mpLastError).slice(0,200) : null,
-    部屋の寿命分: ROOM_FRESH_MS/60000
-  });
-})();
-</script>
+<!-- 【ver1.2.12】edogawa-v89-mp（これまでの方式のマルチプレイ）は削除しました -->
 
 
 
@@ -19013,210 +17258,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     app.showMetro7Plan = function(){ if(app.isMultiplayer) return; return origPlan(); };
   }
 
-  // ── ③ マルチプレイ：ロビー用の文書を使わずに部屋をさがします ──
-  //    これまでは rooms/__lobby_v1 という専用の文書に部屋の一覧を書いていました。
-  //    Firestore のルールが「部屋の形（hostUid など）」を前提にしていると、
-  //    この一覧の文書だけ書き込みを拒否され、部屋さがしの時点で失敗します。
-  //    決まった名前の部屋をそのまま読みにいく形に変え、専用の文書をやめます。
-  const ROOM_IDS = ['room_01','room_02','room_03','room_04','room_05','room_06','room_07','room_08'];
-  const HOST_DEAD_MS = 45000;
-  const ROOM_FRESH_MS = 30 * 60 * 1000;
-  function roomRefOf(id){ return FB().doc(app.db, 'artifacts', app.appId, 'public', 'data', 'rooms', id); }
-
-  app.mpScanRooms = async function(){
-    const now = Date.now(); const out = [];
-    for(const id of ROOM_IDS){
-      let d = null, err = null;
-      try{ const s = await FB().getDoc(roomRefOf(id)); d = (s && s.exists()) ? s.data() : null; }
-      catch(e){ err = (e && e.message) || String(e); }
-      if(err){ out.push({ id, 読めない: err }); continue; }
-      if(!d){ out.push({ id, 空き: true, updatedAt: 0 }); continue; }
-      const fp = Array.isArray(d.finalPlayers) ? d.finalPlayers : [];
-      out.push({
-        id, 空き: false,
-        updatedAt: Number(d.updatedAt || 0),
-        進行役が生きている: (now - Number(d.hostPresence || 0)) < HOST_DEAD_MS,
-        空席: fp.some(p => p && p.isCpu),
-        自分の席: fp.some(p => p && p.uid && p.uid === app.myUid),
-        新しい: (now - Number(d.updatedAt || 0)) < ROOM_FRESH_MS,
-        人数: fp.filter(p => p && !p.isCpu).length
-      });
-    }
-    return out;
-  };
-
-  app.mpFindRoom = async function(forceNew){
-    const rooms = await app.mpScanRooms();
-    const ok = rooms.filter(r => !r['読めない']);
-    if(!ok.length) throw new Error('部屋を読み取れません（通信かFirestoreの権限）');
-    if(!forceNew){
-      // ①前に自分が座っていた部屋 → ②進行役がいて空席のある部屋
-      const mine = ok.find(r => !r.空き && r.自分の席 && r.新しい);
-      if(mine) return { roomId: mine.id, isNew: false, humans: mine.人数 };
-      const open = ok.filter(r => !r.空き && r.新しい && r.進行役が生きている && r.空席)
-        .sort((a,b)=> b.updatedAt - a.updatedAt)[0];
-      if(open) return { roomId: open.id, isNew: false, humans: open.人数 };
-    }
-    // 空いている枠 → 古くて席も空いている枠 → いちばん古い枠
-    //（進行役がいない部屋なら、入った人が自動で引き継ぎます）
-    const empty = ok.find(r => r.空き);
-    if(empty) return { roomId: empty.id, isNew: true, humans: 0 };
-    const byAge = ok.slice().sort((a,b)=> a.updatedAt - b.updatedAt);
-    const seatable = byAge.find(r => r.空席);
-    const pick = seatable || byAge[0];
-    return { roomId: pick.id, isNew: true, humans: 0 };
-  };
-
-  // ロビー用の文書は使わないので、部屋そのものの時刻だけ新しくします
-  app.mpTouchLobby = async function(){
-    if(!app.db || !app.roomId || !FB()) return false;
-    try{ await FB().updateDoc(roomRefOf(app.roomId), { updatedAt: Date.now() }); return true; }
-    catch(e){ return false; }
-  };
-
-  // ── ④ つながらない理由を、その場で分かるようにします ──
-  app.mpWhyText = function(){
-    if(!app.firebaseReady) return 'サーバーにログインできていません（通信が届いていないか、匿名ログインが無効です）。';
-    if(!app.db) return 'サーバーへの接続ができていません。';
-    const e = app.__mpLastError ? String(app.__mpLastError) : '';
-    if(/permission|insufficient|PERMISSION_DENIED/i.test(e)) return 'サーバー側の権限設定で、部屋の読み書きが断られました。（Firestoreのルール）';
-    if(/unavailable|network|offline|Failed to fetch/i.test(e)) return '通信が届きませんでした。電波のよい場所でもう一度お試しください。';
-    return e || '理由が分かりませんでした。';
-  };
-
-  app.mpDiagnose = async function(){
-    const r = ['【マルチプレイの状態】'];
-    try{ if(!app.firebaseReady) app.firebaseInitAttempted = false; await app.initFirebase(); }catch(e){}
-    r.push('サーバー接続：' + (app.firebaseReady ? 'OK' : 'NG'));
-    r.push('自分のID：' + (app.myUid || '(なし)'));
-    if(app.db && FB()){
-      try{
-        const rooms = await app.mpScanRooms();
-        rooms.forEach(x => r.push(' ' + x.id + '：' + (x['読めない'] ? '読めません（' + x['読めない'] + '）'
-          : x.空き ? '空き' : ('人間' + x.人数 + '人／進行役' + (x.進行役が生きている ? 'あり' : 'なし')))));
-      }catch(e){ r.push('部屋さがし：NG（' + ((e && e.message) || e) + '）'); }
-    }
-    if(app.__mpLastError) r.push('直前のエラー：' + app.__mpLastError);
-    const text = r.join('\n');
-    try{ app.addLog && app.addLog('👥 ' + text.replace(/\n/g, ' / ')); }catch(e){}
-    return text;
-  };
-  window.__EDOGAWA_MP_DIAG = ()=>app.mpDiagnose();
-
-  // ── ⑤ ひとり対戦に落ちたときのお知らせ（改行をやめ、理由を添えます） ──
-  const origLocal = app.mpStartLocal ? app.mpStartLocal.bind(app) : null;
-  if(origLocal){
-    app.mpStartLocal = function(){
-      const why = app.mpWhyText();
-      setTimeout(()=>{
-        try{
-          app.showNotice && app.showNotice('👥 ひとりでの対戦になります',
-            'サーバーの部屋に入れなかったため、この端末だけで対戦します。通信環境をご確認のうえ、もう一度「マルチプレイ」を押すと入り直せます。'
-            + (why ? '\n\n【原因】' + why : ''));
-        }catch(e){}
-        // 原因をあとから確認できるように、ログにも残します
-        try{ app.mpDiagnose(); }catch(e){}
-      }, 0);
-      return origLocal();
-    };
-  }
-  // 入り直すときは、サーバー接続もやり直します
-  const origQuick = app.quickJoinMultiplayer ? app.quickJoinMultiplayer.bind(app) : null;
-  if(origQuick){
-    app.quickJoinMultiplayer = function(opts){
-      if(!app.firebaseReady) app.firebaseInitAttempted = false;   // もう一度ログインを試します
-      return origQuick(opts);
-    };
-  }
+  // 【ver1.2.12】③〜⑤ マルチプレイ（これまでの方式・Firebase）は削除しました
 })();
 </script>
 
 
 
-<!-- ============================================================================
-     v92: サーバーへ undefined を書き込んでいた不具合の修正
-     ----------------------------------------------------------------------------
-     Firestore は undefined を受け付けません。
-       Function Transaction.set() called with invalid data.
-       Unsupported field value: undefined (found in field goal.emoji ...)
-     目的地に絵文字が登録されていない施設だと goal.emoji が undefined になり、
-     部屋を作る最初の書き込みで必ず失敗していました。
-     （＝これが「サーバーの部屋に入れなかったため」の正体です。
-       Firebaseの設定・ルールの問題ではありませんでした）
-     ============================================================================ -->
-<script id="edogawa-v92">
-(function(){
-  'use strict';
-  const app = window.EdogawaSugoroku; if(!app) return;
-
-  // ── ① 目的地に必ず値が入るようにします ──
-  const origPick = app.mpPickRandomGoal ? app.mpPickRandomGoal.bind(app) : null;
-  if(origPick){
-    app.mpPickRandomGoal = function(seed){
-      const g = origPick(seed);
-      if(!g) return g;
-      return {
-        name: String(g.name || '目的地'),
-        lat: Number(g.lat), lng: Number(g.lng),
-        emoji: g.emoji || '📍',
-        address: g.address || ''
-      };
-    };
-  }
-
-  // ── ② 念のため、サーバーへ送る中身から undefined を取り除きます ──
-  //    プレーヤーの写真・持ち物・ステータスなど、どこか1つでも undefined が
-  //    混じると書き込み全体が失敗してしまうためです。
-  function clean(v, depth){
-    depth = depth || 0;
-    if(depth > 12) return null;
-    if(v === undefined) return undefined;
-    if(v === null) return null;
-    const t = typeof v;
-    if(t === 'number') return isFinite(v) ? v : 0;
-    if(t === 'string' || t === 'boolean') return v;
-    if(t === 'function') return undefined;
-    if(Array.isArray(v)) return v.map(x => { const c = clean(x, depth+1); return c === undefined ? null : c; });
-    if(t === 'object'){
-      if(v instanceof Date) return v;
-      if(v._methodName || v.toDate || v.isEqual) return v;    // Firestoreの特別な値はそのまま
-      const o = {};
-      Object.keys(v).forEach(k => { const c = clean(v[k], depth+1); if(c !== undefined) o[k] = c; });
-      return o;
-    }
-    return undefined;
-  }
-  app.__edoClean = clean;
-
-  function wrapFB(){
-    const L = window.FirebaseLib;
-    if(!L || L.__edoSafe) return;
-    const sd = L.setDoc, ud = L.updateDoc, rt = L.runTransaction;
-    if(typeof sd === 'function') L.setDoc = function(ref, data, opt){
-      return opt === undefined ? sd(ref, clean(data)) : sd(ref, clean(data), opt); };
-    if(typeof ud === 'function') L.updateDoc = function(ref, data){ return ud(ref, clean(data)); };
-    if(typeof rt === 'function') L.runTransaction = function(db, fn){
-      return rt(db, (tx)=>{
-        const safe = Object.create(tx);
-        safe.get = (r)=>tx.get(r);
-        safe.set = (r, d, o)=> o === undefined ? tx.set(r, clean(d)) : tx.set(r, clean(d), o);
-        safe.update = (r, d)=>tx.update(r, clean(d));
-        if(typeof tx.delete === 'function') safe.delete = (r)=>tx.delete(r);
-        return fn(safe);
-      });
-    };
-    L.__edoSafe = true;
-  }
-  wrapFB();
-  setInterval(wrapFB, 1000);      // 読み込み順や差し替えに関係なく効くようにします
-  app.__edoWrapFirebase = wrapFB;
-
-  window.__EDOGAWA_V92_INFO = ()=>({
-    包んだか: !!(window.FirebaseLib && window.FirebaseLib.__edoSafe),
-    undefinedを除く例: clean({ a:1, b:undefined, c:{ d:undefined, e:'x' }, f:[1, undefined, 2], g:NaN })
-  });
-})();
-</script>
+<!-- 【ver1.2.12】edogawa-v92（これまでの方式のマルチプレイ）は削除しました -->
 
 
 
@@ -31580,9 +29628,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         if(!R.conns.has(p.uid)) return true;                         // つながっていない人は CPU と同じく自動で
         const cp = (app.players || [])[app.currentPlayerIdx];
         if(cp !== p) return false;
-        const key = app.currentPlayerIdx + ':' + app.turnCount;
-        if(R.turnKey !== key){ R.turnKey = key; R.turnAt = now(); }
-        return now() - R.turnAt >= AFK_MS;                             // 30秒なにもしなければ自動で
+        try{ afkWatch(); }catch(e){}
+        return now() - R.turnAt >= AFK_MS;                             // サイコロを30秒待っても振らなければ自動で
       }
       return origAuto(p);
     };
@@ -31630,7 +29677,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       destination: app.currentDestination ? { name:app.currentDestination.name, lat:app.currentDestination.lat, lng:app.currentDestination.lng } : null,
       goalNodeIdx:app.goalNodeIdx, boardNodes:app.roadNetworkNodes || [], players:P,
       lastEvent:app.lastEventForSync || null, eventSeq:app.eventSeq || 0, goaledPlaces:app.goaledPlaces || [], territory:app.territory || {},
-      rolling:!!app.isRolling, hostUid:myUid(), slot:R.slot, x: extraState() };
+      rolling:!!app.isRolling, hostUid:myUid(), slot:R.slot, afk: R.afkLeft == null ? null : R.afkLeft, x: extraState() };
   }
   // ver1.2.3：ほかの機能が盤面に足すもの（競艇・アイテムなど）
   function extraState(){
@@ -31641,8 +29688,24 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function broadcast(msg, exceptUid){
     R.conns.forEach((e, uid)=>{ if(uid === exceptUid) return; try{ send(e.conn, msg); }catch(_){} });
   }
+  // 【ver1.2.11】参加した人の「30秒なにもしなければ自動」は、サイコロを待っている時間だけ数えます
+  //   これまでは番が来た時点から数えていたため、コマの移動・お知らせ・ミニゲームなどの時間も入り、
+  //   参加した人が何もできないうちに自動で進むことがありました（もう一度振るときは、すぐ自動になっていました）
+  function afkWatch(){
+    const cp = (app.players || [])[app.currentPlayerIdx];
+    if(!cp || !cp.remoteHuman){ R.afkLeft = null; return; }
+    const key = app.currentPlayerIdx + ':' + app.turnCount;
+    if(R.turnKey !== key){ R.turnKey = key; R.turnAt = now(); }
+    let busy = false;
+    try{ busy = !!(app.isRolling || app.miniGameActive || app.boatRaceActive || app.regionalMiniGame || (app.__mpUiBusy && app.__mpUiBusy()) ||
+      document.querySelector('#edo-mirror-host.show, #edo-mini-common.show, .quiz-modal.show') ); }catch(e){}
+    if(busy){ R.turnAt = now(); R.afkLeft = null; return; }
+    const left = Math.ceil((AFK_MS - (now() - R.turnAt)) / 1000);
+    R.afkLeft = left <= 15 ? Math.max(0, left) : null;
+  }
   function hostTick(){
     if(R.role !== 'host' || !R.conns.size) return;
+    try{ afkWatch(); }catch(e){}
     // 盤面を送ります（変わったとき・2秒ごと）
     const gs = lightState();
     const sig = JSON.stringify(gs);
@@ -31721,7 +29784,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function paintLobby(){
     const panel = g('edo-mp-panel'), btn = g('recruit-btn'); if(!panel || !btn) return;
     const live = R.probe.rooms.length > 0;
-    const fb = !live && R.serverDown && app.__edoOrig_onRecruitButton;   // PeerJS が使えないときは、これまでの方式
+    const fb = false;   // 【ver1.2.12】これまでの方式（Firebase）への切りかえはなくしました
     const on = live || fb;
     panel.classList.toggle('edo-mp-off', !on); panel.classList.toggle('edo-mp-live', !!live);
     if(on){ panel.removeAttribute('aria-disabled'); window.__EDOGAWA_MP_OFF = false; btn.disabled = false; btn.removeAttribute('tabindex'); }
@@ -31745,8 +29808,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{ peer = await getProbePeer(); }
       catch(e){
         R.serverDown = true; hideWait(); R.joining = false;
-        if(app.__edoOrig_onRecruitButton){ snack('直接つながらないため、これまでの方式（Firebase）でマルチプレイを開きます'); try{ app.__edoOrig_onRecruitButton(); }catch(_){} }
-        else alert('通信できませんでした。しばらく経ってからやり直してください。');
+        alert('通信できませんでした。しばらく経ってからやり直してください。');
         return;
       }
       await makeMine();
@@ -31808,6 +29870,86 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       showWait('参加できませんでした', 'ただいま満席状態なので、しばらく経ってからやり直してください', 0, '閉じる');
     }finally{ R.joining = false; }
   }
+  // ════════════════════════════════════════════════════════════
+  //  【ver1.2.12】ほかの人の双六（フィールド）に参加しているあいだ
+  //   ・参加した双六は、この端末の「前回の続き」には保存しません
+  //     （リロードや「続きから遊ぶ」は、参加する前に自分が遊んでいた双六から）
+  //   ・参加した双六で増えた・減った分（所持金・ゴール数・移動マス・能力・買った物件）だけを、
+  //     自分のステータスと、自分の双六の保存データに足します
+  // ════════════════════════════════════════════════════════════
+  // これまでの方式（Firebase）のマルチプレイの保存データは、もう使いません
+  try{ localStorage.removeItem('edogawa_sugoroku_mp_state'); }catch(e){}
+  const FOREIGN_KEY = 'edogawa_mp_foreign_v1';
+  const FR = { on:false, base:null, prof0:null, solo0:null, becoming:false, at:0 };
+  const STAT_KEYS = ['intelligence', 'wealth', 'stamina', 'luck'];
+  const num = (v)=>Number.isFinite(Number(v)) ? Number(v) : 0;
+  const clampSt = (v)=>(window.__EDOGAWA_CLAMP_STAT ? window.__EDOGAWA_CLAMP_STAT(v) : Math.max(1, Math.min(999, Math.round(v))));
+  function pickVals(p){
+    p = p || {};
+    return { money:num(p.money), goals:num(p.goals), movedSquares:num(p.movedSquares), stats:Object.assign({ intelligence:100, wealth:100, stamina:100, luck:100 }, p.stats || {}),
+      props:Array.isArray(p.properties) ? p.properties.length : 0, properties:Array.isArray(p.properties) ? JSON.parse(JSON.stringify(p.properties)) : [] };
+  }
+  function readSolo(){ try{ return JSON.parse(localStorage.getItem(SOLO_KEY) || 'null'); }catch(e){ return null; } }
+  function soloHuman(st){ return st && Array.isArray(st.players) ? (app.__edoHumanSeat ? app.__edoHumanSeat(st.players) : st.players[0]) : null; }
+  function foreignStart(mySeat){
+    let prof = null; try{ prof = app.getUserProfile && app.getUserProfile(); }catch(e){}
+    const st = readSolo(); const h = soloHuman(st);
+    FR.on = true; FR.at = now();
+    FR.base = pickVals(mySeat); FR.prof0 = pickVals(prof); FR.solo0 = h ? pickVals(h) : null;
+    try{ localStorage.setItem(FOREIGN_KEY, JSON.stringify({ at:FR.at })); }catch(e){}
+  }
+  function foreignEnd(){
+    if(!FR.on) return;
+    try{ foreignApply(); }catch(e){}
+    FR.on = false; FR.base = FR.prof0 = FR.solo0 = null;
+    try{ localStorage.removeItem(FOREIGN_KEY); }catch(e){}
+  }
+  // 増えた・減った分を、ステータス（アカウント）と自分の双六の保存データに反映します
+  function foreignApply(){
+    if(!FR.on || !FR.base) return;
+    const me = (app.players || []).find(p=>p && p.uid === myUid()); if(!me) return;
+    const d = { money:num(me.money) - FR.base.money, goals:num(me.goals) - FR.base.goals, movedSquares:num(me.movedSquares) - FR.base.movedSquares, stats:{} };
+    STAT_KEYS.forEach(k=>{ d.stats[k] = num((me.stats || {})[k]) - num(FR.base.stats[k]); });
+    const newProps = Array.isArray(me.properties) ? me.properties.slice(FR.base.props) : [];
+    const put = (dst, b)=>{
+      dst.money = Math.max(0, Math.round(b.money + d.money));
+      dst.goals = Math.max(0, Math.floor(b.goals + d.goals));
+      dst.movedSquares = Math.max(0, Math.floor(b.movedSquares + d.movedSquares));
+      dst.stats = Object.assign({}, dst.stats || {}); STAT_KEYS.forEach(k=>{ dst.stats[k] = clampSt(num(b.stats[k]) + d.stats[k]); });
+      dst.properties = b.properties.concat(JSON.parse(JSON.stringify(newProps)));
+    };
+    try{
+      const prof = app.getUserProfile && app.getUserProfile();
+      if(prof && FR.prof0){ put(prof, FR.prof0); FR.saving = true; try{ app.saveUserProfile && app.saveUserProfile(); }finally{ FR.saving = false; } }
+    }catch(e){}
+    try{
+      const st = readSolo(); const h = soloHuman(st);
+      if(!FR.becoming && st && h && FR.solo0){ put(h, FR.solo0); localStorage.setItem(SOLO_KEY, JSON.stringify(st)); }
+    }catch(e){}
+    try{ app._refreshAccountPanel && app._refreshAccountPanel(); }catch(e){}
+  }
+  // リロードしたとき：参加していた双六のぶんは、もう反映ずみです
+  try{ if(localStorage.getItem(FOREIGN_KEY)) localStorage.removeItem(FOREIGN_KEY); }catch(e){}
+  // 参加しているあいだは、自分の双六の保存データを書きかえません
+  (function(){
+    const save = app.saveGameState;
+    if(typeof save === 'function') app.saveGameState = function(){ if(FR.on){ try{ foreignApply(); }catch(e){} return true; } return save.apply(this, arguments); };
+    const sync = app._syncProfileFromPlayer;
+    if(typeof sync === 'function') app._syncProfileFromPlayer = function(p){
+      if(FR.on){ if(p && p.uid === myUid()) foreignApply(); return; }        // 席の値をそのまま写さず、増えた分だけ足します
+      return sync.apply(this, arguments);
+    };
+    // 自分の双六を開くときは、参加していた双六から抜けます
+    ['resumeSoloGame', 'startGame'].forEach(k=>{
+      const f = app[k]; if(typeof f !== 'function') return;
+      app[k] = function(){ if(!FR.becoming && FR.on){ foreignEnd(); if(R.role === 'guest') leaveGuest(); } return f.apply(this, arguments); };
+    });
+    window.addEventListener('pagehide', ()=>{ try{ foreignApply(); }catch(e){} });
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) try{ foreignApply(); }catch(e){} });
+    setInterval(()=>{ try{ foreignApply(); }catch(e){} }, 3000);
+  })();
+  app.__edoForeign = FR;
+
   // 参加が決まったら、ホストの盤面で双六を開きます
   async function becomeGuest(peer, conn, msg){
     const snap = msg.snap;
@@ -31816,16 +29958,22 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     // 自分の席だけ人間にして「前回の続き」と同じしくみで開きます（自分の保存データは、あとで元にもどします）
     const local = JSON.parse(JSON.stringify(snap));
     local.players.forEach(p=>{ p.isCpu = p.uid !== me; });
+    // 【ver1.2.12】いま遊んでいる自分の双六を保存してから参加します
+    try{ if(!FR.on && inGame() && !app.isMultiplayer && app.saveGameState) app.saveGameState(); }catch(e){}
+    if(FR.on) foreignEnd();
     let backup = null; try{ backup = localStorage.getItem(SOLO_KEY); }catch(e){}
+    foreignStart(local.players.find(p=>p.uid === me));
     try{ localStorage.setItem(SOLO_KEY, JSON.stringify(local)); }catch(e){}
     const destName = snap.currentDestination && snap.currentDestination.name;
+    FR.becoming = true;
     try{
       if(app.closeResumeChoiceModal) try{ app.closeResumeChoiceModal(); }catch(e){}
       await app.resumeSoloGame();
     }finally{
+      FR.becoming = false;
       try{ if(backup != null) localStorage.setItem(SOLO_KEY, backup); else localStorage.removeItem(SOLO_KEY); }catch(e){}
     }
-    if(!app.currentDestination || app.currentDestination.name !== destName) throw new Error('盤面を開けませんでした');
+    if(!app.currentDestination || app.currentDestination.name !== destName){ foreignEnd(); throw new Error('盤面を開けませんでした'); }
     app.isMultiplayer = true; app.isHost = false; app.myUid = me;
     try{ app.cancelAutoRoll && app.cancelAutoRoll(); }catch(e){}
     app.gameStateVersion = 0; app.lastAppliedEventSeq = snap.eventSeq || app.eventSeq || 0;
@@ -31862,8 +30010,26 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(p && p.uid !== rp.uid && !(app.players || []).some(x=>x.uid === rp.uid)){ p.uid = rp.uid; p.name = rp.name; p.avatar = rp.avatar; p.isCpu = !rp.human; refreshIcon(p); }
     });
   }
+  // 【ver1.2.11】自分の番で、あと何秒で自動で振るかを出します（残り15秒から）
+  function afkBadge(gs){
+    let el = g('edo-afk');
+    const cp = gs && (gs.players || [])[gs.currentPlayerIdx];
+    const show = gs && gs.afk != null && cp && cp.uid === R.uid && R.role === 'guest';
+    if(!show){ if(el) el.classList.remove('show'); return; }
+    if(!el){
+      el = document.createElement('div'); el.id = 'edo-afk';
+      el.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 250px);z-index:60;' +
+        'background:rgba(2,8,23,.92);border:2px solid #f59e0b;color:#fde68a;font-weight:900;font-size:13px;border-radius:999px;padding:8px 14px;' +
+        'box-shadow:0 8px 24px rgba(0,0,0,.45);pointer-events:none;display:none;white-space:nowrap';
+      document.body.appendChild(el);
+      const st = document.createElement('style'); st.textContent = '#edo-afk.show{display:block!important}'; document.head.appendChild(st);
+    }
+    el.innerHTML = '🎲 あなたの番です　あと <b>' + gs.afk + '</b> 秒で自動で振ります';
+    el.classList.add('show');
+  }
   function guestMsg(d){
     if(d.type === 'photos'){ addPhotos(d.map); return; }
+    if(d.type === 'state' && d.gs){ try{ afkBadge(d.gs); }catch(e){} }
     if(d.type === 'state' && d.gs){
       if(Array.isArray(d.gs.boardNodes)) R.board = d.gs.boardNodes; else d.gs.boardNodes = R.board || app.roadNetworkNodes || [];
       R.lastStateAt = now(); R.lastGs = d.gs; R.hostUid = d.gs.hostUid || R.hostUid;
