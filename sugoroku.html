@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.2.8 (2026-10-30)';
+    window.__EDOGAWA_VERSION = 'ver1.2.9 (2026-10-30)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -3570,7 +3570,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
 
         // Check URL parameters for Room Joining (Guest Mode)
         const urlParams = new URLSearchParams(window.location.search);
-        const joinRoomId = urlParams.get('room');
+        let joinRoomId = urlParams.get('room');
+        // 【ver1.2.9】?room=0001 のような番号は、いまのマルチプレイ（PeerJS）の双六です。これまでの方式（Firebase）では扱いません
+        if (joinRoomId && /^\d{1,4}$/.test(joinRoomId)) joinRoomId = null;
 
         if (joinRoomId) {
           this.pendingJoinRoomId = joinRoomId;
@@ -11668,7 +11670,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     this._hideAuthScreen(); document.getElementById('lobby-screen')?.classList.remove('hidden');
     this._applyProfileToLobby(); this._refreshAccountPanel(); this.checkSaveData?.();
     // Continue pending QR-room join after onboarding.
-    const room=this.pendingJoinRoomId || new URLSearchParams(location.search).get('room');
+    let room=this.pendingJoinRoomId || new URLSearchParams(location.search).get('room');
+    if(room && /^\d{1,4}$/.test(String(room))) room=null;   // 【ver1.2.9】PeerJS の双六番号は、これまでの方式では扱いません
     if(room && !this._joinStartedAfterAuth){ this._joinStartedAfterAuth=true; this.pendingJoinRoomId=room; setTimeout(()=>this.joinRoomAsGuest?.(room),250); }
   };
 
@@ -33885,6 +33888,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     ['edo-pachi-ask','edo-fish-ask','edo-board-ask'].forEach(id=>{ const e = g(id); if(e && e.classList.contains('show')) closeAsks(); });
   }, 300);
 
+  // 【ver1.2.9】これまでの方式（Firebase）の参加は、PeerJS の双六番号（0001 など）では動かしません
+  const origJoinOld = app.joinRoomAsGuest;
+  if(typeof origJoinOld === 'function'){
+    app.joinRoomAsGuest = function(room){
+      if(room != null && /^\d{1,4}$/.test(String(room))){ try{ g('guest-waiting-modal') && g('guest-waiting-modal').classList.add('hidden'); }catch(e){} return; }
+      return origJoinOld.apply(this, arguments);
+    };
+  }
+  setInterval(()=>{
+    try{ if(app._peer && app._peer.role() === 'guest'){ const m = g('guest-waiting-modal'); if(m && !m.classList.contains('hidden')) m.classList.add('hidden'); } }catch(e){}
+  }, 1000);
   window.__EDOGAWA_V176 = ()=>({ 最初のゴール済み: unlocked(), ターン表示: (g('game-turn-badge') || {}).innerText, オート表示: (g('auto-mode-btn') || {}).innerText });
 })();
 </script>
