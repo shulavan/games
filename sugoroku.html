@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.3.1 (2026-10-30)';
+    window.__EDOGAWA_VERSION = 'ver1.3.2 (2026-10-31)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -32299,6 +32299,110 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   setInterval(watch, 2000);
   window.__EDOGAWA_V178 = ()=>({ 全画面: (fsEl() && (fsEl().id || fsEl().tagName)) || null, 止まっている秒: Math.round((Date.now() - W.since) / 1000), 記録: (window.EdoLog ? window.EdoLog.list().length : 0) });
   window.__EDOGAWA_V178_TEST = { fsGuard, watch, busy, W };
+})();
+</script>
+<script id="edogawa-v179">
+// ════════════════════════════════════════════════════════════
+//  ver1.3.2　ゴールまでのルートが途切れたプレイヤーを、つなぎ直します
+//   ・新しい目的地のルートを作るとき、道の検索（OSRM）につながらないと、
+//     その人のルートが「いまのマスだけ」になり、「あと0マス」のまま、サイコロを振っても進まなくなっていました
+//     （ゴールしないまま、毎回その場のマスのできごとだけが起きる）
+//   ・見回りで見つけたら、道の検索をやり直してルートを作り直します（30秒ごと・その人が動いていないとき）
+//   ・それでもだめなまま、その人がサイコロを振ったときは、その場でつなぎます
+//       ① 道のつながりをたどってゴールまで
+//       ② ほかの人のゴールまでのルートのうち、いちばん近いマスに合流
+//       ③ どちらもないときだけ、ゴールへ直接
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const log = (k, m, d)=>{ try{ window.EdoLog && window.EdoLog.add(k, m, d); }catch(e){} };
+  const N = ()=>app.roadNetworkNodes || [];
+  const authoritative = ()=>!app.isMultiplayer || !!app.isHost;            // 双六を進めている端末だけ（参加した人の端末はホストにまかせます）
+  const norm = (p)=>app.normalizePathIndices ? app.normalizePathIndices(p || []) : (p || []);
+  function broken(p){
+    if(!p || p.isFlying) return false;
+    const goal = app.goalNodeIdx; if(!Number.isInteger(goal) || !N()[goal]) return false;
+    if(p.currentNodeIdx === goal) return false;
+    const path = norm(p.path);
+    return !path.length || path[path.length - 1] !== goal;
+  }
+  const dist = (a, b)=>{ try{ return app.haversineMeters(a, b); }catch(e){ return Infinity; } };
+  // その場でつなぐ（すぐに使えるもの）
+  function patchNow(p, why){
+    const goal = app.goalNodeIdx, cur = p.currentNodeIdx, nodes = N();
+    let path = null, how = '';
+    // ① 道のつながり
+    try{
+      const r = app.findShortestPath({ nodes }, cur, goal);
+      if(Array.isArray(r) && r.length >= 2 && r[r.length - 1] === goal){ path = r; how = '道をたどって'; }
+    }catch(e){}
+    // ② ほかの人のルートに合流
+    if(!path){
+      let best = null;
+      (app.players || []).forEach(o=>{
+        if(!o || o === p) return;
+        const op = norm(o.path); if(!op.length || op[op.length - 1] !== goal) return;
+        for(let k = Math.max(0, o.pathIndex || 0); k < op.length; k++){
+          const d = dist(nodes[cur], nodes[op[k]]);
+          if(!best || d < best.d) best = { d, rest:op.slice(k) };
+        }
+      });
+      if(best){ path = best.rest[0] === cur ? best.rest : [cur].concat(best.rest); how = 'ほかの人のルートに合流して（' + Math.round(best.d) + 'm）'; }
+    }
+    // ③ ゴールへ直接
+    if(!path){ path = [cur, goal]; how = 'ゴールへ直接'; }
+    p.path = norm(path); p.pathIndex = 0;
+    try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); }catch(e){}
+    try{ app.updateHUD && app.updateHUD(); }catch(e){}
+    log('スキップ', p.name + 'のゴールまでのルートが途切れていたので、' + how + 'つなぎ直しました（' + why + '）', 'node=' + cur + ' goal=' + goal + ' len=' + p.path.length);
+    return true;
+  }
+  // 道の検索をやり直して、きちんとしたルートを作る
+  const tried = {};
+  async function rebuild(p){
+    const goalLoc = app.currentDestination, from = N()[p.currentNodeIdx];
+    if(!goalLoc || !from || typeof app.buildPlayerOwnBranch !== 'function') return false;
+    const keep = { path:(p.path || []).slice(), pathIndex:p.pathIndex, node:p.currentNodeIdx };
+    try{
+      const ok = await app.buildPlayerOwnBranch(p, { lat:from.lat, lng:from.lng }, goalLoc);
+      if(ok !== false && !broken(p)){
+        p.pathIndex = 0;
+        try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+        log('スキップ', p.name + 'のゴールまでのルートが途切れていたので、道を検索しなおしてつなぎ直しました');
+        return true;
+      }
+    }catch(e){}
+    // だめだったときは、もとのまま（その人が振るときに、その場でつなぎます）
+    if(broken(p)){ p.path = keep.path; p.pathIndex = keep.pathIndex; p.currentNodeIdx = keep.node; }
+    return false;
+  }
+  setInterval(()=>{
+    try{
+      if(!authoritative() || !Array.isArray(app.players)) return;
+      const lob = document.getElementById('lobby-screen'); if(!lob || !lob.classList.contains('hidden')) return;
+      app.players.forEach((p, i)=>{
+        if(!broken(p)) return;
+        if(i === app.currentPlayerIdx && app.isRolling) return;                  // 動いている人はさわりません
+        const k = p.id + ':' + app.goalNodeIdx;
+        if(tried[k] && Date.now() - tried[k] < 30000) return;
+        tried[k] = Date.now();
+        rebuild(p);
+      });
+    }catch(e){}
+  }, 2000);
+  // サイコロを振って進むとき：まだ途切れていたら、その場でつなぎます
+  const origMove = app.movePlayerSteps;
+  if(typeof origMove === 'function') app.movePlayerSteps = function(player, totalSteps, stepDelay, silent){
+    try{
+      if(authoritative() && broken(player) && Number(totalSteps) > 0){
+        const path = norm(player.path), at = Math.max(0, Math.min(player.pathIndex || 0, path.length - 1));
+        if(path.length - 1 - at <= 0) patchNow(player, 'サイコロを振ったとき');
+      }
+    }catch(e){ console.warn('[v179]', e); }
+    return origMove.apply(this, arguments);
+  };
+  window.__EDOGAWA_V179_TEST = { broken, patchNow, rebuild };
 })();
 </script>
 <script id="edogawa-v39-footer">
