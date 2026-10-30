@@ -610,8 +610,6 @@
       position: absolute; left: 2px; top: 50%; transform: translateY(-50%);
       font-size: 10px; font-weight: 900; color: rgba(255,255,255,0.6); z-index: 2;
     }
-    .bet-item.hit { animation: bet-hit-blink 0.5s ease-in-out 3; }
-    @keyframes bet-hit-blink { 0%, 100% { background: rgba(2,6,23,0.6); } 50% { background: rgba(245, 158, 11, 0.4); } }
 
     /* 出走表（1号艇〜5号艇）。1行に収まるように大きめ＋折り返し禁止 */
     .br-entry-list { font-size: 13.5px; line-height: 1.45; }
@@ -674,29 +672,6 @@
     .br-line-start { position: absolute; left: 9%; top: 0; bottom: 0; width: 3px; background: #facc15; opacity: 0.85; z-index: 1; }
     .br-line-goal { position: absolute; right: 8%; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(0deg, #fff, #fff 5px, #ef4444 5px, #ef4444 10px); opacity: 0.9; z-index: 1; }
 
-    .kingyo-fish.reverse { animation-name: kingyo-swim-left; }
-    @keyframes kingyo-swim-right {
-      0% { left: -12%; transform: translateY(0) rotate(-4deg) scaleX(-1); }
-      25% { transform: translateY(-11px) rotate(4deg) scaleX(-1); }
-      50% { left: 48%; transform: translateY(9px) rotate(-4deg) scaleX(-1); }
-      75% { transform: translateY(-9px) rotate(4deg) scaleX(-1); }
-      100% { left: 108%; transform: translateY(0) rotate(-4deg) scaleX(-1); }
-    }
-    @keyframes kingyo-swim-left {
-      0% { left: 108%; transform: translateY(0) rotate(4deg) scaleX(1); }
-      25% { transform: translateY(10px) rotate(-4deg) scaleX(1); }
-      50% { left: 48%; transform: translateY(-9px) rotate(4deg) scaleX(1); }
-      75% { transform: translateY(9px) rotate(-4deg) scaleX(1); }
-      100% { left: -12%; transform: translateY(0) rotate(4deg) scaleX(1); }
-    }
-    @keyframes kingyo-caught {
-      0% { transform: translateY(0) scale(1); opacity: 1; }
-      100% { transform: translateY(-95px) scale(1.12); opacity: 0; }
-    }
-    @keyframes kingyo-spook {
-      0% { opacity: 1; }
-      100% { opacity: 0; }
-    }
 
     /* ゴール画面のジャンルボタン。文字を大きくしても1行に収まるよう調整 */
     .cat-btn > div { min-width: 0; }
@@ -727,6 +702,29 @@
   .edo-mp-tag{ display:inline-block; font-size:9px; font-weight:900; color:#0f172a;
     background:#94a3b8; border-radius:999px; padding:2px 8px; letter-spacing:.06em; }
 </style>
+<script id="edogawa-common">
+// ════════════════════════════════════════════════════════════
+//  【ver1.3.0 整理】共通の小さな関数（各スクリプトで同じものを何度も定義していたので、ここにまとめました）
+//   EdoU.esc(v)   … HTML用に & < > " ' を置きかえます（null/undefined は空文字）
+//   EdoU.g(id)    … document.getElementById
+//   EdoU.yen(v)   … ￥1,234（四捨五入。マイナスは「￥-1,234」）
+//   EdoU.yenS(v)  … 符号つき ￥1,234 ／ -￥1,234
+//   EdoU.sleep(ms)・EdoU.now()
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const MAP = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+  const U = {
+    esc: (v)=>String(v == null ? '' : v).replace(/[&<>"']/g, (c)=>MAP[c]),
+    g: (id)=>document.getElementById(id),
+    yen: (v)=>'￥' + Math.round(Number(v) || 0).toLocaleString('ja-JP'),
+    yenS: (v)=>{ v = Math.round(Number(v) || 0); return (v < 0 ? '-￥' : '￥') + Math.abs(v).toLocaleString('ja-JP'); },
+    sleep: (ms)=>new Promise((r)=>setTimeout(r, ms)),
+    now: ()=>Date.now()
+  };
+  window.EdoU = Object.freeze(U);
+})();
+</script>
 <script id="edogawa-mp-off-js">
 (function(){
   'use strict';
@@ -1546,11 +1544,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
   <!-- 【ver1.2.12】host-absent-modal（これまでの方式のマルチプレイ）は削除しました -->
 
   <!-- OVERLAY: ホスト接続の確認中 -->
-  <div data-app="1" id="host-check-overlay" class="hidden fixed inset-0 z-[86] bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 gap-3">
-    <div class="text-4xl animate-pulse">📡</div>
-    <p class="text-sm text-amber-300 font-bold text-center">ホストの接続を確認しています…</p>
-    <p class="text-[11px] text-slate-400 text-center">数秒お待ちください</p>
-  </div>
+  <!-- 【ver1.3.0 整理】host-check-overlay（これまでの方式のマルチプレイ）は削除しました -->
 
   <!-- OVERLAY: ANGELS FLYING + ROCKET GIFT ANNOUNCEMENT -->
   <div data-app="1" id="rocket-gift-modal" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
@@ -3458,16 +3452,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         }
       },
 
-      checkNickname() {
-        const cached = localStorage.getItem("edogawa_sugoroku_nickname");
-        if (cached) {
-          const input = document.getElementById("player-name-input");
-          if (input) input.value = cached;
-        } else {
-          const modal = document.getElementById("nickname-modal");
-          if (modal) modal.classList.remove("hidden");
-        }
-      },
+      /* 【ver1.3.0 整理】checkNickname：あとの版で置きかえられていたため削除 */
 
       confirmNickname() {
         const input = document.getElementById("nickname-modal-input");
@@ -3532,15 +3517,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         this.map.flyTo([this.currentDestination.lat, this.currentDestination.lng], 19, { duration: 0.8 });
       },
 
-      panToPlayer(idx) {
-        if (!this.canActNow()) return;
-        const player = this.players[idx];
-        if (!player || !this.map || !this.roadNetworkNodes) return;
-        const node = this.roadNetworkNodes[player.currentNodeIdx];
-        if (node) {
-          this.map.flyTo([node.lat, node.lng], 19, { duration: 0.8 });
-        }
-      },
+      /* 【ver1.3.0 整理】panToPlayer：あとの版で置きかえられていたため削除 */
 
       renderAvatarGrid() {
         const grid = document.getElementById("character-grid");
@@ -3567,12 +3544,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       // LINEアプリ（またはLINE公式のWeb共有）を開き、招待URLを遠方の友達にも送れるようにする。
       // トップページの「LINEで紹介」ボタン。部屋への招待ではなく、
       // ゲーム自体（公開URL）を友だちに紹介するための共有。
-      shareGameViaLine() {
-        const text = encodeURIComponent(
-          `江戸川双六🎲\n江戸川区のリアルな地図の上をサイコロで進むスマホすごろく！\nCPU対戦・QRコードで最大4人プレイ。クイズや金魚すくい、江戸川競艇のミニゲームも！\n${GAME_SHARE_URL}`
-        );
-        window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
-      },
+      /* 【ver1.3.0 整理】shareGameViaLine：あとの版で置きかえられていたため削除 */
 
       // 【ver1.2.12】これまでの方式（Firebase）のマルチプレイは削除しました
       shareRoomViaLine() {},
@@ -3962,7 +3934,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         if (rLabel) {
           if (mp) {
             const host = mp.isHost ? '自分' : (mp.hostName || 'ホスト');
-            const esc = (v) => String(v).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+            const esc = EdoU.esc;
             rLabel.innerHTML = `前回の続き<br>（ホスト：${esc(host)}）`;
             if (rEmoji) rEmoji.textContent = '💾';
           } else {
@@ -5128,7 +5100,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         if (!host) return;
         const list = (rows || []).filter(r => r && r.value !== '' && r.value !== null && r.value !== undefined);
         if (!list.length) { host.innerHTML = ''; host.classList.add('hidden'); return; }
-        const esc = (v) => String(v).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+        const esc = EdoU.esc;
         host.innerHTML = list.map(r => `
           <div class="flex items-start gap-2">
             <span class="text-[13px] text-slate-400 shrink-0 pt-1 w-[62px]">${esc(r.label)}</span>
@@ -6076,16 +6048,10 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       },
 
       // 所持金の表示。マイナスは「-￥1,234」の形にする（赤字であることが一目でわかるように）。
-      formatMoney(value) {
-        const n = Math.round(Number(value) || 0);
-        return n < 0 ? `-￥${Math.abs(n).toLocaleString('ja-JP')}` : `￥${n.toLocaleString('ja-JP')}`;
-      },
+      /* 【ver1.3.0 整理】formatMoney：あとの版で置きかえられていたため削除 */
 
       // フッターのカード用（万円表示）。マイナスは「-1.2万」。
-      formatMoneyMan(value) {
-        const n = Number(value) || 0;
-        return (n < 0 ? '-' : '') + (Math.abs(n) / 10000).toFixed(1) + '万';
-      },
+      /* 【ver1.3.0 整理】formatMoneyMan：あとの版で置きかえられていたため削除 */
 
       // 「ビリ」＝盤上で最も遅れている人（ゴールまでの残りマスが最も多い人）を返す。
       // ・ゴールした本人（1着）は対象外
@@ -7065,25 +7031,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
 
       // 黄★マス：4種類のミニゲームを均等確率でランダム表示。
       // 緑▲の競艇／左近川カヌーとは完全に別枠。
-      resolveStarEvent(player) {
-        // ★マスは、このターンをミニゲームへ引き渡す専用入口。
-        // 以前は SPECIAL_EVENT_ROTATION / startQuizInvite / startKingyoInvite が
-        // 最新HTMLに存在しない状態で呼ばれていたため、ここで例外が発生し、
-        // isRolling=true のままターンが進まず「フリーズ」していました。
-        // 【v125】★マスは「クイズ → 金魚 → 船堀タワー → 大観覧車 → 飛行隊」の
-        //         順番で必ず持ち回ります（ランダムだと出ない種類があったため）。
-        const rotation = ['quiz', 'kingyo', 'tower', 'wheel'];
-        if (typeof this.starRotationIdx !== 'number') this.starRotationIdx = 0;
-        const kind = rotation[this.starRotationIdx % rotation.length];
-        this.starRotationIdx = (this.starRotationIdx + 1) % rotation.length;
-        this.lastStarMiniGameKind = kind;
-        this.miniGameActive = true;
-        this.activeMiniGamePlayerId = player.id;
-
-        if (kind === 'quiz') this.startQuizInvite(player);
-        else if (kind === 'kingyo') this.startKingyoInvite(player);
-        else this.openRegionalMiniGame(kind, player);
-      },
+      /* 【ver1.3.0 整理】resolveStarEvent：あとの版で置きかえられていたため削除 */
 
       finishMiniGameTurn(player, logText = '') {
         const p = player || this.players[this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
@@ -7523,24 +7471,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         setTimeout(()=>{send();sendPlayer();sendCanoePlayers();},400);
       },
 
-      applyRegionalMiniGameResult(data){
-        const st=this.regionalMiniGame;if(!st||st.done)return;st.done=true;
-        if(st.game==='canoe' && Array.isArray(data.results)){
-          data.results.forEach(r=>{const p=this.players?.find(x=>Number(x.id)===Number(r.id));if(!p)return;const delta=Number(r.delta)||0;p.money=Math.max(0,(Number(p.money)||0)+delta);this.addLog(`🚣‍♂️ ${p.name}：左近川カヌー ${Number(r.rank)||0}位 ${delta>=0?'＋':''}¥${delta.toLocaleString()}（現在 ${this.formatMoney(p.money)}）`);});
-          this.updateHUD();if(this.saveGameState)this.saveGameState();return;
-        }
-        const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));const delta=Number(data.delta)||0;
-        if(p){p.money=Math.max(0,(Number(p.money)||0)+delta);this.updateHUD();this.addLog(`🎮 ${p.name}：${st.game==='tower'?'🏗増築船堀タワー':st.game==='wheel'?'🎡大観覧車':st.game==='canoe'?'🚣‍♂️左近川カヌー':st.game==='hotel'?'🏨江戸川ホテル物語':st.game==='bus'?'🚌江戸川GoGoバス乗車':st.game==='toilet'?'🚻公園トイレ脱出大作戦':st.game==='lunch'?'🍱えどがわ給食当番':st.game==='mart'?'🛒Edogawaマート':st.game==='clinic'?'🏥江戸川診療所':st.game==='plane'?'✈️江戸川飛行隊':'🐟金魚すくい'} ${delta>=0?'＋':''}¥${delta.toLocaleString()}（現在 ${this.formatMoney(p.money)}）`);if(this.saveGameState)this.saveGameState();}
-      },
+      /* 【ver1.3.0 整理】applyRegionalMiniGameResult：あとの版で置きかえられていたため削除 */
 
-      closeRegionalMiniGame(){
-        const st=this.regionalMiniGame;if(!st||st.closing)return;st.closing=true;
-        const o=document.getElementById('regional-mini-overlay'),f=document.getElementById('regional-mini-frame');
-        if(f){ window.__EDOGAWA_UNLOAD_GAME(f); }
-        o?.classList.add('hidden'); const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));
-        this.regionalMiniGame=null;this.miniGameActive=false;this.activeMiniGamePlayerId=null;
-        if(p)this.finishMiniGameTurn(p);
-      },
+      /* 【ver1.3.0 整理】closeRegionalMiniGame：あとの版で置きかえられていたため削除 */
 
       async teleportPlayer(player, targetLoc) {
         let osrmPath = await this.fetchStreetRouteOSRM(targetLoc, this.currentDestination);
@@ -7751,37 +7684,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         this.startPostGoalMiniGameThenAmida(player);
       },
 
-      getGoalMiniGameKey(category) {
-        const GOAL_MINIGAMES = {
-          '宿泊施設': 'hotel',
-          '駅（バス停含む）': 'bus',
-          '公園': 'toilet',
-          '学校・神社仏閣': 'lunch',
-          'スーパー（薬屋含む）': 'mart',
-          '病院': 'clinic'
-        };
-        return GOAL_MINIGAMES[category] || null;
-      },
+      /* 【ver1.3.0 整理】getGoalMiniGameKey：あとの版で置きかえられていたため削除 */
 
-      startPostGoalMiniGameThenAmida(player) {
-        const gameKey = this.getGoalMiniGameKey(this.currentDestinationCategory);
-        if (!gameKey || !player) {
-          this.startGoalAmida(player);
-          return;
-        }
-        // ミニゲームが閉じたタイミングで、通常のターン継続処理ではなくあみだくじへ
-        // 進めるための目印。finishMiniGameTurn() 側で拾う。
-        this._pendingGoalAmidaPlayer = player;
-        setTimeout(() => {
-          try {
-            this.openRegionalMiniGame(gameKey, player);
-          } catch (e) {
-            console.error("ゴール後ミニゲームの起動処理でエラー:", e);
-            this._pendingGoalAmidaPlayer = null;
-            this.startGoalAmida(player);
-          }
-        }, 400);
-      },
+      /* 【ver1.3.0 整理】startPostGoalMiniGameThenAmida：あとの版で置きかえられていたため削除 */
 
       // ゴールした瞬間に「近くの飲食店」APIを先読みしておく（ルーレットの待ち時間対策）。
       // 失敗しても何もしない＝カテゴリ選択時に通常どおり取得しにいく。
@@ -9036,21 +8941,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         this._showBoatRaceScreen('boatrace-buy-screen');
       },
 
-      _updateBoatRaceBuyPayout() {
-        const st = this.boatRaceState;
-        const el = document.getElementById('boatrace-buy-payout');
-        if (!el || !st || !this.boatRaceSelectedPair) return;
-        const odds = parseFloat(st.odds[this.boatRaceSelectedPair] || '1');
-        const amt = this.boatRaceSelectedAmount || 0;
-        el.textContent = `的中したら 払戻 ¥${Math.floor(amt * odds).toLocaleString()}`;
-      },
+      /* 【ver1.3.0 整理】_updateBoatRaceBuyPayout：あとの版で置きかえられていたため削除 */
 
-      boatRaceSetBetAmount(amount) {
-        this.boatRaceSelectedAmount = amount;
-        const el = document.getElementById('boatrace-buy-amount-display');
-        if (el) el.textContent = `¥${amount.toLocaleString()}`;
-        this._updateBoatRaceBuyPayout();
-      },
+      /* 【ver1.3.0 整理】boatRaceSetBetAmount：あとの版で置きかえられていたため削除 */
 
       async confirmBoatRaceBet() {
         const amount = this.boatRaceSelectedAmount || 1000;
@@ -9821,31 +9714,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       },
 
       // 初回起動時だけ同意モーダルを出す。2回目以降は前回の選択に従う。
-      initConsent() {
-        const c = this.readConsent();
-        if (c === 'granted' || c === 'denied') {
-          if (c === 'granted') this.enableAnalytics();
-          // 同意済みの人は同意画面が出ないので、ここで入場枠を確認する
-          this.checkEntryAllowed().then(ok => { if (!ok) this.showEntryLimit(); });
-          return;
-        }
-        document.getElementById('consent-modal')?.classList.remove('hidden');
-      },
+      /* 【ver1.3.0 整理】initConsent：あとの版で置きかえられていたため削除 */
 
-      acceptConsent(granted) {
-        try { localStorage.setItem(CONSENT_KEY, granted ? 'granted' : 'denied'); } catch (e) {}
-        document.getElementById('consent-modal')?.classList.add('hidden');
-        if (granted) this.enableAnalytics();
-        try { sound.init(); } catch (e) {}
-        this.refreshSettingsModal();
-        // 同意のあとに、本日の入場枠を確認する。
-        // 空きがあればそのまま、上限なら「入場制限」の案内を出す。
-        this.checkEntryAllowed().then(ok => {
-          if (!ok) { this.showEntryLimit(); return; }
-          // 初回だけ、「アプリとしてインストール」の案内を出す。
-          setTimeout(() => this.maybeShowInstallHint(), 400);
-        });
-      },
+      /* 【ver1.3.0 整理】acceptConsent：あとの版で置きかえられていたため削除 */
 
       // ============================================================
       // 1日の入場制限
@@ -10070,14 +9941,7 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         this.openInstallModal();
       },
 
-      settingsClearSaves() {
-        try {
-          localStorage.removeItem(SOLO_SAVE_KEY);
-          localStorage.removeItem(MP_SAVE_KEY);
-        } catch (e) {}
-        this.checkSaveData();
-        this.refreshSettingsModal();
-      },
+      /* 【ver1.3.0 整理】settingsClearSaves：あとの版で置きかえられていたため削除 */
 
       _saveUserSettings() {
         try {
@@ -10286,7 +10150,7 @@ if(window.EdogawaSugoroku)window.EdogawaSugoroku._updateFullscreenClass();
  if(!app){console.error('[integrated] EdogawaSugoroku not found');return;}
  const NEW_GAMES=new Set(['delivery','hide','kanken']);
  const META={delivery:{title:'🛵 江戸川出前ライダー',icon:'🛵'},hide:{title:'🏢 江戸川区新庁舎 かくれんぼ',icon:'🏢'},kanken:{title:'漢 いきなり漢字書き取りテスト',icon:'漢'}};
- const oldGoal=app.getGoalMiniGameKey?app.getGoalMiniGameKey.bind(app):null;
+ /* 【ver1.3.0 整理】使っていない oldGoal を削除 */
  /* getGoalMiniGameKey：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
  app.resolveStarEvent=function(p){if(!p)return;/* ★マス：タワーと大観覧車は▲マスへ移したので外し、木の実ドロボーと果実射撃を追加 *//* 【v125】ランダムだと出ない種類があったので、必ず順番に持ち回ります */const a=['quiz','kingyo','kanken','nuts','archery'];if(typeof this.starRotationIdx!=='number')this.starRotationIdx=0;const k=a[this.starRotationIdx%a.length];this.starRotationIdx=(this.starRotationIdx+1)%a.length;this.lastStarMiniGameKind=k;this.miniGameActive=true;this.activeMiniGamePlayerId=p.id;if(k==='quiz')this.startQuizInvite(p);else if(k==='kingyo')this.startKingyoInvite(p);else this.openRegionalMiniGame(k,p);};
  const oldOpen=app.openRegionalMiniGame?app.openRegionalMiniGame.bind(app):null;
@@ -10305,8 +10169,8 @@ if(window.EdogawaSugoroku)window.EdogawaSugoroku._updateFullscreenClass();
    frame.onload=sendInit;frame.style.display='block';overlay.classList.remove('hidden');window.__EDOGAWA_LOAD_GAME(frame,game);setTimeout(()=>{if(!this.regionalMiniGame||this.regionalMiniGame.game!==game)return;try{const bodyText=frame.contentDocument?.body?.innerText||'';const hasBody=!!frame.contentDocument?.body;if(!hasBody){const label=document.getElementById('regional-mini-loading');if(label)label.querySelector('div div:last-child').textContent='ミニゲーム画面を読み込めませんでした。再試行してください。';}}catch(e){}},4500);setTimeout(sendInit,1200);setTimeout(()=>{if(frame.contentDocument&&frame.contentDocument.readyState!=='loading')sendInit();},250);
  };
  app.startIntegratedCpuMiniGame=function(game,p){this.miniGameActive=true;this.activeMiniGamePlayerId=p.id;this.regionalMiniGame={game,playerId:p.id,done:false,integrated:true,cpuResultOnly:true};let score=0,delta=0,success=true,detail='';if(game==='delivery'){score=50+Math.floor(Math.random()*51);delta=score*100;detail=`ステージ1クリア：評価点 ${score}点 × ¥100`;}else if(game==='hide'){success=true;delta=10000;detail='区長を発見！クリア賞金 ¥10,000';}else{score=30+Math.floor(Math.random()*71);delta=score*100;detail=`採点 ${score}点 × ¥100`;}this.applyIntegratedMiniGameResult({type:'EDOGAWA_MINIGAME_RESULT',game,score,delta,prize:delta,success,detail});};
- app.applyIntegratedMiniGameResult=function(data){const st=this.regionalMiniGame;if(!st||st.done||!NEW_GAMES.has(st.game))return;st.done=true;const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));if(!p){this.closeIntegratedMiniGameResult(true);return;}const delta=Math.max(0,Math.round(Number(data.delta??data.prize)||0));p.money=Math.max(0,(Number(p.money)||0)+delta);const meta=META[st.game],score=Number(data.score);let desc=String(data.detail||'').replace(/[<>]/g,'');if(st.game==='delivery'&&Number.isFinite(score))desc=`ステージ1クリア：評価点 ${score}点 × ¥100 = ＋¥${delta.toLocaleString('ja-JP')}`;if(st.game==='kanken'&&Number.isFinite(score))desc=`採点 ${score}点 × ¥100 = ＋¥${delta.toLocaleString('ja-JP')}`;if(st.game==='hide')desc=data.success?`区長室に到達しました。クリア賞金 ＋¥${delta.toLocaleString('ja-JP')}`:`時間切れ。参加賞 ＋¥${delta.toLocaleString('ja-JP')}`;this.updateHUD();this.saveGameState?.();this.addLog(`🎮 ${p.name}：${meta.title} ${desc}（現在 ${this.formatMoney(p.money)}）`);document.getElementById('regional-mini-frame')?.style.setProperty('display','none');document.getElementById('regional-mini-loading')?.style.setProperty('display','none');document.getElementById('integrated-mini-result-icon').textContent=meta.icon;document.getElementById('integrated-mini-result-title').textContent=meta.title;document.getElementById('integrated-mini-result-desc').textContent=desc;document.getElementById('integrated-mini-result-reward').textContent=`＋¥${delta.toLocaleString('ja-JP')}`;document.getElementById('integrated-mini-result-money').textContent=`${p.name} の現在の所持金：${this.formatMoney(p.money)}`;document.getElementById('integrated-mini-result').classList.remove('hidden');this._startIntegratedMiniResultCountdown();};
- const oldApply=app.applyRegionalMiniGameResult?app.applyRegionalMiniGameResult.bind(app):null;app.applyRegionalMiniGameResult=function(d){const st=this.regionalMiniGame;if(st?.integrated&&NEW_GAMES.has(st.game))return this.applyIntegratedMiniGameResult(d);return oldApply?oldApply(d):undefined;};
+ /* 【ver1.3.0 整理】applyIntegratedMiniGameResult：あとの版で置きかえられていたため削除 */
+ /* 【ver1.3.0 整理】使っていない oldApply を削除 *//* 【ver1.3.0 整理】applyRegionalMiniGameResult：あとの版で置きかえられていたため削除 */
  
 app._integratedMiniResultTimer=null;app._integratedMiniResultInterval=null;
  app._startIntegratedMiniResultCountdown=function(){
@@ -10349,7 +10213,7 @@ app._integratedMiniResultTimer=null;app._integratedMiniResultInterval=null;
    this.activeMiniGamePlayerId=null;
    if(!force&&p)this.finishMiniGameTurn(p);
  };
- const oldClose=app.closeRegionalMiniGame?app.closeRegionalMiniGame.bind(app):null;app.closeRegionalMiniGame=function(){const st=this.regionalMiniGame;if(st?.integrated&&NEW_GAMES.has(st.game))return this.closeIntegratedMiniGameResult(false);return oldClose?oldClose():undefined;};
+ /* 【ver1.3.0 整理】使っていない oldClose を削除 *//* 【ver1.3.0 整理】closeRegionalMiniGame：あとの版で置きかえられていたため削除 */
  window.addEventListener('message',e=>{const d=e.data||{};if(NEW_GAMES.has(d.game)&&d.type==='EDOGAWA_MINIGAME_RENDERED')document.getElementById('regional-mini-loading')?.style.setProperty('display','none');if(NEW_GAMES.has(d.game)&&d.type==='EDOGAWA_MINIGAME_RESULT')app.applyIntegratedMiniGameResult(d);});
 document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getElementById('integrated-mini-result')?.classList.contains('hidden')){try{window.EdogawaSugoroku.closeIntegratedMiniGameResult(false);}catch(_){} }});
 })();
@@ -10415,7 +10279,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   const statsDefault = {intelligence:100,wealth:100,stamina:100,luck:100};
   const emojiPool = (Array.isArray(app.selectedAvatar) ? app.selectedAvatar : null);
 
-  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
   const validNum = (v, fallback=0) => Number.isFinite(Number(v)) ? Number(v) : fallback;
   function clampStat(v){ return Math.max(1, Math.min(999, Math.round(validNum(v,100)))); }
   try{ window.__EDOGAWA_CLAMP_STAT = clampStat; }catch(e){}
@@ -10646,7 +10510,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const box=m.firstElementChild; if(!box)return;
     box.innerHTML=`<div class="text-center mb-3"><div class="text-3xl">🎲</div><h2 class="font-mincho text-lg font-bold text-amber-400 mt-1">江戸川双六 利用規約</h2></div><div class="text-xs text-slate-300 leading-relaxed max-h-[42vh] overflow-y-auto bg-slate-950/60 rounded-xl p-3 border border-slate-800"><p>このゲームは江戸川区の実際の地図・施設情報を利用した個人制作ゲームです。ゲームを利用することで、利用規約・プライバシーポリシー・出典表示に同意するものとします。</p><p class="mt-2">LINEログインを利用する場合は、LINEから提供されるユーザーID、表示名、プロフィール画像をログイン・初期設定に使用します。</p><p class="mt-2">詳細は「利用規約」「プライバシーポリシー」を確認してください。</p></div><div class="grid grid-cols-2 gap-2 mt-4"><button onclick="EdogawaSugoroku.openDocModal('terms')" class="bg-slate-800 border border-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-bold">利用規約</button><button onclick="EdogawaSugoroku.openDocModal('privacy')" class="bg-slate-800 border border-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-bold">プライバシー</button></div><button onclick="EdogawaSugoroku.acceptConsent(true)" class="w-full mt-3 bg-gradient-to-b from-amber-500 to-amber-600 text-slate-950 font-black py-3 rounded-xl">同意する</button>`;
   };
-  const originalAccept=app.acceptConsent?.bind(app);
+  /* 【ver1.3.0 整理】使っていない originalAccept を削除 */
   app.initConsent=function(){
     injectUi(); this._rewriteConsentModal();
     if(!this._hasTermsConsent()){
@@ -10839,7 +10703,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   };
 
   // Settings: replace clear-save behavior with full account/OAuth reset.
-  const oldClear=app.settingsClearSaves?.bind(app);
+  /* 【ver1.3.0 整理】使っていない oldClear を削除 */
   app.settingsClearSaves=function(){
     clearTimeout(this._profilePersistTimer);
     try{localStorage.removeItem(SOLO_SAVE_KEY);localStorage.removeItem(MP_SAVE_KEY);}catch(e){}
@@ -10860,42 +10724,17 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     const price=this.propertyPrice(cat); if(validNum(player.money,0)<price)return null;
     const dest=this.currentDestination||{};return {name:dest.name,category:cat,price,lat:validNum(dest.lat,0),lng:validNum(dest.lng,0)};
   };
-  app._openPropertyOfferForGoal=function(player,continueFn){
-    const offer=this.getPropertyOffer(player); if(!offer){continueFn();return;}
-    if(player.isCpu){player.money-=offer.price;player.properties=player.properties||[];player.properties.push({...offer,purchasedAt:Date.now()});this.addLog(`🏠 ${player.name} が ${offer.name} を¥${offer.price.toLocaleString()}で購入！`);this.updateHUD();this.scheduleProfilePersist(player);continueFn();return;}
-    this._pendingPropertyOffer={player,offer,continueFn};const m=document.getElementById('edogawa-property-modal');document.getElementById('edo-prop-name').textContent=offer.name;document.getElementById('edo-prop-price').textContent=`¥${offer.price.toLocaleString('ja-JP')}`;m.classList.add('show');
-  };
+  /* 【ver1.3.0 整理】_openPropertyOfferForGoal：あとの版で置きかえられていたため削除 */
   // injectUi() runs later in this script, so bind through the document instead of the (not yet created) buttons.
-  app._closePropertyOffer=function(buy){
-    const x=this._pendingPropertyOffer; this._pendingPropertyOffer=null;
-    document.getElementById('edogawa-property-modal')?.classList.remove('show');
-    if(buy&&x?.player&&x.offer&&validNum(x.player.money,0)>=x.offer.price){
-      x.player.money-=x.offer.price;
-      x.player.properties=x.player.properties||[];
-      x.player.properties.push({...x.offer,purchasedAt:Date.now()});
-      this.addLog('🏠 '+x.player.name+' が '+x.offer.name+' を￥'+x.offer.price.toLocaleString('ja-JP')+'で購入！毎ターン1%が収入になります。');
-      this.updateHUD?.(); this.scheduleProfilePersist?.(x.player); this._refreshAccountPanel?.();
-    }
-    x?.continueFn?.();
-  };
+  /* 【ver1.3.0 整理】_closePropertyOffer：あとの版で置きかえられていたため削除 */
   document.addEventListener('click',(ev)=>{
     const t=ev.target?.closest?.('#edo-prop-skip,#edo-prop-buy'); if(!t)return;
     ev.preventDefault(); app._closePropertyOffer(t.id==='edo-prop-buy');
   });
-  const origPost=app.startPostGoalMiniGameThenAmida?.bind(app);
-  app.startPostGoalMiniGameThenAmida=function(player){
-    const cont=()=>origPost?origPost(player):this.startGoalAmida(player);
-    this._openPropertyOfferForGoal(player,cont);
-  };
+  /* 【ver1.3.0 整理】使っていない origPost を削除 */
+  /* 【ver1.3.0 整理】startPostGoalMiniGameThenAmida：あとの版で置きかえられていたため削除 */
 
-  app.applyPropertyIncome=function(){
-    if(!this.players) return; const notices=[];
-    this.players.forEach(p=>{if(!Array.isArray(p.properties)||!p.properties.length)return;let gain=0;p.properties.forEach(prop=>gain+=Math.floor(validNum(prop.price,0)*0.01));if(gain>0){p.money=(Number(p.money)||0)+gain;notices.push({player:p,gain});}});
-    notices.forEach(x=>this.addLog(`🏠 ${x.player.name}：不動産収入 ＋¥${x.gain.toLocaleString()}（毎ターン1%）`));
-    const me=notices.find(x=>!x.player.isCpu && (!this.myUid||x.player.uid===this.myUid)); if(me)this.showStatChanges?.(me.player,[]);
-    notices.forEach(x=>this.scheduleProfilePersist(x.player));
-    this.updateHUD?.();
-  };
+  /* 【ver1.3.0 整理】applyPropertyIncome：あとの版で置きかえられていたため削除 */
   const origFinishTurn=app.finishTurn?.bind(app);
   app.finishTurn=function(...args){const wasSettled=this.turnSettled;const r=origFinishTurn?origFinishTurn(...args):undefined;if(!wasSettled)this.applyPropertyIncome();return r;};
 
@@ -10906,7 +10745,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     return this.players.find(p=>!p.isCpu)||this.players[0];
   };
   // The board is shared in multiplayer, so board-wide square counts use the host/local board owner stat.
-  const origBuildRoad=app.buildRoadNetwork?.bind(app);
+  /* 【ver1.3.0 整理】使っていない origBuildRoad を削除 */
   app._calcSquareProbabilities=function(){
     const p=this.getBoardStatReferencePlayer();const intelligence=clampStat(p?.stats?.intelligence||100), wealth=clampStat(p?.stats?.wealth||100);
     const star=Math.max(0.02,Math.min(0.10,0.05*(intelligence/100))); const green=0.25; const pool=1-star-green; const blue=Math.max(0.05,Math.min(pool-0.05,pool*0.5*(wealth/100))); const red=Math.max(0.01,pool-blue); return {star,green,blue,red};
@@ -10972,8 +10811,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   }
 
   // Mini-game stats: new games + regional games. Award once when the first result for the game arrives.
-  const oldIntegrated=app.applyIntegratedMiniGameResult?.bind(app);if(oldIntegrated){app.applyIntegratedMiniGameResult=function(data){const st=this.regionalMiniGame;const first=st&&!st.statsAwarded;const r=oldIntegrated(data);if(first&&st&&st.statsAwarded!==true){st.statsAwarded=true;const p=this.players?.find(x=>Number(x.id)===Number(st.playerId));if(p)this.awardMiniGameStats(p);}return r;};}
-  const oldRegional=app.applyRegionalMiniGameResult?.bind(app);if(oldRegional){/* applyRegionalMiniGameResult：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */}
+  /* 【ver1.3.0 整理】使っていない oldIntegrated を削除 *//* 【ver1.3.0 整理】使っていない oldIntegrated を削除 */
+  /* 【ver1.3.0 整理】使っていない oldRegional を削除 *//* 【ver1.3.0 整理】使っていない oldRegional を削除 */
   const oldAnswer=app.answerQuiz?.bind(app);if(oldAnswer){app.answerQuiz=function(...a){const p=this.players?.find(x=>Number(x.id)===Number(this.activeQuizPlayerId));const r=oldAnswer(...a);if(p){const key=`${this.turnCount}:${this.currentPlayerIdx}:${this.activeQuizPlayerId}`;if(this._quizStatsAwardedKey!==key){this._quizStatsAwardedKey=key;this.awardMiniGameStats(p);}}return r;};}
   const oldFinishBoat=app.finishBoatRaceGame?.bind(app);if(oldFinishBoat){app.finishBoatRaceGame=async function(...a){const participants=Array.isArray(this.players)?this.players.slice():[];participants.forEach(x=>this.awardMiniGameStats?.(x));return oldFinishBoat(...a);};}
 
@@ -10988,10 +10827,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   const oldUpdateHUD=app.updateHUD?.bind(app); if(oldUpdateHUD){app.updateHUD=function(...a){const r=oldUpdateHUD(...a);const p=this.players?.find(x=>!x.isCpu&&(!this.myUid||x.uid===this.myUid))||this.players?.[0];if(p){this.scheduleProfilePersist(p);this._refreshAccountPanel();}return r;};}
 
   // Force avatar image into player cards after original render.
-  const refreshCards=()=>{
-    const container=document.getElementById('players-card-container');if(!container)return;
-    const imgs=container.querySelectorAll('[data-edogawa-avatar-url]'); imgs.forEach(el=>{el.innerHTML=app.avatarHtml(el.getAttribute('data-edogawa-avatar-url'));});
-  };
+  /* 【ver1.3.0 整理】使っていない refreshCards を削除 */
   const oldCreateIcon=app.createPlayerIcon?.bind(app); if(oldCreateIcon){app.createPlayerIcon=function(...a){return oldCreateIcon(...a);};}
 
   // ------------------------------------------------------------------
@@ -11099,7 +10935,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   const PHOTO_MAX_EDGE = 1600;
   const PHOTO_QUALITY = 0.82;
   const CLUSTER_METERS = 20;
-  const ACCURACY_WARN_METERS = 50;
+  /* 【ver1.3.0 整理】使っていない ACCURACY_WARN_METERS を削除 */
   const VISITED_TABLE = window.EDOGAWA_SUPABASE_VISITED_TABLE || 'visited_entries';
   const VISITED_BUCKET = window.EDOGAWA_SUPABASE_VISITED_BUCKET || 'visited-pins';
   const SUPA_RAW_CFG = window.EDOGAWA_SUPABASE_CONFIG || {url:'',publishableKey:''};
@@ -11109,7 +10945,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     url: String(SUPA_RAW_CFG.url || '').replace(/\/rest\/v1\/?$/,'')
   };
   const TODAY = () => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo'}).format(new Date());
-  const esc = (v) => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const esc = EdoU.esc;
   const num = (v,d=0) => Number.isFinite(Number(v)) ? Number(v) : d;
 
   const style=document.createElement('style');
@@ -11763,12 +11599,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 
   // ---------------- Money formatting ----------------
   const moneyNumber=(v)=>Math.round(Number(v)||0);
-  const oldFM=typeof app.formatMoney==='function'?app.formatMoney.bind(app):null;
-  app.formatMoney=function(v){
-    const n=moneyNumber(v);
-    return n<0 ? `-￥${Math.abs(n).toLocaleString('ja-JP')}` : `￥${n.toLocaleString('ja-JP')}`;
-  };
-  const oldFMM=typeof app.formatMoneyMan==='function'?app.formatMoneyMan.bind(app):null;
+  /* 【ver1.3.0 整理】使っていない oldFM を削除 */
+  /* 【ver1.3.0 整理】formatMoney：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】使っていない oldFMM を削除 */
   app.formatMoneyMan=function(v){
     const n=moneyNumber(v);
     return (n<0?'-':'')+(Math.abs(n)/10000).toFixed(1)+'万';
@@ -12342,8 +12175,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     archery: {e:'🏹', t:'ガキんちょ果実射撃',       r:['回転する果物に矢を刺し込もう！','刺さった矢やメタルガードを避けて全3ステージ。','刺さった矢1本につき ￥100 もらえます。']}
   };
   const metaOf=g=>META[g]||{e:'🎮',t:'ミニゲーム',r:['がんばってプレイしよう！']};
-  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const yen=v=>{v=Math.round(Number(v)||0);return (v<0?'-￥':'￥')+Math.abs(v).toLocaleString('ja-JP');};
+  const esc = EdoU.esc;
+  const yen = EdoU.yenS;
 
   let root=null, startTimer=null, resultTimer=null, mode=null;
   function ensureRoot(){
@@ -13032,8 +12865,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   const VIEW        = 260;             // 切り抜き画面の一辺
   const AV_FALLBACK = '🧑‍🦱';
 
-  const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
 
   // 盤面・HUD・カードなど、どこでも画像アイコンを画像として描くための共通ヘルパー。
   // 以前はここが無かったため、LINEのアイコンURLがそのまま文字として出て画面が崩れていました。
@@ -13094,7 +12926,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
   };
 
   // アカウントパネル・ロビーの表示も印に対応させます
-  const origRefreshPanel = app._refreshAccountPanel?.bind(app);
+  /* 【ver1.3.0 整理】使っていない origRefreshPanel を削除 */
   const origApplyLobby   = app._applyProfileToLobby?.bind(app);
   if (origApplyLobby) {
     app._applyProfileToLobby = function(){
@@ -13501,7 +13333,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
 
   // ============================================================
   // ① 2レース目のボートがゴール地点から始まる
@@ -13736,7 +13568,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  /* 【ver1.3.0 整理】使っていない esc を削除 */
 
   // ============================================================
   // ① ゲーム内のお知らせ／確認枠（ブラウザのダイアログの置き換え）
@@ -14048,7 +13880,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
 window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江戸川区北小岩5～8丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/kamikoiwa.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/20141106_019.jpg","d":"","g":[[35.748009,139.88812],[35.747879,139.888125],[35.747814,139.888154],[35.747337,139.887929],[35.746668,139.888022],[35.745479,139.888213],[35.74419,139.888418],[35.743887,139.888442],[35.743522,139.888442],[35.743166,139.888408],[35.743131,139.888335],[35.743023,139.888188],[35.742828,139.888242],[35.742446,139.888227],[35.742055,139.888262],[35.741526,139.888364],[35.740983,139.888447],[35.740263,139.888555],[35.740198,139.88855],[35.739577,139.888662]]},{"n":"下小岩親水緑道","k":"緑道","a":"江戸川区南小岩5・7丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/shimokoiwa.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/21.jpg","d":"","g":[[35.723476,139.879323],[35.723793,139.880075],[35.72388,139.880201],[35.724414,139.880992],[35.724518,139.881134],[35.724635,139.881324],[35.724622,139.881393],[35.724587,139.881476],[35.724531,139.881593],[35.724349,139.881822],[35.72414,139.882091],[35.724201,139.882169],[35.724492,139.882174],[35.724848,139.88253],[35.724991,139.882701],[35.725138,139.882858],[35.725412,139.88315],[35.725516,139.883273],[35.725642,139.883395],[35.725937,139.883683],[35.726176,139.883936],[35.726427,139.8842],[35.726566,139.884346],[35.726727,139.884522],[35.726896,139.884703],[35.727022,139.884849],[35.727157,139.885006],[35.727248,139.885103],[35.727374,139.885245],[35.727508,139.885396],[35.72763,139.885499],[35.727721,139.885582]]},{"n":"興農親水緑道","k":"緑道","a":"江戸川区東小岩1丁目～鹿骨3丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/kounou.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/27.jpg","d":"","g":[[35.721533,139.895718],[35.721354,139.895225],[35.721151,139.894585],[35.721103,139.894478],[35.721055,139.894405],[35.720986,139.894331],[35.72089,139.894234],[35.720795,139.89416],[35.719966,139.893555],[35.71984,139.893467],[35.719666,139.893316],[35.719488,139.89316],[35.719306,139.893037],[35.718469,139.892393],[35.717588,139.891739],[35.717171,139.891446],[35.716802,139.891173],[35.716398,139.89087],[35.716051,139.890616]]},{"n":"西小岩親水緑道","k":"緑道","a":"江戸川区西小岩2丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/nishikoiwa.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/20141106_105.jpg","d":"","g":[[35.733484,139.875631],[35.733288,139.875509],[35.733106,139.87549],[35.73285,139.87547],[35.732529,139.87546],[35.732282,139.87546],[35.731657,139.875441],[35.730893,139.875426],[35.730771,139.875436],[35.730702,139.875465],[35.730572,139.875485],[35.730394,139.87549],[35.730255,139.875485],[35.730112,139.875499]]},{"n":"鹿本親水緑道","k":"緑道","a":"江戸川区東松本1丁目～鹿骨4丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/shikamoto.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/25.jpg","d":"","g":[[35.718225,139.884933],[35.718191,139.885196],[35.718147,139.885524],[35.718125,139.885626],[35.718073,139.885821],[35.71806,139.885895],[35.718026,139.885987],[35.717961,139.886129],[35.717922,139.886241],[35.717865,139.886373],[35.717804,139.886534],[35.717752,139.886666],[35.7177,139.886822],[35.717666,139.886969],[35.717639,139.887091],[35.717583,139.887296],[35.717527,139.887486],[35.717488,139.887682],[35.717444,139.887823],[35.717396,139.887979],[35.717357,139.88814],[35.717331,139.888321],[35.717297,139.888492],[35.717288,139.888624],[35.717271,139.888741],[35.717253,139.888858],[35.71724,139.88898],[35.717227,139.889063],[35.717197,139.889137],[35.717154,139.889229],[35.717119,139.889322],[35.717067,139.889425],[35.71701,139.889527],[35.716967,139.889605],[35.716906,139.889708],[35.716819,139.889869],[35.716785,139.889952],[35.716737,139.890045],[35.716681,139.890147],[35.716646,139.89022]]},{"n":"鹿骨親水緑道","k":"緑道","a":"江戸川区鹿骨3丁目～2丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/shishibone.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/33.jpg","d":"","g":[[35.715778,139.890484],[35.715348,139.890645],[35.714931,139.890792],[35.714389,139.890973],[35.713738,139.891177],[35.71294,139.891441],[35.71228,139.891656],[35.711599,139.891876],[35.710804,139.89211],[35.710379,139.892257],[35.709416,139.892764],[35.708448,139.893311],[35.70755,139.893814],[35.707406,139.893868],[35.707137,139.893873],[35.706443,139.893785],[35.706009,139.893702],[35.705484,139.893624],[35.704998,139.893589]]},{"n":"本郷用水親水緑道","k":"緑道","a":"江戸川区篠崎町1丁目～鹿骨2丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/hongo.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/35.jpg","d":"","g":[[35.706638,139.894024],[35.70669,139.894083],[35.706725,139.894146],[35.70676,139.894249],[35.706769,139.894376],[35.706873,139.89588],[35.706955,139.896573],[35.706999,139.896983],[35.707046,139.897408],[35.707094,139.897979],[35.707146,139.898545],[35.707211,139.899117],[35.707246,139.899595],[35.707307,139.900181],[35.707359,139.900699],[35.707389,139.900972],[35.70742,139.901333],[35.707467,139.901685],[35.707502,139.902149],[35.707532,139.902495],[35.707585,139.902964],[35.707615,139.903398],[35.707676,139.904028],[35.707728,139.904453],[35.707776,139.905005],[35.707841,139.905649],[35.707919,139.906406],[35.707941,139.906626],[35.708014,139.907075],[35.708014,139.907568],[35.708023,139.908139],[35.70811,139.90852],[35.708314,139.908901],[35.708401,139.909111],[35.708201,139.911044]]},{"n":"流堀親水はなのみち","k":"緑道","a":"江戸川区鹿骨1丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/hananomichi.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/20141125_87.jpg","d":"","g":[[35.710275,139.89213],[35.709763,139.892003],[35.709246,139.891847],[35.70847,139.891603],[35.707905,139.891378],[35.707784,139.891324],[35.70761,139.891232],[35.707476,139.891109],[35.707254,139.890929],[35.70702,139.890694]]},{"n":"東井堀親水緑道","k":"緑道","a":"江戸川区谷河内2丁目、南篠崎町4丁目、瑞江2丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/higashiibori.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/37.jpg","d":"","g":[[35.701166,139.89754],[35.700519,139.897891],[35.699729,139.898346],[35.698996,139.898761],[35.698328,139.899156],[35.69775,139.899483],[35.697503,139.899634]]},{"n":"篠田堀親水緑道","k":"緑道","a":"江戸川区下篠崎町～南篠崎町5丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/shinodabori.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/31.jpg","d":"","g":[[35.701357,139.912993],[35.701045,139.913261],[35.700849,139.913422],[35.700667,139.913554],[35.700498,139.913637],[35.700303,139.913725],[35.700129,139.913808],[35.700012,139.913896],[35.69986,139.913998],[35.699752,139.914062],[35.69966,139.914086],[35.699522,139.914101],[35.699183,139.914116],[35.699096,139.914116],[35.69891,139.914057],[35.698714,139.913954],[35.698528,139.913916],[35.698354,139.913891],[35.698155,139.913881],[35.697998,139.913867],[35.697825,139.913847],[35.697664,139.913808],[35.697543,139.913691],[35.697352,139.913564],[35.697204,139.913466],[35.697074,139.913403],[35.696944,139.913462],[35.696874,139.913364],[35.696727,139.913056],[35.696479,139.912734],[35.696149,139.912343],[35.695972,139.91209],[35.69575,139.911865],[35.695646,139.911733],[35.695321,139.911445],[35.695164,139.911313],[35.695043,139.911162],[35.694943,139.911064],[35.694843,139.910967],[35.694756,139.910884],[35.694631,139.91082],[35.694487,139.910757],[35.694314,139.910669],[35.69411,139.910596],[35.693841,139.910503],[35.693598,139.91042],[35.693372,139.910425],[35.693033,139.910435],[35.692773,139.9104],[35.692469,139.910371],[35.69217,139.910322],[35.691901,139.910249],[35.691636,139.910195],[35.691402,139.910147],[35.691315,139.910122],[35.691107,139.910049],[35.690872,139.909932],[35.690703,139.909859],[35.690464,139.909732],[35.690269,139.909644],[35.6901,139.909566],[35.689943,139.909522],[35.689735,139.909483],[35.689518,139.909458],[35.689314,139.909419],[35.68918,139.909385],[35.689045,139.909444]]},{"n":"宿川親水緑道","k":"緑道","a":"江戸川区江戸川2丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/sukugawa.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/38.jpg","d":"","g":[[35.687678,139.899713],[35.687578,139.899728],[35.687517,139.899728],[35.687444,139.899733],[35.687374,139.899728],[35.687326,139.899689],[35.687274,139.89963],[35.687205,139.899557],[35.687118,139.899454],[35.687079,139.899396],[35.687005,139.899332],[35.686931,139.899244],[35.686853,139.899181],[35.686784,139.899122],[35.686728,139.899108],[35.686671,139.899088],[35.686606,139.899078],[35.686545,139.899073],[35.686484,139.899078],[35.686432,139.899108],[35.686385,139.899157],[35.686341,139.899205],[35.686289,139.899215],[35.686228,139.899166],[35.686159,139.899122],[35.686072,139.899039],[35.685994,139.898971],[35.68592,139.898917],[35.685864,139.898864],[35.685768,139.898795],[35.685673,139.898741],[35.68559,139.898673],[35.685508,139.898619],[35.685456,139.898561],[35.685412,139.898483],[35.685373,139.89839],[35.685326,139.898302],[35.685282,139.898224],[35.685217,139.898151],[35.685143,139.898073],[35.685065,139.897995],[35.685018,139.897931],[35.684953,139.897863],[35.684887,139.897804],[35.684822,139.89776],[35.684744,139.897706],[35.684666,139.897658],[35.684592,139.897604],[35.684519,139.89756],[35.684453,139.89754],[35.684375,139.897521],[35.68431,139.897521],[35.684293,139.897409],[35.684275,139.897296],[35.684254,139.897209],[35.68421,139.897096],[35.684184,139.897008],[35.684145,139.89694],[35.684093,139.896876],[35.684037,139.896818],[35.68398,139.896764],[35.683954,139.896725],[35.683694,139.896545]]},{"n":"鎌田川親水緑道","k":"緑道","a":"江戸川区江戸川3丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/kamatagawa.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/32.jpg","d":"","g":[[35.687973,139.893932],[35.687483,139.894181],[35.6873,139.894137],[35.687157,139.894225],[35.687044,139.894298],[35.68694,139.894342],[35.68684,139.894357],[35.686749,139.894386],[35.686671,139.89445],[35.686597,139.894508],[35.686523,139.894523],[35.686441,139.894567],[35.686345,139.894601],[35.686246,139.89465],[35.686107,139.894699],[35.68602,139.894718],[35.685942,139.894738],[35.685851,139.894748],[35.685773,139.894665],[35.685729,139.894611],[35.685681,139.894596],[35.685612,139.894577],[35.685516,139.894567],[35.68543,139.894557],[35.685352,139.894538],[35.685317,139.894518],[35.685208,139.894518],[35.68513,139.894518],[35.685043,139.894567],[35.684983,139.894601],[35.684922,139.894655],[35.684874,139.894704],[35.684818,139.894757],[35.684761,139.894816],[35.684709,139.894875],[35.68467,139.894924],[35.684623,139.894968],[35.68457,139.895026],[35.684518,139.89509],[35.684445,139.895168],[35.684462,139.895309],[35.684423,139.895368],[35.684379,139.895417],[35.684328,139.895475],[35.684258,139.895534],[35.684219,139.895573],[35.684149,139.895636],[35.684093,139.89568]]},{"n":"仲井堀親水緑道","k":"緑道","a":"江戸川区一之江2・3丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/nakaibori.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/30.jpg","d":"","g":[[35.693059,139.884509],[35.692612,139.884348],[35.692538,139.884343],[35.692403,139.884343],[35.692226,139.884358],[35.692,139.884392],[35.691813,139.884416],[35.691679,139.884436],[35.691583,139.884421],[35.69151,139.884416],[35.690563,139.884128],[35.690416,139.88406],[35.690264,139.883982],[35.690147,139.883923],[35.690034,139.883865],[35.689826,139.883777],[35.689674,139.883708],[35.689504,139.883635],[35.689335,139.883557],[35.68911,139.883455],[35.688988,139.88343],[35.688845,139.883406],[35.688693,139.883396],[35.688511,139.883381],[35.688367,139.883352],[35.68825,139.883313],[35.68812,139.883274],[35.688025,139.883235]]},{"n":"葛西親水四季の道","k":"緑道","a":"江戸川区東葛西2丁目から西葛西8丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/shiki.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/23.jpg","d":"","g":[[35.668365,139.876483],[35.667575,139.874657],[35.667393,139.874203],[35.667124,139.873569],[35.666911,139.87309],[35.666512,139.872114],[35.666364,139.871904],[35.666008,139.868706],[35.665952,139.868144],[35.665909,139.867685],[35.665861,139.867221],[35.665813,139.866724],[35.665787,139.866421],[35.665627,139.866269],[35.665505,139.866094],[35.665414,139.865952],[35.665349,139.865859],[35.665292,139.865771],[35.66524,139.865674],[35.665158,139.865562],[35.665093,139.865464],[35.665015,139.865332],[35.66485,139.865151],[35.664659,139.864937],[35.664511,139.864795],[35.664403,139.864668],[35.664342,139.8646],[35.663895,139.864151],[35.663704,139.863926],[35.663582,139.863853],[35.663378,139.863672],[35.663201,139.863531],[35.66301,139.863404],[35.662827,139.863291],[35.662701,139.863179],[35.662506,139.863047],[35.662272,139.862891],[35.662111,139.862784],[35.661647,139.862466],[35.6614,139.86232],[35.661183,139.862168],[35.660987,139.862051],[35.660731,139.861866],[35.660579,139.861783],[35.660397,139.861671],[35.660258,139.861592],[35.660132,139.861544],[35.659967,139.861509],[35.659833,139.8615],[35.659703,139.861509],[35.659581,139.861539],[35.659468,139.861578],[35.659368,139.861607],[35.659216,139.861646],[35.659073,139.861675],[35.658926,139.861705],[35.658817,139.861729],[35.658765,139.861739],[35.658735,139.861573],[35.658696,139.861343],[35.658674,139.861153],[35.658644,139.860958],[35.658613,139.860762],[35.658596,139.860562],[35.658544,139.860343],[35.658513,139.860113],[35.658474,139.85982],[35.658448,139.859644]]},{"n":"左近川親水緑道","k":"緑道","a":"江戸川区東葛西9丁目～南葛西1丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/sakongawa.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/34.jpg","d":"","g":[[35.65433,139.866709],[35.654452,139.866949],[35.654534,139.867183],[35.654595,139.867417],[35.654638,139.867652],[35.654673,139.86791],[35.654677,139.868169],[35.654677,139.868589],[35.654677,139.868819],[35.654721,139.868989],[35.654795,139.869112],[35.654938,139.869248],[35.655068,139.869326],[35.655172,139.869429],[35.655263,139.869512],[35.655359,139.869629],[35.655437,139.869746],[35.655537,139.869902],[35.65561,139.870059],[35.65568,139.870215],[35.655728,139.870376],[35.655784,139.870537],[35.655836,139.870698],[35.655862,139.87085],[35.655875,139.870991],[35.655888,139.871157],[35.655901,139.871323],[35.655888,139.871484],[35.655879,139.871631],[35.655867,139.871758],[35.655867,139.871972],[35.655862,139.872183],[35.655884,139.872363],[35.655975,139.872827],[35.656023,139.87291],[35.656062,139.873003],[35.656096,139.873066],[35.656114,139.873139],[35.656084,139.873242],[35.656049,139.873359],[35.656018,139.873457],[35.655984,139.873545],[35.655958,139.873623],[35.65594,139.87372],[35.655919,139.873842],[35.655901,139.87394],[35.655893,139.874057],[35.655893,139.874184],[35.655893,139.874301],[35.655875,139.874443],[35.655888,139.874575],[35.655893,139.874707],[35.655893,139.874839],[35.655875,139.874917],[35.655849,139.875],[35.655802,139.875083],[35.655732,139.875185],[35.655645,139.875297],[35.655558,139.875434],[35.655454,139.875576],[35.655394,139.875654],[35.65532,139.875761],[35.655237,139.875893],[35.655172,139.87603],[35.655111,139.876186],[35.655055,139.876342],[35.654981,139.876528],[35.654929,139.876718],[35.654864,139.876879],[35.65479,139.877011],[35.654665,139.877114],[35.654599,139.877206],[35.6545,139.877289],[35.654413,139.877358],[35.654361,139.877402],[35.654291,139.877412],[35.654222,139.877407],[35.654118,139.877392],[35.654013,139.877382],[35.653905,139.877382],[35.653757,139.877382],[35.653606,139.877368],[35.653467,139.877363],[35.653315,139.877373],[35.653258,139.877368],[35.653215,139.877412],[35.653172,139.87746],[35.653102,139.877539],[35.653011,139.877661],[35.652942,139.877768],[35.652859,139.87788],[35.652798,139.877949],[35.652664,139.877997],[35.652529,139.878056],[35.652373,139.87811],[35.652182,139.878178],[35.652048,139.878222],[35.651904,139.878256],[35.651818,139.878281],[35.651731,139.87833],[35.651249,139.878715],[35.651132,139.878803],[35.651045,139.878872],[35.650945,139.87894],[35.650854,139.879023],[35.65078,139.879111],[35.650724,139.879204],[35.650724,139.879321],[35.650724,139.879409],[35.650724,139.879521],[35.650746,139.879638],[35.650776,139.879765],[35.650846,139.880195],[35.650876,139.880331],[35.650867,139.880458],[35.650867,139.880585],[35.65085,139.880693],[35.650846,139.880766],[35.650828,139.880849],[35.650811,139.880952],[35.650781,139.881064],[35.650763,139.881166],[35.650724,139.881269],[35.650676,139.881386],[35.650616,139.881518],[35.650563,139.88162],[35.65049,139.881738],[35.650438,139.881821],[35.650338,139.881879],[35.650251,139.881928],[35.650151,139.881972],[35.650064,139.882031],[35.650025,139.88204],[35.649956,139.882143],[35.649878,139.882255],[35.649808,139.882377],[35.649769,139.882465],[35.649761,139.882489],[35.649765,139.882548],[35.649769,139.882621],[35.649787,139.882699],[35.649821,139.882782],[35.649865,139.882875],[35.649908,139.882988],[35.649965,139.883095],[35.650021,139.883197],[35.650064,139.88329],[35.650104,139.883402],[35.650138,139.883486]]},{"n":"親水さくらかいどう","k":"緑道","a":"江戸川区北小岩8丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/sakurakaido.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/22.jpg","d":"","g":[[35.749346,139.882852],[35.749272,139.883145],[35.749177,139.883472],[35.749099,139.883672],[35.749055,139.883892],[35.749012,139.884277],[35.748942,139.884634],[35.748882,139.884995],[35.748786,139.885386],[35.748638,139.885718],[35.748569,139.885986],[35.74853,139.886221],[35.748474,139.886582],[35.748456,139.886797],[35.74843,139.886963],[35.748387,139.887104],[35.748352,139.887241],[35.748348,139.887324]]},{"n":"椿親水緑道","k":"緑道","a":"江戸川区春江町2丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/tsubaki.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/36.jpg","d":"","g":[[35.699751,139.887238],[35.699317,139.887209],[35.699221,139.886569],[35.699013,139.88632],[35.699009,139.886164]]},{"n":"東井掘親水緑道","k":"緑道","a":"江戸川区江戸川1丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsuiryokudou/higashiibori.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/37.jpg","d":"","g":[[35.695945,139.901002],[35.695644,139.901357],[35.695382,139.901696],[35.695237,139.901971],[35.695041,139.902245],[35.694831,139.902648],[35.694648,139.903052],[35.694359,139.903488],[35.693927,139.904004],[35.693573,139.904359],[35.693232,139.904634],[35.692734,139.905247],[35.692406,139.905764],[35.692,139.906264],[35.691568,139.906571],[35.691188,139.906684],[35.690959,139.907041],[35.690903,139.907119],[35.690872,139.907193],[35.690829,139.907344],[35.690803,139.907393],[35.690772,139.907447],[35.690725,139.907496],[35.690673,139.907574],[35.690646,139.907632],[35.690621,139.907696],[35.690581,139.907745],[35.690538,139.907788],[35.690499,139.907818],[35.690451,139.907867],[35.690404,139.907911],[35.690351,139.907954],[35.690295,139.908047],[35.690234,139.90814],[35.690178,139.908218],[35.690113,139.908325],[35.690061,139.908418],[35.690009,139.908506],[35.689965,139.908579],[35.689909,139.908633],[35.689857,139.908697],[35.689809,139.908755],[35.689748,139.908838],[35.689701,139.908897],[35.68964,139.908941]]},{"n":"小松川境川親水公園","k":"親水公園","a":"江戸川区中央四丁目・本一色一丁目から西小松川町","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/komatsugawa2.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/09.jpg","d":"ウォーキングをしたりアスレチックで遊んだり四季を通じて楽しめる。また、桜の名所でもある。","g":[[35.71579,139.873747],[35.715686,139.873659],[35.71553,139.873249],[35.715374,139.872947],[35.715174,139.872595],[35.714957,139.872185],[35.714784,139.871794],[35.714619,139.871462],[35.714488,139.871091],[35.714384,139.87073],[35.714323,139.870505],[35.714141,139.870281],[35.714098,139.870027],[35.713924,139.86992],[35.713681,139.869842],[35.713629,139.869646],[35.713629,139.869402],[35.713594,139.869031],[35.713525,139.868816],[35.713299,139.868523],[35.713143,139.868416],[35.712917,139.868367],[35.712614,139.868211],[35.712362,139.868016],[35.712049,139.867801],[35.711789,139.867693],[35.711381,139.867566],[35.711069,139.867498],[35.71086,139.867332],[35.71053,139.867156],[35.710227,139.866922],[35.70994,139.866717],[35.70981,139.86658],[35.709532,139.866746],[35.709315,139.866932],[35.709116,139.866961],[35.708543,139.867039],[35.708213,139.86702],[35.7079,139.867068],[35.707553,139.86702],[35.707223,139.866942],[35.706989,139.866863],[35.706668,139.866727],[35.705505,139.866571],[35.705262,139.866571],[35.705001,139.866658],[35.704767,139.866785],[35.704689,139.867078],[35.70462,139.867362],[35.704524,139.867557],[35.704342,139.867713],[35.704194,139.867723],[35.704003,139.867684],[35.703838,139.867528],[35.703656,139.867303],[35.703474,139.867078],[35.703283,139.866756],[35.703153,139.866541],[35.70304,139.866239],[35.702962,139.866043],[35.702641,139.865907],[35.702554,139.865672],[35.70245,139.865457],[35.702319,139.865272],[35.702154,139.865174],[35.701972,139.865057],[35.70179,139.865047],[35.701521,139.865028],[35.701269,139.865057],[35.701035,139.865067],[35.700809,139.865096],[35.700514,139.865174],[35.700219,139.865262],[35.700115,139.865311],[35.699854,139.865497],[35.699663,139.865594],[35.699499,139.865575],[35.699334,139.865545],[35.69896,139.865419],[35.698761,139.865243],[35.698561,139.864862],[35.698361,139.864462],[35.698205,139.86413],[35.697902,139.863983],[35.697624,139.863808],[35.697224,139.863544],[35.696799,139.863427],[35.6964,139.86329],[35.69594,139.863329],[35.695523,139.863378],[35.695124,139.863437],[35.694907,139.863446],[35.694707,139.863378],[35.694638,139.863232],[35.694629,139.863056],[35.694612,139.862909],[35.694681,139.862704]]},{"n":"一之江境川親水公園","k":"親水公園","a":"江戸川区一之江1丁目から船堀7丁目","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/ichinoe2.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/10.jpg","d":"自然とのふれあいを味わえる親水公園 平成8年4月に全面完成した区内で5番目の親水公園。魚や昆虫が棲息する自然の川として整備したもので、区としては初めての試み。途中3か所に「水遊び広場」があり、夏季はそこだけ水道水を循環させて水遊びができるようにしている。","g":[[35.697103,139.881853],[35.696973,139.881687],[35.696878,139.881589],[35.69673,139.88154],[35.696557,139.880866],[35.696565,139.880642],[35.696591,139.880456],[35.696583,139.88032],[35.696487,139.880163],[35.696322,139.879998],[35.696209,139.879675],[35.696105,139.879441],[35.695923,139.879236],[35.695836,139.879236],[35.695749,139.879353],[35.695628,139.879509],[35.695515,139.879685],[35.695463,139.879802],[35.695463,139.87991],[35.695446,139.880036],[35.695428,139.880144],[35.695324,139.880203],[35.695177,139.880261],[35.695046,139.880378],[35.694907,139.880535],[35.694829,139.880593],[35.694734,139.880593],[35.69463,139.880544],[35.694447,139.880398],[35.694291,139.88032],[35.694066,139.880222],[35.693892,139.880095],[35.693684,139.879968],[35.693484,139.879783],[35.69325,139.879627],[35.692989,139.879519],[35.69272,139.879402],[35.692442,139.879314],[35.692182,139.879226],[35.691922,139.87905],[35.691679,139.878953],[35.691496,139.878797],[35.691401,139.878621],[35.691331,139.878367],[35.691253,139.878074],[35.691192,139.87783],[35.691114,139.87743],[35.691106,139.877234],[35.69108,139.877039],[35.691036,139.876775],[35.69095,139.876609],[35.690871,139.87657],[35.690793,139.876648],[35.690672,139.876707],[35.690594,139.876726],[35.690446,139.876707],[35.690281,139.876658],[35.689396,139.876414],[35.689014,139.876414],[35.688702,139.876453],[35.688398,139.876531],[35.688181,139.87657],[35.688068,139.87659],[35.687972,139.87657],[35.687886,139.876483],[35.687764,139.876317],[35.687695,139.87615],[35.687651,139.875945],[35.687608,139.874227],[35.687573,139.874119],[35.687521,139.873993],[35.687426,139.873846],[35.687313,139.873729],[35.687148,139.873563],[35.687018,139.873426],[35.686688,139.873153],[35.686202,139.87287],[35.686045,139.872743],[35.685854,139.872606],[35.685672,139.872469],[35.68542,139.872313],[35.685229,139.872264],[35.684301,139.872098],[35.683164,139.871942],[35.682296,139.871825],[35.68181,139.871786],[35.681141,139.871796],[35.68069,139.871903],[35.680343,139.871962],[35.680013,139.872089],[35.679839,139.872138],[35.679666,139.872128],[35.679492,139.872108],[35.679362,139.87203],[35.679241,139.871903],[35.679206,139.871659],[35.679232,139.869735],[35.679223,139.869472],[35.67918,139.869247],[35.67905,139.869149],[35.678945,139.869003],[35.678815,139.868876],[35.678668,139.868691],[35.678529,139.868476],[35.678242,139.868134]]},{"n":"新長島川親水公園","k":"親水公園","a":"江戸川区清新町2丁目8番・9番・10番先","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shincho.html","p":"https://www.city.edogawa.tokyo.jp/edg/park/shinnagashimagawa01.jpg","d":"水の階段や噴水広場のある、区内3番目の親水公園","g":[[35.658114,139.857911],[35.657949,139.857852],[35.657741,139.857872],[35.657524,139.857872],[35.657428,139.857891],[35.657324,139.857911],[35.657185,139.85797],[35.657012,139.858028],[35.656838,139.858106],[35.656673,139.858194],[35.656543,139.858263],[35.656387,139.858311],[35.656196,139.858312],[35.656005,139.858302],[35.655935,139.858321],[35.655762,139.85839],[35.655623,139.858438],[35.655575,139.858419],[35.65551,139.858453],[35.655441,139.858512],[35.655324,139.858526],[35.655232,139.858546],[35.655146,139.858614],[35.655072,139.858668],[35.655037,139.858687],[35.654946,139.858678],[35.654855,139.858678],[35.654768,139.858683],[35.654681,139.858722]]},{"n":"古川親水公園","k":"親水公園","a":"江戸川区江戸川6丁目内","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/furukawa.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/08.jpg","d":"国内の親水公園第１号。子どもたちの水遊び、花見や散歩など四季を通じて楽しめる公園","g":[[35.677635,139.882635],[35.677427,139.88158],[35.677392,139.880994],[35.677357,139.880682],[35.677062,139.880565],[35.676732,139.880369],[35.676524,139.880115],[35.676333,139.879803],[35.676194,139.879471],[35.676107,139.878905],[35.676038,139.878573],[35.675257,139.87744],[35.674962,139.876776],[35.675135,139.875975],[35.67517,139.875292],[35.675205,139.87494],[35.675465,139.874569],[35.675639,139.874276],[35.675725,139.874003],[35.675656,139.873729],[35.675413,139.873378],[35.675222,139.873143]]},{"n":"新左近川親水公園","k":"親水公園","a":"江戸川区臨海町2丁目・3丁目地先","u":"https://www.city.edogawa.tokyo.jp/e066/kuseijoho/gaiyo/shisetsuguide/bunya/koendobutsuen/shinsakon.html","p":"http://www.city.edogawa.tokyo.jp/edg/park/13.jpg","d":"広い水面を持つ、区内で4番目の親水公園 区内初のボート場を始め、デイキャンプができる芝生広場など、ご家族で楽しめる施設があります。","g":[[35.654043,139.85836],[35.654043,139.858673],[35.654026,139.859063],[35.65413,139.859434],[35.654252,139.859669],[35.654252,139.86004],[35.654304,139.860372],[35.654286,139.860684],[35.654234,139.861055],[35.654113,139.861446],[35.653957,139.861798],[35.653835,139.862188],[35.653714,139.862481],[35.653592,139.862754],[35.653505,139.863106],[35.653488,139.863419],[35.653471,139.863926],[35.653575,139.864317],[35.653748,139.864649],[35.653922,139.864903],[35.654009,139.865215],[35.654061,139.865489],[35.65413,139.865879],[35.654217,139.866094],[35.654235,139.866407]]}];
 </script>
 <style id="edogawa-v70-css">
-  .edo-gw-pane{ z-index:399 }
   #edo-gw-modal{ position:fixed; inset:0; z-index:2147483200; display:none;
     align-items:center; justify-content:center; padding:16px }
   #edo-gw-modal.show{ display:flex }
@@ -14075,7 +13906,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
   const KEY = 'edogawa_greenway_on_v1';
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
   const DATA = window.__EDOGAWA_GREENWAYS || [];
 
   app.greenwaysEnabled = function(){
@@ -14245,7 +14076,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  /* 【ver1.3.0 整理】使っていない esc を削除 */
   const KEY = 'edogawa_rail_on_v1';
 
   // ── 路線データ ──
@@ -14351,7 +14182,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{ map.__railLayers.forEach(l=>l.bringToBack && l.bringToBack()); }catch(e){}
     }catch(e){ console.error('[v72]', e); }
   }
-  app._drawRail = function(){ drawRail(app.map); drawRail(app.lobbyMap); };
+  /* 【ver1.3.0 整理】_drawRail：あとの版で置きかえられていたため削除 */
   app._drawRailOn = drawRail;
 
   let tries=0;
@@ -14387,49 +14218,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
 
   // ── 駅に止まったら「電車に乗る」 ──
-  function modal(){
-    let el=document.getElementById('edo-rail-modal');
-    if(!el){
-      el=document.createElement('div'); el.id='edo-rail-modal';
-      document.body.appendChild(el);
-    }
-    return el;
-  }
-  app._openRailRide = function(player, at, done){
-    const L=LINES[at.line];
-    const el=modal();
-    const others=L.stations.filter(n=>n!==at.name);
-    const eco=app.economy();
-    const rows=others.map(n=>{
-      const f=app.railFare(at.line, at.name, n);
-      if(!f) return '';
-      const can=(Number(player.money)||0)>=f.fare;
-      return `<button type="button" class="edo-rail-item" data-to="${esc(n)}" ${can?'':'disabled'}>
-        <span><span class="nm">${esc(n)}駅</span><span class="km">約${f.km}km${can?'':'　所持金が足りません'}</span></span>
-        <span class="fare${eco.fare>1?' up':''}">¥${f.fare.toLocaleString('ja-JP')}</span></button>`;
-    }).join('');
-    el.innerHTML=`<div class="edo-rail-box">
-      <div class="edo-rail-head">
-        <div style="min-width:0">
-          <div class="edo-rail-line"><span class="edo-rail-chip" style="background:${L.color}"></span>${esc(L.name)}</div>
-          <div class="edo-rail-title">🚃 ${esc(at.name)}駅</div>
-          <div class="edo-rail-sub">運賃を払うと、この路線の駅まで移動できます。${eco.fare>1?'<br><b style="color:#f87171">'+esc(eco.name)+'：運賃'+eco.fare+'倍</b>':''}</div>
-        </div>
-        <button type="button" class="edo-x-btn" aria-label="閉じる">×</button>
-      </div>
-      <div class="edo-rail-list">${rows||'<div class="edo-rail-sub">この路線は区内にこの駅だけです。</div>'}</div>
-      <button type="button" class="edo-rail-skip">乗らずに進む</button>
-      <div class="edo-rail-note">運賃は営業キロの目安による概算です（東京メトロ・都営地下鉄は公表の区分、JR・京成は初乗りのみ公表値）。</div>
-    </div>`;
-    el.classList.add('show');
-    const close=(ride)=>{ el.classList.remove('show'); done && done(ride); };
-    el.querySelector('.edo-x-btn').onclick=()=>close(null);
-    el.querySelector('.edo-rail-skip').onclick=()=>close(null);
-    el.onclick=(ev)=>{ if(ev.target===el) close(null); };
-    el.querySelectorAll('.edo-rail-item').forEach(b=>{
-      b.onclick=()=>{ if(b.disabled) return; close(b.dataset.to); };
-    });
-  };
+  /* 【ver1.3.0 整理】使っていない modal を削除 */
+  /* 【ver1.3.0 整理】_openRailRide：あとの版で置きかえられていたため削除 */
 
   const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
   app.__origLandOnSpot = origLand;          // 後から差し替える版が使います
@@ -14532,15 +14322,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   M7.totalKm = Math.round(TOTAL*100)/100;
 
   // ── 開通の進み具合（ターン数から決まるので、保存も同期も自動でついてきます） ──
-  app.metro7Progress = function(){
-    const t = Math.max(0, Number(app.turnCount)||0);
-    return Math.max(0, Math.min(1, t / M7.openTurns));
-  };
-  app.metro7OpenKm = function(){ return TOTAL * app.metro7Progress(); };
-  app.metro7OpenStations = function(){
-    const open = app.metro7OpenKm();
-    return M7.stations.filter((n,i)=> CUM[i] <= open + 1e-9);
-  };
+  /* 【ver1.3.0 整理】metro7Progress：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7OpenKm：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7OpenStations：あとの版で置きかえられていたため削除 */
   app.metro7IsOpen = function(a,b){
     const o = app.metro7OpenStations();
     return o.indexOf(a)>=0 && o.indexOf(b)>=0;
@@ -14560,7 +14344,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     }
     return null;
   }
-  app.metro7Tip = tipLatLng;
+  /* 【ver1.3.0 整理】metro7Tip：あとの版で置きかえられていたため削除 */
   // 開通ずみの線の形
   function openPath(){
     const open = app.metro7OpenKm();
@@ -14572,7 +14356,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     }
     return pts;
   }
-  app.metro7Path = openPath;
+  /* 【ver1.3.0 整理】metro7Path：あとの版で置きかえられていたため削除 */
 
   // ── 地図に描く ──
   function drawM7(map){
@@ -14614,12 +14398,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       map.__m7Layers=map.__m7Layers.filter(Boolean);
     }catch(e){ console.error('[v73]', e); }
   }
-  app._drawMetro7 = function(){ drawM7(app.map); drawM7(app.lobbyMap); };
+  /* 【ver1.3.0 整理】_drawMetro7：あとの版で置きかえられていたため削除 */
   app._drawMetro7On = drawM7;
 
   // 路線表示のON/OFFと、ターンの進行にあわせて描き直します
-  const origDrawRail = app._drawRail ? app._drawRail.bind(app) : null;
-  if (origDrawRail) app._drawRail = function(){ const r=origDrawRail(); app._drawMetro7(); return r; };
+  /* 【ver1.3.0 整理】使っていない origDrawRail を削除 */
+  /* 【ver1.3.0 整理】_drawRail：あとの版で置きかえられていたため削除 */
   const origFinishTurn = app.finishTurnContinue ? app.finishTurnContinue.bind(app) : null;
   if (origFinishTurn) {
     app.finishTurnContinue = function(){
@@ -14653,62 +14437,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return {name:best.name, lines:lines, distM:Math.round(best.d*1000)};
   };
 
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  /* 【ver1.3.0 整理】使っていない esc を削除 */
 
-  app._openRailRide = function(player, at, done){
-    const el = (function(){ let e=document.getElementById('edo-rail-modal');
-      if(!e){ e=document.createElement('div'); e.id='edo-rail-modal'; document.body.appendChild(e); } return e; })();
-    const eco = app.economy();
-    const lines = at.lines || [at.line];
-    let groups='';
-    lines.forEach(k=>{
-      const L=LINES[k];
-      const isM7 = (k==='metro7');
-      let others=L.stations.filter(n=>n!==at.name);
-      if(isM7){
-        const open=app.metro7OpenStations();
-        if(open.indexOf(at.name)<0) return;                 // この駅がまだ開通していない
-        others=others.filter(n=>open.indexOf(n)>=0);
-      }
-      const rows=others.map(n=>{
-        const f=app.railFare(k, at.name, n); if(!f) return '';
-        const can=(Number(player.money)||0)>=f.fare;
-        return `<button type="button" class="edo-rail-item" data-line="${esc(k)}" data-to="${esc(n)}" ${can?'':'disabled'}>
-          <span><span class="nm">${esc(n)}駅</span><span class="km">約${f.km}km${can?'':'　所持金が足りません'}</span></span>
-          <span class="fare${eco.fare>1?' up':''}">¥${f.fare.toLocaleString('ja-JP')}</span></button>`;
-      }).join('');
-      if(!rows && !isM7) return;
-      groups += `<div class="edo-rail-group">
-        <div class="edo-rail-gname"><span class="edo-rail-chip" style="background:${L.color}"></span>${esc(String(L.name).replace('（構想）',''))}${L.plan?'<span class="edo-m7-badge">構想</span>':''}</div>
-        ${rows || '<div class="edo-rail-sub">まだ先の区間が開通していません。</div>'}
-        ${isM7 ? `<div class="edo-rail-open">🚧 開通 ${(app.metro7OpenStationsAll?app.metro7OpenStationsAll():app.metro7OpenStations()).length}/${LINES.metro7.stations.length}駅</div>` : ''}
-      </div>`;
-    });
-    el.innerHTML=`<div class="edo-rail-box">
-      <div class="edo-rail-head">
-        <div style="min-width:0">
-          <div class="edo-rail-title">🚃 ${esc(at.name)}駅</div>
-          <div class="edo-rail-sub">運賃を払うと、その駅まで移動できます。${eco.fare>1?'<br><b style="color:#f87171">'+esc(eco.name)+'：運賃'+eco.fare+'倍</b>':''}</div>
-        </div>
-        <button type="button" class="edo-x-btn" aria-label="閉じる">×</button>
-      </div>
-      ${groups || '<div class="edo-rail-sub" style="margin-top:12px">行ける駅がありません。</div>'}
-      <button type="button" class="edo-rail-skip">乗らずに進む</button>
-      <div class="edo-rail-note">運賃は営業キロの目安による概算です。メトロセブンは構想段階の路線で、運賃は都営地下鉄の区分にならった想定額です。</div>
-    </div>`;
-    el.classList.add('show');
-    const close=(ride)=>{ el.classList.remove('show'); done && done(ride); };
-    el.querySelector('.edo-x-btn').onclick=()=>close(null);
-    el.querySelector('.edo-rail-skip').onclick=()=>close(null);
-    el.onclick=(ev)=>{ if(ev.target===el) close(null); };
-    el.querySelectorAll('.edo-rail-item').forEach(b=>{
-      b.onclick=()=>{ if(b.disabled) return; close({line:b.dataset.line, to:b.dataset.to}); };
-    });
-  };
+  /* 【ver1.3.0 整理】_openRailRide：あとの版で置きかえられていたため削除 */
 
   // 着地時の処理も、複数路線に対応した形に差し替えます
-  const origLand2 = app.landOnSpot ? app.landOnSpot.bind(app) : null;
-  const rawLand = app.__rawLandOnSpot || null;
+  /* 【ver1.3.0 整理】使っていない origLand2 を削除 */
+  /* 【ver1.3.0 整理】使っていない rawLand を削除 */
   /* landOnSpot：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
 
   window.__EDOGAWA_METRO7_INFO = () => ({
@@ -14805,7 +14540,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
 
   // ── 乗車の流れに運転を差し込みます ──
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  /* 【ver1.3.0 整理】使っていない esc を削除 */
 
   app.landOnSpot = function(player){
     try{
@@ -15057,42 +14792,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   M7.openStartTurn = 50;    // ここから工事が始まります
   M7.openSpanTurns = 50;    // ここから何ターンかけて全線開通するか（50→100）
 
-  app.metro7Progress = function(){
-    const t = Math.max(0, Number(app.turnCount)||0);
-    if (t < M7.openStartTurn) return 0;
-    return Math.max(0, Math.min(1, (t - M7.openStartTurn) / M7.openSpanTurns));
-  };
-  app.metro7Started = function(){ return (Number(app.turnCount)||0) >= M7.openStartTurn; };
-  app.metro7OpenKm = function(){ return (SHAPE_CUM[SHAPE_CUM.length-1]||0) * app.metro7Progress(); };
-  app.metro7OpenStations = function(){
-    const open = app.metro7OpenKm();
-    if (!app.metro7Started()) return [];
-    return M7.stations.filter((n,i)=> (SHAPE_CUM[ST_INDEX[i]]||0) <= open + 1e-9);
-  };
-  app.metro7Tip = function(){
-    const open=app.metro7OpenKm();
-    if(!app.metro7Started() || open<=0) return null;
-    for(let i=1;i<SHAPE_CUM.length;i++){
-      if(open<=SHAPE_CUM[i]){
-        const seg=SHAPE_CUM[i]-SHAPE_CUM[i-1];
-        const r=seg>0?(open-SHAPE_CUM[i-1])/seg:0;
-        const a=SHAPE[i-1], b=SHAPE[i];
-        return {lat:a.lat+(b.lat-a.lat)*r, lng:a.lng+(b.lng-a.lng)*r};
-      }
-    }
-    return SHAPE[SHAPE.length-1];
-  };
-  app.metro7Path = function(){
-    const open=app.metro7OpenKm();
-    if(!app.metro7Started() || open<=0) return [];
-    const pts=[[SHAPE[0].lat, SHAPE[0].lng]];
-    for(let i=1;i<SHAPE.length;i++){
-      if(SHAPE_CUM[i]<=open) pts.push([SHAPE[i].lat, SHAPE[i].lng]);
-      else { const t=app.metro7Tip(); if(t) pts.push([t.lat,t.lng]); break; }
-    }
-    return pts;
-  };
-  app.metro7FullPath = function(){ return SHAPE.map(p=>[p.lat,p.lng]); };
+  /* 【ver1.3.0 整理】metro7Progress：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7Started：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7OpenKm：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7OpenStations：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7Tip：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7Path：あとの版で置きかえられていたため削除 */
+  /* 【ver1.3.0 整理】metro7FullPath：あとの版で置きかえられていたため削除 */
 
   // ── 描き直し（50ターン前は何も出さない） ──
   function drawM7(map){
@@ -15134,17 +14840,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // ── 開通のお知らせ（区間で伝えます） ──
   const origFinish = app.finishTurnContinue ? app.finishTurnContinue.bind(app) : null;
   if (origFinish) {
-    app.metro7AnnounceOpen = function(before){
-      const after = app.metro7OpenStations();
-      if (after.length <= (before||[]).length) return null;
-      const to = after[after.length-1];
-      const from = after.length>=2 ? after[after.length-2] : M7.stations[0];
-      const text = `メトロセブン：${from}駅から${to}駅までの区間が開通しました`;
-      app.addLog && app.addLog('🚧 ' + text);
-      app.showNotice && app.showNotice('🚧 メトロセブン 開通',
-        `${text}。\n開通した駅どうしなら乗車できます。\n\n（全長 約${M7.totalKm}km／${M7.openStartTurn}ターンから${M7.openSpanTurns}ターンかけて全線開通）`);
-      return text;
-    };
+    /* 【ver1.3.0 整理】metro7AnnounceOpen：あとの版で置きかえられていたため削除 */
     app.finishTurnContinue = function(){
       const before = app.metro7OpenStations();
       let r, err = null;
@@ -15684,7 +15380,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const app = window.EdogawaSugoroku; if(!app) return;
   const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
   if(!LINES || !ST || !window.L) return;
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
 
   function box(id, cls){
     let el=document.getElementById(id);
@@ -15998,7 +15694,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
   const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
 
   // ============================================================
   // ① 江戸川競艇の締めの実況が5秒で切れる
@@ -16182,18 +15878,6 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
      ・人間4名で満席。それ以上は新しい部屋（人間1＋CPU3）を作ります
      ============================================================================ -->
 <style id="edogawa-v82-style">
-  #edo-mp-wait{ position:fixed; inset:0; z-index:2147483300; display:none;
-    align-items:center; justify-content:center; padding:18px }
-  #edo-mp-wait.show{ display:flex }
-  .edo-mp-box{ width:min(360px,92vw); background:#0f172a;
-    border:1px solid rgba(56,189,248,.55); border-radius:20px; padding:20px 18px; text-align:center;
-    box-shadow:0 20px 56px rgba(0,0,0,.6);
-    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif }
-  .edo-mp-t{ font-size:17px; font-weight:900; color:#f8fafc }
-  .edo-mp-s{ font-size:11px; color:#94a3b8; margin-top:6px; line-height:1.7 }
-  .edo-mp-dots{ font-size:30px; margin-bottom:8px }
-  .edo-mp-btn{ width:100%; margin-top:14px; padding:11px; border-radius:12px; font-size:13px; font-weight:900;
-    background:#1e293b; border:1px solid #475569; color:#e2e8f0 }
   /* ミニゲームが固まった時の逃げ道 */
   #edo-mini-escape{ position:absolute; top:8px; right:10px; z-index:6; display:none;
     padding:7px 11px; border-radius:11px; font-size:11px; font-weight:900;
@@ -16204,8 +15888,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const FIXED = window.__EDOGAWA_FIXED_CPUS || [];
+  /* 【ver1.3.0 整理】使っていない esc を削除 */
+  /* 【ver1.3.0 整理】使っていない FIXED を削除 */
 
   // ============================================================
   // ① かくれんぼが固まる対策
@@ -16475,7 +16159,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }, true);
 
   // 目的地の文字は、入る分だけ長く出します
-  const origName = app.updateHUD ? null : null;
+  /* 【ver1.3.0 整理】使っていない origName を削除 */
   function fitDestName(){
     const el = document.getElementById('mobile-destination-name');
     if(!el) return;
@@ -16769,7 +16453,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
   if(!LINES || !ST || !LINES.metro7) return;
   const M7 = LINES.metro7;
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
 
   // ── 駅（ご指定の8駅） ──
   const NEW_ST = {
@@ -17202,10 +16886,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return false;
   }
   app.railHasDestination = hasDestination;
-  const origRide = app._openRailRide ? app._openRailRide.bind(app) : null;
-  if(origRide){
-    /* _openRailRide：ここにあった古い版は、あとの版で置きかえられたため削除（ver1.2.0） */
-  }
+  /* 【ver1.3.0 整理】使っていない origRide を削除 */
+  /* 【ver1.3.0 整理】使っていない origRide を削除 */
 
   window.__EDOGAWA_V90_INFO = ()=>{
     const head = document.getElementById('edo-event-head');
@@ -17240,7 +16922,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const FB = ()=>window.FirebaseLib;
+  /* 【ver1.3.0 整理】使っていない FB を削除 */
 
   // ── ① アプリインストールの説明文 ──
   function markPwaLead(){
@@ -17298,7 +16980,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
   const FB = ()=>window.FirebaseLib;
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
 
   // ============================================================
   // ① メトロセブン：マルチプレイでは開通のお知らせを出しません
@@ -18314,7 +17996,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   window.__EDOGAWA_V105_INFO = ()=>{
-    const g = (id)=>document.getElementById(id);
+    const g = EdoU.g;
     const cs = (el)=> el ? getComputedStyle(el) : null;
     const box = g('roulette-box');
     const cell = box && box.querySelector('.edo-rt-cell:last-child');
@@ -18372,7 +18054,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
   function avatarHtml(v){
     try{ if(app.avatarMarkup) return app.avatarMarkup(v, 'w-full h-full object-cover rounded-full'); }catch(e){}
     return esc(v || '🙂');
@@ -18427,7 +18109,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
 
   window.__EDOGAWA_V106_INFO = ()=>{
-    const g = (id)=>document.getElementById(id);
+    const g = EdoU.g;
     const title = document.querySelector('#goal-modal h2');
     const av = g('edo-goal-avatar');
     const pav = g('edo-penalty-avatar');
@@ -18490,7 +18172,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  /* 【ver1.3.0 整理】使っていない esc を削除 */
 
   // ============================================================
   // ① ビリ案内の文言
@@ -18692,7 +18374,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   addEntry(); setInterval(addEntry, 2000);
 
   window.__EDOGAWA_V107_INFO = ()=>{
-    const g = (id)=>document.getElementById(id);
+    const g = EdoU.g;
     const cs = (el)=> el ? getComputedStyle(el) : null;
     return {
       罰金の揃え: cs(g('goal-penalty-text')) && cs(g('goal-penalty-text')).justifyContent,
@@ -18734,7 +18416,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const app = window.EdogawaSugoroku; if(!app) return;
   const BTN_TEXT = '次の双六を開始';
 
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   const visible = (el)=> !!el && !el.classList.contains('hidden');
 
   // ルーレットが回っている間：押せない灰色のボタンを置いておきます
@@ -19037,7 +18719,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = (v)=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
   const yen = (n)=>'¥'+Math.round(Number(n)||0).toLocaleString('ja-JP');
 
   // ══════════════════════════════════════════════════════════════
@@ -19532,7 +19214,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const app = window.EdogawaSugoroku; if(!app) return;
   const LINES = app.RAIL_LINES, ST = app.RAIL_STATIONS;
   if(!LINES || !ST) return;
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
   const DRIVABLE = new Set(['tozai','shinjuku','sobu','keiyo','keisei','metro7']);
 
   // ── いま乗れる駅（メトロセブンは開通ぶんだけ） ──
@@ -20747,7 +20429,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const esc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = EdoU.esc;
 
   // ══════════════════════════════════════════════════════════════
   //  ① 電車などで移動したあと、「あと◯マス」をすぐに新しくします
@@ -21740,9 +21422,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g  = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
-  const esc = (v)=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const esc = EdoU.esc;
 
   // ══════════════════════════════════════════════════════════════
   //  ① 目的地までジャンプして、施設の詳細を3秒見せる演出
@@ -22573,7 +22255,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   const n = (v)=>Math.round(Number(v)||0);
   const yen = (v)=>`￥${Math.abs(n(v)).toLocaleString('ja-JP')}`;
   const signed = (v)=>(n(v) > 0 ? '＋' : (n(v) < 0 ? '－' : '')) + yen(v);
@@ -22904,7 +22586,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
 
   // 共通の結果モーダルが出ているか
   function resultShowing(){
@@ -23252,8 +22934,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const g = EdoU.g;
+  const esc = EdoU.esc;
 
   // ──────────────────────────────────────────────────────────────
   //  ver1.0.5 ①　予想屋の一覧を縦に並べ、名前と人物像を出します
@@ -23529,8 +23211,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const g = EdoU.g;
+  const esc = EdoU.esc;
 
   // ──────────────────────────────────────────────────────────────
   //  ver1.0.6 ①　「🔮 予想屋（￥100）」のボタンをオレンジ色にします
@@ -23752,7 +23434,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
 
   // ──────────────────────────────────────────────────────────────
   //  ver1.0.7　マルチプレイは、当面おやすみにします
@@ -24087,8 +23769,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const g = EdoU.g;
+  const esc = EdoU.esc;
 
   // ──────────────────────────────────────────────────────────────
   //  ver1.0.14 ①　グレーアウト中のマルチプレイの説明を短くします
@@ -24469,8 +24151,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const g = EdoU.g;
+  const esc = EdoU.esc;
 
   // ──────────────────────────────────────────────────────────────
   //  ver1.0.14　🎰 パチンコ店
@@ -24843,7 +24525,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
 
   // ──────────────────────────────────────────────────────────────
   //  ver1.0.19　「☰」→「アカウント設定」から戻る場所を直します
@@ -24946,9 +24628,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const yen = (v)=>'￥' + Math.round(Number(v)||0).toLocaleString('ja-JP');
+  const g = EdoU.g;
+  const esc = EdoU.esc;
+  const yen = EdoU.yen;
 
   // ──────────────────────────────────────────────────────────────
   //  ver1.0.21　🏠 不動産の購入画面と、自分の番ごとの収入
@@ -25302,9 +24984,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (s)=>String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const yen = (v)=>{ v = Math.round(Number(v)||0); return (v < 0 ? '-￥' : '￥') + Math.abs(v).toLocaleString('ja-JP'); };
+  const g = EdoU.g;
+  const esc = EdoU.esc;
+  const yen = EdoU.yenS;
   const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
 
   // ──────────────────────────────────────────────────────────────
@@ -26986,8 +26668,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #auto-mode-btn, #bgm-toggle-btn, button[onclick="EdogawaSugoroku.toggleFullscreen()"], #host-save-btn, #game-menu-btn,
   #mobile-destination-badge, #game-destination-badge, #nearby-locate-btn,
   #roll-dice-btn, #edo-item-btn, #edo-game-menu-tool,
-  #players-card-container > div,
-  .edo-btn-frame{
+  #players-card-container > div{
     /* 【ver1.1.17】白黒の枠 → ニューモーフィズム（やわらかい浮き出し）。押すとへこみます */
     border-color: transparent !important;
     box-shadow: var(--edo-nm-out) !important;
@@ -27272,7 +26953,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #roll-dice-btn:active, #edo-item-btn:active, #edo-game-menu-tool:active, #visited-pin-tool:active,
   #menu-modal .space-y-2 > button:active, #settings-modal button.w-full:active,
   .edo-ask-btns button:active, #edo-rail-modal .edo-rail-item:active, .edo-dev-btn:active, #edo-item-list button:not(.edo-il-close):active,
-  #players-card-container > div:active, .edo-btn-frame:active{
+  #players-card-container > div:active{
     box-shadow: var(--edo-nm-in) !important;
     transform: scale(.98);
   }
@@ -27320,7 +27001,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
 
   // ── ② リップル：タップできる所すべて（メニュー・設定の項目、各ボタン） ──
   const TAP = 'button, [onclick], [role="button"], .edo-rail-item, a[href]';
@@ -27390,7 +27071,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   const KEY = 'edogawa_theme_v1';
   const THEMES = [
     { k:'black',  short:'黒', n:'双六ブラック',     c:'#0f172a', fg:'#ffffff', code:'いままでの色' },
@@ -27749,12 +27430,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 
   // 本体
   let main = null;
-  const skipMain = (n)=>{
-    const c = n.classList;
-    if(c && (c.contains('leaflet-container') || c.contains('leaflet-pane') || c.contains('leaflet-marker-icon'))) return n.id !== 'map';
-    if(n.id === 'dice-footer-container' || n.id === 'map') return n.id !== 'map' ? true : false;
-    return false;
-  };
+  /* 【ver1.3.0 整理】使っていない skipMain を削除 */
   function startMain(){
     if(themeKey() === 'black'){ if(main){ main.stop(); main = null; } return; }
     if(!main) main = makeRecolor(document, { skipSubtree: (n)=>{
@@ -27791,7 +27467,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   setInterval(startFrames, 150);   // ミニゲームの画面は、開いたらすぐ合わせます
   // 背景色を選び直したら、すぐ反映
   window.addEventListener('storage', tick);
-  const oldPick = app.openThemePicker;
+  /* 【ver1.3.0 整理】使っていない oldPick を削除 */
   document.addEventListener('click', (ev)=>{ if(ev.target && ev.target.closest && ev.target.closest('#edo-theme-modal .topt')) setTimeout(()=>{ if(main){ main.stop(); main = null; } tick(); }, 50); }, true);
 
   window.__EDOGAWA_V166_INFO = ()=>({ 背景色: themeKey(), 本体の置きかえ: !!main });
@@ -27849,9 +27525,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (v)=>String(v == null ? '' : v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const yen = (v)=>'￥' + Math.round(Number(v) || 0).toLocaleString('ja-JP');
+  const g = EdoU.g;
+  const esc = EdoU.esc;
+  const yen = EdoU.yen;
   // ════════════════════════════════════════════════════════════
   //  ver1.1.24　御朱印
   //   ・自分のコマが寺社の近く（6マス＝240m以内）に止まったら、次の自分の番のはじめに
@@ -28141,8 +27817,6 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     padding:18px 18px 16px; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.5); font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;
     animation:edo-un-in .28s cubic-bezier(.2,.9,.3,1.2); }
   @keyframes edo-un-in{ from{opacity:0;transform:translateY(18px) scale(.94)} to{opacity:1;transform:none} }
-  #edo-update-notice .un-x{ position:absolute; top:10px; right:10px; width:34px; height:34px; border-radius:10px; border:0;
-    background:var(--t-surf2, #1e293b); color:var(--t-text, #e2e8f0); font-size:17px; font-weight:900; }
   #edo-update-notice .un-emoji{ font-size:42px; line-height:1.1; margin-bottom:4px; }
   #edo-update-notice .un-kicker{ font-size:13px; font-weight:900; letter-spacing:.18em; color:var(--t-accent, #fbbf24); margin-bottom:4px; }
   #edo-update-notice .un-title{ font-size:20px; font-weight:900; line-height:1.3; margin-bottom:10px; }
@@ -28166,7 +27840,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   // ════════════════════════════════════════════════════════════
   //  ver1.1.29　アップデート情報（「前回の続きから遊ぶ」がある人）
   //   ・「閉じる」ボタンで閉じます。その上に「アプリインストールする」（最初はON・インストール済みなら出さない）
@@ -28321,7 +27995,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
   const M = app._edoMini; if(!M) return;                 // v156 の共通の道具（ミニゲームの画面・共通モーダル）
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   const { esc, yen, isMine, km } = M;
   // ════════════════════════════════════════════════════════════
   //  ver1.2.0　🚴 爆走！親水緑道SeSeラギー
@@ -28567,7 +28241,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   // ════════════════════════════════════════════════════════════
   //  ver1.2.1　地図
   //   ① 建物の3D表示（いままでの真上からの地図のまま）
@@ -29031,7 +28705,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   // ════════════════════════════════════════════════════════════
   //  ver1.2.1　取得情報のいちばん上に「所持金の推移」グラフ（単位：千円）
   //   ・自分の番がくるたびに、その時点の所持金を記録（プレイヤーの情報に入れるので「続きから」でも残ります）
@@ -29216,8 +28890,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
-  const esc = (v)=>String(v == null ? '' : v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const g = EdoU.g;
+  const esc = EdoU.esc;
   // ════════════════════════════════════════════════════════════
   //  ver1.2.2　マルチプレイ（PeerJS：端末どうしで直接やりとり）
   //   ・ひとりで遊んでいる双六は、0001・0002…の番号で「参加待ち」になります（ホスト）
@@ -29269,8 +28943,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(window.__EDOGAWA_PEER_CONFIG && !window.__EDOGAWA_PEER_CONFIG.config) o.config = { iceServers: STUN.concat(TURN.list) };
     return o;
   };
-  const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
-  const now = ()=>Date.now();
+  const sleep = EdoU.sleep;
+  const now = EdoU.now;
 
   const R = { role:'none', peer:null, slot:0, conns:new Map(), hostConn:null, uid:null, askQ:[], asking:false,
     turnKey:'', turnAt:0, lastSent:'', sentAt:0, ver:0, lastStateAt:0, hostUid:null, lastGs:null, migrating:false,
@@ -29800,7 +29474,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(note){ note.className = 'edo-mp-note'; note.textContent = live ? 'ほかの人の双六に、CPUと交代して参加できます'
       : (fb ? '直接つながらないため、これまでの方式（Firebase）で遊べます' : 'ひとりで遊んでいる人がいると、ここから参加できます'); }
   }
-  function myStateKey(){ return SOLO_KEY; }
+  /* 【ver1.3.0 整理】使っていない myStateKey を削除 */
   // 参加：好きな番号（シェアされた番号）から。満席ならほかの双六をさがします
   async function startJoin(prefer){
     if(R.joining || R.role === 'guest') return;
@@ -30333,7 +30007,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   window.__EDOGAWA_V174 = ()=>({ 役割: R.role, 番号: R.slot ? pad(R.slot) : null, 参加者: [...R.conns.keys()], 空き席: freeSeats(), 記録: R.log.slice(-12),
     参加できる双六: R.probe.rooms, サーバー: R.serverDown ? '通信できない' : 'OK', エラー: R.err, uid: R.uid || null, 引き継ぎ中: R.migrating,
     プレイヤー: (app.players || []).map(p=>({ id:p.id, name:p.name, cpu:!!p.isCpu, remote:!!p.remoteHuman, uid:p.uid })) });
-  window.__EDOGAWA_V174_TEST = { R, startJoin, lobbyProbe, share, shareUrl, hostGone, wakeHost };
+  // 単体テスト用（中の小さな関数を外から呼べるようにします）
+  window.__EDOGAWA_V174_TEST = { R, startJoin, lobbyProbe, share, shareUrl, hostGone, wakeHost,
+    spGate, loadOf, wireAv, resolveAv, okPhoto, afkWatch, fixedCpuFor, pickVals, foreignStart, foreignApply, foreignEnd, FR, PH, profile, myUid };
 })();
 </script>
 <script id="edogawa-v175">
@@ -30346,9 +30022,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // ════════════════════════════════════════════════════════════
   const app = window.EdogawaSugoroku; if(!app) return;
   const bus = app._peer; if(!bus) return;
-  const g = (id)=>document.getElementById(id);
-  const now = ()=>Date.now();
-  const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
+  const g = EdoU.g;
+  const now = EdoU.now;
+  const sleep = EdoU.sleep;
   // ════════════════════════════════════════════════════════════
   //  ① 江戸川競艇：参加した人も自分の端末で舟券を買えます
   //   ・ホストの競艇の様子（締切・レース・結果）を、参加した人の画面にもそのまま出します
@@ -30888,10 +30564,25 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       bus.all({ type:'spEnd', sid:r.sid });
     }
     SP.stopRec = stopRec;
+    // 【ver1.3.0】結果のモーダルが出たら、中継はそこで終わりにします（見る人の画面がゲームのまま残らないように）
+    (function(){
+      const orig = app._miniCommonResultShow;
+      if(typeof orig === 'function') app._miniCommonResultShow = function(){ try{ if(SP.rec) stopRec(); }catch(e){} return orig.apply(this, arguments); };
+    })();
+    // 【ver1.3.0】遊んでいる人の画面に見えているゲームの大きさ（見る側も同じ大きさで並べます）
+    function frameSize(win){
+      try{
+        const f = Array.from(document.querySelectorAll('iframe')).find(x=>{ try{ return x.contentWindow === win; }catch(e){ return false; } });
+        if(!f) return null;
+        const r = f.getBoundingClientRect(), p = f.parentElement ? f.parentElement.getBoundingClientRect() : r;
+        const w = Math.round(Math.min(r.width, p.width || r.width)), h = Math.round(Math.min(r.height, p.height || r.height));
+        return (w > 100 && h > 100) ? [w, h] : null;
+      }catch(e){ return null; }
+    }
     function flush(r){
       if(!r.buf.length) return;
       const evs = r.buf.splice(0);
-      bus.all({ type:'sp', sid:r.sid, n:r.name, a:r.avatar, g:r.game, t:r.title, evs });
+      bus.all({ type:'sp', sid:r.sid, n:r.name, a:r.avatar, g:r.game, t:r.title, vs:frameSize(r.win), evs });
     }
     async function startRec(game, win){
       stopRec();
@@ -31020,6 +30711,16 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const el = g('edo-spect'); if(!el || !v || !v.rep) return;
         const stage = el.querySelector('.sp-stage'); const wrap = el.querySelector('.replayer-wrapper'); const ifr = wrap && wrap.querySelector('iframe');
         if(!wrap || !ifr) return;
+        // 【ver1.3.0】遊んでいる人の画面と同じ大きさで並べます（横長の並びになって小さく映っていたため）
+        if(v.vs){ if(ifr.getAttribute('width') !== String(v.vs[0])) ifr.setAttribute('width', v.vs[0]); if(ifr.getAttribute('height') !== String(v.vs[1])) ifr.setAttribute('height', v.vs[1]); }
+        // 【ver1.3.0】再生側では動き（CSSアニメーション）が止められていたので、動かします（あみだくじの「隠しルート」のシールなど）
+        try{
+          const d = ifr.contentDocument;
+          if(d && d.documentElement){
+            d.documentElement.classList.remove('rrweb-paused');
+            if(d.head && !d.getElementById('edo-sp-anim')){ const st = d.createElement('style'); st.id = 'edo-sp-anim'; st.textContent = '*,*::before,*::after{animation-play-state:running!important}'; d.head.appendChild(st); }
+          }
+        }catch(e){}
         const w = Number(ifr.getAttribute('width')) || ifr.offsetWidth || 390, h = Number(ifr.getAttribute('height')) || ifr.offsetHeight || 844;
         const s = Math.min(stage.clientWidth / w, stage.clientHeight / h);
         wrap.style.transform = 'scale(' + s + ')';
@@ -31028,7 +30729,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }catch(e){}
     }
     window.addEventListener('resize', ()=>fit(cur()));
+    SP.ended = new Set();
     function endView(sid){
+      SP.ended.add(sid);                                   // 【ver1.3.0】終わった中継は、あとから届いても出しなおしません
       const v = SP.view[sid]; if(!v) return;
       v.ended = true;
       setTimeout(()=>{
@@ -31068,6 +30771,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         paint();
         loadLib();
       }
+      if(Array.isArray(m.vs) && m.vs.length === 2) v.vs = m.vs;
       (m.evs || []).forEach(e=>v.q.push(e));
       if(!(await loadLib())) return;
       if(SP.view[m.sid] !== v) return;
@@ -31117,11 +30821,18 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     bus.on('sp', (m, from)=>{
       if(from === bus.me()) return;
       // 自分がいっしょに遊んでいる（カヌー・しりとり・闘魂ロードなど）ときは、中継は出しません
-      if(SP.ignored.has(m.sid)) return;
+      if(SP.ignored.has(m.sid) || SP.ended.has(m.sid)) return;
       if((RL.P && RL.P.sid) || (g('edo-fight-remote') && g('edo-fight-remote').classList.contains('show'))){ SP.ignored.add(m.sid); return; }
       feed(m, from).catch(e=>console.warn('[v175] sp', e));
     });
     bus.on('spEnd', (m)=>endView(m.sid));
+    // 【ver1.3.0】ホストの結果モーダル（結果発表）が届いたら、見ている中継は閉じます
+    setInterval(()=>{
+      try{
+        const mc = g('edo-mini-common');
+        if(mc && mc.classList.contains('show') && /結果発表/.test(mc.textContent || '')) Object.keys(SP.view).forEach(k=>{ if(!SP.view[k].ended) endView(k); });
+      }catch(e){}
+    }, 500);
     // 自分が遊びはじめたら、見ている中継は閉じます（その中継は、もう出しません）
     SP.ignored = new Set();
     SP.hideAll = function(){
@@ -32188,7 +31899,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   // ════════════════════════════════════════════════════════════
   //  ver1.2.4
   //   ① ヘッダー：「◯ターン」は上に数字・下に「ターン」。数字は改行しません
@@ -32298,7 +32009,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
-  const g = (id)=>document.getElementById(id);
+  const g = EdoU.g;
   const snd = ()=>{ try{ return (typeof sound !== 'undefined') ? sound : null; }catch(e){ return null; } };
   const shown = (id, cls)=>{ const e = g(id); if(!e) return false; return cls ? e.classList.contains(cls) : !e.classList.contains('hidden'); };
   const inGame = ()=>{ const l = g('lobby-screen'); return !!l && l.classList.contains('hidden'); };
