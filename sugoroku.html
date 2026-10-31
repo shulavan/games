@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.3.2 (2026-10-31)';
+    window.__EDOGAWA_VERSION = 'ver1.3.3 (2026-10-31)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -18857,6 +18857,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const prize = Math.max(0, Math.round(Number(d.prize ?? d.delta)||0));
       player.money = (Number(player.money)||0) + prize;
       if(d.history) L.history = Object.assign(L.history, d.history);
+      // 【ver1.3.3】抽選ごとの記録（当選実績の画面で見られます）
+      L.draws = (Array.isArray(L.draws) ? L.draws : []).concat([{ turn:Math.max(0, Number(app.turnCount) || 0), prize, tickets:(L.renban || 0) + (L.bara || 0), at:Date.now() }]).slice(-50);
       L.tickets = []; L.renban = 0; L.bara = 0;
       app.addLog(prize > 0
         ? `🎊 ${player.name}：宝くじ当せん　＋${yen(prize)}`
@@ -18869,6 +18871,39 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ app.scheduleProfilePersist && app.scheduleProfilePersist(player); }catch(e){}
   };
 
+  // 【ver1.3.3】次の発売／抽選まで、あと何ターンか
+  function lotteryNext(L){
+    const t = Math.max(0, Number(app.turnCount) || 0);
+    let nt = (Math.floor(t / LOTTERY_EVERY) + 1) * LOTTERY_EVERY;
+    if(app.lotteryPhaseFor(t) && t !== lastLotteryTurn) nt = t;          // このターンに開く予定（まだ開いていない）
+    const ph = app.lotteryPhaseFor(nt);
+    const left = nt - t;
+    // 券を持っていない抽選の回は、売り場が開きます
+    const draw = ph === 'draw' && L && Array.isArray(L.tickets) && L.tickets.length > 0;
+    return (draw ? '抽選' : '発売') + (left > 0 ? 'まであと' + left + 'ターン' : 'はこのターン');
+  }
+  app.lotteryNextText = function(p){ return lotteryNext(app.lotteryStore(p || myPlayer() || (app.players || [])[0])); };
+  // 【ver1.3.3】過去の当選実績
+  app.openLotteryHistory = function(p){
+    p = p || myPlayer() || (app.players || [])[0]; if(!p) return;
+    const L = app.lotteryStore(p), h = L.history || {};
+    const tiers = [['１等前後賞', 1000000000, 'p1_front_back'], ['１等（全６桁）', 500000000, 'p1'], ['２等（下５桁）', 50000000, 'p2'],
+      ['３等（下４桁）', 500000, 'p3'], ['４等（下３桁）', 50000, 'p4'], ['５等（下２桁）', 3000, 'p5'], ['６等（下１桁）', 300, 'p6']];
+    const draws = Array.isArray(L.draws) ? L.draws.slice().reverse() : [];
+    const total = draws.reduce((a, d)=>a + (Number(d.prize) || 0), 0);
+    const yen2 = (n)=>'￥' + Math.round(Number(n) || 0).toLocaleString('ja-JP');
+    const html =
+      '<div class="edo-lm-sum">' + esc(p.name) + '　' + esc(lotteryNext(L)) + '</div>' +
+      '<div style="font-size:12px;font-weight:900;color:#fbbf24;margin:4px 2px 6px">🏆 通算の当選実績</div>' +
+      '<div style="display:grid;grid-template-columns:1fr auto auto;gap:4px 10px;font-size:12px;padding:8px 10px;border-radius:12px;background:rgba(2,6,23,.35);border:1px solid rgba(148,163,184,.25)">' +
+        tiers.map(([n, y, k])=>'<span>' + n + '</span><span style="text-align:right;opacity:.8">' + yen2(y) + '</span><span style="text-align:right;font-weight:900">' + (Number(h[k]) || 0).toLocaleString('ja-JP') + '回</span>').join('') +
+      '</div>' +
+      '<div style="font-size:12px;font-weight:900;color:#fbbf24;margin:12px 2px 6px">🎊 これまでの抽選（' + draws.length + '回・合計 ' + yen2(total) + '）</div>' +
+      (draws.length ? draws.map(d=>'<div class="edo-prop-row" style="display:flex;justify-content:space-between;font-size:12px;padding:6px 8px;border-bottom:1px solid rgba(148,163,184,.2)"><span>' +
+          esc(d.turn) + 'ターン目' + (d.tickets ? '（' + d.tickets + '枚）' : '') + '</span><span style="font-weight:900;color:' + (d.prize > 0 ? '#86efac' : '#94a3b8') + '">' + (d.prize > 0 ? '＋' + yen2(d.prize) : 'はずれ') + '</span></div>').join('')
+        : '<div class="edo-lm-empty">まだ抽選はありません。<br>' + LOTTERY_EVERY + 'ターンごとに「発売」と「抽選」が交互にあります。</div>');
+    if(app.showListModal) app.showListModal('🎫 江戸川ジャンボ宝くじ　当選実績', html, []);
+  };
   // ── 30ターンごとの呼び出し ──
   function myPlayer(){
     const ps = app.players || [];
@@ -18981,7 +19016,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         go:()=>{ app.closeGameMenuSheet(); app.openPropertyList(); }},
       {ic:'📿', t1:`御朱印${stamps}個`, t2:'御朱印帳を見る',
         go:()=>{ app.closeGameMenuSheet(); app.openGoshuinBook && app.openGoshuinBook(); }},
-      {ic:'🎫', t1:'宝くじ購入枚数', t2:`連番 ${L.renban}枚　バラ ${L.bara}枚`, readonly:true}
+      // 【ver1.3.3】次の発売・抽選までのターン数を出し、タップで当選実績を見られます
+      {ic:'🎫', t1:'宝くじ購入枚数', t2:`連番 ${L.renban}枚　バラ ${L.bara}枚　${lotteryNext(L)}`,
+        go:()=>{ app.closeGameMenuSheet(); app.openLotteryHistory(p); }}
     ];
     const box = el.querySelector('#edo-ms-items');
     box.innerHTML = '';
@@ -23988,6 +24025,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(el) el.classList.remove('show');
   };
   const miniMapShown = ()=>{ const el = g('edo-mini-map'); return !!(el && el.classList.contains('show')); };
+  // 【ver1.3.3】たからの地図（画面の中央に出す縮小マップ）でも、同じ地図と位置の計算を使います
+  app.__edoMiniMapGeo = { MAP_IMG, pct, colorOf, nodeOf };
 
   // 画面にさわったら消します（地図を動かす・ボタン・サイコロ、どれでも）
   document.addEventListener('pointerdown', (ev)=>{
@@ -26039,7 +26078,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     { id:'rocket',   ic:'🚀', n:'ロケット',         d:'ロケットに乗って、200マス以上はなれた区内のどこかへ飛んでいきます（このターンはおしまい）。' },
     { id:'taxi',     ic:'🚕', n:'かしきりタクシー', d:'￥1,000,000 はらって、ゴールの近くまで一気に移動します（このターンはおしまい）。' },
     { id:'present',  ic:'🎁', n:'プレゼント',       d:'他のプレーヤー全員に ￥1,000,000 プレゼント。自分は -￥3,000,000 になります。' },
-    { id:'treasure', ic:'📜', n:'たからのちず',     d:'区内のどこかにたからが埋まります。いつもの目的地へのルートで、たまたま近くを通ると ￥100,000,000！' }
+    { id:'treasure', ic:'📜', n:'たからのちず',     d:'手に入れたら、使わなくてもすぐ発動します。区内のどこかにたからが埋まり、いつもの目的地へのルートで、たまたま近くを通ると ￥100,000,000！' }
   ];
   const byId = {}; ITEMS.forEach(it => byId[it.id] = it);
   const strip = s => String(s || '').replace(/️/g, '');
@@ -26139,6 +26178,28 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     try{ const n = nodeOf(p), mk = app.playerMarkers && app.playerMarkers[p.id]; if(mk && n) mk.setLatLng([n.lat, n.lng]); }catch(e){}
   }
 
+  // ── 【ver1.3.3】たからのちず：手に入れたら、使わなくてもすぐ広げます ──
+  function spreadTreasure(p, here){
+    const spot = randomPlace(here || nodeOf(p), 1500) || randomPlace(null, 0);
+    if(!spot) return false;
+    let hint = null; try{ hint = app.nearbyAreaName ? app.nearbyAreaName(spot.lat, spot.lng) : null; }catch(e){}
+    p.treasures = (p.treasures || []).concat([{ lat:spot.lat, lng:spot.lng, hint:hint || '江戸川区のどこか' }]);
+    const mine = p === human();
+    if(mine) toast('📜', 'たからのちずが発動！\nヒント：' + (hint || '江戸川区のどこか') + 'のあたり\n（アイテムの「いま発動中のアイテム」から地図を見られます）', 3600);
+    log('📜 [アイテム] ' + (p.name || '') + ' の たからのちずが発動しました。（ヒント：' + (hint || '江戸川区のどこか') + 'のあたり）');
+    return true;
+  }
+  function autoTreasure(){
+    try{
+      if(app.isMultiplayer && !app.isHost) return;                  // 参加した人の端末は、ホストにまかせます
+      const lob = document.getElementById('lobby-screen'); if(!lob || !lob.classList.contains('hidden')) return;
+      let any = false;
+      (app.players || []).forEach(p => { while(p && countOf(p, 'treasure') > 0){ take(p, 'treasure'); if(!spreadTreasure(p)) give(p, 'treasure', 1); else any = true; if(countOf(p, 'treasure') > 0 && !places().length) break; } });
+      if(any){ saveWorld(); try{ app.saveGameState && app.saveGameState(); app.updateHUD && app.updateHUD(); }catch(e){} refresh(true); }
+    }catch(e){ console.warn('[items] treasure', e); }
+  }
+  setInterval(autoTreasure, 1000);
+
   // ── ターンを「使う」宣言（このターンをアイテムで終える時） ──
   function claimTurn(){
     try{ app.cancelAutoRoll && app.cancelAutoRoll(); }catch(e){}
@@ -26230,13 +26291,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       toast(it.ic, name + ' から みんなへ プレゼント！\nみんな ＋￥1,000,000 ／ ' + name + ' -￥3,000,000');
       log('🎁 [アイテム] ' + name + ' が プレゼント！ 他の全員に ＋￥1,000,000、自分は -￥3,000,000。');
     } else if(id === 'treasure'){
-      const spot = randomPlace(here, 1500) || randomPlace(null, 0);
-      if(spot){
-        let hint = null; try{ hint = app.nearbyAreaName ? app.nearbyAreaName(spot.lat, spot.lng) : null; }catch(e){}
-        p.treasures = (p.treasures || []).concat([{ lat:spot.lat, lng:spot.lng, hint:hint || '江戸川区のどこか' }]);
-        toast(it.ic, 'たからのちずを広げた！\nヒント：' + (hint || '江戸川区のどこか') + 'のあたり');
-        log('📜 [アイテム] ' + name + ' が たからのちずを広げました。（ヒント：' + (hint || '江戸川区のどこか') + 'のあたり）');
-      }
+      spreadTreasure(p, here);
     }
     saveWorld();
     try{ app.saveGameState && app.saveGameState(); }catch(e){}
@@ -26341,7 +26396,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       try{ app.saveGameState && app.saveGameState(); }catch(e){}
       setTimeout(() => app.landOnSpot(player), 300);
     };
-    if(n <= 0){ done(); return; }
+    if(n <= 0){
+      // 【ver1.3.3】目的地が決まったばかりなどで、うしろに戻れるマスがないときは、その場で止まります
+      log('🧭 ' + (player.name || '') + ' は ほうこうおんちですが、うしろに戻れるマスがないので、その場で止まります。');
+      try{ if(player === human()) toast('🧭', 'ほうこうおんち！\nうしろに戻れるマスがないので、その場で止まります', 2600); }catch(e){}
+      done(); return;
+    }
     if(app.moveInterval){ clearInterval(app.moveInterval); app.moveInterval = null; }
     let k = 0;
     const iv = app.moveInterval = setInterval(() => {
@@ -26587,7 +26647,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if((W.bombs || []).length) out.push('💣 ばくだん：' + W.bombs.length + 'か所');
     const h = human();
     if(h && (Number(h.itemSleep) || 0) > 0) out.push('💤 ' + h.name + '：あと' + h.itemSleep + '回休み');
-    if(h && (h.treasures || []).length) h.treasures.forEach(tr => out.push('📜 たからのヒント：' + tr.hint + 'のあたり'));
+    if(h && (h.treasures || []).length) h.treasures.forEach((tr, i) => out.push({ t:'📜 たからの地図：' + tr.hint + 'のあたり', map:i }));
     return out;
   }
   function renderList(){
@@ -26603,10 +26663,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     });
     if(own.length && !can) html += '<div class="edo-il-note">※ 自分の番で、サイコロを振る前に使えます（1ターンに1つまで）</div>';
     const eff = effectsText();
-    if(eff.length) html += '<div class="edo-il-row" style="display:block"><div class="edo-il-name" style="font-size:12px;color:#f0abfc">いま効いているもの</div>' +
-      eff.map(t => '<div class="edo-il-eff">' + t + '</div>').join('') + '</div>';
+    if(eff.length) html += '<div class="edo-il-row" style="display:block"><div class="edo-il-name" style="font-size:12px;color:#f0abfc">いま発動中のアイテム</div>' +
+      eff.map(t => typeof t === 'string' ? '<div class="edo-il-eff">' + t + '</div>'
+        : '<button type="button" class="edo-il-eff edo-il-tmap" data-map="' + t.map + '" style="display:block;width:100%;text-align:left;background:rgba(240,171,252,.12);border:1px solid rgba(240,171,252,.5);border-radius:10px;padding:6px 8px;margin-top:4px;color:inherit">' +
+          t.t + '<span style="float:right;color:#f0abfc;font-weight:900">地図 ›</span></button>').join('') + '</div>';
     el.innerHTML = html;
     el.querySelector('.edo-il-close').onclick = (e) => { e.stopPropagation(); closeList(); };
+    el.querySelectorAll('.edo-il-tmap').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); closeList(); try{ app.openTreasureMap && app.openTreasureMap(human()); }catch(err){ console.warn('[items] tmap', err); } });
     el.querySelectorAll('.edo-il-use').forEach(btn => btn.onclick = async (e) => {
       e.stopPropagation();
       const id = btn.getAttribute('data-id');
@@ -26673,12 +26736,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const n = total(p);
         const badge = b.querySelector('.edo-item-badge');
         if(badge){ badge.textContent = String(n); badge.style.display = n > 0 ? 'flex' : 'none'; }
-        b.classList.toggle('is-off', !(n > 0 && canUseNow(p)));
+        b.classList.toggle('is-off', !((n > 0 && canUseNow(p)) || ((p && p.treasures) || []).length > 0));
       }
       // 【ver1.1.0】アイテムを持っている間だけ「アイテム」ボタンを出します（使い切ったら消えます）
       // 【ver1.1.14】CPUの番のときは「アイテム」ボタンを出しません（自分の番だけ）
       const cpNow = (app.players || [])[app.currentPlayerIdx];
-      const has = total(p) > 0 && !!cpNow && cpNow === p;
+      const has = (total(p) > 0 || ((p && p.treasures) || []).length > 0) && !!cpNow && cpNow === p;   // 【ver1.3.3】たからの地図があるときも出します
       if(document.body.classList.contains('edo-has-items') !== has){
         document.body.classList.toggle('edo-has-items', has);
         if(!has) closeList();
@@ -26712,7 +26775,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     use: (pid, id) => useItem((app.players || [])[pid], id, {}),
     canUse: () => canUseNow(human()),
     blockOnPath: (pid) => !!blockOnPath((app.players || [])[pid]),
-    starOn, reverseOn, cpuOn: cpuItemsOn, open: openList, close: closeList,
+    starOn, reverseOn, cpuOn: cpuItemsOn, open: openList, close: closeList, autoTreasure, effects: effectsText,
     nextAmidaItem: () => ITEMS[(Math.floor(Number(W.rot) || 0)) % ITEMS.length].id
   };
 })();
@@ -31850,7 +31913,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
           const box = g('edo-ms-items'); if(!box) return r;
           const b = document.createElement('button'); b.type = 'button'; b.className = 'edo-ms-item edo-ms-badge';
           b.innerHTML = '<span class="edo-ms-ic">🏅</span><span class="edo-ms-tx"><span class="edo-ms-t1">獲得バッジ ' + total() + ' / ' + (DEFS.length * 4) + '</span>' +
-            '<span class="edo-ms-t2">銅・銀・金・プラチナのバッジを集めよう</span></span><span class="edo-ms-ar">›</span>';
+            '<span class="edo-ms-t2">ミッション達成バッジ一覧</span></span><span class="edo-ms-ar">›</span>';
           b.onclick = ()=>{ app.closeGameMenuSheet && app.closeGameMenuSheet(); app.openBadgeScreen(); };
           box.appendChild(b);
         }catch(e){ console.warn('[v175] badge menu', e); }
@@ -32403,6 +32466,90 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return origMove.apply(this, arguments);
   };
   window.__EDOGAWA_V179_TEST = { broken, patchNow, rebuild };
+})();
+</script>
+<script id="edogawa-v180">
+// ════════════════════════════════════════════════════════════
+//  ver1.3.3
+//   ① ✈️をとって「江戸川飛行隊」を遊ぶ前に、だれかがゴールして目的地が変わったときは、
+//      新しい目的地まで飛行機のルート（一直線の空の旅）にします
+//   ② たからの地図：画面の中央に縮小マップを出して、たからの場所に🪎を置きます
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = EdoU.g, esc = EdoU.esc;
+  const log = (k, m, d)=>{ try{ window.EdoLog && window.EdoLog.add(k, m, d); }catch(e){} };
+
+  // ── ① 目的地が変わっても、飛行隊がまだの✈️は、新しい目的地へ飛びます ──
+  const origSetup = app.setupBoard;
+  if(typeof origSetup === 'function') app.setupBoard = async function(){
+    const carry = (app.players || []).filter(p=>p && p.pendingPlaneMission);
+    const r = await origSetup.apply(this, arguments);
+    for(const p of carry){
+      try{
+        if(!p.pendingPlaneMission) continue;
+        // 飛行機を取ったときと同じ作り方で、いまの場所から新しい目的地まで一直線のルートにします（お知らせは出しません）
+        const show = app.showEventModal, chime = (typeof sound !== 'undefined') ? sound.playChime : null;
+        app.showEventModal = function(){};
+        try{ if(chime) sound.playChime = function(){}; await app.grantFlight(p, '✈️'); }
+        finally{ app.showEventModal = show; if(chime) sound.playChime = chime; }
+        p.pendingPlaneMission = true;                         // 飛行隊は次の番に遊びます
+        app.planeGrantedThisLeg = true;                       // この目的地の✈️は、この人が使っています
+        try{ app.setPlayerIconState && app.setPlayerIconState(p, { bubbleText:'✈️ 新しい目的地へ！' }); }catch(e){}
+        try{ app.addLog && app.addLog('✈️ ' + p.name + ' は 目的地が変わったので、新しい目的地まで飛行機で向かいます。'); }catch(e){}
+        try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+      }catch(e){ console.warn('[v180] plane', e); log('エラー', '✈️ 新しい目的地への飛行ルートを作れませんでした：' + (e && e.message)); }
+    }
+    return r;
+  };
+
+  // ── ② たからの地図 ──
+  function ensure(){
+    let el = g('edo-tmap'); if(el) return el;
+    el = document.createElement('div'); el.id = 'edo-tmap';
+    el.innerHTML = '<div class="tm-box"><div class="tm-head"><b>📜 たからの地図</b><button type="button" class="tm-x" aria-label="閉じる">✕</button></div>' +
+      '<div class="tm-map"><div class="tm-inner"></div></div><div class="tm-foot"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', (e)=>{ if(e.target === el || (e.target.closest && e.target.closest('.tm-x'))) el.classList.remove('show'); });
+    const st = document.createElement('style'); st.id = 'edogawa-v180-css';
+    st.textContent =
+      '#edo-tmap{position:fixed;inset:0;z-index:2147483150;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(2,6,23,.55)}' +
+      '#edo-tmap.show{display:flex}' +
+      '#edo-tmap .tm-box{width:min(92vw,430px);max-height:92vh;display:flex;flex-direction:column;background:var(--t-surf,#0f172a);border:2px solid rgba(240,171,252,.6);border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.55)}' +
+      '#edo-tmap .tm-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;color:var(--t-text,#e2e8f0);font-size:15px}' +
+      '#edo-tmap .tm-x{border:0;border-radius:10px;background:var(--t-surf2,#1e293b);color:var(--t-text,#e2e8f0);font-weight:900;width:34px;height:34px}' +
+      '#edo-tmap .tm-map{flex:1 1 auto;overflow:auto;background:#0b1220}' +
+      '#edo-tmap .tm-inner{position:relative;width:100%}' +
+      '#edo-tmap .tm-inner img{display:block;width:100%;height:auto;aspect-ratio:auto 2/3;background:#1e293b}' +
+      '#edo-tmap .tm-pin{position:absolute;transform:translate(-50%,-50%);font-size:15px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.85);pointer-events:none}' +
+      '#edo-tmap .tm-p{font-size:8px;font-weight:900;color:#020617;padding:2px 3px;border-radius:4px;border:1px solid rgba(2,6,23,.55);text-shadow:none;white-space:nowrap}' +
+      '#edo-tmap .tm-tr{font-size:26px;z-index:9;filter:drop-shadow(0 0 6px rgba(253,224,71,.95));animation:edoTmB 1.1s ease-in-out infinite}' +
+      '@keyframes edoTmB{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-62%) scale(1.15)}}' +
+      '#edo-tmap .tm-foot{padding:9px 12px;font-size:12px;line-height:1.6;color:var(--t-text,#e2e8f0)}';
+    document.head.appendChild(st);
+    return el;
+  }
+  app.openTreasureMap = function(p){
+    const G = app.__edoMiniMapGeo; if(!G) return false;
+    const list = ((p && p.treasures) || []).filter(t=>t && isFinite(t.lat) && isFinite(t.lng));
+    const el = ensure(), inner = el.querySelector('.tm-inner');
+    let pins = '<img alt="江戸川区のちず" referrerpolicy="no-referrer" src="' + G.MAP_IMG + '">';
+    const d = app.currentDestination;
+    if(d && isFinite(d.lat) && isFinite(d.lng)){ const q = G.pct(Number(d.lat), Number(d.lng)); pins += '<span class="tm-pin" style="left:' + q.x + '%;top:' + q.y + '%;z-index:8">🚩</span>'; }
+    (app.players || []).forEach((pl, i)=>{
+      const n = G.nodeOf(pl); if(!n) return; const q = G.pct(n.lat, n.lng);
+      pins += '<span class="tm-pin tm-p" style="left:' + q.x + '%;top:' + q.y + '%;background:' + G.colorOf(pl, i) + ';z-index:' + (7 - i) + '">' + (i + 1) + 'P</span>';
+    });
+    list.forEach(t=>{ const q = G.pct(Number(t.lat), Number(t.lng)); pins += '<span class="tm-pin tm-tr" style="left:' + q.x + '%;top:' + q.y + '%">🪎</span>'; });
+    inner.innerHTML = pins;
+    el.querySelector('.tm-foot').innerHTML = list.length
+      ? '🪎 のあたりを通ると、たからが見つかって <b style="color:#fbbf24">￥100,000,000</b>！<br>' + list.map(t=>'・' + esc(t.hint) + 'のあたり').join('<br>')
+      : 'いま、たからの地図はありません。';
+    el.classList.add('show');
+    return true;
+  };
+  window.__EDOGAWA_V180_TEST = {};
 })();
 </script>
 <script id="edogawa-v39-footer">
