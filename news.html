@@ -392,7 +392,7 @@
             }
             for (let i = 0; i < 50; i++) {
                 const loc = EDOGAWA_LOCATIONS[(i + 4) % EDOGAWA_LOCATIONS.length];
-                const text = `${loc}の話題の新店です。　${shopTemplates[i % shopTemplates.length].replace(/{loc}/g, loc)}　地域住民から　連日大きな注目を　集めています。`;
+                const text = `${loc}の話題の新店舗です。　${shopTemplates[i % shopTemplates.length].replace(/{loc}/g, loc)}　地域住民から　連日大きな注目を　集めています。`;
                 happyNews.push({
                     type: 'happy_shop',
                     summary: `${loc}話題の新店舗オープン`,
@@ -728,6 +728,39 @@
             return lineTexts;
         }
 
+        function removeCumulativeSlotReplay(previousCombined, incomingText) {
+            const incoming = String(incomingText || '');
+            if (!incoming || !previousCombined) return incoming;
+            // 通常の隣接重複は末尾と先頭を照合する。
+            const boundaryTrimmed = removeLeadingSessionOverlap(previousCombined, incoming, false);
+            if (boundaryTrimmed !== incoming) return boundaryTrimmed;
+
+            // 一部の音声認識実装では、後続result slotが「直前までの全文＋新しい続き」を返す。
+            // その場合は前スロット全文と一致する先頭部分だけを取り除く。
+            const previousNormalized = normalizeSpeechCharacters(previousCombined);
+            const incomingRawChars = Array.from(incoming);
+            const incomingNormalized = [];
+            const rawStartByNormalizedIndex = [];
+            incomingRawChars.forEach((char, rawIndex) => {
+                normalizeSpeechCharacters(char).forEach(unit => {
+                    incomingNormalized.push(unit);
+                    rawStartByNormalizedIndex.push(rawIndex);
+                });
+            });
+            let commonPrefix = 0;
+            const limit = Math.min(previousNormalized.length, incomingNormalized.length);
+            while (commonPrefix < limit && previousNormalized[commonPrefix] === incomingNormalized[commonPrefix]) commonPrefix++;
+
+            // 8文字以上、かつ新しいslotの半分以上が前slot先頭と一致する場合だけ累積再送と判定。
+            if (commonPrefix >= 8 && commonPrefix >= incomingNormalized.length * 0.5) {
+                const rawCutPosition = commonPrefix < rawStartByNormalizedIndex.length
+                    ? rawStartByNormalizedIndex[commonPrefix]
+                    : incoming.length;
+                return incoming.slice(rawCutPosition);
+            }
+            return incoming;
+        }
+
         function getRecognitionSessionText() {
             let combined = '';
             const orderedSlots = Array.from(recognitionSessionSlots.entries())
@@ -735,16 +768,15 @@
             orderedSlots.forEach(([, slot]) => {
                 const phrase = slot && slot.text ? slot.text : '';
                 if (!phrase) return;
-                // 同一セッション内でも隣接するresult slotが文章を重ねて返す端末があるため、
-                // 直前までのスロットとの重複を除去してから連結する。
-                combined += removeLeadingSessionOverlap(combined, phrase);
+                // 通常のslot重複に加え、「前slot全文＋続き」の累積再送も除去する。
+                combined += removeCumulativeSlotReplay(combined, phrase);
             });
             return combined;
         }
 
         // セッション再起動時に、直前セッション末尾と新セッション先頭の重複を除去する。
         // 句読点・空白の差を無視して照合し、4文字以上の完全一致だけを重複とみなす。
-        function removeLeadingSessionOverlap(previousText, incomingText) {
+        function removeLeadingSessionOverlap(previousText, incomingText, allowSessionReplay = false) {
             const incoming = String(incomingText || '');
             if (!incoming) return '';
             const previousChars = normalizeSpeechCharacters(previousText);
@@ -759,11 +791,12 @@
                     rawStartByNormalizedIndex.push(rawIndex);
                 });
             });
+            if (!incomingNormalized.length || !previousChars.length) return incoming;
 
+            // まず、直前セッション末尾と新セッション先頭の重なりだけを除去する。
+            // 文中の任意位置を検索する方式は、正当に繰り返された語まで消すため使用しない。
             const maxOverlap = Math.min(previousChars.length, incomingNormalized.length);
             let overlap = 0;
-
-            // 最優先は直前セッション末尾との一致。
             for (let length = maxOverlap; length >= 4; length--) {
                 let matches = true;
                 const previousStart = previousChars.length - length;
@@ -773,27 +806,30 @@
                         break;
                     }
                 }
-                if (matches) {
-                    overlap = length;
-                    break;
-                }
+                if (matches) { overlap = length; break; }
             }
 
-            // 一部ブラウザは再起動後、直前の末尾ではなくセッション冒頭から結果を再送する。
-            // 末尾一致がない場合に限り、過去全文中に存在する8文字以上の先頭重複も除去する。
-            if (!overlap) {
-                const previousNormalizedText = previousChars.join('');
-                const fallbackMax = Math.min(incomingNormalized.length, 160);
-                for (let length = fallbackMax; length >= 8; length--) {
-                    const candidate = incomingNormalized.slice(0, length).join('');
-                    if (previousNormalizedText.includes(candidate)) {
-                        overlap = length;
-                        break;
-                    }
+            // 一部のAndroid音声認識は再起動時に、直前セッションの冒頭から
+            // 同じ認識スロットを再送する。過去セッションの「冒頭」と一致する場合だけ除去する。
+            // 任意位置の部分一致では除去しないため、原稿中の正当な反復語を保護する。
+            if (!overlap && allowSessionReplay && Array.isArray(recognitionSegments)) {
+                let best = 0;
+                // 前セッションまでの全文先頭から再送されるケース。
+                const priorCandidates = [previousChars];
+                // また、ブラウザが直前の個別セッションの冒頭だけを再送するケース。
+                recognitionSegments.forEach(segment => {
+                    priorCandidates.push(normalizeSpeechCharacters(segment && segment.text ? segment.text : ''));
+                });
+                for (const priorStart of priorCandidates) {
+                    const limit = Math.min(priorStart.length, incomingNormalized.length, 240);
+                    let matched = 0;
+                    while (matched < limit && priorStart[matched] === incomingNormalized[matched]) matched++;
+                    if (matched > best) best = matched;
                 }
+                if (best >= 8) overlap = best;
             }
+
             if (!overlap) return incoming;
-            // 重複した文の直後にある句読点・空白も一緒に捨て、句点が二重になるのを防ぐ。
             const rawCutPosition = overlap < rawStartByNormalizedIndex.length
                 ? rawStartByNormalizedIndex[overlap]
                 : incoming.length;
@@ -812,7 +848,7 @@
             if (!sessionText) return;
 
             const previousText = recognitionSegments.map(segment => segment.text || '').join('');
-            const uniqueText = removeLeadingSessionOverlap(previousText, sessionText);
+            const uniqueText = removeLeadingSessionOverlap(previousText, sessionText, true);
             if (uniqueText) {
                 recognitionSegments.push({
                     text: uniqueText,
@@ -830,7 +866,7 @@
                 .join('');
             const activeSessionText = getRecognitionSessionText();
             // 表示中の仮結果にもセッション境界の重複除去を適用する。
-            const activeUniqueText = removeLeadingSessionOverlap(committedText, activeSessionText);
+            const activeUniqueText = removeLeadingSessionOverlap(committedText, activeSessionText, true);
             userTranscript = committedText + activeUniqueText;
             const mappedLines = alignTranscriptToScriptLines(userTranscript, playerScriptChunks);
 
@@ -939,6 +975,7 @@
         const finalScores = { dark: {}, happy: {} };
 
         let micStream = null;
+        let micSource = null;
         let micAnalyser = null;
         let micAnimFrame = null;
 
@@ -975,21 +1012,53 @@
             }
         }
 
-        async function requestMicPermission() {
-            const badge = document.getElementById('mic-status-badge');
+        async function attachMicAnalyser(stream) {
             try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const ctx = getAudioContext();
-                const source = ctx.createMediaStreamSource(micStream);
+                if (ctx.state === 'suspended') await ctx.resume();
+                if (micSource) {
+                    try { micSource.disconnect(); } catch (e) {}
+                    micSource = null;
+                }
+                micSource = ctx.createMediaStreamSource(stream);
                 micAnalyser = ctx.createAnalyser();
-                micAnalyser.fftSize = 2048;
-                micAnalyser.smoothingTimeConstant = 0.15;
-                source.connect(micAnalyser);
+                // 低めの声も拾えるように長めの波形窓を使い、平滑化は解析側で行う。
+                micAnalyser.fftSize = 4096;
+                micAnalyser.smoothingTimeConstant = 0;
+                micSource.connect(micAnalyser);
+                return true;
+            } catch (e) {
+                micAnalyser = null;
+                return false;
+            }
+        }
 
+        async function requestMicPermission() {
+            try {
+                if (!micStream || !micStream.getAudioTracks().some(track => track.readyState === 'live')) {
+                    micStream = await navigator.mediaDevices.getUserMedia({
+                        audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: true }
+                    });
+                }
+                const connected = await attachMicAnalyser(micStream);
+                if (!connected) throw new Error('マイク音声解析を開始できません');
                 setMicBadge('granted');
                 return true;
             } catch(e) {
                 setMicBadge('denied');
+                return false;
+            }
+        }
+
+        async function ensureMicAnalyserReady() {
+            if (!micStream || !micStream.getAudioTracks().some(track => track.readyState === 'live') || !micAnalyser) {
+                return await requestMicPermission();
+            }
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') await ctx.resume();
+                return !!micAnalyser;
+            } catch (e) {
                 return false;
             }
         }
@@ -999,7 +1068,7 @@
         function estimateFundamentalFrequency(buffer, sampleRate) {
             const step = 2;
             const length = Math.floor(buffer.length / step);
-            if (length < 128) return null;
+            if (length < 256) return null;
             const data = new Float32Array(length);
             let mean = 0;
             for (let i = 0; i < length; i++) {
@@ -1012,13 +1081,13 @@
                 data[i] -= mean;
                 energy += data[i] * data[i];
             }
-            if (energy / length < 0.000035) return null;
+            if (energy / length < 0.000004) return null;
 
             const reducedRate = sampleRate / step;
-            const minLag = Math.max(2, Math.floor(reducedRate / 350));
-            const maxLag = Math.min(Math.floor(reducedRate / 75), Math.floor(length / 2));
-            let bestLag = -1;
-            let bestCorrelation = 0;
+            const minLag = Math.max(2, Math.floor(reducedRate / 500));
+            const maxLag = Math.min(Math.floor(reducedRate / 65), Math.floor(length / 2));
+            const correlations = new Float32Array(maxLag + 1);
+
             for (let lag = minLag; lag <= maxLag; lag++) {
                 let cross = 0, energyA = 0, energyB = 0;
                 const limit = length - lag;
@@ -1029,45 +1098,81 @@
                     energyB += b * b;
                 }
                 const denominator = Math.sqrt(energyA * energyB);
-                const correlation = denominator > 0 ? cross / denominator : 0;
-                if (correlation > bestCorrelation) {
-                    bestCorrelation = correlation;
+                correlations[lag] = denominator > 0 ? cross / denominator : 0;
+            }
+
+            // 自己相関の最大値だけを採用すると、基本周波数の2倍・半分へ誤検出しやすい。
+            // 先に現れる十分強い局所ピークを採り、倍周期への引き込みを抑える。
+            let bestLag = -1;
+            let bestCorrelation = 0;
+            for (let lag = minLag + 1; lag < maxLag; lag++) {
+                const current = correlations[lag];
+                if (current >= 0.48 && current >= correlations[lag - 1] && current >= correlations[lag + 1]) {
+                    bestLag = lag;
+                    bestCorrelation = current;
+                    break;
+                }
+                if (current > bestCorrelation) {
+                    bestCorrelation = current;
                     bestLag = lag;
                 }
             }
-            if (bestLag < 0 || bestCorrelation < 0.38) return null;
-            return reducedRate / bestLag;
+            if (bestLag < 0 || bestCorrelation < 0.28) return null;
+
+            // 放物線補間でラグを小数化し、音程評価の揺れを抑える。
+            let refinedLag = bestLag;
+            if (bestLag > minLag && bestLag < maxLag) {
+                const left = correlations[bestLag - 1];
+                const center = correlations[bestLag];
+                const right = correlations[bestLag + 1];
+                const denominator = left - 2 * center + right;
+                if (Math.abs(denominator) > 1e-8) {
+                    refinedLag += 0.5 * (left - right) / denominator;
+                }
+            }
+            return refinedLag > 0 ? reducedRate / refinedLag : null;
         }
 
         function startMicMonitorLipSync() {
             if (!micAnalyser) return;
+            if (micAnimFrame) cancelAnimationFrame(micAnimFrame);
             const waveform = new Float32Array(micAnalyser.fftSize);
             const sampleRate = (audioCtx && audioCtx.sampleRate) ? audioCtx.sampleRate : 44100;
 
             function checkAudioLevel() {
-                if (!micAnalyser) return;
+                if (!micAnalyser) { micAnimFrame = null; return; }
                 micAnalyser.getFloatTimeDomainData(waveform);
                 let squareSum = 0;
-                for (let i = 0; i < waveform.length; i++) squareSum += waveform[i] * waveform[i];
+                let peak = 0;
+                for (let i = 0; i < waveform.length; i++) {
+                    const value = waveform[i];
+                    squareSum += value * value;
+                    const absolute = Math.abs(value);
+                    if (absolute > peak) peak = absolute;
+                }
                 const rms = Math.sqrt(squareSum / waveform.length);
-                setCasterMouth(rms > 0.008);
+                setCasterMouth(rms > 0.003);
 
                 const now = Date.now();
-                if (playerReadingActive && now - playerAudioMetrics.lastSampleAt >= 100) {
+                if (playerReadingActive && now - playerAudioMetrics.lastSampleAt >= 60) {
                     const sampleInterval = playerAudioMetrics.lastSampleAt > 0
-                        ? Math.max(50, Math.min(250, now - playerAudioMetrics.lastSampleAt))
-                        : 100;
+                        ? Math.max(40, Math.min(180, now - playerAudioMetrics.lastSampleAt))
+                        : 60;
                     playerAudioMetrics.lastSampleAt = now;
                     playerAudioMetrics.sampleCount++;
-                    if (rms > 0.006) {
+
+                    // Android端末の入力レベル差を考慮し、RMSとピークを併用。
+                    // 旧0.006固定では通常の話し声も無音扱いになる端末があった。
+                    const isVoiced = rms >= 0.0022 || (rms >= 0.0013 && peak >= 0.008);
+                    if (isVoiced) {
                         playerAudioMetrics.voicedFrames++;
                         playerAudioMetrics.voicedDurationMs += sampleInterval;
                         playerAudioMetrics.voicedRms.push(rms);
-                        if (playerAudioMetrics.voicedRms.length > 1200) playerAudioMetrics.voicedRms.shift();
+                        if (playerAudioMetrics.voicedRms.length > 1600) playerAudioMetrics.voicedRms.shift();
                         const pitch = estimateFundamentalFrequency(waveform, sampleRate);
-                        if (pitch && pitch >= 75 && pitch <= 350) {
+                        if (pitch && pitch >= 65 && pitch <= 500) {
                             playerAudioMetrics.pitchHz.push(pitch);
-                            if (playerAudioMetrics.pitchHz.length > 1200) playerAudioMetrics.pitchHz.shift();
+                            if (playerAudioMetrics.pitchHz.length > 1600) playerAudioMetrics.pitchHz.shift();
                         }
                     }
                 }
@@ -1078,6 +1183,7 @@
 
         function stopMicMonitorLipSync() {
             if (micAnimFrame) cancelAnimationFrame(micAnimFrame);
+            micAnimFrame = null;
             setCasterMouth(false);
         }
 
@@ -1186,9 +1292,16 @@
             }
 
             if (startBtn) {
-                startBtn.onclick = (e) => {
+                startBtn.onclick = async (e) => {
                     e.preventDefault();
                     enterFullscreen();
+                    // 権限表示だけ「許可済み」で、実際の音声ストリームは未取得のケースを防ぐ。
+                    // 開始ボタンからも必ず解析用マイクを確保する。
+                    const micReady = await ensureMicAnalyserReady();
+                    if (!micReady) {
+                        alert('マイクを利用できません。ブラウザのマイク使用を許可してから、もう一度お試しください。');
+                        return;
+                    }
                     if (startModal) startModal.classList.add('hidden');
                     playChime();
                     setTimeout(() => {
@@ -1485,11 +1598,10 @@
             const expectedText = currentPlayerNews && currentPlayerNews.fullText ? currentPlayerNews.fullText : '';
             const expectedChars = normalizeSpeechCharacters(expectedText);
             const hasRecognizedSpeech = normalizedTranscript.length > 0;
-            const hasVoiceActivity = playerAudioMetrics.voicedFrames >= 3;
-            const durationMs = Math.max(1, (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now()));
+            const hasVoiceActivity = playerAudioMetrics.voicedFrames >= 3 && playerAudioMetrics.voicedDurationMs >= 120;
 
-            // 無言、または文字起こしが空の場合は、5項目すべて0点。
-            if (!hasRecognizedSpeech || (micAnalyser && !hasVoiceActivity)) {
+            // 無言は音声波形・認識文の両方がない状態として全項目0点。
+            if (!hasRecognizedSpeech || !hasVoiceActivity) {
                 return { accuracy: 0, pronun: 0, inton: 0, tempo: 0, exp: 0 };
             }
 
@@ -1498,8 +1610,7 @@
                 : 0;
             const accuracy = clampScore(accuracyRatio * 100);
 
-            // 発音力は音声認識エンジンの確定結果信頼度を主指標にする。
-            // ブラウザがconfidenceを返さない場合は、認識一致率から保守的に推定する。
+            // 発音力は音声認識信頼度と原稿一致率を組み合わせる。
             let pronun = 0;
             if (recognitionConfidenceSamples.length) {
                 const averageConfidence = recognitionConfidenceSamples.reduce((sum, value) => sum + value, 0) / recognitionConfidenceSamples.length;
@@ -1508,37 +1619,43 @@
                 pronun = clampScore(accuracyRatio * 75);
             }
 
-            // 抑揚は有声音の基本周波数(F0)の10-90パーセンタイル幅から評価。
+            // 抑揚は声の基本周波数の変化幅を中心に評価。
+            // F0が取れない端末では声量包絡の変化幅を代替指標にして0点固定を防ぐ。
             let inton = 0;
-            if (playerAudioMetrics.pitchHz.length >= 5) {
+            if (playerAudioMetrics.pitchHz.length >= 3) {
                 const lowPitch = percentile(playerAudioMetrics.pitchHz, 0.10);
                 const highPitch = percentile(playerAudioMetrics.pitchHz, 0.90);
                 const rangeSemitones = lowPitch > 0 ? 12 * Math.log2(highPitch / lowPitch) : 0;
-                inton = clampScore(18 + rangeSemitones * 15);
+                inton = clampScore(15 + rangeSemitones * 16);
+            } else if (playerAudioMetrics.voicedRms.length >= 3) {
+                const values = playerAudioMetrics.voicedRms;
+                const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+                const variance = values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length;
+                const cv = mean > 0 ? Math.sqrt(variance) / mean : 0;
+                inton = clampScore(12 + Math.min(1.0, cv) * 45);
             }
 
-            // テンポは読み上げ時間に対する認識文字数(文字/分)で評価。
+            // テンポは認識文字数÷実際に声が出ていた時間。音声サンプルが不足した時は
+            // プレーヤーの読み上げ時間を使い、発話したのに毎回0点になる事態を防ぐ。
             let tempo = 0;
-            if (playerAudioMetrics.voicedDurationMs > 0 && hasVoiceActivity) {
-                const charsPerMinute = normalizedTranscript.length / (playerAudioMetrics.voicedDurationMs / 60000);
+            const measuredSpeechMs = playerAudioMetrics.voicedDurationMs > 0
+                ? playerAudioMetrics.voicedDurationMs
+                : Math.max(1, (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now()));
+            if (measuredSpeechMs > 0 && normalizedTranscript.length > 0) {
+                const charsPerMinute = normalizedTranscript.length / (measuredSpeechMs / 60000);
                 tempo = clampScore(100 - Math.abs(charsPerMinute - 300) * 0.28);
             }
 
-            // 表現力は発話中の声量変化(CV)を使う。一定すぎる声・極端に不安定な声は低くなる。
+            // 表現力は声量の変化係数から算出。測定点が少ない場合は抑揚指標を補助利用。
             let exp = 0;
-            if (playerAudioMetrics.voicedRms.length >= 5) {
+            if (playerAudioMetrics.voicedRms.length >= 3) {
                 const values = playerAudioMetrics.voicedRms;
                 const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
                 const variance = values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length;
                 const coefficientOfVariation = mean > 0 ? Math.sqrt(variance) / mean : 0;
-                exp = clampScore(100 - Math.abs(coefficientOfVariation - 0.35) * 140);
-            }
-
-            // 実音声がほとんど検出されない場合は音響評価を与えない。
-            if (!hasVoiceActivity) {
-                inton = 0;
-                tempo = 0;
-                exp = 0;
+                exp = clampScore(100 - Math.abs(coefficientOfVariation - 0.35) * 120);
+            } else {
+                exp = clampScore(inton * 0.65);
             }
 
             return { accuracy, pronun, inton, tempo, exp };
