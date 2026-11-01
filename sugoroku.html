@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.3.4 (2026-11-01)';
+    window.__EDOGAWA_VERSION = 'ver1.3.5 (2026-11-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -18715,6 +18715,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   /* v112：見出しと説明がくっついて見えたので、1文字ぶん空けます */
   .edo-ms-t2{ font-size:11px; color:#94a3b8; display:inline; margin-left:1em }
   .edo-ms-ar{ color:#64748b; font-weight:900 }
+  /* 【ver1.3.5】宝くじ：3つのかたまりを横に並べます（それぞれ2行まで） */
+  .edo-ms-tx.edo-ms-lot{ display:flex; align-items:center; gap:8px }
+  .edo-ms-lot .lt-h{ flex:1 1 auto; min-width:0; display:flex; align-items:center; align-self:stretch; text-align:left; white-space:nowrap }
+  .edo-ms-lot .lt-c, .edo-ms-lot .lt-n{ flex:0 0 auto; display:flex; flex-direction:column; font-size:11px; line-height:1.45; color:#94a3b8; white-space:nowrap }
+  .edo-ms-lot .lt-c, .edo-ms-lot .lt-n{ padding-left:8px; border-left:1px solid #334155 }
+  .edo-ms-lot .lt-v{ text-align:right; color:#fbbf24; font-weight:900 }
 
   /* 一覧モーダル（不動産・投稿） */
   #edo-list-modal{ position:fixed; inset:0; z-index:2147483210; display:none;
@@ -18872,7 +18878,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   };
 
   // 【ver1.3.3】次の発売／抽選まで、あと何ターンか
-  function lotteryNext(L){
+  // 【ver1.3.5】「抽選まであと」「10ターン」のように2つに分けて返します（取得情報で2行に出すため）
+  function lotteryNextParts(L){
     const t = Math.max(0, Number(app.turnCount) || 0);
     let nt = (Math.floor(t / LOTTERY_EVERY) + 1) * LOTTERY_EVERY;
     if(app.lotteryPhaseFor(t) && t !== lastLotteryTurn) nt = t;          // このターンに開く予定（まだ開いていない）
@@ -18880,8 +18887,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const left = nt - t;
     // 券を持っていない抽選の回は、売り場が開きます
     const draw = ph === 'draw' && L && Array.isArray(L.tickets) && L.tickets.length > 0;
-    return (draw ? '抽選' : '発売') + (left > 0 ? 'まであと' + left + 'ターン' : 'はこのターン');
+    const k = draw ? '抽選' : '発売';
+    return left > 0 ? [k + 'まであと', left + 'ターン'] : [k + 'は', 'このターン'];
   }
+  function lotteryNext(L){ return lotteryNextParts(L).join(''); }
   app.lotteryNextText = function(p){ return lotteryNext(app.lotteryStore(p || myPlayer() || (app.players || [])[0])); };
   // 【ver1.3.3】過去の当選実績
   app.openLotteryHistory = function(p){
@@ -19017,7 +19026,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       {ic:'📿', t1:`御朱印${stamps}個`, t2:'御朱印帳を見る',
         go:()=>{ app.closeGameMenuSheet(); app.openGoshuinBook && app.openGoshuinBook(); }},
       // 【ver1.3.3】次の発売・抽選までのターン数を出し、タップで当選実績を見られます
+      // 【ver1.3.5】「宝くじ購入枚数」｜連番・バラ（2行）｜発売・抽選まで（2行・ターン数は右揃え）の3つを横に並べます
       {ic:'🎫', t1:'宝くじ購入枚数', t2:`連番 ${L.renban}枚　バラ ${L.bara}枚　${lotteryNext(L)}`,
+        html:(()=>{ const nx = lotteryNextParts(L);
+          return `<span class="edo-ms-tx edo-ms-lot"><span class="edo-ms-t1 lt-h">宝くじ購入枚数</span>` +
+            `<span class="lt-c"><span>連番 ${esc(String(L.renban))}枚</span><span>バラ ${esc(String(L.bara))}枚</span></span>` +
+            `<span class="lt-n"><span>${esc(nx[0])}</span><span class="lt-v">${esc(nx[1])}</span></span></span>`; })(),
         go:()=>{ app.closeGameMenuSheet(); app.openLotteryHistory(p); }}
     ];
     const box = el.querySelector('#edo-ms-items');
@@ -19027,8 +19041,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       b.type = 'button';
       b.className = 'edo-ms-item' + (it.readonly ? ' readonly' : '');
       b.innerHTML = `<span class="edo-ms-ic">${it.ic}</span>` +
-        `<span class="edo-ms-tx"><span class="edo-ms-t1">${esc(it.t1)}</span>` +
-        `<span class="edo-ms-t2">${esc(it.t2)}</span></span>` +
+        (it.html || (`<span class="edo-ms-tx"><span class="edo-ms-t1">${esc(it.t1)}</span>` +
+        `<span class="edo-ms-t2">${esc(it.t2)}</span></span>`)) +
         (it.readonly ? '' : '<span class="edo-ms-ar">›</span>');
       if(it.readonly){ b.disabled = true; } else { b.onclick = it.go; }
       box.appendChild(b);
