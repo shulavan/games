@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.3.3 (2026-10-31)';
+    window.__EDOGAWA_VERSION = 'ver1.3.4 (2026-11-01)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -26072,7 +26072,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     { id:'block',    ic:'🚧', n:'とおせんぼ',       d:'今いる場所を24ターンの間、全プレーヤーが通れなくなります。ここを通る予定の人は、自動で別のルートを探します。' },
     { id:'bomb',     ic:'💣', n:'ばくだん',         d:'今いる場所に爆弾を仕掛けます。ここを通った人・止まった人は💥して、区内のどこかへ吹き飛ばされます。' },
     { id:'star',     ic:'🌠', n:'ほしにねがいを',   d:'12ターンの間、全マスが★マスになります。' },
-    { id:'reverse',  ic:'🧭', n:'ほうこうおんち',   d:'全プレーヤーが8ターンの間、逆に進むようになります。' },
+    { id:'reverse',  ic:'🧭', n:'ほうこうおんち',   d:'全プレーヤーが8ターンの間、道に迷います。1ターンごとに行き先がランダムに変わり、8ターンたつと元の目的地にもどります。' },
     { id:'magnet',   ic:'🧲', n:'じしゃく',         d:'他の全プレーヤーを、自分のいる場所にジャンプさせて集合させます。' },
     { id:'sleep',    ic:'💤', n:'こもりうた',       d:'自分自身が3回休みになります（このターンから）。' },
     { id:'rocket',   ic:'🚀', n:'ロケット',         d:'ロケットに乗って、200マス以上はなれた区内のどこかへ飛んでいきます（このターンはおしまい）。' },
@@ -26234,8 +26234,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       log('🌠 [アイテム] ' + name + ' が ほしにねがいを！ ' + STAR_TURNS + 'ターンのあいだ全マスが★マスになります。');
     } else if(id === 'reverse'){
       W.reverseUntil = Math.max(Number(W.reverseUntil) || 0, T() + REVERSE_TURNS);
-      toast(it.ic, 'ほうこうおんち！\n全員 ' + REVERSE_TURNS + 'ターンのあいだ逆に進みます');
-      log('🧭 [アイテム] ' + name + ' が ほうこうおんち！ 全員 ' + REVERSE_TURNS + 'ターンのあいだ逆に進みます。');
+      toast(it.ic, 'ほうこうおんち！\n全員 ' + REVERSE_TURNS + 'ターンのあいだ道に迷います');
+      log('🧭 [アイテム] ' + name + ' が ほうこうおんち！ 全員 ' + REVERSE_TURNS + 'ターンのあいだ道に迷い、1ターンごとに行き先が変わります。');
     } else if(id === 'magnet'){
       (app.players || []).forEach(o => {
         if(!o || o === p) return;
@@ -26378,45 +26378,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return { n, bombAt, bomb, treasure };
   }
 
-  // ほうこうおんち：うしろ向きに進みます
-  function moveBackward(player, steps, stepDelay){
-    const { path, start } = upcoming(player);
-    player.path = path;
-    const sc = scanAhead(player, steps, -1);
-    const n = sc.bombAt || sc.n;
-    if(sc.bomb) player.__itemBoom = sc.bomb;
-    if(sc.treasure) player.__itemTreasure = sc.treasure;
-    log('🧭 ' + (player.name || '') + ' は ほうこうおんちで ' + n + 'マス逆に進みます。');
-    const done = () => {
-      try{ app.clearUsedVehicle && app.clearUsedVehicle(player); }catch(e){}
-      try{ app.updateMoveCountdown && app.updateMoveCountdown(player, 0, 0); }catch(e){}
-      app._suppressNearby = false;
-      try{ app.showNearbyForCurrentPlayer && app.showNearbyForCurrentPlayer(); }catch(e){}
-      try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); }catch(e){}
-      try{ app.saveGameState && app.saveGameState(); }catch(e){}
-      setTimeout(() => app.landOnSpot(player), 300);
-    };
-    if(n <= 0){
-      // 【ver1.3.3】目的地が決まったばかりなどで、うしろに戻れるマスがないときは、その場で止まります
-      log('🧭 ' + (player.name || '') + ' は ほうこうおんちですが、うしろに戻れるマスがないので、その場で止まります。');
-      try{ if(player === human()) toast('🧭', 'ほうこうおんち！\nうしろに戻れるマスがないので、その場で止まります', 2600); }catch(e){}
-      done(); return;
-    }
-    if(app.moveInterval){ clearInterval(app.moveInterval); app.moveInterval = null; }
-    let k = 0;
-    const iv = app.moveInterval = setInterval(() => {
-      try{
-        k++;
-        player.pathIndex = start - k; player.currentNodeIdx = path[start - k];
-        const nd = nodeOf(player), mk = app.playerMarkers && app.playerMarkers[player.id];
-        if(mk && nd){ mk.setLatLng([nd.lat, nd.lng]); try{ app.map && app.map.panTo([nd.lat, nd.lng], { animate:true, duration:0.2 }); }catch(e){} }
-        try{ sound.playTone(400 + k * 30, 'sine', 0.05, 0.05); }catch(e){}
-        try{ app.updateMoveCountdown && app.updateMoveCountdown(player, n - k, n); }catch(e){}
-      }catch(e){ console.warn('[items]', e); k = n; }
-      if(k >= n){ clearInterval(iv); if(app.moveInterval === iv) app.moveInterval = null; done(); }
-    }, stepDelay || 350);
-  }
-
+  // 【ver1.3.4】ほうこうおんちは「うしろに進む」から「道に迷う（行き先が毎ターン変わる）」に変えました（edogawa-v181）
   const origMove = app.movePlayerSteps ? app.movePlayerSteps.bind(app) : null;
   function forwardMove(player, steps, stepDelay, silent){
     try{
@@ -26430,9 +26392,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     app.movePlayerSteps = function(player, totalSteps, stepDelay, silent){
       if(!player || silent) return origMove(player, totalSteps, stepDelay, silent);
       try{
-        const cp = (app.players || [])[app.currentPlayerIdx];
-        if(reverseOn() && cp === player) return moveBackward(player, totalSteps, stepDelay);
-        const blk = blockOnPath(player);
+        const blk = reverseOn() ? null : blockOnPath(player);   // 道に迷っているあいだは、とおせんぼをよけるルートは作りません
         if(blk && !player.__itemRerouting){
           player.__itemRerouting = true;
           reroute(player, blk).catch(() => {}).then(() => {
@@ -26642,7 +26602,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const out = [];
     const t = T();
     if(starOn()) out.push('🌠 全マス★：あと' + (W.starUntil - t) + 'ターン');
-    if(reverseOn()) out.push('🧭 逆に進む：あと' + (W.reverseUntil - t) + 'ターン');
+    if(reverseOn()) out.push('🧭 道に迷い中' + (W.lost && W.lost.name ? '（行き先：' + W.lost.name + '）' : '') + '：あと' + (W.reverseUntil - t) + 'ターン');
     const bl = activeBlocks(); if(bl.length) out.push('🚧 とおせんぼ：' + bl.length + 'か所（いちばん長いもので あと' + Math.max.apply(null, bl.map(b => b.until - t)) + 'ターン）');
     if((W.bombs || []).length) out.push('💣 ばくだん：' + W.bombs.length + 'か所');
     const h = human();
@@ -26754,7 +26714,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       const eff = (starOn() ? 's' : '') + (reverseOn() ? 'r' : '');
       if(eff !== lastEff){
         if(lastEff.indexOf('s') >= 0 && !starOn()) log('🌠 ほしにねがいを の効き目が終わりました。');
-        if(lastEff.indexOf('r') >= 0 && !reverseOn()) log('🧭 ほうこうおんち の効き目が終わりました。前に進みます。');
+        if(lastEff.indexOf('r') >= 0 && !reverseOn()) log('🧭 ほうこうおんち の効き目が終わりました。元の目的地にもどります。');
         lastEff = eff;
       }
       syncMarks();
@@ -32385,6 +32345,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const norm = (p)=>app.normalizePathIndices ? app.normalizePathIndices(p || []) : (p || []);
   function broken(p){
     if(!p || p.isFlying) return false;
+    if(app.__edoLostOn && app.__edoLostOn()) return false;               // 【ver1.3.4】ほうこうおんちで道に迷っているあいだは、行き先がゴールではありません
     const goal = app.goalNodeIdx; if(!Number.isInteger(goal) || !N()[goal]) return false;
     if(p.currentNodeIdx === goal) return false;
     const path = norm(p.path);
@@ -32550,6 +32511,169 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     return true;
   };
   window.__EDOGAWA_V180_TEST = {};
+})();
+</script>
+<script id="edogawa-v181">
+// ════════════════════════════════════════════════════════════
+//  ver1.3.4　アイテム「ほうこうおんち」：道に迷います
+//   ・使うと、全プレーヤーが8ターンのあいだ道に迷います
+//   ・1ターン（全員が1回ずつ振る）ごとに、行き先をランダムに決めて、全員のルートをそこまで作り直します
+//   ・行き先に着いたら、次のターンの行き先が決まるまで、その場で止まります（本当の目的地に着いたときはゴールです）
+//   ・8ターンたつと、元の目的地までのルートにもどします
+//   ・✈️🚁で飛んでいる人は、そのまま飛び続けます
+//   ・行き先は、ホストの端末で決めます（参加した人の画面にも 🧭 の印が出ます）
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const I = ()=>window.__EDOGAWA_ITEMS;
+  const N = ()=>app.roadNetworkNodes || [];
+  const T = ()=>Math.max(0, Number(app.turnCount) || 0);
+  const authoritative = ()=>!app.isMultiplayer || !!app.isHost;
+  const dist = (a, b)=>{ try{ return app.haversineMeters(a, b); }catch(e){ return Infinity; } };
+  const elog = (k, m, d)=>{ try{ window.EdoLog && window.EdoLog.add(k, m, d); }catch(e){} };
+  const world = ()=>{ try{ return I() ? I().world() : null; }catch(e){ return null; } };
+  const lostOn = ()=>{ try{ return !!(I() && I().reverseOn()); }catch(e){ return false; } };
+  app.__edoLostOn = lostOn;
+  function inGame(){ const l = document.getElementById('lobby-screen'); return !!l && l.classList.contains('hidden') && Array.isArray(app.players) && app.players.length > 0 && N().length > 0; }
+  function busy(){
+    return !!(app.isRolling || app.moveInterval || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive ||
+      app._destIntroRunning || app.legTransitionInProgress);
+  }
+  function setLost(v){
+    const it = I(); if(!it) return;
+    const w = it.world(); if(v) w.lost = v; else delete w.lost;
+    it.setWorld(w);
+  }
+  // 行き先の名前（近くの施設 → 町名）
+  function placeName(nd){
+    try{
+      let best = null, bd = 300;
+      (app._facilityPoiGroups() || []).forEach(([list])=>(list || []).forEach(loc=>{
+        if(!loc || !loc.name || !Number.isFinite(Number(loc.lat))) return;
+        const d = dist(nd, { lat:Number(loc.lat), lng:Number(loc.lng) }); if(d < bd){ bd = d; best = loc; }
+      }));
+      if(best) return String(best.name);
+    }catch(e){}
+    try{ const a = app.nearbyAreaName && app.nearbyAreaName(nd.lat, nd.lng); if(a) return String(a); }catch(e){}
+    return '知らない場所';
+  }
+  const movers = ()=>(app.players || []).filter(p=>p && !p.isFlying && Number.isInteger(p.currentNodeIdx) && N()[p.currentNodeIdx]);
+  // 行き先をランダムに決めて、全員のルートを作ります
+  function pickAndRoute(reason){
+    const nodes = N(), goal = nodes[app.goalNodeIdx], ps = movers();
+    const prev = (world() || {}).lost;
+    const cands = [];
+    nodes.forEach((n, i)=>{
+      if(!n || !Array.isArray(n.neighbors) || !n.neighbors.length || i === app.goalNodeIdx) return;
+      if(goal && dist(n, goal) < 400) return;                                    // 目的地のすぐそばは選びません
+      if(prev && Number.isInteger(prev.idx) && nodes[prev.idx] && dist(n, nodes[prev.idx]) < 300) return;
+      if(ps.some(p=>dist(n, nodes[p.currentNodeIdx]) < 250)) return;             // だれかのすぐそばも選びません
+      cands.push(i);
+    });
+    let best = null;
+    for(let k = 0; k < 30 && cands.length; k++){
+      const idx = cands.splice(Math.floor(Math.random() * cands.length), 1)[0];
+      const paths = {};
+      let ok = 0;
+      ps.forEach(p=>{
+        let r = null; try{ r = app.findShortestPath({ nodes }, p.currentNodeIdx, idx); }catch(e){}
+        if(Array.isArray(r) && r.length >= 2 && r[r.length - 1] === idx){ paths[p.id] = r; ok++; }
+      });
+      if(!best || ok > best.ok) best = { idx, paths, ok };
+      if(ok === ps.length) break;
+    }
+    if(!best || !best.ok){ elog('スキップ', '🧭 ほうこうおんち：迷う行き先が見つからなかったので、このターンは元の目的地のままにしました', reason); return false; }
+    ps.forEach(p=>{
+      const r = best.paths[p.id]; if(!r) return;
+      p.path = app.normalizePathIndices ? app.normalizePathIndices(r) : r; p.pathIndex = 0; p.currentNodeIdx = p.path[0];
+    });
+    const nd = nodes[best.idx], w = world() || {};
+    const name = placeName(nd);
+    setLost({ idx:best.idx, lat:nd.lat, lng:nd.lng, name, turn:T(), goal:app.goalNodeIdx });
+    const left = Math.max(0, (Number(w.reverseUntil) || 0) - T());
+    try{ app.addLog && app.addLog('🧭 みんな道に迷った！ このターンの行き先は「' + name + '」です（ほうこうおんち あと' + left + 'ターン）。'); }catch(e){}
+    try{ if(app.updatePlayerRoutes) app.updatePlayerRoutes(); app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+    toast('🧭 道に迷った！\n行き先が「' + name + '」に変わりました（あと' + left + 'ターン）');
+    return true;
+  }
+  // 元の目的地にもどします
+  async function restore(){
+    const nodes = N(), goal = app.goalNodeIdx;
+    setLost(null);
+    for(const p of movers()){
+      if(p.currentNodeIdx === goal) continue;
+      let r = null; try{ r = app.findShortestPath({ nodes }, p.currentNodeIdx, goal); }catch(e){}
+      if(Array.isArray(r) && r.length >= 2 && r[r.length - 1] === goal){ p.path = app.normalizePathIndices ? app.normalizePathIndices(r) : r; p.pathIndex = 0; continue; }
+      const from = nodes[p.currentNodeIdx];
+      try{ if(from && app.currentDestination) await app.buildPlayerOwnBranch(p, { lat:from.lat, lng:from.lng }, app.currentDestination); p.pathIndex = 0; }catch(e){}
+      // それでもつながらないときは、ver1.3.2 の見回りがつなぎ直します
+    }
+    try{ app.addLog && app.addLog('🧭 道に迷うのが終わりました。みんな元の目的地「' + ((app.currentDestination && app.currentDestination.name) || '') + '」に向かいます。'); }catch(e){}
+    try{ if(app.updatePlayerRoutes) app.updatePlayerRoutes(); app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+    toast('🧭 元の目的地にもどります\n「' + ((app.currentDestination && app.currentDestination.name) || '') + '」');
+  }
+  function toast(text){
+    try{
+      let el = document.getElementById('edo-item-toast');
+      if(!el){ el = document.createElement('div'); el.id = 'edo-item-toast'; document.body.appendChild(el); }
+      const [ic, ...rest] = text.split(' ');
+      el.innerHTML = '<span class="ic"></span><span class="tx"></span>';
+      el.querySelector('.ic').textContent = ic; el.querySelector('.tx').textContent = rest.join(' ');
+      el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+      clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove('show'), 3200);
+    }catch(e){}
+  }
+  // 地図の 🧭 印（どの端末でも）
+  let mk = null, mkKey = '';
+  function drawMark(lost){
+    const key = lost && app.map ? lost.lat + ',' + lost.lng : '';
+    if(key === mkKey && (!key || mk)) return;
+    mkKey = key;
+    try{ if(mk){ mk.remove(); mk = null; } }catch(e){ mk = null; }
+    if(!key || typeof L === 'undefined') return;
+    try{
+      const html = '<div class="edo-lost-mk"><span>🧭</span><b></b></div>';
+      mk = L.marker([lost.lat, lost.lng], { icon:L.divIcon({ className:'edo-lost-icon', html, iconSize:[30, 30], iconAnchor:[15, 15] }), zIndexOffset:900 }).addTo(app.map);
+      const b = mk.getElement && mk.getElement() && mk.getElement().querySelector('b'); if(b) b.textContent = lost.name || '';
+    }catch(e){ mk = null; }
+  }
+  // 「目的地:」のバッジに、迷っていることを出します（本当の目的地の名前はそのまま）
+  function badge(lost){
+    ['current-destination-name', 'mobile-destination-name'].forEach(id=>{
+      const nm = document.getElementById(id); if(!nm || !nm.parentNode) return;
+      let tag = nm.parentNode.querySelector('.edo-lost-tag');
+      if(!lost){ if(tag) tag.remove(); return; }
+      if(!tag){ tag = document.createElement('span'); tag.className = 'edo-lost-tag'; nm.parentNode.insertBefore(tag, nm); }
+      const t = '🧭迷子中 ';
+      if(tag.textContent !== t) tag.textContent = t;
+    });
+  }
+  const st = document.createElement('style'); st.id = 'edogawa-v181-css';
+  st.textContent = '.edo-lost-icon{background:none;border:0}.edo-lost-tag{color:#c4b5fd;font-weight:800;margin-right:2px}' +
+    '.edo-lost-mk{position:relative;width:30px;height:30px;border-radius:50%;background:#7c3aed;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 0 4px rgba(124,58,237,.35),0 4px 10px rgba(0,0,0,.4);animation:edoLostPulse 1.6s ease-in-out infinite}' +
+    '.edo-lost-mk b{position:absolute;top:32px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;font-weight:800;color:#fff;background:rgba(76,29,149,.92);padding:1px 6px;border-radius:8px}' +
+    '@keyframes edoLostPulse{0%,100%{box-shadow:0 0 0 3px rgba(124,58,237,.35),0 4px 10px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 9px rgba(124,58,237,.12),0 4px 10px rgba(0,0,0,.4)}}';
+  document.head.appendChild(st);
+
+  let working = false;
+  async function tick(){
+    if(working) return;
+    try{
+      const w = world(); if(!w) return;
+      drawMark(lostOn() && w.lost ? w.lost : null);
+      badge(lostOn() && w.lost ? w.lost : null);
+      if(!authoritative() || !inGame() || busy()) return;
+      if(lostOn()){
+        const L0 = w.lost;
+        // ターンが変わった・目的地が変わった（だれかがゴール）ときに、行き先を決めなおします
+        if(!L0 || L0.turn !== T() || L0.goal !== app.goalNodeIdx || !N()[L0.idx]){ working = true; pickAndRoute(L0 ? 'turn ' + T() : 'start'); }
+      } else if(w.lost){ working = true; await restore(); }
+    }catch(e){ console.warn('[v181]', e); elog('エラー', '🧭 ほうこうおんちの処理でエラー：' + (e && e.message)); }
+    finally{ working = false; }
+  }
+  setInterval(tick, 700);
+  window.__EDOGAWA_V181_TEST = { tick, pickAndRoute, restore, lostOn };
 })();
 </script>
 <script id="edogawa-v39-footer">
