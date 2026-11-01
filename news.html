@@ -85,6 +85,11 @@
         .script-scroll-container::-webkit-scrollbar {
             display: none;
         }
+        .script-line-pair { display:flex; flex-direction:column; gap:2px; }
+        .script-transcript {
+            min-height:1.25em; color:#4ade80; font-style:italic; font-size:.78em;
+            font-weight:800; line-height:1.35; overflow-wrap:anywhere; padding-left:.15rem;
+        }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col justify-start overflow-hidden bg-slate-950 pt-1 pb-2">
@@ -517,6 +522,7 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
         let userTranscript = "";
+        let activePlayerChunkIdx = 0;
         let playerSpeechStartTime = 0;
         let playerSpeechEndTime = 0;
 
@@ -533,6 +539,10 @@
                         current += event.results[i][0].transcript;
                     }
                     userTranscript = current;
+                    const live = document.getElementById('user-transcript-live');
+                    if (live) live.textContent = current || "（音声認識中... お声を出してください）";
+                    const lineTranscript = document.getElementById(`transcript-line-${activePlayerChunkIdx}`);
+                    if (lineTranscript) lineTranscript.textContent = current.trim();
                 };
             } catch(e){}
         }
@@ -546,6 +556,39 @@
         let micAnalyser = null;
         let micAnimFrame = null;
 
+        function setMicBadge(status) {
+            const badge = document.getElementById('mic-status-badge');
+            if (!badge) return;
+            if (status === 'granted') {
+                badge.textContent = "許可済み";
+                badge.className = "text-xs bg-emerald-950 text-emerald-400 border border-emerald-500/50 px-2 py-0.5 rounded";
+            } else if (status === 'denied') {
+                badge.textContent = "拒否/未許可";
+                badge.className = "text-xs bg-red-950 text-red-400 border border-red-500/50 px-2 py-0.5 rounded";
+            } else {
+                badge.textContent = "未確認";
+                badge.className = "text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded";
+            }
+        }
+
+        async function checkMicPermissionStatus() {
+            try {
+                if (!navigator.permissions || !navigator.permissions.query) return;
+                const permission = await navigator.permissions.query({ name: 'microphone' });
+                setMicBadge(permission.state);
+                permission.onchange = () => setMicBadge(permission.state);
+            } catch (e) {
+                // microphone 権限状態の照会に対応しないブラウザでは未確認のままにする
+            }
+        }
+
+        function enterFullscreen() {
+            const root = document.documentElement;
+            if (!document.fullscreenElement && root.requestFullscreen) {
+                root.requestFullscreen().catch(() => {});
+            }
+        }
+
         async function requestMicPermission() {
             const badge = document.getElementById('mic-status-badge');
             try {
@@ -556,16 +599,10 @@
                 micAnalyser.fftSize = 256;
                 source.connect(micAnalyser);
 
-                if (badge) {
-                    badge.textContent = "許可済み";
-                    badge.className = "text-xs bg-emerald-950 text-emerald-400 border border-emerald-500/50 px-2 py-0.5 rounded";
-                }
+                setMicBadge('granted');
                 return true;
             } catch(e) {
-                if (badge) {
-                    badge.textContent = "拒否/未許可";
-                    badge.className = "text-xs bg-red-950 text-red-400 border border-red-500/50 px-2 py-0.5 rounded";
-                }
+                setMicBadge('denied');
                 return false;
             }
         }
@@ -621,11 +658,23 @@
             if (!container) return;
             container.innerHTML = "";
             chunks.forEach((chunkText, idx) => {
+                const pair = document.createElement('div');
+                pair.className = "script-line-pair py-1";
                 const lineDiv = document.createElement('div');
                 lineDiv.id = `script-line-${idx}`;
-                lineDiv.className = "text-lg sm:text-2xl font-black tracking-wide py-1 leading-snug flex items-center";
-                lineDiv.innerHTML = `<span class="karaoke-text" style="background-position: 100% 0;">${chunkText}</span>`;
-                container.appendChild(lineDiv);
+                lineDiv.className = "text-lg sm:text-2xl font-black tracking-wide leading-snug flex items-center";
+                const sourceSpan = document.createElement('span');
+                sourceSpan.className = "karaoke-text";
+                sourceSpan.style.backgroundPosition = "100% 0";
+                sourceSpan.textContent = chunkText;
+                lineDiv.appendChild(sourceSpan);
+                const transcriptDiv = document.createElement('div');
+                transcriptDiv.id = `transcript-line-${idx}`;
+                transcriptDiv.className = "script-transcript";
+                transcriptDiv.setAttribute('aria-live', 'polite');
+                pair.appendChild(lineDiv);
+                pair.appendChild(transcriptDiv);
+                container.appendChild(pair);
             });
             container.scrollTop = 0;
         }
@@ -664,6 +713,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initVoices();
+            checkMicPermissionStatus();
 
             const startBtn = document.getElementById('start-btn');
             const micBtn = document.getElementById('mic-perm-btn');
@@ -679,6 +729,7 @@
             if (startBtn) {
                 startBtn.onclick = (e) => {
                     e.preventDefault();
+                    enterFullscreen();
                     if (startModal) startModal.classList.add('hidden');
                     playChime();
                     setTimeout(() => {
@@ -795,6 +846,7 @@
             const chunks = splitTextToChunks(currentPlayerNews.fullText, 20);
 
             let currentChunkIdx = 0;
+            activePlayerChunkIdx = 0;
             userTranscript = "";
             playerSpeechStartTime = Date.now();
 
@@ -826,6 +878,7 @@
                     return;
                 }
 
+                activePlayerChunkIdx = currentChunkIdx;
                 const chunkText = chunks[currentChunkIdx];
                 const lineDuration = Math.max(2400, chunkText.length * 240);
                 const startTime = Date.now();
@@ -841,6 +894,8 @@
                     if (transLive) {
                         transLive.textContent = userTranscript.length > 0 ? userTranscript : "（音声認識中... お声を出してください）";
                     }
+                    const lineTranscript = document.getElementById(`transcript-line-${currentChunkIdx}`);
+                    if (lineTranscript && userTranscript) lineTranscript.textContent = userTranscript.trim();
                     if (matchTag && currentPlayerNews) {
                         const targetClean = currentPlayerNews.fullText.replace(/[\s　]+/g, '');
                         const currentSim = getLevenshteinSimilarity(userTranscript, targetClean);
