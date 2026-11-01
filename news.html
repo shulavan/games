@@ -555,6 +555,9 @@
         let userTranscript = "";
         let activePlayerChunkIdx = 0;
         let playerScriptChunks = [];
+        // 認識結果は「セッション単位」で確定保存する。
+        // Web Speech APIは再起動後に直前の発話を再送することがあるため、
+        // セッション境界で末尾・先頭の重複を除去してから全文へ追加する。
         let recognitionSessionSlots = new Map();
         let recognitionSegments = [];
         let recognitionSegmentOrder = 0;
@@ -712,9 +715,104 @@
             return lineTexts;
         }
 
+        function getRecognitionSessionText() {
+            let combined = '';
+            const orderedSlots = Array.from(recognitionSessionSlots.entries())
+                .sort((a, b) => a[0] - b[0]);
+            orderedSlots.forEach(([, slot]) => {
+                const phrase = slot && slot.text ? slot.text : '';
+                if (!phrase) return;
+                // 同一セッション内でも隣接するresult slotが文章を重ねて返す端末があるため、
+                // 直前までのスロットとの重複を除去してから連結する。
+                combined += removeLeadingSessionOverlap(combined, phrase);
+            });
+            return combined;
+        }
+
+        // セッション再起動時に、直前セッション末尾と新セッション先頭の重複を除去する。
+        // 句読点・空白の差を無視して照合し、4文字以上の完全一致だけを重複とみなす。
+        function removeLeadingSessionOverlap(previousText, incomingText) {
+            const incoming = String(incomingText || '');
+            if (!incoming) return '';
+            const previousChars = normalizeSpeechCharacters(previousText);
+            const incomingRawChars = Array.from(incoming);
+            const incomingNormalized = [];
+            const rawStartByNormalizedIndex = [];
+
+            incomingRawChars.forEach((char, rawIndex) => {
+                const units = normalizeSpeechCharacters(char);
+                units.forEach(unit => {
+                    incomingNormalized.push(unit);
+                    rawStartByNormalizedIndex.push(rawIndex);
+                });
+            });
+
+            const maxOverlap = Math.min(previousChars.length, incomingNormalized.length);
+            let overlap = 0;
+
+            // 最優先は直前セッション末尾との一致。
+            for (let length = maxOverlap; length >= 4; length--) {
+                let matches = true;
+                const previousStart = previousChars.length - length;
+                for (let i = 0; i < length; i++) {
+                    if (previousChars[previousStart + i] !== incomingNormalized[i]) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (matches) {
+                    overlap = length;
+                    break;
+                }
+            }
+
+            // 一部ブラウザは再起動後、直前の末尾ではなくセッション冒頭から結果を再送する。
+            // 末尾一致がない場合に限り、過去全文中に存在する8文字以上の先頭重複も除去する。
+            if (!overlap) {
+                const previousNormalizedText = previousChars.join('');
+                const fallbackMax = Math.min(incomingNormalized.length, 160);
+                for (let length = fallbackMax; length >= 8; length--) {
+                    const candidate = incomingNormalized.slice(0, length).join('');
+                    if (previousNormalizedText.includes(candidate)) {
+                        overlap = length;
+                        break;
+                    }
+                }
+            }
+            if (!overlap) return incoming;
+            // 重複した文の直後にある句読点・空白も一緒に捨て、句点が二重になるのを防ぐ。
+            const rawCutPosition = overlap < rawStartByNormalizedIndex.length
+                ? rawStartByNormalizedIndex[overlap]
+                : incoming.length;
+            return incoming.slice(rawCutPosition);
+        }
+
+        function commitRecognitionSession() {
+            const sessionText = getRecognitionSessionText();
+            recognitionSessionSlots.clear();
+            if (!sessionText) return;
+
+            const previousText = recognitionSegments.map(segment => segment.text || '').join('');
+            const uniqueText = removeLeadingSessionOverlap(previousText, sessionText);
+            if (uniqueText) {
+                recognitionSegments.push({
+                    text: uniqueText,
+                    order: ++recognitionSegmentOrder,
+                    sessionId: recognitionSessionId
+                });
+            }
+        }
+
         function refreshPlayerTranscriptDisplay() {
-            const ordered = recognitionSegments.slice().sort((a, b) => a.order - b.order);
-            userTranscript = ordered.map(segment => segment.text || '').join('');
+            const committedText = recognitionSegments
+                .slice()
+                .sort((a, b) => a.order - b.order)
+                .map(segment => segment.text || '')
+                .join('');
+            const activeSessionText = getRecognitionSessionText();
+            // 表示中の仮結果にもセッション境界の重複除去を適用する。
+            const activeUniqueText = removeLeadingSessionOverlap(committedText, activeSessionText);
+            userTranscript = committedText + activeUniqueText;
             const mappedLines = alignTranscriptToScriptLines(userTranscript, playerScriptChunks);
 
             for (let idx = 0; idx < playerScriptChunks.length; idx++) {
@@ -767,32 +865,26 @@
                 recognition.onresult = (event) => {
                     if (!playerReadingActive && !playerRecognitionFinishing) return;
                     const results = event.results || [];
-                    // Web Speech APIのresultIndex以降だけを処理する。確定済み結果を毎回再追加しない。
-                    // 同じスロットの途中結果は同じsegmentを更新し、final化しても二重登録しない。
+                    // ブラウザが途中結果を取り下げてresults配列を縮めた場合、
+                    // 配列外になった古いスロットを残すと同じ発話が再表示されるため削除する。
+                    for (const slotIndex of Array.from(recognitionSessionSlots.keys())) {
+                        if (slotIndex >= results.length) recognitionSessionSlots.delete(slotIndex);
+                    }
+                    // 結果番号はセッション内だけで有効。グローバル全文へ直接追加せず、
+                    // 現セッションのスロットを更新する。確定全文への追加は onend の一度だけ。
                     const firstChanged = Number.isInteger(event.resultIndex)
                         ? Math.max(0, Math.min(results.length, event.resultIndex))
                         : 0;
                     for (let i = firstChanged; i < results.length; i++) {
                         const result = results[i];
-                        const phrase = (result && result[0] && result[0].transcript ? result[0].transcript : '').trim();
+                        const phrase = (result && result[0] && result[0].transcript ? result[0].transcript : '');
                         if (!phrase) continue;
-                        let segment = recognitionSessionSlots.get(i);
-                        // final済みスロットが別の文章へ差し替わった場合は、ブラウザ側の番号再利用と判断して新規発話にする。
-                        // 同じ確定結果が再通知された場合は下の既存segment更新となり、二重追加しない。
-                        if (!segment || (segment.isFinal && segment.text !== phrase)) {
-                            segment = {
-                                text: phrase,
-                                isFinal: !!result.isFinal,
-                                sessionId: recognitionSessionId,
-                                slotIndex: i,
-                                order: ++recognitionSegmentOrder
-                            };
-                            recognitionSessionSlots.set(i, segment);
-                            recognitionSegments.push(segment);
-                        } else {
-                            segment.text = phrase;
-                            segment.isFinal = !!result.isFinal;
-                        }
+                        recognitionSessionSlots.set(i, {
+                            text: phrase,
+                            isFinal: !!result.isFinal,
+                            sessionId: recognitionSessionId,
+                            slotIndex: i
+                        });
                     }
                     refreshPlayerTranscriptDisplay();
                 };
@@ -808,6 +900,10 @@
                 recognition.onend = () => {
                     recognitionStartPending = false;
                     recognitionIsStarted = false;
+                    // セッション中の各result slotを一括確定し、前セッションとの重複を除去。
+                    // onresultごとに全文へpushしないため、再通知やresultIndex再利用で増殖しない。
+                    commitRecognitionSession();
+                    refreshPlayerTranscriptDisplay();
                     if (playerReadingActive && !playerRecognitionFinishing && !recognitionPermissionBlocked) {
                         schedulePlayerRecognitionRestart(450);
                     }
