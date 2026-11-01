@@ -523,6 +523,10 @@
         let recognition = null;
         let userTranscript = "";
         let activePlayerChunkIdx = 0;
+        // 音声認識の結果は行単位で保持し、累積結果を毎行へ貼り付けない
+        let lineTranscriptParts = [];
+        let lineInterimTexts = [];
+        let finalizedRecognitionResultIndexes = new Set();
         let playerSpeechStartTime = 0;
         let playerSpeechEndTime = 0;
 
@@ -534,15 +538,38 @@
                 recognition.interimResults = true;
 
                 recognition.onresult = (event) => {
-                    let current = "";
-                    for (let i = 0; i < event.results.length; ++i) {
-                        current += event.results[i][0].transcript;
+                    const lineIdx = activePlayerChunkIdx;
+                    if (!lineTranscriptParts[lineIdx]) lineTranscriptParts[lineIdx] = "";
+                    if (!lineInterimTexts[lineIdx]) lineInterimTexts[lineIdx] = "";
+
+                    // resultIndex以降の「変更された結果」だけを処理する。
+                    // 確定済み結果はSetで管理し、認識イベントのたびに二重追加しない。
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const result = event.results[i];
+                        const phrase = (result[0] && result[0].transcript ? result[0].transcript : "").trim();
+                        if (!phrase) continue;
+                        if (result.isFinal) {
+                            if (!finalizedRecognitionResultIndexes.has(i)) {
+                                lineTranscriptParts[lineIdx] += (lineTranscriptParts[lineIdx] ? " " : "") + phrase;
+                                finalizedRecognitionResultIndexes.add(i);
+                            }
+                            lineInterimTexts[lineIdx] = "";
+                        } else {
+                            lineInterimTexts[lineIdx] = phrase;
+                        }
                     }
-                    userTranscript = current;
+
+                    // 画面下部のライブ欄・採点用には全行分を連結して保持する。
+                    userTranscript = lineTranscriptParts.map((part, idx) =>
+                        (part || "") + (lineInterimTexts[idx] ? (part ? " " : "") + lineInterimTexts[idx] : "")
+                    ).join(" ").trim();
+
+                    const lineTranscript = document.getElementById(`transcript-line-${lineIdx}`);
+                    if (lineTranscript) {
+                        lineTranscript.textContent = [lineTranscriptParts[lineIdx], lineInterimTexts[lineIdx]].filter(Boolean).join(" ");
+                    }
                     const live = document.getElementById('user-transcript-live');
-                    if (live) live.textContent = current || "（音声認識中... お声を出してください）";
-                    const lineTranscript = document.getElementById(`transcript-line-${activePlayerChunkIdx}`);
-                    if (lineTranscript) lineTranscript.textContent = current.trim();
+                    if (live) live.textContent = userTranscript || "（音声認識中... お声を出してください）";
                 };
             } catch(e){}
         }
@@ -848,6 +875,14 @@
             let currentChunkIdx = 0;
             activePlayerChunkIdx = 0;
             userTranscript = "";
+            lineTranscriptParts = chunks.map(() => "");
+            lineInterimTexts = chunks.map(() => "");
+            finalizedRecognitionResultIndexes = new Set();
+            // 表示欄も必ず空にして、前回の読み上げ結果を残さない
+            chunks.forEach((_, idx) => {
+                const lineTranscript = document.getElementById(`transcript-line-${idx}`);
+                if (lineTranscript) lineTranscript.textContent = "";
+            });
             playerSpeechStartTime = Date.now();
 
             // 文字起こしエリアを表示
@@ -894,8 +929,6 @@
                     if (transLive) {
                         transLive.textContent = userTranscript.length > 0 ? userTranscript : "（音声認識中... お声を出してください）";
                     }
-                    const lineTranscript = document.getElementById(`transcript-line-${currentChunkIdx}`);
-                    if (lineTranscript && userTranscript) lineTranscript.textContent = userTranscript.trim();
                     if (matchTag && currentPlayerNews) {
                         const targetClean = currentPlayerNews.fullText.replace(/[\s　]+/g, '');
                         const currentSim = getLevenshteinSimilarity(userTranscript, targetClean);
