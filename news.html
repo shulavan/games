@@ -6,7 +6,7 @@
     <title>速報 江戸川ニュースキャスター</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&family=Noto+Sans+JP:wght@600;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@600;800;900&display=swap');
 
         body {
             font-family: 'Noto Sans JP', sans-serif;
@@ -438,9 +438,9 @@
 
         // 音声認識と原稿の一致率。未定義関数によって行送りタイマーが停止しないよう実装。
         function getLevenshteinSimilarity(a, b) {
-            const normalize = value => Array.from(String(value || '').toLowerCase().replace(/[\s\u3000、。，．・：；！？!?「」『』（）()［］【】]/g, ''));
-            const left = normalize(a);
-            const right = normalize(b);
+            // 原稿整列と同じ正規化関数を共有し、照合基準の二重管理をなくす。
+            const left = normalizeSpeechCharacters(a);
+            const right = normalizeSpeechCharacters(b);
             if (left.length === 0 && right.length === 0) return 1;
             if (left.length === 0 || right.length === 0) return 0;
             if (left.length > right.length) return getLevenshteinSimilarity(b, a);
@@ -589,8 +589,6 @@
         // セッション境界で末尾・先頭の重複を除去してから全文へ追加する。
         let recognitionSessionSlots = new Map();
         let recognitionSegments = [];
-        let recognitionSegmentOrder = 0;
-        let recognitionSessionId = 0;
         let playerReadingActive = false;
         let playerRecognitionFinishing = false;
         let recognitionStartPending = false;
@@ -605,8 +603,7 @@
             pitchHz: [],
             voicedFrames: 0,
             voicedDurationMs: 0,
-            lastSampleAt: 0,
-            sampleCount: 0
+            lastSampleAt: 0
         };
 
         // 音声認識の句読点・空白を照合時だけ除外する。表示用の原文は変更しない。
@@ -839,18 +836,13 @@
             const previousText = recognitionSegments.map(segment => segment.text || '').join('');
             const uniqueText = removeLeadingSessionOverlap(previousText, sessionText);
             if (uniqueText) {
-                recognitionSegments.push({
-                    text: uniqueText,
-                    order: ++recognitionSegmentOrder,
-                    sessionId: recognitionSessionId
-                });
+                // セッション終了順に追加されるため、配列順をそのまま全文順として使う。
+                recognitionSegments.push({ text: uniqueText });
             }
         }
 
         function refreshPlayerTranscriptDisplay() {
             const committedText = recognitionSegments
-                .slice()
-                .sort((a, b) => a.order - b.order)
                 .map(segment => segment.text || '')
                 .join('');
             const activeSessionText = getRecognitionSessionText();
@@ -882,7 +874,6 @@
                 recognitionRestartTimer = null;
             }
             // セッションごとに結果スロットを初期化。確定済みの過去セッションは保持する。
-            recognitionSessionId++;
             recognitionSessionSlots = new Map();
             recognitionStartPending = true;
             try {
@@ -926,9 +917,7 @@
                         recognitionSessionSlots.set(i, {
                             text: phrase,
                             isFinal: !!result.isFinal,
-                            confidence: result[0] && Number.isFinite(result[0].confidence) ? result[0].confidence : null,
-                            sessionId: recognitionSessionId,
-                            slotIndex: i
+                            confidence: result[0] && Number.isFinite(result[0].confidence) ? result[0].confidence : null
                         });
                     }
                     refreshPlayerTranscriptDisplay();
@@ -1001,7 +990,6 @@
         }
 
         async function requestMicPermission() {
-            const badge = document.getElementById('mic-status-badge');
             try {
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 const ctx = getAudioContext();
@@ -1083,7 +1071,6 @@
                         ? Math.max(50, Math.min(250, now - playerAudioMetrics.lastSampleAt))
                         : 100;
                     playerAudioMetrics.lastSampleAt = now;
-                    playerAudioMetrics.sampleCount++;
                     if (rms > 0.006) {
                         playerAudioMetrics.voicedFrames++;
                         playerAudioMetrics.voicedDurationMs += sampleInterval;
@@ -1195,6 +1182,22 @@
             `;
         }
 
+        // CPU・プレイヤー共通のニュースモニター表示処理。
+        function showNewsOnMonitor(news) {
+            if (!news) return;
+            const titleScreen = document.getElementById('monitor-title-screen');
+            const contentScreen = document.getElementById('monitor-content-screen');
+            if (titleScreen) titleScreen.classList.add('hidden');
+            if (contentScreen) {
+                contentScreen.classList.remove('hidden');
+                contentScreen.classList.add('flex');
+            }
+            const emojiEl = document.getElementById('news-emoji');
+            const summaryEl = document.getElementById('news-summary');
+            if (emojiEl) emojiEl.textContent = news.emoji || '';
+            if (summaryEl) summaryEl.textContent = news.summary || '';
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             initVoices();
             checkMicPermissionStatus();
@@ -1242,18 +1245,7 @@
                 : "続いてのニュースです。明るい話題をお伝えします。";
 
             speakText(introText, () => {
-                const titleScreen = document.getElementById('monitor-title-screen');
-                const contentScreen = document.getElementById('monitor-content-screen');
-                if (titleScreen) titleScreen.classList.add('hidden');
-                if (contentScreen) {
-                    contentScreen.classList.remove('hidden');
-                    contentScreen.classList.add('flex');
-                }
-                
-                const emojiEl = document.getElementById('news-emoji');
-                const summaryEl = document.getElementById('news-summary');
-                if (emojiEl) emojiEl.textContent = currentCpuNews.emoji;
-                if (summaryEl) summaryEl.textContent = currentCpuNews.summary;
+                showNewsOnMonitor(currentCpuNews);
 
                 const chunks = splitTextToChunks(currentCpuNews.fullText, 20);
                 renderFullScript(chunks);
@@ -1283,6 +1275,16 @@
             });
         }
 
+        function clearRoundScoreDisplay() {
+            // 表示中の前ラウンド得点だけを消去する。集計用 finalScores は保持する。
+            ['score-accuracy', 'score-pronun', 'score-inton', 'score-tempo', 'score-exp'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = '--';
+                el.classList.remove('scale-125', 'text-yellow-300');
+            });
+        }
+
         function startPlayerTurnPrep() {
             const tag = document.getElementById('game-status-tag');
             if (tag) tag.textContent = 'あなたの番です';
@@ -1293,6 +1295,9 @@
             } while (currentPlayerNews === currentCpuNews);
 
             resetDisplayToDefault();
+            // 「続いてのニュースです」の案内に入るタイミングで前回の評価表示をリセット。
+            // finalScores は消さず、最終結果の２回分合算には利用する。
+            clearRoundScoreDisplay();
 
             speakText("続いてのニュースです。", () => {
                 const cueOverlay = document.getElementById('cue-overlay');
@@ -1310,17 +1315,7 @@
                     } else if (count === 0) {
                         if (cueCount) cueCount.textContent = "キュー！";
                         speakCueNumber("キュー");
-                        const titleScreen = document.getElementById('monitor-title-screen');
-                        const contentScreen = document.getElementById('monitor-content-screen');
-                        if (titleScreen) titleScreen.classList.add('hidden');
-                        if (contentScreen) {
-                            contentScreen.classList.remove('hidden');
-                            contentScreen.classList.add('flex');
-                        }
-                        const emojiEl = document.getElementById('news-emoji');
-                        const summaryEl = document.getElementById('news-summary');
-                        if (emojiEl) emojiEl.textContent = currentPlayerNews.emoji;
-                        if (summaryEl) summaryEl.textContent = currentPlayerNews.summary;
+                        showNewsOnMonitor(currentPlayerNews);
 
                         const chunks = splitTextToChunks(currentPlayerNews.fullText, 20);
                         renderFullScript(chunks);
@@ -1342,10 +1337,8 @@
             userTranscript = "";
             recognitionSessionSlots = new Map();
             recognitionSegments = [];
-            recognitionSegmentOrder = 0;
-            recognitionSessionId = 0;
             recognitionConfidenceSamples = [];
-            playerAudioMetrics = { voicedRms: [], pitchHz: [], voicedFrames: 0, voicedDurationMs: 0, lastSampleAt: 0, sampleCount: 0 };
+            playerAudioMetrics = { voicedRms: [], pitchHz: [], voicedFrames: 0, voicedDurationMs: 0, lastSampleAt: 0 };
             recognitionPermissionBlocked = false;
             playerRecognitionFinishing = false;
             playerReadingActive = true;
@@ -1514,7 +1507,6 @@
             const expectedText = currentPlayerNews && currentPlayerNews.fullText ? currentPlayerNews.fullText : '';
             const expectedChars = normalizeSpeechCharacters(expectedText);
             const hasRecognizedSpeech = normalizedTranscript.length > 0;
-            const hasVoiceActivity = playerAudioMetrics.voicedFrames >= 3;
             const measuredDurationMs = (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now());
             const plannedDurationMs = Array.isArray(playerScriptChunks) && playerScriptChunks.length
                 ? playerScriptChunks.reduce((sum, line) => sum + Math.max(2400, String(line).length * 240), 0)
