@@ -255,6 +255,7 @@
             <div id="user-transcript-live" class="text-xs sm:text-sm font-bold text-slate-200 tracking-wide min-h-[22px] overflow-hidden text-ellipsis whitespace-nowrap">
                 （マイクに向かって読んでください...）
             </div>
+            <div id="recognition-status" class="text-[10px] text-cyan-300/80 mt-0.5">音声認識の準備中...</div>
         </div>
     </footer>
 
@@ -572,6 +573,13 @@
         let recognitionIsStarted = false;
         let recognitionPermissionBlocked = false;
         let recognitionRestartTimer = null;
+        let recognitionAudioCaptureRetries = 0;
+        let recognitionSpeechOnlyMode = false;
+        let recognitionSpeechResultCount = 0;
+        let recognitionSpeechFirstAt = 0;
+        let recognitionSpeechLastAt = 0;
+        let recognitionStartWatchdog = null;
+        let recognitionMouthTimer = null;
         let playerSpeechStartTime = 0;
         let playerSpeechEndTime = 0;
         let recognitionConfidenceSamples = [];
@@ -898,9 +906,29 @@
             recognitionStartPending = true;
             try {
                 recognition.start();
+                if (recognitionStartWatchdog) clearTimeout(recognitionStartWatchdog);
+                recognitionStartWatchdog = setTimeout(() => {
+                    recognitionStartWatchdog = null;
+                    if (!playerReadingActive || playerRecognitionFinishing || recognitionIsStarted || !recognitionStartPending) return;
+                    // onstartが返らない時も、マイク競合を疑って一度だけ音声認識優先へ切替。
+                    if (!recognitionSpeechOnlyMode) {
+                        recognitionSpeechOnlyMode = true;
+                        recognitionStartPending = false;
+                        recognitionIsStarted = false;
+                        releaseMicAnalyserForSpeechRecognition();
+                        showRecognitionMessage('音声認識を再接続しています...');
+                        try { recognition.abort(); } catch (e) {}
+                        schedulePlayerRecognitionRestart(800);
+                    } else {
+                        recognitionStartPending = false;
+                        recognitionPermissionBlocked = true;
+                        showRecognitionMessage('音声認識を開始できません。Chromeのサイト設定でマイクを許可し、ページを再読み込みしてください。');
+                    }
+                }, 2800);
             } catch (error) {
                 recognitionStartPending = false;
-                // 既に開始済みの場合は、現在のセッションの onend を待つ。
+                if (recognitionStartWatchdog) { clearTimeout(recognitionStartWatchdog); recognitionStartWatchdog = null; }
+                // 既に開始済みの場合は、現在のセッションのonendを待つ。
                 if (error && error.name !== 'InvalidStateError') schedulePlayerRecognitionRestart(700);
             }
         }
@@ -915,6 +943,8 @@
                 recognition.onstart = () => {
                     recognitionStartPending = false;
                     recognitionIsStarted = true;
+                    if (recognitionStartWatchdog) { clearTimeout(recognitionStartWatchdog); recognitionStartWatchdog = null; }
+                    showRecognitionMessage('音声認識中です。原稿を読み上げてください。');
                 };
 
                 recognition.onresult = (event) => {
@@ -934,6 +964,18 @@
                         const result = results[i];
                         const phrase = (result && result[0] && result[0].transcript ? result[0].transcript : '');
                         if (!phrase) continue;
+                        recognitionSpeechResultCount++;
+                        const resultTime = Date.now();
+                        if (!recognitionSpeechFirstAt) recognitionSpeechFirstAt = resultTime;
+                        recognitionSpeechLastAt = resultTime;
+                        showRecognitionMessage(recognitionSpeechOnlyMode ? '音声認識中（マイク競合回避モード）' : '音声認識中');
+                        // 生のマイク解析を解放した端末でも、認識された発話に合わせて口の動きを補う。
+                        setCasterMouth(true);
+                        if (recognitionMouthTimer) clearTimeout(recognitionMouthTimer);
+                        recognitionMouthTimer = setTimeout(() => {
+                            recognitionMouthTimer = null;
+                            if (!micAnalyser) setCasterMouth(false);
+                        }, 180);
                         recognitionSessionSlots.set(i, {
                             text: phrase,
                             isFinal: !!result.isFinal,
@@ -947,15 +989,30 @@
 
                 recognition.onerror = (event) => {
                     const code = event && event.error ? event.error : '';
-                    if (code === 'not-allowed' || code === 'service-not-allowed' || code === 'audio-capture') {
+                    if (recognitionStartWatchdog) { clearTimeout(recognitionStartWatchdog); recognitionStartWatchdog = null; }
+                    if (code === 'audio-capture') {
+                        // マイクの二重取得が原因なら、解析ストリームを解放して認識を再試行する。
+                        recognitionAudioCaptureRetries++;
+                        if (!recognitionSpeechOnlyMode) {
+                            recognitionSpeechOnlyMode = true;
+                            recognitionPermissionBlocked = false;
+                            releaseMicAnalyserForSpeechRecognition();
+                            showRecognitionMessage('マイクを音声認識へ切り替えています...');
+                        } else if (recognitionAudioCaptureRetries >= 2) {
+                            recognitionPermissionBlocked = true;
+                            showRecognitionMessage('マイクを音声認識で使用できません。ほかのアプリのマイク使用を終了し、Chromeの権限をご確認ください。');
+                        }
+                    } else if (code === 'not-allowed' || code === 'service-not-allowed') {
                         recognitionPermissionBlocked = true;
+                        showRecognitionMessage('音声認識が許可されていません。Chromeのサイト設定でマイクを許可してください。');
                     }
-                    // no-speech / aborted 等は onend 後に自動再開する。
+                    // no-speech / aborted 等はonend後に自動再開する。
                 };
 
                 recognition.onend = () => {
                     recognitionStartPending = false;
                     recognitionIsStarted = false;
+                    if (recognitionStartWatchdog) { clearTimeout(recognitionStartWatchdog); recognitionStartWatchdog = null; }
                     // セッション中の各result slotを一括確定し、前セッションとの重複を除去。
                     // onresultごとに全文へpushしないため、再通知やresultIndex再利用で増殖しない。
                     commitRecognitionSession();
@@ -1036,9 +1093,8 @@
         async function requestMicPermission() {
             try {
                 if (!micStream || !micStream.getAudioTracks().some(track => track.readyState === 'live')) {
-                    micStream = await navigator.mediaDevices.getUserMedia({
-                        audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: true }
-                    });
+                    // 端末固有の音声制約で認識側と競合しないよう、標準設定で取得する。
+                    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 }
                 const connected = await attachMicAnalyser(micStream);
                 if (!connected) throw new Error('マイク音声解析を開始できません');
@@ -1061,6 +1117,28 @@
             } catch (e) {
                 return false;
             }
+        }
+
+        // 一部AndroidブラウザではgetUserMediaとWeb Speech APIがマイクを取り合い、
+        // SpeechRecognitionがaudio-captureで停止する。文字起こしを最優先し、
+        // その場合だけ解析用ストリームを解放して音声認識を再接続する。
+        function releaseMicAnalyserForSpeechRecognition() {
+            stopMicMonitorLipSync();
+            if (micSource) {
+                try { micSource.disconnect(); } catch (e) {}
+                micSource = null;
+            }
+            if (micStream) {
+                try { micStream.getTracks().forEach(track => track.stop()); } catch (e) {}
+                micStream = null;
+            }
+            micAnalyser = null;
+            setCasterMouth(false);
+        }
+
+        function showRecognitionMessage(message) {
+            const status = document.getElementById('recognition-status');
+            if (status) status.textContent = message;
         }
 
         // マイク波形から声量(RMS)と基本周波数(F0)を軽量推定する。
@@ -1429,6 +1507,13 @@
             recognitionSegmentOrder = 0;
             recognitionSessionId = 0;
             recognitionConfidenceSamples = [];
+            recognitionSpeechOnlyMode = false;
+            recognitionAudioCaptureRetries = 0;
+            recognitionSpeechResultCount = 0;
+            recognitionSpeechFirstAt = 0;
+            recognitionSpeechLastAt = 0;
+            if (recognitionMouthTimer) { clearTimeout(recognitionMouthTimer); recognitionMouthTimer = null; }
+            if (recognitionStartWatchdog) { clearTimeout(recognitionStartWatchdog); recognitionStartWatchdog = null; }
             playerAudioMetrics = { voicedRms: [], pitchHz: [], voicedFrames: 0, voicedDurationMs: 0, lastSampleAt: 0, sampleCount: 0 };
             recognitionPermissionBlocked = false;
             playerRecognitionFinishing = false;
@@ -1450,9 +1535,14 @@
             const matchTag = document.getElementById('match-rate-tag');
             if (transArea) transArea.classList.remove('hidden');
             if (transLive) transLive.textContent = "（発話中...）";
+            showRecognitionMessage('音声認識を起動しています...');
             if (matchTag) matchTag.textContent = "一致率: --%";
 
-            startPlayerRecognitionSession();
+            if (!recognition) {
+                showRecognitionMessage('このブラウザでは日本語音声認識を利用できません。Android版Chrome最新版をご利用ください。');
+            } else {
+                startPlayerRecognitionSession();
+            }
             startMicMonitorLipSync();
 
             let lastMatchUpdateAt = 0;
@@ -1474,6 +1564,7 @@
                         playerReadingActive = false;
                         playerRecognitionFinishing = false;
                         refreshPlayerTranscriptDisplay();
+                        showRecognitionMessage(userTranscript ? '文字起こし完了' : '音声を認識できませんでした。マイク権限と周囲の音量をご確認ください。');
                         evaluateAndShowScores();
                     }, 1300);
                     return;
@@ -1598,9 +1689,12 @@
             const expectedText = currentPlayerNews && currentPlayerNews.fullText ? currentPlayerNews.fullText : '';
             const expectedChars = normalizeSpeechCharacters(expectedText);
             const hasRecognizedSpeech = normalizedTranscript.length > 0;
-            const hasVoiceActivity = playerAudioMetrics.voicedFrames >= 3 && playerAudioMetrics.voicedDurationMs >= 120;
+            const measuredVoiceActivity = playerAudioMetrics.voicedFrames >= 3 && playerAudioMetrics.voicedDurationMs >= 120;
+            // 音声認識に文章が返った事実も発話検出として扱う。
+            // 端末のマイク競合で解析ストリームを解放しても、認識された声を無音扱いしない。
+            const hasVoiceActivity = measuredVoiceActivity || (hasRecognizedSpeech && recognitionSpeechResultCount > 0);
 
-            // 無言は音声波形・認識文の両方がない状態として全項目0点。
+            // 無言、または文字起こしが空の場合は、5項目すべて0点。
             if (!hasRecognizedSpeech || !hasVoiceActivity) {
                 return { accuracy: 0, pronun: 0, inton: 0, tempo: 0, exp: 0 };
             }
@@ -1633,14 +1727,30 @@
                 const variance = values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length;
                 const cv = mean > 0 ? Math.sqrt(variance) / mean : 0;
                 inton = clampScore(12 + Math.min(1.0, cv) * 45);
+            } else {
+                // 音声解析ストリームを解放した場合の代替評価。
+                // 原稿の句読点に沿った区切りと認識精度を使うため、無言には加点されない。
+                const punctuationCount = (rawTranscript.match(/[、。！？!?]/g) || []).length;
+                const expectedPunctuationCount = (expectedText.match(/[、。！？!?]/g) || []).length;
+                const punctuationCoverage = expectedPunctuationCount
+                    ? Math.min(1, punctuationCount / expectedPunctuationCount)
+                    : 0;
+                const confidenceAverage = recognitionConfidenceSamples.length
+                    ? recognitionConfidenceSamples.reduce((sum, value) => sum + value, 0) / recognitionConfidenceSamples.length
+                    : accuracyRatio;
+                inton = clampScore(15 + accuracyRatio * 25 + punctuationCoverage * 20 + confidenceAverage * 10);
             }
 
-            // テンポは認識文字数÷実際に声が出ていた時間。音声サンプルが不足した時は
-            // プレーヤーの読み上げ時間を使い、発話したのに毎回0点になる事態を防ぐ。
+            // テンポは認識文字数÷実際に声が出ていた時間。音声解析がない場合は
+            // 認識イベントの発話区間を使い、それも短い場合はプレーヤーの読み上げ時間を使う。
             let tempo = 0;
+            const recognitionSpeechDuration = recognitionSpeechFirstAt && recognitionSpeechLastAt
+                ? Math.max(1000, recognitionSpeechLastAt - recognitionSpeechFirstAt)
+                : 0;
+            const totalReadingDuration = Math.max(1000, (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now()));
             const measuredSpeechMs = playerAudioMetrics.voicedDurationMs > 0
                 ? playerAudioMetrics.voicedDurationMs
-                : Math.max(1, (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now()));
+                : (recognitionSpeechDuration || totalReadingDuration);
             if (measuredSpeechMs > 0 && normalizedTranscript.length > 0) {
                 const charsPerMinute = normalizedTranscript.length / (measuredSpeechMs / 60000);
                 tempo = clampScore(100 - Math.abs(charsPerMinute - 300) * 0.28);
@@ -1655,7 +1765,17 @@
                 const coefficientOfVariation = mean > 0 ? Math.sqrt(variance) / mean : 0;
                 exp = clampScore(100 - Math.abs(coefficientOfVariation - 0.35) * 120);
             } else {
-                exp = clampScore(inton * 0.65);
+                // 生波形が利用できない端末では、句読点の再現・原稿一致・認識信頼度で
+                // 表現面を控えめに推定する。実測RMSがある場合は上の音量変化を優先。
+                const punctuationCount = (rawTranscript.match(/[、。！？!?]/g) || []).length;
+                const expectedPunctuationCount = (expectedText.match(/[、。！？!?]/g) || []).length;
+                const punctuationCoverage = expectedPunctuationCount
+                    ? Math.min(1, punctuationCount / expectedPunctuationCount)
+                    : 0;
+                const confidenceAverage = recognitionConfidenceSamples.length
+                    ? recognitionConfidenceSamples.reduce((sum, value) => sum + value, 0) / recognitionConfidenceSamples.length
+                    : accuracyRatio;
+                exp = clampScore(10 + accuracyRatio * 25 + punctuationCoverage * 20 + confidenceAverage * 10);
             }
 
             return { accuracy, pronun, inton, tempo, exp };
