@@ -34,14 +34,20 @@
             box-shadow: 0 0 12px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(0,0,0,0.8);
         }
 
-        /* カラオケ文字アニメーション用 */
+        /* カラオケ文字アニメーション用。文字単位で左から色を進める */
         .karaoke-text {
-            background: linear-gradient(to right, #ffeb3b 50%, #64748b 50%);
-            background-size: 200% 100%;
-            background-position: 100% 0;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            transition: background-position 0.08s linear;
+            display: block;
+            width: 100%;
+            overflow-wrap: anywhere;
+            color: #64748b;
+        }
+        .karaoke-char {
+            color: #64748b;
+            transition: color 0.06s linear;
+        }
+        .karaoke-char.is-lit {
+            color: #ffeb3b;
+            text-shadow: 0 0 5px rgba(255,235,59,0.18);
         }
 
         /* LIVE点滅アニメーション */
@@ -428,6 +434,31 @@
             return chunks;
         }
 
+        // 音声認識と原稿の一致率。未定義関数によって行送りタイマーが停止しないよう実装。
+        function getLevenshteinSimilarity(a, b) {
+            const normalize = value => Array.from(String(value || '').toLowerCase().replace(/[\s\u3000、。，．・：；！？!?「」『』（）()［］【】]/g, ''));
+            const left = normalize(a);
+            const right = normalize(b);
+            if (left.length === 0 && right.length === 0) return 1;
+            if (left.length === 0 || right.length === 0) return 0;
+            if (left.length > right.length) return getLevenshteinSimilarity(b, a);
+
+            let previous = Array.from({ length: left.length + 1 }, (_, i) => i);
+            for (let j = 1; j <= right.length; j++) {
+                const current = [j];
+                for (let i = 1; i <= left.length; i++) {
+                    const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+                    current[i] = Math.min(
+                        current[i - 1] + 1,
+                        previous[i] + 1,
+                        previous[i - 1] + cost
+                    );
+                }
+                previous = current;
+            }
+            return Math.max(0, 1 - previous[left.length] / Math.max(left.length, right.length));
+        }
+
         let audioCtx = null;
         function getAudioContext() {
             if (!audioCtx) {
@@ -523,12 +554,70 @@
         let recognition = null;
         let userTranscript = "";
         let activePlayerChunkIdx = 0;
-        // 音声認識の結果は行単位で保持し、累積結果を毎行へ貼り付けない
         let lineTranscriptParts = [];
         let lineInterimTexts = [];
-        let finalizedRecognitionResultIndexes = new Set();
+        let recognitionSessionSlots = new Map();
+        let recognitionSegments = [];
+        let recognitionSegmentOrder = 0;
+        let playerReadingActive = false;
+        let recognitionStartPending = false;
+        let recognitionIsStarted = false;
+        let recognitionPermissionBlocked = false;
+        let recognitionRestartTimer = null;
         let playerSpeechStartTime = 0;
         let playerSpeechEndTime = 0;
+
+        function refreshPlayerTranscriptDisplay() {
+            const lineCount = Math.max(lineTranscriptParts.length, lineInterimTexts.length);
+            lineTranscriptParts = Array.from({ length: lineCount }, () => "");
+            lineInterimTexts = Array.from({ length: lineCount }, () => "");
+
+            const ordered = recognitionSegments.slice().sort((a, b) => a.order - b.order);
+            ordered.forEach(segment => {
+                if (!segment.text) return;
+                const idx = Math.max(0, Math.min(lineCount - 1, segment.lineIdx));
+                if (lineCount === 0) return;
+                if (segment.isFinal) lineTranscriptParts[idx] += segment.text;
+                else lineInterimTexts[idx] += segment.text;
+            });
+
+            userTranscript = ordered.map(segment => segment.text || "").join("");
+
+            for (let idx = 0; idx < lineCount; idx++) {
+                const lineTranscript = document.getElementById(`transcript-line-${idx}`);
+                if (lineTranscript) {
+                    lineTranscript.textContent = lineTranscriptParts[idx] + lineInterimTexts[idx];
+                }
+            }
+            const live = document.getElementById('user-transcript-live');
+            if (live) live.textContent = userTranscript || "（音声認識中... お声を出してください）";
+        }
+
+        function schedulePlayerRecognitionRestart(delay = 350) {
+            if (!recognition || !playerReadingActive || recognitionPermissionBlocked || recognitionRestartTimer) return;
+            recognitionRestartTimer = setTimeout(() => {
+                recognitionRestartTimer = null;
+                startPlayerRecognitionSession();
+            }, delay);
+        }
+
+        function startPlayerRecognitionSession() {
+            if (!recognition || !playerReadingActive || recognitionPermissionBlocked || recognitionStartPending || recognitionIsStarted) return;
+            if (recognitionRestartTimer) {
+                clearTimeout(recognitionRestartTimer);
+                recognitionRestartTimer = null;
+            }
+            // Android/Chrome等で認識が自動終了した場合に備え、セッションごとに結果スロットを作り直す。
+            recognitionSessionSlots = new Map();
+            recognitionStartPending = true;
+            try {
+                recognition.start();
+            } catch (error) {
+                recognitionStartPending = false;
+                // 既に開始済みの場合は、現在のセッションの onend を待つ。
+                if (error && error.name !== 'InvalidStateError') schedulePlayerRecognitionRestart(700);
+            }
+        }
 
         if (SpeechRecognition) {
             try {
@@ -537,41 +626,59 @@
                 recognition.continuous = true;
                 recognition.interimResults = true;
 
-                recognition.onresult = (event) => {
-                    const lineIdx = activePlayerChunkIdx;
-                    if (!lineTranscriptParts[lineIdx]) lineTranscriptParts[lineIdx] = "";
-                    if (!lineInterimTexts[lineIdx]) lineInterimTexts[lineIdx] = "";
+                recognition.onstart = () => {
+                    recognitionStartPending = false;
+                    recognitionIsStarted = true;
+                };
 
-                    // resultIndex以降の「変更された結果」だけを処理する。
-                    // 確定済み結果はSetで管理し、認識イベントのたびに二重追加しない。
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const result = event.results[i];
-                        const phrase = (result[0] && result[0].transcript ? result[0].transcript : "").trim();
+                recognition.onresult = (event) => {
+                    if (!playerReadingActive) return;
+                    // resultIndexや結果番号の再利用に依存せず、結果リスト全体をスナップショットとして処理。
+                    // 途中結果→確定結果は同じスロットを更新し、番号が再利用された新しい発話は別セグメントにする。
+                    const results = event.results || [];
+                    for (const key of Array.from(recognitionSessionSlots.keys())) {
+                        if (key >= results.length) recognitionSessionSlots.delete(key);
+                    }
+                    for (let i = 0; i < results.length; i++) {
+                        const result = results[i];
+                        const phrase = (result && result[0] && result[0].transcript ? result[0].transcript : '').trim();
                         if (!phrase) continue;
-                        if (result.isFinal) {
-                            if (!finalizedRecognitionResultIndexes.has(i)) {
-                                lineTranscriptParts[lineIdx] += (lineTranscriptParts[lineIdx] ? " " : "") + phrase;
-                                finalizedRecognitionResultIndexes.add(i);
-                            }
-                            lineInterimTexts[lineIdx] = "";
+                        let segment = recognitionSessionSlots.get(i);
+                        if (!segment || (segment.isFinal && segment.text !== phrase)) {
+                            segment = {
+                                lineIdx: activePlayerChunkIdx,
+                                text: phrase,
+                                isFinal: !!result.isFinal,
+                                order: ++recognitionSegmentOrder
+                            };
+                            recognitionSessionSlots.set(i, segment);
+                            recognitionSegments.push(segment);
                         } else {
-                            lineInterimTexts[lineIdx] = phrase;
+                            segment.text = phrase;
+                            segment.isFinal = !!result.isFinal;
                         }
                     }
-
-                    // 画面下部のライブ欄・採点用には全行分を連結して保持する。
-                    userTranscript = lineTranscriptParts.map((part, idx) =>
-                        (part || "") + (lineInterimTexts[idx] ? (part ? " " : "") + lineInterimTexts[idx] : "")
-                    ).join(" ").trim();
-
-                    const lineTranscript = document.getElementById(`transcript-line-${lineIdx}`);
-                    if (lineTranscript) {
-                        lineTranscript.textContent = [lineTranscriptParts[lineIdx], lineInterimTexts[lineIdx]].filter(Boolean).join(" ");
-                    }
-                    const live = document.getElementById('user-transcript-live');
-                    if (live) live.textContent = userTranscript || "（音声認識中... お声を出してください）";
+                    refreshPlayerTranscriptDisplay();
                 };
-            } catch(e){}
+
+                recognition.onerror = (event) => {
+                    const code = event && event.error ? event.error : '';
+                    if (code === 'not-allowed' || code === 'service-not-allowed' || code === 'audio-capture') {
+                        recognitionPermissionBlocked = true;
+                    }
+                    // no-speech / aborted 等は onend 後に自動再開する。
+                };
+
+                recognition.onend = () => {
+                    recognitionStartPending = false;
+                    recognitionIsStarted = false;
+                    if (playerReadingActive && !recognitionPermissionBlocked) {
+                        schedulePlayerRecognitionRestart(450);
+                    }
+                };
+            } catch(e) {
+                recognition = null;
+            }
         }
 
         let currentMode = 'dark';
@@ -680,20 +787,27 @@
             }
         }
 
+        let lastScrolledKaraokeLineIdx = -1;
+
         function renderFullScript(chunks) {
             const container = document.getElementById('script-container');
             if (!container) return;
             container.innerHTML = "";
+            lastScrolledKaraokeLineIdx = -1;
             chunks.forEach((chunkText, idx) => {
                 const pair = document.createElement('div');
                 pair.className = "script-line-pair py-1";
                 const lineDiv = document.createElement('div');
                 lineDiv.id = `script-line-${idx}`;
-                lineDiv.className = "text-lg sm:text-2xl font-black tracking-wide leading-snug flex items-center";
+                lineDiv.className = "text-lg sm:text-2xl font-black tracking-wide leading-snug";
                 const sourceSpan = document.createElement('span');
                 sourceSpan.className = "karaoke-text";
-                sourceSpan.style.backgroundPosition = "100% 0";
-                sourceSpan.textContent = chunkText;
+                Array.from(chunkText).forEach(character => {
+                    const characterSpan = document.createElement('span');
+                    characterSpan.className = "karaoke-char";
+                    characterSpan.textContent = character;
+                    sourceSpan.appendChild(characterSpan);
+                });
                 lineDiv.appendChild(sourceSpan);
                 const transcriptDiv = document.createElement('div');
                 transcriptDiv.id = `transcript-line-${idx}`;
@@ -708,11 +822,16 @@
 
         function updateLineProgress(lineIdx, progress) {
             const lineEl = document.getElementById(`script-line-${lineIdx}`);
-            if (lineEl) {
-                const span = lineEl.querySelector('.karaoke-text');
-                if (span) {
-                    span.style.backgroundPosition = `${100 - progress}%`;
-                }
+            if (!lineEl) return;
+            const chars = lineEl.querySelectorAll('.karaoke-char');
+            const safeProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+            const litCount = Math.round(chars.length * safeProgress / 100);
+            chars.forEach((character, index) => {
+                character.classList.toggle('is-lit', index < litCount);
+            });
+            lineEl.dataset.progress = String(safeProgress);
+            if (lineIdx !== lastScrolledKaraokeLineIdx) {
+                lastScrolledKaraokeLineIdx = lineIdx;
                 lineEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
         }
@@ -877,35 +996,45 @@
             userTranscript = "";
             lineTranscriptParts = chunks.map(() => "");
             lineInterimTexts = chunks.map(() => "");
-            finalizedRecognitionResultIndexes = new Set();
+            recognitionSessionSlots = new Map();
+            recognitionSegments = [];
+            recognitionSegmentOrder = 0;
+            recognitionPermissionBlocked = false;
+            playerReadingActive = true;
+            if (recognitionRestartTimer) {
+                clearTimeout(recognitionRestartTimer);
+                recognitionRestartTimer = null;
+            }
             // 表示欄も必ず空にして、前回の読み上げ結果を残さない
             chunks.forEach((_, idx) => {
                 const lineTranscript = document.getElementById(`transcript-line-${idx}`);
                 if (lineTranscript) lineTranscript.textContent = "";
             });
+            lastScrolledKaraokeLineIdx = -1;
             playerSpeechStartTime = Date.now();
 
-            // 文字起こしエリアを表示
             const transArea = document.getElementById('transcript-display-area');
             const transLive = document.getElementById('user-transcript-live');
             const matchTag = document.getElementById('match-rate-tag');
             if (transArea) transArea.classList.remove('hidden');
             if (transLive) transLive.textContent = "（発話中...）";
+            if (matchTag) matchTag.textContent = "一致率: --%";
 
-            if (recognition) {
-                try {
-                    recognition.start();
-                } catch(e) {}
-            }
-
+            startPlayerRecognitionSession();
             startMicMonitorLipSync();
 
+            let lastMatchUpdateAt = 0;
             function processNextPlayerLine() {
                 if (currentChunkIdx >= chunks.length) {
                     playerSpeechEndTime = Date.now();
+                    playerReadingActive = false;
+                    if (recognitionRestartTimer) {
+                        clearTimeout(recognitionRestartTimer);
+                        recognitionRestartTimer = null;
+                    }
                     stopMicMonitorLipSync();
                     if (recognition) {
-                        try { recognition.stop(); } catch(e){}
+                        try { recognition.stop(); } catch(e) {}
                     }
                     setTimeout(() => {
                         evaluateAndShowScores();
@@ -921,18 +1050,18 @@
                 const timer = setInterval(() => {
                     const elapsed = Date.now() - startTime;
                     const prog = Math.min(100, (elapsed / lineDuration) * 100);
-                    
                     updateLineProgress(currentChunkIdx, prog);
                     updateHeaderScoreLive(userTranscript.length > 0);
 
-                    // リアルタイム文字起こし＆一致率を更新
                     if (transLive) {
                         transLive.textContent = userTranscript.length > 0 ? userTranscript : "（音声認識中... お声を出してください）";
                     }
-                    if (matchTag && currentPlayerNews) {
-                        const targetClean = currentPlayerNews.fullText.replace(/[\s　]+/g, '');
-                        const currentSim = getLevenshteinSimilarity(userTranscript, targetClean);
+                    // 文字色アニメーション用の40msタイマーとは分離し、採点表示は250msごとに更新する。
+                    const now = Date.now();
+                    if (matchTag && currentPlayerNews && now - lastMatchUpdateAt >= 250) {
+                        const currentSim = getLevenshteinSimilarity(userTranscript, currentPlayerNews.fullText);
                         matchTag.textContent = `一致率: ${Math.round(currentSim * 100)}%`;
+                        lastMatchUpdateAt = now;
                     }
 
                     if (prog >= 100) {
