@@ -554,12 +554,13 @@
         let recognition = null;
         let userTranscript = "";
         let activePlayerChunkIdx = 0;
-        let lineTranscriptParts = [];
-        let lineInterimTexts = [];
+        let playerScriptChunks = [];
         let recognitionSessionSlots = new Map();
         let recognitionSegments = [];
         let recognitionSegmentOrder = 0;
+        let recognitionSessionId = 0;
         let playerReadingActive = false;
+        let playerRecognitionFinishing = false;
         let recognitionStartPending = false;
         let recognitionIsStarted = false;
         let recognitionPermissionBlocked = false;
@@ -567,34 +568,165 @@
         let playerSpeechStartTime = 0;
         let playerSpeechEndTime = 0;
 
-        function refreshPlayerTranscriptDisplay() {
-            const lineCount = Math.max(lineTranscriptParts.length, lineInterimTexts.length);
-            lineTranscriptParts = Array.from({ length: lineCount }, () => "");
-            lineInterimTexts = Array.from({ length: lineCount }, () => "");
+        // 音声認識の句読点・空白を照合時だけ除外する。表示用の原文は変更しない。
+        function normalizeSpeechCharacters(value) {
+            return Array.from(String(value || '').toLowerCase().replace(/[\s\u3000、。，．・：；！？!?「」『』（）()［］【】]/g, ''));
+        }
 
-            const ordered = recognitionSegments.slice().sort((a, b) => a.order - b.order);
-            ordered.forEach(segment => {
-                if (!segment.text) return;
-                const idx = Math.max(0, Math.min(lineCount - 1, segment.lineIdx));
-                if (lineCount === 0) return;
-                if (segment.isFinal) lineTranscriptParts[idx] += segment.text;
-                else lineInterimTexts[idx] += segment.text;
+        // 文字起こし全文を原稿全文へ順序を保って近似整列し、認識文字を原稿行へ割り当てる。
+        // イベントが届いた時点の再生行(activePlayerChunkIdx)には依存しないため、認識遅延で1行ずれる問題を防ぐ。
+        function alignTranscriptToScriptLines(transcript, chunks) {
+            const rawChars = Array.from(String(transcript || ''));
+            const speechChars = [];
+            rawChars.forEach(char => {
+                normalizeSpeechCharacters(char).forEach(unit => speechChars.push(unit));
             });
 
-            userTranscript = ordered.map(segment => segment.text || "").join("");
+            const scriptChars = [];
+            const scriptLineForChar = [];
+            const scriptPunctuationLineAtBoundary = new Map();
+            chunks.forEach((chunk, lineIndex) => {
+                Array.from(chunk).forEach(char => {
+                    const normalized = normalizeSpeechCharacters(char);
+                    if (normalized.length) {
+                        normalized.forEach(unit => {
+                            scriptChars.push(unit);
+                            scriptLineForChar.push(lineIndex);
+                        });
+                    } else {
+                        // 原稿の行頭・行末にある句読点も、元の行位置を保持する。
+                        scriptPunctuationLineAtBoundary.set(scriptChars.length, lineIndex);
+                    }
+                });
+            });
 
-            for (let idx = 0; idx < lineCount; idx++) {
-                const lineTranscript = document.getElementById(`transcript-line-${idx}`);
-                if (lineTranscript) {
-                    lineTranscript.textContent = lineTranscriptParts[idx] + lineInterimTexts[idx];
+            const lineTexts = Array.from({ length: chunks.length }, () => '');
+            if (!rawChars.length || !chunks.length) return lineTexts;
+            if (!speechChars.length || !scriptChars.length) {
+                lineTexts[Math.max(0, Math.min(chunks.length - 1, activePlayerChunkIdx))] = rawChars.join('');
+                return lineTexts;
+            }
+
+            const n = speechChars.length;
+            const m = scriptChars.length;
+            const cols = m + 1;
+            const dp = new Float32Array((n + 1) * cols);
+            const trace = new Uint8Array((n + 1) * cols); // 1=斜め、2=発話側、3=原稿側
+
+            // 冒頭の原稿読み落としにも対応しつつ、最初の発話が後半行へ飛ばないよう先頭を優先。
+            for (let j = 1; j <= m; j++) {
+                dp[j] = -j * 0.9;
+                trace[j] = 3;
+            }
+            for (let i = 1; i <= n; i++) {
+                dp[i * cols] = -i * 1.5;
+                trace[i * cols] = 2;
+            }
+
+            for (let i = 1; i <= n; i++) {
+                const row = i * cols;
+                const prevRow = (i - 1) * cols;
+                for (let j = 1; j <= m; j++) {
+                    const same = speechChars[i - 1] === scriptChars[j - 1];
+                    const diagonal = dp[prevRow + j - 1] + (same ? 3 : -1.3);
+                    const speechOnly = dp[prevRow + j] - 1.5;
+                    const scriptOnly = dp[row + j - 1] - 0.9;
+                    if (diagonal >= speechOnly && diagonal >= scriptOnly) {
+                        dp[row + j] = diagonal;
+                        trace[row + j] = 1;
+                    } else if (speechOnly >= scriptOnly) {
+                        dp[row + j] = speechOnly;
+                        trace[row + j] = 2;
+                    } else {
+                        dp[row + j] = scriptOnly;
+                        trace[row + j] = 3;
+                    }
                 }
             }
+
+            // 発話全文が原稿途中までの場合、最後に到達した原稿位置を選ぶ。
+            let bestJ = 0;
+            let bestScore = dp[n * cols];
+            for (let j = 1; j <= m; j++) {
+                const score = dp[n * cols + j];
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestJ = j;
+                }
+            }
+
+            const speechLine = new Array(n).fill(null);
+            const speechSourcePosition = new Array(n).fill(null);
+            let i = n;
+            let j = bestJ;
+            let guard = 0;
+            while (i > 0 && guard++ < n + m + 10) {
+                const direction = trace[i * cols + j];
+                if (direction === 1 && j > 0) {
+                    speechLine[i - 1] = scriptLineForChar[j - 1];
+                    speechSourcePosition[i - 1] = j - 1;
+                    i--; j--;
+                } else if (direction === 2 || j === 0) {
+                    const nearestPosition = j < m ? j : Math.max(0, j - 1);
+                    const nearest = scriptLineForChar[nearestPosition];
+                    speechLine[i - 1] = nearest;
+                    speechSourcePosition[i - 1] = nearestPosition;
+                    i--;
+                } else if (direction === 3 && j > 0) {
+                    j--;
+                } else {
+                    const nearestPosition = j > 0 ? j - 1 : 0;
+                    speechLine[i - 1] = scriptLineForChar[nearestPosition] ?? 0;
+                    speechSourcePosition[i - 1] = nearestPosition;
+                    i--;
+                }
+            }
+
+            // 句読点・空白も消さず、直前の認識文字と同じ行へ残す。
+            let normalizedIndex = 0;
+            let lastLine = speechLine.find(value => value !== null && value !== undefined);
+            if (lastLine === undefined) lastLine = Math.max(0, Math.min(chunks.length - 1, activePlayerChunkIdx));
+            rawChars.forEach(char => {
+                const normalized = normalizeSpeechCharacters(char);
+                if (normalized.length) {
+                    for (let k = 0; k < normalized.length; k++) {
+                        const assigned = speechLine[normalizedIndex++];
+                        if (assigned !== null && assigned !== undefined) lastLine = assigned;
+                        lineTexts[Math.max(0, Math.min(chunks.length - 1, lastLine))] += char;
+                    }
+                } else {
+                    // 音声認識された句読点が原稿の同じ境界にある場合は、その原稿行へ配置する。
+                    // 原稿にない区切り記号は直前の発話行へ残す。
+                    const previousSourcePosition = normalizedIndex > 0
+                        ? speechSourcePosition[normalizedIndex - 1]
+                        : null;
+                    const sourceBoundary = previousSourcePosition === null || previousSourcePosition === undefined
+                        ? 0
+                        : previousSourcePosition + 1;
+                    const punctuationLine = scriptPunctuationLineAtBoundary.get(sourceBoundary);
+                    const targetLine = punctuationLine === undefined ? lastLine : punctuationLine;
+                    lineTexts[Math.max(0, Math.min(chunks.length - 1, targetLine))] += char;
+                    if (punctuationLine !== undefined) lastLine = punctuationLine;
+                }
+            });
+            return lineTexts;
+        }
+
+        function refreshPlayerTranscriptDisplay() {
+            const ordered = recognitionSegments.slice().sort((a, b) => a.order - b.order);
+            userTranscript = ordered.map(segment => segment.text || '').join('');
+            const mappedLines = alignTranscriptToScriptLines(userTranscript, playerScriptChunks);
+
+            for (let idx = 0; idx < playerScriptChunks.length; idx++) {
+                const lineTranscript = document.getElementById(`transcript-line-${idx}`);
+                if (lineTranscript) lineTranscript.textContent = mappedLines[idx] || '';
+            }
             const live = document.getElementById('user-transcript-live');
-            if (live) live.textContent = userTranscript || "（音声認識中... お声を出してください）";
+            if (live) live.textContent = userTranscript || '（音声認識中... お声を出してください）';
         }
 
         function schedulePlayerRecognitionRestart(delay = 350) {
-            if (!recognition || !playerReadingActive || recognitionPermissionBlocked || recognitionRestartTimer) return;
+            if (!recognition || !playerReadingActive || playerRecognitionFinishing || recognitionPermissionBlocked || recognitionRestartTimer) return;
             recognitionRestartTimer = setTimeout(() => {
                 recognitionRestartTimer = null;
                 startPlayerRecognitionSession();
@@ -602,12 +734,13 @@
         }
 
         function startPlayerRecognitionSession() {
-            if (!recognition || !playerReadingActive || recognitionPermissionBlocked || recognitionStartPending || recognitionIsStarted) return;
+            if (!recognition || !playerReadingActive || playerRecognitionFinishing || recognitionPermissionBlocked || recognitionStartPending || recognitionIsStarted) return;
             if (recognitionRestartTimer) {
                 clearTimeout(recognitionRestartTimer);
                 recognitionRestartTimer = null;
             }
-            // Android/Chrome等で認識が自動終了した場合に備え、セッションごとに結果スロットを作り直す。
+            // セッションごとに結果スロットを初期化。確定済みの過去セッションは保持する。
+            recognitionSessionId++;
             recognitionSessionSlots = new Map();
             recognitionStartPending = true;
             try {
@@ -632,23 +765,26 @@
                 };
 
                 recognition.onresult = (event) => {
-                    if (!playerReadingActive) return;
-                    // resultIndexや結果番号の再利用に依存せず、結果リスト全体をスナップショットとして処理。
-                    // 途中結果→確定結果は同じスロットを更新し、番号が再利用された新しい発話は別セグメントにする。
+                    if (!playerReadingActive && !playerRecognitionFinishing) return;
                     const results = event.results || [];
-                    for (const key of Array.from(recognitionSessionSlots.keys())) {
-                        if (key >= results.length) recognitionSessionSlots.delete(key);
-                    }
-                    for (let i = 0; i < results.length; i++) {
+                    // Web Speech APIのresultIndex以降だけを処理する。確定済み結果を毎回再追加しない。
+                    // 同じスロットの途中結果は同じsegmentを更新し、final化しても二重登録しない。
+                    const firstChanged = Number.isInteger(event.resultIndex)
+                        ? Math.max(0, Math.min(results.length, event.resultIndex))
+                        : 0;
+                    for (let i = firstChanged; i < results.length; i++) {
                         const result = results[i];
                         const phrase = (result && result[0] && result[0].transcript ? result[0].transcript : '').trim();
                         if (!phrase) continue;
                         let segment = recognitionSessionSlots.get(i);
+                        // final済みスロットが別の文章へ差し替わった場合は、ブラウザ側の番号再利用と判断して新規発話にする。
+                        // 同じ確定結果が再通知された場合は下の既存segment更新となり、二重追加しない。
                         if (!segment || (segment.isFinal && segment.text !== phrase)) {
                             segment = {
-                                lineIdx: activePlayerChunkIdx,
                                 text: phrase,
                                 isFinal: !!result.isFinal,
+                                sessionId: recognitionSessionId,
+                                slotIndex: i,
                                 order: ++recognitionSegmentOrder
                             };
                             recognitionSessionSlots.set(i, segment);
@@ -672,7 +808,7 @@
                 recognition.onend = () => {
                     recognitionStartPending = false;
                     recognitionIsStarted = false;
-                    if (playerReadingActive && !recognitionPermissionBlocked) {
+                    if (playerReadingActive && !playerRecognitionFinishing && !recognitionPermissionBlocked) {
                         schedulePlayerRecognitionRestart(450);
                     }
                 };
@@ -993,13 +1129,14 @@
 
             let currentChunkIdx = 0;
             activePlayerChunkIdx = 0;
+            playerScriptChunks = chunks.slice();
             userTranscript = "";
-            lineTranscriptParts = chunks.map(() => "");
-            lineInterimTexts = chunks.map(() => "");
             recognitionSessionSlots = new Map();
             recognitionSegments = [];
             recognitionSegmentOrder = 0;
+            recognitionSessionId = 0;
             recognitionPermissionBlocked = false;
+            playerRecognitionFinishing = false;
             playerReadingActive = true;
             if (recognitionRestartTimer) {
                 clearTimeout(recognitionRestartTimer);
@@ -1027,18 +1164,23 @@
             function processNextPlayerLine() {
                 if (currentChunkIdx >= chunks.length) {
                     playerSpeechEndTime = Date.now();
-                    playerReadingActive = false;
+                    // 最終行の発話が認識サーバーから返る猶予を設けてから採点へ進む。
+                    // finishフラグで自動再起動だけを止め、終了直前のfinal結果は受け取る。
+                    playerRecognitionFinishing = true;
                     if (recognitionRestartTimer) {
                         clearTimeout(recognitionRestartTimer);
                         recognitionRestartTimer = null;
                     }
                     stopMicMonitorLipSync();
                     if (recognition) {
-                        try { recognition.stop(); } catch(e) {}
+                        try { if (recognitionIsStarted || recognitionStartPending) recognition.stop(); } catch(e) {}
                     }
                     setTimeout(() => {
+                        playerReadingActive = false;
+                        playerRecognitionFinishing = false;
+                        refreshPlayerTranscriptDisplay();
                         evaluateAndShowScores();
-                    }, 800);
+                    }, 1300);
                     return;
                 }
 
@@ -1053,9 +1195,6 @@
                     updateLineProgress(currentChunkIdx, prog);
                     updateHeaderScoreLive(userTranscript.length > 0);
 
-                    if (transLive) {
-                        transLive.textContent = userTranscript.length > 0 ? userTranscript : "（音声認識中... お声を出してください）";
-                    }
                     // 文字色アニメーション用の40msタイマーとは分離し、採点表示は250msごとに更新する。
                     const now = Date.now();
                     if (matchTag && currentPlayerNews && now - lastMatchUpdateAt >= 250) {
