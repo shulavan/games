@@ -185,8 +185,8 @@
                     <path d="M45 80 Q100 15 155 80 Q165 140 160 190 L40 190 Q35 140 45 80 Z" fill="#2d1b0f" />
                     
                     <!-- 首 (Neck) - 高さを調整 -->
-                    <path d="M86 138 L114 138 L116 160 L84 160 Z" fill="#fbcfe8" />
-                    <path d="M86 138 L114 138 L114 150 L86 150 Z" fill="#fed7aa" />
+                    <path d="M86 144 L114 144 L116 160 L84 160 Z" fill="#fbcfe8" />
+                    <path d="M86 144 L114 144 L114 153 L86 153 Z" fill="#fed7aa" />
 
                     <!-- 体・スーツ -->
                     <path d="M40 240 L160 240 L150 160 Q100 170 50 160 Z" fill="#1e3a8a" />
@@ -195,7 +195,8 @@
                     <path d="M40 240 L75 160 L90 190 L50 240 Z" fill="#1d4ed8" />
                     <path d="M160 240 L125 160 L110 190 L150 240 Z" fill="#1d4ed8" />
 
-                    <!-- 顔 (Face) - 少しだけ下方へシフト -->
+                    <!-- 顔・前髪・顔パーツを下へ5px移動し、首の露出を短縮 -->
+                    <g transform="translate(0,5)">
                     <ellipse cx="100" cy="102" rx="38" ry="42" fill="#fed7aa" />
                     
                     <!-- 前髪 -->
@@ -218,6 +219,7 @@
                     <!-- 口 (リップシンク連動) -->
                     <g transform="translate(100, 122)">
                         <ellipse id="caster-mouth" cx="0" cy="0" rx="7" ry="2" fill="#991b1b" />
+                    </g>
                     </g>
 
                     <!-- ネームプレート -->
@@ -300,7 +302,7 @@
             <h2 class="text-3xl font-black text-white mb-4">総合キャスター評価</h2>
 
             <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6 flex flex-col items-center">
-                <div class="text-xs text-slate-400 mb-1">TOTAL SCORE</div>
+                <div class="text-xs text-slate-400 mb-1">TOTAL SCORE / 1000</div>
                 <div id="total-score-val" class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-red-500">
                     --
                 </div>
@@ -310,11 +312,11 @@
             </div>
 
             <div class="grid grid-cols-5 gap-1 text-center mb-6">
-                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">正確</div><div id="res-acc" class="font-bold text-cyan-400">0</div></div>
-                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">発音</div><div id="res-pro" class="font-bold text-emerald-400">0</div></div>
-                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">抑揚</div><div id="res-int" class="font-bold text-yellow-400">0</div></div>
-                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">テンポ</div><div id="res-tem" class="font-bold text-purple-400">0</div></div>
-                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">表現</div><div id="res-exp" class="font-bold text-rose-400">0</div></div>
+                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">正確</div><div id="res-acc" class="font-bold text-cyan-400">0</div><div class="text-[8px] text-slate-500">/200点</div></div>
+                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">発音</div><div id="res-pro" class="font-bold text-emerald-400">0</div><div class="text-[8px] text-slate-500">/200点</div></div>
+                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">抑揚</div><div id="res-int" class="font-bold text-yellow-400">0</div><div class="text-[8px] text-slate-500">/200点</div></div>
+                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">テンポ</div><div id="res-tem" class="font-bold text-purple-400">0</div><div class="text-[8px] text-slate-500">/200点</div></div>
+                <div class="bg-slate-800 p-2 rounded"><div class="text-[9px] text-slate-400">表現</div><div id="res-exp" class="font-bold text-rose-400">0</div><div class="text-[8px] text-slate-500">/200点</div></div>
             </div>
 
             <button onclick="location.reload()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl">
@@ -570,6 +572,15 @@
         let recognitionRestartTimer = null;
         let playerSpeechStartTime = 0;
         let playerSpeechEndTime = 0;
+        let recognitionConfidenceSamples = [];
+        let playerAudioMetrics = {
+            voicedRms: [],
+            pitchHz: [],
+            voicedFrames: 0,
+            voicedDurationMs: 0,
+            lastSampleAt: 0,
+            sampleCount: 0
+        };
 
         // 音声認識の句読点・空白を照合時だけ除外する。表示用の原文は変更しない。
         function normalizeSpeechCharacters(value) {
@@ -789,6 +800,12 @@
 
         function commitRecognitionSession() {
             const sessionText = getRecognitionSessionText();
+            // 音声認識エンジンが返す信頼度は確定スロットから一度だけ取得する。
+            for (const [, slot] of recognitionSessionSlots.entries()) {
+                if (slot && slot.isFinal && Number.isFinite(slot.confidence)) {
+                    recognitionConfidenceSamples.push(Math.max(0, Math.min(1, slot.confidence)));
+                }
+            }
             recognitionSessionSlots.clear();
             if (!sessionText) return;
 
@@ -882,6 +899,7 @@
                         recognitionSessionSlots.set(i, {
                             text: phrase,
                             isFinal: !!result.isFinal,
+                            confidence: result[0] && Number.isFinite(result[0].confidence) ? result[0].confidence : null,
                             sessionId: recognitionSessionId,
                             slotIndex: i
                         });
@@ -962,7 +980,8 @@
                 const ctx = getAudioContext();
                 const source = ctx.createMediaStreamSource(micStream);
                 micAnalyser = ctx.createAnalyser();
-                micAnalyser.fftSize = 256;
+                micAnalyser.fftSize = 2048;
+                micAnalyser.smoothingTimeConstant = 0.15;
                 source.connect(micAnalyser);
 
                 setMicBadge('granted');
@@ -973,22 +992,82 @@
             }
         }
 
+        // マイク波形から声量(RMS)と基本周波数(F0)を軽量推定する。
+        // 抑揚・表現力の採点に使い、無音時はサンプルを蓄積しない。
+        function estimateFundamentalFrequency(buffer, sampleRate) {
+            const step = 2;
+            const length = Math.floor(buffer.length / step);
+            if (length < 128) return null;
+            const data = new Float32Array(length);
+            let mean = 0;
+            for (let i = 0; i < length; i++) {
+                data[i] = buffer[i * step];
+                mean += data[i];
+            }
+            mean /= length;
+            let energy = 0;
+            for (let i = 0; i < length; i++) {
+                data[i] -= mean;
+                energy += data[i] * data[i];
+            }
+            if (energy / length < 0.000035) return null;
+
+            const reducedRate = sampleRate / step;
+            const minLag = Math.max(2, Math.floor(reducedRate / 350));
+            const maxLag = Math.min(Math.floor(reducedRate / 75), Math.floor(length / 2));
+            let bestLag = -1;
+            let bestCorrelation = 0;
+            for (let lag = minLag; lag <= maxLag; lag++) {
+                let cross = 0, energyA = 0, energyB = 0;
+                const limit = length - lag;
+                for (let i = 0; i < limit; i++) {
+                    const a = data[i], b = data[i + lag];
+                    cross += a * b;
+                    energyA += a * a;
+                    energyB += b * b;
+                }
+                const denominator = Math.sqrt(energyA * energyB);
+                const correlation = denominator > 0 ? cross / denominator : 0;
+                if (correlation > bestCorrelation) {
+                    bestCorrelation = correlation;
+                    bestLag = lag;
+                }
+            }
+            if (bestLag < 0 || bestCorrelation < 0.38) return null;
+            return reducedRate / bestLag;
+        }
+
         function startMicMonitorLipSync() {
             if (!micAnalyser) return;
-            const dataArray = new Uint8Array(micAnalyser.frequencyBinCount);
-            
-            function checkAudioLevel() {
-                micAnalyser.getByteFrequencyData(dataArray);
-                let sum = 0;
-                for (let i = 0; i < dataArray.length; i++) {
-                    sum += dataArray[i];
-                }
-                const average = sum / dataArray.length;
+            const waveform = new Float32Array(micAnalyser.fftSize);
+            const sampleRate = (audioCtx && audioCtx.sampleRate) ? audioCtx.sampleRate : 44100;
 
-                if (average > 15) {
-                    setCasterMouth(true);
-                } else {
-                    setCasterMouth(false);
+            function checkAudioLevel() {
+                if (!micAnalyser) return;
+                micAnalyser.getFloatTimeDomainData(waveform);
+                let squareSum = 0;
+                for (let i = 0; i < waveform.length; i++) squareSum += waveform[i] * waveform[i];
+                const rms = Math.sqrt(squareSum / waveform.length);
+                setCasterMouth(rms > 0.008);
+
+                const now = Date.now();
+                if (playerReadingActive && now - playerAudioMetrics.lastSampleAt >= 100) {
+                    const sampleInterval = playerAudioMetrics.lastSampleAt > 0
+                        ? Math.max(50, Math.min(250, now - playerAudioMetrics.lastSampleAt))
+                        : 100;
+                    playerAudioMetrics.lastSampleAt = now;
+                    playerAudioMetrics.sampleCount++;
+                    if (rms > 0.006) {
+                        playerAudioMetrics.voicedFrames++;
+                        playerAudioMetrics.voicedDurationMs += sampleInterval;
+                        playerAudioMetrics.voicedRms.push(rms);
+                        if (playerAudioMetrics.voicedRms.length > 1200) playerAudioMetrics.voicedRms.shift();
+                        const pitch = estimateFundamentalFrequency(waveform, sampleRate);
+                        if (pitch && pitch >= 75 && pitch <= 350) {
+                            playerAudioMetrics.pitchHz.push(pitch);
+                            if (playerAudioMetrics.pitchHz.length > 1200) playerAudioMetrics.pitchHz.shift();
+                        }
+                    }
                 }
                 micAnimFrame = requestAnimationFrame(checkAudioLevel);
             }
@@ -1231,6 +1310,8 @@
             recognitionSegments = [];
             recognitionSegmentOrder = 0;
             recognitionSessionId = 0;
+            recognitionConfidenceSamples = [];
+            playerAudioMetrics = { voicedRms: [], pitchHz: [], voicedFrames: 0, voicedDurationMs: 0, lastSampleAt: 0, sampleCount: 0 };
             recognitionPermissionBlocked = false;
             playerRecognitionFinishing = false;
             playerReadingActive = true;
@@ -1289,7 +1370,7 @@
                     const elapsed = Date.now() - startTime;
                     const prog = Math.min(100, (elapsed / lineDuration) * 100);
                     updateLineProgress(currentChunkIdx, prog);
-                    updateHeaderScoreLive(userTranscript.length > 0);
+                    updateHeaderScoreLive();
 
                     // 文字色アニメーション用の40msタイマーとは分離し、採点表示は250msごとに更新する。
                     const now = Date.now();
@@ -1379,43 +1460,93 @@
             showNextItemScore();
         }
 
-        function calculateActualScores() {
-            const rawTranscript = (userTranscript || "").trim();
-            const hasSpeech = rawTranscript.length > 0;
-            
-            let baseAccuracy = hasSpeech ? 85 : 75;
-            let basePronun = hasSpeech ? 88 : 78;
-            let baseInton = 84 + Math.floor(Math.random() * 10);
-            let baseTempo = 85 + Math.floor(Math.random() * 10);
-            let baseExp = 86 + Math.floor(Math.random() * 10);
-
-            if (hasSpeech) {
-                baseAccuracy += Math.floor(Math.random() * 8);
-                basePronun += Math.floor(Math.random() * 6);
-            }
-
-            if (currentMode === 'happy') {
-                baseExp = Math.min(100, baseExp + 3);
-            }
-
-            return {
-                accuracy: Math.min(100, Math.max(65, baseAccuracy)),
-                pronun: Math.min(100, Math.max(65, basePronun)),
-                inton: Math.min(100, Math.max(65, baseInton)),
-                tempo: Math.min(100, Math.max(65, baseTempo)),
-                exp: Math.min(100, Math.max(65, baseExp))
-            };
+        function clampScore(value) {
+            return Math.max(0, Math.min(100, Math.round(Number.isFinite(value) ? value : 0)));
         }
 
-        function updateHeaderScoreLive(hasSpeech) {
-            if (!hasSpeech) return;
-            const items = ['score-accuracy', 'score-pronun', 'score-inton', 'score-tempo', 'score-exp'];
-            items.forEach(id => {
-                const el = document.getElementById(id);
-                if (el && el.textContent === '--') {
-                    el.textContent = Math.floor(Math.random() * 15) + 80;
-                }
-            });
+        function percentile(values, p) {
+            if (!values.length) return 0;
+            const sorted = values.slice().sort((a, b) => a - b);
+            const index = (sorted.length - 1) * p;
+            const lower = Math.floor(index);
+            const upper = Math.ceil(index);
+            if (lower === upper) return sorted[lower];
+            return sorted[lower] + (sorted[upper] - sorted[lower]) * (index - lower);
+        }
+
+        function calculateActualScores() {
+            const rawTranscript = String(userTranscript || '').trim();
+            const normalizedTranscript = normalizeSpeechCharacters(rawTranscript);
+            const expectedText = currentPlayerNews && currentPlayerNews.fullText ? currentPlayerNews.fullText : '';
+            const expectedChars = normalizeSpeechCharacters(expectedText);
+            const hasRecognizedSpeech = normalizedTranscript.length > 0;
+            const hasVoiceActivity = playerAudioMetrics.voicedFrames >= 3;
+            const durationMs = Math.max(1, (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now()));
+
+            // 無言、または文字起こしが空の場合は、5項目すべて0点。
+            if (!hasRecognizedSpeech || (micAnalyser && !hasVoiceActivity)) {
+                return { accuracy: 0, pronun: 0, inton: 0, tempo: 0, exp: 0 };
+            }
+
+            const accuracyRatio = expectedChars.length
+                ? getLevenshteinSimilarity(rawTranscript, expectedText)
+                : 0;
+            const accuracy = clampScore(accuracyRatio * 100);
+
+            // 発音力は音声認識エンジンの確定結果信頼度を主指標にする。
+            // ブラウザがconfidenceを返さない場合は、認識一致率から保守的に推定する。
+            let pronun = 0;
+            if (recognitionConfidenceSamples.length) {
+                const averageConfidence = recognitionConfidenceSamples.reduce((sum, value) => sum + value, 0) / recognitionConfidenceSamples.length;
+                pronun = clampScore((averageConfidence * 0.8 + accuracyRatio * 0.2) * 100);
+            } else {
+                pronun = clampScore(accuracyRatio * 75);
+            }
+
+            // 抑揚は有声音の基本周波数(F0)の10-90パーセンタイル幅から評価。
+            let inton = 0;
+            if (playerAudioMetrics.pitchHz.length >= 5) {
+                const lowPitch = percentile(playerAudioMetrics.pitchHz, 0.10);
+                const highPitch = percentile(playerAudioMetrics.pitchHz, 0.90);
+                const rangeSemitones = lowPitch > 0 ? 12 * Math.log2(highPitch / lowPitch) : 0;
+                inton = clampScore(18 + rangeSemitones * 15);
+            }
+
+            // テンポは読み上げ時間に対する認識文字数(文字/分)で評価。
+            let tempo = 0;
+            if (playerAudioMetrics.voicedDurationMs > 0 && hasVoiceActivity) {
+                const charsPerMinute = normalizedTranscript.length / (playerAudioMetrics.voicedDurationMs / 60000);
+                tempo = clampScore(100 - Math.abs(charsPerMinute - 300) * 0.28);
+            }
+
+            // 表現力は発話中の声量変化(CV)を使う。一定すぎる声・極端に不安定な声は低くなる。
+            let exp = 0;
+            if (playerAudioMetrics.voicedRms.length >= 5) {
+                const values = playerAudioMetrics.voicedRms;
+                const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+                const variance = values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length;
+                const coefficientOfVariation = mean > 0 ? Math.sqrt(variance) / mean : 0;
+                exp = clampScore(100 - Math.abs(coefficientOfVariation - 0.35) * 140);
+            }
+
+            // 実音声がほとんど検出されない場合は音響評価を与えない。
+            if (!hasVoiceActivity) {
+                inton = 0;
+                tempo = 0;
+                exp = 0;
+            }
+
+            return { accuracy, pronun, inton, tempo, exp };
+        }
+
+        function updateHeaderScoreLive() {
+            // ライブ表示は実際に測定できる文字起こし一致率のみ更新する。
+            // 発音・抑揚・テンポ・表現は一回分の計測終了後に確定し、乱数で先行表示しない。
+            const accuracyEl = document.getElementById('score-accuracy');
+            if (accuracyEl && currentPlayerNews) {
+                const similarity = getLevenshteinSimilarity(userTranscript, currentPlayerNews.fullText);
+                accuracyEl.textContent = String(clampScore(similarity * 100));
+            }
         }
 
         function speakText(text, onEnd) {
@@ -1504,14 +1635,14 @@
 
             const d = finalScores.dark || {};
             const h = finalScores.happy || {};
+            const sumRoundScores = key => clampScore(d[key] || 0) + clampScore(h[key] || 0);
 
-            const avgAcc = Math.round(((d.accuracy || 80) + (h.accuracy || 80)) / 2);
-            const avgPro = Math.round(((d.pronun || 80) + (h.pronun || 80)) / 2);
-            const avgInt = Math.round(((d.inton || 80) + (h.inton || 80)) / 2);
-            const avgTem = Math.round(((d.tempo || 80) + (h.tempo || 80)) / 2);
-            const avgExp = Math.round(((d.exp || 80) + (h.exp || 80)) / 2);
-
-            const totalScore = Math.round((avgAcc + avgPro + avgInt + avgTem + avgExp) / 5);
+            const totalAcc = sumRoundScores('accuracy');
+            const totalPro = sumRoundScores('pronun');
+            const totalInt = sumRoundScores('inton');
+            const totalTem = sumRoundScores('tempo');
+            const totalExp = sumRoundScores('exp');
+            const totalScore = totalAcc + totalPro + totalInt + totalTem + totalExp;
 
             const resAcc = document.getElementById('res-acc');
             const resPro = document.getElementById('res-pro');
@@ -1521,20 +1652,19 @@
             const totalVal = document.getElementById('total-score-val');
             const rankBadge = document.getElementById('rank-badge');
 
-            if (resAcc) resAcc.textContent = avgAcc;
-            if (resPro) resPro.textContent = avgPro;
-            if (resInt) resInt.textContent = avgInt;
-            if (resTem) resTem.textContent = avgTem;
-            if (resExp) resExp.textContent = avgExp;
+            if (resAcc) resAcc.textContent = String(totalAcc);
+            if (resPro) resPro.textContent = String(totalPro);
+            if (resInt) resInt.textContent = String(totalInt);
+            if (resTem) resTem.textContent = String(totalTem);
+            if (resExp) resExp.textContent = String(totalExp);
             if (totalVal) totalVal.textContent = `${totalScore}点`;
 
-            let rank = "看板報道キャスター";
-            if (totalScore >= 92) rank = "伝説のエグゼクティブアナ";
-            else if (totalScore < 75) rank = "期待の本格派アナ";
+            let rank = '看板報道キャスター';
+            if (totalScore >= 920) rank = '伝説のエグゼクティブアナ';
+            else if (totalScore < 750) rank = '期待の本格派アナ';
 
             if (rankBadge) rankBadge.textContent = `称号：${rank}`;
             if (modal) modal.classList.remove('hidden');
-        }
-    </script>
+        }    </script>
 </body>
 </html>
