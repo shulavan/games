@@ -1040,8 +1040,8 @@
             if (energy / length < 0.000035) return null;
 
             const reducedRate = sampleRate / step;
-            const minLag = Math.max(2, Math.floor(reducedRate / 350));
-            const maxLag = Math.min(Math.floor(reducedRate / 75), Math.floor(length / 2));
+            const minLag = Math.max(2, Math.floor(reducedRate / 450));
+            const maxLag = Math.min(Math.floor(reducedRate / 65), Math.floor(length / 2));
             let bestLag = -1;
             let bestCorrelation = 0;
             for (let lag = minLag; lag <= maxLag; lag++) {
@@ -1090,7 +1090,7 @@
                         playerAudioMetrics.voicedRms.push(rms);
                         if (playerAudioMetrics.voicedRms.length > 1200) playerAudioMetrics.voicedRms.shift();
                         const pitch = estimateFundamentalFrequency(waveform, sampleRate);
-                        if (pitch && pitch >= 75 && pitch <= 350) {
+                        if (pitch && pitch >= 65 && pitch <= 450) {
                             playerAudioMetrics.pitchHz.push(pitch);
                             if (playerAudioMetrics.pitchHz.length > 1200) playerAudioMetrics.pitchHz.shift();
                         }
@@ -1515,10 +1515,21 @@
             const expectedChars = normalizeSpeechCharacters(expectedText);
             const hasRecognizedSpeech = normalizedTranscript.length > 0;
             const hasVoiceActivity = playerAudioMetrics.voicedFrames >= 3;
-            const durationMs = Math.max(1, (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now()));
+            const measuredDurationMs = (playerSpeechEndTime || Date.now()) - (playerSpeechStartTime || Date.now());
+            const plannedDurationMs = Array.isArray(playerScriptChunks) && playerScriptChunks.length
+                ? playerScriptChunks.reduce((sum, line) => sum + Math.max(2400, String(line).length * 240), 0)
+                : 0;
+            const durationMs = measuredDurationMs >= Math.max(1000, plannedDurationMs * 0.35)
+                && (!plannedDurationMs || measuredDurationMs <= plannedDurationMs * 2.5)
+                ? measuredDurationMs
+                : Math.max(1, plannedDurationMs || measuredDurationMs);
+            const voiceCoverage = durationMs > 0
+                ? playerAudioMetrics.voicedDurationMs / durationMs
+                : 0;
 
-            // 無言、または文字起こしが空の場合は、5項目すべて0点。
-            if (!hasRecognizedSpeech || (micAnalyser && !hasVoiceActivity)) {
+            // 文字起こしが空の場合だけ無言として0点にする。
+            // micAnalyserが未取得・端末非対応でも、認識された発話まで0点にしない。
+            if (!hasRecognizedSpeech) {
                 return { accuracy: 0, pronun: 0, inton: 0, tempo: 0, exp: 0 };
             }
 
@@ -1528,7 +1539,7 @@
             const accuracy = clampScore(accuracyRatio * 100);
 
             // 発音力は音声認識エンジンの確定結果信頼度を主指標にする。
-            // ブラウザがconfidenceを返さない場合は、認識一致率から保守的に推定する。
+            // confidence非対応ブラウザでは原稿との一致率から保守的に算出。
             let pronun = 0;
             if (recognitionConfidenceSamples.length) {
                 const averageConfidence = recognitionConfidenceSamples.reduce((sum, value) => sum + value, 0) / recognitionConfidenceSamples.length;
@@ -1537,37 +1548,54 @@
                 pronun = clampScore(accuracyRatio * 75);
             }
 
-            // 抑揚は有声音の基本周波数(F0)の10-90パーセンタイル幅から評価。
+            // 文字起こしを原稿行へ整列し、音響サンプルが取れない端末向けの補助指標を準備。
+            // この処理は表示内容や認識イベントの保存には触れず、採点時だけ利用する。
+            const alignedLines = Array.isArray(playerScriptChunks) && playerScriptChunks.length
+                ? alignTranscriptToScriptLines(rawTranscript, playerScriptChunks)
+                : [];
+            const totalLines = Math.max(1, playerScriptChunks.length || 1);
+            const coveredLines = alignedLines.filter(line => normalizeSpeechCharacters(line).length > 0).length;
+            const lineCoverage = Math.max(0, Math.min(1, coveredLines / totalLines));
+            const punctuationCount = (rawTranscript.match(/[、。！？!?]/g) || []).length;
+            const punctuationRate = punctuationCount / Math.max(1, normalizedTranscript.length);
+
+            // 抑揚: 音声の基本周波数幅が取れれば実測。取れない場合は句読点・行ごとの
+            // 読み進みを使った控えめな読み上げリズム推定値にフォールバックする。
             let inton = 0;
-            if (playerAudioMetrics.pitchHz.length >= 5) {
+            if (playerAudioMetrics.pitchHz.length >= 6) {
                 const lowPitch = percentile(playerAudioMetrics.pitchHz, 0.10);
                 const highPitch = percentile(playerAudioMetrics.pitchHz, 0.90);
                 const rangeSemitones = lowPitch > 0 ? 12 * Math.log2(highPitch / lowPitch) : 0;
-                inton = clampScore(18 + rangeSemitones * 15);
+                inton = clampScore(Math.max(15, 25 + Math.min(8, rangeSemitones) * 8.5));
+            } else {
+                const cadenceScore = Math.min(22, punctuationRate * 500);
+                inton = clampScore(42 + lineCoverage * 20 + cadenceScore);
             }
 
-            // テンポは読み上げ時間に対する認識文字数(文字/分)で評価。
+            // テンポ: 有声音の累積時間が十分あれば実測、マイク解析が利用できない場合は
+            // プレーヤーの読み上げ区間全体に対する認識文字数から推定する。
             let tempo = 0;
-            if (playerAudioMetrics.voicedDurationMs > 0 && hasVoiceActivity) {
-                const charsPerMinute = normalizedTranscript.length / (playerAudioMetrics.voicedDurationMs / 60000);
-                tempo = clampScore(100 - Math.abs(charsPerMinute - 300) * 0.28);
+            const speakingDurationMs = playerAudioMetrics.voicedDurationMs >= 1200 && voiceCoverage >= 0.12
+                ? playerAudioMetrics.voicedDurationMs
+                : durationMs;
+            if (speakingDurationMs > 0) {
+                const charsPerMinute = normalizedTranscript.length / (speakingDurationMs / 60000);
+                // ニュース原稿の読み上げに合わせた目安: 約250文字/分。
+                tempo = clampScore(Math.max(15, 100 - Math.abs(charsPerMinute - 250) * 0.35));
             }
 
-            // 表現力は発話中の声量変化(CV)を使う。一定すぎる声・極端に不安定な声は低くなる。
+            // 表現力: マイクの声量変化が十分に取れれば音響実測値を使う。
+            // それ以外は認識の原稿一致度・行の連続性・句読点の間から読みのまとまりを推定。
             let exp = 0;
-            if (playerAudioMetrics.voicedRms.length >= 5) {
+            if (playerAudioMetrics.voicedRms.length >= 8 && voiceCoverage >= 0.10) {
                 const values = playerAudioMetrics.voicedRms;
                 const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
                 const variance = values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) / values.length;
                 const coefficientOfVariation = mean > 0 ? Math.sqrt(variance) / mean : 0;
-                exp = clampScore(100 - Math.abs(coefficientOfVariation - 0.35) * 140);
-            }
-
-            // 実音声がほとんど検出されない場合は音響評価を与えない。
-            if (!hasVoiceActivity) {
-                inton = 0;
-                tempo = 0;
-                exp = 0;
+                exp = clampScore(Math.max(15, 100 - Math.abs(coefficientOfVariation - 0.35) * 140));
+            } else {
+                const cadenceBonus = Math.min(10, punctuationRate * 250);
+                exp = clampScore(35 + accuracyRatio * 25 + lineCoverage * 25 + cadenceBonus);
             }
 
             return { accuracy, pronun, inton, tempo, exp };
