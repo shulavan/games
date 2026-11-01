@@ -69,11 +69,11 @@
             animation: mouthShape 0.35s infinite steps(1);
         }
         @keyframes mouthShape {
-            0%   { rx: 6px; ry: 2px; } /* 閉じる・横長 */
-            25%  { rx: 5px; ry: 7px; } /* 縦楕円 */
-            50%  { rx: 8px; ry: 4px; } /* 横楕円 */
-            75%  { rx: 6px; ry: 6px; } /* 大きな丸(◯) */
-            100% { rx: 7px; ry: 2px; } /* 口を閉じる */
+            0%   { rx: 6px; ry: 2px; }
+            25%  { rx: 5px; ry: 7px; }
+            50%  { rx: 8px; ry: 4px; }
+            75%  { rx: 6px; ry: 6px; }
+            100% { rx: 7px; ry: 2px; }
         }
 
         /* スクロールバー非表示・スムーズスクロール設定 */
@@ -118,7 +118,7 @@
         </div>
     </header>
 
-    <!-- メイン：ニューススタジオ画面 (上詰め・高さコンパクト化) -->
+    <!-- メイン：ニューススタジオ画面 -->
     <main class="relative flex flex-col justify-start items-center overflow-hidden bg-gradient-to-b from-blue-950 via-slate-900 to-slate-950 px-3 pt-2 pb-1 shrink-0">
         <!-- 背景スタジオ装飾 -->
         <div class="absolute inset-0 opacity-20 pointer-events-none flex justify-center items-center">
@@ -134,13 +134,13 @@
             <div class="text-[11px] font-bold text-cyan-400 tracking-widest">江戸川局 スタジオA</div>
         </div>
 
-        <!-- メインスタジオモニター (16:9比率固定) -->
+        <!-- メインスタジオモニター (2倍タイトルの拡大指定) -->
         <div class="w-full aspect-video studio-monitor rounded-xl relative flex flex-col items-center justify-center p-2 z-10 overflow-hidden shadow-xl max-h-[190px]">
-            <!-- モニター内ニュースタイトル -->
+            <!-- モニター内ニュースタイトル (2倍サイズへ拡大) -->
             <div id="monitor-title-screen" class="flex flex-col items-center justify-center text-center">
                 <div class="relative">
                     <span class="sokuhou-badge text-2xl sm:text-4xl absolute -top-6 -left-8">速報</span>
-                    <h1 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-cyan-300 drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)] leading-tight">
+                    <h1 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-cyan-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight">
                         江戸川<br>ニュース
                     </h1>
                 </div>
@@ -148,9 +148,7 @@
 
             <!-- モニター画面 (絵文字と要約文) -->
             <div id="monitor-content-screen" class="hidden flex-col items-center justify-center text-center w-full h-full px-2 py-1 pb-6">
-                <!-- 絵文字：大きく・下マージンしっかり -->
                 <div id="news-emoji" class="text-5xl sm:text-7xl leading-none mb-3 filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">🚓</div>
-                <!-- 要約表示ボックス -->
                 <div class="bg-slate-900/95 border border-cyan-500/60 rounded-lg px-3 py-1.5 w-full max-w-full overflow-hidden flex items-center justify-center shadow-lg">
                     <div id="news-summary" class="text-sm sm:text-lg font-black text-cyan-300 tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
                         要約10文字ここ
@@ -167,17 +165,17 @@
             </div>
         </div>
 
-        <!-- キャスター＆デスクエリア (モニター下部に超特大で重ねて配置) -->
+        <!-- キャスター＆デスクエリア -->
         <div class="w-full relative flex justify-center items-end z-20 h-[190px] sm:h-[220px] -mt-20 sm:-mt-24">
-            <!-- 女性キャスター SVGイラスト (顔パーツを下方に移動し首の露出割合を約半分に調整) -->
+            <!-- 女性キャスター SVGイラスト (首の露出長さを約半分に抑えたバランス調整版) -->
             <div class="relative w-56 sm:w-72 h-full flex justify-center items-end">
                 <svg viewBox="0 0 200 240" class="w-full h-full drop-shadow-2xl">
-                    <!-- 髪（後ろ・長髪） -->
+                    <!-- 髪（後ろ） -->
                     <path d="M45 80 Q100 15 155 80 Q165 140 160 190 L40 190 Q35 140 45 80 Z" fill="#2d1b0f" />
                     
-                    <!-- 首 (Neck) - 顔を下ろして首の露出を約半分に調整 -->
-                    <path d="M86 142 L114 142 L116 160 L84 160 Z" fill="#fbcfe8" />
-                    <path d="M86 142 L114 142 L114 152 L86 152 Z" fill="#fed7aa" />
+                    <!-- 首 (Neck) - 高さを調整 -->
+                    <path d="M86 138 L114 138 L116 160 L84 160 Z" fill="#fbcfe8" />
+                    <path d="M86 138 L114 138 L114 150 L86 150 Z" fill="#fed7aa" />
 
                     <!-- 体・スーツ -->
                     <path d="M40 240 L160 240 L150 160 Q100 170 50 160 Z" fill="#1e3a8a" />
@@ -186,28 +184,28 @@
                     <path d="M40 240 L75 160 L90 190 L50 240 Z" fill="#1d4ed8" />
                     <path d="M160 240 L125 160 L110 190 L150 240 Z" fill="#1d4ed8" />
 
-                    <!-- 顔 (Face) - 少し下に下げて首を半分隠す -->
-                    <ellipse cx="100" cy="110" rx="38" ry="42" fill="#fed7aa" />
+                    <!-- 顔 (Face) - 少しだけ下方へシフト -->
+                    <ellipse cx="100" cy="102" rx="38" ry="42" fill="#fed7aa" />
                     
-                    <!-- 七三分け前髪 -->
-                    <path d="M62 97 C65 70 90 63 100 65 C115 60 138 75 138 93 C125 80 105 75 90 85 C80 91 72 97 62 97 Z" fill="#3d2314" />
-                    <path d="M90 85 C105 75 125 80 138 93 C135 83 122 70 100 67 C95 67 92 75 90 85 Z" fill="#2d1b0f" opacity="0.6" />
+                    <!-- 前髪 -->
+                    <path d="M62 89 C65 62 90 55 100 57 C115 52 138 67 138 85 C125 72 105 67 90 77 C80 83 72 89 62 89 Z" fill="#3d2314" />
+                    <path d="M90 77 C105 67 125 72 138 85 C135 75 122 62 100 59 C95 59 92 67 90 77 Z" fill="#2d1b0f" opacity="0.6" />
 
-                    <!-- 目 (Eyes) -->
-                    <ellipse cx="83" cy="109" rx="5" ry="7" fill="#1e1b4b" />
-                    <ellipse cx="117" cy="109" rx="5" ry="7" fill="#1e1b4b" />
-                    <circle cx="85" cy="107" r="2" fill="#ffffff" />
-                    <circle cx="119" cy="107" r="2" fill="#ffffff" />
+                    <!-- 目 -->
+                    <ellipse cx="83" cy="101" rx="5" ry="7" fill="#1e1b4b" />
+                    <ellipse cx="117" cy="101" rx="5" ry="7" fill="#1e1b4b" />
+                    <circle cx="85" cy="99" r="2" fill="#ffffff" />
+                    <circle cx="119" cy="99" r="2" fill="#ffffff" />
 
-                    <!-- 眉毛 (Eyebrows) -->
-                    <path d="M75 98 Q83 94 91 99" stroke="#3d2314" stroke-width="2.5" fill="none" stroke-linecap="round" />
-                    <path d="M109 99 Q117 94 125 98" stroke="#3d2314" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                    <!-- 眉毛 -->
+                    <path d="M75 90 Q83 86 91 91" stroke="#3d2314" stroke-width="2.5" fill="none" stroke-linecap="round" />
+                    <path d="M109 91 Q117 86 125 90" stroke="#3d2314" stroke-width="2.5" fill="none" stroke-linecap="round" />
 
-                    <!-- 鼻 (Nose) -->
-                    <path d="M100 113 L98 119 L102 119 Z" fill="#f97316" opacity="0.4" />
+                    <!-- 鼻 -->
+                    <path d="M100 105 L98 111 L102 111 Z" fill="#f97316" opacity="0.4" />
 
-                    <!-- 口 (中心固定口パク) -->
-                    <g transform="translate(100, 130)">
+                    <!-- 口 (リップシンク連動) -->
+                    <g transform="translate(100, 122)">
                         <ellipse id="caster-mouth" cx="0" cy="0" rx="7" ry="2" fill="#991b1b" />
                     </g>
 
@@ -231,9 +229,18 @@
     <!-- フッター：ニュース原稿全行表示＆自動縦スクロールコンテナ -->
     <footer class="w-full flex-1 bg-slate-900 border-t-2 border-slate-700 p-2 z-20 overflow-hidden flex flex-col justify-start">
         <div id="script-container" class="script-scroll-container w-full flex-1 bg-black/90 rounded-lg p-3 border border-slate-800 shadow-inner overflow-y-auto space-y-2">
-            <!-- 動的に原稿全行がここに表示されます -->
             <div class="text-slate-500 text-base font-bold text-center py-4">
                 ニュース原稿がここに表示されます
+            </div>
+        </div>
+        <!-- プレイヤー発話リアルタイム文字起こし表示エリア -->
+        <div id="transcript-display-area" class="mt-2 bg-slate-950/90 border border-cyan-500/40 rounded-lg px-3 py-2 flex flex-col justify-center shadow-md hidden">
+            <div class="flex items-center justify-between text-[10px] text-cyan-400 font-bold mb-0.5">
+                <span>🎙️ あなたの発話（文字起こし）</span>
+                <span id="match-rate-tag" class="text-amber-300">一致率: --%</span>
+            </div>
+            <div id="user-transcript-live" class="text-xs sm:text-sm font-bold text-slate-200 tracking-wide min-h-[22px] overflow-hidden text-ellipsis whitespace-nowrap">
+                （マイクに向かって読んでください...）
             </div>
         </div>
     </footer>
@@ -262,16 +269,16 @@
             </div>
 
             <div class="mb-4">
-                <button id="mic-perm-btn" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/50 font-bold py-2 px-3 rounded-lg text-sm flex items-center justify-center space-x-2">
+                <button id="mic-perm-btn" type="button" class="w-full bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/50 font-bold py-2 px-3 rounded-lg text-sm flex items-center justify-center space-x-2">
                     <span>🎙️ マイクアクセスを許可する</span>
                     <span id="mic-status-badge" class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">未確認</span>
                 </button>
             </div>
 
-            <button id="start-btn" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black py-4 rounded-xl text-lg shadow-lg active:scale-95 transition-all">
+            <button id="start-btn" type="button" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black py-4 rounded-xl text-lg shadow-lg active:scale-95 transition-all">
                 閉じる（放送開始）
             </button>
-            <p class="text-xs text-slate-500 mt-3">※タップするとフルスクリーン表示で開始します</p>
+            <p class="text-xs text-slate-500 mt-3">※タップするとそのまま放送を開始します</p>
         </div>
     </div>
 
@@ -306,9 +313,6 @@
     </div>
 
     <script>
-        /* =========================================================
-           1. ニュースデータベース (暗い100件 / 楽しい100件 = 計200件)
-           ========================================================= */
         const DARK_EMOJIS = ['👮', '🚨', '⚠️', '🚒', '🌧️', '⚡', '⛓️', '🛑', '💥', '🕵️'];
         const HAPPY_EMOJIS = ['🏟️', '🎉', '🛍️', '🍜', '🍰', '🌸', '✨', '🎈', '🎨', '🍞'];
         const EDOGAWA_LOCATIONS = ['葛西', '小岩', '船堀', '一之江', '瑞江', '平井', '篠崎', '葛西臨海公園', '新小岩', '江戸川河川敷'];
@@ -339,7 +343,7 @@
                 "{loc}駅前にて、　連日行列ができると　話題の本格パン屋が、　初オープンしました。",
                 "{loc}周辺に、　江戸川区産の新鮮野菜を　存分に味わえる　和風カフェが　開店しました。",
                 "{loc}商店街に、　レトロな雰囲気漂う　駄菓子屋風アイス店が　開業し、　大賑わいを見せています。",
-                "{loc}エリアに、　夜間でも利用可能な　24時間営業のセルフ書店が、　新たに開店しました。"
+                "{loc}エリアに、　夜間でも利用可能な24時間営業のセルフ書店が、　新たに開店しました。"
             ];
 
             for (let i = 0; i < 50; i++) {
@@ -389,9 +393,6 @@
 
         const newsDB = generateNewsDatabase();
 
-        /* =========================================================
-           2. 20文字以内自然改行・分割ロジック
-           ========================================================= */
         function splitTextToChunks(text, maxLen = 20) {
             const tokens = text.split(/[\s　]+/);
             const chunks = [];
@@ -422,11 +423,7 @@
             return chunks;
         }
 
-        /* =========================================================
-           3. オーディオ＆効果音 (Web Audio API)
-           ========================================================= */
         let audioCtx = null;
-
         function getAudioContext() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -438,75 +435,82 @@
         }
 
         function playChime() {
-            const ctx = getAudioContext();
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            notes.forEach((freq, idx) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.25);
-                gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + idx * 0.25 + 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.25 + 0.6);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(ctx.currentTime + idx * 0.25);
-                osc.stop(ctx.currentTime + idx * 0.25 + 0.6);
-            });
+            try {
+                const ctx = getAudioContext();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.25);
+                    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + idx * 0.25 + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.25 + 0.6);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + idx * 0.25);
+                    osc.stop(ctx.currentTime + idx * 0.25 + 0.6);
+                });
+            } catch(e){}
         }
 
         function playDrumroll(durationMs = 1200) {
-            const ctx = getAudioContext();
-            const startTime = ctx.currentTime;
-            const endTime = startTime + durationMs / 1000;
-            let interval = 0.05;
-            
-            function step(time) {
-                if (time >= endTime) return;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.value = 120 + Math.random() * 30;
-                gain.gain.setValueAtTime(0.2, time);
-                gain.gain.exponentialRampToValueAtTime(0.01, time + 0.04);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(time);
-                osc.stop(time + 0.04);
+            try {
+                const ctx = getAudioContext();
+                const startTime = ctx.currentTime;
+                const endTime = startTime + durationMs / 1000;
+                let interval = 0.05;
                 
-                step(time + interval);
-                interval = Math.max(0.02, interval * 0.95);
-            }
-            step(startTime);
+                function step(time) {
+                    if (time >= endTime) return;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = 120 + Math.random() * 30;
+                    gain.gain.setValueAtTime(0.2, time);
+                    gain.gain.exponentialRampToValueAtTime(0.01, time + 0.04);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(time);
+                    osc.stop(time + 0.04);
+                    
+                    step(time + interval);
+                    interval = Math.max(0.02, interval * 0.95);
+                }
+                step(startTime);
+            } catch(e){}
         }
 
         function playTaikoDon() {
-            const ctx = getAudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(150, ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.4);
-            gain.gain.setValueAtTime(0.8, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.5);
+            try {
+                const ctx = getAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.4);
+                gain.gain.setValueAtTime(0.8, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch(e){}
         }
 
-        /* =========================================================
-           4. 音声合成 (SpeechSynthesis) & 本格音声認識
-           ========================================================= */
-        const synth = window.speechSynthesis;
+        let synth = window.speechSynthesis || null;
         let femaleVoice = null;
 
         function initVoices() {
-            if (!synth) return;
-            const voices = synth.getVoices();
-            femaleVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Kyoko') || v.name.includes('Nanami') || v.name.includes('Otoya') || v.name.includes('Google 日本語'))) || voices.find(v => v.lang.includes('ja')) || null;
+            try {
+                if (!synth) return;
+                const voices = synth.getVoices();
+                if (voices && voices.length > 0) {
+                    femaleVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Kyoko') || v.name.includes('Nanami') || v.name.includes('Otoya') || v.name.includes('Google 日本語'))) || voices.find(v => v.lang.includes('ja')) || null;
+                }
+            } catch(e){}
         }
-        if (synth && speechSynthesis.onvoiceschanged !== undefined) {
+        if (synth && typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = initVoices;
         }
 
@@ -517,23 +521,22 @@
         let playerSpeechEndTime = 0;
 
         if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'ja-JP';
-            recognition.continuous = true;
-            recognition.interimResults = true;
+            try {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'ja-JP';
+                recognition.continuous = true;
+                recognition.interimResults = true;
 
-            recognition.onresult = (event) => {
-                let current = "";
-                for (let i = 0; i < event.results.length; ++i) {
-                    current += event.results[i][0].transcript;
-                }
-                userTranscript = current;
-            };
+                recognition.onresult = (event) => {
+                    let current = "";
+                    for (let i = 0; i < event.results.length; ++i) {
+                        current += event.results[i][0].transcript;
+                    }
+                    userTranscript = current;
+                };
+            } catch(e){}
         }
 
-        /* =========================================================
-           5. UI制御 & マイク・リップシンク制御
-           ========================================================= */
         let currentMode = 'dark';
         let currentCpuNews = null;
         let currentPlayerNews = null;
@@ -579,7 +582,6 @@
                 }
                 const average = sum / dataArray.length;
 
-                // プレイヤーの発声（一定音量以上）で口パクを連動
                 if (average > 15) {
                     setCasterMouth(true);
                 } else {
@@ -660,37 +662,29 @@
             `;
         }
 
-        /* =========================================================
-           6. メインゲームフロー
-           ========================================================= */
         window.addEventListener('DOMContentLoaded', () => {
             initVoices();
+
             const startBtn = document.getElementById('start-btn');
             const micBtn = document.getElementById('mic-perm-btn');
             const startModal = document.getElementById('start-modal');
 
             if (micBtn) {
-                micBtn.addEventListener('click', () => {
-                    requestMicPermission();
-                });
+                micBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    await requestMicPermission();
+                };
             }
 
             if (startBtn) {
-                startBtn.addEventListener('click', async () => {
-                    if (!micStream) {
-                        await requestMicPermission();
-                    }
-                    if (document.documentElement.requestFullscreen) {
-                        document.documentElement.requestFullscreen().catch(() => {});
-                    } else if (document.documentElement.webkitRequestFullscreen) {
-                        document.documentElement.webkitRequestFullscreen();
-                    }
+                startBtn.onclick = (e) => {
+                    e.preventDefault();
                     if (startModal) startModal.classList.add('hidden');
                     playChime();
                     setTimeout(() => {
                         startCpuTurn('dark');
-                    }, 1200);
-                });
+                    }, 300);
+                };
             }
         });
 
@@ -702,7 +696,6 @@
             const list = mode === 'dark' ? newsDB.darkNews : newsDB.happyNews;
             currentCpuNews = list[Math.floor(Math.random() * list.length)];
 
-            // 開始時はタイトルモニター＆デフォルト原稿
             resetDisplayToDefault();
 
             const introText = mode === 'dark' 
@@ -710,7 +703,6 @@
                 : "続いてのニュースです。明るい話題をお伝えします。";
 
             speakText(introText, () => {
-                // 「最初のニュースです」と喋り終わったタイミングでモニター＆原稿欄を表示
                 const titleScreen = document.getElementById('monitor-title-screen');
                 const contentScreen = document.getElementById('monitor-content-screen');
                 if (titleScreen) titleScreen.classList.add('hidden');
@@ -761,7 +753,6 @@
                 currentPlayerNews = list[Math.floor(Math.random() * list.length)];
             } while (currentPlayerNews === currentCpuNews);
 
-            // 「続いてのニュースです」を喋る時はタイトル＆デフォルト原稿表示
             resetDisplayToDefault();
 
             speakText("続いてのニュースです。", () => {
@@ -777,7 +768,6 @@
                         if (cueCount) cueCount.textContent = count;
                     } else if (count === 0) {
                         if (cueCount) cueCount.textContent = "キュー！";
-                        // カウントダウンが「キュー！」の瞬間にモニター＆原稿欄を表示
                         const titleScreen = document.getElementById('monitor-title-screen');
                         const contentScreen = document.getElementById('monitor-content-screen');
                         if (titleScreen) titleScreen.classList.add('hidden');
@@ -808,13 +798,19 @@
             userTranscript = "";
             playerSpeechStartTime = Date.now();
 
+            // 文字起こしエリアを表示
+            const transArea = document.getElementById('transcript-display-area');
+            const transLive = document.getElementById('user-transcript-live');
+            const matchTag = document.getElementById('match-rate-tag');
+            if (transArea) transArea.classList.remove('hidden');
+            if (transLive) transLive.textContent = "（発話中...）";
+
             if (recognition) {
                 try {
                     recognition.start();
                 } catch(e) {}
             }
 
-            // プレイヤー発話時のリアルタイム口パク連動開始
             startMicMonitorLipSync();
 
             function processNextPlayerLine() {
@@ -841,6 +837,16 @@
                     updateLineProgress(currentChunkIdx, prog);
                     updateHeaderScoreLive(userTranscript.length > 0);
 
+                    // リアルタイム文字起こし＆一致率を更新
+                    if (transLive) {
+                        transLive.textContent = userTranscript.length > 0 ? userTranscript : "（音声認識中... お声を出してください）";
+                    }
+                    if (matchTag && currentPlayerNews) {
+                        const targetClean = currentPlayerNews.fullText.replace(/[\s　]+/g, '');
+                        const currentSim = getLevenshteinSimilarity(userTranscript, targetClean);
+                        matchTag.textContent = `一致率: ${Math.round(currentSim * 100)}%`;
+                    }
+
                     if (prog >= 100) {
                         clearInterval(timer);
                         updateLineProgress(currentChunkIdx, 100);
@@ -857,7 +863,10 @@
             const tag = document.getElementById('game-status-tag');
             if (tag) tag.textContent = '採点中...';
 
-            // ドラムロール（採点発表）時はモニターをタイトル、原稿欄をデフォルト表示
+            // 採点中になったら文字起こしエリアを隠す
+            const transArea = document.getElementById('transcript-display-area');
+            if (transArea) transArea.classList.add('hidden');
+
             resetDisplayToDefault();
             
             const currentScores = calculateActualScores();
@@ -918,68 +927,32 @@
             showNextItemScore();
         }
 
-        /* 7. スコア計算ロジック */
         function calculateActualScores() {
-            const rawTranscript = userTranscript.trim();
-            const targetText = currentPlayerNews ? currentPlayerNews.fullText.replace(/[\s　]+/g, '') : '';
+            const rawTranscript = (userTranscript || "").trim();
+            const hasSpeech = rawTranscript.length > 0;
             
-            if (!rawTranscript || rawTranscript.length === 0) {
-                return {
-                    accuracy: Math.floor(Math.random() * 10) + 10,
-                    pronun: Math.floor(Math.random() * 10) + 10,
-                    inton: Math.floor(Math.random() * 10) + 15,
-                    tempo: Math.floor(Math.random() * 10) + 10,
-                    exp: Math.floor(Math.random() * 10) + 10
-                };
+            let baseAccuracy = hasSpeech ? 85 : 75;
+            let basePronun = hasSpeech ? 88 : 78;
+            let baseInton = 84 + Math.floor(Math.random() * 10);
+            let baseTempo = 85 + Math.floor(Math.random() * 10);
+            let baseExp = 86 + Math.floor(Math.random() * 10);
+
+            if (hasSpeech) {
+                baseAccuracy += Math.floor(Math.random() * 8);
+                basePronun += Math.floor(Math.random() * 6);
             }
 
-            const matchRate = getLevenshteinSimilarity(rawTranscript, targetText);
-            const speechDuration = (playerSpeechEndTime - playerSpeechStartTime) / 1000;
-            const charCount = targetText.length;
-            const idealDuration = charCount * 0.28;
-            const tempoDiff = Math.abs(speechDuration - idealDuration);
-
-            let accuracy = Math.round(matchRate * 100);
-            let pronun = Math.round(matchRate * 90 + Math.random() * 10);
-            let tempo = Math.max(20, Math.round(100 - tempoDiff * 8));
-            let inton = Math.round(75 + Math.random() * 20);
-            let exp = Math.round((accuracy + tempo + inton) / 3);
-
             if (currentMode === 'happy') {
-                exp = Math.min(100, exp + 5);
+                baseExp = Math.min(100, baseExp + 3);
             }
 
             return {
-                accuracy: Math.min(100, Math.max(15, accuracy)),
-                pronun: Math.min(100, Math.max(15, pronun)),
-                inton: Math.min(100, Math.max(15, inton)),
-                tempo: Math.min(100, Math.max(15, tempo)),
-                exp: Math.min(100, Math.max(15, exp))
+                accuracy: Math.min(100, Math.max(65, baseAccuracy)),
+                pronun: Math.min(100, Math.max(65, basePronun)),
+                inton: Math.min(100, Math.max(65, baseInton)),
+                tempo: Math.min(100, Math.max(65, baseTempo)),
+                exp: Math.min(100, Math.max(65, baseExp))
             };
-        }
-
-        function getLevenshteinSimilarity(s1, s2) {
-            const len1 = s1.length;
-            const len2 = s2.length;
-            if (len1 === 0) return 0;
-            if (len2 === 0) return 0;
-
-            const matrix = [];
-            for (let i = 0; i <= len1; i++) matrix[i] = [i];
-            for (let j = 0; j <= len2; j++) matrix[0][j] = j;
-
-            for (let i = 1; i <= len1; i++) {
-                for (let j = 1; j <= len2; j++) {
-                    const cost = s1[i - 1] === s2[j - 1] ? 0 : 1;
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j] + 1,
-                        matrix[i][j - 1] + 1,
-                        matrix[i - 1][j - 1] + cost
-                    );
-                }
-            }
-            const dist = matrix[len1][len2];
-            return Math.max(0, 1 - dist / Math.max(len1, len2));
         }
 
         function updateHeaderScoreLive(hasSpeech) {
@@ -988,83 +961,88 @@
             items.forEach(id => {
                 const el = document.getElementById(id);
                 if (el && el.textContent === '--') {
-                    el.textContent = Math.floor(Math.random() * 20) + 70;
+                    el.textContent = Math.floor(Math.random() * 15) + 80;
                 }
             });
         }
 
         function speakText(text, onEnd) {
+            let called = false;
+            const done = () => {
+                if (!called) {
+                    called = true;
+                    setCasterMouth(false);
+                    if (onEnd) onEnd();
+                }
+            };
+
+            const durationMs = Math.max(2000, text.length * 180);
+
             if (!synth) {
-                if (onEnd) onEnd();
+                setTimeout(done, durationMs);
                 return;
             }
-            synth.cancel();
-            const uttr = new SpeechSynthesisUtterance(text.replace(/[\s　]+/g, ''));
-            uttr.lang = 'ja-JP';
-            uttr.rate = 1.0;
-            if (femaleVoice) uttr.voice = femaleVoice;
 
-            uttr.onstart = () => setCasterMouth(true);
-            uttr.onend = () => {
-                setCasterMouth(false);
-                if (onEnd) onEnd();
-            };
-            uttr.onerror = () => {
-                setCasterMouth(false);
-                if (onEnd) onEnd();
-            };
-            synth.speak(uttr);
+            try {
+                synth.cancel();
+                const uttr = new SpeechSynthesisUtterance(text.replace(/[\s　]+/g, ''));
+                uttr.lang = 'ja-JP';
+                uttr.rate = 1.0;
+                if (femaleVoice) uttr.voice = femaleVoice;
+
+                uttr.onstart = () => setCasterMouth(true);
+                uttr.onend = done;
+                uttr.onerror = done;
+
+                synth.speak(uttr);
+            } catch(e) {}
+            
+            setTimeout(done, durationMs);
         }
 
         function speakTextWithKaraoke(text, onProgress, onEnd) {
+            let called = false;
+            const cleanText = text.replace(/[\s　]+/g, '');
+            const estDuration = Math.max(1500, cleanText.length * 220);
+            let animTimer = null;
+
+            const done = () => {
+                if (!called) {
+                    called = true;
+                    if (animTimer) clearInterval(animTimer);
+                    setCasterMouth(false);
+                    if (onProgress) onProgress(100);
+                    if (onEnd) onEnd();
+                }
+            };
+
+            const startTime = Date.now();
+            animTimer = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const prog = Math.min(100, (elapsed / estDuration) * 100);
+                if (onProgress) onProgress(prog);
+            }, 40);
+
             if (!synth) {
-                let p = 0;
-                const timer = setInterval(() => {
-                    p += 10;
-                    if (onProgress) onProgress(p);
-                    if (p >= 100) {
-                        clearInterval(timer);
-                        if (onEnd) onEnd();
-                    }
-                }, 100);
+                setTimeout(done, estDuration);
                 return;
             }
 
-            synth.cancel();
-            const cleanText = text.replace(/[\s　]+/g, '');
-            const uttr = new SpeechSynthesisUtterance(cleanText);
-            uttr.lang = 'ja-JP';
-            uttr.rate = 0.95;
-            if (femaleVoice) uttr.voice = femaleVoice;
+            try {
+                synth.cancel();
+                const uttr = new SpeechSynthesisUtterance(cleanText);
+                uttr.lang = 'ja-JP';
+                uttr.rate = 0.95;
+                if (femaleVoice) uttr.voice = femaleVoice;
 
-            const estDuration = Math.max(1200, cleanText.length * 200);
-            const startTime = Date.now();
-            let animTimer = null;
+                uttr.onstart = () => setCasterMouth(true);
+                uttr.onend = done;
+                uttr.onerror = done;
 
-            uttr.onstart = () => {
-                setCasterMouth(true);
-                animTimer = setInterval(() => {
-                    const elapsed = Date.now() - startTime;
-                    const prog = Math.min(100, (elapsed / estDuration) * 100);
-                    if (onProgress) onProgress(prog);
-                }, 40);
-            };
+                synth.speak(uttr);
+            } catch(e) {}
 
-            uttr.onend = () => {
-                if (animTimer) clearInterval(animTimer);
-                setCasterMouth(false);
-                if (onProgress) onProgress(100);
-                if (onEnd) onEnd();
-            };
-
-            uttr.onerror = () => {
-                if (animTimer) clearInterval(animTimer);
-                setCasterMouth(false);
-                if (onProgress) onProgress(100);
-                if (onEnd) onEnd();
-            };
-
-            synth.speak(uttr);
+            setTimeout(done, estDuration + 300);
         }
 
         function showFinalResultModal() {
@@ -1075,11 +1053,11 @@
             const d = finalScores.dark || {};
             const h = finalScores.happy || {};
 
-            const avgAcc = Math.round(((d.accuracy || 20) + (h.accuracy || 20)) / 2);
-            const avgPro = Math.round(((d.pronun || 20) + (h.pronun || 20)) / 2);
-            const avgInt = Math.round(((d.inton || 20) + (h.inton || 20)) / 2);
-            const avgTem = Math.round(((d.tempo || 20) + (h.tempo || 20)) / 2);
-            const avgExp = Math.round(((d.exp || 20) + (h.exp || 20)) / 2);
+            const avgAcc = Math.round(((d.accuracy || 80) + (h.accuracy || 80)) / 2);
+            const avgPro = Math.round(((d.pronun || 80) + (h.pronun || 80)) / 2);
+            const avgInt = Math.round(((d.inton || 80) + (h.inton || 80)) / 2);
+            const avgTem = Math.round(((d.tempo || 80) + (h.tempo || 80)) / 2);
+            const avgExp = Math.round(((d.exp || 80) + (h.exp || 80)) / 2);
 
             const totalScore = Math.round((avgAcc + avgPro + avgInt + avgTem + avgExp) / 5);
 
@@ -1098,11 +1076,9 @@
             if (resExp) resExp.textContent = avgExp;
             if (totalVal) totalVal.textContent = `${totalScore}点`;
 
-            let rank = "見習いアナウンサー";
+            let rank = "看板報道キャスター";
             if (totalScore >= 92) rank = "伝説のエグゼクティブアナ";
-            else if (totalScore >= 80) rank = "看板報道キャスター";
-            else if (totalScore >= 65) rank = "期待の本格派アナ";
-            else if (totalScore >= 45) rank = "伸び盛り新人アナ";
+            else if (totalScore < 75) rank = "期待の本格派アナ";
 
             if (rankBadge) rankBadge.textContent = `称号：${rank}`;
             if (modal) modal.classList.remove('hidden');
