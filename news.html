@@ -404,7 +404,90 @@
             return { darkNews, happyNews };
         }
 
-        const newsDB = generateNewsDatabase();
+        // 外部ニュースJSONを優先し、取得できない場合は従来の内蔵ニュースを使用する。
+        const NEWS_JSON_URL = 'https://shulavan.github.io/data/news.json';
+        const fallbackNewsDB = generateNewsDatabase();
+        let newsDB = fallbackNewsDB;
+        let newsDataSource = 'fallback';
+        let newsLoadPromise = null;
+
+        function normalizeNewsRecords(records) {
+            if (!Array.isArray(records)) {
+                throw new Error('ニュースJSONの形式が配列ではありません。');
+            }
+
+            const darkNews = [];
+            const happyNews = [];
+            const darkCategories = new Set(['事件', '事故']);
+            const happyCategories = new Set(['イベント開催', '新店オープン']);
+
+            for (const item of records) {
+                if (!item || typeof item !== 'object') continue;
+                const category = String(item.category || '').trim();
+                const script = String(item.script || '').trim();
+                if (!category || !script) continue;
+
+                const newsItem = {
+                    ...item,
+                    type: category,
+                    summary: String(item.summary || item.title || ''),
+                    emoji: String(item.emoji || '📰'),
+                    fullText: script
+                };
+
+                if (darkCategories.has(category)) darkNews.push(newsItem);
+                else if (happyCategories.has(category)) happyNews.push(newsItem);
+            }
+
+            // 片方のジャンルが欠けた不完全なJSONは採用せず、内蔵データへ戻す。
+            if (darkNews.length === 0 || happyNews.length === 0) {
+                throw new Error('ニュースJSONに必要なジャンル（事件・事故／イベント開催・新店オープン）が揃っていません。');
+            }
+            return { darkNews, happyNews };
+        }
+
+        async function loadNewsDatabase() {
+            const controller = typeof AbortController === 'function' ? new AbortController() : null;
+            let timeoutId = null;
+            try {
+                const timeoutPromise = new Promise((_, reject) => {
+                    timeoutId = window.setTimeout(() => {
+                        if (controller) controller.abort();
+                        reject(new Error('ニュースJSONの取得がタイムアウトしました。'));
+                    }, 5000);
+                });
+                const fetchOptions = {
+                    method: 'GET',
+                    cache: 'no-cache',
+                    headers: { 'Accept': 'application/json' }
+                };
+                if (controller) fetchOptions.signal = controller.signal;
+                const response = await Promise.race([
+                    fetch(NEWS_JSON_URL, fetchOptions),
+                    timeoutPromise
+                ]);
+                if (!response.ok) {
+                    throw new Error(`ニュースJSON取得失敗（HTTP ${response.status}）`);
+                }
+                const records = await response.json();
+                const loadedNewsDB = normalizeNewsRecords(records);
+                newsDB = loadedNewsDB;
+                newsDataSource = 'remote';
+                console.info(`ニュースJSONを読み込みました（${records.length}件）。`);
+            } catch (error) {
+                newsDB = fallbackNewsDB;
+                newsDataSource = 'fallback';
+                console.warn('ニュースJSONを利用できないため、内蔵原稿に切り替えます。', error);
+            } finally {
+                if (timeoutId !== null) window.clearTimeout(timeoutId);
+            }
+            return newsDB;
+        }
+
+        function ensureNewsDatabaseLoaded() {
+            if (!newsLoadPromise) newsLoadPromise = loadNewsDatabase();
+            return newsLoadPromise;
+        }
 
         function splitTextToChunks(text, maxLen = 20) {
             const tokens = text.split(/[\s　]+/);
@@ -1201,6 +1284,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             initVoices();
             checkMicPermissionStatus();
+            // ゲーム開始前にバックグラウンド取得。失敗時は内蔵原稿をそのまま使用。
+            ensureNewsDatabaseLoaded();
 
             const startBtn = document.getElementById('start-btn');
             const micBtn = document.getElementById('mic-perm-btn');
@@ -1222,6 +1307,8 @@
                     enterFullscreen();
                     if (startModal) startModal.classList.add('hidden');
 
+                    // JSON取得の完了を待つ。失敗時はloadNewsDatabase内で内蔵原稿へ切り替わる。
+                    await ensureNewsDatabaseLoaded();
                     // チャイムの最後の音が終わってから、女性キャスターの冒頭アナウンスを開始。
                     await playChime();
                     initVoices();
