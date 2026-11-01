@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
 
-concurrency:
-  group: github-pages
-  cancel-in-progress: false
-
 jobs:
   build:
 
