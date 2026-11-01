@@ -10,8 +10,8 @@
 
         body {
             font-family: 'Noto Sans JP', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: #f6edda;
+            color: #3f3428;
             user-select: none;
             -webkit-user-select: none;
             touch-action: manipulation;
@@ -98,10 +98,10 @@
         }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-start overflow-hidden bg-slate-950 pt-1 pb-2">
+<body class="h-screen w-screen flex flex-col justify-start overflow-hidden bg-[#f6edda] pt-1 pb-2">
 
     <!-- ヘッダー：リアルタイム採点メーター -->
-    <header class="w-full bg-slate-900 border-b border-slate-800 px-2 py-1.5 z-20 shadow-md shrink-0">
+    <header class="w-full bg-[#f2e4c9] border-b border-[#d7c5a5] px-2 py-1.5 z-20 shadow-md shrink-0">
         <div class="text-[11px] text-slate-400 text-right font-bold mb-1 tracking-widest px-2">
             <span id="game-status-tag" class="text-amber-400">待機中</span>
         </div>
@@ -130,7 +130,7 @@
     </header>
 
     <!-- メイン：ニューススタジオ画面 -->
-    <main class="relative flex flex-col justify-start items-center overflow-hidden bg-gradient-to-b from-blue-950 via-slate-900 to-slate-950 px-3 pt-2 pb-1 shrink-0">
+    <main class="relative flex flex-col justify-start items-center overflow-hidden bg-gradient-to-b from-[#fff8e9] via-[#f4e8d2] to-[#ead9bd] px-3 pt-2 pb-1 shrink-0">
         <!-- 背景スタジオ装飾 -->
         <div class="absolute inset-0 opacity-20 pointer-events-none flex justify-center items-center">
             <div class="w-[120%] h-[120%] rounded-full border-8 border-cyan-500/30 animate-pulse"></div>
@@ -151,7 +151,7 @@
             <div id="monitor-title-screen" class="flex flex-col items-center justify-center text-center">
                 <div class="relative">
                     <span class="sokuhou-badge text-2xl sm:text-4xl absolute -top-6 -left-8">速報</span>
-                    <h1 class="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-cyan-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight">
+                    <h1 class="text-[45px] sm:text-[72px] font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)] leading-tight">
                         江戸川<br>ニュース
                     </h1>
                 </div>
@@ -538,13 +538,15 @@
 
         let synth = window.speechSynthesis || null;
         let femaleVoice = null;
+        let maleVoice = null;
 
         function initVoices() {
             try {
                 if (!synth) return;
                 const voices = synth.getVoices();
                 if (voices && voices.length > 0) {
-                    femaleVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Kyoko') || v.name.includes('Nanami') || v.name.includes('Otoya') || v.name.includes('Google 日本語'))) || voices.find(v => v.lang.includes('ja')) || null;
+                    femaleVoice = voices.find(v => v.lang.includes('ja') && (v.name.includes('Kyoko') || v.name.includes('Nanami') || v.name.includes('Google 日本語'))) || voices.find(v => v.lang.includes('ja')) || null;
+                    maleVoice = voices.find(v => v.lang.includes('ja') && /Otoya|Ichiro|Takumi|Keita|male|男性/i.test(v.name)) || voices.find(v => v.lang.includes('ja') && v !== femaleVoice) || null;
                 }
             } catch(e){}
         }
@@ -1270,12 +1272,15 @@
 
                 let count = 3;
                 if (cueCount) cueCount.textContent = count;
+                speakCueNumber("さん");
                 const cntTimer = setInterval(() => {
                     count--;
                     if (count > 0) {
                         if (cueCount) cueCount.textContent = count;
+                        speakCueNumber(count === 2 ? "にー" : "いち");
                     } else if (count === 0) {
                         if (cueCount) cueCount.textContent = "キュー！";
+                        speakCueNumber("キュー");
                         const titleScreen = document.getElementById('monitor-title-screen');
                         const contentScreen = document.getElementById('monitor-content-screen');
                         if (titleScreen) titleScreen.classList.add('hidden');
@@ -1547,6 +1552,18 @@
                 const similarity = getLevenshteinSimilarity(userTranscript, currentPlayerNews.fullText);
                 accuracyEl.textContent = String(clampScore(similarity * 100));
             }
+        }
+
+        function speakCueNumber(text) {
+            if (!synth) return;
+            try {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 0.92;
+                utterance.pitch = 0.78;
+                if (maleVoice) utterance.voice = maleVoice;
+                synth.speak(utterance);
+            } catch (e) { /* 音声非対応端末では画面表示のみ */ }
         }
 
         function speakText(text, onEnd) {
