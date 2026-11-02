@@ -140,7 +140,7 @@
         <div class="w-full flex items-center justify-between mb-1.5 px-2 z-10">
             <div class="flex items-center space-x-2">
                 <div class="bg-red-600 text-white font-black px-2 py-0.5 rounded text-[11px] tracking-wider live-badge">LIVE</div>
-                <div id="clock-display" class="text-white font-mono font-bold text-base drop-shadow">12:57</div>
+                <div id="clock-display" class="text-black font-mono font-bold text-base">12:57</div>
             </div>
             <div class="text-[11px] font-bold text-cyan-400 tracking-widest">江戸川局 スタジオA</div>
         </div>
@@ -274,7 +274,7 @@
                 <h2 class="text-3xl font-black text-cyan-300">江戸川ニュース</h2>
             </div>
             <div class="space-y-3 text-slate-300 text-sm sm:text-base text-left bg-slate-950/50 p-4 rounded-xl border border-slate-800 mb-4">
-                <p class="font-bold text-amber-400 text-center">【ニュースキャスター体験＆AI音声採点】</p>
+                <p class="font-black text-amber-300 text-center leading-tight whitespace-nowrap" style="font-size:clamp(15px,5vw,24px)"><span>これから公表するニュースは</span><br><span>実際の出来事ではありません</span></p>
                 <p>① 最初にお手本ニュース（暗いニュース）を聴きます。</p>
                 <p>② 次にあなたに原稿が回ってきます！マイクに向かって声に出して音読してください。</p>
                 <p>③ マイクの音声認識機能で、正確性・発音・抑揚・テンポ・表現力を本格採点！</p>
@@ -411,37 +411,65 @@
         let newsDataSource = 'fallback';
         let newsLoadPromise = null;
 
+        function classifyNewsCategory(value) {
+            const category = String(value || '').trim().toLowerCase().replace(/[\s　_-]/g, '');
+            if (!category) return null;
+
+            // 基本の4カテゴリに加え、表記ゆれ・短縮名にも対応する。
+            const darkAliases = new Set(['事件', '事故', 'incident', 'accident', 'dark', 'darknews']);
+            const happyAliases = new Set([
+                'イベント開催', 'イベント', 'イベント情報', '催し', '催し物',
+                '新店オープン', '新店舗オープン', '新店舗', '新店', '開店', 'オープン',
+                'event', 'events', 'shop', 'newshop', 'opening', 'happy'
+            ]);
+
+            if (darkAliases.has(category) || /(事件|事故|犯罪|災害|火災|トラブル)/.test(category)) return 'dark';
+            if (happyAliases.has(category) || /(イベント|催し|祭|新店|新店舗|開店|オープン)/.test(category)) return 'happy';
+            return null;
+        }
+
         function normalizeNewsRecords(records) {
             if (!Array.isArray(records)) {
-                throw new Error('ニュースJSONの形式が配列ではありません。');
+                throw new Error('ニュースJSONの最上位は配列である必要があります。');
             }
 
             const darkNews = [];
             const happyNews = [];
-            const darkCategories = new Set(['事件', '事故']);
-            const happyCategories = new Set(['イベント開催', '新店オープン']);
+            let skippedRecords = 0;
 
             for (const item of records) {
-                if (!item || typeof item !== 'object') continue;
-                const category = String(item.category || '').trim();
-                const script = String(item.script || '').trim();
-                if (!category || !script) continue;
+                if (!item || typeof item !== 'object' || Array.isArray(item)) {
+                    skippedRecords++;
+                    continue;
+                }
+
+                const category = String(item.category || item.type || '').trim();
+                const script = String(item.script ?? item.fullText ?? item.body ?? item.text ?? '').trim();
+                const group = classifyNewsCategory(category);
+                if (!group || !script) {
+                    skippedRecords++;
+                    continue;
+                }
 
                 const newsItem = {
                     ...item,
                     type: category,
-                    summary: String(item.summary || item.title || ''),
+                    summary: String(item.summary || item.title || 'ニュース速報'),
                     emoji: String(item.emoji || '📰'),
                     fullText: script
                 };
 
-                if (darkCategories.has(category)) darkNews.push(newsItem);
-                else if (happyCategories.has(category)) happyNews.push(newsItem);
+                if (group === 'dark') darkNews.push(newsItem);
+                else happyNews.push(newsItem);
             }
 
-            // 片方のジャンルが欠けた不完全なJSONは採用せず、内蔵データへ戻す。
+            // 片方のジャンルが欠けたJSONは採用せず、内蔵データへ戻す。
             if (darkNews.length === 0 || happyNews.length === 0) {
-                throw new Error('ニュースJSONに必要なジャンル（事件・事故／イベント開催・新店オープン）が揃っていません。');
+                throw new Error(`必要なニュースが揃っていません（事件・事故: ${darkNews.length}件 / 明るいニュース: ${happyNews.length}件）。カテゴリ名と件数を確認してください。`);
+            }
+
+            if (skippedRecords > 0) {
+                console.warn(`ニュースJSONのうち${skippedRecords}件は、カテゴリまたはscriptが不足しているため除外しました。`);
             }
             return { darkNews, happyNews };
         }
@@ -454,26 +482,34 @@
                     timeoutId = window.setTimeout(() => {
                         if (controller) controller.abort();
                         reject(new Error('ニュースJSONの取得がタイムアウトしました。'));
-                    }, 5000);
+                    }, 8000);
                 });
+                const cacheBustedUrl = `${NEWS_JSON_URL}${NEWS_JSON_URL.includes('?') ? '&' : '?'}_=${Date.now()}`;
                 const fetchOptions = {
                     method: 'GET',
-                    cache: 'no-cache',
+                    cache: 'no-store',
                     headers: { 'Accept': 'application/json' }
                 };
                 if (controller) fetchOptions.signal = controller.signal;
-                const response = await Promise.race([
-                    fetch(NEWS_JSON_URL, fetchOptions),
-                    timeoutPromise
-                ]);
-                if (!response.ok) {
-                    throw new Error(`ニュースJSON取得失敗（HTTP ${response.status}）`);
-                }
-                const records = await response.json();
+
+                const fetchAndParse = (async () => {
+                    const response = await fetch(cacheBustedUrl, fetchOptions);
+                    if (!response.ok) {
+                        throw new Error(`ニュースJSON取得失敗（HTTP ${response.status}）`);
+                    }
+                    const rawText = await response.text();
+                    try {
+                        return JSON.parse(rawText);
+                    } catch (parseError) {
+                        throw new Error(`ニュースJSONの構文が不正です。末尾のカンマ、閉じ括弧、引用符などを確認してください。（${parseError.message}）`);
+                    }
+                })();
+
+                const records = await Promise.race([fetchAndParse, timeoutPromise]);
                 const loadedNewsDB = normalizeNewsRecords(records);
                 newsDB = loadedNewsDB;
                 newsDataSource = 'remote';
-                console.info(`ニュースJSONを読み込みました（${records.length}件）。`);
+                console.info(`ニュースJSONを読み込みました（全${records.length}件 / 事件・事故${newsDB.darkNews.length}件 / 明るいニュース${newsDB.happyNews.length}件）。`);
             } catch (error) {
                 newsDB = fallbackNewsDB;
                 newsDataSource = 'fallback';
