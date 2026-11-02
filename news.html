@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>速報 江戸川ニュースキャスター</title>
+    <title>速報 江戸川ニュースキャスター v21</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@600;800;900&display=swap');
@@ -147,11 +147,16 @@
 
         <!-- メインスタジオモニター (2倍タイトルの拡大指定) -->
         <div class="w-full aspect-video studio-monitor rounded-xl relative flex flex-col items-center justify-center p-2 z-10 overflow-hidden shadow-xl max-h-[190px]">
-            <!-- モニター内ニュースタイトル (2倍サイズへ拡大) -->
+            <!-- モニター右上の江戸川TVロゴ -->
+            <div id="monitor-station-logo" class="absolute top-2 right-2 z-10 rounded-lg border-2 border-white/90 bg-slate-950/35 px-2 py-1 text-center text-white font-black leading-[1.05] shadow-md pointer-events-none">
+                <div class="text-[11px] sm:text-xs tracking-wider">江戸川</div>
+                <div class="mt-0.5 text-[10px] sm:text-xs tracking-[0.18em]">Ｔ Ｖ</div>
+            </div>
+            <!-- モニター内ニュースタイトル (v15の大きさ・配置を維持) -->
             <div id="monitor-title-screen" class="flex flex-col items-center justify-center text-center">
                 <div class="relative">
                     <span class="sokuhou-badge text-2xl sm:text-4xl absolute -top-6 -left-8">速報</span>
-                    <h1 class="text-[45px] sm:text-[72px] font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)] leading-tight">
+                    <h1 class="text-[45px] sm:text-[72px] font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-500 drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)] leading-[0.84] relative -top-1">
                         江戸川<br>ニュース
                     </h1>
                 </div>
@@ -160,9 +165,13 @@
             <!-- モニター画面 (絵文字と要約文) -->
             <div id="monitor-content-screen" class="hidden flex-col items-center justify-center text-center w-full h-full px-2 py-1 pb-6">
                 <div id="news-emoji" class="text-5xl sm:text-7xl leading-none mb-3 filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">🚓</div>
-                <div class="bg-slate-900/95 border border-cyan-500/60 rounded-lg px-3 py-1.5 w-full max-w-full overflow-hidden flex items-center justify-center shadow-lg">
-                    <div id="news-summary" class="text-sm sm:text-lg font-black text-cyan-300 tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
-                        要約10文字ここ
+                <div class="relative w-[calc(100%+2rem)] -mx-4 pt-1 overflow-visible">
+                    <!-- NEWSタブは赤帯の背面。赤帯がタブの下部を覆う -->
+                    <span class="absolute -top-[6px] left-0 z-10 rounded-t-md border border-white bg-white px-2 py-0.5 text-[9px] font-black tracking-widest leading-none text-red-700 shadow-sm">NEWS</span>
+                    <div class="relative z-20 bg-red-700 border-y border-red-300/70 px-3 py-1.5 w-full overflow-hidden flex items-center justify-center shadow-lg">
+                        <div id="news-summary" class="w-full text-center text-sm sm:text-lg font-black italic text-white tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
+                            要約10文字ここ
+                        </div>
                     </div>
                 </div>
             </div>
@@ -180,7 +189,7 @@
         <div class="w-full relative flex justify-center items-end z-20 h-[190px] sm:h-[220px] -mt-20 sm:-mt-24">
             <!-- 女性キャスター SVGイラスト (首の露出長さを約半分に抑えたバランス調整版) -->
             <div class="relative w-56 sm:w-72 h-full flex justify-center items-end">
-                <svg viewBox="0 0 200 240" class="w-full h-full drop-shadow-2xl">
+                <svg viewBox="0 0 200 240" class="w-full h-full drop-shadow-2xl" style="transform:scale(1);transform-origin:bottom center;">
                     <!-- 髪（後ろ） -->
                     <path d="M45 80 Q100 15 155 80 Q165 140 160 190 L40 190 Q35 140 45 80 Z" fill="#2d1b0f" />
                     
@@ -222,15 +231,17 @@
                     </g>
                     </g>
 
-                    <!-- ネームプレート -->
-                    <rect x="25" y="218" width="60" height="18" rx="3" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2" />
-                    <text x="55" y="230" font-size="9" font-weight="bold" fill="#ffffff" text-anchor="middle">江戸川 葵</text>
                 </svg>
             </div>
 
-            <!-- スタジオデスク前板 -->
-            <div class="absolute bottom-0 w-full h-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-t-2 border-cyan-500/60 shadow-xl flex items-center justify-between px-3">
-                <div class="text-[8px] text-cyan-400 font-mono">EDOGAWA BROADCASTING STATION</div>
+            <!-- ネームプレート：局名バーの「BROADCASTING」付近の真上 -->
+            <div class="absolute bottom-6 left-[68px] -translate-x-1/2 z-30 rounded-md border border-cyan-300 bg-slate-950 px-2.5 py-0.5 text-[10px] font-black tracking-wider text-white shadow-lg whitespace-nowrap">
+                江戸川葵
+            </div>
+
+            <!-- 局名バー：v15のデスク位置を維持して画面左端から右端まで拡張 -->
+            <div class="absolute bottom-0 -left-3 -right-3 h-6 z-40 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-t-2 border-cyan-500/60 shadow-xl flex items-center justify-between px-3">
+                <div class="text-[8px] text-cyan-400 font-mono tracking-wide">EDOGAWA BROADCASTING STATION</div>
                 <div class="flex space-x-1">
                     <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></div>
                     <div class="w-1.5 h-1.5 rounded-full bg-green-500"></div>
@@ -270,7 +281,7 @@
     <div id="start-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border-2 border-cyan-500 rounded-2xl max-w-md w-full p-6 text-center shadow-2xl relative overflow-hidden">
             <div class="mb-4 relative inline-block">
-                <span class="sokuhou-badge text-2xl absolute -top-4 -left-6">速報</span>
+                <span class="sokuhou-badge text-2xl absolute -top-4 -left-12">速報</span>
                 <h2 class="text-3xl font-black text-cyan-300">江戸川ニュース</h2>
             </div>
             <div class="space-y-3 text-slate-300 text-sm sm:text-base text-left bg-slate-950/50 p-4 rounded-xl border border-slate-800 mb-4">
@@ -1748,7 +1759,7 @@
                 }
             };
 
-            const durationMs = Math.max(2000, text.length * 180);
+            const durationMs = Math.max(2000, text.length * 165);
 
             if (!synth) {
                 setTimeout(done, durationMs);
@@ -1759,7 +1770,7 @@
                 synth.cancel();
                 const uttr = new SpeechSynthesisUtterance(text.replace(/[\s　]+/g, ''));
                 uttr.lang = 'ja-JP';
-                uttr.rate = 0.98;
+                uttr.rate = 1.08;
                 uttr.pitch = 1.12;
                 if (femaleVoice) uttr.voice = femaleVoice;
 
@@ -1776,7 +1787,7 @@
         function speakTextWithKaraoke(text, onProgress, onEnd) {
             let called = false;
             const cleanText = text.replace(/[\s　]+/g, '');
-            const estDuration = Math.max(1500, cleanText.length * 220);
+            const estDuration = Math.max(1500, cleanText.length * 200);
             let animTimer = null;
 
             const done = () => {
@@ -1805,7 +1816,7 @@
                 synth.cancel();
                 const uttr = new SpeechSynthesisUtterance(cleanText);
                 uttr.lang = 'ja-JP';
-                uttr.rate = 0.95;
+                uttr.rate = 1.05;
                 if (femaleVoice) uttr.voice = femaleVoice;
 
                 uttr.onstart = () => setCasterMouth(true);
