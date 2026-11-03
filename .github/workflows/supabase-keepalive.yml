@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: 訪問記録のテーブルを1件だけ読む
         env:
-          KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          KEY: ${{ secrets.sb_publishable_OYHGr5kwFfedoA2mH0oN3A_56Uv3Bfr }}
         run: |
           code=$(curl -s -o /tmp/out.json -w '%{http_code}' \
             "https://iboywxukmqevlwyszbff.supabase.co/rest/v1/visited_entries?select=*&limit=1" \
