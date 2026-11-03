@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>速報 江戸川ニュースキャスター v21</title>
+    <title>速報 江戸川ニュースキャスター v23</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@600;800;900&display=swap');
@@ -164,12 +164,12 @@
 
             <!-- モニター画面 (絵文字と要約文) -->
             <div id="monitor-content-screen" class="hidden flex-col items-center justify-center text-center w-full h-full px-2 py-1 pb-6">
-                <div id="news-emoji" class="text-5xl sm:text-7xl leading-none mb-3 filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]">🚓</div>
+                <div id="news-emoji" class="text-5xl sm:text-7xl leading-none mb-3 filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)]" style="transform:translateY(-10px) scale(1.5);transform-origin:center center;">🚓</div>
                 <div class="relative w-[calc(100%+2rem)] -mx-4 pt-1 overflow-visible">
                     <!-- NEWSタブは赤帯の背面。赤帯がタブの下部を覆う -->
                     <span class="absolute -top-[6px] left-0 z-10 rounded-t-md border border-white bg-white px-2 py-0.5 text-[9px] font-black tracking-widest leading-none text-red-700 shadow-sm">NEWS</span>
-                    <div class="relative z-20 bg-red-700 border-y border-red-300/70 px-3 py-1.5 w-full overflow-hidden flex items-center justify-center shadow-lg">
-                        <div id="news-summary" class="w-full text-center text-sm sm:text-lg font-black italic text-white tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
+                    <div class="relative z-20 bg-red-700 border-y border-red-300/70 h-[34px] shrink-0 px-3 py-0 w-full overflow-hidden flex items-center justify-center shadow-lg">
+                        <div id="news-summary" class="w-full text-center text-[21px] sm:text-[27px] leading-7 sm:leading-8 font-black italic text-white tracking-wider whitespace-nowrap overflow-hidden text-ellipsis">
                             要約10文字ここ
                         </div>
                     </div>
@@ -741,6 +741,69 @@
             return Array.from(String(value || '').toLowerCase().replace(/[\s\u3000、。，．・：；！？!?「」『』（）()［］【】]/g, ''));
         }
 
+        // 連続する同一フレーズが3回以上現れた場合だけ、3回目以降を表示・採点対象から除外する。
+        // 最初の2回は残すため「むかしむかし」のような自然な反復を壊さない。
+        // 句読点や空白の違いは無視し、2文字以上の完全な反復単位だけを対象にする。
+        function suppressThirdConsecutiveRepeat(value) {
+            const raw = Array.from(String(value || ''));
+            const normalized = [];
+            const rawIndex = [];
+            raw.forEach((char, index) => {
+                normalizeSpeechCharacters(char).forEach(unit => {
+                    normalized.push(unit);
+                    rawIndex.push(index);
+                });
+            });
+            if (normalized.length < 6) return raw.join('');
+
+            let output = '';
+            let rawCursor = 0;
+            let i = 0;
+            while (i < normalized.length) {
+                let repeat = null;
+                const maxUnitLength = Math.min(80, Math.floor((normalized.length - i) / 3));
+                // 短い完全反復から調べ、同じ語句が連続した区間を検出する。
+                for (let unitLength = 2; unitLength <= maxUnitLength; unitLength++) {
+                    let count = 1;
+                    while (i + (count + 1) * unitLength <= normalized.length) {
+                        let same = true;
+                        const base = i;
+                        const next = i + count * unitLength;
+                        for (let j = 0; j < unitLength; j++) {
+                            if (normalized[base + j] !== normalized[next + j]) {
+                                same = false;
+                                break;
+                            }
+                        }
+                        if (!same) break;
+                        count++;
+                    }
+                    if (count >= 3) {
+                        repeat = { unitLength, count };
+                        break;
+                    }
+                }
+
+                if (!repeat) {
+                    i++;
+                    continue;
+                }
+
+                const thirdCopyStart = i + repeat.unitLength * 2;
+                const endOfRepeatedRun = i + repeat.unitLength * repeat.count;
+                const rawThirdStart = rawIndex[thirdCopyStart];
+                let rawAfterRun = rawIndex[endOfRepeatedRun - 1] + 1;
+                output += raw.slice(rawCursor, rawThirdStart).join('');
+                // すでに2回分の文末記号が残っている場合、3回目側の句読点は重ねずに捨てる。
+                if (/[、。，．・：；！？!?]\s*$/.test(output)) {
+                    while (rawAfterRun < raw.length && /[\s　、。，．・：；！？!?]/.test(raw[rawAfterRun])) rawAfterRun++;
+                }
+                rawCursor = rawAfterRun;
+                i = endOfRepeatedRun;
+            }
+            return output + raw.slice(rawCursor).join('');
+        }
+
         // 文字起こし全文を原稿全文へ順序を保って近似整列し、認識文字を原稿行へ割り当てる。
         // イベントが届いた時点の再生行(activePlayerChunkIdx)には依存しないため、認識遅延で1行ずれる問題を防ぐ。
         function alignTranscriptToScriptLines(transcript, chunks) {
@@ -978,7 +1041,8 @@
             const activeSessionText = getRecognitionSessionText();
             // 表示中の仮結果にもセッション境界の重複除去を適用する。
             const activeUniqueText = removeLeadingSessionOverlap(committedText, activeSessionText);
-            userTranscript = committedText + activeUniqueText;
+            // 連続3回目以降の同一フレーズだけを抑制し、表示と採点の両方に同じ本文を使う。
+            userTranscript = suppressThirdConsecutiveRepeat(committedText + activeUniqueText);
             const mappedLines = alignTranscriptToScriptLines(userTranscript, playerScriptChunks);
 
             for (let idx = 0; idx < playerScriptChunks.length; idx++) {
