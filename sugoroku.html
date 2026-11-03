@@ -209,13 +209,13 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '31';
+    window.__EDOGAWA_MINIGAMES_VER = '32';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
     window.__EDOGAWA_MINIGAME_LIST = ['amida','plane','mart','clinic','bus','toilet','lunch',
       'hotel','kingyo','tower','wheel','canoe','delivery','kanken','hide','nuts','archery','train',
-      'lottery','pachinko','fishing','fight','shiritori','bicycle'];
+      'lottery','pachinko','fishing','fight','shiritori','bicycle','news'];
     window.__EDOGAWA_HAS_GAME = function(k){
       return window.__EDOGAWA_MINIGAME_LIST.indexOf(k) >= 0;
     };
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.3.5 (2026-11-01)';
+    window.__EDOGAWA_VERSION = 'ver1.3.8 (2026-11-03)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -1063,13 +1063,16 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       </div>
     </div>
 
-    <!-- LINEで紹介（このゲーム自体をLINEで友だちに紹介する） -->
-    <div class="relative z-10 max-w-3xl w-full mx-auto mt-4 flex flex-col items-center gap-1.5">
-      <button onclick="EdogawaSugoroku.shareGameViaLine()" class="w-full sm:w-auto sm:px-8 bg-[#06C755] hover:bg-[#05b34c] text-white font-black py-3 px-4 rounded-2xl shadow-lg shadow-[#06C755]/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
+    <!-- 【ver1.3.6】ミニゲーム順位 ／ LINEで紹介（このゲーム自体をLINEで友だちに紹介する） -->
+    <div class="relative z-10 max-w-3xl w-full mx-auto mt-4 flex items-stretch justify-center gap-2">
+      <button id="edo-rank-btn" type="button" onclick="EdogawaSugoroku.openMiniRanking()" class="flex-1 sm:flex-none sm:px-6 bg-gradient-to-b from-amber-500 to-amber-600 text-white font-black py-3 px-3 rounded-2xl shadow-lg active:scale-[0.98] transition flex items-center justify-center gap-2">
+        <span class="text-lg">🏆</span>
+        <span class="text-sm">ミニゲーム順位</span>
+      </button>
+      <button onclick="EdogawaSugoroku.shareGameViaLine()" class="flex-1 sm:flex-none sm:px-8 bg-[#06C755] hover:bg-[#05b34c] text-white font-black py-3 px-3 rounded-2xl shadow-lg shadow-[#06C755]/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
         <span class="text-lg">💬</span>
         <span class="text-sm">LINEで紹介</span>
       </button>
-      <p class="text-[10px] text-slate-500">友だちや家族に「江戸川双六」を教えてあげてください</p>
     </div>
 
     <div class="relative z-10 text-center text-[11px] text-slate-500 pb-2 pt-3 leading-relaxed">
@@ -3116,6 +3119,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
       stats: { ...FIXED_CPUS[i].stats }
     });
     const CPU_AVATAR_POOL = ["🐶", "🐱", "🐻", "🐼", "🦊", "🐰", "🐯", "🦁", "🐨", "🐵", "🐔", "🐧", "🐤", "🦉", "🦄", "🐷", "🐸", "🐙", "🐢", "🦜", "🦝", "🐺", "🦌", "🐘"];
+    // 【ver1.3.7】ミニゲーム順位のCPUにも、双六と同じ名前・アイコンを使います（名前はゲームデータを読んだあとに入ります）
+    window.__EDOGAWA_CPU_POOL = { names: CPU_NAME_POOL, avatars: CPU_AVATAR_POOL };
 
     // --- SOUND ENGINE ---
     class SoundEngine {
@@ -7478,9 +7483,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         const [ttl,icon]=defs[game]||defs.kingyo;
         let delta=0,detail='';
         if(game==='nuts'){const sc=10+Math.floor(Math.random()*26);delta=sc*100;detail=`木の実で <b>${sc}点</b>！ <b>＋¥${delta.toLocaleString()}</b>`;}
-        else if(game==='archery'){const sc=6+Math.floor(Math.random()*14);delta=sc*100;detail=`矢が <b>${sc}本</b>刺さって <b>＋¥${delta.toLocaleString()}</b>！`;}
+        else if(game==='archery'){const sc=25+Math.floor(Math.random()*36);delta=sc*200;detail=`60秒で矢が <b>${sc}本</b>刺さって <b>＋¥${delta.toLocaleString()}</b>！`;}
         else if(game==='kingyo'){delta=[0,500,1000,1500,2000,3000][Math.floor(Math.random()*6)];detail=delta?`金魚をすくって <b>＋¥${delta.toLocaleString()}</b>！`:'今回は金魚をすくえませんでした。';}
-        else if(game==='tower'){delta=[0,5000,10000,15000,20000][Math.floor(Math.random()*5)];detail=delta?`増築に成功して <b>＋¥${delta.toLocaleString()}</b>！`:'今回は増築に失敗しました。';}
+        else if(game==='tower'){const fl=5+Math.floor(Math.random()*12);delta=fl*3000;detail=`60秒で <b>${fl}階</b>増築して <b>＋¥${delta.toLocaleString()}</b>！`;}
         else if(game==='canoe'){const ranks=[10000,5000,1000,0];const rank=Math.floor(Math.random()*4);delta=ranks[rank];detail=`CPUカヌー ${rank+1}位で 賞金 <b>＋¥${delta.toLocaleString()}</b>！`;}
         else if(game==='hotel'){const sat=20+Math.floor(Math.random()*61);delta=Math.round(10000*(sat/100));detail=`満足度 <b>${sat}%</b> のおもてなしで <b>＋¥${delta.toLocaleString()}</b>！`;}
         else if(game==='bus'){const cnt=4+Math.floor(Math.random()*13);delta=cnt*200;detail=`乗客 <b>${cnt}人</b>を送り届け、<b>＋¥${delta.toLocaleString()}</b>！`;}
@@ -7488,8 +7493,8 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         else if(game==='lunch'){const success=Math.random()<0.75;const plates=6+Math.floor(Math.random()*19);delta=success?10000:0;detail=success?`動物3体に配膳をやりきり、本日のバイト代 <b>＋¥${delta.toLocaleString()}</b>！`:'今回は動物3体を配膳しきれませんでした。';}
         else if(game==='mart'){delta=7000+Math.floor(Math.random()*5000);detail=`レジ打ち・品出しをこなし、日払い給与 <b>＋¥${delta.toLocaleString()}</b>！`;}
         else if(game==='clinic'){const ok=6+Math.floor(Math.random()*10);delta=Math.max(0,10000+(ok-8)*500);detail=`${ok}人を診察し、本日支給給与 <b>＋¥${delta.toLocaleString()}</b>！`;}
-        else if(game==='plane'){const r=Math.random();const rank=r<0.35?'S':r<0.75?'A':'B';delta={S:10000,A:5000,B:1000}[rank];detail=`離陸評価 <b>${rank}ランク</b>で出動手当 <b>＋¥${delta.toLocaleString()}</b>！`;}
-        else {const success=Math.floor(Math.random()*6);delta=success*10000;detail=`5人中 <b>${success}人</b>のお客さんを乗せ、<b>＋¥${delta.toLocaleString()}</b>！`;}
+        else if(game==='plane'){const pt=Math.round((55+Math.random()*45)*10)/10;delta=Math.round(pt*100);detail=`操縦評価点 <b>${pt.toFixed(1)}点</b>で出動手当 <b>＋¥${delta.toLocaleString()}</b>！`;}
+        else {const success=6+Math.floor(Math.random()*12);delta=success*1000;detail=`60秒で <b>${success}人</b>のお客さんを乗せ、<b>＋¥${delta.toLocaleString()}</b>！`;}
         player.money=(Number(player.money)||0)+delta; this.updateHUD();
         this.addLog(`🎮 ${player.name}：${ttl}（CPU結果） ＋¥${delta.toLocaleString()}（現在 ${this.formatMoney(player.money)}）`);
         if(this.saveGameState)this.saveGameState();
@@ -12213,14 +12218,14 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter' && !document.getEleme
     lunch:   {e:'🍱', t:'えどがわ給食当番',        r:['同じ食材の皿をタップして移動＆ソート！','動物が求める食材しか置けません。','まとめて配膳するとボーナス！']},
     hotel:   {e:'🛏️', t:'江戸川ホテル物語',        r:['フロントスタッフとして全5名を接客します。','来客ごとに3択から最適な対応を選ぼう。']},
     kingyo:  {e:'🏮', t:'江戸川金魚すくい',        r:['制限時間30秒！水面の金魚をタップ。','赤い金魚1点・出目金3点。','すくった点数 × ￥100 が所持金に加算されます。']},
-    tower:   {e:'🏗️', t:'増築 船堀タワー',         r:['船堀タワーをさらに高層化せよ！','クレーンからタイミングよくブロックを落とそう。','1建設あたり ￥5,000（最大12回）。']},
-    wheel:   {e:'🎡', t:'ダイヤと花の大観覧車',     r:['高速回転する観覧車を止めよう！','客が指定する色のゴンドラが乗り場に来たらストップ。','5人中3人以上乗せられたら成功です。']},
+    tower:   {e:'🏗️', t:'増築 船堀タワー',         r:['船堀タワーをさらに高層化せよ！','クレーンからタイミングよくブロックを落とそう。','60秒でできるだけ高く積もう！1階 ＋￥3,000（ミス −￥2,000）。']},
+    wheel:   {e:'🎡', t:'ダイヤと花の大観覧車',     r:['高速回転する観覧車を止めよう！','客が指定する色のゴンドラが乗り場に来たらストップ。','60秒で何人乗せられるか！1人 ￥1,000。']},
     canoe:   {e:'🚣', t:'新左近川カヌー大会',       r:['参加費 ￥3,000 でエントリー。','タップでパドルを漕いでライバルに競り勝とう！']},
     delivery:{e:'🛵', t:'江戸川出前ライダー',       r:['スマホを左右に傾けてハンドル操作（ジャイロ）。','最短ルートで料理を届けよう！','評価点 × ￥100 が賞金になります。']},
     kanken:  {e:'✍️', t:'いきなり漢字書き取りテスト', r:['全10問・1問10点の書き取りテスト。','指で画面に漢字を書いて解答します。','採点 × ￥100 が賞金になります。']},
     hide:    {e:'🔍', t:'区長をさがせ！',          r:['施設の中に区長が隠れています。','制限時間内に見つけ出そう！']},
     nuts:    {e:'⚾️', t:'ガキんちょ木の実ドロボー',  r:['引っ張って角度を決め、指を離して⚾️を発射！','木の実の数字が0になると落ちて高得点。','塀や実に当たるとバウンド。ボールは3つ！']},
-    archery: {e:'🏹', t:'ガキんちょ果実射撃',       r:['回転する果物に矢を刺し込もう！','刺さった矢やメタルガードを避けて全3ステージ。','刺さった矢1本につき ￥100 もらえます。']}
+    archery: {e:'🏹', t:'ガキんちょ果実射撃',       r:['回転する果物に矢を刺し込もう！','刺さった矢やメタルガードを避けて、60秒で何本刺せるか！','刺さった矢1本につき ￥200 もらえます。']}
   };
   const metaOf=g=>META[g]||{e:'🎮',t:'ミニゲーム',r:['がんばってプレイしよう！']};
   const esc = EdoU.esc;
@@ -16394,7 +16399,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     delivery: ()=>{ const s=50+Math.floor(Math.random()*51); return {score:s, delta:s*100, detail:`ステージ1クリア：評価点 ${s}点 × ￥100`}; },
     kanken:   ()=>{ const s=30+Math.floor(Math.random()*71); return {score:s, delta:s*100, detail:`採点 ${s}点 × ￥100`}; },
     hide:     ()=>({score:100, delta:10000, detail:'区長を発見！クリア賞金 ￥10,000'}),
-    archery:  ()=>{ const s=3+Math.floor(Math.random()*13); return {score:s, delta:s*1000, detail:`矢 ${s}本 × ￥1,000`}; },
+    archery:  ()=>{ const s=25+Math.floor(Math.random()*36); return {score:s, delta:s*200, detail:`60秒で 矢 ${s}本 × ￥200`}; },
     nuts:     ()=>{ const s=20+Math.floor(Math.random()*81); return {score:s, delta:s*100, detail:`${s}点 × ￥100`}; },
     toilet:   ()=>{ const s=60+Math.floor(Math.random()*121); return {score:s, delta:s*100, detail:`${s}点 × ￥100`}; }
   };
@@ -21890,6 +21895,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     { t:'そのほか', items:[
       {k:'lottery_shop', ic:'🎫', n:'江戸川ジャンボ宝くじ　売り場'},
       {k:'lottery_draw', ic:'🎊', n:'江戸川ジャンボ宝くじ　抽選会'},
+      {k:'news',         ic:'📺', n:'速報 江戸川ニュース'},
       {k:'train',        ic:'🚃', n:'電車シミュレーター'},
       {k:'bicycle',      ic:'🚴', n:'爆走！親水緑道SeSeラギー'},
       {k:'pachinko',     ic:'🎰', n:'CR EDOGAWA フィーバー'},
@@ -21994,6 +22000,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       }
       if(key === 'train'){
         app.startTrainRide(p, 'tozai', '西葛西', '葛西', ()=>restore());
+        return;
+      }
+      if(key === 'news'){
+        // 【ver1.3.6】速報 江戸川ニュース（宝くじの売り場と抽選の真ん中のターンに起動します）
+        Promise.resolve(app.startNewsGame ? app.startNewsGame(p, { onDone:()=>restore() }) : false)
+          .then(ok=>{ if(!ok) restore(); }).catch(()=>restore());
         return;
       }
       if(key === 'bicycle'){
@@ -32688,6 +32700,623 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
   setInterval(tick, 700);
   window.__EDOGAWA_V181_TEST = { tick, pickAndRoute, restore, lostOn };
+})();
+</script>
+<style id="edogawa-v182-style">
+  /* 速報 江戸川ニュース：開始モーダルの注意書き（大きめ・太字・自動で折り返さない） */
+  #edo-mini-common .edo-news-warn{ margin:6px 0 10px; padding:10px 8px; border-radius:14px;
+    background:rgba(127,29,29,.28); border:1px solid rgba(248,113,113,.55); text-align:center;
+    font-weight:1000; line-height:1.45; color:#fde68a; white-space:nowrap;
+    font-size:clamp(15px, 5.2vw, 22px); letter-spacing:.01em; }
+  #edo-mini-common .edo-news-warn span{ display:block; white-space:nowrap; }
+  #edo-mini-common .edo-news-mic{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  #edo-mini-common .edo-news-mic button{ border:0; border-radius:14px; padding:12px 10px; font-size:15px; font-weight:900; cursor:pointer; }
+  #edo-mini-common .edo-news-mic .go{ background:linear-gradient(135deg,#06b6d4,#2563eb); color:#fff; }
+  #edo-mini-common .edo-news-mic .no{ background:rgba(51,65,85,.85); color:#e2e8f0; }
+  #edo-mini-common .edo-news-mic .msg{ font-size:12px; font-weight:800; color:#fca5a5; text-align:center; min-height:1em; }
+  #edo-mini-common .edo-news-note{ font-size:12px; font-weight:800; color:#cbd5e1; text-align:center; margin-top:6px; }
+</style>
+<script id="edogawa-v182">
+// ════════════════════════════════════════════════════════════
+//  ver1.3.6　📺 速報 江戸川ニュース（音声認識のミニゲーム）
+//   ・宝くじの売り場と抽選の真ん中のターン（45・75・105…）に、人間プレーヤーの番のはじめに強制で起動します
+//     （CPUの番では起動しません。マルチプレイの参加者の番も起動しません）
+//   ・開始・結果は双六共通のモーダル。開始モーダルは「これから公表するニュースは／実際の出来事ではありません」
+//   ・はじめてのとき（マイクがまだ許可されていないとき）は開始モーダルを自動で閉じず、
+//     「マイクを許可して始める」を押して許可した人だけが遊べます。許可しなかった人は、このミニゲームを閉じます
+//     次からは（許可ずみなら）ほかのミニゲームと同じく自動で閉じて始まります
+//   ・1点 ＝ ￥100（1000点で ￥100,000）。このミニゲームは番を使いません（終わったらサイコロを振れます）
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const M = app._edoMini; if(!M) return;
+  const g = EdoU.g;
+  const { esc, yen, isMine } = M;
+  const GAME = 'news', TITLE = '速報 江戸川ニュース';
+  const MIC_KEY = 'edogawa_news_mic_ok_v1', DONE_KEY = 'edogawa_news_done_v1';
+  const elog = (k, m, d)=>{ try{ window.EdoLog && window.EdoLog.add(k, m, d); }catch(e){} };
+  const srOk = ()=>!!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const micApi = ()=>!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  async function micState(){
+    try{ if(navigator.permissions && navigator.permissions.query){ const r = await navigator.permissions.query({ name:'microphone' }); return r.state; } }catch(e){}
+    return 'unknown';
+  }
+  const flagOk = ()=>{ try{ return localStorage.getItem(MIC_KEY) === '1'; }catch(e){ return false; } };
+  const setFlag = (v)=>{ try{ if(v) localStorage.setItem(MIC_KEY, '1'); else localStorage.removeItem(MIC_KEY); }catch(e){} };
+
+  const RULES = '<li>女性キャスターのお手本のあと、あなたが原稿をマイクで読み上げます（2本）。</li>' +
+    '<li>正確性・発音・抑揚・テンポ・表現力の5項目を採点（1000点満点）。</li>' +
+    '<li>1点 ＝ ￥100（1000点で ￥100,000）。</li>';
+  const WARN = '<div class="edo-news-warn"><span>これから公表するニュースは</span><span>実際の出来事ではありません</span></div>';
+
+  function paintStart(player, mode){
+    app._miniCommonStartShow && app._miniCommonStartShow(GAME, player);
+    M.decorate('📺', 'ミニゲーム', TITLE, esc(player.name) + ' の番', RULES);
+    const box = document.querySelector('#edo-mini-common .edo-mc-box'); if(!box) return null;
+    const ul = box.querySelector('.edo-mc-rules');
+    if(ul) ul.insertAdjacentHTML('beforebegin', WARN);
+    if(mode === 'auto') return box;
+    box.querySelectorAll('.edo-mc-bar, .edo-mc-hint').forEach(e=>e.remove());
+    if(mode === 'ask'){
+      box.insertAdjacentHTML('beforeend', '<div class="edo-news-mic">' +
+        '<button type="button" class="go" data-mic="1">🎙️ マイクを許可して始める</button>' +
+        '<button type="button" class="no" data-skip="1">マイクを使わない（とばす）</button>' +
+        '<div class="msg"></div></div>');
+    }else{
+      box.insertAdjacentHTML('beforeend', '<div class="edo-news-note">' + esc(mode) + '</div>');
+    }
+    return box;
+  }
+
+  // ── ミニゲームを開きます ──
+  app.startNewsGame = async function(player, opts){
+    opts = opts || {};
+    if(!player || app.__newsActive) return false;
+    let done = false, payload = null, guard = null, fr = null, repaint = null, waiting = false;
+    app.__newsActive = true;
+    const finish = (why)=>{
+      if(done) return; done = true;
+      clearTimeout(guard); clearInterval(repaint);
+      app.__customMiniQuit = null;
+      const r = (payload && payload.news) || null;
+      const closeAll = ()=>{
+        try{ M.closeCommon(); }catch(e){}
+        try{ fr && fr.close(); }catch(e){}
+        app.miniGameActive = false; app.__newsActive = false;
+        try{ app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+        try{ opts.onDone && opts.onDone(); }catch(e){}
+      };
+      if(!r || r.micDenied){
+        // マイクを使えなかった／許可しなかった人は、このミニゲームを閉じます（賞金なし）
+        const msg = why === 'skip' ? 'マイクを使わないため、このミニゲームはとばしました。'
+          : (r && r.noRecognition) || why === 'nosr' ? 'この端末・ブラウザは音声認識に対応していないため、このミニゲームはとばしました。'
+          : 'マイクが許可されなかったため、このミニゲームを閉じました。';
+        try{ app.addLog && app.addLog('📺 ' + player.name + '：' + msg); }catch(e){}
+        if(why !== 'skip' && why !== 'nosr') elog('スキップ', '📺 速報 江戸川ニュース：' + msg);
+        closeAll();
+        return;
+      }
+      const total = Math.max(0, Math.min(1000, Math.round(Number(r.total) || 0)));
+      const prize = total * 100;                                   // 1点 ＝ ￥100
+      player.money = Math.round(Number(player.money) || 0) + prize;
+      try{ app.addLog && app.addLog('📺 ' + player.name + '：速報 江戸川ニュース ' + total.toLocaleString('ja-JP') + '点（' + (r.rank || '') + '）→ ＋' + yen(prize)); }catch(e){}
+      const it = r.items || {};
+      const rows = [
+        { name:'正確性', text:(Number(it.accuracy) || 0) + ' ／ 200点' },
+        { name:'発音力', text:(Number(it.pronun) || 0) + ' ／ 200点' },
+        { name:'抑揚度', text:(Number(it.inton) || 0) + ' ／ 200点' },
+        { name:'テンポ', text:(Number(it.tempo) || 0) + ' ／ 200点' },
+        { name:'表現力', text:(Number(it.exp) || 0) + ' ／ 200点' },
+        { name:'評価点の合計', text: total.toLocaleString('ja-JP') + ' ／ 1000点' },
+        { name:'総合評価', text: String(r.rank || '—') }
+      ];
+      (r.rounds || []).forEach(x=>{
+        rows.push({ name:'照合（' + (x.mode === 'dark' ? '事件' : '明るい') + '）',
+          text:'一致率' + (Number(x.sim) || 0).toFixed(1) + '%（' + (Number(x.readLen) || 0) + '/' + (Number(x.scriptLen) || 0) + '字）' });
+      });
+      rows.push({ name:'換金（1点＝￥100）', text:'＋' + yen(prize) });
+      try{
+        app._miniCommonResultShow && app._miniCommonResultShow({ game:GAME, playerName:player.name, money:player.money, delta:prize, rows });
+        M.decorate('📺', '結果発表', TITLE, esc(player.name) + '　称号：' + esc(r.rank || ''), null);
+      }catch(e){}
+      try{ app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+      setTimeout(closeAll, 5400);
+    };
+
+    app.miniGameActive = true;
+    fr = M.openFrame(GAME, '📺 ' + TITLE, (d)=>{
+      if(d.type === 'EDOGAWA_MINIGAME_RENDERED'){ g('regional-mini-loading')?.style.setProperty('display','none'); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_ALIVE'){ clearTimeout(guard); guard = setTimeout(()=>finish('timeout'), 600000); return; }
+      if(d.type === 'EDOGAWA_MINIGAME_RESULT'){ payload = d; return; }
+      if(d.type === 'EDOGAWA_MINIGAME_CLOSE'){ finish('close'); }
+    });
+    if(!fr){ app.miniGameActive = false; app.__newsActive = false; return false; }
+    fr.frame.onload = ()=>{ g('regional-mini-loading')?.style.setProperty('display','none'); };
+    app.__customMiniQuit = ()=>{
+      if(done) return;
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      if(waiting){ payload = { news:{ micDenied:true } }; finish('skip'); return; }
+      fr.post({ type:'EDOGAWA_FORCE_END', game:GAME });
+      setTimeout(()=>{ if(!done) finish('quit'); }, 1500);
+    };
+    guard = setTimeout(()=>finish('timeout'), 600000);
+    const go = ()=>{
+      waiting = false; clearInterval(repaint);
+      try{ app._miniCommonStartHide && app._miniCommonStartHide(); }catch(e){}
+      const send = ()=>fr.post({ type:'EDOGAWA_COMMON_MINIGAME_START', game:GAME });
+      send(); setTimeout(send, 300); setTimeout(send, 900);
+    };
+
+    // 音声認識がない端末では遊べません
+    if(!srOk() || !micApi()){
+      paintStart(player, 'この端末・ブラウザは音声認識に対応していないため、このミニゲームはとばします。');
+      setTimeout(()=>{ payload = { news:{ micDenied:true, noRecognition:true } }; finish('nosr'); }, 3500);
+      return true;
+    }
+    const st = await micState();
+    // 一度許可した人は、次からは自動で始めます（ブラウザが毎回たずねる作りのときは、ゲームの中でたずねます）
+    if(st === 'granted' || (st !== 'denied' && flagOk())){
+      // 許可ずみ：ほかのミニゲームと同じく、3秒で自動で閉じて始めます
+      paintStart(player, 'auto');
+      setTimeout(go, 3000);
+      return true;
+    }
+    // はじめて（または まだ許可していない）：許可したら始めます。開始モーダルは自動で閉じません
+    waiting = true;
+    const bind = ()=>{
+      const box = paintStart(player, 'ask'); if(!box) return;
+      const msg = box.querySelector('.edo-news-mic .msg');
+      box.querySelector('[data-skip]').onclick = ()=>{ if(done) return; payload = { news:{ micDenied:true } }; finish('skip'); };
+      box.querySelector('[data-mic]').onclick = async (ev)=>{
+        const b = ev.currentTarget; if(b.disabled || done) return;
+        b.disabled = true; if(msg) msg.textContent = 'マイクの許可を確認しています…';
+        try{
+          const s = await navigator.mediaDevices.getUserMedia({ audio:true });
+          try{ s.getTracks().forEach(t=>t.stop()); }catch(e){}
+          setFlag(true);
+          go();
+        }catch(e){
+          setFlag(false);
+          payload = { news:{ micDenied:true } };
+          finish('denied');
+        }
+      };
+    };
+    bind();
+    // 共通モーダルは20秒で消える作りなので、待っているあいだは描きなおします
+    repaint = setInterval(()=>{ if(waiting && !done){ const b = document.querySelector('#edo-mini-common [data-mic]'); if(!b || !b.disabled) bind(); } }, 15000);
+    return true;
+  };
+
+  // ── いつ起動するか：宝くじの売り場（30・90…）と抽選（60・120…）の真ん中のターン ──
+  const isNewsTurn = (t)=>t >= 45 && t % 30 === 15;
+  app.newsTurnFor = isNewsTurn;
+  const doneKey = (t, p)=>t + ':' + (p.uid || p.id);
+  // 新しく始めたゲームでは、同じターン番号でもまた起動します
+  const origStartGame = app.startGame;
+  if(typeof origStartGame === 'function') app.startGame = function(){ try{ localStorage.removeItem(DONE_KEY); }catch(e){} return origStartGame.apply(this, arguments); };
+  const wasDone = (k)=>{ try{ return localStorage.getItem(DONE_KEY) === k; }catch(e){ return false; } };
+  const markDone = (k)=>{ try{ localStorage.setItem(DONE_KEY, k); }catch(e){} };
+  function screenBusy(){
+    if(app.miniGameActive || app.boatRaceActive || app.goalAmidaActive || app.awaitingGoalSelection || app.isRolling) return true;
+    if(app.legTransitionInProgress || app._destIntroRunning || app.__newsActive || app.__edoMiniTesting) return true;
+    return ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','boatrace-continue-modal','goal-modal','rocket-gift-modal',
+      'regional-mini-overlay','edo-list-modal','edo-menu-sheet','settings-modal','menu-modal','edo-mini-common']
+      .some(id=>{ const el = g(id); if(!el || el.classList.contains('hidden')) return false;
+        if(id === 'edo-mini-common') return el.classList.contains('show');
+        try{ return getComputedStyle(el).display !== 'none'; }catch(e){ return false; } });
+  }
+  app.maybeOpenNews = function(){
+    try{
+      const lob = g('lobby-screen'); if(!lob || !lob.classList.contains('hidden')) return false;
+      const t = Math.max(0, Number(app.turnCount) || 0);
+      if(!isNewsTurn(t)) return false;
+      const cp = (app.players || [])[app.currentPlayerIdx];
+      if(!cp || cp.isCpu || cp.remoteHuman || !isMine(cp)) return false;
+      if(app.isMultiplayer && !app.isHost) return false;            // 参加者の番は起動しません
+      const k = doneKey(t, cp); if(wasDone(k)) return false;
+      if(screenBusy()) return false;
+      if(document.body.classList.contains('edo-visited-only')) return false;
+      markDone(k);
+      try{ app.addLog && app.addLog('📺 ' + cp.name + '：速報 江戸川ニュースの時間です！'); }catch(e){}
+      return app.startNewsGame(cp);
+    }catch(e){ console.warn('[v182]', e); return false; }
+  };
+  setInterval(()=>{ try{ app.maybeOpenNews(); }catch(e){} }, 1500);
+
+  window.__EDOGAWA_V182_TEST = { isNewsTurn, micState, flagOk, setFlag, doneKey, screenBusy };
+})();
+</script>
+<style id="edogawa-v183-style">
+  /* 🏆 ミニゲーム順位 */
+  #edo-rank-btn{ box-shadow: var(--edo-nm-out, 0 6px 14px rgba(0,0,0,.35)); border:0; }
+  #edo-rank-modal{ position:fixed; inset:0; z-index:2147483150; display:none; align-items:center; justify-content:center;
+    padding:12px; background:rgba(2,6,23,.62); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  #edo-rank-modal.show{ display:flex; }
+  #edo-rank-modal .rk-box{ width:min(94vw,460px); max-height:92vh; display:flex; flex-direction:column; overflow:hidden;
+    background:var(--t-surf,#0f172a); color:var(--t-text,#e2e8f0); border:2px solid rgba(251,191,36,.55); border-radius:20px;
+    box-shadow:0 24px 60px rgba(0,0,0,.55); }
+  #edo-rank-modal .rk-head{ display:flex; align-items:center; gap:8px; padding:12px 12px 10px; border-bottom:1px solid rgba(148,163,184,.22); }
+  #edo-rank-modal .rk-head b{ flex:1; font-size:16px; font-weight:1000; color:#fbbf24; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #edo-rank-modal .rk-head button{ flex:0 0 auto; border:0; border-radius:12px; padding:6px 11px; font-weight:900; cursor:pointer;
+    background:rgba(51,65,85,.85); color:#e2e8f0; }
+  #edo-rank-modal .rk-body{ flex:1 1 auto; overflow:auto; padding:10px 12px 14px; -webkit-overflow-scrolling:touch; }
+  #edo-rank-modal .rk-grp{ margin:8px 2px 6px; font-size:12px; font-weight:1000; color:#94a3b8; }
+  #edo-rank-modal .rk-games{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+  #edo-rank-modal .rk-game{ display:flex; align-items:center; gap:7px; text-align:left; border:1px solid rgba(148,163,184,.25);
+    border-radius:14px; padding:9px 9px; background:rgba(2,6,23,.45); color:inherit; font-size:12.5px; font-weight:900; line-height:1.25; cursor:pointer; }
+  #edo-rank-modal .rk-game:active{ transform:scale(.98); }
+  #edo-rank-modal .rk-game .ic{ font-size:20px; flex:0 0 auto; }
+  #edo-rank-modal .rk-sub{ font-size:12px; font-weight:800; color:#94a3b8; margin:0 2px 8px; }
+  #edo-rank-modal .rk-row{ display:flex; align-items:center; gap:9px; padding:8px 8px; border-radius:14px; margin-bottom:6px;
+    background:rgba(2,6,23,.45); border:1px solid rgba(148,163,184,.18); }
+  #edo-rank-modal .rk-row.me{ border-color:rgba(251,191,36,.8); background:rgba(120,53,15,.35); }
+  #edo-rank-modal .rk-no{ flex:0 0 30px; text-align:center; font-size:15px; font-weight:1000; color:#cbd5e1; }
+  #edo-rank-modal .rk-no.m{ font-size:21px; }
+  #edo-rank-modal .rk-av{ flex:0 0 38px; width:38px; height:38px; border-radius:50%; overflow:hidden; display:flex; align-items:center;
+    justify-content:center; font-size:22px; background:rgba(51,65,85,.7); border:2px solid rgba(255,255,255,.75); }
+  #edo-rank-modal .rk-av img{ width:100%; height:100%; object-fit:cover; display:block; }
+  #edo-rank-modal .rk-nm{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #edo-rank-modal .rk-nm i{ font-style:normal; font-size:10px; font-weight:900; color:#94a3b8; margin-left:5px;
+    border:1px solid rgba(148,163,184,.5); border-radius:6px; padding:0 4px; }
+  #edo-rank-modal .rk-val{ flex:0 0 auto; text-align:right; font-size:15px; font-weight:1000; color:#fbbf24; white-space:nowrap; }
+  #edo-rank-modal .rk-val small{ display:block; font-size:10px; font-weight:800; color:#94a3b8; }
+  #edo-rank-modal .rk-note{ font-size:11px; font-weight:800; color:#94a3b8; text-align:center; margin-top:8px; line-height:1.5; }
+  #edo-rank-modal .rk-wait{ text-align:center; padding:28px 0; font-weight:900; color:#94a3b8; }
+</style>
+<script id="edogawa-v183">
+// ════════════════════════════════════════════════════════════
+//  ver1.3.6　🏆 ミニゲーム順位
+//   ・人間プレーヤーが遊んだミニゲームの成績（自己ベスト）を記録して、全員共通の順位表（Supabase）に送ります
+//   ・トップページの「ミニゲーム順位」→ ゲームを選ぶと、上位10位まで（アイコン・ニックネーム・成績）
+//   ・人間が10人に足りないときは、CPU（呑んべぇ社長・イルカヒロシ・親方舟大工 を優先）で補います
+//     CPUの成績は、順位表の人間の成績に近い値にします（その日のあいだは同じ値）
+//   ・CPUの成績、検証用の「ミニゲーム確認」で遊んだ分は記録しません
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = EdoU.g, esc = EdoU.esc;
+  const TABLE = 'minigame_scores';
+  const LS_KEY = 'edogawa_mg_rank_v1';
+  const elog = (k, m, d)=>{ try{ window.EdoLog && window.EdoLog.add(k, m, d); }catch(e){} };
+
+  // ── ゲームの一覧（検証用「ミニゲーム確認」と同じ順番。あみだくじはありません） ──
+  //   kind: max＝大きいほど上 / min＝小さいほど上（秒） / rate＝正解率
+  const GROUPS = [
+    { t:'★マス', items:[
+      { k:'quiz',     ic:'🧠', n:'江戸川クイズ',            kind:'rate', what:'正解率（何回中何問正解）' },
+      { k:'kingyo',   ic:'🐟', n:'江戸川金魚すくい',        kind:'max', u:'点', what:'1回の最大得点' },
+      { k:'kanken',   ic:'✍️', n:'江戸川漢字検定',          kind:'rate', what:'正解率（何回中何問正解）' },
+      { k:'nuts',     ic:'⚾️', n:'ガキんちょ木の実ドロボー', kind:'max', u:'点', what:'1回の最大得点' },
+      { k:'archery',  ic:'🏹', n:'ガキんちょ果実射撃',      kind:'max', u:'本', what:'1回の最大得点（60秒で刺した矢）' }
+    ]},
+    { t:'▲マス', items:[
+      { k:'boat',     ic:'🚤', n:'江戸川競艇',              kind:'max', u:'円', what:'1舟券あたりの最大払戻金' },
+      { k:'canoe',    ic:'🚣', n:'新左近川カヌー',          kind:'min', u:'秒', d:2, what:'ゴールまでの最短秒数' },
+      { k:'wheel',    ic:'🎡', n:'ダイヤと花の大観覧車',    kind:'max', u:'人', what:'60秒で乗せた最大人数' },
+      { k:'tower',    ic:'🏗', n:'増築船堀タワー',          kind:'max', u:'階', what:'60秒で積んだ最大階数' },
+      { k:'plane',    ic:'✈️', n:'江戸川飛行隊',            kind:'max', u:'点', d:1, what:'最大採点（100.0点満点）' }
+    ]},
+    { t:'ゴール後（目的地のジャンル別）', items:[
+      { k:'delivery', ic:'🛵', n:'出前バイク配達',          kind:'min', u:'秒', d:2, what:'ゴールまでの最短秒数' },
+      { k:'mart',     ic:'🛒', n:'Edogawaマート',           kind:'max', u:'円', what:'1日あたりの最大売上' },
+      { k:'toilet',   ic:'🚻', n:'公園トイレ脱出大作戦',    kind:'min', u:'秒', what:'脱出までの最短秒数' },
+      { k:'bus',      ic:'🚌', n:'江戸川GoGoバス乗車',      kind:'max', u:'人', what:'最大乗車人数' },
+      { k:'lunch',    ic:'🍱', n:'えどがわ給食当番',        kind:'max', u:'枚', d:1, what:'一人あたりの最大提供枚数' },
+      { k:'hotel',    ic:'🏨', n:'江戸川ホテル物語',        kind:'min', u:'秒', d:1, what:'最短クリア秒数' },
+      { k:'clinic',   ic:'🏥', n:'江戸川診療所',            kind:'max', u:'人', what:'最大対応人数' },
+      { k:'hide',     ic:'🕵️', n:'江戸川かくれんぼ',        kind:'min', u:'秒', d:1, what:'最短発見秒数' }
+    ]},
+    { t:'そのほか', items:[
+      { k:'lottery',  ic:'🎫', n:'江戸川ジャンボ宝くじ',    kind:'max', u:'円', what:'1回の購入あたりの最大当選額' },
+      { k:'news',     ic:'📺', n:'速報 江戸川ニュース',     kind:'max', u:'点', what:'最大採点（1000点満点）' },
+      { k:'train',    ic:'🚃', n:'電車シミュレーター',      kind:'max', u:'点', d:1, what:'最大採点（100.0点満点）' },
+      { k:'bicycle',  ic:'🚴', n:'爆走！親水緑道SeSeラギー', kind:'min', u:'秒', d:2, what:'ゴールまでの最短秒数' },
+      { k:'pachinko', ic:'🎰', n:'CR EDOGAWA フィーバー',   kind:'max', u:'玉', what:'最大出玉数' },
+      { k:'fishing',  ic:'🎣', n:'えどがわ釣りスポット',    kind:'max', u:'点', what:'最大得点' },
+      { k:'fight',    ic:'🥊', n:'江戸川街道 闘魂ロード',   kind:'min', u:'秒', what:'相手を倒した最短秒数' },
+      { k:'shiritori',ic:'🔤', n:'ガキんちょしりとり',      kind:'max', u:'枚', what:'最大で開いた枚数' }
+    ]}
+  ];
+  const DEF = {};
+  GROUPS.forEach(gr=>gr.items.forEach(x=>{ DEF[x.k] = x; }));
+  // 順位表に人間がいないときの、CPUの目安の成績
+  const TYPICAL = { quiz:62, kingyo:22, kanken:68, nuts:55, archery:40, boat:12000, canoe:38, wheel:12, tower:12, plane:74,
+    delivery:95, mart:60000, toilet:42, bus:14, lunch:6, hotel:85, clinic:11, hide:45, lottery:3000, news:690, train:79,
+    bicycle:75, pachinko:1800, fishing:320, fight:50, shiritori:18 };
+
+  // ── この端末の自己ベスト ──
+  function load(){ try{ const o = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if(o && o.games) return o; }catch(e){} return { games:{}, dirty:{} }; }
+  function save(o){ try{ localStorage.setItem(LS_KEY, JSON.stringify(o)); }catch(e){} }
+  const isMine = (p)=>!!p && !p.isCpu && !p.remoteHuman && (!app.myUid || p.uid === app.myUid);
+  const canRecord = (p)=>isMine(p) && !app.__edoMiniTesting;
+  const roundTo = (v, d)=>{ const m = Math.pow(10, d || 0); return Math.round(v * m) / m; };
+
+  function record(k, player, value, extra){
+    try{
+      const def = DEF[k]; if(!def || !canRecord(player)) return false;
+      const v = Number(value); if(!Number.isFinite(v)) return false;
+      if(def.kind === 'min' && !(v > 0)) return false;           // 秒は、クリアしたときだけ
+      const o = load(); const cur = o.games[k] || { best:null, plays:0, correct:0, total:0 };
+      cur.plays = (cur.plays || 0) + 1;
+      let changed = false;
+      if(def.kind === 'rate'){
+        cur.correct = (cur.correct || 0) + Math.max(0, Number(extra && extra.correct) || 0);
+        cur.total = (cur.total || 0) + Math.max(0, Number(extra && extra.total) || 0);
+        cur.best = cur.total > 0 ? roundTo(cur.correct / cur.total * 100, 1) : 0;
+        changed = true;
+      }else{
+        const nv = roundTo(v, def.d || 0);
+        if(cur.best == null || (def.kind === 'max' ? nv > cur.best : nv < cur.best)){ cur.best = nv; changed = true; }
+      }
+      cur.at = Date.now();
+      o.games[k] = cur;
+      o.dirty = o.dirty || {}; if(changed || !cur.sent) o.dirty[k] = true;
+      save(o);
+      scheduleFlush();
+      return true;
+    }catch(e){ console.warn('[v183]', e); return false; }
+  }
+  app.recordMiniGameScore = record;
+
+  // ── Supabase ──
+  async function client(){
+    try{
+      if(!app.checkVisitedSupabase) return null;
+      const r = await app.checkVisitedSupabase();
+      return r && r.ok && app.visitedSupabase && app.visitedSupabaseUser ? app.visitedSupabase : null;
+    }catch(e){ return null; }
+  }
+  function myProfile(){
+    let pr = null; try{ pr = app.getUserProfile ? app.getUserProfile() : null; }catch(e){}
+    const name = String((pr && pr.nickname) || localStorage.getItem('edogawa_sugoroku_nickname') || 'プレイヤー').slice(0, 20);
+    return { name, avatar: (pr && pr.avatarValue) || '🧑' };
+  }
+  // 写真のアイコンは、小さく（64×64）してから送ります
+  function avatarForUpload(v){
+    return new Promise(res=>{
+      try{
+        let src = String(v || '');
+        if(app.isPhotoAvatar && app.isPhotoAvatar(src)) src = (app.getAvatarPhoto && app.getAvatarPhoto()) || '🧑';
+        if(/^https:\/\//i.test(src)) return res(src.slice(0, 500));
+        if(!/^data:image\//i.test(src)) return res(src.slice(0, 16) || '🧑');
+        const img = new Image();
+        img.onload = ()=>{ try{ const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d');
+          const s = Math.min(img.width, img.height); x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 64, 64);
+          res(c.toDataURL('image/jpeg', 0.8)); }catch(e){ res('🧑'); } };
+        img.onerror = ()=>res('🧑');
+        img.src = src;
+      }catch(e){ res('🧑'); }
+    });
+  }
+  let flushTimer = null, flushing = false;
+  function scheduleFlush(){ clearTimeout(flushTimer); flushTimer = setTimeout(flush, 1500); }
+  async function flush(){
+    if(flushing) return; flushing = true;
+    try{
+      const o = load(); const keys = Object.keys(o.dirty || {}).filter(k=>o.dirty[k] && o.games[k]);
+      if(!keys.length) return;
+      const sb = await client(); if(!sb) return;
+      const me = myProfile(); const avatar = await avatarForUpload(me.avatar);
+      const uid = app.visitedSupabaseUser.id;
+      const rows = keys.map(k=>{ const x = o.games[k];
+        return { user_id:uid, game:k, name:me.name, avatar, best:Number(x.best) || 0, correct:x.correct || 0, total:x.total || 0,
+          plays:x.plays || 0, updated_at:new Date().toISOString() }; });
+      const { error } = await sb.from(TABLE).upsert(rows, { onConflict:'user_id,game' });
+      if(error) throw error;
+      const o2 = load(); keys.forEach(k=>{ if(o2.dirty) delete o2.dirty[k]; if(o2.games[k]) o2.games[k].sent = true; }); save(o2);
+    }catch(e){
+      console.warn('[v183] 成績を送れませんでした', e);
+      if(!flush._logged){ flush._logged = true; elog('記録', '🏆 ミニゲームの成績を順位表に送れませんでした（あとで送りなおします）：' + ((e && e.message) || e)); }
+    }finally{ flushing = false; }
+  }
+  setTimeout(()=>{ try{ if(Object.keys(load().dirty || {}).length) flush(); }catch(e){} }, 8000);
+
+  // ── 遊んだ結果を受け取ります ──
+  const playerNow = ()=>{
+    const st = app.regionalMiniGame;
+    if(st && st.playerId != null){ const p = (app.players || []).find(x=>Number(x.id) === Number(st.playerId)); if(p) return p; }
+    return (app.players || [])[app.currentPlayerIdx] || null;
+  };
+  let startedAt = 0, lastSig = '', lastAt = 0;
+  const origStartHide = app._miniCommonStartHide;
+  if(typeof origStartHide === 'function') app._miniCommonStartHide = function(){ startedAt = Date.now(); return origStartHide.apply(this, arguments); };
+  const num = (v)=>{ const n = Number(v); return Number.isFinite(n) ? n : null; };
+  function fromMessage(d){
+    const k = d.game; const p = playerNow();
+    switch(k){
+      case 'kingyo': case 'nuts': return [k, p, num(d.score)];
+      case 'kanken': { const s = num(d.score); return s == null ? null : [k, p, s, { correct:Math.round(s / 10), total:10 }]; }
+      case 'archery': return [k, p, num(d.arrows != null ? d.arrows : d.score)];
+      case 'canoe': {
+        const row = (d.ranking || []).find(x=>x && x.real && x.id != null && isMine((app.players || []).find(q=>Number(q.id) === Number(x.id))));
+        if(!row) return null;
+        return [k, (app.players || []).find(q=>Number(q.id) === Number(row.id)), num(row.time)];
+      }
+      case 'wheel': return [k, p, num(d.people != null ? d.people : d.success)];
+      case 'tower': return [k, p, num(d.floors != null ? d.floors : d.successCount)];
+      case 'plane': return d.seconds == null ? null : [k, p, num(d.score)];
+      case 'delivery': case 'toilet': case 'hide': return d.success ? [k, p, num(d.seconds)] : null;
+      case 'mart': return [k, p, num(d.sales)];
+      case 'bus': return [k, p, num(d.count)];
+      case 'lunch': { const n = num(d.plates); return n == null ? null : [k, p, n / 3]; }   // 動物3体に配膳します
+      case 'hotel': return startedAt ? [k, p, (Date.now() - startedAt) / 1000] : null;
+      case 'clinic': return [k, p, num(d.treated)];
+      case 'train': return d.skipped ? null : [k, p, num(d.score)];
+      case 'news': { const r = d.news || {}; return r.completed ? [k, p, num(r.total)] : null; }
+      case 'bicycle': { const r = d.bicycle || {}; return r.completed ? [k, p, num(r.seconds)] : null; }
+      case 'pachinko': { const r = d.pachinko || {}; return [k, p, num(r.payout != null ? r.payout : r.balls)]; }
+      case 'fishing': { const r = d.fishing || {}; return [k, p, num(r.totalScore != null ? r.totalScore : d.score)]; }
+      case 'fight': { const r = d.fight || {}; return r.winner === 'player' ? [k, p, num(r.seconds)] : null; }
+      case 'shiritori': { const r = d.shiritori || {}; return [k, p, num(r.cleared)]; }
+    }
+    return null;
+  }
+  window.addEventListener('message', (ev)=>{
+    try{
+      const d = ev.data || {}; if(d.type !== 'EDOGAWA_MINIGAME_RESULT' || !d.game) return;
+      const fr = g('regional-mini-frame');
+      if(fr && ev.source && ev.source !== fr.contentWindow && ev.source !== window) return;   // ほかの枠（閲覧モードなど）は数えません
+      const sig = d.game + ':' + JSON.stringify(d).length; const now = Date.now();
+      if(sig === lastSig && now - lastAt < 4000) return;          // 同じ結果が2回届いたとき
+      lastSig = sig; lastAt = now;
+      const r = fromMessage(d); if(!r || !r[1] || r[2] == null) return;
+      record(r[0], r[1], r[2], r[3]);
+    }catch(e){ console.warn('[v183]', e); }
+  });
+  // クイズ（双六の画面の中で遊びます）
+  const origQuiz = app.answerQuiz;
+  if(typeof origQuiz === 'function') app.answerQuiz = function(index){
+    const p = this.players && this.players[this.activeQuizPlayerId ?? this.activeMiniGamePlayerId ?? this.currentPlayerIdx];
+    const q = this.activeQuizQuestion, was = this.quizAnswered;
+    const r = origQuiz.apply(this, arguments);
+    try{ if(!was && this.quizAnswered && q && p){ const ok = q.options[index] === q.answer ? 1 : 0; record('quiz', p, ok, { correct:ok, total:1 }); } }catch(e){}
+    return r;
+  };
+  // 競艇：当たった舟券のうち、いちばん大きい払戻
+  const origBoat = app._renderBoatRaceResult;
+  let boatSig = '';
+  if(typeof origBoat === 'function') app._renderBoatRaceResult = function(){
+    const r = origBoat.apply(this, arguments);
+    try{
+      const st = this.boatRaceState, me = this._boatRaceLocalPlayer && this._boatRaceLocalPlayer();
+      if(st && st.rankResult && me && st.participants && st.participants[me.id]){
+        const sig = (this.turnCount || 0) + ':' + st.rankResult.join('-') + ':' + me.id;
+        if(sig !== boatSig){
+          boatSig = sig;
+          const win = st.rankResult[0] + '-' + st.rankResult[1], odds = Number(st.odds && st.odds[win]) || 0;
+          const best = (st.bets && st.bets[me.id] || []).filter(b=>b.pair === win).reduce((m, b)=>Math.max(m, Math.round((Number(b.amount) || 0) * odds)), 0);
+          record('boat', me, best);
+        }
+      }
+    }catch(e){}
+    return r;
+  };
+  // 宝くじ：抽選のときの当選額（1回の購入あたり）
+  const origLot = app.applyLotteryResult;
+  if(typeof origLot === 'function') app.applyLotteryResult = function(player, d){
+    const r = origLot.apply(this, arguments);
+    try{ if(d && d.kind === 'draw') record('lottery', player, Math.max(0, Math.round(Number(d.prize ?? d.delta) || 0))); }catch(e){}
+    return r;
+  };
+
+  // ════════════════════════════════════════════════════════════
+  //  順位表の画面
+  // ════════════════════════════════════════════════════════════
+  const CPU_EXTRA = [['江戸川さん','🐶'],['葛西さん','🐱'],['小岩さん','🐻'],['船堀さん','🐼'],['瑞江さん','🦊'],['篠崎さん','🐰'],['平井さん','🐯'],['一之江さん','🐨'],['松江さん','🐵']];
+  // 呑んべぇ社長・イルカヒロシ・親方舟大工のあとは、双六のマップ画面と同じCPUの名前・アイコンからランダムに選びます
+  function shuffle(arr, R){ const a = arr.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function cpuMembers(R){
+    const F = (window.__EDOGAWA_FIXED_CPUS || []).map(c=>({ name:c.name, avatar:c.avatar }));
+    const pool = window.__EDOGAWA_CPU_POOL || {};
+    const fixed = new Set(F.map(c=>c.name));
+    let names = (Array.isArray(pool.names) ? pool.names : []).filter(n=>n && !fixed.has(n));
+    if(!names.length) names = CPU_EXTRA.map(x=>x[0]);
+    names = shuffle(Array.from(new Set(names)), R);
+    // 名前が足りないときだけ、予備の名前を足します
+    CPU_EXTRA.forEach(x=>{ if(names.length < 7 && !names.includes(x[0]) && !fixed.has(x[0])) names.push(x[0]); });
+    let avs = Array.isArray(pool.avatars) && pool.avatars.length ? pool.avatars : CPU_EXTRA.map(x=>x[1]);
+    avs = shuffle(avs, R);
+    return F.concat(names.map((n, i)=>({ name:n, avatar:avs[i % avs.length] })));
+  }
+  function rng(seed){ let h = 2166136261; for(const ch of String(seed)){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+    return ()=>{ h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const today = ()=>{ const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+  const cap = (k, v)=>{ if(DEF[k].kind === 'rate' || k === 'plane' || k === 'train') return Math.min(100, v); if(k === 'news') return Math.min(1000, v); return v; };
+  // 人間の成績に近い値で、足りない人数ぶんのCPUを作ります
+  function cpuRows(k, humans, need){
+    if(need <= 0) return [];
+    const def = DEF[k], R = rng(k + ':' + today() + ':' + humans.length);
+    const base = humans.length ? humans.map(h=>Number(h.best) || 0).filter(v=>v > 0) : [];
+    const pool = base.length ? base : [TYPICAL[k] || 10];
+    return cpuMembers(rng(k + ':names:' + today())).slice(0, need).map(c=>{
+      const b = pool[Math.floor(R() * pool.length)];
+      let v = b * (1 + (R() - 0.5) * 0.3);
+      v = Math.max(def.kind === 'min' ? 1 : 0, cap(k, v));
+      if(!def.d && def.kind !== 'rate') v = Math.round(v); else v = roundTo(v, def.kind === 'rate' ? 1 : def.d);
+      const row = { cpu:true, name:c.name, avatar:c.avatar, best:v };
+      if(def.kind === 'rate'){ row.total = 10 + Math.floor(R() * 50); row.correct = Math.round(row.total * v / 100); row.best = roundTo(row.correct / row.total * 100, 1); }
+      return row;
+    });
+  }
+  function valText(k, r){
+    const def = DEF[k], v = Number(r.best) || 0;
+    if(def.kind === 'rate') return roundTo(v, 1).toFixed(1) + '%<small>' + (r.total || 0) + '問中' + (r.correct || 0) + '問正解</small>';
+    if(def.u === '円') return '￥' + Math.round(v).toLocaleString('ja-JP');
+    const t = def.d ? v.toFixed(def.d) : Math.round(v).toLocaleString('ja-JP');
+    return t + def.u;
+  }
+  function avHtml(a){
+    const s = String(a || '');
+    if(/^(https:\/\/|data:image\/)/i.test(s)) return '<img src="' + esc(s) + '" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode(\'🧑\'))">';
+    return esc(s || '🧑');
+  }
+  function ensure(){
+    let el = g('edo-rank-modal'); if(el) return el;
+    el = document.createElement('div'); el.id = 'edo-rank-modal';
+    el.innerHTML = '<div class="rk-box"><div class="rk-head"><button type="button" class="rk-back" style="display:none">‹ 一覧</button>' +
+      '<b>🏆 ミニゲーム順位</b><button type="button" class="rk-x" aria-label="閉じる">✕</button></div><div class="rk-body"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click', (e)=>{
+      if(e.target === el || (e.target.closest && e.target.closest('.rk-x'))){ el.classList.remove('show'); return; }
+      if(e.target.closest && e.target.closest('.rk-back')){ showList(); return; }
+      const b = e.target.closest && e.target.closest('[data-rk]'); if(b) showGame(b.getAttribute('data-rk'));
+    });
+    return el;
+  }
+  function head(title, back){ const el = ensure(); el.querySelector('.rk-head b').textContent = title; el.querySelector('.rk-back').style.display = back ? '' : 'none'; }
+  function showList(){
+    const el = ensure(); head('🏆 ミニゲーム順位', false);
+    el.querySelector('.rk-body').innerHTML = GROUPS.map(gr=>'<div class="rk-grp">' + esc(gr.t) + '</div><div class="rk-games">' +
+      gr.items.map(x=>'<button type="button" class="rk-game" data-rk="' + x.k + '"><span class="ic">' + x.ic + '</span><span>' + esc(x.n) + '</span></button>').join('') +
+      '</div>').join('') + '<div class="rk-note">ゲームをえらぶと、上位10位までの順位表を出します。</div>';
+    el.querySelector('.rk-body').scrollTop = 0;
+  }
+  let seq = 0;
+  async function showGame(k){
+    const def = DEF[k]; if(!def) return;
+    const el = ensure(), body = el.querySelector('.rk-body'), my = ++seq;
+    head(def.ic + ' ' + def.n, true);
+    body.innerHTML = '<div class="rk-sub">' + esc(def.what) + '</div><div class="rk-wait">順位表を読み込み中…</div>';
+    try{ await flush(); }catch(e){}
+    let humans = [], note = '', myId = null;
+    try{
+      const sb = await client();
+      if(!sb) throw new Error('offline');
+      myId = app.visitedSupabaseUser && app.visitedSupabaseUser.id;
+      let q = sb.from(TABLE).select('user_id,name,avatar,best,correct,total,plays').eq('game', k);
+      if(def.kind === 'min') q = q.gt('best', 0);
+      q = q.order('best', { ascending: def.kind === 'min' });
+      if(def.kind === 'rate') q = q.order('total', { ascending:false });
+      const { data, error } = await q.limit(10);
+      if(error) throw error;
+      humans = (data || []).map(r=>Object.assign({}, r, { me: r.user_id === myId }));
+    }catch(e){
+      // つながらないときは、この端末の記録だけで作ります
+      const mine = load().games[k];
+      if(mine && mine.best != null){ const me = myProfile(); humans = [{ name:me.name, avatar:me.avatar, best:mine.best, correct:mine.correct, total:mine.total, me:true }]; }
+      note = '全員の順位表を読み込めなかったため、この端末の記録だけを表示しています。';
+      console.warn('[v183] 順位表', e);
+    }
+    if(my !== seq) return;
+    const rows = humans.concat(cpuRows(k, humans, 10 - humans.length));
+    const better = (a, b)=>def.kind === 'min' ? a.best - b.best : (b.best - a.best) || ((b.total || 0) - (a.total || 0));
+    rows.sort(better);
+    const top = rows.slice(0, 10);
+    let rank = 0, prev = null;
+    body.innerHTML = '<div class="rk-sub">' + esc(def.what) + '</div>' + top.map((r, i)=>{
+      if(!prev || better(prev, r) !== 0) rank = i + 1; prev = r;
+      const medal = rank <= 3 ? ['🥇','🥈','🥉'][rank - 1] : String(rank);
+      let av = r.avatar; if(r.me && app.isPhotoAvatar && app.isPhotoAvatar(av)) av = (app.getAvatarPhoto && app.getAvatarPhoto()) || '🧑';
+      return '<div class="rk-row' + (r.me ? ' me' : '') + '"><div class="rk-no' + (rank <= 3 ? ' m' : '') + '">' + medal + '</div>' +
+        '<div class="rk-av">' + avHtml(av) + '</div><div class="rk-nm">' + esc(r.name || 'プレイヤー') + (r.me ? '<i>あなた</i>' : '') + '</div>' +
+        '<div class="rk-val">' + valText(k, r) + '</div></div>';
+    }).join('') + (note ? '<div class="rk-note">' + esc(note) + '</div>' : '');
+  }
+  app.openMiniRanking = function(){ const el = ensure(); showList(); el.classList.add('show'); };
+  window.__EDOGAWA_V183_TEST = { GROUPS, DEF, record, load, flush, fromMessage, cpuRows, showGame, valText };
 })();
 </script>
 <script id="edogawa-v39-footer">
