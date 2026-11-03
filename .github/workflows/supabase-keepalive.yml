@@ -1,0 +1,26 @@
+# 江戸川双六：Supabase（無料プラン）の自動一時停止を防ぐため、週2回データベースに軽く問い合わせます
+# 置き場所：GitHub リポジトリの .github/workflows/supabase-keepalive.yml
+# 事前準備：リポジトリの Settings → Secrets and variables → Actions → New repository secret
+#   名前：SUPABASE_PUBLISHABLE_KEY　値：sb_publishable_…（sugoroku.html に入っているものと同じ公開用キー）
+#   ※ service_role キーは使わないでください
+name: Supabase keepalive
+
+on:
+  schedule:
+    - cron: '17 3 * * 1,4'   # 毎週 月・木 の 12:17（日本時間）
+  workflow_dispatch:          # Actions 画面から手動でも動かせます
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 訪問記録のテーブルを1件だけ読む
+        env:
+          KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' \
+            "https://iboywxukmqevlwyszbff.supabase.co/rest/v1/visited_entries?select=*&limit=1" \
+            -H "apikey: ${KEY}")
+          echo "HTTP ${code}"
+          head -c 200 /tmp/out.json; echo
+          test "${code}" = "200"
