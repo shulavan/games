@@ -209,7 +209,7 @@
     window.__EDOGAWA_MINIGAMES_URL = 'minigames.html';   // sugoroku.html と同じフォルダ
     // minigames.html を差し替えたときだけ、この番号を上げてください。
     // （上げるとブラウザが新しい方を読み直します。上げなければ再ダウンロードは起きません）
-    window.__EDOGAWA_MINIGAMES_VER = '35';
+    window.__EDOGAWA_MINIGAMES_VER = '36';
     window.__EDOGAWA_MINIGAMES_OK = null;                // 読み込めたか（null=未確認）
 
     // ここに入っているゲームの一覧。中身は minigames.html 側にあります。
@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.3.11 (2026-11-03)';
+    window.__EDOGAWA_VERSION = 'ver1.3.12 (2026-11-03)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -32947,14 +32947,36 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-rank-modal{ position:fixed; inset:0; z-index:2147483150; display:none; align-items:center; justify-content:center;
     padding:12px; background:rgba(2,6,23,.62); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
   #edo-rank-modal.show{ display:flex; }
-  #edo-rank-modal .rk-box{ width:min(94vw,460px); max-height:92vh; display:flex; flex-direction:column; overflow:hidden;
+  #edo-rank-modal .rk-box{ width:min(94vw,460px); height:min(92vh, 820px); max-height:92vh; display:flex; flex-direction:column; overflow:hidden;
     background:var(--t-surf,#0f172a); color:var(--t-text,#e2e8f0); border:2px solid rgba(251,191,36,.55); border-radius:20px;
     box-shadow:0 24px 60px rgba(0,0,0,.55); }
   #edo-rank-modal .rk-head{ display:flex; align-items:center; gap:8px; padding:12px 12px 10px; border-bottom:1px solid rgba(148,163,184,.22); }
   #edo-rank-modal .rk-head b{ flex:1; font-size:16px; font-weight:1000; color:#fbbf24; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #edo-rank-modal .rk-head button{ flex:0 0 auto; border:0; border-radius:12px; padding:6px 11px; font-weight:900; cursor:pointer;
     background:rgba(51,65,85,.85); color:#e2e8f0; }
-  #edo-rank-modal .rk-body{ flex:1 1 auto; overflow:auto; padding:10px 12px 14px; -webkit-overflow-scrolling:touch; }
+  #edo-rank-modal .rk-body{ flex:1 1 auto; overflow:auto; padding:6px 10px 12px; -webkit-overflow-scrolling:touch; }
+  /* 【ver1.3.12】見出し：マスのボタン4つ（横いっぱい・同じ幅） */
+  #edo-rank-modal .rk-cats{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; padding:10px 10px 8px; }
+  #edo-rank-modal .rk-cat{ display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; padding:8px 2px 7px; border-radius:14px;
+    border:1px solid rgba(148,163,184,.25); background:rgba(2,6,23,.45); color:inherit; cursor:pointer; }
+  #edo-rank-modal .rk-cat.on{ border-color:rgba(251,191,36,.9); background:rgba(120,53,15,.42); box-shadow:0 0 0 2px rgba(251,191,36,.25) inset; }
+  #edo-rank-modal .rk-ct{ font-size:11.5px; font-weight:1000; white-space:nowrap; }
+  #edo-rank-modal .rk-mk{ width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:2px solid #fff;
+    box-shadow:0 2px 6px rgba(0,0,0,.45); font-weight:1000; font-size:14px; line-height:1; }
+  #edo-rank-modal .rk-mk.star{ border-radius:50%; background:#facc15; color:#0f172a; }
+  #edo-rank-modal .rk-mk.green{ width:24px; height:24px; margin:2px; transform:rotate(45deg); background:#22c55e; color:#fff; font-size:12px; }
+  #edo-rank-modal .rk-mk.green > span{ transform:rotate(-45deg); }
+  #edo-rank-modal .rk-mk.goal{ border-radius:50%; background:#dc2626; font-size:14px; }
+  #edo-rank-modal .rk-mk.other{ border-radius:50%; background:#7c3aed; color:#fff; }
+  /* タブ（見出しの耳）：ミニゲームの絵文字 */
+  #edo-rank-modal .rk-tabs{ display:flex; gap:3px; padding:0 10px; align-items:flex-end; }
+  #edo-rank-modal .rk-tab{ flex:1 1 0; min-width:0; height:38px; font-size:20px; line-height:1; border-radius:11px 11px 0 0; cursor:pointer;
+    border:1px solid rgba(148,163,184,.3); border-bottom:0; background:rgba(51,65,85,.55); color:inherit; opacity:.75; padding:0; }
+  #edo-rank-modal .rk-tab.on{ height:44px; opacity:1; background:rgba(120,53,15,.55); border-color:rgba(251,191,36,.85); font-size:22px; }
+  #edo-rank-modal .rk-panel{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; margin:0 10px 10px; border:1px solid rgba(251,191,36,.85);
+    border-radius:0 0 14px 14px; background:rgba(120,53,15,.18); }
+  #edo-rank-modal .rk-title{ padding:9px 10px 2px; text-align:center; white-space:nowrap; overflow:hidden; }
+  #edo-rank-modal .rk-title span{ display:inline-block; font-size:18px; font-weight:1000; color:#fde68a; white-space:nowrap; }
   #edo-rank-modal .rk-grp{ margin:8px 2px 6px; font-size:12px; font-weight:1000; color:#94a3b8; }
   #edo-rank-modal .rk-games{ display:grid; grid-template-columns:1fr 1fr; gap:7px; }
   #edo-rank-modal .rk-game{ display:flex; align-items:center; gap:7px; text-align:left; border:1px solid rgba(148,163,184,.25);
@@ -33033,8 +33055,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       { k:'shiritori',ic:'🔤', n:'ガキんちょしりとり',      kind:'max', u:'枚', what:'最大で開いた枚数' }
     ]}
   ];
+  // 【ver1.3.12】順位表の見出しは、開始モーダルの見出しと同じ正式名称にします
+  const FORMAL = {"quiz": "江戸川クイズ", "kingyo": "江戸川金魚すくい", "kanken": "いきなり漢字書き取りテスト", "nuts": "ガキんちょ木の実ドロボー", "archery": "ガキんちょ果実射撃", "boat": "江戸川競艇（双六記念杯）", "canoe": "新左近川カヌー大会", "wheel": "ダイヤと花の大観覧車", "tower": "増築 船堀タワー", "plane": "江戸川飛行隊", "delivery": "江戸川出前ライダー", "mart": "Edogawaマート 日雇いバイト", "toilet": "公園トイレ脱出大作戦", "bus": "江戸川 GoGoバス乗車", "lunch": "えどがわ給食当番", "hotel": "江戸川ホテル物語", "clinic": "江戸川診療所", "hide": "区長をさがせ！", "lottery": "江戸川ジャンボ宝くじ", "news": "速報 江戸川ニュース", "train": "電車運転シミュレーター", "bicycle": "爆走！親水緑道SeSeラギー", "pachinko": "CR EDOGAWA フィーバー", "fishing": "えどがわ釣りスポット", "fight": "江戸川街道 闘魂ロード", "shiritori": "ガキんちょしりとり"};
+  // 見出しのボタン：マップのマスと同じデザイン（★マス・▲マス・ゴールマス・その他）
+  const CATS = [ { t:'★マス', mk:'star', s:'★' }, { t:'▲マス', mk:'green', s:'▲' }, { t:'ゴールマス', mk:'goal', s:'🚩' }, { t:'その他', mk:'other', s:'？' } ];
   const DEF = {};
-  GROUPS.forEach(gr=>gr.items.forEach(x=>{ DEF[x.k] = x; }));
+  GROUPS.forEach((gr, gi)=>gr.items.forEach(x=>{ DEF[x.k] = x; x.g = gi; x.f = FORMAL[x.k] || x.n; }));
   // 順位表に人間がいないときの、CPUの目安の成績
   const TYPICAL = { quiz:62, kingyo:22, kanken:68, nuts:55, archery:40, boat:12000, canoe:38, wheel:12, tower:12, plane:74,
     delivery:95, mart:60000, toilet:42, bus:14, lunch:6, hotel:85, clinic:11, hide:45, lottery:3000, news:690, train:79,
@@ -33269,29 +33295,41 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function ensure(){
     let el = g('edo-rank-modal'); if(el) return el;
     el = document.createElement('div'); el.id = 'edo-rank-modal';
-    el.innerHTML = '<div class="rk-box"><div class="rk-head"><button type="button" class="rk-back" style="display:none">‹ 一覧</button>' +
-      '<b>🏆 ミニゲーム順位</b><button type="button" class="rk-x" aria-label="閉じる">✕</button></div><div class="rk-body"></div></div>';
+    el.innerHTML = '<div class="rk-box"><div class="rk-head"><b>🏆 ミニゲーム順位</b><button type="button" class="rk-x" aria-label="閉じる">✕</button></div>' +
+      '<div class="rk-cats">' + CATS.map((c, i)=>'<button type="button" class="rk-cat" data-cat="' + i + '"><span class="rk-mk ' + c.mk + '"><span>' + c.s + '</span></span><span class="rk-ct">' + esc(c.t) + '</span></button>').join('') + '</div>' +
+      '<div class="rk-tabs"></div><div class="rk-panel"><div class="rk-title"><span></span></div><div class="rk-body"></div></div></div>';
     document.body.appendChild(el);
     el.addEventListener('click', (e)=>{
       if(e.target === el || (e.target.closest && e.target.closest('.rk-x'))){ el.classList.remove('show'); return; }
-      if(e.target.closest && e.target.closest('.rk-back')){ showList(); return; }
+      const c = e.target.closest && e.target.closest('[data-cat]'); if(c){ const gi = Number(c.getAttribute('data-cat')); showGame(GROUPS[gi].items[0].k); return; }
       const b = e.target.closest && e.target.closest('[data-rk]'); if(b) showGame(b.getAttribute('data-rk'));
     });
+    window.addEventListener('resize', ()=>{ if(el.classList.contains('show')) fitTitle(); });
     return el;
   }
-  function head(title, back){ const el = ensure(); el.querySelector('.rk-head b').textContent = title; el.querySelector('.rk-back').style.display = back ? '' : 'none'; }
-  function showList(){
-    const el = ensure(); head('🏆 ミニゲーム順位', false);
-    el.querySelector('.rk-body').innerHTML = GROUPS.map(gr=>'<div class="rk-grp">' + esc(gr.t) + '</div><div class="rk-games">' +
-      gr.items.map(x=>'<button type="button" class="rk-game" data-rk="' + x.k + '"><span class="ic">' + x.ic + '</span><span>' + esc(x.n) + '</span></button>').join('') +
-      '</div>').join('') + '<div class="rk-note">ゲームをえらぶと、上位10位までの順位表を出します。</div>';
-    el.querySelector('.rk-body').scrollTop = 0;
+  // タイトルは自動で折り返さず1行。入りきらないときは文字を小さくします
+  function fitTitle(){
+    try{
+      const box = ensure().querySelector('.rk-title'), sp = box.querySelector('span');
+      sp.style.fontSize = '18px';
+      const w = sp.getBoundingClientRect().width, avail = box.clientWidth - 4;
+      if(w > avail) sp.style.fontSize = Math.max(11, Math.floor(18 * avail / w * 10) / 10) + 'px';
+    }catch(e){}
   }
+  function paintTabs(k){
+    const el = ensure(), def = DEF[k];
+    el.querySelectorAll('.rk-cat').forEach((b, i)=>b.classList.toggle('on', i === def.g));
+    el.querySelector('.rk-tabs').innerHTML = GROUPS[def.g].items.map(x=>
+      '<button type="button" class="rk-tab' + (x.k === k ? ' on' : '') + '" data-rk="' + x.k + '" title="' + esc(x.f) + '" aria-label="' + esc(x.f) + '">' + x.ic + '</button>').join('');
+    el.querySelector('.rk-title span').textContent = def.f;
+    fitTitle();
+  }
+  function showList(){ showGame(GROUPS[0].items[0].k); }   // はじめは「江戸川クイズ」
   let seq = 0;
   async function showGame(k){
     const def = DEF[k]; if(!def) return;
     const el = ensure(), body = el.querySelector('.rk-body'), my = ++seq;
-    head(def.ic + ' ' + def.n, true);
+    paintTabs(k);
     body.innerHTML = '<div class="rk-sub">' + esc(def.what) + '</div><div class="rk-wait">順位表を読み込み中…</div>';
     try{ await flush(); }catch(e){}
     let humans = [], note = '', myId = null;
@@ -33328,7 +33366,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         '<div class="rk-val">' + valText(k, r) + '</div></div>';
     }).join('') + (note ? '<div class="rk-note">' + esc(note) + '</div>' : '');
   }
-  app.openMiniRanking = function(){ const el = ensure(); showList(); el.classList.add('show'); };
+  app.openMiniRanking = function(){ const el = ensure(); el.classList.add('show'); showList(); };
   window.__EDOGAWA_V183_TEST = { GROUPS, DEF, record, load, flush, fromMessage, cpuRows, showGame, valText };
 })();
 </script>
