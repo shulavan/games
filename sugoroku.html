@@ -33753,13 +33753,16 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-fortune .ft-body{ padding:12px 16px 4px; }
   #edo-fortune .ft-text{ text-align:left; font-size:15px; font-weight:800; line-height:1.75; margin-bottom:12px; }
   #edo-fortune .ft-row{ display:flex; align-items:center; gap:10px; padding:9px 4px; border-top:1px solid rgba(148,163,184,.18); }
-  #edo-fortune .ft-k{ flex:0 0 92px; font-size:12px; font-weight:900; color:#c4b5fd; white-space:nowrap; }
+  #edo-fortune .ft-k{ flex:0 0 64px; font-size:12px; font-weight:900; color:#c4b5fd; white-space:nowrap; line-height:1.35; }
   #edo-fortune .ft-v{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:900; text-align:left; }
   #edo-fortune .ft-v small{ display:block; font-size:10.5px; font-weight:700; color:#94a3b8; margin-top:2px; line-height:1.45; }
   #edo-fortune .ft-color{ display:inline-flex; align-items:center; gap:7px; border-radius:12px; padding:7px 11px; font-size:13.5px; font-weight:1000; cursor:pointer;
     border:2px solid rgba(255,255,255,.75); box-shadow:0 4px 0 rgba(0,0,0,.35); transition:transform .1s, box-shadow .1s; }
   #edo-fortune .ft-color.on{ transform:translateY(3px); box-shadow:inset 0 3px 6px rgba(0,0,0,.45); border-color:#fde047; }
   #edo-fortune .ft-color .ck{ display:none; }
+  #edo-fortune .ft-cwrap{ display:flex; align-items:center; gap:8px; flex-wrap:nowrap; }
+  #edo-fortune .ft-cnote{ font-size:11.5px; font-weight:800; color:#e9d5ff; line-height:1.4; min-width:0; }
+  #edo-fortune .ft-cwrap .ft-color{ flex:0 0 auto; white-space:nowrap; padding:7px 9px; font-size:13px; }
   #edo-fortune .ft-color.on .ck{ display:inline; }
   #edo-fortune .ft-die{ font-size:38px; line-height:1; vertical-align:middle; margin-right:6px; }
   #edo-fortune .ft-item{ font-size:28px; line-height:1; vertical-align:middle; margin-right:6px; }
@@ -33849,19 +33852,18 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
     el.innerHTML = '<div class="ft-box" role="dialog" aria-label="江戸川双六占い館">' +
       '<div class="ft-head"><div class="ft-title">🔯 江戸川双六占い館</div><div class="ft-date">' + (d.getMonth() + 1) + '月' + d.getDate() + '日の占い</div></div>' +
       '<div class="ft-body"><div class="ft-text">' + esc(f.text) + '</div>' +
-        '<div class="ft-row"><div class="ft-k">ラッキーカラー</div><div class="ft-v"><button type="button" class="ft-color' + (on ? ' on' : '') + '" data-theme="' + c[0] + '" style="background:' + c[2] + ';color:' + c[3] + '">' +
-          '<span class="ck">✔</span>' + esc(f.color + '(' + c[1] + ')') + '</button><small>この背景色で遊ぶと、今日はステータスの増減が5倍！' + (on ? '' : '（ボタンを押すと、この背景色にします）') + '</small></div></div>' +
-        '<div class="ft-row"><div class="ft-k">ラッキーナンバー</div><div class="ft-v"><span class="ft-die">' + face + '</span><small style="display:inline-block">今日この目が出たら ＋￥50,000</small></div></div>' +
-        '<div class="ft-row"><div class="ft-k">ラッキーアイテム</div><div class="ft-v"><span class="ft-item">' + esc(f.item) + '</span>' + esc(ITEM_NAME[f.item] || '') +
-          '<small>' + (giftToday() ? '今日はもう使いました' : (viewOnly ? '' : '占いを閉じると、1回だけ使えます')) + '</small></div></div>' +
-        '<div class="ft-row"><div class="ft-k">ラッキー方角</div><div class="ft-v">🧭 ' + esc(f.dir) + '</div></div>' +
+        // 【ver1.4.0】項目名は「ラッキー（改行）◯◯」の2行
+        '<div class="ft-row"><div class="ft-k">ラッキー<br>カラー</div><div class="ft-v"><div class="ft-cwrap"><button type="button" class="ft-color' + (on ? ' on' : '') + '" data-theme="' + c[0] + '" style="background:' + c[2] + ';color:' + c[3] + '">' +
+          '<span class="ck">✔</span>' + esc(f.color + '(' + c[1] + ')') + '</button><span class="ft-cnote">今日のステータス増減色です</span></div></div></div>' +
+        '<div class="ft-row"><div class="ft-k">ラッキー<br>ナンバー</div><div class="ft-v"><span class="ft-die">' + face + '</span><small style="display:inline-block">今日この目が出たら ＋￥50,000</small></div></div>' +
+        '<div class="ft-row"><div class="ft-k">ラッキー<br>アイテム</div><div class="ft-v"><span class="ft-item">' + esc(f.item) + '</span>' + esc(ITEM_NAME[f.item] || '') + '</div></div>' +
+        '<div class="ft-row"><div class="ft-k">ラッキー<br>方角</div><div class="ft-v">🧭 ' + esc(f.dir) + '</div></div>' +
       '</div><div class="ft-foot"><button type="button" class="ft-close">閉じる</button></div></div>';
     el.classList.add('show');
     el.querySelector('.ft-color').onclick = (ev)=>{
       ev.stopPropagation();
       try{ app.chooseTheme && app.chooseTheme(c[0]); }catch(e){}
       const b = ev.currentTarget; b.classList.add('on');
-      const sm = b.parentNode.querySelector('small'); if(sm) sm.textContent = 'この背景色で遊ぶと、今日はステータスの増減が5倍！';
     };
     el.querySelector('.ft-close').onclick = ()=>close(viewOnly);
     return el;
