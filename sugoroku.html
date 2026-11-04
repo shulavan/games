@@ -250,7 +250,7 @@
     // どのビルドが動いているかを画面で確認できるようにしておきます。
     // （スマホはキャッシュで古いHTMLが残ることがあり、
     //   「直したはずなのに直っていない」の切り分けに使います）
-    window.__EDOGAWA_VERSION = 'ver1.3.12 (2026-11-03)';
+    window.__EDOGAWA_VERSION = 'ver1.4.0 (2026-11-04)';
     document.addEventListener('DOMContentLoaded', function(){
       try{
         document.querySelectorAll('.edo-version-label').forEach(function(el){
@@ -6325,10 +6325,13 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         this.turnWatchdogTimer = setTimeout(() => {
           if (this.turnSettled) return;
           if (this.currentPlayerIdx !== idxAtStart || this.turnCount !== countAtStart) return;
-          if (this.miniGameActive || this.boatRaceActive || this.awaitingGoalSelection) return;
-          const openModal = ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','boatrace-continue-modal','goal-modal','rocket-gift-modal','regional-mini-overlay']
+          // 【ver1.4.0】ミニゲーム・ゴール（あみだくじ・次の目的地の準備・目的地の紹介）のあいだは止まっているのではないので、
+          //   見張りをかけなおして待ちます（ゴールのあとは45秒をこえることがあり、止まったと誤って記録していました）
+          const busy = this.miniGameActive || this.boatRaceActive || this.awaitingGoalSelection || this.goalAmidaActive ||
+            this._pendingGoalAmidaPlayer || this.legTransitionInProgress || this._destIntroRunning;
+          const openModal = ['event-modal','quiz-modal','kingyo-modal','boatrace-modal','boatrace-continue-modal','goal-modal','rocket-gift-modal','regional-mini-overlay','goal-amida-overlay']
             .some(id => { const el = document.getElementById(id); return el && !el.classList.contains('hidden'); });
-          if (openModal) return;
+          if (busy || openModal) { this._armTurnWatchdog(); return; }
           this.addLog('⚠️ ターンが止まっていたため自動的に次のターンへ進めました。');
           this.finishTurn();
         }, 45000);
@@ -26191,6 +26194,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   async function relocate(player, loc){
     let ok = false;
     try{ ok = await app.buildPlayerOwnBranch(player, loc, app.currentDestination); }catch(e){ console.warn('[items]', e); }
+    // 【ver1.4.0】道の検索ができなかったとき（電波が弱いなど）も、その場でゴールまでつなぎます（ほかの人のルートに合流など）
+    try{ const V = window.__EDOGAWA_V179_TEST; if(V && V.broken(player)) V.patchNow(player, 'アイテムで移動したとき'); }catch(e){}
     try{
       const n = nodeOf(player), mk = app.playerMarkers && app.playerMarkers[player.id];
       if(mk && n) mk.setLatLng([n.lat, n.lng]);
@@ -26205,14 +26210,17 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   // ── 【ver1.3.3】たからのちず：手に入れたら、使わなくてもすぐ広げます ──
+  // 【ver1.4.0】「江戸川区◯◯あたり」（場所がわからないときは「江戸川区のどこか」）
+  function treasureArea(h){ h = String(h || '江戸川区のどこか'); return /どこか$/.test(h) ? h : h + 'あたり'; }
+  app.treasureArea = treasureArea;
   function spreadTreasure(p, here){
     const spot = randomPlace(here || nodeOf(p), 1500) || randomPlace(null, 0);
     if(!spot) return false;
     let hint = null; try{ hint = app.nearbyAreaName ? app.nearbyAreaName(spot.lat, spot.lng) : null; }catch(e){}
     p.treasures = (p.treasures || []).concat([{ lat:spot.lat, lng:spot.lng, hint:hint || '江戸川区のどこか' }]);
     const mine = p === human();
-    if(mine) toast('📜', 'たからのちずが発動！\nヒント：' + (hint || '江戸川区のどこか') + 'のあたり\n（アイテムの「いま発動中のアイテム」から地図を見られます）', 3600);
-    log('📜 [アイテム] ' + (p.name || '') + ' の たからのちずが発動しました。（ヒント：' + (hint || '江戸川区のどこか') + 'のあたり）');
+    if(mine) toast('📜', 'たからのちずが発動！\nヒント：' + treasureArea(hint) + '\n（アイテムの「いま発動中のアイテム」から地図を見られます）', 3600);
+    log('📜 [アイテム] ' + (p.name || '') + ' の たからのちずが発動しました。（ヒント：' + treasureArea(hint) + '）');
     return true;
   }
   function autoTreasure(){
@@ -26238,7 +26246,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   // ════════════════════════════════════════════════════════════
   async function useItem(p, id, opts){
     opts = opts || {};
-    const it = byId[id]; if(!p || !it || !take(p, id)) return { ok:false };
+    const it = byId[id];
+    // 【ver1.4.1】✈️🚁で飛んでいるあいだは使えません（CPU・参加した人も同じ）
+    if(p && p.isFlying){ if(!opts.cpu && p === human()) toast('✈️', '飛んでいるあいだは\nアイテムを使えません'); return { ok:false, flying:true }; }
+    if(!p || !it || !take(p, id)) return { ok:false };
     app.__itemUsedKey = T() + '-' + app.currentPlayerIdx;
     const here = nodeOf(p);
     const name = p.name || 'プレーヤー';
@@ -26265,8 +26276,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     } else if(id === 'magnet'){
       (app.players || []).forEach(o => {
         if(!o || o === p) return;
+        // 【ver1.4.0】✈️🚁で飛んでいた人は、地上に下りて集合します（飛んでいたルートは使いません）
+        if(o.isFlying){ o.isFlying = false; o.vehicle = null; try{ app.setPlayerIconState && app.setPlayerIconState(o, {}); }catch(e){} }
         o.path = Array.isArray(p.path) ? p.path.slice() : [p.currentNodeIdx];
         o.pathIndex = p.pathIndex || 0;
+        // 自分が飛んでいるときは、集合した人には地上の道のルートを作ります（空のルートは自分だけ）
+        if(p.isFlying){
+          let r = null; try{ r = app.findShortestPath({ nodes: app.roadNetworkNodes || [] }, p.currentNodeIdx, app.goalNodeIdx); }catch(e){}
+          if(Array.isArray(r) && r.length >= 2){ o.path = r; o.pathIndex = 0; }
+        }
         o.currentNodeIdx = p.currentNodeIdx;
         moveMarker(o);
       });
@@ -26292,6 +26310,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       app.showEventModal('🚀 ロケット', name + ' はロケットに乗って「' + (dest ? dest.name : '区内のどこか') + '」の近くまで飛んでいった！',
         r != null ? ('目的地まで あと' + r + 'マス') : null, { icon:'🚀', type:'yellow' });
     } else if(id === 'taxi'){
+      // 【ver1.4.0】ほうこうおんちで道に迷っているあいだは、行き先がゴールではないので使えません
+      if(reverseOn()){
+        give(p, id, 1); app.__itemUsedKey = null;
+        if(!opts.cpu) toast(it.ic, 'みんな道に迷っているので、\nタクシーは使えません（ほうこうおんちが終わってから）');
+        return { ok:false };
+      }
       const path = app.normalizePathIndices ? app.normalizePathIndices(p.path) : (p.path || []);
       const target = Math.max(0, path.length - 1 - 8);
       if(target <= (p.pathIndex || 0)){
@@ -26478,6 +26502,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //  サイコロの前：こもりうたの休み・CPUのアイテム使用
   // ════════════════════════════════════════════════════════════
   function pickCpuItem(p){
+    if(p && p.isFlying) return null;                   // 【ver1.4.1】飛んでいるあいだは使いません
     const own = ITEMS.filter(it => countOf(p, it.id) > 0 && it.id !== 'sleep');
     if(!own.length) return null;
     const r = app.remainingSquares ? app.remainingSquares(p) : null;
@@ -26605,6 +26630,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function canUseNow(p){
     const cp = (app.players || [])[app.currentPlayerIdx];
     if(!p || !cp || cp !== p || p.isCpu) return false;
+    if(p.isFlying) return false;                       // 【ver1.4.1】✈️🚁で飛んでいるあいだは使えません
     if(app.isRolling || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive) return false;
     if(app.__itemUsedKey === (T() + '-' + app.currentPlayerIdx)) return false;
     if(!app.map || !(app.roadNetworkNodes || []).length) return false;
@@ -26633,7 +26659,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if((W.bombs || []).length) out.push('💣 ばくだん：' + W.bombs.length + 'か所');
     const h = human();
     if(h && (Number(h.itemSleep) || 0) > 0) out.push('💤 ' + h.name + '：あと' + h.itemSleep + '回休み');
-    if(h && (h.treasures || []).length) h.treasures.forEach((tr, i) => out.push({ t:'📜 たからの地図：' + tr.hint + 'のあたり', map:i }));
+    // 【ver1.4.0】たからのちずが2つ以上あるときは「江戸川区◯◯あたり、他◯件」の1行にまとめます（地図には全部の🪎を出します）
+    if(h && (h.treasures || []).length){ const ts = h.treasures; out.push({ t:'📜 たからのちず：' + treasureArea(ts[0].hint) + (ts.length > 1 ? '、他' + (ts.length - 1) + '件' : ''), map:0 }); }
     return out;
   }
   function renderList(){
@@ -26647,12 +26674,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         '</span><span class="edo-il-cnt">×' + countOf(p, it.id) + '</span><div class="edo-il-desc">' + it.d + '</div></span>' +
         '<button type="button" class="edo-il-use" data-id="' + it.id + '"' + (can ? '' : ' disabled') + '>使う</button></div>';
     });
-    if(own.length && !can) html += '<div class="edo-il-note">※ 自分の番で、サイコロを振る前に使えます（1ターンに1つまで）</div>';
+    if(own.length && !can) html += '<div class="edo-il-note">' + (p && p.isFlying ? '※ ✈️🚁で飛んでいるあいだは、アイテムを使えません（着陸してから使えます）'
+      : '※ 自分の番で、サイコロを振る前に使えます（1ターンに1つまで）') + '</div>';
     const eff = effectsText();
     if(eff.length) html += '<div class="edo-il-row" style="display:block"><div class="edo-il-name" style="font-size:12px;color:#f0abfc">いま発動中のアイテム</div>' +
       eff.map(t => typeof t === 'string' ? '<div class="edo-il-eff">' + t + '</div>'
         : '<button type="button" class="edo-il-eff edo-il-tmap" data-map="' + t.map + '" style="display:block;width:100%;text-align:left;background:rgba(240,171,252,.12);border:1px solid rgba(240,171,252,.5);border-radius:10px;padding:6px 8px;margin-top:4px;color:inherit">' +
-          t.t + '<span style="float:right;color:#f0abfc;font-weight:900">地図 ›</span></button>').join('') + '</div>';
+          t.t + '<span style="float:right;color:#f0abfc;font-weight:900">ちず ›</span></button>').join('') + '</div>';
     el.innerHTML = html;
     el.querySelector('.edo-il-close').onclick = (e) => { e.stopPropagation(); closeList(); };
     el.querySelectorAll('.edo-il-tmap').forEach(btn => btn.onclick = (e) => { e.stopPropagation(); closeList(); try{ app.openTreasureMap && app.openTreasureMap(human()); }catch(err){ console.warn('[items] tmap', err); } });
@@ -27250,6 +27278,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
   function closePicker(){ const m = g('edo-theme-modal'); if(m) m.classList.remove('show'); }
   app.openThemePicker = openPicker;
+  app.chooseTheme = function(k){ if(byKey(k)) choose(k); };   // 【ver1.4.0】占い館のラッキーカラーから使います
+  app.themeKeyNow = ()=>current().k;
 
   // ① アカウント情報：「写真からアイコン作成」の右隣
   function ensureAccountBtn(){
@@ -27973,7 +28003,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //   ・そのあと、今回限りの「背景色の選択」（まだ背景色を選んだことがない人だけ）
   // ════════════════════════════════════════════════════════════
   const SOLO_KEY = 'edogawa_sugoroku_state';
-  const NOTICE_VER = 'v1.3.0';                       // アップデート情報を出す版（内容を変えたら、ここを変えます）
+  const NOTICE_VER = 'v1.4.0';                       // アップデート情報を出す版（内容を変えたら、ここを変えます）
   const SEEN_KEY = 'edogawa_update_notice_seen_v1';   // 最後に出した版
   const OFF_KEY = 'edogawa_update_notice_off_v1';     // 「次回から表示しない」
   const OLD_KEY = 'edogawa_update_notice_v1';         // ver1.1.28 で出したときの印
@@ -27994,19 +28024,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const installed = ()=>{ try{ return document.body.classList.contains('edo-app-installed') || (app._isStandaloneApp && app._isStandaloneApp()); }catch(e){ return false; } };
   if(!needNotice && !needTheme){ window.__EDOGAWA_V169_INFO = ()=>({ 続きあり: hasContinue, お知らせ: 'なし', 背景色の選択: 'なし' }); return; }
 
+  // 【ver1.4.0】
   const ITEMS = [
-    '・「マルチプレイ」対応（シェア対戦可能）',
-    '・「3D建物」視点切替モード',
-    '・「取得情報」のグラフ、獲得バッチ',
-    '・「背景色の選択」（青、赤、黄、緑、白）',
-    '・「御朱印帳」（寺社に近づくと発動）',
-    '・「縮小マップ」「ステータス」表示',
-    '・「アイテム」（あみだくじにて取得可能）',
-    '・目的地ゴール後「不動産購入」画面',
-    '・親水緑道「自転車」ゲームで端まで移動',
-    '・近づき発動「パチンコ」「釣り」ゲーム',
-    '・すれ違い対戦「闘魂ロード」「しりとり」',
-    '・マテリアルデザインの適用'
+    '・「速報 江戸川ニュース」ミニゲーム',
+    '・「江戸川双六占い館」で今日の占いを表示',
+    '・「ミニゲーム順位」表示対応',
+    '・視点切替3D建物モードのまま進行可能',
+    '・マルチプレイの軽微な修正',
+    '・その他不具合修正'
   ];
   const NOTE = '※ちなみにこの「江戸川双六」は「PHP」は使用しておらず、個人情報の扱いもございません。';
   const MS = 5000;
@@ -28358,6 +28383,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   #edo-view3d{ position:fixed; z-index:15; touch-action:none; background:#e5e7eb; overflow:hidden; }
   #edo-view3d .maplibregl-canvas{ outline:none; }
   #edo-view3d .edo-vm-wrap{ pointer-events:auto; }
+  /* 【ver1.4.0】✈️🚁の上空のルート */
+  #edo-view3d .edo-vm-sky-route{ position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; overflow:visible; }
+  #edo-view3d .edo-vm-sky-route polyline{ fill:none; stroke-width:5; stroke-dasharray:2 11; stroke-linecap:round; stroke-linejoin:round; opacity:.95;
+    filter:drop-shadow(0 0 3px rgba(255,255,255,.9)); }
 </style>
 <script id="edogawa-v172">
 (function(){
@@ -28631,7 +28660,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     map.eachLayer(l=>{
       try{
         if(l instanceof L.Polyline && !(l instanceof L.Polygon)){
-          const op = l.options; if(op.opacity === 0 || l === layer) return;
+          const op = l.options; if(op.opacity === 0 || l === layer || op.className === 'flight-route-line') return;
           const ll = l.getLatLngs(); const segs = Array.isArray(ll[0]) ? ll : [ll];
           segs.forEach(sg=>{ if(sg.length > 1 && sg.some(near)) lines.push({ c: sg.map(p=>[p.lng, p.lat]), color: op.color || '#3388ff', w: op.weight || 3,
             o: op.opacity == null ? 1 : op.opacity, dash: op.dashArray ? String(op.dashArray).split(/[ ,]+/).map(Number).filter(n=>n > 0) : null }); });
@@ -28649,6 +28678,133 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     });
     return { lines, marks };
   }
+  // ════════════════════════════════════════════════════════════
+  //  【ver1.4.0】視点切替のまま遊べるようにします
+  //   ・コマ・マス・ルートの線は、地図（Leaflet）と同じものを、動くたびに写します
+  //   ・だれかが動いているあいだは、カメラ（傾き・向き・ズームはそのまま）がその人を追います
+  //   ・✈️🚁で飛んでいる人のマスは、斜め45度で上空（建物より上）へ上がり、上空を進み、45度で目的地へ下ります
+  // ════════════════════════════════════════════════════════════
+  const SKY_H = 150;                                   // 上空の高さ（m）。区内でいちばん高い建物（約115m）より上
+  function linesGeo(lines){
+    return { type:'FeatureCollection', features: lines.map(x=>({ type:'Feature',
+      properties:{ color:x.color, w:x.w, o:x.o, dash: !!(x.dash && x.dash.length) },
+      geometry:{ type:'LineString', coordinates:x.c } })) };
+  }
+  const llKey = (lat, lng)=>Number(lat).toFixed(6) + ',' + Number(lng).toFixed(6);
+  // 飛んでいる人のルート：マスごとの高さ（45度＝進んだ距離と同じだけ上がる。目的地の手前も同じく下がる）
+  function flightPlans(){
+    const out = [];
+    (app.players || []).forEach(p=>{
+      if(!p || !p.isFlying || !Array.isArray(p.path) || p.path.length < 2) return;
+      const nodes = p.path.map(i=>(app.roadNetworkNodes || [])[i]).filter(Boolean); if(nodes.length < 2) return;
+      const d = [0]; for(let i = 1; i < nodes.length; i++) d.push(d[i-1] + app.haversineMeters(nodes[i-1], nodes[i]));
+      const D = d[d.length - 1];
+      const alt = d.map(x=>Math.max(0, Math.min(SKY_H, x, D - x)));
+      out.push({ p, nodes, alt });
+    });
+    return out;
+  }
+  function altMap(plans){ const m = new Map(); plans.forEach(f=>f.nodes.forEach((n, i)=>{ const k = llKey(n.lat, n.lng); m.set(k, Math.max(m.get(k) || 0, f.alt[i])); })); return m; }
+  function markerOfPlayer(l){ const pm = app.playerMarkers || {}; for(const id in pm){ if(pm[id] === l) return (app.players || []).find(x=>String(x.id) === String(id)) || null; } return null; }
+  function makeEl(src, k){
+    const el = src.cloneNode(true);
+    el.style.transform = ''; el.style.marginLeft = '0'; el.style.marginTop = '0'; el.style.position = 'relative'; el.style.left = '0'; el.style.top = '0';
+    el.style.width = k.w + 'px'; el.style.height = k.h + 'px';
+    return el;
+  }
+  function syncMarks(v){
+    const map = app.map; if(!map || !v || !v.ml) return;
+    const center = L.latLng(v.c.lat, v.c.lng);
+    const plans = flightPlans(); v.plans = plans; v.alts = altMap(plans);
+    const seen = new Set();
+    map.eachLayer(l=>{
+      try{
+        if(!(l instanceof L.Marker) || !l._icon) return;
+        const ll = l.getLatLng(); if(map.distance(ll, center) > 2500) return;
+        const el = l._icon, cs = getComputedStyle(el);
+        if(cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return;
+        seen.add(l);
+        const sig = el.className + '|' + el.innerHTML;
+        let m = v.reg.get(l);
+        const ic = (l.options.icon && l.options.icon.options) || {};
+        if(!m || m.sig !== sig){
+          const rc = el.getBoundingClientRect();
+          const k = { w: rc.width || (ic.iconSize && ic.iconSize[0]) || 20, h: rc.height || (ic.iconSize && ic.iconSize[1]) || 20 };
+          const anc = ic.iconAnchor ? (ic.iconAnchor.x != null ? [ic.iconAnchor.x, ic.iconAnchor.y] : ic.iconAnchor) : [k.w/2, k.h/2];
+          if(!m){
+            const wrap = document.createElement('div'); wrap.className = 'edo-vm-wrap';
+            wrap.addEventListener('click', (ev)=>{ ev.stopPropagation(); try{ l.fire('click'); }catch(e){} });
+            const pane = l.options.pane || 'markerPane';
+            const z = (pane === 'edoPoiPane' ? 1 : 3) * 100000 + (parseInt(el.style.zIndex, 10) || 0) + (markerOfPlayer(l) ? 200000 : 0);
+            wrap.style.zIndex = String(Math.max(1, z));
+            m = { l, wrap, mk: new maplibregl.Marker({ element: wrap, anchor:'top-left', offset:[-anc[0], -anc[1]] }).setLngLat([ll.lng, ll.lat]).addTo(v.ml) };
+            v.reg.set(l, m);
+          }
+          m.sig = sig; m.anc = anc;
+          m.wrap.style.width = k.w + 'px'; m.wrap.style.height = k.h + 'px';
+          m.wrap.innerHTML = ''; m.wrap.appendChild(makeEl(el, k));
+        }
+        if(!m.ll || m.ll[0] !== ll.lng || m.ll[1] !== ll.lat){ m.ll = [ll.lng, ll.lat]; m.mk.setLngLat(m.ll); }
+        // 高さ：飛んでいる人のコマ／その人の空のマス
+        const pl = markerOfPlayer(l);
+        let alt = 0;
+        if(pl && pl.isFlying){ const f = plans.find(x=>x.p === pl); if(f){ const i = Math.max(0, Math.min(f.alt.length - 1, pl.pathIndex || 0)); alt = f.alt[i] || 0; } }
+        else if(!pl) alt = v.alts.get(llKey(ll.lat, ll.lng)) || 0;
+        m.alt = alt;
+      }catch(e){}
+    });
+    v.reg.forEach((m, l)=>{ if(!seen.has(l)){ try{ m.mk.remove(); }catch(e){} v.reg.delete(l); } });
+    // 線（地上のルート）。✈️🚁の空のルートは別に上空へ描きます
+    try{ const src = v.ml.getSource('lines'); if(src) src.setData(linesGeo(collect(map, center).lines)); }catch(e){}
+    placeMarks(v);
+  }
+  // 空に浮かべる高さぶん、画面の上へずらします／地平線より上（空）に来たものは隠します
+  function placeMarks(v){
+    try{
+      const ml = v.ml, tr = ml.transform, hz = tr.height / 2 - tr.getHorizon() + 14;
+      // 高さ h（m）の点の画面の位置。カメラのうしろに来た点は w ≦ 0 になります
+      const M = tr.pixelMatrix;
+      const sp = (lng, lat, h)=>{ const c = tr.locationCoordinate(new maplibregl.LngLat(lng, lat)); const X = c.x * tr.worldSize, Y = c.y * tr.worldSize, Z = h || 0;
+        const w = M[3]*X + M[7]*Y + M[11]*Z + M[15];
+        return { x:(M[0]*X + M[4]*Y + M[8]*Z + M[12]) / w, y:(M[1]*X + M[5]*Y + M[9]*Z + M[13]) / w, w }; };
+      v.reg.forEach(m=>{
+        if(!m.ll) return;
+        let dx = 0, dy = 0;
+        let behind = false;
+        if(m.alt > 0){ const a = sp(m.ll[0], m.ll[1], 0), b = sp(m.ll[0], m.ll[1], m.alt);
+          if(a.w > 0 && b.w > 0){ dx = b.x - a.x; dy = b.y - a.y; } else behind = true; }
+        const off = [-m.anc[0] + dx, -m.anc[1] + dy];
+        if(!m.off || Math.abs(m.off[0] - off[0]) > .3 || Math.abs(m.off[1] - off[1]) > .3){ m.off = off; m.mk.setOffset(off); }
+        // 地上のものは、地平線より上（空）に来たら隠します。上空のものは、カメラのうしろに来たときだけ隠します
+        const p = ml.project(m.ll); const sky = behind || (ml.getPitch() > 0 && (p.y + dy) < hz && m.alt <= 0);
+        if(m.sky !== sky){ m.sky = sky; m.wrap.style.visibility = sky ? 'hidden' : ''; }
+      });
+      // 空のルートの線
+      const parts = (v.plans || []).map(f=>{
+        const from = Math.max(0, Math.min(f.nodes.length - 1, f.p.pathIndex || 0));
+        const pts = [];
+        for(let i = from; i < f.nodes.length; i++){ const q = sp(f.nodes[i].lng, f.nodes[i].lat, f.alt[i]); if(q.w > 0) pts.push(q.x.toFixed(1) + ',' + q.y.toFixed(1)); }
+        const col = (app.playerColorOf ? app.playerColorOf(f.p).stroke : '#f59e0b');
+        return pts.length > 1 ? '<polyline points="' + pts.join(' ') + '" stroke="' + col + '" />' : '';
+      }).join('');
+      if(v.svgHtml !== parts){ v.svgHtml = parts; v.svg.innerHTML = parts; }
+    }catch(e){}
+  }
+  // 動いている人をカメラで追います（傾き・向き・ズームはそのまま）
+  function follow(v, p){
+    try{
+      const n = p && (app.roadNetworkNodes || [])[p.currentNodeIdx]; if(!n) return;
+      if(Math.abs(v.c.lat - n.lat) < 1e-7 && Math.abs(v.c.lng - n.lng) < 1e-7) return;
+      v.c = { lat:n.lat, lng:n.lng }; v.apply && v.apply();
+    }catch(e){}
+  }
+  function tick(v){
+    if(VM !== v) return;
+    const moving = !!app.isRolling;
+    if(moving) follow(v, (app.players || [])[app.currentPlayerIdx]);
+    const now = Date.now();
+    if(moving || now - (v.lastSync || 0) > 1000){ v.lastSync = now; syncMarks(v); }
+  }
   function enterView(){
     if(VM) return;
     const map = app.map, host = g('map'), p = me();
@@ -28657,17 +28813,20 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     // 【ver1.2.1】いま地図に映っている場所（中心）で視点を切りかえます（自分のコマの位置でも、動かした先でも）
     const c = map.getCenter();
     const z0 = map.getZoom() - 1;                     // Leaflet（256px）→ MapLibre（512px）
-    const { lines, marks } = collect(map, c);
-    const vmMarks = [];
+    const { lines } = collect(map, c);
     const r = host.getBoundingClientRect();
     const box = document.createElement('div'); box.id = 'edo-view3d'; box.setAttribute('data-edo-norc', '1');
     box.style.left = r.left + 'px'; box.style.top = r.top + 'px'; box.style.width = r.width + 'px'; box.style.height = r.height + 'px';
     host.parentNode.insertBefore(box, host.nextSibling);
     paintSky(box);
-    const lineLayers = lines.map((x, i)=>({ id:'ln' + i, type:'line', source:'lines', filter:['==', ['get','i'], i], layout:{ 'line-cap':'round', 'line-join':'round' },
-      paint: Object.assign({ 'line-color': x.color, 'line-width': x.w, 'line-opacity': x.o }, x.dash && x.dash.length ? { 'line-dasharray': x.dash.map(v=>Math.max(.1, v / Math.max(1, x.w))) } : {}) }));
+    // 【ver1.4.0】線は1つのソースにまとめ、動いたら入れかえます（実線と点線の2つのレイヤー）
+    const lineLayers = [
+      { id:'ln-solid', type:'line', source:'lines', filter:['!', ['get','dash']], layout:{ 'line-cap':'round', 'line-join':'round' },
+        paint:{ 'line-color':['get','color'], 'line-width':['get','w'], 'line-opacity':['get','o'] } },
+      { id:'ln-dash', type:'line', source:'lines', filter:['get','dash'], layout:{ 'line-cap':'round', 'line-join':'round' },
+        paint:{ 'line-color':['get','color'], 'line-width':['get','w'], 'line-opacity':['get','o'], 'line-dasharray':[1.2, 1.6] } }];
     const sources = Object.assign({ base:{ type:'raster', tiles:[basemapUrl()], tileSize:256, maxzoom:18 },
-      lines:{ type:'geojson', data:{ type:'FeatureCollection', features: lines.map((x, i)=>({ type:'Feature', properties:{ i }, geometry:{ type:'LineString', coordinates:x.c } })) } } },
+      lines:{ type:'geojson', data: linesGeo(lines) } },
       enabled() ? buildingSources() : {});
     const layers = [{ id:'base', type:'raster', source:'base' }]
       .concat(enabled() ? buildingLayers(MIN_ZOOM) : []).concat(lineLayers);
@@ -28677,26 +28836,14 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         interactive:false, attributionControl:false, fadeDuration:0, renderWorldCopies:false, style:{ version:8, sources, layers } });
     }catch(e){ box.remove(); snack('視点切替を開けませんでした'); return; }
     if(enabled()) watchSpecial(ml);
-    marks.sort((a, b)=>a.z - b.z).forEach(k=>{
-      const w = document.createElement('div'); w.innerHTML = k.html; const el = w.firstChild; if(!el) return;
-      el.style.transform = ''; el.style.marginLeft = '0'; el.style.marginTop = '0'; el.style.position = 'relative'; el.style.left = '0'; el.style.top = '0';
-      el.style.width = k.w + 'px'; el.style.height = k.h + 'px';
-      const wrap = document.createElement('div'); wrap.className = 'edo-vm-wrap'; wrap.style.width = k.w + 'px'; wrap.style.height = k.h + 'px'; wrap.appendChild(el);
-      wrap.addEventListener('click', (ev)=>{ ev.stopPropagation(); try{ k.l.fire('click'); }catch(e){} });
-      new maplibregl.Marker({ element: wrap, anchor:'top-left', offset:[-k.anc[0], -k.anc[1]] }).setLngLat([k.p.lng, k.p.lat]).addTo(ml);
-      vmMarks.push({ wrap, ll:[k.p.lng, k.p.lat] });
-    });
-    // 地平線より上（空）に来たマス・コマ・アイコンは隠します（遠くのものが空に浮いて見えるため）
-    const hideSky = ()=>{
-      try{
-        const tr = ml.transform, hz = tr.height / 2 - tr.getHorizon() + 14;
-        vmMarks.forEach(m=>{ const p = ml.project(m.ll); const sky = ml.getPitch() > 0 && p.y < hz;
-          if(m.sky !== sky){ m.sky = sky; m.wrap.style.visibility = sky ? 'hidden' : ''; } });
-      }catch(e){}
-    };
-    ml.on('render', hideSky);
-    VM = { ml, box, c, z0, idx: app.currentPlayerIdx, cam:{ pitch:0, bearing:0, zoom:z0 } };
+    // ✈️🚁の空のルート（線）は、マスの高さに合わせて上空に描きます
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'edo-vm-sky-route');
+    try{ ml.getCanvasContainer().appendChild(svg); }catch(e){ box.appendChild(svg); }
+    VM = { ml, box, svg, c, z0, idx: app.currentPlayerIdx, cam:{ pitch:0, bearing:0, zoom:z0 }, reg: new Map() };
     bindGestures(VM);
+    syncMarks(VM);
+    ml.on('render', ()=>placeMarks(VM));
+    VM.timer = setInterval(()=>tick(VM), 250);
     // 【ver1.2.8】👀 をタップしたら、地図を30度かたむけます（そこからスワイプで変えられます）
     VM.cam.pitch = 30;
     try{ ml.easeTo({ pitch:30, duration:450 }); }catch(e){ try{ VM.apply && VM.apply(); }catch(_){} }
@@ -28773,6 +28920,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function exitView(){
     if(!VM) return;
     const v = VM; VM = null; setBtn(false);
+    try{ clearInterval(v.timer); }catch(e){}
     try{ v.ml.easeTo({ pitch:0, bearing:0, zoom:v.z0, center:[v.c.lng, v.c.lat], duration:300 }); }catch(e){}
     // 地図は、その場所の真上からの見え方（いつもの見え方）にもどります
     setTimeout(()=>{ try{ v.ml.remove(); }catch(e){} try{ v.box.remove(); }catch(e){} }, 330);
@@ -28783,16 +28931,20 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   document.addEventListener('click', (e)=>{
     if(!VM) return;
     const t = e.target; if(!t || !t.closest) return;
-    if(t.closest('#edo-view-btn') || VM.box.contains(t)) return;
+    if(t.closest('#edo-view-btn') || t.closest('#roll-dice-btn') || VM.box.contains(t)) return;
     if(t.closest('button, a, [onclick], [role="button"], #players-card-container > div, #edo-mini-map, #edogawa-player-status')) exitView();
   }, true);
   // サイコロを振ったとき・ほかの人の番になったとき・地図が隠れたときも、もどします
   const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
-  if(origRoll){ app.rollDice = function(){ try{ exitView(); }catch(e){} return origRoll.apply(app, arguments); }; }
+  // 【ver1.4.0】視点切替のまま振れます。地図を動かしていても、その向き・傾きのまま自分の地点へもどってから振ります
+  if(origRoll){ app.rollDice = function(){
+    try{ if(VM){ const cp = (app.players || [])[app.currentPlayerIdx]; follow(VM, cp); syncMarks(VM); } }catch(e){}
+    return origRoll.apply(app, arguments);
+  }; }
   setInterval(()=>{
     if(!VM) return;
     const host = g('map');
-    if(app.isRolling || app.currentPlayerIdx !== VM.idx || !host || host.offsetParent === null || !app.map) exitView();
+    if(!host || host.offsetParent === null || !app.map) exitView();
   }, 400);
   window.addEventListener('resize', ()=>{ if(VM){ const r = g('map').getBoundingClientRect(); Object.assign(VM.box.style, { left:r.left+'px', top:r.top+'px', width:r.width+'px', height:r.height+'px' }); try{ VM.ml.resize(); }catch(e){} } });
 
@@ -31510,6 +31662,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(cp !== p || app.isRolling || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive || app.__itemUsedKey === key){
         bus.to(from, { type:'notice', html:'🎒 いまはアイテムを使えません' }); return;
       }
+      if(p.isFlying){ bus.to(from, { type:'notice', html:'✈️ 飛んでいるあいだは、アイテムを使えません' }); return; }   // 【ver1.4.1】
       bus.touch();
       try{ await it.use(p.id, String(m.id || '')); }catch(e){ console.warn('[v175] item', e); }
       bus.kick();
@@ -32495,7 +32648,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function ensure(){
     let el = g('edo-tmap'); if(el) return el;
     el = document.createElement('div'); el.id = 'edo-tmap';
-    el.innerHTML = '<div class="tm-box"><div class="tm-head"><b>📜 たからの地図</b><button type="button" class="tm-x" aria-label="閉じる">✕</button></div>' +
+    el.innerHTML = '<div class="tm-box"><div class="tm-head"><b>📜 たからのちず</b><button type="button" class="tm-x" aria-label="閉じる">✕</button></div>' +
       '<div class="tm-map"><div class="tm-inner"></div></div><div class="tm-foot"></div></div>';
     document.body.appendChild(el);
     el.addEventListener('click', (e)=>{ if(e.target === el || (e.target.closest && e.target.closest('.tm-x'))) el.classList.remove('show'); });
@@ -32531,8 +32684,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     list.forEach(t=>{ const q = G.pct(Number(t.lat), Number(t.lng)); pins += '<span class="tm-pin tm-tr" style="left:' + q.x + '%;top:' + q.y + '%">🪎</span>'; });
     inner.innerHTML = pins;
     el.querySelector('.tm-foot').innerHTML = list.length
-      ? '🪎 のあたりを通ると、たからが見つかって <b style="color:#fbbf24">￥100,000,000</b>！<br>' + list.map(t=>'・' + esc(t.hint) + 'のあたり').join('<br>')
-      : 'いま、たからの地図はありません。';
+      ? '🪎 のあたりを通ると、たからが見つかって <b style="color:#fbbf24">￥100,000,000</b>！<br>・' +
+        esc((app.treasureArea ? app.treasureArea(list[0].hint) : list[0].hint) + (list.length > 1 ? '、他' + (list.length - 1) + '件' : ''))
+      : 'いま、たからのちずはありません。';
     el.classList.add('show');
     return true;
   };
@@ -32611,7 +32765,15 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     }
     if(!best || !best.ok){ elog('スキップ', '🧭 ほうこうおんち：迷う行き先が見つからなかったので、このターンは元の目的地のままにしました', reason); return false; }
     ps.forEach(p=>{
-      const r = best.paths[p.id]; if(!r) return;
+      let r = best.paths[p.id];
+      if(!r){
+        // 【ver1.4.0】道がつながっていない人は、ほかの人の行き先までのルートのいちばん近いマスに合流します
+        let near = null;
+        Object.keys(best.paths).forEach(id=>{ const q = best.paths[id];
+          q.forEach((ni, k)=>{ const dd = dist(nodes[p.currentNodeIdx], nodes[ni]); if(!near || dd < near.d) near = { d:dd, rest:q.slice(k) }; }); });
+        if(!near) return;
+        r = near.rest[0] === p.currentNodeIdx ? near.rest : [p.currentNodeIdx].concat(near.rest);
+      }
       p.path = app.normalizePathIndices ? app.normalizePathIndices(r) : r; p.pathIndex = 0; p.currentNodeIdx = p.path[0];
     });
     const nd = nodes[best.idx], w = world() || {};
@@ -32623,6 +32785,27 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     toast('🧭 道に迷った！\n行き先が「' + name + '」に変わりました（あと' + left + 'ターン）');
     return true;
   }
+  // 【ver1.4.0】迷っているあいだに、アイテム（ロケット・ばくだん・じしゃく など）でルートが変わった人も、
+  //   このターンの迷った行き先へ向かわせます
+  function retarget(L0){
+    const nodes = N(); let changed = false;
+    movers().forEach(p=>{
+      const path = app.normalizePathIndices ? app.normalizePathIndices(p.path || []) : (p.path || []);
+      if(path.length && path[path.length - 1] === L0.idx) return;
+      if(p.currentNodeIdx === L0.idx) return;
+      let r = null; try{ r = app.findShortestPath({ nodes }, p.currentNodeIdx, L0.idx); }catch(e){}
+      if(!(Array.isArray(r) && r.length >= 2 && r[r.length - 1] === L0.idx)){
+        // 道がつながっていないときは、ほかの人のルートに合流します
+        let near = null;
+        movers().forEach(o=>{ if(o === p) return; const q = o.path || []; if(!q.length || q[q.length - 1] !== L0.idx) return;
+          for(let k = Math.max(0, o.pathIndex || 0); k < q.length; k++){ const dd = dist(nodes[p.currentNodeIdx], nodes[q[k]]); if(!near || dd < near.d) near = { d:dd, rest:q.slice(k) }; } });
+        if(!near) return;
+        r = near.rest[0] === p.currentNodeIdx ? near.rest : [p.currentNodeIdx].concat(near.rest);
+      }
+      p.path = app.normalizePathIndices ? app.normalizePathIndices(r) : r; p.pathIndex = 0; changed = true;
+    });
+    if(changed){ try{ app.updatePlayerRoutes && app.updatePlayerRoutes(); app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){} }
+  }
   // 元の目的地にもどします
   async function restore(){
     const nodes = N(), goal = app.goalNodeIdx;
@@ -32633,7 +32816,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(Array.isArray(r) && r.length >= 2 && r[r.length - 1] === goal){ p.path = app.normalizePathIndices ? app.normalizePathIndices(r) : r; p.pathIndex = 0; continue; }
       const from = nodes[p.currentNodeIdx];
       try{ if(from && app.currentDestination) await app.buildPlayerOwnBranch(p, { lat:from.lat, lng:from.lng }, app.currentDestination); p.pathIndex = 0; }catch(e){}
-      // それでもつながらないときは、ver1.3.2 の見回りがつなぎ直します
+      // 【ver1.4.0】それでもゴールにつながらないときは、その場でつなぎます（ほかの人のルートに合流など）
+      try{ const T = window.__EDOGAWA_V179_TEST; if(T && T.broken(p)) T.patchNow(p, 'ほうこうおんちが終わったとき'); }catch(e){}
     }
     try{ app.addLog && app.addLog('🧭 道に迷うのが終わりました。みんな元の目的地「' + ((app.currentDestination && app.currentDestination.name) || '') + '」に向かいます。'); }catch(e){}
     try{ if(app.updatePlayerRoutes) app.updatePlayerRoutes(); app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
@@ -32694,6 +32878,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         const L0 = w.lost;
         // ターンが変わった・目的地が変わった（だれかがゴール）ときに、行き先を決めなおします
         if(!L0 || L0.turn !== T() || L0.goal !== app.goalNodeIdx || !N()[L0.idx]){ working = true; pickAndRoute(L0 ? 'turn ' + T() : 'start'); }
+        else retarget(L0);
       } else if(w.lost){ working = true; await restore(); }
     }catch(e){ console.warn('[v181]', e); elog('エラー', '🧭 ほうこうおんちの処理でエラー：' + (e && e.message)); }
     finally{ working = false; }
@@ -33368,6 +33553,426 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
   app.openMiniRanking = function(){ const el = ensure(); el.classList.add('show'); showList(); };
   window.__EDOGAWA_V183_TEST = { GROUPS, DEF, record, load, flush, fromMessage, cpuRows, showGame, valText };
+})();
+</script>
+<style id="edogawa-v184-style">
+  /* LINEのブラウザ → 外部ブラウザ：データのコピー */
+  #edo-move-modal{ position:fixed; inset:0; z-index:2147483600; display:none; align-items:center; justify-content:center; padding:16px;
+    background:rgba(2,6,23,.72); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  #edo-move-modal.show{ display:flex; }
+  #edo-move-modal .mv-box{ width:min(92vw,400px); background:var(--t-surf,#0f172a); color:var(--t-text,#e2e8f0); border:2px solid rgba(6,199,85,.7);
+    border-radius:20px; padding:18px 16px 14px; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.55); }
+  #edo-move-modal .mv-e{ font-size:40px; line-height:1; }
+  #edo-move-modal .mv-t{ margin:10px 0 6px; font-size:16px; font-weight:1000; line-height:1.55; }
+  #edo-move-modal .mv-s{ font-size:12px; font-weight:700; color:#94a3b8; line-height:1.6; }
+  #edo-move-modal .mv-btns{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  #edo-move-modal .mv-btns button{ border:0; border-radius:14px; padding:12px 10px; font-size:15px; font-weight:900; cursor:pointer; }
+  #edo-move-modal .mv-btns .go{ background:#06C755; color:#fff; }
+  #edo-move-modal .mv-btns .sub{ background:rgba(51,65,85,.9); color:#e2e8f0; }
+  #edo-move-modal .mv-btns .no{ background:transparent; color:#94a3b8; font-size:13px; padding:6px; }
+  #edo-move-modal .mv-wait{ margin-top:12px; font-size:13px; font-weight:900; color:#fbbf24; letter-spacing:.06em; }
+</style>
+<script id="edogawa-v184">
+// ════════════════════════════════════════════════════════════
+//  ver1.4.0　LINEのブラウザで「アプリインストール」を押したとき
+//   ・Android：「アプリインストールして、現在のLINEで遊んでいたこのゲームの情報をコピーしますか？」と聞きます
+//       コピーする → データを一時的に預けて（Supabase・30分だけ・1回だけ受け取れる）、外部ブラウザ（Chrome）で開きなおします
+//                    外部ブラウザで受け取ってから読み込みなおし、「インストールする」の画面を出します
+//       コピーしない → そのまま外部ブラウザで開きなおして、「インストールする」の画面を出します
+//     （LINEの決まり：URLに openExternalBrowser=1 をつけると、外部ブラウザで開きます）
+//   ・iPhone：これまでどおり、ホーム画面に追加する手順を出します（外部ブラウザへは移りません）
+//   ・預ける表は supabase_data_transfer.sql で作ります
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const PARAM = 'edoinstall', MOVE = 'edomove', TABLE = 'data_transfers';
+  const g = EdoU.g, esc = EdoU.esc;
+  const elog = (k, m, d)=>{ try{ window.EdoLog && window.EdoLog.add(k, m, d); }catch(e){} };
+  const env = ()=>{ try{ return app._detectBrowserEnv(); }catch(e){ const ua = navigator.userAgent || ''; return { isLine: /\bLine\//i.test(ua), isAndroid: /Android/i.test(ua) }; } };
+  const standalone = ()=>{ try{ return app._isStandaloneApp(); }catch(e){ return false; } };
+  async function client(){
+    if(window.__EDOGAWA_TEST_SUPABASE) return window.__EDOGAWA_TEST_SUPABASE;          // テスト用
+    try{ const r = app.checkVisitedSupabase ? await app.checkVisitedSupabase() : null; return r && r.ok && app.visitedSupabase ? app.visitedSupabase : null; }catch(e){ return null; }
+  }
+  // この端末の双六のデータ（edogawa で始まるものだけ。ログインの情報は入れません）
+  function snapshot(){
+    const o = {};
+    try{ for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(/^edogawa/.test(k)) o[k] = localStorage.getItem(k); } }catch(e){}
+    return o;
+  }
+  function newCode(){ const a = new Uint8Array(18); crypto.getRandomValues(a); return Array.from(a, b=>b.toString(16).padStart(2, '0')).join(''); }
+
+  // ── 確認の画面 ──
+  function modal(html){
+    let el = g('edo-move-modal');
+    if(!el){ el = document.createElement('div'); el.id = 'edo-move-modal'; document.body.appendChild(el); }
+    el.innerHTML = '<div class="mv-box">' + html + '</div>'; el.classList.add('show'); return el;
+  }
+  const closeModal = ()=>{ const el = g('edo-move-modal'); if(el){ el.classList.remove('show'); el.innerHTML = ''; } };
+
+  app.openInExternalBrowser = function(code){
+    try{
+      const u = new URL(location.href);
+      u.searchParams.set('openExternalBrowser', '1');
+      u.searchParams.set(PARAM, '1');
+      if(code) u.searchParams.set(MOVE, code); else u.searchParams.delete(MOVE);
+      try{ app.addLog && app.addLog('📲 外部ブラウザで開きなおします（アプリのインストールのため）'); }catch(e){}
+      location.href = u.toString();
+      return true;
+    }catch(e){ return false; }
+  };
+  async function copyAndOpen(){
+    const el = modal('<div class="mv-e">📦</div><div class="mv-t">このゲームの情報をコピーしています…</div><div class="mv-wait">● ● ●</div>');
+    try{
+      const sb = await client(); if(!sb) throw new Error('つながりませんでした');
+      const code = newCode();
+      const payload = JSON.stringify({ v:1, at:Date.now(), ver:String(window.__EDOGAWA_VERSION || ''), data:snapshot() });
+      const { error } = await sb.from(TABLE).insert({ code, payload });
+      if(error) throw error;
+      app.openInExternalBrowser(code);
+    }catch(e){
+      elog('記録', '📦 LINEから外部ブラウザへのデータのコピーに失敗：' + ((e && e.message) || e));
+      modal('<div class="mv-e">⚠️</div><div class="mv-t">コピーできませんでした</div>' +
+        '<div class="mv-s">電波のよいところで、もう一度お試しください。<br>コピーしないで開くこともできます（外部ブラウザでは最初からになります）。</div>' +
+        '<div class="mv-btns"><button type="button" class="go" data-a="retry">もう一度コピーする</button>' +
+        '<button type="button" class="sub" data-a="plain">コピーしないで開く</button><button type="button" class="no" data-a="no">やめる</button></div>');
+      bind();
+    }
+    void el;
+  }
+  function bind(){
+    const el = g('edo-move-modal'); if(!el) return;
+    el.onclick = (ev)=>{
+      const b = ev.target.closest && ev.target.closest('[data-a]'); if(!b) return;
+      const a = b.getAttribute('data-a');
+      if(a === 'copy' || a === 'retry') copyAndOpen();
+      else if(a === 'plain'){ closeModal(); app.openInExternalBrowser(null); }
+      else closeModal();
+    };
+  }
+  app.askMoveFromLine = function(){
+    modal('<div class="mv-e">📲</div>' +
+      '<div class="mv-t">アプリインストールして、<br>現在のLINEで遊んでいたこのゲームの情報をコピーしますか？</div>' +
+      '<div class="mv-s">LINEのブラウザではインストールできないため、Chromeなどの外部ブラウザで開きなおします。<br>コピーすると、所持金・前回の続き・プロフィール・成績などをそのまま引き継げます。</div>' +
+      '<div class="mv-btns"><button type="button" class="go" data-a="copy">コピーしてインストール</button>' +
+      '<button type="button" class="sub" data-a="plain">コピーしないでインストール</button><button type="button" class="no" data-a="no">やめる</button></div>');
+    bind();
+  };
+  const origOpen = app.openInstallModal;
+  if(typeof origOpen === 'function') app.openInstallModal = function(){
+    const e = env();
+    // Android の LINE だけ外部ブラウザへ。iPhone はこれまでどおり手順の画面です
+    if(e.isLine && e.isAndroid && !standalone() && !app.deferredInstallPrompt){ app.askMoveFromLine(); return; }
+    return origOpen.apply(this, arguments);
+  };
+
+  // ── 外部ブラウザで開いたとき ──
+  function showInstallLater(){
+    const t0 = Date.now();
+    const iv = setInterval(()=>{
+      try{
+        if(standalone()){ clearInterval(iv); return; }
+        const auth = g('edogawa-auth-screen');
+        const authOn = auth && auth.classList.contains('show') && getComputedStyle(auth).display !== 'none';
+        const busy = authOn || !!document.querySelector('#edo-update-notice.show') || !!document.querySelector('#edo-move-modal.show');
+        // Android は「インストールできます」の合図を少し待ちます（最大8秒）
+        if(!busy && (app.deferredInstallPrompt || Date.now() - t0 > 8000)){ clearInterval(iv); origOpen && origOpen.call(app); }
+        if(Date.now() - t0 > 120000) clearInterval(iv);
+      }catch(e){ clearInterval(iv); }
+    }, 500);
+  }
+  function hasOwnData(){ try{ return !!localStorage.getItem('edogawa_sugoroku_profile_v1') || !!localStorage.getItem('edogawa_sugoroku_state'); }catch(e){ return false; } }
+  function apply(data){
+    Object.keys(data || {}).forEach(k=>{ if(/^edogawa/.test(k) && typeof data[k] === 'string'){ try{ localStorage.setItem(k, data[k]); }catch(e){} } });
+    // ミニゲーム順位：LINEで送った成績は、もう一度は送りません（同じ人が2行にならないように）
+    try{ const r = JSON.parse(localStorage.getItem('edogawa_mg_rank_v1') || 'null'); if(r && r.games){ r.dirty = {}; Object.keys(r.games).forEach(k=>{ r.games[k].sent = true; }); localStorage.setItem('edogawa_mg_rank_v1', JSON.stringify(r)); } }catch(e){}
+  }
+  async function receive(code){
+    modal('<div class="mv-e">📦</div><div class="mv-t">LINEで遊んでいたデータを<br>コピーしています…</div><div class="mv-wait">● ● ●</div>');
+    let data = null, err = '';
+    try{
+      const sb = await client(); if(!sb) throw new Error('つながりませんでした');
+      const { data:txt, error } = await sb.rpc('take_transfer', { p_code: code });
+      if(error) throw error;
+      if(!txt) throw new Error('コピーの期限（30分）が切れたか、すでに受け取りずみです');
+      const o = JSON.parse(txt); data = o && o.data;
+      if(!data || typeof data !== 'object') throw new Error('データを読めませんでした');
+    }catch(e){ err = (e && e.message) || String(e); }
+    if(!data){
+      elog('記録', '📦 LINEからのデータを受け取れませんでした：' + err);
+      modal('<div class="mv-e">⚠️</div><div class="mv-t">データをコピーできませんでした</div><div class="mv-s">' + esc(err) + '<br>LINEで「アプリインストール」からもう一度お試しください。</div>' +
+        '<div class="mv-btns"><button type="button" class="sub" data-a="no">閉じる</button></div>');
+      bind(); showInstallLater(); return;
+    }
+    const go = ()=>{
+      apply(data);
+      try{ sessionStorage.setItem('edogawa_after_move', '1'); }catch(e){}
+      try{ app.addLog && app.addLog('📦 LINEで遊んでいたデータをコピーしました'); }catch(e){}
+      location.reload();
+    };
+    if(hasOwnData()){
+      modal('<div class="mv-e">📦</div><div class="mv-t">このブラウザにも、双六のデータがあります</div>' +
+        '<div class="mv-s">LINEで遊んでいたデータで上書きしますか？<br>（このブラウザのデータは消えます）</div>' +
+        '<div class="mv-btns"><button type="button" class="go" data-a="over">上書きしてコピーする</button><button type="button" class="sub" data-a="keep">このブラウザのデータを使う</button></div>');
+      const el = g('edo-move-modal');
+      el.onclick = (ev)=>{ const b = ev.target.closest && ev.target.closest('[data-a]'); if(!b) return;
+        if(b.getAttribute('data-a') === 'over') go(); else { closeModal(); showInstallLater(); } };
+      return;
+    }
+    go();
+  }
+  try{
+    const u = new URL(location.href);
+    const move = u.searchParams.get(MOVE), inst = u.searchParams.get(PARAM) === '1';
+    let afterMove = false; try{ afterMove = sessionStorage.getItem('edogawa_after_move') === '1'; sessionStorage.removeItem('edogawa_after_move'); }catch(e){}
+    if((inst || move || afterMove) && !env().isLine){
+      [PARAM, MOVE, 'openExternalBrowser'].forEach(k=>u.searchParams.delete(k));
+      try{ history.replaceState(null, '', u.pathname + (u.search || '') + u.hash); }catch(e){}
+      if(move && /^[0-9a-f]{20,64}$/.test(move)) receive(move);
+      else{
+        if(afterMove){ setTimeout(()=>{ try{ const t = g('edogawa-stat-toast'); if(t){ t.innerHTML = '<span class="text-lg mr-1">📦</span><strong>LINEで遊んでいたデータをコピーしました</strong>'; t.classList.remove('hidden','opacity-0'); t.classList.add('opacity-100'); setTimeout(()=>{ t.classList.add('opacity-0'); setTimeout(()=>t.classList.add('hidden'), 250); }, 3600); } }catch(e){} }, 1500); }
+        showInstallLater();
+      }
+    }
+  }catch(e){}
+  window.__EDOGAWA_V184_TEST = { PARAM, MOVE, snapshot, apply, receive };
+})();
+</script>
+<style id="edogawa-v185-style">
+  /* 🔯 江戸川双六占い館 */
+  #edo-fortune{ position:fixed; inset:0; z-index:2147483300; display:none; align-items:center; justify-content:center; padding:14px;
+    background:rgba(2,6,23,.66); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  #edo-fortune.show{ display:flex; }
+  #edo-fortune .ft-box{ width:min(94vw,420px); max-height:92vh; overflow:auto; background:var(--t-surf,#0f172a); color:var(--t-text,#e2e8f0);
+    border:2px solid rgba(192,132,252,.75); border-radius:20px; box-shadow:0 24px 60px rgba(0,0,0,.55); }
+  #edo-fortune .ft-head{ padding:14px 16px 10px; text-align:center; border-bottom:1px solid rgba(148,163,184,.22);
+    background:linear-gradient(180deg, rgba(88,28,135,.55), rgba(88,28,135,0)); }
+  #edo-fortune .ft-title{ font-size:19px; font-weight:1000; color:#f0abfc; letter-spacing:.04em; white-space:nowrap; }
+  #edo-fortune .ft-date{ margin-top:3px; font-size:12px; font-weight:800; color:#c4b5fd; }
+  #edo-fortune .ft-body{ padding:12px 16px 4px; }
+  #edo-fortune .ft-text{ text-align:left; font-size:15px; font-weight:800; line-height:1.75; margin-bottom:12px; }
+  #edo-fortune .ft-row{ display:flex; align-items:center; gap:10px; padding:9px 4px; border-top:1px solid rgba(148,163,184,.18); }
+  #edo-fortune .ft-k{ flex:0 0 92px; font-size:12px; font-weight:900; color:#c4b5fd; white-space:nowrap; }
+  #edo-fortune .ft-v{ flex:1 1 auto; min-width:0; font-size:14px; font-weight:900; text-align:left; }
+  #edo-fortune .ft-v small{ display:block; font-size:10.5px; font-weight:700; color:#94a3b8; margin-top:2px; line-height:1.45; }
+  #edo-fortune .ft-color{ display:inline-flex; align-items:center; gap:7px; border-radius:12px; padding:7px 11px; font-size:13.5px; font-weight:1000; cursor:pointer;
+    border:2px solid rgba(255,255,255,.75); box-shadow:0 4px 0 rgba(0,0,0,.35); transition:transform .1s, box-shadow .1s; }
+  #edo-fortune .ft-color.on{ transform:translateY(3px); box-shadow:inset 0 3px 6px rgba(0,0,0,.45); border-color:#fde047; }
+  #edo-fortune .ft-color .ck{ display:none; }
+  #edo-fortune .ft-color.on .ck{ display:inline; }
+  #edo-fortune .ft-die{ font-size:38px; line-height:1; vertical-align:middle; margin-right:6px; }
+  #edo-fortune .ft-item{ font-size:28px; line-height:1; vertical-align:middle; margin-right:6px; }
+  #edo-fortune .ft-foot{ padding:10px 16px 16px; }
+  #edo-fortune .ft-close{ width:100%; border:0; border-radius:14px; padding:13px; font-size:16px; font-weight:1000; color:#fff; cursor:pointer;
+    background:linear-gradient(135deg,#a855f7,#6d28d9); }
+</style>
+<script id="edogawa-fortune-data">
+// 【ver1.4.0】江戸川双六占い館（366日分）。ふだんは https://shulavan.github.io/data/fortune.json を読みます。読めないときはこちらを使います
+// [占い, ラッキーカラー, ラッキーナンバー, ラッキーアイテム, ラッキー方角]（1月1日 → 12月31日。2月29日をふくみます）
+window.__EDOGAWA_FORTUNE_FALLBACK = 
+[["お気に入りのカフェで心落ち着く一杯を楽しむと、素晴らしいひらめきが得られそうです。","青",4,"🚗","北東"],["近所の八百屋で新鮮な旬の野菜を選ぶと、体に活力が満ちて一日を元気に過ごせます。","黄",1,"🚲️","南"],["緑豊かな森の中をのんびり散策することで、澄んだ空気と自然のエネルギーを実感できます。","黒",6,"🚃","東南"],["駅からの心地よい乗車時間が、旅気分を高めて爽やかな気分転換をもたらしてくれます。","白",2,"🚲️","西"],["小学校の校庭から聞こえる元気な声に刺激を受け、自分の成長意欲がすくすく高まります。","赤",5,"🚗","北"],["静かな図書館で新しい知識を探求すると、探していた答えがすんなり見つかる日です。","緑",3,"🚲️","北西"],["素敵なホテルでの上質な時間が、日頃の努力を優しく包み込み最高のリラックスを与えます。","青",1,"🚲️","東"],["かかりつけのクリニックで健康維持のアドバイスを受け、心身ともに深い安心感を得られます。","白",4,"🚗","南西"],["友人とのしりとり遊びで言葉のセンスが冴え渡り、笑顔溢れる楽しい時間を共有できます。","黄",6,"🚲️","北東"],["お祭りの金魚すくいにチャレンジすると、集中力が増して見事な手腕を発揮できるでしょう。","黒",2,"🚃","南"],["アットホームな定食屋で温かい料理を味わうと、心も体もホッと解きほぐされていきます。","赤",3,"🚲️","東南"],["近所の薬局で体調を整える便利アイテムを見つけると、毎日の健康管理がさらに楽しくなります。","緑",5,"🚗","西"],["公園のブランコに揺られながら空を見上げると、自由で大らかな気持ちを取り戻せます。","白",1,"🚲️","北"],["バスの車窓から眺める街並みが新鮮に映り、目的地までの移動が素敵な思い出になります。","青",6,"🚅","東"],["幼稚園の可愛らしい飾り付けを目にして、優しく温かい気持ちが心いっぱいに広がります。","黄",2,"🚲️","南西"],["市民広場のオープンイベントに参加すると、新しい素敵な仲間との交流が広がります。","黒",4,"🚗","北西"],["趣のある温泉旅館での湯浴みが、心身の疲労をきれいに洗い流してエネルギーを満たします。","赤",1,"🚲️","北東"],["頼りになる医者の親切なアドバイスによって、日々の予防ケアに対する意欲がますます高まります。","緑",6,"🚃","南"],["射的ゲームで狙いを定めると、自分の直感と集中力が想像以上に高まっていることを実感します。","青",3,"🚲️","東南"],["のんびりとした釣りを楽しむ中で、静かな水面を眺めながら心が穏やかに整っていきます。","白",5,"🚗","西"],["活気あるラーメン屋で絶品の一杯を堪能すると、明日の活力となるパワフルな元気が湧きます。","黄",4,"🚲️","北"],["活気あふれる魚屋でフレッシュな魚介を手に取ると、豊かな食卓への期待が大きく膨らみます。","黒",1,"🚲️","東"],["公園の噴水が美しく跳ねる水滴を眺めることで、日頃の悩みが爽やかに吹き飛びます。","赤",2,"🚗","北西"],["電車内での穏やかな時間が、頭の中を整理して新しいアイデアを生み出す好機となります。","緑",6,"🚲️","南西"],["おいしい給食の献立に想いを馳せると、童心に返ったようなワクワク感が胸を満たします。","青",5,"🚃","北東"],["最新設備が整うスポーツセンターで汗を流すと、爽快感とともに身体の軽さを実感できます。","白",3,"🚲️","南"],["胸躍る旅行の計画を立てることで、日常に新しい輝きと前向きな希望が満ちていきます。","黄",1,"🚗","東南"],["病気を未然に防ぐ知識を学ぶことで、自分自身や大切な家族を守る自信が深まります。","黒",4,"🚲️","西"],["ライトアップされた大観覧車から夜景を見下ろすと、感動的でロマンチックなひとときを過ごせます。","赤",6,"🚁","北"],["そびえ立つタワーの展望台からの絶景が、あなたの視野と可能性を大きく広げてくれます。","緑",2,"🚲️","東"],["賑やかな居酒屋で仲間と語らうことで、日頃の感謝と思いが深まり温かい絆を感じられます。","青",1,"🚗","南西"],["専門店が並ぶお店でのお買い物が、日常に彩りを添える素敵なお気に入りとの出会いを生みます。","白",5,"🚲️","北西"],["公園の滑り台を駆け下りるような躍動感が、あなたのやる気スイッチを力強く押してくれます。","黄",3,"🚃","北東"],["スムーズに到着するタクシーのおかげで、予定通りの行動ができて心にゆとりが生まれます。","黒",2,"🚲️","南"],["新しい知識を吸収する授業のように、未知の分野への挑戦があなたの才能を開花させます。","赤",4,"🚗","東南"],["親切な役所の窓口対応により、手続きが滞りなく完了して清々しい達成感を味わえます。","緑",1,"🚲️","西"],["見どころ満載の観光名所を巡ると、文化や歴史への理解が深まり心が豊かになります。","青",6,"🚲️","北"],["怪我を防ぐストレッチ習慣を取り入れることで、しなやかで健康的な体を維持できます。","白",3,"🚅","東"],["清流でのカヌー体験により、自然のダイナミズムを全身で感じながら大満足の一日となります。","黄",5,"🚗","北西"],["夢広がる宝くじを手に取ると、未来へのポジティブな期待感で心が大きく躍ります。","黒",2,"🚲️","南西"],["レトロなスナックの温かい雰囲気に包まれ、心地よい音楽とともに穏やかな夜を過ごせます。","赤",1,"🚃","北東"],["新鮮な肉屋のお肉を使った手料理が、家族や友人の笑顔と美味しさを同時に引き出します。","緑",4,"🚲️","南"],["開放的な公園の広場で深呼吸をすると、全身に新鮮な酸素が巡って思考がクリアになります。","青",3,"🚗","東南"],["ターミナル駅での賑わいが、あなたの探求心と行動力を力強く後押ししてくれます。","白",6,"🚲️","西"],["中学校時代の恩師や友人を思い出すことで、当時の原動力を思い出してエネルギーが充填されます。","黄",2,"🚲️","北"],["地域が集う公民館でのワークショップに参加し、手作りの楽しさと達成感を共有できます。","黒",5,"🚗","東"],["洗練された有名ホテルでの滞在が、最高のインスピレーションとモチベーションをもたらします。","赤",3,"🚲️","南西"],["定期健診を通じて自身の健康状態を確認することで、自信を持って前進する基盤が整います。","緑",1,"🚃","北西"],["エキサイティングな競艇の迫力を体感し、日常に心地よいスリルと活気が注入されます。","青",4,"🚲️","北東"],["明るいアミューズメント施設でのパチンコプレイが、気分転換と適度な集中力向上に寄与します。","白",2,"🚗","南"],["こだわりの自家焙煎カフェで過ごす時間が、クリエイティブな構想を形にする原動力となります。","黄",6,"🚲️","東南"],["品揃え豊富なスーパーマーケットでの買い物が、生活の質を高める新たなアイデアを授けます。","黒",1,"🚲️","西"],["木々に囲まれた緑の森でバードウォッチングを楽しむと、心の安らぎを感じられます。","赤",5,"🚗","北"],["景色の良いロケーションでのバス乗車が、日常の移動を贅沢なリラクゼーションタイムに変えます。","緑",3,"🚲️","東"],["活気ある生徒たちの熱量に刺激を受け、自分のプロジェクトに対する情熱が再燃します。","青",2,"🚃","北西"],["近代的なスポーツセンターのプールで泳ぐと、全身のバランスが整ってリフレッシュできます。","白",4,"🚲️","南西"],["風情溢れる温泉旅館のおもてなしに心が和み、日頃の労苦が最高の癒やしへと変わります。","黄",1,"🚗","北東"],["信頼のおけるクリニックでの相談を通じて、健康に対する前向きな意識がさらに定着します。","黒",6,"🚲️","南"],["リズム良く楽しむ言葉遊びのしりとりが、脳の柔軟性を高めて発想力を豊かにします。","赤",3,"🚲️","東南"],["色彩豊かな金魚すくいの楽しさが、子供の頃の無邪気な冒険心を思い出させてくれます。","緑",5,"🚗","西"],["ボリューム満点の定食屋での一食が、午後からの力強いパフォーマンスを強力にサポートします。","青",2,"🚲️","北"],["地域の八百屋で店主とおしゃべりしながら選ぶ野菜が、心温まる食卓の主役となります。","白",1,"🚅","東"],["公園のブランコに揺られて感じる風が、日頃の慌ただしさを優しく忘れさせてくれます。","黄",4,"🚲️","南西"],["スムーズな電車の乗り継ぎにより、予定していた以上の成果をスムーズに収められます。","黒",6,"🚗","北西"],["栄養バランスの行き届いた給食の思い出が、毎日の健康的な食習慣を維持するヒントになります。","赤",2,"🚲️","北東"],["市民広場で開催されるクラフト市を覗くと、感性を刺激する手作りの温もりに巡り会えます。","緑",3,"🚃","南"],["景色の素晴らしい観光地を巡ることで、新鮮な刺激と忘れられない感動体験が得られます。","青",5,"🚲️","東南"],["専門医の診察を受けることで不安が解消し、健やかな毎日を送るための自信が得られます。","白",1,"🚗","西"],["縁日の射的で的に当てた瞬間の爽快感が、日頃のモチベーションを最高潮に高めます。","黄",4,"🚲️","北"],["川辺での釣りがもたらす静寂と緊張感が、深いリフレッシュと心のゆとりをもたらします。","黒",3,"🚲️","東"],["行列ができるラーメン屋のこだわりのスープが、疲れた心身にじんわりと染み渡ります。","赤",6,"🎒","北西"],["薬局で見つけたおすすめのセルフケアグッズが、明日のあなたをより健康的に輝かせます。","緑",2,"🚗","南西"],["きれいな滑り台のある公園で子供たちの笑顔に接し、心底あたたかい気持ちになれます。","青",5,"🚲️","北東"],["快適なタクシーの移動により、リラックスした状態で次の目的地へと向かうことができます。","白",1,"🚃","南"],["興味深い授業を受けるように読書に没頭すると、知的好奇心が心地よく満たされます。","黄",3,"🚲️","東南"],["役所の効率的な手続きのおかげで、スムーズに時間を有効活用できる喜びを感じられます。","黒",4,"🚗","西"],["リゾートホテルでの優雅なひとときが、心身を最高レベルにリフレッシュさせてくれます。","赤",2,"🚲️","北"],["怪我を防止する正しい運動姿勢を学ぶことで、アクティブな毎日を安全に楽しむことができます。","緑",6,"🚲️","東"],["大観覧車の上からのパノラマビューが、日常の悩みを小さく見せる大きな視点を授けます。","青",1,"🚗","南西"],["シンボリックなタワーを見上げることで、自分の目標を高く掲げる意欲が一段と高まります。","白",5,"🚲️","北西"],["おしゃれなカフェでの読書タイムが、あなたに豊かな知的満足と静かな安らぎをもたらします。","黄",3,"🚃","北東"],["新鮮な肉屋の厳選食材が、エネルギー満点の美味しい料理としてあなたを元気づけます。","黒",2,"🚲️","南"],["公園の噴水近くでの休憩が、涼やかな癒やしとともに集中力を高めてくれます。","赤",4,"🚗","東南"],["ターミナル駅周辺での新しいお店との巡り会いが、楽しい発見の連続をもたらします。","緑",1,"🚲️","西"],["中学校時代のスポーツの思い出が、諦めない挑戦心と前進する勇気を思い出させます。","青",6,"🚲️","北"],["充実した図書館の蔵書の中から、あなたの将来に役立つ価値ある一冊を発見できます。","白",3,"🚗","東"],["趣深い旅行先での体験が、新しい感性を刺激し日常の視野を豊かに広げてくれます。","黄",5,"🚲️","北西"],["かかりつけの医者によるアドバイスが、日頃のヘルスケアに対する自信を強固にします。","黒",2,"🚃","南西"],["カヌーに乗って水上を自在に進む爽快感が、自己効力感を大きく高めてくれます。","赤",1,"🚲️","北東"],["期待の宝くじを購入することで、未来の夢や希望についてワクワク語り合えます。","緑",4,"🚗","南"],["居心地のよいスナックでの談笑が、心地よい社交性を呼び覚まし明るい気分にさせます。","青",3,"🚲️","東南"],["信頼できる魚屋でおすすめ品を聞くことで、美味しい食体験と豊かな会話が楽しめます。","白",6,"🚲️","西"],["森の散策路を歩くことで、マイナスイオンをたっぷり浴びて身体が軽やかになります。","黄",2,"🚗","北"],["バスの丁寧な運転により、目的地までの時間を安心してゆったり過ごせます。","黒",5,"🚲️","東"],["幼稚園での微笑ましい風景を目にし、純粋で温かな優しさが心に広がっていきます。","赤",3,"🚅","南西"],["公民館のサークル活動に参加することで、趣味を通じた素敵な交友関係が芽生えます。","緑",1,"🚲️","北西"],["老舗旅館のおもてなしと美味しい食事が、心身のエネルギーをフルチャージしてくれます。","青",4,"🚗","北東"],["病気の兆候を見逃さない予防意識が高まり、毎日を健やかに生きる知恵が身につきます。","白",2,"🚲️","南"],["白熱する競艇レースを観戦することで、日頃のストレスが吹き飛びスカッとした気分になれます。","黄",6,"🚃","東南"],["アミューズメント施設でのパチンコで気分転換を図り、集中力を研ぎ澄ます良い機会になります。","黒",1,"🚲️","西"],["レトロな居酒屋でいただく名物料理が、心とお腹をいっぱいに満たしてくれます。","赤",5,"🚗","北"],["元気な八百屋の店頭に並ぶフルーツから、爽やかなビタミンと元気を分けてもらえます。","緑",3,"🚲️","東"],["広々とした公園でのピクニックが、自然の豊かさと家族や友人との絆を感じさせます。","青",2,"🚲️","北西"],["発車ベルの響く駅ホームで、新しい行動への前向きな一歩を踏み出す勇気が湧いてきます。","白",4,"🚗","南西"],["小学校の読書時間のように集中して本を開くことで、深い洞察力が身につく一日です。","黄",1,"🚲️","北東"],["充実したスポーツセンターでのトレーニングが、引き締まった体と満足感をもたらします。","黒",6,"🚃","南"],["魅力的な観光地への旅が、日常を忘れさせてくれる素晴らしい思い出を紡ぎ出します。","赤",3,"🚲️","東南"],["病院での親切な検診対応を受け、ヘルスケアへの安心感と感謝の気持ちが湧いてきます。","緑",5,"🚗","西"],["楽しい言葉探しのしりとりが、家族や仲間とのコミュニケーションを最高に盛り上げます。","青",2,"🚲️","北"],["祭りの金魚すくいで見せた見事な手さばきが、周囲からの称賛を集めるきっかけになります。","白",6,"🚲️","東"],["こだわりのあるラーメン屋で味わう自慢の麺が、明日のエネルギーをみなぎらせます。","黄",3,"🚗","南西"],["薬局の専門スタッフとの相談により、あなたに最適なセルフケア方法が明確になります。","黒",1,"🚲️","北西"],["公園のブランコで心地よい風を切る時間が、発想力を高めてアイデアを研ぎ澄まします。","赤",4,"🚁","北東"],["タクシーでの快適な移動空間が、大切な打合せ前の集中力を高めてくれます。","緑",2,"🚲️","南"],["幼稚園の行事を思い出すような心温まるニュースに触れ、優しい気持ちになれる一日です。","青",5,"🚃","東南"],["役所の迅速な窓口対応のおかげで、予定していた手続きがスムーズに完了します。","白",3,"🚲️","西"],["モダンなホテルでの優雅なランチが、日常に特別感と豊かな気分を添えてくれます。","黄",1,"🚗","北"],["怪我を防ぐための柔軟体操を行うことで、体が驚くほど軽やかに動くのを体感できます。","黒",4,"🚲️","東"],["射的ゲームでの見事な命中が、あなたの中に眠る集中力を引き出します。","赤",6,"🚲️","北西"],["静かな池での釣りが、日常の喧騒を忘れさせて穏やかな心を取り戻させてくれます。","緑",2,"🚗","南西"],["アットホームな定食屋でのバランスの良い食事が、あなたの体調をベストに整えます。","青",5,"🚲️","北東"],["肉屋の厳選食材を使った料理が、家族みんなの笑顔と活力を引き出します。","白",1,"🚲️","南"],["公園の滑り台から見渡す景色が、小さな達成感と前進するワクワク感を教えてくれます。","黄",3,"🚗","東南"],["乗車した電車の窓から眺める青空が、今日の幸運な展開を予感させてくれます。","黒",2,"🚲️","西"],["おいしい給食の記憶がよみがえり、食生活を見直す素晴らしいきっかけが得られます。","赤",4,"🚃","北"],["静寂に包まれた図書館での読書が、心の深化と知識の拡充をもたらす贅沢な時間となります。","緑",1,"🚲️","東"],["情緒ある温泉旅館での滞在が、心身ともに最高のコンディショニングを提供してくれます。","青",6,"🚗","南西"],["かかりつけ医のアドバイスのおかげで、健康に対する前向きな確信が得られます。","白",3,"🚲️","北西"],["夕空に映える大観覧車からの景色が、あなたに大きな感動とロマンを与えてくれます。","黄",5,"🚲️","北東"],["高さのあるタワーからの展望が、あなたの将来のビジョンをより明確にしてくれます。","黒",2,"🚗","南"],["お洒落なカフェでのティータイムが、心身の疲れを癒やし会話を弾ませます。","赤",1,"🚲️","東南"],["新鮮な食材が揃う魚屋での買い物が、今夜の食卓を豪華に彩るきっかけとなります。","緑",4,"🚲️","西"],["木々が生い茂る森での森林浴が、ストレスを軽減し深いリラックスをもたらします。","青",3,"🚃","北"],["バスでのスムーズな移動が、一日の計画を予定以上に効率よく進めさせてくれます。","白",6,"🚲️","東"],["小学校の運動会を思い出すような爽やかな情熱が、あなたの行動力を高めます。","黄",2,"🚗","北西"],["市民広場でのフリーマーケットで、欲しかった掘り出し物と巡り会えるラッキーな日です。","黒",5,"🚲️","南西"],["魅力あふれる観光スポットの探索が、日常のストレスを吹き飛ばし心を解放します。","赤",3,"🚲️","北東"],["健康維持のための運動習慣が定着し、身体のキレと軽さを実感できる一日となります。","緑",1,"🚗","南"],["カヌーで波を漕ぎ分ける楽しさが、新しい冒険への意欲を大きく奮い立たせます。","青",4,"🚲️","東南"],["夢のある宝くじをきっかけに、家族や友人と明るい未来の話題で盛り上がれます。","白",2,"🚅","西"],["活気に満ちた居酒屋での美味しいお酒と料理が、疲れを一気に吹き飛ばしてくれます。","黄",6,"🚲️","北"],["親切なお店での親切な接客が、一日中暖かい気持ちを保つ源となります。","黒",1,"🚗","東"],["公園の噴水近くで過ごすひとときが、心をリフレッシュさせ爽やかな思考を促します。","赤",5,"🚲️","南西"],["駅前でのスムーズな乗り換えが、あなたの目的地への到着を快調にサポートします。","緑",3,"🚃","北西"],["学びの多い授業のように、今日の新たな知識獲得がステップアップに繋がります。","青",2,"🚲️","北東"],["スポーツセンターで爽やかに汗を流すことで、心身のバランスが完璧に整います。","白",4,"🚗","南"],["旅行の思い出を振り返ることで、次の目的地へのワクワク感と元気が湧いてきます。","黄",1,"🚲️","東南"],["クリニックでの定期検診のおかげで、自分の健康状態に自信を持って活動できます。","黒",6,"🚲️","西"],["ダイナミックな競艇のレースを観戦し、爽快な決断力とモチベーションが得られます。","赤",3,"🚗","北"],["パチンコでの楽しい時間が、程よい緊張感と気分転換をもたらしてくれます。","緑",5,"🚲️","東"],["落ち着いた雰囲気のスナックでの会話が、日常に優しい安らぎを与えてくれます。","青",2,"🚲️","北西"],["鮮度抜群の八百屋の野菜を使った手料理が、心と体の双方を最高に満たします。","白",6,"🚃","南西"],["緑豊かな公園の広場で深呼吸すると、クリアな思考とやる気が身体中に溢れます。","黄",4,"🚲️","北東"],["タクシーでの快適な移動が、多忙な一日にゆとりと心地よさを添えてくれます。","黒",1,"🚗","南"],["中学校の思い出の曲を聴くことで、当時の純粋な情熱とエネルギーが蘇ります。","赤",5,"🚲️","東南"],["役所でのスムーズな相談対応が、長年の疑問をすっきり解決へと導きます。","緑",3,"🚲️","西"],["豪華なホテルでの洗練されたサービスが、あなたに自信と優雅な気分を約束します。","青",1,"🚗","北"],["怪我を防ぐための体幹トレーニングが、あなたの健康的で美しい姿勢をサポートします。","白",4,"🚲️","東"],["楽しく言葉をつなぐしりとりで、脳がアクティブに刺激され会話が弾みます。","黄",6,"🚁","南西"],["色とりどりの金魚すくに夢中になる時間が、日頃の疲れを忘れさせる最高の癒やしです。","黒",2,"🚲️","北西"],["ボリューム満点な定食屋のランチが、午後の活動を力強く後押ししてくれます。","赤",1,"🚗","北東"],["薬局でおすすめされた健康補助食品が、日々の体調維持を強力にサポートします。","緑",5,"🚲️","南"],["公園のブランコで心地よい風を感じながら、新しい目標に思いを馳せることができます。","青",3,"🚃","東南"],["電車内での穏やかな読書時間が、忙しい一日に最高の癒やしをもたらします。","白",2,"🚲️","西"],["給食の美味しいカレーの記憶が、家庭料理への新たな工夫のインスピレーションを与えます。","黄",6,"🚲️","北"],["公民館での文化講座への参加が、あなたの趣味の世界を豊かに広げてくれます。","黒",4,"🚗","東"],["観光名所での素晴らしい発見が、あなたの感性と知的好奇心を大いに刺激します。","赤",1,"🚲️","北西"],["医者の丁寧な診断を受け、自分の体調管理に揺るぎない自信が持てるようになります。","緑",3,"🚲️","南西"],["射的で見事に的を射抜く快感が、日頃のストレスを心地よく消し去ってくれます。","青",5,"🚗","北東"],["静かな川辺での釣り体験が、心に穏やかな波紋と心地よいリラクゼーションを与えます。","白",2,"🚲️","南"],["評判のラーメン屋での美味しいランチが、活力溢れる午後のスタートを後押しします。","黄",4,"🚲️","東南"],["精肉店での質の良いお肉が、今夜の夕食を笑顔あふれる特別な時間へと変えます。","黒",6,"🚃","西"],["滑り台を楽しむ子どもたちの明るい声が、あなたに元気を分けてくれます。","赤",1,"🚲️","北"],["バスの乗車中に眺める街の景色が、新しい発見と探求心を刺激してくれます。","緑",5,"🚗","東"],["学校の参観日のような温かい視線を感じて、自分の仕事に誇りと情熱が持てます。","青",3,"🚲️","南西"],["静かな図書館での学習が、目標達成に向けた確実な実力を養ってくれます。","白",1,"🚲️","北西"],["くつろげる旅館での温かいおもてなしが、心身ともに最高の癒やしを授けてくれます。","黄",4,"🚗","北東"],["病気を防ぐための規則正しい生活が、明るくエネルギッシュな毎日を約束します。","黒",2,"🚲️","南"],["観覧車からの美しい夕焼けに包まれ、心が深い感動と感謝で満たされる一日です。","赤",6,"🚅","東南"],["高くそびえるタワーを見上げることで、あなたの目指すべき高い志が再確認できます。","緑",3,"🚲️","西"],["お気に入りカフェでの贅沢な時間が、毎日の忙しさに心地よい句読点を打ってくれます。","青",5,"🚗","北"],["スーパーマーケットでの賢い買い物が、生活にゆとりと喜びをもたらします。","白",2,"🚲️","東"],["森の中での静かな歩みが、心と身体の調和を取り戻しリフレッシュさせます。","黄",1,"🚃","北西"],["駅へのスムーズなアクセスが、今日一日の行動をよりアクティブで快適なものにします。","黒",4,"🚲️","南西"],["生徒たちの生き生きとした眼差しから、前向きに挑戦し続ける大切さを学びます。","赤",6,"🚲️","北東"],["スポーツセンターでのフィットネスが、あなたの健康美と体力を一段と高めます。","緑",2,"🚗","南"],["思い出に残る旅行の計画が、明日からの生活に新しい張り合いと活力をもたらします。","青",1,"🚲️","東南"],["クリニックでの親切な応対が、体調面の些細な不安を根底から解消してくれます。","白",5,"🚲️","西"],["水上でのカヌー漕ぎが、あなたのバランス感覚と全身の筋力を鍛えてくれます。","黄",3,"🚗","北"],["夢のある宝くじを話題にすることで、友人同士の会話がワクワクとした熱を帯びます。","黒",6,"🚲️","東"],["味わい深い居酒屋でのお喋りが、明日への新たな活力を充電する最高のひとときです。","赤",2,"🚃","南西"],["信頼のおける魚屋での新鮮な仕入れが、おうちご飯の満足度を最高レベルに高めます。","緑",4,"🚲️","北西"],["公園の噴水の涼やかな音に包まれ、心地よい瞑想のような静寂を味わえます。","青",1,"🚗","北東"],["タクシーでの快適な移動により、重要な打合せ前の頭の整理が完璧に整います。","白",5,"🚲️","南"],["幼稚園の頃の純粋な夢を思い出すことで、今の自分の目標に新鮮な光が当たります。","黄",3,"🚲️","東南"],["役所でのスムーズな業務手続き完了により、心に大きなゆとりと爽快感が生まれます。","黒",2,"🚗","西"],["格式あるホテルでのティータイムが、あなたの立ち振る舞いをより洗練されたものにします。","赤",4,"🚲️","北"],["怪我を防止する適切な運動習慣が、アクティブなライフスタイルを末永く支えます。","緑",6,"🚲️","東"],["スリリングな競艇の展開を楽し破ることで、心の中の鬱屈した気分がスカッと晴れ渡ります。","青",3,"🚗","北西"],["パチンコのアミューズメント体験が、心地よい集中と気晴らしを提供してくれます。","白",1,"🚲️","南西"],["アットホームな定食屋での家庭的な味が、心身に深く染み渡り元気を引き出します。","黄",5,"🚃","北東"],["地域に親しまれる薬局での親身なアドバイスが、毎日の健康維持に役立ちます。","黒",2,"🚲️","南"],["広々とした公園でのウォーキングが、身体の代謝を高めてリフレッシュに最適です。","赤",4,"🚗","東南"],["電車内での快適な座席獲得が、移動時間を贅沢なリラックスタイムへと変えてくれます。","緑",1,"🚲️","西"],["新しい学びを得る授業のような体験が、あなたのスキルを一段と向上させます。","青",6,"🚲️","北"],["市民広場で開かれる音楽イベントに耳を傾け、心が豊かで開放的な気分になります。","白",3,"🚗","東"],["風情豊かな観光地を歩くことで、日常を忘れさせる新鮮な感動が胸に広がります。","黄",2,"🚲️","南西"],["かかりつけ医による定期ケアのおかげで、毎日を安心して元気に過ごせます。","黒",5,"🎒","北西"],["テンポ良く進むしりとりゲームが、頭の回転を速めてユーモアセンスを高めます。","赤",1,"🚲️","北東"],["金魚すくいの繊細なコツを掴むことで、物事にじっくり取り組む集中力が身につきます。","緑",4,"🚗","南"],["美味しいラーメン屋での一杯が、明日の活力となる元気とパワーを全身に届けます。","青",3,"🚲️","東南"],["八百屋のフレッシュなフルーツを食べることで、体が喜びで満たされる感覚を得られます。","白",6,"🚃","西"],["公園のブランコに揺れる心地よさが、無邪気でポジティブな心を引き出してくれます。","黄",1,"🚲️","北"],["乗車したバスの窓からの景色が、あなたに新しい街の魅力と発見をもたらします。","黒",5,"🚗","東"],["小学校の頃の給食の時間を思い出して、美味しい食事をじっくり楽しむ心のゆとりが生まれます。","赤",2,"🚲️","北西"],["静かな図書館での集中作業が、予想以上のスピードで目標を達成させてくれます。","緑",4,"🚲️","南西"],["くつろぎの旅館での温泉入浴が、体の芯から疲れを取り除いてくれます。","青",1,"🚗","北東"],["病気に強い体を作る食生活を実践することで、溢れるばかりの元気が湧いてきます。","白",6,"🚲️","南"],["射的で見事に的を倒す達成感が、あなたに自信と強い実行力を与えます。","黄",3,"🚅","東南"],["のんびりとした釣りで自然と一体になる感覚が、心の平穏を取り戻してくれます。","黒",2,"🚲️","西"],["落ち着いたカフェで楽しむ香ばしいコーヒーが、疲れた頭をすっきりリフレッシュさせます。","赤",5,"🚗","北"],["新鮮な肉屋のお肉を使った夕食が、家族の団らんと笑顔をより一層深めます。","緑",1,"🚲️","東"],["滑り台がある公園でリフレッシュすることで、前向きな意欲がどんどん湧き出します。","青",4,"🚲️","南西"],["タクシーのスムーズな運行のおかげで、大切な約束の時間にゆとりを持って到着できます。","白",3,"🚗","北西"],["中学校時代の仲間との再会や連絡が、忘れかけていた友情の温もりを思い出させます。","黄",6,"🚲️","北東"],["公民館の最新展示を観覧することで、地域文化への深い理解と興味が芽生えます。","黒",1,"🚃","南"],["旅行先での美しい景色との巡り会いが、あなたの心に一生モノの感動を刻みます。","赤",4,"🚲️","東南"],["医者からの的確なワンポイントアドバイスにより、毎日のセルフケアが向上します。","緑",2,"🚗","西"],["ゆったり回る観覧車からの遠景が、広大な視点と大らかな心をもたらしてくれます。","青",5,"🚲️","北"],["タワーの最上階から見渡す街並みが、新しい挑戦への大きな勇気を授けてくれます。","白",3,"🚲️","東"],["温かいスナックでのアットホームな接客が、疲れた心をやさしく解きほぐします。","黄",1,"🚗","北西"],["便利なお店での心地よいショッピングが、欲しかった生活必需品との運命的な出会いを生みます。","黒",6,"🚲️","南西"],["深緑の森での空気浴が、ストレスを解消し心身の若返りを促してくれます。","赤",2,"🚲️","北東"],["駅からのアクセスが抜群な目的地への移動が、今日一日の効率を高めます。","緑",5,"🚗","南"],["生徒たちが元気に活動する姿に刺激を受け、自分のプロジェクトに情熱が注げます。","青",3,"🚲️","東南"],["スポーツセンターでの有酸素運動が、身体の隅々までフレッシュなエネルギーを巡らせます。","白",4,"🚃","西"],["素晴らしいリゾートでの宿泊体験が、心身を最高にリフレッシュさせてくれます。","黄",2,"🚲️","北"],["怪我を予防する運動前の準備運動習慣が、あなたの日常の安全と安心を高めます。","黒",1,"🚗","東"],["川の流れを漕ぎ進むカヌーの体験が、爽快な達成感と新しい目標を与えます。","赤",6,"🚲️","南西"],["宝くじのワクワク感を共有することで、家族や友人とのコミュニケーションが一段と深まります。","緑",3,"🚲️","北西"],["こだわりのおいしい定食屋でのランチが、午後への元気をフルチャージしてくれます。","青",5,"🚗","北東"],["スーパーマーケットでのポイント活用が、賢い買い物としての満足感を高めます。","白",1,"🚲️","南"],["広大な公園の広場で深呼吸を繰り返すことで、心身のエネルギーが見事になじみます。","黄",4,"🚲️","東南"],["乗車した電車の快適なスピード感が、目的地への到着を心地よく後押しします。","黒",2,"🚗","西"],["幼稚園での可愛い創作物を見て、豊かな感性と想像力が刺激される一日です。","赤",5,"🚲️","北"],["役所の迅速な窓口対応のおかげで、スムーズに一日を有効活用できます。","緑",1,"🚅","東"],["素敵なホテルでの上質な朝食が、優雅で最高の一日のスタートを約束します。","青",6,"🚲️","北西"],["病院での親切な看護師さんとの対話が、健やかな日常への安心感をもたらします。","白",3,"🚗","南西"],["競艇のダイナミックなレースが、日頃のモヤモヤを吹き飛ばす最高の興奮をもたらします。","黄",2,"🚲️","北東"],["パチンコのアミューズメント施設で遊ぶことで、心地よい気分転換が得られます。","黒",4,"🚃","南"],["お洒落なカフェでの美味しいスイーツが、頑張る自分への最高のご褒美になります。","赤",1,"🚲️","東南"],["新鮮なお肉が並ぶ肉屋での買い物が、今夜の夕食を格別な御馳走へと仕立てます。","緑",6,"🚗","西"],["公園の噴水の前で過ごす時間が、清涼感とクリアな思考を与えてくれます。","青",3,"🚲️","北"],["バスの車窓から新しいお店を見つけるなど、小さな発見が嬉しい一日になります。","白",5,"🚲️","東"],["小学校の授業のような集中力を発揮し、懸案事項をクリアに解決できます。","黄",2,"🚗","南西"],["市民広場での賑やかなイベントが、活気と前向きな刺激をプラスしてくれます。","黒",4,"🚲️","北西"],["風情のある旅館での露天風呂が、体の深部まで温めて至福のリラックスを届けます。","赤",3,"🚲️","北東"],["予防医療の知識を深めることで、自分と家族の健康を守る強い安心が得られます。","緑",1,"🚗","南"],["友人とのしりとりで笑い合うことで、日頃のストレスが綺麗に解消されます。","青",6,"🚲️","東南"],["お祭りの金魚すくいでコツを掴む楽しさが、小さな成功体験として心に残ります。","白",2,"🚃","西"],["居酒屋での美味しいおつまみと会話が、楽しい一日の締めくくりを演出します。","黄",5,"🚲️","北"],["新鮮な野菜が並ぶ八百屋での買い物が、食卓を色鮮やかに彩るインスピレーションになります。","黒",3,"🚗","東"],["公園のブランコに腰掛けて心地よい風を受けると、頭の中がすっきり整理されます。","赤",1,"🚲️","北西"],["駅からのアクセスがスムーズで、目的地へ快適に到着できる運気です。","緑",4,"🚲️","南西"],["中学校時代の恩師の教えを振り返り、今の課題を乗り越える大きなヒントが得られます。","青",2,"🚗","北東"],["静寂な図書館で読書に没頭する時間が、深い知識と心の豊かさをもたらします。","白",6,"🚲️","南"],["観光名所での素晴らしい体験が、あなたの視点を広げ心に新鮮な風を吹き込みます。","黄",3,"🚲️","東南"],["かかりつけのクリニックでの親身なアドバイスが、日々の生活習慣を整える力になります。","黒",5,"🚗","西"],["射的で見事に的を射抜く楽しさが、目標達成へのモチベーションを急上昇させます。","赤",2,"🚲️","北"],["静かな水辺での釣り体験が、心に穏やかさと静寂を取り戻させてくれます。","緑",1,"🚃","東"],["こだわりのラーメン屋で味わう熱々のスープが、体に染み渡る元気を与えてくれます。","青",4,"🚲️","南西"],["活気ある魚屋で厳選された旬の魚が、食卓の満足度を最高潮に高めます。","白",6,"🚗","北西"],["公園の滑り台を滑るような爽快感で、スムーズに物事を進められる一日です。","黄",1,"🚲️","北東"],["タクシーでの快適な移動時間が、心と体の双方をリフレッシュさせてくれます。","黒",3,"🚲️","南"],["給食の思い出のメニューを再現することで、心が温まる楽しい夕食になります。","赤",5,"🚗","東南"],["スポーツセンターでの新しいトレーニングが、筋肉と体幹を心地よく刺激します。","緑",2,"🚲️","西"],["ワクワクする旅行の計画が、毎日を前向きに頑張る大きな原動力となります。","青",4,"🚲️","北"],["医者の適切な診察により、体のメンテナンスに対する安心感が深まります。","白",1,"🚗","東"],["大きな観覧車からの美しいパノラマ夜景が、ロマンチックで感動的な時間を彩ります。","黄",6,"🚲️","北西"],["タワーの展望台からの爽快な眺めが、大きな夢を描くきっかけを与えてくれます。","黒",3,"🚃","南西"],["雰囲気のよいカフェでのゆったりした時間が、クリエイティブなアイデアを生み出します。","赤",2,"🚲️","北東"],["薬局で見つけた便利なヘルスケア用品が、日々の体調維持を快適にサポートします。","緑",5,"🚗","南"],["緑豊かな森の中を歩くことで、マイナスイオンをたっぷり浴びて身体が軽くなります。","青",1,"🚲️","東南"],["電車内での快適な過ごし方が、移動時間を充実したインプットの時間に変えます。","白",4,"🚲️","西"],["生徒たちの明るい挨拶にパワーをもらい、自分も笑顔で前進できる一日です。","黄",3,"🚗","北"],["公民館での地域活動への参加が、心地よい連帯感と新しい発見をもたらします。","黒",6,"🚲️","東"],["温泉旅館での贅沢な料理が、心とお腹を最高レベルで満たしてくれます。","赤",1,"🚲️","南西"],["怪我を防ぐための体ほぐしストレッチが、日頃の疲労を爽やかに解消します。","緑",4,"🚗","北西"],["カヌーで爽やかな水面を進む体験が、あなたの冒険心を心地よく刺激します。","青",2,"🚲️","北東"],["夢広がる宝くじをきっかけに、家族で将来の楽しみについて会話が弾みます。","白",5,"🚃","南"],["賑やかな居酒屋でのおいしい料理と酒が、日頃の頑張りを優しくねぎらってくれます。","黄",3,"🚲️","東南"],["肉屋の特売で美味しいお肉を手に入れ、活気ある楽しい食事会を開けます。","黒",1,"🚗","西"],["広々とした公園の広場で深呼吸することで、全身の細胞がリフレッシュされます。","赤",6,"🚲️","北"],["乗車したバスの丁寧な安全運転により、目的地までゆったり読書が楽しめます。","緑",2,"🚲️","東"],["幼稚園での微笑ましい一幕に遭遇し、温かく穏やかな心が一日中持続します。","青",5,"🚗","北西"],["役所の効率的な手続きのおかげで、予定の時間を有意義に活用できます。","白",3,"🚲️","南西"],["洗練されたホテルでの滞在が、あなたに上質な寛ぎとインスピレーションをもたらします。","黄",1,"🚁","北東"],["定期健診で自身の健康を再確認し、前向きに毎日を楽しむパワーが湧いてきます。","黒",4,"🚲️","南"],["競艇のレースを観戦して感じるスリルとスピード感が、最高の気分転換になります。","赤",2,"🚗","東南"],["パチンコのアミューズメント体験が、日常にほどよい刺激とワクワク感を届けてくれます。","緑",6,"🚲️","西"],["定食屋での栄養満点な日替わりランチが、午後からのやる気を最大に高めます。","青",3,"🚲️","北"],["便利なお店での心地よいショッピングが、暮らしを豊かにするアイテムを引き寄せます。","白",1,"🚗","東"],["公園の噴水の爽やかな音と跳ねる水滴が、日頃のストレスを綺麗に流し去ります。","黄",5,"🚲️","南西"],["ターミナル駅でのスムーズな乗り換えにより、次の予定へと快調に向かえます。","黒",2,"🚃","北西"],["授業での学びのように新しい知識を得ることで、自分の可能性がさらに広がります。","赤",4,"🚲️","北東"],["市民広場で開かれるイベントに参加することで、笑顔あふれる素敵な思い出が作れます。","緑",1,"🚗","南"],["見どころあふれる観光地を巡ることで、日常を忘れさせる感動と刺激が得られます。","青",6,"🚲️","東南"],["予防医療の知識を活用して健康的な一日を過ごすことで、活力と充実感が満ちてきます。","白",3,"🚲️","西"],["言葉を繋ぐしりとりゲームの楽しさが、頭の回転を滑らかにして笑顔を生みます。","黄",5,"🚗","北"],["金魚すくいで見せる集中力が、自分の中に潜む新たな才能を気づかせてくれます。","黒",2,"🚲️","東"],["こだわりのラーメン屋のスープを堪能し、お腹も心も大満足の一日となります。","赤",1,"🚲️","北西"],["近所の八百屋で出会う新鮮な野菜が、あなたの健康美を体の内側から支えます。","緑",4,"🚗","南西"],["公園のブランコに乗って見る青空が、悩みや迷いを爽やかに吹き飛ばしてくれます。","青",2,"🚲️","北東"],["タクシーでの快適な移動空間のおかげで、大切なプレゼンの準備が完璧に整います。","白",5,"🚃","南"],["小学校の懐かしい記憶を呼び起こすことで、純粋な情熱と前向なパワーが湧き出します。","黄",3,"🚲️","東南"],["図書館での静かな勉強時間が、あなたの専門性と理解力を大きく飛躍させます。","黒",6,"🚗","西"],["情緒溢れる旅館で過ごす特別な時間が、日頃の努力を最高のアプローチでねぎらいます。","赤",1,"🚲️","北"],["かかりつけ医のアドバイスのおかげで、不安なく健やかな毎日を送ることができます。","緑",4,"🚲️","東"],["射的ゲームでの素晴らしい命中体験が、あなたの直感と決断力を鋭く高めます。","青",3,"🚗","南西"],["静かな水辺での釣りの時間が、心に豊かな静寂とリフレッシュをもたらしてくれます。","白",2,"🚲️","北西"],["温かい雰囲気のカフェでいただく自家製スイーツが、心身を甘く優しく癒やします。","黄",6,"🚲️","北東"],["新鮮な魚介を仕入れる魚屋での買い物が、今夜の食卓を贅沢で豊かなものにします。","黒",1,"🚗","南"],["滑り台のある公園で無邪気に遊ぶ子供たちから、明日への元気と笑顔をもらえます。","赤",5,"🚲️","東南"],["電車の車窓に広がる景色の美しさが、移動の合間に感動と安らぎを届けてくれます。","緑",3,"🚃","西"],["中学校時代の恩師の言葉を思い出し、自分の目標をより高く持ち直すことができます。","青",2,"🚲️","北"],["スポーツセンターでのアクティブな運動により、心地よい汗と爽快感が得られます。","白",4,"🚗","東"],["旅先の観光スポットで感じる文化の深さが、あなたの感性と見識を磨いてくれます。","黄",1,"🚲️","北西"],["怪我を防ぐための体幹トレーニング習慣が、あなたの健康的な美しさを引き立てます。","黒",6,"🚲️","南西"],["大きな観覧車の頂上からの絶景が、視野を広げて新しい可能性を提示してくれます。","赤",2,"🚗","北東"],["高いタワーからの見渡しが、あなたの胸に大志と力強いやる気を満たしてくれます。","緑",5,"🚲️","南"],["アットホームな居酒屋で囲む美味しい料理が、心の絆と安らぎを届けてくれます。","青",1,"🎒","東南"],["スーパーマーケットでのポイントでお得なお買い物ができ、気分良く一日を過ごせます。","白",4,"🚲️","西"],["広々とした公園の森で聴く小鳥のさえずりが、疲れた心を心地よく癒やしてくれます。","黄",3,"🚗","北"],["バスの乗車中にゆったりと過ごすことで、頭の中を整理して新しい発想が得られます。","黒",2,"🚲️","東"],["授業での新たな学びや発見が、あなたのステップアップを強力に後押しします。","赤",6,"🚃","南西"],["役所での迅速な手続き完了によって、予定以上の自由時間を獲得できます。","緑",1,"🚲️","北西"],["素敵なホテルでの優雅なディナーが、日頃の努力に対する最高の報酬となります。","青",5,"🚗","北東"],["病院での親身な体調ケアを受けることで、明日からの生活に揺るぎない安心が生まれます。","白",3,"🚲️","南"],["カヌーに乗って川面を進む爽快な冒険が、あなたの心身を活発にリフレッシュします。","黄",2,"🚲️","東南"],["宝くじの購入を通じた未来へのワクワク感が、前向きな希望を運んできます。","黒",4,"🚗","西"],["レトロなスナックでの温かい会話が、一日の終わりに心地よい安心感を添えてくれます。","赤",1,"🚲️","北"],["肉屋でおすすめの特選肉を使った料理が、家族みんなの笑顔を最高に引き出します。","緑",6,"🚲️","東"],["公園の噴水の爽快な水音に包まれて、リフレッシュされたクリアな思考が手に入ります。","青",3,"🚗","南西"],["駅でのスムーズな乗り換えにより、時間を無駄にすることなく計画が進みます。","白",5,"🚲️","北西"],["生徒たちの元気な姿を目にすることで、明日への明るいエネルギーをもらえます。","黄",2,"🚃","北東"],["公民館の最新の文化活動に参加することで、新しい趣味や学びの扉が開きます。","黒",1,"🚲️","南"],["温泉旅館の温かいおもてなしと温泉が、日常の疲れを完全に癒やしてくれます。","赤",4,"🚗","東南"],["予防医療を取り入れた生活スタイルの確立が、あなたの健康美をずっと支えます。","緑",2,"🚲️","西"],["白熱した競艇の展開を観戦し、スリルと快感を存分に味わえる一日です。","青",5,"🚲️","北"],["パチンコのアミューズメント体験が、心地よい集中と楽しい気分転換を提供します。","白",3,"🚗","東"],["定食屋での家庭的な料理の味わいが、心身を奥深くから優しく満たします。","黄",1,"🚲️","北西"],["薬局で自分にぴったりのヘルスケア用品を見つけ、明日の活力が向上します。","黒",6,"🚲️","南西"],["公園のブランコに揺られるひとときが、心を自由に解放し新しい発想を授けます。","赤",3,"🚗","北東"],["乗車したバスの窓から見える澄み切った空が、晴れやかな幸運を予感させます。","緑",5,"🚲️","南"],["小学校の参観日を思い出すような温かい応援を受けて、自信を持って前進できます。","青",2,"🚃","東南"],["スポーツセンターでの爽快な運動が、身体のキレと最高のコンディションをもたらします。","白",4,"🚲️","西"],["旅先の観光スポットでの素敵な出会いが、あなたの見識と人生の彩りを豊かにします。","黄",1,"🚗","北"],["医者の丁寧な健康アドバイスに耳を傾けることで、毎日を健やかに過ごす確信が得られます。","黒",6,"🚲️","東"],["しりとり遊びで広がる笑顔の輪が、人間関係をより一層温かいものにしてくれます。","赤",3,"🚲️","南西"],["金魚すくいに真剣に向き合う経験が、物事に没頭する心地よさを教えてくれます。","緑",2,"🚗","北西"],["活気あふれるラーメン屋での一杯が、体に元気とパワーをみなぎらせてくれます。","青",5,"🚲️","北東"],["信頼できる魚屋でおすすめの魚を選び、最高の美味しさと栄養を堪能できます。","白",1,"🚲️","南"],["広大な公園の広場で青空を見上げる時間が、心に無限の開放感を与えてくれます。","黄",4,"🚗","東南"],["タクシーでの快適な移動が、あなたの一日を時間的なゆとりと優雅さで包みます。","黒",3,"🚲️","西"],["一年を通じて蓄積された学びと経験が、あなたの未来を最高に輝かせる黄金の鍵となります。","赤",2,"🚃","北"],["潤いのある日々を支えてくれた全ての人への感謝が、さらなる豊かな幸運を引き寄せます。","緑",6,"🚲️","東"]];
+</script>
+<script id="edogawa-v185">
+// ════════════════════════════════════════════════════════════
+//  ver1.4.0　🔯 江戸川双六占い館（今日の占い）
+//   ・「ひとりで遊ぶ」「前回の続きから遊ぶ」「マルチプレイ」で、その日はじめて双六の地図の画面を開いたら、1日1回出します
+//     自動では閉じません（「閉じる」で閉じます）
+//   ・ラッキーカラー：その背景色で遊ぶと、その日はステータスの増減が5倍（ボタンを押すと、その背景色にします）
+//   ・ラッキーナンバー：その日は、サイコロでその目が出るたびに ＋￥50,000（スナックバーでお知らせ）
+//   ・ラッキーアイテム：占いを閉じたときに1回だけ使えます
+//       🚲🚗🚃🚅 → 次のサイコロがその乗り物（1回限り）／🚁 → ヘリコプターで目的地まで直線のルート／🎒 → アイテムを1つ
+//   ・「取得情報」（グラフと「投稿◯件」のあいだ）からも見られます
+// ════════════════════════════════════════════════════════════
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  const g = EdoU.g, esc = EdoU.esc;
+  const URL_ = 'https://shulavan.github.io/data/fortune.json';
+  const SEEN_KEY = 'edogawa_fortune_seen_v1', GIFT_KEY = 'edogawa_fortune_gift_v1';
+  const COLORS = { '黒':['black','双六ブラック','#0f172a','#fff'], '青':['blue','海浜公園の海風','#4285F4','#fff'], '赤':['red','赤い江戸川金魚','#EA4335','#fff'],
+    '黄':['yellow','最勝寺目黄不動','#FBBC05','#1f2937'], '緑':['green','緑ある親水公園','#2F9E4C','#fff'], '白':['white','白い展望塔船','#ffffff','#0f172a'] };
+  const VEH = { '🚲':{ emoji:'🚲', name:'自転車', mult:2 }, '🚗':{ emoji:'🚗', name:'自動車', mult:3 }, '🚃':{ emoji:'🚃', name:'電車', mult:4 }, '🚅':{ emoji:'🚅', name:'新幹線', mult:5 } };
+  const ITEM_NAME = { '🚲':'自転車（次のサイコロ2倍）', '🚗':'自動車（次のサイコロ3倍）', '🚃':'電車（次のサイコロ4倍）', '🚅':'新幹線（次のサイコロ5倍）',
+    '🚁':'ヘリコプター（目的地まで直線のルート）', '🎒':'アイテムをひとつ' };
+  const strip = (s)=>String(s || '').replace(/️/g, '');
+  const pad = (n)=>String(n).padStart(2, '0');
+  const today = ()=>{ const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  // 2月29日をふくむ1年（366日）の何日目か
+  const dayIndex = (d)=>{ d = d || new Date(); const a = new Date(2024, d.getMonth(), d.getDate()), b = new Date(2024, 0, 1); return Math.round((a - b) / 86400000); };
+  let DATA = null;
+  const fromFallback = ()=>(window.__EDOGAWA_FORTUNE_FALLBACK || []).map((x, i)=>({ day:i + 1, fortune:x[0], lucky_color:x[1], lucky_number:x[2], lucky_item:x[3], lucky_direction:x[4] }));
+  async function load(){
+    if(DATA) return DATA;
+    try{
+      const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+      const t = setTimeout(()=>{ try{ ctl && ctl.abort(); }catch(e){} }, 6000);
+      const r = await fetch(URL_, { cache:'no-cache', signal: ctl ? ctl.signal : undefined }); clearTimeout(t);
+      const j = await r.json();
+      if(Array.isArray(j) && j.length >= 365) DATA = j;
+    }catch(e){}
+    if(!DATA) DATA = fromFallback();
+    return DATA;
+  }
+  function todayFortune(){
+    const list = DATA || fromFallback(); const i = dayIndex();
+    const f = list.find(x=>x && Number(x.day) === i + 1) || list[i] || list[0];
+    if(!f) return null;
+    const item = strip(f.lucky_item);
+    return { text:String(f.fortune || ''), color:String(f.lucky_color || '黒'), num:Math.max(1, Math.min(6, Number(f.lucky_number) || 1)),
+      item, dir:String(f.lucky_direction || '') };
+  }
+  app.todayFortune = ()=>todayFortune();
+  const myPlayer = ()=>{ const ps = app.players || []; const me = app.__edoHumanSeat ? app.__edoHumanSeat(ps) : null;
+    return me || ps.find(p=>p && !p.isCpu && !p.remoteHuman && (!app.myUid || p.uid === app.myUid)) || null; };
+  const isMine = (p)=>!!p && !p.isCpu && !p.remoteHuman && (!app.myUid || p.uid === app.myUid);
+  const seenToday = ()=>{ try{ return localStorage.getItem(SEEN_KEY) === today(); }catch(e){ return false; } };
+  const giftToday = ()=>{ try{ return localStorage.getItem(GIFT_KEY) === today(); }catch(e){ return false; } };
+  function snack(html){
+    const el = g('edogawa-stat-toast'); if(!el) return;
+    try{ clearTimeout(app._statToastTimer); }catch(e){}
+    el.innerHTML = html; el.classList.remove('hidden', 'opacity-0'); el.classList.add('opacity-100');
+    app._statToastTimer = setTimeout(()=>{ el.classList.add('opacity-0'); setTimeout(()=>el.classList.add('hidden'), 250); }, 3600);
+  }
+  const themeNow = ()=>{ try{ return app.themeKeyNow ? app.themeKeyNow() : (localStorage.getItem('edogawa_theme_v1') || 'black'); }catch(e){ return 'black'; } };
+  const luckyThemeOn = ()=>{ const f = todayFortune(); const c = f && COLORS[f.color]; return !!c && c[0] === themeNow(); };
+  app.fortuneLuckyThemeOn = luckyThemeOn;
+
+  // ── 画面 ──
+  function paint(viewOnly){
+    const f = todayFortune(); if(!f) return null;
+    let el = g('edo-fortune');
+    if(!el){ el = document.createElement('div'); el.id = 'edo-fortune'; document.body.appendChild(el); }
+    const d = new Date(); const c = COLORS[f.color] || COLORS['黒'];
+    const on = c[0] === themeNow();
+    const face = String.fromCodePoint(0x267F + f.num);
+    el.innerHTML = '<div class="ft-box" role="dialog" aria-label="江戸川双六占い館">' +
+      '<div class="ft-head"><div class="ft-title">🔯 江戸川双六占い館</div><div class="ft-date">' + (d.getMonth() + 1) + '月' + d.getDate() + '日の占い</div></div>' +
+      '<div class="ft-body"><div class="ft-text">' + esc(f.text) + '</div>' +
+        '<div class="ft-row"><div class="ft-k">ラッキーカラー</div><div class="ft-v"><button type="button" class="ft-color' + (on ? ' on' : '') + '" data-theme="' + c[0] + '" style="background:' + c[2] + ';color:' + c[3] + '">' +
+          '<span class="ck">✔</span>' + esc(f.color + '(' + c[1] + ')') + '</button><small>この背景色で遊ぶと、今日はステータスの増減が5倍！' + (on ? '' : '（ボタンを押すと、この背景色にします）') + '</small></div></div>' +
+        '<div class="ft-row"><div class="ft-k">ラッキーナンバー</div><div class="ft-v"><span class="ft-die">' + face + '</span><small style="display:inline-block">今日この目が出たら ＋￥50,000</small></div></div>' +
+        '<div class="ft-row"><div class="ft-k">ラッキーアイテム</div><div class="ft-v"><span class="ft-item">' + esc(f.item) + '</span>' + esc(ITEM_NAME[f.item] || '') +
+          '<small>' + (giftToday() ? '今日はもう使いました' : (viewOnly ? '' : '占いを閉じると、1回だけ使えます')) + '</small></div></div>' +
+        '<div class="ft-row"><div class="ft-k">ラッキー方角</div><div class="ft-v">🧭 ' + esc(f.dir) + '</div></div>' +
+      '</div><div class="ft-foot"><button type="button" class="ft-close">閉じる</button></div></div>';
+    el.classList.add('show');
+    el.querySelector('.ft-color').onclick = (ev)=>{
+      ev.stopPropagation();
+      try{ app.chooseTheme && app.chooseTheme(c[0]); }catch(e){}
+      const b = ev.currentTarget; b.classList.add('on');
+      const sm = b.parentNode.querySelector('small'); if(sm) sm.textContent = 'この背景色で遊ぶと、今日はステータスの増減が5倍！';
+    };
+    el.querySelector('.ft-close').onclick = ()=>close(viewOnly);
+    return el;
+  }
+  function close(viewOnly){
+    const el = g('edo-fortune'); if(el){ el.classList.remove('show'); el.innerHTML = ''; }
+    if(!viewOnly) giveLuckyItem();
+  }
+  app.openFortune = function(viewOnly){ load().then(()=>paint(!!viewOnly)); };
+
+  // ── ラッキーアイテム（占いを閉じたとき、1日1回だけ） ──
+  async function giveLuckyItem(){
+    if(giftToday()) return;
+    const f = todayFortune(), p = myPlayer(); if(!f || !p) return;
+    try{ localStorage.setItem(GIFT_KEY, today()); }catch(e){}
+    // マルチプレイで参加している人の双六は、ホストの端末で動いているため、ここでは使えません
+    if(app.isMultiplayer && !app.isHost){ snack('<span class="text-lg mr-1">🔯</span><strong>マルチプレイに参加しているあいだは、ラッキーアイテムは使えません</strong>'); return; }
+    try{
+      if(VEH[f.item]){
+        if(p.isFlying){ snack('<span class="text-lg mr-1">🔯</span><strong>飛んでいるので、ラッキーアイテムの' + f.item + 'は使いませんでした</strong>'); return; }
+        p.vehicle = Object.assign({}, VEH[f.item]);
+        try{ app.setPlayerIconState && app.setPlayerIconState(p, { bubbleText: f.item + ' ラッキーアイテム！' }); }catch(e){}
+        app.addLog && app.addLog('🔯 ' + p.name + '：ラッキーアイテム ' + f.item + ' ' + VEH[f.item].name + '（次のサイコロ' + VEH[f.item].mult + '倍・1回限り）');
+        snack('<span class="text-lg mr-1">' + f.item + '</span><strong>ラッキーアイテム！</strong><br>次のサイコロは ' + VEH[f.item].name + '（' + VEH[f.item].mult + '倍）です');
+      }else if(f.item === '🚁'){
+        if(p.isFlying){ snack('<span class="text-lg mr-1">🔯</span><strong>すでに飛んでいるので、ラッキーアイテムの🚁は使いませんでした</strong>'); return; }
+        // 目的地まで直線のルートを作りなおします
+        await app.grantFlight(p, '🚁');
+        app.addLog && app.addLog('🔯 ' + p.name + '：ラッキーアイテム 🚁 ヘリコプターで目的地まで直線のルートに');
+      }else if(f.item === '🎒'){
+        const I = window.__EDOGAWA_ITEMS; if(!I) return;
+        // いまあるアイテム（10種類）の中から、ランダムに1つ
+        const ids = ['block','bomb','star','reverse','magnet','sleep','rocket','taxi','present','treasure'];
+        const names = I.list || [];
+        const k = Math.floor(Math.random() * ids.length), id = ids[k];
+        const pid = (app.players || []).indexOf(p);
+        I.give(pid, id, 1);
+        const label = names[k] || '';
+        app.addLog && app.addLog('🔯 ' + p.name + '：ラッキーアイテム 🎒 で「' + label + '」を手に入れました');
+        snack('<span class="text-lg mr-1">🎒</span><strong>ラッキーアイテム！</strong><br>「' + esc(label) + '」を手に入れました' + (id === 'treasure' ? '' : '（アイテムのボタンから使えます）'));
+      }
+      try{ app.updateHUD && app.updateHUD(); app.saveGameState && app.saveGameState(); }catch(e){}
+    }catch(e){ console.warn('[v185] gift', e); }
+  }
+
+  // ── その日はじめて双六の地図を開いたら ──
+  function canShow(){
+    const lob = g('lobby-screen'); if(!lob || !lob.classList.contains('hidden')) return false;
+    if(!Array.isArray(app.players) || !app.players.length || !myPlayer()) return false;
+    if(!app.map || !(app.roadNetworkNodes || []).length) return false;
+    if(app.isRolling || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive || app._destIntroRunning || app.legTransitionInProgress) return false;
+    if(app.__edoMiniTesting || document.body.classList.contains('edo-visited-only')) return false;
+    const vis = (id)=>{ const e = g(id); return !!e && !e.classList.contains('hidden') && getComputedStyle(e).display !== 'none'; };
+    if(['event-modal','quiz-modal','boatrace-modal','goal-modal','regional-mini-overlay','pwa-install-modal'].some(vis)) return false;
+    if(document.querySelector('#edo-update-notice.show, #edo-theme-modal.show, #edo-mini-common.show, #edo-move-modal.show, #edo-fortune.show')) return false;
+    return true;
+  }
+  setInterval(()=>{
+    try{
+      if(seenToday() || !canShow()) return;
+      try{ localStorage.setItem(SEEN_KEY, today()); }catch(e){}
+      app.openFortune(false);
+    }catch(e){}
+  }, 1200);
+  load();
+
+  // ── ラッキーナンバー：サイコロでその目が出たら ＋￥50,000 ──
+  let lastDice = null;
+  try{
+    Object.defineProperty(app, 'lastDiceValueForSync', { configurable:true, enumerable:true,
+      get(){ return lastDice; },
+      set(v){
+        lastDice = v;
+        try{
+          const f = todayFortune(), cp = (app.players || [])[app.currentPlayerIdx];
+          if(!f || !cp || !isMine(cp) || Number(v) !== f.num || app.__edoMiniTesting) return;
+          if(app.isMultiplayer && !app.isHost) return;            // お金はホストの端末で動かします
+          cp.money = Math.round(Number(cp.money) || 0) + 50000;
+          app.addLog && app.addLog('🔯 ' + cp.name + '：ラッキーナンバー ' + String.fromCodePoint(0x267F + f.num) + ' が出た！ ＋￥50,000');
+          setTimeout(()=>snack('<span class="text-lg mr-1">' + String.fromCodePoint(0x267F + f.num) + '</span><strong>ラッキーナンバーが出た！</strong> ＋￥50,000'), 400);
+          try{ app.updateHUD && app.updateHUD(); }catch(e){}
+        }catch(e){}
+      } });
+  }catch(e){}
+
+  // ── ラッキーカラー：その背景色で遊ぶと、ステータスの増減が5倍 ──
+  const origStat = app.adjustPlayerStat;
+  if(typeof origStat === 'function') app.adjustPlayerStat = function(player, key, delta, showToast){
+    let d = Number(delta) || 0;
+    try{ if(d && isMine(player) && luckyThemeOn()) d = d * 5; }catch(e){}
+    return origStat.call(this, player, key, d, showToast);
+  };
+
+  // ── 「取得情報」：グラフと「投稿◯件」のあいだ ──
+  const origSheet = app.openGameMenuSheet;
+  if(typeof origSheet === 'function') app.openGameMenuSheet = function(){
+    const r = origSheet.apply(this, arguments);
+    try{
+      const box = g('edo-ms-items');
+      if(box && !box.querySelector('.edo-ms-fortune')){
+        const f = todayFortune();
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'edo-ms-item edo-ms-fortune';
+        b.innerHTML = '<span class="edo-ms-ic">🔯</span><span class="edo-ms-tx"><span class="edo-ms-t1">江戸川双六占い館</span>' +
+          '<span class="edo-ms-t2">' + esc(f ? '今日のラッキーカラー：' + f.color : '今日の占いを見る') + '</span></span><span class="edo-ms-ar">›</span>';
+        b.onclick = ()=>{ try{ app.closeGameMenuSheet(); }catch(e){} app.openFortune(true); };
+        box.insertBefore(b, box.firstChild);
+      }
+    }catch(e){}
+    return r;
+  };
+  window.__EDOGAWA_V185_TEST = { todayFortune, dayIndex, load, giveLuckyItem, luckyThemeOn, COLORS, setData:(d)=>{ DATA = d; } };
 })();
 </script>
 <script id="edogawa-v39-footer">
