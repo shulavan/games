@@ -33981,12 +33981,14 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
 </script>
 <style id="edogawa-v186-style">
   /* 【ver1.4.0】一度キャンセルした駅・親水緑道を、あとから使うボタン（「サイコロを振る」の真上） */
-  #edo-use-btns{ position:absolute; right:0; bottom:calc(100% + 8px); display:none; flex-direction:column; gap:6px; z-index:30; pointer-events:auto; }
+  #edo-use-btns{ position:absolute; right:0; bottom:calc(100% + 8px); display:none; box-sizing:border-box; flex-direction:column; gap:6px; z-index:30; pointer-events:auto; }
   #edo-use-btns.show{ display:flex; }
   #edo-use-btns button{ display:flex; align-items:center; justify-content:center; gap:4px; width:100%; white-space:nowrap;
     padding:8px 10px; border-radius:.75rem; font-weight:900; font-size:14px; color:#fff; line-height:1.2;
     box-shadow:0 4px 12px rgba(0,0,0,.35); }
   #edo-use-btns button:active{ transform:scale(.97); }
+  #edo-use-btns button:disabled{ filter:grayscale(.5) brightness(.8); }
+  #edo-use-btns button{ box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; }
   #edo-use-btns .u-st{ background:linear-gradient(90deg,#0369a1,#0284c7,#0369a1); border:2px solid #7dd3fc; }
   #edo-use-btns .u-gw{ background:linear-gradient(90deg,#15803d,#16a34a,#15803d); border:2px solid #86efac; }
   body.edo-visited-only #edo-use-btns, body.edo-remote-turn #edo-use-btns{ display:none !important; }
@@ -34001,6 +34003,9 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
   //     その駅・緑道の端のそばにいるあいだは、「サイコロを振る」の真上にボタンを出します
   //     （到着場所を地図で確かめてから、使えるようにするため）
   //   ・ボタンを出すだけです。「乗車しますか？」「移動しますか？」は、もう出しません
+  //   ・サイコロを振ったあとも、まだそのそばにいれば出したままにします（離れたら消します）
+  //     進んでいるあいだは押せません。ボタンの横幅は「サイコロを振る」と同じです
+  //   ・「アイテム」ボタンは、このボタンの上に出します
   //   ・押すと、駅は乗車の画面（行き先を選ぶ）、緑道は自転車ゲームを始めます
   // ════════════════════════════════════════════════════════════
   const g = (id)=>document.getElementById(id);
@@ -34055,7 +34060,7 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
     const b = ev.target.closest ? ev.target.closest('button[data-use]') : null; if(!b || busy) return;
     ev.stopPropagation();
     const cp = (app.players || [])[app.currentPlayerIdx];
-    if(!canShow(cp)){ refresh(); return; }
+    if(!canShow(cp) || app.isRolling){ refresh(); return; }
     if(b.dataset.use === 'st'){
       const st = stationFor(cp); if(!st){ refresh(); return; }
       busy = true; hide();
@@ -34076,12 +34081,32 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
       setTimeout(()=>{ busy = false; refresh(); }, 600);
     }
   }
-  function hide(){ const el = g('edo-use-btns'); if(el) el.classList.remove('show'); }
+  function hide(){
+    const el = g('edo-use-btns'); if(el) el.classList.remove('show');
+    const it = g('edo-item-btn'); if(it && it.style.translate){ it.style.translate = ''; it.style.zIndex = ''; }
+  }
+  // 「サイコロを振る」の真上に、同じ横幅で置きます。「アイテム」ボタンはその上へ上げます
+  function place(el){
+    const row = g('edo-footer-top-row'), roll = g('roll-dice-btn'); if(!row || !roll) return;
+    const R = row.getBoundingClientRect(), B = roll.getBoundingClientRect();
+    if(B.width <= 0) return;
+    el.style.width = Math.round(B.width) + 'px';
+    el.style.right = Math.round(R.right - B.right) + 'px';
+    el.style.bottom = Math.round(R.bottom - B.top + 6) + 'px';
+    const it = g('edo-item-btn');
+    if(it && getComputedStyle(it).display !== 'none'){
+      const I = it.getBoundingClientRect();
+      const top = B.top - 6 - el.getBoundingClientRect().height - 6;     // ボタンの上の端より、さらに上
+      const dy = Math.round((I.bottom - (parseFloat((it.style.translate || '0 0').split(' ')[1]) || 0)) - top);
+      it.style.translate = dy > 0 ? '0 ' + (-dy) + 'px' : '';
+      it.style.zIndex = '31';
+    }
+  }
   function canShow(cp){
     if(!cp || !isMine(cp) || cp.isFlying || cp.skipTurn) return false;
     if(!unlocked()) return false;
-    if(app.isRolling || app.miniGameActive || app.boatRaceActive || app.__bicycleActive) return false;
-    if(app.canActNow && !app.canActNow()) return false;
+    if(app.miniGameActive || app.boatRaceActive || app.__bicycleActive) return false;
+    if(!app.isRolling && app.canActNow && !app.canActNow()) return false;
     if(app.autoMode) return false;
     if(document.body.classList.contains('edo-visited-only') || document.body.classList.contains('edo-remote-turn')) return false;
     if(ASKS.some(shown)) return false;
@@ -34097,18 +34122,20 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
       const gw = canShow(cp) ? greenwayFor(cp) : null;
       if(!st && !gw) return hide();
       const el = box(); if(!el) return;
-      el.querySelector('.u-st').style.display = st ? '' : 'none';
-      el.querySelector('.u-gw').style.display = gw ? '' : 'none';
-      const stack = g('visited-roll-stack');
-      if(stack){ const w = Math.round(stack.getBoundingClientRect().width); if(w > 0) el.style.width = Math.max(w, 150) + 'px'; }
+      const bs = el.querySelector('.u-st'), bg = el.querySelector('.u-gw');
+      bs.style.display = st ? '' : 'none';
+      bg.style.display = gw ? '' : 'none';
+      bs.disabled = bg.disabled = !!app.isRolling;              // 進んでいるあいだは押せません
       el.classList.add('show');
+      place(el);
     }catch(e){}
   }
   const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
   if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); refresh(); return r; }; }
   const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
-  if(origRoll){ app.rollDice = function(){ hide(); return origRoll.apply(app, arguments); }; }
-  setInterval(refresh, 500);
+  if(origRoll){ app.rollDice = function(){ const r = origRoll.apply(app, arguments); refresh(); return r; }; }
+  setInterval(refresh, 400);
+  window.addEventListener('resize', ()=>setTimeout(refresh, 100));
   window.__EDOGAWA_V186_TEST = { refresh, stationFor, greenwayFor, canShow };
 })();
 </script>
