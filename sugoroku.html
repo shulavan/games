@@ -28197,6 +28197,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       return best;
     }catch(e){ return null; }
   }
+  // 【ver1.4.0】「🌳 緑道を利用する」ボタン（v186）から使います
+  app.__gw = { nearEnd, other, endId, endById, unlocked, enabled, lenKm };
   const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
   if(origLand){
     app.landOnSpot = function(player){
@@ -33975,6 +33977,139 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
     return r;
   };
   window.__EDOGAWA_V185_TEST = { todayFortune, dayIndex, load, giveLuckyItem, luckyThemeOn, COLORS, setData:(d)=>{ DATA = d; } };
+})();
+</script>
+<style id="edogawa-v186-style">
+  /* 【ver1.4.0】一度キャンセルした駅・親水緑道を、あとから使うボタン（「サイコロを振る」の真上） */
+  #edo-use-btns{ position:absolute; right:0; bottom:calc(100% + 8px); display:none; flex-direction:column; gap:6px; z-index:30; pointer-events:auto; }
+  #edo-use-btns.show{ display:flex; }
+  #edo-use-btns button{ display:flex; align-items:center; justify-content:center; gap:4px; width:100%; white-space:nowrap;
+    padding:8px 10px; border-radius:.75rem; font-weight:900; font-size:14px; color:#fff; line-height:1.2;
+    box-shadow:0 4px 12px rgba(0,0,0,.35); }
+  #edo-use-btns button:active{ transform:scale(.97); }
+  #edo-use-btns .u-st{ background:linear-gradient(90deg,#0369a1,#0284c7,#0369a1); border:2px solid #7dd3fc; }
+  #edo-use-btns .u-gw{ background:linear-gradient(90deg,#15803d,#16a34a,#15803d); border:2px solid #86efac; }
+  body.edo-visited-only #edo-use-btns, body.edo-remote-turn #edo-use-btns{ display:none !important; }
+</style>
+<script id="edogawa-v186">
+(function(){
+  'use strict';
+  const app = window.EdogawaSugoroku; if(!app) return;
+  // ════════════════════════════════════════════════════════════
+  //  ver1.4.0　「🚉 駅を利用する」「🌳 緑道を利用する」
+  //   ・駅の「乗車しますか？」・親水緑道の「移動しますか？」をキャンセルしたあとも、
+  //     その駅・緑道の端のそばにいるあいだは、「サイコロを振る」の真上にボタンを出します
+  //     （到着場所を地図で確かめてから、使えるようにするため）
+  //   ・ボタンを出すだけです。「乗車しますか？」「移動しますか？」は、もう出しません
+  //   ・押すと、駅は乗車の画面（行き先を選ぶ）、緑道は自転車ゲームを始めます
+  // ════════════════════════════════════════════════════════════
+  const g = (id)=>document.getElementById(id);
+  const NEAR_M = 240;
+  const ASKS = ['edo-board-ask','edo-pachi-ask','edo-fish-ask','edo-goshuin-ask','edo-gw-ask'];
+  const shown = (id)=>{ const e = g(id); if(!e || !e.isConnected) return false; if(e.classList.contains('show')) return true;
+    return e.innerHTML.trim() !== '' && getComputedStyle(e).display !== 'none' && !e.classList.contains('hidden'); };
+  const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid) &&
+    !(app._peer && typeof app._peer.isLocal === 'function' && !app._peer.isLocal(p));
+  const unlocked = ()=>{ try{ return app.__edoFirstGoalDone ? !!app.__edoFirstGoalDone() : (app.goaledPlaces || []).length > 0; }catch(e){ return true; } };
+  const curNode = (p)=>{ try{ return app.roadNetworkNodes && app.roadNetworkNodes[p.currentNodeIdx]; }catch(e){ return null; } };
+
+  // ── いまいる駅（キャンセルした駅だけ） ──
+  function stationFor(p){
+    try{
+      if(!p.railDeclined || p.pendingStation) return null;
+      if(app.railEnabled && !app.railEnabled()) return null;
+      const n = curNode(p); if(!n || !app.stationLinesAt) return null;
+      const at = app.stationLinesAt(n.lat, n.lng, NEAR_M);
+      if(!at || !at.lines || !at.lines.length || at.name !== p.railDeclined) return null;
+      // 目的地にいちばん近い駅は、乗車の案内と同じく出しません
+      const d = app.currentDestination;
+      if(d && Number.isFinite(+d.lat)){ const ds = app.stationLinesAt(+d.lat, +d.lng, 1e7); if(ds && ds.name === at.name) return null; }
+      const ST = app.RAIL_STATIONS || {};
+      return ST[at.name] ? { name: at.name, lat: ST[at.name].lat, lng: ST[at.name].lng } : null;
+    }catch(e){ return null; }
+  }
+  // ── いまいる親水緑道の端（キャンセルした端だけ） ──
+  function greenwayFor(p){
+    try{
+      const G = app.__gw; if(!G || !p.greenwayDeclined || p.pendingGreenway) return null;
+      if(!G.unlocked() || !G.enabled()) return null;
+      const hit = G.nearEnd(p); if(!hit) return null;
+      if(G.endId(hit.e) !== p.greenwayDeclined) return null;
+      const to = G.other(hit.e); return to ? { e: hit.e, to } : null;
+    }catch(e){ return null; }
+  }
+
+  function box(){
+    let el = g('edo-use-btns');
+    if(!el){
+      const row = g('edo-footer-top-row'); if(!row) return null;
+      el = document.createElement('div'); el.id = 'edo-use-btns';
+      el.innerHTML = '<button type="button" class="u-st" data-use="st">🚉 駅を利用する</button><button type="button" class="u-gw" data-use="gw">🌳 緑道を利用する</button>';
+      row.appendChild(el);
+      el.addEventListener('click', onClick);
+    }
+    return el;
+  }
+  let busy = false;
+  function onClick(ev){
+    const b = ev.target.closest ? ev.target.closest('button[data-use]') : null; if(!b || busy) return;
+    ev.stopPropagation();
+    const cp = (app.players || [])[app.currentPlayerIdx];
+    if(!canShow(cp)){ refresh(); return; }
+    if(b.dataset.use === 'st'){
+      const st = stationFor(cp); if(!st){ refresh(); return; }
+      busy = true; hide();
+      try{
+        cp.pendingStation = st;
+        app.boardTrainNow(cp);
+        // 乗車の画面で「やめる」を選んだときも、そのままボタンが出るようにします
+        cp.railDeclined = st.name;
+        if(cp.pendingStation) cp.pendingStation = null;
+      }catch(e){ console.warn('[v186]', e); }
+      setTimeout(()=>{ busy = false; refresh(); }, 600);
+    }else if(b.dataset.use === 'gw'){
+      const gw = greenwayFor(cp); if(!gw){ refresh(); return; }
+      // iPhone：傾きを使う許可は、ボタンを押したこの瞬間にしか聞けません
+      try{ const D = window.DeviceOrientationEvent; if(D && typeof D.requestPermission === 'function') D.requestPermission().catch(()=>{}); }catch(e){}
+      busy = true; hide();
+      try{ cp.pendingGreenway = null; app.startBicycleGame(cp, gw.e, gw.to); }catch(e){ console.warn('[v186]', e); }
+      setTimeout(()=>{ busy = false; refresh(); }, 600);
+    }
+  }
+  function hide(){ const el = g('edo-use-btns'); if(el) el.classList.remove('show'); }
+  function canShow(cp){
+    if(!cp || !isMine(cp) || cp.isFlying || cp.skipTurn) return false;
+    if(!unlocked()) return false;
+    if(app.isRolling || app.miniGameActive || app.boatRaceActive || app.__bicycleActive) return false;
+    if(app.canActNow && !app.canActNow()) return false;
+    if(app.autoMode) return false;
+    if(document.body.classList.contains('edo-visited-only') || document.body.classList.contains('edo-remote-turn')) return false;
+    if(ASKS.some(shown)) return false;
+    if(['edo-rail-modal','edo-gw-modal','edo-mini-common','edo-item-list'].some(id=>{ const e = g(id); return e && e.classList.contains('show'); })) return false;
+    const ov = g('regional-mini-overlay'); if(ov && !ov.classList.contains('hidden')) return false;
+    return true;
+  }
+  function refresh(){
+    try{
+      if(busy) return hide();
+      const cp = (app.players || [])[app.currentPlayerIdx];
+      const st = canShow(cp) ? stationFor(cp) : null;
+      const gw = canShow(cp) ? greenwayFor(cp) : null;
+      if(!st && !gw) return hide();
+      const el = box(); if(!el) return;
+      el.querySelector('.u-st').style.display = st ? '' : 'none';
+      el.querySelector('.u-gw').style.display = gw ? '' : 'none';
+      const stack = g('visited-roll-stack');
+      if(stack){ const w = Math.round(stack.getBoundingClientRect().width); if(w > 0) el.style.width = Math.max(w, 150) + 'px'; }
+      el.classList.add('show');
+    }catch(e){}
+  }
+  const origHUD = app.updateHUD ? app.updateHUD.bind(app) : null;
+  if(origHUD){ app.updateHUD = function(){ const r = origHUD.apply(app, arguments); refresh(); return r; }; }
+  const origRoll = app.rollDice ? app.rollDice.bind(app) : null;
+  if(origRoll){ app.rollDice = function(){ hide(); return origRoll.apply(app, arguments); }; }
+  setInterval(refresh, 500);
+  window.__EDOGAWA_V186_TEST = { refresh, stationFor, greenwayFor, canShow };
 })();
 </script>
 <script id="edogawa-v39-footer">
