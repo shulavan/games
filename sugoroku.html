@@ -24396,6 +24396,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   }
 
   const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
+  app.__pachi = { near: nearPachinko };          // 【ver1.4.0】「🎰 パチンコをする」ボタン（v186）から使います
 
   const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
   if(origLand){
@@ -25294,6 +25295,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       return best;
     }catch(e){ return null; }
   }
+  app.__fish = { near: nearSpot };               // 【ver1.4.0】「🎣 釣りを楽しむ」ボタン（v186）から使います
   // 止まったマスの近くに釣りスポットがあれば、次の自分の番に聞きます
   const origLandFish = app.landOnSpot ? app.landOnSpot.bind(app) : null;
   if(origLandFish){
@@ -26247,7 +26249,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   async function useItem(p, id, opts){
     opts = opts || {};
     const it = byId[id];
-    // 【ver1.4.1】✈️🚁で飛んでいるあいだは使えません（CPU・参加した人も同じ）
+    // 【ver1.4.0】✈️🚁で飛んでいるあいだは使えません（CPU・参加した人も同じ）
     if(p && p.isFlying){ if(!opts.cpu && p === human()) toast('✈️', '飛んでいるあいだは\nアイテムを使えません'); return { ok:false, flying:true }; }
     if(!p || !it || !take(p, id)) return { ok:false };
     app.__itemUsedKey = T() + '-' + app.currentPlayerIdx;
@@ -26502,7 +26504,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   //  サイコロの前：こもりうたの休み・CPUのアイテム使用
   // ════════════════════════════════════════════════════════════
   function pickCpuItem(p){
-    if(p && p.isFlying) return null;                   // 【ver1.4.1】飛んでいるあいだは使いません
+    if(p && p.isFlying) return null;                   // 【ver1.4.0】飛んでいるあいだは使いません
     const own = ITEMS.filter(it => countOf(p, it.id) > 0 && it.id !== 'sleep');
     if(!own.length) return null;
     const r = app.remainingSquares ? app.remainingSquares(p) : null;
@@ -26630,7 +26632,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   function canUseNow(p){
     const cp = (app.players || [])[app.currentPlayerIdx];
     if(!p || !cp || cp !== p || p.isCpu) return false;
-    if(p.isFlying) return false;                       // 【ver1.4.1】✈️🚁で飛んでいるあいだは使えません
+    if(p.isFlying) return false;                       // 【ver1.4.0】✈️🚁で飛んでいるあいだは使えません
     if(app.isRolling || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive) return false;
     if(app.__itemUsedKey === (T() + '-' + app.currentPlayerIdx)) return false;
     if(!app.map || !(app.roadNetworkNodes || []).length) return false;
@@ -27743,6 +27745,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const isMine = (p)=>!!p && !p.isCpu && (!app.myUid || p.uid === app.myUid);
   const myPlayer = ()=>(app.players || []).find(isMine) || null;
   function syncPlayer(){ const p = myPlayer(); if(p) p.goshuin = ST.stamps.map(x=>({ name:x.name, label:x.label })); }
+  app.__goshuin = { near: nearTemple, receive: (p, t)=>receive(p, t) };   // 【ver1.4.0】「📿 御朱印を頂く」ボタン（v186）から使います
 
   const origLand = app.landOnSpot ? app.landOnSpot.bind(app) : null;
   if(origLand){
@@ -31664,7 +31667,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       if(cp !== p || app.isRolling || app.miniGameActive || app.boatRaceActive || app.goalAmidaActive || app.__itemUsedKey === key){
         bus.to(from, { type:'notice', html:'🎒 いまはアイテムを使えません' }); return;
       }
-      if(p.isFlying){ bus.to(from, { type:'notice', html:'✈️ 飛んでいるあいだは、アイテムを使えません' }); return; }   // 【ver1.4.1】
+      if(p.isFlying){ bus.to(from, { type:'notice', html:'✈️ 飛んでいるあいだは、アイテムを使えません' }); return; }   // 【ver1.4.0】
       bus.touch();
       try{ await it.use(p.id, String(m.id || '')); }catch(e){ console.warn('[v175] item', e); }
       bus.kick();
@@ -33783,7 +33786,7 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
 //  ver1.4.0　🔯 江戸川双六占い館（今日の占い）
 //   ・「ひとりで遊ぶ」「前回の続きから遊ぶ」「マルチプレイ」で、その日はじめて双六の地図の画面を開いたら、1日1回出します
 //     自動では閉じません（「閉じる」で閉じます）
-//   ・ラッキーカラー：その背景色で遊ぶと、その日はステータスの増減が5倍（ボタンを押すと、その背景色にします）
+//   ・ラッキーカラー：その背景色で遊ぶと、その日はステータスの増減が2倍（ボタンを押すと、その背景色にします）
 //   ・ラッキーナンバー：その日は、サイコロでその目が出るたびに ＋￥50,000（スナックバーでお知らせ）
 //   ・ラッキーアイテム：占いを閉じたときに1回だけ使えます
 //       🚲🚗🚃🚅 → 次のサイコロがその乗り物（1回限り）／🚁 → ヘリコプターで目的地まで直線のルート／🎒 → アイテムを1つ
@@ -33951,11 +33954,11 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
       } });
   }catch(e){}
 
-  // ── ラッキーカラー：その背景色で遊ぶと、ステータスの増減が5倍 ──
+  // ── ラッキーカラー：その背景色で遊ぶと、ステータスの増減が2倍（ver1.4.0 で5倍→2倍） ──
   const origStat = app.adjustPlayerStat;
   if(typeof origStat === 'function') app.adjustPlayerStat = function(player, key, delta, showToast){
     let d = Number(delta) || 0;
-    try{ if(d && isMine(player) && luckyThemeOn()) d = d * 5; }catch(e){}
+    try{ if(d && isMine(player) && luckyThemeOn()) d = d * 2; }catch(e){}
     return origStat.call(this, player, key, d, showToast);
   };
 
@@ -33991,14 +33994,22 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
   #edo-use-btns button{ box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; }
   #edo-use-btns .u-st{ background:linear-gradient(90deg,#0369a1,#0284c7,#0369a1); border:2px solid #7dd3fc; }
   #edo-use-btns .u-gw{ background:linear-gradient(90deg,#15803d,#16a34a,#15803d); border:2px solid #86efac; }
+  #edo-use-btns .u-pa{ background:linear-gradient(90deg,#be123c,#e11d48,#be123c); border:2px solid #fda4af; }
+  #edo-use-btns .u-fi{ background:linear-gradient(90deg,#0e7490,#0891b2,#0e7490); border:2px solid #67e8f9; }
+  #edo-use-btns .u-go{ background:linear-gradient(90deg,#92400e,#b45309,#92400e); border:2px solid #fcd34d; }
   body.edo-visited-only #edo-use-btns, body.edo-remote-turn #edo-use-btns{ display:none !important; }
+  /* 【ver1.4.0】強制ミニゲームの「ミニゲームをとばす」（「✕」の左隣） */
+  .edo-mini-bar .edo-mini-skip{ display:none; height:32px; margin-right:8px; padding:0 12px; border-radius:11px; white-space:nowrap;
+    background:#1e293b; border:1px solid #f59e0b; color:#fcd34d; font-size:13px; font-weight:900; line-height:1; }
+  .edo-mini-bar .edo-mini-skip.show{ display:inline-flex; align-items:center; }
+  .edo-mini-bar .edo-mini-skip:active{ transform:scale(.96); }
 </style>
 <script id="edogawa-v186">
 (function(){
   'use strict';
   const app = window.EdogawaSugoroku; if(!app) return;
   // ════════════════════════════════════════════════════════════
-  //  ver1.4.0　「🚉 駅を利用する」「🌳 緑道を利用する」
+  //  ver1.4.0　「🚉 駅を利用する」「🌳 緑道を利用する」「🎰 パチンコをする」「🎣 釣りを楽しむ」「📿 御朱印を頂く」
   //   ・駅の「乗車しますか？」・親水緑道の「移動しますか？」をキャンセルしたあとも、
   //     その駅・緑道の端のそばにいるあいだは、「サイコロを振る」の真上にボタンを出します
   //     （到着場所を地図で確かめてから、使えるようにするため）
@@ -34033,6 +34044,19 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
       return ST[at.name] ? { name: at.name, lat: ST[at.name].lat, lng: ST[at.name].lng } : null;
     }catch(e){ return null; }
   }
+  // ── パチンコ・釣り・御朱印（「いいえ」を選んだ場所だけ） ──
+  function pachiFor(p){
+    try{ if(!p.pachiDeclined || p.pendingPachinko || !app.__pachi) return null;
+      const h = app.__pachi.near(p); return (h && h.place && h.place.name === p.pachiDeclined) ? h.place : null; }catch(e){ return null; }
+  }
+  function fishFor(p){
+    try{ if(!p.fishDeclined || p.pendingFishing || !app.__fish) return null;
+      const h = app.__fish.near(p); return (h && h.spot && h.spot.name === p.fishDeclined) ? h.spot : null; }catch(e){ return null; }
+  }
+  function goshuinFor(p){
+    try{ if(!p.goshuinDeclined || p.pendingGoshuin || !app.__goshuin) return null;
+      const h = app.__goshuin.near(p); return (h && h.t && h.t.name === p.goshuinDeclined) ? h.t : null; }catch(e){ return null; }
+  }
   // ── いまいる親水緑道の端（キャンセルした端だけ） ──
   function greenwayFor(p){
     try{
@@ -34049,7 +34073,9 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
     if(!el){
       const row = g('edo-footer-top-row'); if(!row) return null;
       el = document.createElement('div'); el.id = 'edo-use-btns';
-      el.innerHTML = '<button type="button" class="u-st" data-use="st">🚉 駅を利用する</button><button type="button" class="u-gw" data-use="gw">🌳 緑道を利用する</button>';
+      el.innerHTML = '<button type="button" class="u-st" data-use="st">🚉 駅を利用する</button><button type="button" class="u-gw" data-use="gw">🌳 緑道を利用する</button>' +
+        '<button type="button" class="u-pa" data-use="pa">🎰 パチンコをする</button><button type="button" class="u-fi" data-use="fi">🎣 釣りを楽しむ</button>' +
+        '<button type="button" class="u-go" data-use="go">📿 御朱印を頂く</button>';
       row.appendChild(el);
       el.addEventListener('click', onClick);
     }
@@ -34078,6 +34104,21 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
       try{ const D = window.DeviceOrientationEvent; if(D && typeof D.requestPermission === 'function') D.requestPermission().catch(()=>{}); }catch(e){}
       busy = true; hide();
       try{ cp.pendingGreenway = null; app.startBicycleGame(cp, gw.e, gw.to); }catch(e){ console.warn('[v186]', e); }
+      setTimeout(()=>{ busy = false; refresh(); }, 600);
+    }else if(b.dataset.use === 'pa'){
+      const pl = pachiFor(cp); if(!pl){ refresh(); return; }
+      busy = true; hide();
+      try{ cp.pendingPachinko = null; app.startPachinkoGame(cp, pl); }catch(e){ console.warn('[v186]', e); }
+      setTimeout(()=>{ busy = false; refresh(); }, 600);
+    }else if(b.dataset.use === 'fi'){
+      const sp = fishFor(cp); if(!sp){ refresh(); return; }
+      busy = true; hide();
+      try{ cp.pendingFishing = null; cp.pendingPachinko = null; app.startFishingGame(cp, sp); }catch(e){ console.warn('[v186]', e); }
+      setTimeout(()=>{ busy = false; refresh(); }, 600);
+    }else if(b.dataset.use === 'go'){
+      const t = goshuinFor(cp); if(!t){ refresh(); return; }
+      busy = true; hide();
+      try{ cp.pendingGoshuin = null; app.__goshuin.receive(cp, t); }catch(e){ console.warn('[v186]', e); }
       setTimeout(()=>{ busy = false; refresh(); }, 600);
     }
   }
@@ -34118,14 +34159,15 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
     try{
       if(busy) return hide();
       const cp = (app.players || [])[app.currentPlayerIdx];
-      const st = canShow(cp) ? stationFor(cp) : null;
-      const gw = canShow(cp) ? greenwayFor(cp) : null;
-      if(!st && !gw) return hide();
+      const ok = canShow(cp);
+      const on = { st: ok && !!stationFor(cp), gw: ok && !!greenwayFor(cp), pa: ok && !!pachiFor(cp), fi: ok && !!fishFor(cp), go: ok && !!goshuinFor(cp) };
+      if(!Object.values(on).some(Boolean)) return hide();
       const el = box(); if(!el) return;
-      const bs = el.querySelector('.u-st'), bg = el.querySelector('.u-gw');
-      bs.style.display = st ? '' : 'none';
-      bg.style.display = gw ? '' : 'none';
-      bs.disabled = bg.disabled = !!app.isRolling;              // 進んでいるあいだは押せません
+      Object.keys(on).forEach(k=>{
+        const b = el.querySelector('.u-' + k); if(!b) return;
+        b.style.display = on[k] ? '' : 'none';
+        b.disabled = !!app.isRolling;                          // 進んでいるあいだは押せません
+      });
       el.classList.add('show');
       place(el);
     }catch(e){}
@@ -34136,7 +34178,62 @@ window.__EDOGAWA_FORTUNE_FALLBACK =
   if(origRoll){ app.rollDice = function(){ const r = origRoll.apply(app, arguments); refresh(); return r; }; }
   setInterval(refresh, 400);
   window.addEventListener('resize', ()=>setTimeout(refresh, 100));
-  window.__EDOGAWA_V186_TEST = { refresh, stationFor, greenwayFor, canShow };
+
+  // ════════════════════════════════════════════════════════════
+  //  ver1.4.0　強制ミニゲームに「ミニゲームをとばす」（ミニゲームの枠の「✕」の左隣）
+  //   ・マスに止まって始まるミニゲームなど、自分で選んでいないミニゲームに出します
+  //   ・自分で選んだもの（🎰パチンコ・🎣釣り・🚴親水緑道・🚃電車に乗車）には出しません（「✕」はこれまでどおり）
+  //   ・押すと、そのミニゲームを遊ばずに終わります（賞金なし・結果モーダルなし）。番はそのまま進みます
+  // ════════════════════════════════════════════════════════════
+  let optIn = false, optSeen = false, optAt = 0;
+  ['startPachinkoGame','startFishingGame','startBicycleGame','startTrainRide'].forEach(k=>{
+    const o = app[k]; if(typeof o !== 'function') return;
+    app[k] = function(){ optIn = true; optSeen = false; optAt = Date.now(); return o.apply(this, arguments); };
+  });
+  const overlayOpen = ()=>{ const ov = g('regional-mini-overlay'); return !!(ov && !ov.classList.contains('hidden')); };
+  function forcedNow(){
+    if(!overlayOpen()) return false;
+    if(optIn || app.__pachinkoActive || app.__fishingActive || app.__bicycleActive) return false;
+    try{
+      const st = app.regionalMiniGame;
+      const pid = st && st.playerId != null ? st.playerId : app.activeMiniGamePlayerId;
+      const p = pid != null ? (app.players || []).find(x=>x && x.id === pid) : null;
+      if(p && p.isCpu) return false;
+      if(st && st.done) return false;                       // 結果が出たあとは出しません
+    }catch(e){}
+    return true;
+  }
+  function skipBtn(){
+    const bar = document.querySelector('#regional-mini-overlay .edo-mini-bar'); if(!bar) return null;
+    let b = bar.querySelector('.edo-mini-skip');
+    if(!b){
+      b = document.createElement('button'); b.type = 'button'; b.className = 'edo-mini-skip'; b.textContent = 'ミニゲームをとばす';
+      const x = bar.querySelector('.edo-mini-x');
+      bar.insertBefore(b, x || null);
+      b.addEventListener('click', ()=>{
+        if(!forcedNow()) return;
+        b.classList.remove('show');
+        try{ const cp = (app.players || [])[app.currentPlayerIdx]; app.addLog && app.addLog('⏭ ' + (cp ? cp.name + '：' : '') + 'ミニゲームをとばしました。'); }catch(e){}
+        app.__edoMiniQuit = true;                             // 「✕」と同じく、結果モーダルを出さずに終わります
+        try{ app.closeRegionalMiniGame && app.closeRegionalMiniGame(); }catch(e){ console.warn('[v186]', e); }
+      });
+    }
+    return b;
+  }
+  function tickSkip(){
+    try{
+      if(optIn){
+        if(overlayOpen()) optSeen = true;
+        else if(optSeen || Date.now() - optAt > 8000){ optIn = false; optSeen = false; }   // 閉じた・開かなかった
+      }
+      const b = skipBtn(); if(!b) return;
+      b.classList.toggle('show', forcedNow());
+    }catch(e){}
+  }
+  setInterval(tickSkip, 300);
+  const origOpenMini = app.openRegionalMiniGame ? app.openRegionalMiniGame.bind(app) : null;
+  if(origOpenMini){ app.openRegionalMiniGame = function(){ const r = origOpenMini.apply(app, arguments); setTimeout(tickSkip, 50); return r; }; }
+  window.__EDOGAWA_V186_TEST = { refresh, stationFor, greenwayFor, pachiFor, fishFor, goshuinFor, canShow, forcedNow, tickSkip };
 })();
 </script>
 <script id="edogawa-v39-footer">
