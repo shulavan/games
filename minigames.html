@@ -180,6 +180,63 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
     }
   }catch(e){}
 
+  // 【ver1.4.1】画質（sugoroku.html の設定「🖼️ 画質」）。古いスマホで3Dのミニゲームを軽くします
+  //   ・標準：解像度を最大1倍　・軽い：解像度0.75倍・影なし・ふちのなめらかさ（antialias）なし
+  //   ・自動のとき：1秒に28コマを下回り続けたら、遊んでいる途中でも解像度を下げます（最小0.6倍）
+  //   ・1秒ごとに、なめらかさ（fps）を親（sugoroku.html）に知らせます（自動の画質を決めるのに使います）
+  try{
+    var EQ = { lv:'high', auto:true };
+    try{ EQ = JSON.parse(localStorage.getItem('edogawa_quality_eff_v1') || 'null') || EQ; }catch(e){}
+    var EQ_CAP = EQ.lv === 'low' ? 0.75 : EQ.lv === 'mid' ? 1 : 99, EQ_LOW = EQ.lv === 'low';
+    if (EQ_LOW && window.HTMLCanvasElement){
+      var gcq = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function(t, o){ if (/webgl/i.test(String(t))) o = Object.assign({}, o || {}, { antialias:false }); return gcq.call(this, t, o); };
+    }
+    var eqPatch = function(r){
+      if (!r || r.__edoQ || typeof r.setPixelRatio !== 'function') return; r.__edoQ = true;
+      var sp = r.setPixelRatio.bind(r), want = r.getPixelRatio ? r.getPixelRatio() : 1, dyn = 99;
+      r.setPixelRatio = function(v){ want = Number(v) || 1; sp(Math.min(want, EQ_CAP, dyn)); };
+      r.setPixelRatio(want);
+      if (EQ_LOW){ try{ Object.defineProperty(r.shadowMap, 'enabled', { configurable:true, get:function(){ return false; }, set:function(){} }); }catch(e){} }
+      if (typeof r.render !== 'function') return;
+      var rd = r.render, fr = 0, t0 = (window.performance ? performance.now() : Date.now()), slow = 0;
+      r.render = function(){
+        fr++;
+        var t = window.performance ? performance.now() : Date.now();
+        if (t - t0 >= 1000){
+          var fps = Math.round(fr * 1000 / (t - t0)); fr = 0; t0 = t;
+          if (EQ.auto){
+            if (fps < 28){ slow++; if (slow >= 2 && r.getPixelRatio() > 0.65){ dyn = Math.max(0.6, r.getPixelRatio() - 0.25); sp(Math.min(want, EQ_CAP, dyn)); slow = 0; } }
+            else slow = 0;
+          }
+          try{ var c = r.domElement; parent.postMessage({ type:'EDOGAWA_PERF', game:game, fps:fps, pr:r.getPixelRatio(), lv:EQ.lv, w:c ? c.width : 0, h:c ? c.height : 0 }, '*'); }catch(e){}
+        }
+        return rd.apply(r, arguments);
+      };
+    };
+    var eqWrap = function(Orig){
+      if (typeof Orig !== 'function' || Orig.__edoQ) return Orig;
+      var R = function(p){ p = Object.assign({}, p || {}); if (EQ_LOW) p.antialias = false; var r = new Orig(p); eqPatch(r); return r; };
+      R.prototype = Orig.prototype; try{ Object.setPrototypeOf(R, Orig); }catch(e){} R.__edoQ = true;
+      return R;
+    };
+    if (!('THREE' in window)){
+      var eqNs;
+      Object.defineProperty(window, 'THREE', { configurable:true, enumerable:true,
+        get:function(){ return eqNs; },
+        set:function(v){
+          eqNs = v;
+          try{
+            if (v && typeof v === 'object'){
+              if (v.WebGLRenderer) v.WebGLRenderer = eqWrap(v.WebGLRenderer);
+              else { var real; Object.defineProperty(v, 'WebGLRenderer', { configurable:true, enumerable:true, get:function(){ return real; }, set:function(x){ real = eqWrap(x); } }); }
+            }
+          }catch(e){}
+        } });
+    }
+    window.__EDOGAWA_QUALITY = EQ;
+  }catch(e){}
+
   // 【ver1.2.3】マルチプレイ中は、3Dの画面（WebGL）も閲覧モードで映せるように、描いた絵を残しておきます
   try{
     var mpOn = false; try{ mpOn = parent !== window && typeof parent.__EDO_MP_ON === 'function' && !!parent.__EDO_MP_ON(); }catch(e){}
