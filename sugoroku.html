@@ -3120,7 +3120,9 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
     });
     const CPU_AVATAR_POOL = ["🐶", "🐱", "🐻", "🐼", "🦊", "🐰", "🐯", "🦁", "🐨", "🐵", "🐔", "🐧", "🐤", "🦉", "🦄", "🐷", "🐸", "🐙", "🐢", "🦜", "🦝", "🐺", "🦌", "🐘"];
     // 【ver1.3.7】ミニゲーム順位のCPUにも、双六と同じ名前・アイコンを使います（名前はゲームデータを読んだあとに入ります）
-    window.__EDOGAWA_CPU_POOL = { names: CPU_NAME_POOL, avatars: CPU_AVATAR_POOL };
+    // 【ver1.4.0】CPUごとの絵文字アイコン（sugoroku-data.json の cpuNames：{ name, cpuIcon }）。名前 → アイコン
+    const CPU_ICON_MAP = {};
+    window.__EDOGAWA_CPU_POOL = { names: CPU_NAME_POOL, avatars: CPU_AVATAR_POOL, icons: CPU_ICON_MAP };
 
     // --- SOUND ENGINE ---
     class SoundEngine {
@@ -4039,8 +4041,29 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         if(account){ account.territoryCount=0; this._userProfile=account; this.saveUserProfile?.(); }
         const pName = account?.nickname || document.getElementById("player-name-input")?.value || "プレイヤー1";
         localStorage.setItem("edogawa_sugoroku_nickname", pName);
-        const shuffledCpuNames = [...CPU_NAME_POOL].sort(() => Math.random() - 0.5);
+        // 【ver1.4.0】CPUの名前は、重ならないようにします（同じ名前のCPU・自分のニックネームと同じ名前は使いません）
+        const cpuNameSet = new Set(FIXED_CPUS.map(c => c.name).concat([String(pName).trim()]));
+        const shuffledCpuNames = [...new Set(CPU_NAME_POOL.map(n => String(n || '').trim()).filter(Boolean))]
+          .filter(n => !cpuNameSet.has(n)).sort(() => Math.random() - 0.5);
+        ['江戸川さん', '葛西さん', '小岩さん', '船堀さん', '瑞江さん', '篠崎さん'].forEach(n => {
+          if (shuffledCpuNames.length < 3 && !cpuNameSet.has(n) && !shuffledCpuNames.includes(n)) shuffledCpuNames.push(n);
+        });
         const shuffledCpuAvatars = [...CPU_AVATAR_POOL].sort(() => Math.random() - 0.5);
+        // 【ver1.4.0】CPUのアイコンは、名前ごとに決まった絵文字（cpuIcon）。なければ、これまでどおり動物の絵文字
+        //   同じ双六の中で同じアイコンにならないよう、アイコンが重なる名前はなるべく避けて選びます
+        {
+          const picked = [], usedIc = new Set();
+          shuffledCpuNames.forEach(n => { const ic = CPU_ICON_MAP[n]; if (picked.length < 3 && !(ic && usedIc.has(ic))) { picked.push(n); if (ic) usedIc.add(ic); } });
+          shuffledCpuNames.forEach(n => { if (picked.length < 3 && !picked.includes(n)) picked.push(n); });
+          shuffledCpuNames.splice(0, shuffledCpuNames.length, ...picked, ...shuffledCpuNames.filter(n => !picked.includes(n)));
+          const used = new Set(), animals = shuffledCpuAvatars.slice(), av = [];
+          for (let i = 0; i < 3; i++) {
+            let ic = CPU_ICON_MAP[shuffledCpuNames[i]];
+            if (!ic) ic = animals.find(x => !used.has(x)) || animals[i];
+            used.add(ic); av.push(ic);
+          }
+          av.forEach((x, i) => { shuffledCpuAvatars[i] = x; });
+        }
 
         this.players = [
           { id: 0, name: pName, avatar: (account?.avatarValue || this.selectedAvatar), color: PLAYER_COLORS[0], money: Number.isFinite(account?.money) ? account.money : INITIAL_MONEY, pos: 0, vehicle: null, skipTurn: false, wheelchairTurns: 0, forcedMoveCount: 0, isCpu: false,
@@ -4730,7 +4753,18 @@ body[data-edo-theme]:not([data-edo-theme="black"]) .text-slate-400, body[data-ed
         fill(SKY_BLUE_REASONS, t.skyBlueReasons);
         fill(ROLL_BUBBLES, t.rollBubbles);
         fill(LAND_BUBBLES, t.landBubbles);
-        fill(CPU_NAME_POOL, t.cpuNames);
+        // 【ver1.4.0】cpuNames は { "name": "…", "cpuIcon": "…" } の形（これまでの名前だけの形も使えます）
+        if (Array.isArray(t.cpuNames)) {
+          CPU_NAME_POOL.length = 0;
+          Object.keys(CPU_ICON_MAP).forEach(k => delete CPU_ICON_MAP[k]);
+          t.cpuNames.forEach(r => {
+            const n = String((r && typeof r === 'object') ? (r.name || '') : (r || '')).trim();
+            if (!n) return;
+            if (!CPU_NAME_POOL.includes(n)) CPU_NAME_POOL.push(n);
+            const ic = (r && typeof r === 'object') ? String(r.cpuIcon || '').trim() : '';
+            if (ic && ic.length <= 16) CPU_ICON_MAP[n] = ic;
+          });
+        }
 
         this.gameDataLoaded = true;
         this._facilityPoiCache = null;
@@ -29225,6 +29259,150 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   const sleep = EdoU.sleep;
   const now = EdoU.now;
 
+  // ════════════════════════════════════════════════════════════
+  //  【ver1.4.0】同じ家庭内Wi-Fiどうしで遊ぶ（🏠 同じWi-Fi）
+  //   ・同じWi-Fi（同じ回線）につないでいる端末は、インターネット側から見た住所（IPアドレス）が同じです
+  //     （IPv6 のときは、家ごとに同じ先頭64ビット）。STUN でその住所を調べ、ハッシュにして「家の目印」にします
+  //     ※ 住所そのものは送りません。目印（ハッシュ12文字）だけを使います
+  //   ・ホスト：ふだんの番号（0001〜）とは別に、「家の目印」の受け口を開きます
+  //   ・参加する人：トップページで同じ目印の双六をさがし、見つかればそちらへ先に参加をお願いします
+  //   ・つながったあとは、WebRTC が同じWi-Fiの中の道（端末どうしの直接通信）を先に選びます。
+  //     どの道でつながったかを調べて、知らせます（🏠 直接／🌐 直接／🔁 中継）
+  // ════════════════════════════════════════════════════════════
+  const HOME = { keys:null, at:0, busy:null, peers:[], opening:false };
+  function v6prefix(a){
+    a = String(a).split('%')[0].toLowerCase();
+    if(a.indexOf('::') >= 0){
+      const [l, r] = a.split('::'); const L = l ? l.split(':') : [], Rr = r ? r.split(':') : [];
+      a = L.concat(Array(Math.max(0, 8 - L.length - Rr.length)).fill('0'), Rr).join(':');
+    }
+    const p = a.split(':'); if(p.length < 4) return null;
+    if(/^fe8|^fc|^fd/.test(p[0])) return null;                     // リンクローカル・ULA は使いません
+    return p.slice(0, 4).map(x=>parseInt(x, 16).toString(16)).join(':');
+  }
+  async function sha12(t){
+    try{
+      const b = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('edogawa-home:' + t)));
+      return [...b].slice(0, 6).map(x=>x.toString(16).padStart(2, '0')).join('');
+    }catch(e){ return null; }
+  }
+  // STUN で、インターネット側から見た住所を調べます（3秒まで）
+  function publicAddrs(){
+    return new Promise((res)=>{
+      let pc = null; const out = new Set();
+      const fin = ()=>{ clearTimeout(tm); try{ pc && pc.close(); }catch(e){} res([...out]); };
+      const tm = setTimeout(fin, 3000);
+      try{
+        pc = new RTCPeerConnection({ iceServers: STUN });
+        pc.createDataChannel('home');
+        pc.onicecandidate = (ev)=>{
+          if(!ev.candidate){ fin(); return; }
+          const c = ev.candidate.candidate || '';
+          const m = c.match(/ typ (srflx|prflx) /); if(!m) return;
+          const f = c.split(' '); const addr = ev.candidate.address || f[4];
+          if(addr) out.add(addr);
+        };
+        pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(fin);
+      }catch(e){ fin(); }
+    });
+  }
+  async function homeKeys(){
+    if(Array.isArray(window.__EDOGAWA_TEST_HOME)) return (HOME.keys = window.__EDOGAWA_TEST_HOME.slice());   // テスト用
+    if(HOME.keys && now() - HOME.at < 10 * 60000) return HOME.keys;
+    if(HOME.busy) return HOME.busy;
+    HOME.busy = (async()=>{
+      try{
+        const addrs = await publicAddrs();
+        const v6 = [...new Set(addrs.filter(a=>a.indexOf(':') >= 0).map(v6prefix).filter(Boolean))];
+        const v4 = [...new Set(addrs.filter(a=>/^\d+\.\d+\.\d+\.\d+$/.test(a)))];
+        const keys = [];
+        for(const k of v6.slice(0, 1).map(x=>'6:' + x).concat(v4.slice(0, 1).map(x=>'4:' + x))){ const h = await sha12(k); if(h) keys.push(h); }
+        HOME.keys = keys; HOME.at = now();
+        return keys;
+      }catch(e){ return []; }
+      finally{ HOME.busy = null; }
+    })();
+    return HOME.busy;
+  }
+  const HOME_N = 3;
+  const homeId = (h, k)=>PREFIX + 'home-' + h + '-' + k;
+  // ホスト：家の目印の受け口を開きます（目印ごとに1つ）
+  async function openHome(){
+    if(HOME.opening || HOME.peers.length || R.role !== 'host') return;
+    HOME.opening = true;
+    try{
+      const keys = await homeKeys();
+      for(const h of keys){
+        for(let k = 1; k <= HOME_N; k++){
+          if(R.role !== 'host') return;
+          try{
+            const p = await openPeer(homeId(h, k));
+            p.on('connection', (conn)=>{
+              onMsg(conn, (d)=>{
+                if(!d || d.type !== 'homeProbe' || R.role !== 'host') return;
+                send(conn, { type:'homeAck', slot:R.slot, seats:freeSeats(), host:hostName(), dest:(app.currentDestination && app.currentDestination.name) || '' });
+                setTimeout(()=>{ try{ conn.close(); }catch(e){} }, 1500);
+              });
+            });
+            p.on('disconnected', ()=>{ setTimeout(()=>{ try{ if(!p.destroyed) p.reconnect(); }catch(e){} }, 2000); });
+            p.on('error', ()=>{});
+            HOME.peers.push(p);
+            break;
+          }catch(e){
+            if(e && e.type === 'unavailable-id') continue;           // 同じ家でほかの人もホスト中 → 次の番号
+            break;
+          }
+        }
+      }
+    }finally{ HOME.opening = false; }
+  }
+  function closeHome(){ HOME.peers.splice(0).forEach(p=>{ try{ p.destroy(); }catch(e){} }); }
+  // 参加する人：同じ家の双六をさがします
+  async function homeProbe(peer){
+    const keys = await homeKeys(); if(!keys.length) return [];
+    const ids = []; keys.forEach(h=>{ for(let k = 1; k <= HOME_N; k++) ids.push(homeId(h, k)); });
+    const res = await Promise.all(ids.map(id=>connectTo(peer, id, { type:'homeProbe' }, ['homeAck'], 4000).then(r=>{
+      try{ r.conn && r.conn.close(); }catch(e){}
+      return r.ok ? { slot:Number(r.msg.slot) || 0, seats:Number(r.msg.seats) || 0, host:r.msg.host || '', dest:r.msg.dest || '', home:true } : null;
+    })));
+    const seen = new Set();
+    return res.filter(r=>r && r.slot && !seen.has(r.slot) && seen.add(r.slot));
+  }
+  // つながった道を調べます：lan（同じWi-Fiの中で直接）／p2p（インターネット経由で直接）／relay（中継サーバー経由）
+  async function netType(conn){
+    try{
+      const pc = conn && conn.peerConnection; if(!pc || !pc.getStats) return null;
+      const st = await pc.getStats(); let pair = null; const by = {};
+      st.forEach(x=>{ by[x.id] = x; });
+      st.forEach(x=>{ if(x.type === 'transport' && x.selectedCandidatePairId) pair = by[x.selectedCandidatePairId]; });
+      if(!pair) st.forEach(x=>{ if(x.type === 'candidate-pair' && x.state === 'succeeded' && (x.nominated || x.selected) && !pair) pair = x; });
+      if(!pair) return null;
+      const L = by[pair.localCandidateId] || {}, Rm = by[pair.remoteCandidateId] || {};
+      const lt = L.candidateType, rt = Rm.candidateType;
+      if(lt === 'relay' || rt === 'relay') return 'relay';
+      if(lt === 'host' && rt === 'host') return 'lan';
+      return 'p2p';
+    }catch(e){ return null; }
+  }
+  const NET_TEXT = {
+    lan:'🏠 同じWi-Fiの中で、端末どうし直接つながりました',
+    p2p:'🌐 端末どうし直接つながりました',
+    relay:'🔁 中継サーバー経由でつながっています'
+  };
+  function netNotice(conn, home, who){
+    setTimeout(async ()=>{
+      let t = await netType(conn);
+      if(!t){ await sleep(2500); t = await netType(conn); }
+      if(!t) return;
+      if(t === 'p2p' && home) t = 'lan';                              // 同じ家の目印どうしで、中継なし＝家の中の道
+      conn.__net = t;
+      let html = NET_TEXT[t] + (who ? '（' + esc(who) + '）' : '');
+      if(t === 'relay' && home) html += '<br><span style="font-size:11px;opacity:.85">同じWi-Fiですが、Wi-Fiの設定（端末どうしの通信を止める「プライバシーセパレーター」など）で直接つながりませんでした</span>';
+      snack(html, 5200);
+      try{ app.addLog && app.addLog(NET_TEXT[t].replace(/<[^>]+>/g, '') + (who ? '（' + who + '）' : '')); }catch(e){}
+    }, 2500);
+  }
+
   const R = { role:'none', peer:null, slot:0, conns:new Map(), hostConn:null, uid:null, askQ:[], asking:false,
     turnKey:'', turnAt:0, lastSent:'', sentAt:0, ver:0, lastStateAt:0, hostUid:null, lastGs:null, migrating:false,
     claiming:false, log:[], serverDown:false, probe:{ at:0, rooms:[], busy:false }, joining:false, fallback:false, err:'',
@@ -29454,6 +29632,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     finally{ R.claiming = false; if(R.role === 'claim') R.role = 'none'; }
   }
   function stopHosting(){
+    closeHome();
     try{ R.conns.forEach(c=>{ try{ c.conn.close(); }catch(e){} }); }catch(e){}
     R.conns.clear();
     try{ R.peer && R.peer.destroy(); }catch(e){}
@@ -29506,7 +29685,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     let el = g('edo-join-ask');
     if(!el){ el = document.createElement('div'); el.id = 'edo-join-ask'; document.body.appendChild(el); }
     el.innerHTML = '<div class="ja-box"><div class="ja-row"><div class="ja-av">' + avatarHtml(it.d.avatar) + '</div>' +
-      '<div class="ja-t">この双六に<strong>' + esc(it.d.name) + '</strong>が参加希望しています</div></div>' +
+      '<div class="ja-t">この双六に<strong>' + esc(it.d.name) + '</strong>が参加希望しています' +
+        (sameHome(it.d) ? '<br><span style="font-size:12px;color:#86efac;font-weight:900">🏠 同じWi-Fiから</span>' : '') + '</div></div>' +
       '<div class="ja-bar"><i style="animation-duration:' + ASK_MS + 'ms"></i></div>' +
       '<div class="ja-btns"><button type="button" class="ja-ng">NGする</button><button type="button" class="ja-ok">OKする</button></div></div>';
     el.classList.add('show');
@@ -29525,6 +29705,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     el.querySelector('.ja-ok').onclick = (ev)=>{ ev.stopPropagation(); fin(true); };
     el.querySelector('.ja-ng').onclick = (ev)=>{ ev.stopPropagation(); fin(false); };
   }
+  function sameHome(d){ const mine = HOME.keys || []; return !!(d && Array.isArray(d.home) && d.home.some(h=>mine.indexOf(h) >= 0)); }
   function refreshIcon(p){
     try{ const m = app.playerMarkers && app.playerMarkers[p.id]; if(m && app.createPlayerIcon) m.setIcon(app.createPlayerIcon(p, '')); }catch(e){}
   }
@@ -29555,6 +29736,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     if(!back){
       try{ app.addLog && app.addLog('👥 ' + p.name + ' がマルチプレイで参加しました（CPUと交代）'); }catch(e){}
       snack(iconHtml(p.avatar) + '<strong>' + esc(p.name) + '</strong>が参加しました');
+      netNotice(conn, sameHome(d), p.name);
       broadcast({ type:'notice', html: iconHtml(p.avatar) + '<strong>' + esc(p.name) + '</strong>が参加しました' }, d.uid);
     }
     R.sentAt = 0;                                                  // すぐに盤面を送ります
@@ -29733,7 +29915,10 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     R.probe.busy = true;
     try{
       const slots = []; for(let n = 1; n <= PROBE_N; n++) slots.push(n);
-      R.probe.rooms = (await probe(slots)).filter(r=>r.seats > 0);
+      const [rooms, home] = await Promise.all([ probe(slots), getProbePeer().then(homeProbe).catch(()=>[]) ]);
+      R.probe.home = home.filter(r=>r.seats > 0);
+      const hs = new Set(R.probe.home.map(r=>r.slot));
+      R.probe.rooms = R.probe.home.concat(rooms.filter(r=>r.seats > 0 && !hs.has(r.slot)));
       R.probe.at = now(); R.serverDown = false;
     }catch(e){ R.serverDown = true; R.err = String(e && (e.type || e.message) || e); R.probe.rooms = []; }
     finally{ R.probe.busy = false; paintLobby(); }
@@ -29746,11 +29931,13 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     panel.classList.toggle('edo-mp-off', !on); panel.classList.toggle('edo-mp-live', !!live);
     if(on){ panel.removeAttribute('aria-disabled'); window.__EDOGAWA_MP_OFF = false; btn.disabled = false; btn.removeAttribute('tabindex'); }
     else{ panel.setAttribute('aria-disabled', 'true'); window.__EDOGAWA_MP_OFF = true; btn.disabled = true; btn.setAttribute('tabindex', '-1'); }
-    const lb = g('recruit-btn-label'); if(lb) lb.innerHTML = live ? '双六に<br>参加する' : (fb ? 'マルチ<br>プレイ' : '参加できる<br>双六なし');
+    const homeN = (R.probe.home || []).length;
+    panel.classList.toggle('edo-mp-home', homeN > 0);
+    const lb = g('recruit-btn-label'); if(lb) lb.innerHTML = homeN ? '同じWi-Fiの<br>双六に参加' : live ? '双六に<br>参加する' : (fb ? 'マルチ<br>プレイ' : '参加できる<br>双六なし');
     const badge = g('room-status-badge');
-    if(badge){ badge.textContent = live ? ('参加できる双六 ' + R.probe.rooms.length + '件') : (fb ? '通信方式を切りかえ' : '募集なし'); badge.className = 'edo-mp-tag'; if(live) badge.style.background = '#34d399'; else badge.style.background = ''; }
+    if(badge){ badge.textContent = homeN ? ('🏠 同じWi-Fiの双六 ' + homeN + '件') : live ? ('参加できる双六 ' + R.probe.rooms.length + '件') : (fb ? '通信方式を切りかえ' : '募集なし'); badge.className = 'edo-mp-tag'; if(live) badge.style.background = '#34d399'; else badge.style.background = ''; }
     const note = panel.querySelector('p');
-    if(note){ note.className = 'edo-mp-note'; note.textContent = live ? 'ほかの人の双六に、CPUと交代して参加できます'
+    if(note){ note.className = 'edo-mp-note'; note.textContent = homeN ? '同じWi-Fiで遊んでいる家族などの双六に、CPUと交代して参加できます' : live ? 'ほかの人の双六に、CPUと交代して参加できます'
       : (fb ? '直接つながらないため、これまでの方式（Firebase）で遊べます' : 'ひとりで遊んでいる人がいると、ここから参加できます'); }
   }
   /* 【ver1.3.0 整理】使っていない myStateKey を削除 */
@@ -29758,6 +29945,12 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
   async function startJoin(prefer){
     if(R.joining || R.role === 'guest') return;
     R.joining = true;
+    // 【ver1.4.0】同じWi-Fiの双六が見つかっていれば、そちらへ先に参加をお願いします
+    R.joinHome = false;
+    try{
+      if(!prefer && now() - R.probe.at < 25000 && (R.probe.home || []).length){ prefer = R.probe.home[0].slot; R.joinHome = true; }
+      else if(prefer && (R.probe.home || []).some(r=>r.slot === prefer)) R.joinHome = true;
+    }catch(e){}
     const t0 = now(); let cancelled = false;
     showWait('参加できる双六をさがしています', 'しばらくお待ちください…', JOIN_TOTAL_MS, 'キャンセル', ()=>{ cancelled = true; });
     try{
@@ -29769,10 +29962,11 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         return;
       }
       await makeMine();
+      try{ await homeKeys(); }catch(e){}
       const pf = profile();
       const attempt = async (n)=>{
         setWaitSub('双六 <b>' + pad(n) + '</b> に参加をお願いしています…<br>（ホストの返事を待っています）');
-        const r = await connectTo(peer, slotId(n), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar, photo:pf.photo }, ['joinOk', 'joinNg'],
+        const r = await connectTo(peer, slotId(n), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar, photo:pf.photo, home:HOME.keys || [] }, ['joinOk', 'joinNg'],
           Math.min(ASK_MS + 5000, Math.max(3000, JOIN_TOTAL_MS - (now() - (attempt.t1 || t0)))));
         R.log.push([now() % 1000000, 'join', n, r.ok ? r.msg.type : r.why]); if(R.log.length > 60) R.log.shift();
         if(cancelled){ try{ r.conn && r.conn.close(); }catch(e){} return 'cancel'; }
@@ -29793,7 +29987,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
         paint('ホストの人の画面に「参加希望」の確認が出ます。<br>ホストの人が双六の画面を開いていないときは、開くまで待ちます（最大3分）');
         while(!cancelled && !other && now() < until){
           tries++;
-          const r = await connectTo(peer, slotId(prefer), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar, photo:pf.photo }, ['joinOk', 'joinNg'],
+          const r = await connectTo(peer, slotId(prefer), { type:'join', uid:myUid(), name:pf.name, avatar:pf.avatar, photo:pf.photo, home:HOME.keys || [] }, ['joinOk', 'joinNg'],
             Math.max(3000, until - now()), 12000);
           R.log.push([now() % 1000000, 'join', prefer, r.ok ? r.msg.type : r.why]); if(R.log.length > 60) R.log.shift();
           if(cancelled || other){ try{ r.conn && r.conn.close(); }catch(e){} break; }
@@ -29945,6 +30139,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     conn.on('error', ()=>{ if(R.hostConn === conn) hostGone(); });
     try{ app.updateHUD && app.updateHUD(); }catch(e){}
     snack('👥 双六 <strong>' + pad(R.slot) + '</strong> に参加しました！');
+    netNotice(conn, !!R.joinHome, '');
     try{ app.addLog && app.addLog('👥 マルチプレイ（双六 ' + pad(R.slot) + '）に参加しました'); }catch(e){}
   }
   function applyExtra(gs){
@@ -30186,7 +30381,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
       ensureShareBtn();
       if(R.role === 'none' && !R.claiming && !R.joining && inGame() && !app.isMultiplayer && !R.serverDownUntil) claimSlot();
       if(R.role === 'host' && !inGame()) stopHosting();
-      if(R.role === 'host') hostTick();
+      if(R.role === 'host'){ hostTick(); HOME.peers = HOME.peers.filter(x=>!x.destroyed); if(!HOME.peers.length && !HOME.opening && R.peer && R.peer.open && now() - (HOME.tryAt || 0) > 30000){ HOME.tryAt = now(); openHome(); } }
+      else if(HOME.peers.length) closeHome();
       if(R.role === 'guest'){ guestTick(); if(!inGame()) leaveGuest(); }
       tryAutoJoin();
       const lob = g('lobby-screen');
@@ -30287,7 +30483,7 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     参加できる双六: R.probe.rooms, サーバー: R.serverDown ? '通信できない' : 'OK', エラー: R.err, uid: R.uid || null, 引き継ぎ中: R.migrating,
     プレイヤー: (app.players || []).map(p=>({ id:p.id, name:p.name, cpu:!!p.isCpu, remote:!!p.remoteHuman, uid:p.uid })) });
   // 単体テスト用（中の小さな関数を外から呼べるようにします）
-  window.__EDOGAWA_V174_TEST = { R, startJoin, lobbyProbe, share, shareUrl, hostGone, wakeHost,
+  window.__EDOGAWA_V174_TEST = { R, HOME, homeKeys, homeProbe, netType, v6prefix, startJoin, lobbyProbe, share, shareUrl, hostGone, wakeHost,
     spGate, loadOf, wireAv, resolveAv, okPhoto, afkWatch, fixedCpuFor, pickVals, foreignStart, foreignApply, foreignEnd, FR, PH, profile, myUid };
 })();
 </script>
@@ -33448,7 +33644,8 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     CPU_EXTRA.forEach(x=>{ if(names.length < 7 && !names.includes(x[0]) && !fixed.has(x[0])) names.push(x[0]); });
     let avs = Array.isArray(pool.avatars) && pool.avatars.length ? pool.avatars : CPU_EXTRA.map(x=>x[1]);
     avs = shuffle(avs, R);
-    return F.concat(names.map((n, i)=>({ name:n, avatar:avs[i % avs.length] })));
+    const icons = pool.icons || {};                                   // 【ver1.4.0】名前ごとの絵文字アイコン
+    return F.concat(names.map((n, i)=>({ name:n, avatar:icons[n] || avs[i % avs.length] })));
   }
   function rng(seed){ let h = 2166136261; for(const ch of String(seed)){ h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
     return ()=>{ h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -33460,7 +33657,9 @@ window.__EDOGAWA_GREENWAYS = [{"n":"上小岩親水緑道","k":"緑道","a":"江
     const def = DEF[k], R = rng(k + ':' + today() + ':' + humans.length);
     const base = humans.length ? humans.map(h=>Number(h.best) || 0).filter(v=>v > 0) : [];
     const pool = base.length ? base : [TYPICAL[k] || 10];
-    return cpuMembers(rng(k + ':names:' + today())).slice(0, need).map(c=>{
+    // 【ver1.4.0】順位表にいる人と同じ名前のCPUは出しません
+    const hn = new Set(humans.map(h=>String(h.name || '').trim()).filter(Boolean));
+    return cpuMembers(rng(k + ':names:' + today())).filter(c=>!hn.has(String(c.name).trim())).slice(0, need).map(c=>{
       const b = pool[Math.floor(R() * pool.length)];
       let v = b * (1 + (R() - 0.5) * 0.3);
       v = Math.max(def.kind === 'min' ? 1 : 0, cap(k, v));
