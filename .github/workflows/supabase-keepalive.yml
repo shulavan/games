@@ -3,6 +3,11 @@
 # 事前準備：リポジトリの Settings → Secrets and variables → Actions → New repository secret
 #   名前：SUPABASE_PUBLISHABLE_KEY　値：sb_publishable_…（sugoroku.html に入っているものと同じ公開用キー）
 #   ※ service_role キーは使わないでください
+#
+# 【2026-11 見直し】
+#   ・一時的な通信の失敗で「失敗」メールが届かないよう、最大3回（30秒あけて）試します
+#   ・失敗したときは、ログに原因の目安（キーの設定・一時停止 など）を出します
+#   ・ubuntu-latest の案内（Ubuntu 26 への移行）は、ただのお知らせです（動きには関係ありません）
 name: Supabase keepalive
 
 on:
@@ -13,14 +18,33 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: 訪問記録のテーブルを1件だけ読む
+      - name: データベースに軽く問い合わせる（最大3回）
         env:
-          KEY: ${{ secrets.sb_publishable_OYHGr5kwFfedoA2mH0oN3A_56Uv3Bfr }}
+          KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          BASE: https://iboywxukmqevlwyszbff.supabase.co/rest/v1
         run: |
-          code=$(curl -s -o /tmp/out.json -w '%{http_code}' \
-            "https://iboywxukmqevlwyszbff.supabase.co/rest/v1/visited_entries?select=*&limit=1" \
-            -H "apikey: ${KEY}")
-          echo "HTTP ${code}"
-          head -c 200 /tmp/out.json; echo
-          test "${code}" = "200"
+          if [ -z "${KEY}" ]; then
+            echo "::error::Secrets に SUPABASE_PUBLISHABLE_KEY がありません（Settings → Secrets and variables → Actions で登録してください）"
+            exit 1
+          fi
+          for i in 1 2 3; do
+            # 訪問記録（なければ順位表）を1件だけ読みます。どちらかが 200 ならOK
+            for t in visited_entries minigame_scores; do
+              code=$(curl -s -m 30 -o /tmp/out.json -w '%{http_code}' \
+                "${BASE}/${t}?select=*&limit=1" -H "apikey: ${KEY}" || true)
+              code=${code:-000}
+              echo "試行${i} ${t}: HTTP ${code}"
+              head -c 200 /tmp/out.json 2>/dev/null; echo
+              if [ "${code}" = "200" ]; then echo "OK"; exit 0; fi
+            done
+            sleep 30
+          done
+          case "${code}" in
+            401|403) echo "::error::キーが受けつけられませんでした（HTTP ${code}）。Supabase の Project Settings → API Keys の publishable キーと、GitHub の Secret が同じか確かめてください" ;;
+            000)     echo "::error::Supabase につながりませんでした。プロジェクトが一時停止（Paused）していないか、ダッシュボードで確かめてください" ;;
+            5*)      echo "::error::Supabase 側のエラーです（HTTP ${code}）。一時停止中・メンテナンス中の可能性があります。ダッシュボードで確かめてください" ;;
+            *)       echo "::error::問い合わせに失敗しました（HTTP ${code}）" ;;
+          esac
+          exit 1
