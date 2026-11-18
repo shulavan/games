@@ -214,9 +214,38 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
         return rd.apply(r, arguments);
       };
     };
+    var eqFailed = false;
+    var eqFail = function(why){
+      if (eqFailed) return; eqFailed = true;
+      try{ console.warn('[3D]', why); }catch(e){}
+      try{ parent.postMessage({ type:'EDOGAWA_MINIGAME_START_FAILED', game:game, reason:'webgl', detail:String(why || '') }, '*'); }catch(e){}
+    };
+    window.__edoWebglFail = eqFail;
+    // three.js が WebGL を作れなかったときのエラー（画面が真っ黒のまま）も拾います
+    window.addEventListener('error', function(ev){ var m = String((ev && (ev.message || (ev.error && ev.error.message))) || ''); if (/WebGL|webgl|creating WebGL context/.test(m)) eqFail(m); });
     var eqWrap = function(Orig){
       if (typeof Orig !== 'function' || Orig.__edoQ) return Orig;
-      var R = function(p){ p = Object.assign({}, p || {}); if (EQ_LOW) p.antialias = false; var r = new Orig(p); eqPatch(r); return r; };
+      // 【ver1.6.1】3Dの画面（WebGL）を作れない・とちゅうで失われた端末では、真っ黒のまま止まらないようにします
+      //   ① 作れなかったら、軽い設定（antialias なし・省電力の指定なし）でもう一度　② それでもだめ／失われて戻らないときは、親へ「開始できなかった」を知らせます
+      var R = function(p){
+        p = Object.assign({}, p || {}); if (EQ_LOW) p.antialias = false;
+        var r;
+        try { r = new Orig(p); }
+        catch (e1) {
+          try { r = new Orig(Object.assign({}, p, { antialias:false, powerPreference:'default', failIfMajorPerformanceCaveat:false })); }
+          catch (e2) { eqFail('WebGLを作れませんでした：' + ((e2 && e2.message) || e2)); throw e2; }
+        }
+        try {
+          var gl = r.getContext && r.getContext();
+          if (!gl || (gl.isContextLost && gl.isContextLost())) eqFail('WebGLの画面がありません');
+          var cv = r.domElement, lostT = null;
+          if (cv && cv.addEventListener){
+            cv.addEventListener('webglcontextlost', function(ev){ try{ ev.preventDefault(); }catch(x){} clearTimeout(lostT); lostT = setTimeout(function(){ eqFail('WebGLの画面が失われました'); }, 3000); }, false);
+            cv.addEventListener('webglcontextrestored', function(){ clearTimeout(lostT); }, false);
+          }
+        } catch (e3) {}
+        eqPatch(r); return r;
+      };
       R.prototype = Orig.prototype; try{ Object.setPrototypeOf(R, Orig); }catch(e){} R.__edoQ = true;
       return R;
     };
