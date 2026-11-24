@@ -204,7 +204,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
         '<div class="ft"><button type="button" id="b-reset">所持金と記録をリセット</button></div>';
       $('menu').style.display = 'block';
       $('b-all').onclick = function(){ full(); start((Number(S.idx) || 0) % list.length, true); };
-      [].forEach.call(document.querySelectorAll('.gb'), function(b){ b.onclick = function(){ full(); start(Number(b.getAttribute('data-i')), false); }; });
+      [].forEach.call(document.querySelectorAll('.gb[data-i]'), function(b){ b.onclick = function(){ full(); start(Number(b.getAttribute('data-i')), false); }; });
       if($('b-install')) $('b-install').onclick = function(){ openInstall(); };
       $('b-reset').onclick = function(){ if(!confirmBox()) return; S = { money:C.startMoney, total:0, best:{}, plays:{}, idx:0 }; save(S); menu(); };
     }
