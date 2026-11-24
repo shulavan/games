@@ -31,6 +31,8 @@
 <script>
 /* 【江戸川双六 ver1.1.21】読み込み中の画面も、選んだ背景色にします（黒い画面をはさまないため） */
 (function(){ try{
+  // 【ver1.6.2】ミニゲーム集（単体のメニューと、そこから遊ぶゲーム）は「双六ブラック」で統一します
+  var q0 = new URLSearchParams(location.search); if (!q0.get('game') || q0.get('solo') === '1') return;
   var k = localStorage.getItem('edogawa_theme_v1') || 'black';
   var c = { blue:['#4285F4','#ffffff'], red:['#EA4335','#ffffff'], yellow:['#FBBC05','#1f2937'], green:['#2F9E4C','#ffffff'], white:['#f1f5f9','#0f172a'] }[k];
   if(c){ var st = document.createElement('style');
@@ -72,30 +74,30 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
 (function(){
   'use strict';
   var GAMES = [
-    { k:'delivery', ic:'🛵', n:'江戸川出前ライダー', s:'バイクで出前を配達（むずかしめ）' },
-    { k:'bus',      ic:'🚌', n:'江戸川GoGoバス乗車', s:'お客さんをバスに乗せる（むずかしめ）' },
-    { k:'lunch',    ic:'🍱', n:'えどがわ給食当番',   s:'時間無制限でずっと配れる' },
-    { k:'mart',     ic:'🛒', n:'Edogawaマート',      s:'スーパーの日雇いバイト' },
-    { k:'toilet',   ic:'🚻', n:'公園トイレ脱出大作戦', s:'公園のトイレを探せ' },
-    { k:'hotel',    ic:'🏨', n:'江戸川ホテル物語',   s:'ホテルのおもてなし' },
+    { k:'delivery', ic:'🛵', n:'江戸川出前ライダー', s:'上級：出前を配達' },
+    { k:'bus',      ic:'🚌', n:'江戸川GoGoバス乗車', s:'上級：乗客を乗せる' },
+    { k:'lunch',    ic:'🍱', n:'えどがわ給食当番',   s:'無制限：給食を配る' },
+    { k:'mart',     ic:'🛒', n:'Edogawaマート',      s:'スーパーでバイト' },
+    { k:'toilet',   ic:'🚻', n:'公園トイレ脱出大作戦', s:'トイレから脱出' },
+    { k:'hotel',    ic:'🏨', n:'江戸川ホテル物語',   s:'お客様をおもてなし' },
     { k:'clinic',   ic:'🏥', n:'江戸川診療所',       s:'患者さんを診察' },
     { k:'hide',     ic:'🕵️', n:'新庁舎かくれんぼ',   s:'区長を見つけよう' },
-    { k:'kingyo',   ic:'🐟', n:'江戸川金魚すくい',   s:'ポイで金魚をすくう' },
+    { k:'kingyo',   ic:'🐟', n:'江戸川金魚すくい',   s:'ポイで金魚すくい' },
     { k:'kanken',   ic:'✍️', n:'いきなり漢字書き取り', s:'漢字を書いて採点' },
     { k:'nuts',     ic:'⚾️', n:'ガキんちょ木の実ドロボー', s:'木の実をキャッチ' },
-    { k:'archery',  ic:'🏹', n:'ガキんちょ果実射撃', s:'果実をねらって射る' },
+    { k:'archery',  ic:'🏹', n:'ガキんちょ果実射撃', s:'果実をねらい射つ' },
     { k:'canoe',    ic:'🚣', n:'新左近川カヌー',     s:'カヌーでレース' },
-    { k:'wheel',    ic:'🎡', n:'ダイヤと花の大観覧車', s:'観覧車をタイミングよく' },
+    { k:'wheel',    ic:'🎡', n:'ダイヤと花の大観覧車', s:'タイミングで止める' },
     { k:'tower',    ic:'🏗', n:'増築船堀タワー',     s:'タワーを高く積む' },
-    { k:'bowling',  ic:'🎳', n:'江戸川ボーリング部', s:'3Dボーリング' },
-    { k:'plane',    ic:'✈️', n:'江戸川飛行隊',       s:'3Dフライト' },
+    { k:'bowling',  ic:'🎳', n:'江戸川ボーリング部', s:'3Dでストライク' },
+    { k:'plane',    ic:'✈️', n:'江戸川飛行隊',       s:'3Dで空を飛ぶ' },
     { k:'train',    ic:'🚃', n:'電車シミュレーター', s:'東西線 西葛西→葛西', q:'&line=' + encodeURIComponent('東西線') + '&from=' + encodeURIComponent('西葛西') + '&to=' + encodeURIComponent('葛西') },
-    { k:'bicycle',  ic:'🚴', n:'爆走！親水緑道SeSeラギー', s:'自転車で緑道を爆走' },
+    { k:'bicycle',  ic:'🚴', n:'爆走！親水緑道SeSeラギー', s:'緑道を自転車で爆走' },
     { k:'fishing',  ic:'🎣', n:'えどがわ釣りスポット', s:'魚を釣りあげる' },
-    { k:'fight',    ic:'🥊', n:'江戸川街道 闘魂ロード', s:'街道で勝負' },
-    { k:'shiritori',ic:'🔤', n:'ガキんちょしりとり', s:'しりとりで対決' },
-    { k:'pachinko', ic:'🎰', n:'CR EDOGAWA フィーバー', s:'パチンコ' },
-    { k:'news',     ic:'📺', n:'速報 江戸川ニュース', s:'ニュースを読み上げる（マイク）' }
+    { k:'fight',    ic:'🥊', n:'江戸川街道 闘魂ロード', s:'街道で格闘バトル' },
+    { k:'shiritori',ic:'🔤', n:'ガキんちょしりとり', s:'CPUとしりとり' },
+    { k:'pachinko', ic:'🎰', n:'CR EDOGAWA フィーバー', s:'パチンコで大当たり' },
+    { k:'news',     ic:'📺', n:'速報 江戸川ニュース', s:'ニュースを音読' }
   ];
   var START_IDS = { nuts:['start-modal'], archery:['uiOverlay'], delivery:['start-modal'], kanken:['start-modal'], plane:['modal-overlay'], mart:['start-modal'], clinic:['start-modal'],
     bus:['modal-intro'], toilet:['start-modal'], lunch:['start-modal'], hotel:['start-modal'], kingyo:['game-start-overlay','start-modal'], tower:['start-modal'], wheel:['start-modal'], canoe:['start-modal'] };
@@ -108,7 +110,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
 
   window.__EDOGAWA_SOLO_SHELL = function(has){
     var list = GAMES.filter(function(g){ return has(g.k); });
-    var css = 'html,body{margin:0;height:100%;background:#0b1220;color:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;-webkit-text-size-adjust:100%}' +
+    var css = 'html,body{margin:0;height:100%;background:#0b1220 !important;color:#e2e8f0 !important;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN",sans-serif;-webkit-text-size-adjust:100%}' +
       '*{box-sizing:border-box}button{font-family:inherit}' +
       '#menu{max-width:560px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom))}' +
       '.hd{display:flex;align-items:center;gap:10px}.hd .lg{font-size:34px}.hd h1{margin:0;font-size:19px;font-weight:900;color:#fbbf24;line-height:1.3}.hd h1 small{display:block;font-size:11px;color:#94a3b8;font-weight:700}' +
@@ -116,9 +118,12 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       '.all{margin-top:12px;width:100%;border:0;border-radius:16px;padding:14px 12px;background:linear-gradient(180deg,#f59e0b,#d97706);color:#fff;font-size:17px;font-weight:900;box-shadow:0 4px 0 #92400e}' +
       '.all small{display:block;font-size:11px;font-weight:800;opacity:.9;margin-top:2px}' +
       '.grid{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}' +
-      '.gb{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;min-height:92px;padding:10px;border-radius:16px;border:1px solid #2b3b5e;background:linear-gradient(180deg,#16213a,#101a2f);color:#e2e8f0;cursor:pointer}' +
-      '.gb:active{transform:scale(.97)}.gb .ic{font-size:28px;line-height:1}.gb .n{font-size:13.5px;font-weight:900;line-height:1.3}.gb .s{font-size:10.5px;color:#94a3b8;font-weight:700;line-height:1.35}' +
-      '.gb .b{margin-top:auto;font-size:10.5px;color:#86efac;font-weight:800}.gb .no{position:absolute;right:8px;top:7px;font-size:10px;color:#64748b;font-weight:900}' +
+      '.gb{position:relative;display:flex;align-items:center;gap:8px;text-align:left;min-height:70px;padding:8px 8px 8px 9px;border-radius:16px;border:1px solid #2b3b5e;background:linear-gradient(180deg,#16213a,#101a2f);color:#e2e8f0;cursor:pointer;min-width:0}' +
+      '.gb:active{transform:scale(.97)}.gb .ic{flex:0 0 auto;font-size:30px;line-height:1;width:36px;text-align:center}' +
+      '.gb .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}' +
+      '.gb .n{font-size:13px;font-weight:900;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:12px}' +
+      '.gb .s{font-size:10.5px;color:#94a3b8;font-weight:700;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '.gb .b{font-size:10px;color:#86efac;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gb .no{position:absolute;right:7px;top:5px;font-size:9.5px;color:#64748b;font-weight:900}' +
       '.ft{margin-top:16px;display:flex;justify-content:center}.ft button{background:none;border:1px solid #334155;color:#94a3b8;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:800}' +
       '#play{position:fixed;inset:0;display:none;background:#0b1220;z-index:10}#play.show{display:block}#play iframe{position:absolute;left:0;right:0;bottom:0;top:calc(40px + env(safe-area-inset-top));width:100%;height:calc(100% - 40px - env(safe-area-inset-top));border:0;background:#020617}' +
       '#bar{position:fixed;left:0;right:0;top:0;height:calc(40px + env(safe-area-inset-top));z-index:20;display:none;align-items:center;gap:6px;padding:env(safe-area-inset-top) 8px 0;background:#0b1220;border-bottom:1px solid #1e293b}#bar.show{display:flex}' +
@@ -155,15 +160,41 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
         '<button type="button" class="all" id="b-all">▶ 全部つづけて遊ぶ<small>' + (nextI ? (nextI + 1) + '番目の「' + esc(list[nextI].n) + '」から（全' + list.length + 'ゲーム）' : '上から順に、終わったら次のゲームへ（全' + list.length + 'ゲーム）') + '</small></button>' +
         '<div class="grid">' + list.map(function(g, i){
           var b = S.best[g.k];
-          return '<button type="button" class="gb" data-i="' + i + '"><span class="no">' + (i + 1) + '</span><span class="ic">' + g.ic + '</span><span class="n">' + esc(g.n) + '</span><span class="s">' + esc(g.s) + '</span>' +
-            (b != null ? '<span class="b">ベスト ' + yen(b) + '・' + (S.plays[g.k] || 0) + '回</span>' : '') + '</button>';
+          return '<button type="button" class="gb" data-i="' + i + '"><span class="no">' + (i + 1) + '</span><span class="ic">' + g.ic + '</span><span class="tx"><span class="n">' + esc(g.n) + '</span><span class="s">' + esc(g.s) + '</span>' +
+            (b != null ? '<span class="b">ベスト ' + yen(b) + '・' + (S.plays[g.k] || 0) + '回</span>' : '') + '</span></button>';
         }).join('') + '</div>' +
         '<div class="ft"><button type="button" id="b-reset">所持金と記録をリセット</button></div>';
       $('menu').style.display = 'block';
-      $('b-all').onclick = function(){ start((Number(S.idx) || 0) % list.length, true); };
-      [].forEach.call(document.querySelectorAll('.gb'), function(b){ b.onclick = function(){ start(Number(b.getAttribute('data-i')), false); }; });
+      $('b-all').onclick = function(){ full(); start((Number(S.idx) || 0) % list.length, true); };
+      [].forEach.call(document.querySelectorAll('.gb'), function(b){ b.onclick = function(){ full(); start(Number(b.getAttribute('data-i')), false); }; });
       $('b-reset').onclick = function(){ if(!confirmBox()) return; S = { money:C.startMoney, total:0, best:{}, plays:{}, idx:0 }; save(S); menu(); };
     }
+    // 【ver1.6.2】ゲームのボタンを押したら、全画面にします（できないブラウザではそのまま）
+    function full(){
+      try{
+        var el = document.documentElement;
+        if(document.fullscreenElement || document.webkitFullscreenElement) return;
+        var f = el.requestFullscreen || el.webkitRequestFullscreen;
+        if(f){ var r = f.call(el, { navigationUI:'hide' }); if(r && r.catch) r.catch(function(){}); }
+      }catch(e){}
+    }
+    // 【ver1.6.2】すれ違い対戦（闘魂ロード・しりとり）の相手は、sugoroku-data.json の cpuNames からランダム
+    var CPUS = [{ name:'江戸ぴょん吉', icon:'🐸' }];
+    (function(){
+      var urls = ['https://shulavan.github.io/data/sugoroku-data.json', '../data/sugoroku-data.json', './sugoroku-data.json'];
+      (function next(i){
+        if(i >= urls.length) return;
+        try{
+          fetch(urls[i], { cache:'force-cache' }).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(d){
+            var a = d && d.texts && d.texts.cpuNames;
+            if(!Array.isArray(a) || !a.length) throw 0;
+            CPUS = a.map(function(x){ return typeof x === 'string' ? { name:x, icon:'🙂' } : { name:String(x.name || ''), icon:String(x.cpuIcon || '🙂') }; }).filter(function(x){ return x.name; });
+          }).catch(function(){ next(i + 1); });
+        }catch(e){ next(i + 1); }
+      })(0);
+    })();
+    function pickCpu(){ return CPUS[Math.floor(Math.random() * CPUS.length)] || { name:'あいて', icon:'🙂' }; }
+    window.__EDOGAWA_SOLO_CPUS = function(){ return CPUS; };
     var resetArm = 0;
     function confirmBox(){ var now = Date.now(); if(now - resetArm < 3000){ resetArm = 0; return true; } resetArm = now; toast('もう一度押すとリセットします'); return false; }
     var tt = null;
@@ -173,6 +204,11 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
     function sendPlayer(){
       post({ type:'EDOGAWA_SET_MONEY', money:S.money, playerName:'あなた', avatar:'🙂' });
       post({ type:'EDOGAWA_SET_PLAYER', playerName:'あなた', avatar:'🙂' });
+      if(cur && (cur.g.k === 'fight' || cur.g.k === 'shiritori')){
+        cur.opp = cur.opp || pickCpu();
+        if(cur.g.k === 'fight') post({ type:'EDOGAWA_FIGHT_NAMES', p1:'あなた', p2:cur.opp.name, mul:1 });
+        else post({ type:'EDOGAWA_SHIRITORI_SETUP', opp:{ name:cur.opp.name, icon:cur.opp.icon }, speech:true, me:'あなた' });
+      }
       if(cur && cur.g.k === 'canoe') post({ type:'EDOGAWA_SET_CANOE_PLAYERS', playerId:0, players:[{ id:0, name:'あなた', avatar:'🚣', isCpu:false, money:S.money }] });
     }
     function later(fn, ms){ var t = setTimeout(fn, ms); if(cur) cur.timers.push(t); return t; }
@@ -274,7 +310,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       if(t === 'EDOGAWA_MINIGAME_START_FAILED'){ var c2 = cur; toast('⚠️ ' + esc(c2.g.n) + ' を始められませんでした（この端末では動かないことがあります）', 3500); setTimeout(function(){ if(cur === c2) finish(true); }, 300); return; }
     });
     menu();
-    try{ window.__EDOGAWA_SOLO_STATE = function(){ return { cur:cur ? { k:cur.g.k, started:cur.started, delta:cur.delta, all:cur.all, i:cur.i } : null, S:S }; }; }catch(e){}
+    try{ window.__EDOGAWA_SOLO_STATE = function(){ return { cur:cur ? { k:cur.g.k, started:cur.started, delta:cur.delta, all:cur.all, i:cur.i, opp:cur.opp || null } : null, S:S }; }; }catch(e){}
   }
 })();
 </script>
@@ -521,7 +557,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
   // 【ver1.4.2】新しい絵文字を表示できない端末では、古くからある絵文字に置きかえて表示します（ゲームの頭に入れます）
   try{
     var EDO_EF = '<script id="edogawa-emoji-fix">' + "(function(){\n  // \u3010ver1.4.2\u3011\u65b0\u3057\u3044\u7d75\u6587\u5b57\u3092\u3001\u8868\u793a\u3067\u304d\u306a\u3044\u7aef\u672b\u3067\u3060\u3051\u3001\u53e4\u304f\u304b\u3089\u3042\u308b\u7d75\u6587\u5b57\u306b\u7f6e\u304d\u304b\u3048\u3066\u8868\u793a\u3057\u307e\u3059\u3002\n  //   \u30fbiOS 15 \u4ee5\u4e0a\uff08\u3068 Android \u306a\u3069\uff09\u304c\u5bfe\u8c61\u3002iOS 14 \u4ee5\u4e0b\u306f\u305d\u306e\u307e\u307e\u8868\u793a\u3057\u307e\u3059\uff08\u63a8\u5968\u74b0\u5883\u306e\u5916\uff09\n  //   \u30fb\u305d\u306e\u7aef\u672b\u304c\u8868\u793a\u3067\u304d\u308b\u304b\u306f\u3001\u7248\u3054\u3068\u306b\u4ee3\u8868\u306e\u7d75\u6587\u5b57\u30921\u56de\u63cf\u3044\u3066\u78ba\u304b\u3081\u307e\u3059\uff08\u8868\u793a\u3067\u304d\u308b\u7248\u306f\u7f6e\u304d\u304b\u3048\u307e\u305b\u3093\uff09\n  //   \u30fb\u753b\u9762\u306e\u6587\u5b57\uff08JSON\u304b\u3089\u8aad\u3093\u3060\u6587\u3082\u542b\u3080\uff09\u3068\u3001canvas \u306b\u63cf\u304f\u6587\u5b57\uff08fillText\uff09\u306e\u4e21\u65b9\u3092\u7f6e\u304d\u304b\u3048\u307e\u3059\n  if (window.__edoEmojiFixOn !== undefined) return;\n  window.__edoEmojiFixOn = false;\n  var T = {\"13.1\": {\"\\ud83d\\ude2e\\u200d\\ud83d\\udca8\": \"\\ud83d\\ude24\", \"\\ud83d\\ude36\\u200d\\ud83c\\udf2b\": \"\\ud83d\\ude36\", \"\\ud83d\\ude35\\u200d\\ud83d\\udcab\": \"\\ud83d\\ude35\", \"\\u2764\\u200d\\ud83d\\udd25\": \"\\ud83d\\udd25\", \"\\ud83e\\uddd4\\u200d\\u2642\": \"\\ud83e\\uddd4\", \"\\ud83e\\uddd4\\u200d\\u2640\": \"\\ud83e\\uddd4\", \"\\u2764\\u200d\\ud83e\\ude79\": \"\\u2764\\ufe0f\"}, \"14\": {\"\\ud83e\\uded8\": \"\\ud83e\\udd5c\", \"\\ud83e\\udee6\": \"\\ud83d\\udc44\", \"\\ud83e\\udee7\": \"\\ud83d\\udca7\", \"\\ud83e\\udeb8\": \"\\ud83d\\udc1a\", \"\\ud83e\\ude7c\": \"\\ud83e\\uddaf\", \"\\ud83e\\udee5\": \"\\ud83d\\ude36\", \"\\ud83e\\udeb9\": \"\\ud83d\\udc26\", \"\\ud83e\\udd79\": \"\\ud83e\\udd7a\", \"\\ud83e\\udee4\": \"\\ud83d\\ude15\", \"\\ud83e\\udee2\": \"\\ud83e\\udd2d\", \"\\ud83e\\udee3\": \"\\ud83d\\ude48\", \"\\ud83e\\udeac\": \"\\ud83e\\uddff\", \"\\ud83e\\udef0\": \"\\ud83d\\udc4c\", \"\\ud83e\\udef6\": \"\\ud83e\\udd32\", \"\\ud83d\\udff0\": \"\\uff1d\", \"\\ud83e\\udeaa\": \"\\ud83d\\udcb3\", \"\\ud83e\\udef5\": \"\\ud83d\\udc49\", \"\\ud83e\\uded9\": \"\\ud83c\\udffa\", \"\\ud83e\\udef2\": \"\\ud83e\\udd1a\", \"\\ud83e\\udeb7\": \"\\ud83c\\udf38\", \"\\ud83e\\udeab\": \"\\ud83d\\udd0b\", \"\\ud83e\\udee0\": \"\\ud83d\\ude13\", \"\\ud83e\\udea9\": \"\\ud83c\\udf89\", \"\\ud83e\\udeba\": \"\\ud83d\\udc23\", \"\\ud83e\\udef3\": \"\\ud83e\\udd1a\", \"\\ud83e\\udef4\": \"\\ud83e\\udd32\", \"\\ud83e\\udec5\": \"\\ud83e\\udd34\", \"\\ud83d\\udedd\": \"\\ud83c\\udfa2\", \"\\ud83e\\uded7\": \"\\ud83e\\udd64\", \"\\ud83e\\udec3\": \"\\ud83e\\udd30\", \"\\ud83e\\udec4\": \"\\ud83e\\udd30\", \"\\ud83e\\udef1\": \"\\ud83e\\udd1a\", \"\\ud83d\\udedf\": \"\\u2693\", \"\\ud83e\\udee1\": \"\\ud83d\\ude47\", \"\\ud83e\\uddcc\": \"\\ud83d\\udc79\", \"\\ud83d\\udede\": \"\\u2699\\ufe0f\", \"\\ud83e\\ude7b\": \"\\ud83e\\uddb4\"}, \"15\": {\"\\ud83d\\udc26\\u200d\\u2b1b\": \"\\ud83d\\udc26\", \"\\ud83e\\udecf\": \"\\ud83d\\udc34\", \"\\ud83e\\ude88\": \"\\ud83c\\udfb5\", \"\\ud83e\\udead\": \"\\ud83c\\udf90\", \"\\ud83e\\udeda\": \"\\ud83e\\udd54\", \"\\ud83e\\udebf\": \"\\ud83e\\udda2\", \"\\ud83e\\ude76\": \"\\ud83e\\udd0d\", \"\\ud83e\\udeae\": \"\\ud83d\\udc87\", \"\\ud83e\\udebb\": \"\\ud83c\\udf37\", \"\\ud83e\\udebc\": \"\\ud83d\\udc19\", \"\\ud83e\\udeaf\": \"\\ud83d\\udd31\", \"\\ud83e\\udef7\": \"\\ud83e\\udd1a\", \"\\ud83e\\ude75\": \"\\ud83d\\udc99\", \"\\ud83e\\ude87\": \"\\ud83e\\udd41\", \"\\ud83e\\udece\": \"\\ud83e\\udd8c\", \"\\ud83e\\udedb\": \"\\ud83e\\uded1\", \"\\ud83e\\ude77\": \"\\ud83d\\udc97\", \"\\ud83e\\udef8\": \"\\ud83e\\udd1a\", \"\\ud83e\\udee8\": \"\\ud83d\\ude35\", \"\\ud83e\\udebd\": \"\\ud83e\\udeb6\", \"\\ud83d\\udedc\": \"\\ud83d\\udcf6\"}, \"15.1\": {\"\\u26d3\\u200d\\ud83d\\udca5\": \"\\u26d3\\ufe0f\", \"\\ud83c\\udf44\\u200d\\ud83d\\udfeb\": \"\\ud83c\\udf44\", \"\\ud83e\\uddd1\\u200d\\ud83e\\uddd1\\u200d\\ud83e\\uddd2\\u200d\\ud83e\\uddd2\": \"\\ud83d\\udc6a\", \"\\ud83e\\uddd1\\u200d\\ud83e\\uddd1\\u200d\\ud83e\\uddd2\": \"\\ud83d\\udc6a\", \"\\ud83e\\uddd1\\u200d\\ud83e\\uddd2\\u200d\\ud83e\\uddd2\": \"\\ud83d\\udc6a\", \"\\ud83e\\uddd1\\u200d\\ud83e\\uddd2\": \"\\ud83d\\udc6a\", \"\\ud83d\\ude42\\u200d\\u2194\": \"\\ud83d\\ude42\", \"\\ud83d\\ude42\\u200d\\u2195\": \"\\ud83d\\ude42\", \"\\ud83c\\udf4b\\u200d\\ud83d\\udfe9\": \"\\ud83c\\udf4b\", \"\\ud83d\\udc26\\u200d\\ud83d\\udd25\": \"\\ud83e\\udd85\"}, \"16\": {\"\\ud83c\\udde8\\ud83c\\uddf6\": \"\\ud83c\\udff3\\ufe0f\", \"\\ud83e\\udee9\": \"\\ud83d\\ude2a\", \"\\ud83e\\udec6\": \"\\ud83d\\udc46\", \"\\ud83e\\ude89\": \"\\ud83c\\udfbb\", \"\\ud83e\\udebe\": \"\\ud83c\\udf33\", \"\\ud83e\\udedc\": \"\\ud83e\\udd55\", \"\\ud83e\\ude8f\": \"\\u26cf\\ufe0f\", \"\\ud83e\\udedf\": \"\\ud83d\\udca6\"}, \"17\": {\"\\ud83e\\uddd1\\u200d\\ud83e\\ude70\": \"\\ud83d\\udc83\", \"\\ud83e\\udeea\": \"\\ud83d\\ude16\", \"\\ud83e\\udeef\": \"\\ud83d\\udca5\", \"\\ud83e\\udec8\": \"\\ud83e\\udd8d\", \"\\ud83d\\uded8\": \"\\u26f0\\ufe0f\", \"\\ud83e\\udecd\": \"\\ud83d\\udc0b\", \"\\ud83e\\ude8e\": \"\\ud83d\\udcb0\", \"\\ud83e\\ude8a\": \"\\ud83c\\udfba\"}, \"18\": {\"\\ud83e\\udeeb\": \"\\ud83d\\ude2b\", \"\\ud83e\\ude8c\": \"\\u270f\\ufe0f\", \"\\ud83e\\udef9\": \"\\ud83d\\udc4d\", \"\\ud83e\\udefa\": \"\\ud83d\\udc4d\", \"\\ud83d\\uded9\": \"\\ud83d\\uddfc\", \"\\ud83e\\ude8b\": \"\\u2604\\ufe0f\", \"\\ud83e\\udecc\": \"\\ud83e\\udd8b\", \"\\ud83e\\ude8d\": \"\\ud83c\\udfa3\", \"\\ud83e\\udedd\": \"\\ud83e\\udd52\"}}, REP = {\"13.1\": \"\\ud83d\\ude2e\\u200d\\ud83d\\udca8\", \"14\": \"\\ud83e\\udee0\", \"15\": \"\\ud83e\\udebc\", \"15.1\": \"\\ud83c\\udf4b\\u200d\\ud83d\\udfe9\", \"16\": \"\\ud83e\\udee9\", \"17\": \"\\ud83e\\udecd\", \"18\": \"\\ud83e\\udeeb\"};\n  try{\n    var ua = navigator.userAgent || '', m = ua.match(/\\b(?:iPhone|iPad|iPod)\\b.*?OS (\\d+)_/);\n    if (m && +m[1] < 15) return;                       // iOS 14 \u4ee5\u4e0b\uff1a\u305d\u306e\u307e\u307e\n  }catch(e){}\n  function can(){ var c = document.createElement('canvas'); c.width = c.height = 40; return c; }\n  function supported(e){\n    try{\n      var c = can(), x = c.getContext('2d', { willReadFrequently:true });\n      if (!x) return true;\n      x.font = '32px \"Apple Color Emoji\",\"Segoe UI Emoji\",\"Noto Color Emoji\",sans-serif';\n      x.textBaseline = 'top'; x.fillStyle = '#000';\n      var w = x.measureText(e).width, r = x.measureText('\ud83d\ude00').width;\n      if (r > 0 && w > r * 1.4) return false;          // \u7d44\u307f\u5408\u308f\u305b\u304c2\u3064\u4ee5\u4e0a\u306b\u5206\u304b\u308c\u305f\n      x.fillText(e, 2, 2);\n      var d = x.getImageData(0, 0, 40, 40).data;\n      for (var i = 0; i < d.length; i += 4){\n        if (d[i + 3] > 40 && (Math.abs(d[i] - d[i + 1]) + Math.abs(d[i + 1] - d[i + 2])) > 60) return true;   // \u8272\u304c\u3064\u3044\u305f\u7d75\n      }\n      return false;                                     // \u25a1 \u3084 \uff1f \u3060\u3051\n    }catch(e){ return true; }\n  }\n  var KEY = 'edogawa_emoji_fix_v1', bad = null;\n  try{ var sv = JSON.parse(localStorage.getItem(KEY) || 'null'); if (sv && sv.ua === navigator.userAgent) bad = sv.bad; }catch(e){}\n  function check(){\n    if (bad) return bad;\n    bad = [];\n    Object.keys(REP).forEach(function(v){ if (!supported(REP[v])) bad.push(v); });\n    try{ localStorage.setItem(KEY, JSON.stringify({ ua:navigator.userAgent, bad:bad })); }catch(e){}\n    return bad;\n  }\n  function esc(s){ return s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'); }\n  var MAP = null, RE = null, TEST = null;\n  function build(){\n    var vs = check(); if (!vs.length) return false;\n    MAP = {}; var keys = [];\n    vs.forEach(function(v){ Object.keys(T[v] || {}).forEach(function(k){ MAP[k] = T[v][k]; keys.push(k); }); });\n    keys.sort(function(a, b){ return b.length - a.length; });\n    // \u7570\u4f53\u5b57\u30bb\u30ec\u30af\u30bf\uff08FE0F\uff09\u306f\u3042\u3063\u3066\u3082\u306a\u304f\u3066\u3082\u3001\u808c\u306e\u8272\u306f\u3064\u3044\u3066\u3044\u3066\u3082\u7f6e\u304d\u304b\u3048\u307e\u3059\n    var alt = keys.map(function(k){ return Array.from(k).map(function(ch){ return esc(ch) + '\ufe0f?'; }).join(''); });\n    var src = '(?:' + alt.join('|') + ')[\\\\u{1F3FB}-\\\\u{1F3FF}]?';\n    if (vs.indexOf('15.1') >= 0) src += '|\\\\u200D\\\\u27A1\\\\uFE0F?';          // \u300c\u53f3\u5411\u304d\u300d\u306e\u7d44\u307f\u5408\u308f\u305b\u306f\u5411\u304d\u3092\u5916\u3057\u307e\u3059\n    RE = new RegExp(src, 'gu'); TEST = new RegExp(src, 'u');\n    return true;\n  }\n  function fix(s){\n    if (typeof s !== 'string' || !s || !TEST || !TEST.test(s)) return s;\n    return s.replace(RE, function(mm){\n      if (/^\u200d\u27a1/.test(mm)) return '';\n      var k = mm.replace(/[\ufe0f]|[\\u{1F3FB}-\\u{1F3FF}]/gu, '');\n      return MAP[k] != null ? MAP[k] : mm;\n    });\n  }\n  window.__edoEmojiFix = function(s){ return TEST ? fix(s) : s; };\n  function boot(){\n    if (!build()) return;\n    window.__edoEmojiFixOn = true;\n    // canvas \u306b\u63cf\u304f\u6587\u5b57\n    try{\n      var P = CanvasRenderingContext2D.prototype;\n      ['fillText','strokeText','measureText'].forEach(function(n){\n        var o = P[n]; if (typeof o !== 'function' || o.__edoEF) return;\n        var f = function(t){ var a = Array.prototype.slice.call(arguments); a[0] = fix(String(t)); return o.apply(this, a); };\n        f.__edoEF = true; P[n] = f;\n      });\n    }catch(e){}\n    // \u753b\u9762\u306e\u6587\u5b57\n    var SKIP = /^(SCRIPT|STYLE|TEXTAREA|INPUT|NOSCRIPT)$/;\n    function fixText(n){ var v = n.nodeValue, f = fix(v); if (f !== v) n.nodeValue = f; }\n    function walk(root){\n      if (!root) return;\n      if (root.nodeType === 3){ if (!root.parentNode || !SKIP.test(root.parentNode.nodeName)) fixText(root); return; }\n      if (root.nodeType !== 1 && root.nodeType !== 9 && root.nodeType !== 11) return;\n      if (root.nodeType === 1 && SKIP.test(root.nodeName)) return;\n      var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;\n      while ((n = w.nextNode())){ if (!n.parentNode || !SKIP.test(n.parentNode.nodeName)) fixText(n); }\n    }\n    function start(){\n      walk(document.body || document.documentElement);\n      try{\n        new MutationObserver(function(list){\n          for (var i = 0; i < list.length; i++){\n            var r = list[i];\n            if (r.type === 'characterData') walk(r.target);\n            else for (var j = 0; j < r.addedNodes.length; j++) walk(r.addedNodes[j]);\n          }\n        }).observe(document.documentElement, { childList:true, subtree:true, characterData:true });\n      }catch(e){}\n    }\n    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();\n  }\n  try{ boot(); }catch(e){}\n  window.__EDOGAWA_EMOJI_FIX_INFO = function(){ return { \u7f6e\u304d\u304b\u3048\u308b\u7248: check(), \u52d5\u4f5c\u4e2d: window.__edoEmojiFixOn }; };\n})();" + '<\/script>';
-    if (q.get('solo') === '1') EDO_EF = '<script>window.__EDOGAWA_SOLO=true;<\/script>' + EDO_EF;   // 【ver1.6.2】ミニゲーム集（単体）で遊んでいるとき
+    if (q.get('solo') === '1') EDO_EF = '<script>window.__EDOGAWA_SOLO=true;try{var gi=Storage.prototype.getItem;Storage.prototype.getItem=function(k){return k==="edogawa_theme_v1"?"black":gi.apply(this,arguments);};}catch(e){}<\/script>' + EDO_EF;   // 【ver1.6.2】ミニゲーム集（単体）で遊んでいるとき
     if (/<head[^>]*>/i.test(html)) html = html.replace(/<head[^>]*>/i, function(h){ return h + EDO_EF; });
     else html = EDO_EF + html;
   }catch(e){}
