@@ -137,6 +137,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       '.gb:active{transform:scale(.97)}.gb .ic{flex:0 0 auto;font-size:30px;line-height:1;width:36px;text-align:center}' +
       '.gb .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}' +
       '.gb .n{font-size:13px;font-weight:900;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:12px}' +
+      'a.gb{text-decoration:none;-webkit-tap-highlight-color:transparent}.gb.ext .no{font-size:12px;color:#fbbf24}.gb.ext .ic{color:#fde68a}' +
       '.gb .s{font-size:10.5px;color:#94a3b8;font-weight:700;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
       '.gb .b{font-size:10px;color:#86efac;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gb .no{position:absolute;right:7px;top:5px;font-size:9.5px;color:#64748b;font-weight:900}' +
       '.ft{margin-top:16px;display:flex;justify-content:center}.ft button{background:none;border:1px solid #334155;color:#94a3b8;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:800}' +
@@ -180,6 +181,13 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
     var $ = function(id){ return document.getElementById(id); };
     var cur = null;   // { g, i, frame, all, delta, ended, timers:[] }
 
+    // 別に作ったゲーム（別窓で開きます。「全部つづけて遊ぶ」には入りません）
+    var EXT = [
+      { ic:'🐬', n:'イルカヒーローテトリス', s:'クセがあるテトリス', u:'https://shulavan.github.io/games/tetris.html' },
+      { ic:'☗', n:'のんだくれしょーぎ', s:'オリジナル将棋ルール', u:'https://shulavan.github.io/games/shogi.html' },
+      { ic:'🀄️', n:'じゃんじゃじゃじゃん', s:'ひらがじゃんもアリ', u:'https://shulavan.github.io/games/mahjong.html' },
+      { ic:'🎲', n:'江戸川双六', s:'本物マップリアル双六', u:'https://shulavan.github.io/games/sugoroku.html' }
+    ];
     function menu(){
       var nextI = (Number(S.idx) || 0) % list.length;
       $('menu').innerHTML = '<div class="hd"><span class="lg">🎮</span><h1>ミニゲーム<small>江戸川双六のミニゲームを、何回でも遊べます</small></h1>' +
@@ -190,6 +198,8 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
           var b = S.best[g.k];
           return '<button type="button" class="gb" data-i="' + i + '"><span class="no">' + (i + 1) + '</span><span class="ic">' + g.ic + '</span><span class="tx"><span class="n">' + esc(g.n) + '</span><span class="s">' + esc(g.s) + '</span>' +
             (b != null ? '<span class="b">ベスト ' + yen(b) + '・' + (S.plays[g.k] || 0) + '回</span>' : '') + '</span></button>';
+        }).join('') + EXT.map(function(g){
+          return '<a class="gb ext" href="' + g.u + '" target="_blank" rel="noopener"><span class="no">↗</span><span class="ic">' + g.ic + '</span><span class="tx"><span class="n">' + esc(g.n) + '</span><span class="s">' + esc(g.s) + '</span></span></a>';
         }).join('') + '</div>' +
         '<div class="ft"><button type="button" id="b-reset">所持金と記録をリセット</button></div>';
       $('menu').style.display = 'block';
