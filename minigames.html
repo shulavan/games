@@ -3,7 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>江戸川双六 ミニゲーム</title>
+<title>ミニゲーム</title>
+<!-- 【ver1.6.2】ミニゲーム集（単体）：江戸川双六と同じファビコン・アプリとしてインストール（minigames-manifest.json を同じフォルダに置きます） -->
+<link rel="icon" href="https://shulavan.github.io/img/sugoroku.ico" sizes="any">
+<link rel="shortcut icon" href="https://shulavan.github.io/img/sugoroku.ico">
+<link rel="apple-touch-icon" href="https://shulavan.github.io/img/icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="https://shulavan.github.io/img/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="https://shulavan.github.io/img/icon-512.png">
+<link rel="manifest" href="minigames-manifest.json">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ミニゲーム">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <!-- ============================================================================
      江戸川双六 ミニゲーム集  minigames.html
      ----------------------------------------------------------------------------
@@ -137,10 +149,19 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       '#next .bx{width:min(340px,100%);background:#111a2e;border:1px solid #334a7a;border-radius:20px;padding:20px 16px;text-align:center}#next .r{font-size:14px;font-weight:800;color:#cbd5e1;min-height:20px}' +
       '#next .r b{color:#fde68a;font-size:18px}#next .t{margin-top:10px;font-size:12px;color:#94a3b8;font-weight:800}#next .g{margin-top:4px;font-size:20px;font-weight:900;color:#fff}#next .g .ic{font-size:40px;display:block;margin-bottom:4px}' +
       '#next .bt{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}#next .bt button{border:0;border-radius:12px;padding:12px 6px;font-size:14px;font-weight:900;background:#334155;color:#fff}#next .bt .go{background:#f59e0b}' +
+      '.hd .inst{margin-left:auto;flex:0 0 auto;width:42px;height:42px;border-radius:14px;border:1px solid #f59e0b;background:rgba(245,158,11,.14);font-size:22px;line-height:1;box-shadow:0 0 0 0 rgba(245,158,11,.6);animation:instP 2s ease-in-out infinite}' +
+      '@keyframes instP{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.55)}50%{box-shadow:0 0 0 7px rgba(245,158,11,0)}}' +
+      '#inst{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.78)}#inst.show{display:flex}' +
+      '#inst .bx{width:min(380px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:#111a2e;border:1px solid #f59e0b;border-radius:20px;padding:20px 16px;text-align:center}' +
+      '#inst .e{font-size:44px}#inst h3{margin:6px 0 4px;color:#fbbf24;font-size:18px;font-weight:900}#inst p{margin:6px 0;font-size:13px;color:#cbd5e1;line-height:1.7}' +
+      '#inst .go{display:block;width:100%;margin-top:12px;border:0;border-radius:14px;padding:13px;background:linear-gradient(180deg,#f59e0b,#d97706);color:#0f172a;font-size:16px;font-weight:900}' +
+      '#inst .no{display:block;width:100%;margin-top:8px;border:1px solid #334155;border-radius:12px;padding:10px;background:transparent;color:#94a3b8;font-size:13px;font-weight:800}' +
+      '#inst .st{margin-top:10px;text-align:left;background:#0b1220;border:1px solid #263553;border-radius:14px;padding:10px 12px}#inst .st b{display:block;color:#fde68a;font-size:13px;margin-bottom:4px}' +
+      '#inst ol{margin:0;padding-left:20px;font-size:13px;color:#e2e8f0;line-height:1.75}#inst .sh{display:inline-block;padding:0 6px;border:1px solid #64748b;border-radius:6px;font-size:12px}' +
       '#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;background:rgba(15,23,42,.94);color:#fff;border:1px solid #334155;border-radius:14px;padding:10px 14px;font-size:13px;font-weight:800;display:none;max-width:92vw}#toast.show{display:block}';
     var html = '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">' +
-      '<title>江戸川双六 ミニゲーム集</title><style>' + css + '</style></head><body>' +
-      '<div id="menu"></div><div id="play"></div><div id="bar"></div><div id="next"></div><div id="toast"></div>' +
+      '<title>ミニゲーム</title><style>' + css + '</style></head><body>' +
+      '<div id="menu"></div><div id="play"></div><div id="bar"></div><div id="next"></div><div id="inst"></div><div id="toast"></div>' +
       '<script>(' + shell.toString() + ')(' + JSON.stringify({ list:list, startIds:START_IDS, key:KEY, startMoney:START_MONEY }) + ');<\/script></body></html>';
     return html;
   };
@@ -158,7 +179,8 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
 
     function menu(){
       var nextI = (Number(S.idx) || 0) % list.length;
-      $('menu').innerHTML = '<div class="hd"><span class="lg">🎮</span><h1>江戸川双六 ミニゲーム集<small>好きなゲームを選んで、何回でも遊べます</small></h1></div>' +
+      $('menu').innerHTML = '<div class="hd"><span class="lg">🎮</span><h1>ミニゲーム<small>江戸川双六のミニゲームを、何回でも遊べます</small></h1>' +
+          (installable() ? '<button type="button" id="b-install" class="inst" aria-label="アプリをインストール">📲</button>' : '') + '</div>' +
         '<div class="wal"><div><div class="k">所持金</div><div class="v" id="w-m">' + yen(S.money) + '</div></div><div><div class="k">ミニゲームで稼いだ合計</div><div class="v">' + yen(S.total) + '</div></div></div>' +
         '<button type="button" class="all" id="b-all">▶ 全部つづけて遊ぶ<small>' + (nextI ? (nextI + 1) + '番目の「' + esc(list[nextI].n) + '」から（全' + list.length + 'ゲーム）' : '上から順に、終わったら次のゲームへ（全' + list.length + 'ゲーム）') + '</small></button>' +
         '<div class="grid">' + list.map(function(g, i){
@@ -170,6 +192,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       $('menu').style.display = 'block';
       $('b-all').onclick = function(){ full(); start((Number(S.idx) || 0) % list.length, true); };
       [].forEach.call(document.querySelectorAll('.gb'), function(b){ b.onclick = function(){ full(); start(Number(b.getAttribute('data-i')), false); }; });
+      if($('b-install')) $('b-install').onclick = function(){ openInstall(); };
       $('b-reset').onclick = function(){ if(!confirmBox()) return; S = { money:C.startMoney, total:0, best:{}, plays:{}, idx:0 }; save(S); menu(); };
     }
     // 【ver1.6.2】ゲームのボタンを押したら、全画面にします（できないブラウザではそのまま）
@@ -319,6 +342,62 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       if(t === 'EDOGAWA_MINIGAME_CLOSE' || t === 'EDOGAWA_MINIGAME_QUIT'){ var c = cur; setTimeout(function(){ if(cur === c) finish(false); }, 60); return; }
       if(t === 'EDOGAWA_MINIGAME_START_FAILED'){ var c2 = cur; toast('⚠️ ' + esc(c2.g.n) + ' を始められませんでした（この端末では動かないことがあります）', 3500); setTimeout(function(){ if(cur === c2) finish(true); }, 300); return; }
     });
+    // ════════════════════════════════════════════════════════════
+    //  【ver1.6.2】アプリとしてインストール
+    //   ・LINEのブラウザで開いたら、ふだんのブラウザ（外部ブラウザ）で開きなおします（openExternalBrowser=1）
+    //   ・はじめて開いたとき（と、LINEから開きなおしたとき）に「アプリインストールしますか？」
+    //     Android・パソコン（Chrome / Edge）：「インストールする」で、ブラウザのインストール画面を出します
+    //     iPhone・iPad：ホーム画面に追加する手順を出します
+    //   ・インストールしていない人には、右上に📲ボタン
+    // ════════════════════════════════════════════════════════════
+    var UA = navigator.userAgent || '';
+    var ENV = { ios:/iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), android:/Android/i.test(UA),
+      line:/\bLine\//i.test(UA), inapp:/(FBAN|FBAV|Instagram|Twitter|MicroMessenger)/i.test(UA) };
+    var IKEY = 'edogawa_mini_install_v1';
+    function iget(){ try{ return JSON.parse(localStorage.getItem(IKEY) || 'null') || {}; }catch(e){ return {}; } }
+    function iset(o){ try{ localStorage.setItem(IKEY, JSON.stringify(Object.assign(iget(), o))); }catch(e){} }
+    function standalone(){ try{ return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }catch(e){ return false; } }
+    function installable(){ return !standalone() && !iget().installed; }
+    var deferred = null;
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; var el = $('inst'); if(el && el.classList.contains('show') && el.__wait) openInstall(); });
+    window.addEventListener('appinstalled', function(){ deferred = null; iset({ installed:true }); closeInstall(); menu(); toast('📲 アプリとしてインストールしました'); });
+    try{ if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){}
+    function closeInstall(){ var el = $('inst'); if(el){ el.classList.remove('show'); el.innerHTML = ''; el.__wait = false; } }
+    function openInstall(){
+      var el = $('inst'); if(!el) return;
+      var head = '<div class="bx" role="dialog" aria-modal="true"><div class="e">📲</div><h3>アプリインストールしますか？</h3>' +
+        '<p>ホーム画面から全画面で「ミニゲーム」を起動できるようになり、次回からの読み込みも速くなります。</p>';
+      var no = '<button type="button" class="no" id="i-no">あとで</button></div>';
+      var html;
+      if(standalone()) html = head + '<p>✅ すでにアプリとして起動しています。</p>' + no.replace('あとで', '閉じる');
+      else if(deferred) html = head + '<button type="button" class="go" id="i-go">インストールする</button>' + no;
+      else if(ENV.ios) html = head + '<div class="st"><b>iPhone / iPad（Safari）</b><ol><li>画面下の<span class="sh">共有</span>ボタン（□に↑）をタップ</li><li>メニューを下にスクロールして「ホーム画面に追加」をタップ</li><li>右上の「追加」をタップ</li></ol></div>' +
+        (ENV.line || ENV.inapp ? '<div class="st"><b>LINEなどのアプリの中で開いている場合</b><ol><li>右下（または右上）の「⋯」をタップ</li><li>「Safariで開く」（他のブラウザで開く）を選ぶ</li><li>開いたSafariで、上の手順でホーム画面に追加</li></ol></div>' : '') + no;
+      else html = head + '<div class="st"><b>' + (ENV.android ? 'Android（Chrome）' : 'パソコン（Chrome / Edge）') + '</b>' +
+        (ENV.android ? '<ol><li>右上の「⋮」メニューをタップ</li><li>「アプリをインストール」または「ホーム画面に追加」をタップ</li></ol>' : '<p>アドレスバー右端のインストールアイコン（⊕ / 🖥）をクリックしてインストールできます。</p>') + '</div>' + no;
+      el.innerHTML = html; el.classList.add('show'); el.__wait = !deferred && !ENV.ios && !standalone();
+      iset({ asked:Date.now() });
+      if($('i-go')) $('i-go').onclick = function(){
+        var p = deferred; deferred = null; if(!p){ openInstall(); return; }
+        try{ p.prompt(); Promise.resolve(p.userChoice).then(function(c){ if(c && c.outcome === 'accepted'){ iset({ installed:true }); menu(); } closeInstall(); }, closeInstall); }catch(e){ closeInstall(); }
+      };
+      $('i-no').onclick = closeInstall;
+      el.onclick = function(ev){ if(ev.target === el) closeInstall(); };
+    }
+    window.__EDOGAWA_MINI_INSTALL = { open:openInstall, env:ENV, standalone:standalone, installable:installable, deferred:function(){ return !!deferred; } };
+    (function(){
+      var q = new URLSearchParams(location.search);
+      // LINEのブラウザ：ふだんのブラウザで開きなおします（1回だけ。開きなおせなかったときは、そのまま遊べます）
+      if((ENV.line) && !q.get('openExternalBrowser') && !standalone()){
+        try{ var u = new URL(location.href); u.searchParams.set('openExternalBrowser', '1'); u.searchParams.set('edoinstall', '1'); location.replace(u.toString()); return; }catch(e){}
+      }
+      var fromLine = q.get('edoinstall') === '1';
+      if(fromLine || q.get('openExternalBrowser')){
+        try{ var u2 = new URL(location.href); ['openExternalBrowser', 'edoinstall'].forEach(function(k){ u2.searchParams.delete(k); }); history.replaceState(null, '', u2.toString()); }catch(e){}
+      }
+      // はじめて開いたとき（と、LINEから開きなおしたとき）は、インストールの案内を出します（Android は「インストールする」が出せるまで少し待ちます）
+      if(installable() && (fromLine || !iget().asked)) setTimeout(function(){ if(!cur) openInstall(); }, (ENV.android && !deferred) ? 2500 : 900);
+    })();
     menu();
     try{ window.__EDOGAWA_SOLO_STATE = function(){ return { cur:cur ? { k:cur.g.k, started:cur.started, delta:cur.delta, all:cur.all, i:cur.i, opp:cur.opp || null } : null, S:S }; }; }catch(e){}
   }

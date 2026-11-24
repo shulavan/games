@@ -1,0 +1,18 @@
+{
+  "id": "./minigames.html",
+  "name": "ミニゲーム",
+  "short_name": "ミニゲーム",
+  "description": "江戸川双六のミニゲームを、好きなだけ続けて遊べるミニゲーム集です。",
+  "lang": "ja",
+  "start_url": "./minigames.html",
+  "scope": "./minigames.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "icons": [
+    { "src": "https://shulavan.github.io/img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "https://shulavan.github.io/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "https://shulavan.github.io/img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
