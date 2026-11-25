@@ -232,6 +232,8 @@ def parse_edogawa_city_calendar(year, month):
     html = fetch_html(BASE_URL, params={"type": "1", "year": str(year), "month": str(month)})
     if html:
         soup = BeautifulSoup(html, "html.parser")
+        td_count = len(soup.find_all("td"))
+        li_count = 0
         for td in soup.find_all("td"):
             first_text = td.get_text(" ", strip=True)
             day_match = re.match(r"^(\d{1,2})日", first_text)
@@ -244,6 +246,7 @@ def parse_edogawa_city_calendar(year, month):
                 continue
 
             for li in td.find_all("li"):
+                li_count += 1
                 a_tag = li.find("a", href=True)
                 if not a_tag:
                     continue
@@ -271,12 +274,9 @@ def parse_edogawa_city_calendar(year, month):
                         "image_url": extract_image_from_element(li, BASE_URL),
                     }
                 events[full_url]["dates"].add(current_date)
-
-    list_html = fetch_html(BASE_URL, params={"type": "2", "year": str(year), "month": str(month)})
-    if list_html:
-        soup2 = BeautifulSoup(list_html, "html.parser")
-        for block in soup2.find_all(["tr", "li", "div"]):
-            a_tag = block.find("a", href=True)
+        print(f"    [debug] 区公式({year}-{month:02d}) type=1: len={len(html)}, td={td_count}, li={li_count}, parsed={len(events)}")
+    else:
+        print(f"    [debug] 区公式({year}-{month:02d}) type=1: html is None")
             if not a_tag:
                 continue
             href = a_tag["href"]
@@ -362,10 +362,13 @@ def parse_generic_facility_events(url, category, default_venue=""):
     """Generic scraper for Edogawa public/cultural facility event pages."""
     html = fetch_html(url)
     if not html:
+        print(f"    [debug] {category} ({url}): html is None")
         return []
 
     soup = BeautifulSoup(html, "html.parser")
     events = {}
+    all_links = soup.find_all("a", href=True)
+    dated_candidates = 0
 
     containers = soup.find_all(["article", "tr", "li", "dd", "div"], class_=re.compile(r"event|post|news|item|list|card|tribe", re.I))
     if not containers:
@@ -405,6 +408,7 @@ def parse_generic_facility_events(url, category, default_venue=""):
         parsed_dates = extract_dates_from_text(block_text)
         if not parsed_dates:
             continue
+        dated_candidates += 1
 
         venue = default_venue
         for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
@@ -425,6 +429,7 @@ def parse_generic_facility_events(url, category, default_venue=""):
         if venue:
             events[full_url]["venue"] = venue
 
+    print(f"    [debug] {category}: html_len={len(html)}, links={len(all_links)}, containers={len(containers)}, dated={dated_candidates}, unique={len(events)}")
     return list(events.values())
 
 
