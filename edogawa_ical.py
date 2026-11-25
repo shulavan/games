@@ -334,6 +334,7 @@ def discover_fallback_url(base_url, path_hints=("event", "news", "info", "calend
             return cand
     return candidates[0] if candidates else None
 
+
 def is_past_report_text(text):
     """Return True if the text describes an already completed event in past tense."""
     t = text.strip()
@@ -510,6 +511,33 @@ def extract_dates_from_text(text, default_year=None):
     return parsed_dates
 
 
+def _extract_day_from_td(td):
+    """Extract day of month (1-31) from a calendar td cell using text, attributes, or child elements."""
+    for attr in ("data-day", "data-date", "id", "headers"):
+        val = td.get(attr)
+        if val:
+            norm_val = normalize_japanese_text(str(val))
+            m = re.search(r"(?:^|[-_])(\d{1,2})$", norm_val.strip())
+            if m and 1 <= int(m.group(1)) <= 31:
+                return int(m.group(1))
+
+    cell_text = normalize_japanese_text(td.get_text(" ", strip=True))
+    m = re.match(r"^(\d{1,2})(?:\s*(?:日|\([月火水木金土日祝・]+\))|\b|\D|$)", cell_text.strip())
+    if m and 1 <= int(m.group(1)) <= 31:
+        return int(m.group(1))
+
+    m = re.search(r"(?:^|\s|\[|【|\()(\d{1,2})\s*(?:日|\([月火水木金土日祝・]+\))", cell_text)
+    if m and 1 <= int(m.group(1)) <= 31:
+        return int(m.group(1))
+
+    for child in td.find_all(["span", "div", "p", "a", "strong", "em", "font", "b"], recursive=True):
+        c_text = normalize_japanese_text(child.get_text(" ", strip=True)).strip()
+        m = re.fullmatch(r"(\d{1,2})(?:日|\([月火水木金土日祝・]+\))?", c_text)
+        if m and 1 <= int(m.group(1)) <= 31:
+            return int(m.group(1))
+    return None
+
+
 def parse_edogawa_city_calendar(year, month):
     """Scrape all events from Edogawa City official calendar (calendar view and list view)."""
     events = {}
@@ -519,36 +547,26 @@ def parse_edogawa_city_calendar(year, month):
         soup = BeautifulSoup(html, "html.parser")
         a_total = 0
         for td in soup.find_all("td"):
-            cell_text = td.get_text(" ", strip=True)
-            norm_cell = normalize_japanese_text(cell_text)
-            day_match = re.search(
-                r"(?:^|\s|\[|【|\()(\d{1,2})\s*(?:日|\([月火水木金土日祝・]+\))",
-                norm_cell,
-            )
-            if not day_match:
-                day_match = re.match(r"^(\d{1,2})(?:\D|$)", norm_cell.strip())
-            if not day_match:
-                header_like = td.find(["span", "div", "p", "a", "strong", "em"])
-                if header_like:
-                    h_text = normalize_japanese_text(header_like.get_text(" ", strip=True))
-                    day_match = re.match(r"^(\d{1,2})(?:日|\([月火水木金土日祝・]+\))?$", h_text.strip())
-            if not day_match:
+            day = _extract_day_from_td(td)
+            if day is None:
                 continue
-            day = int(day_match.group(1))
             try:
                 current_date = datetime(year, month, day, tzinfo=JST).date()
             except ValueError:
                 continue
 
+            cell_text = td.get_text(" ", strip=True)
             for a_tag in td.find_all("a", href=True):
-                a_total += 1
                 href = a_tag["href"].strip()
+                raw_title = a_tag.get_text(" ", strip=True)
                 if not href or href.startswith("#") or "javascript:" in href:
                     continue
                 if "calendar.cgi" in href and ("more" in href or "type=" in href):
                     continue
+                if re.fullmatch(r"\d{1,2}日?", normalize_japanese_text(raw_title).strip()):
+                    continue
+                a_total += 1
                 full_url = urljoin(BASE_URL, href)
-                raw_title = a_tag.get_text(" ", strip=True)
                 if is_noise_or_news(raw_title, url=full_url):
                     continue
                 title = clean_event_title(raw_title)
