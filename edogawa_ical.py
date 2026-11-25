@@ -22,6 +22,29 @@ OUTPUT_ICS = "edogawa_events.ics"
 USER_AGENT = "Mozilla/5.0 (compatible; EdogawaCalendarSync/1.0)"
 JST = timezone(timedelta(hours=9), name="JST")
 
+# 除外するニュース・お知らせ・システム表記キーワード
+EXCLUDE_KEYWORDS = (
+    "【重要】",
+    "ニュース",
+    "お知らせ",
+    "休館日",
+    "休園します",
+    "一時閉鎖",
+    "展示を再開",
+    "展示を中止",
+    "メンテナンス",
+    "機関誌",
+    "どうぶつと動物園",
+    "SEA LIFE NEWS",
+    "リスト表示",
+    "詳細を見る",
+    "掲載申込書",
+    "サイトリニューアル",
+    "正門の位置が変わります",
+    "募集は終了",
+    "【終了】",
+)
+
 # 江戸川区内主要施設・全12図書館・公園・文化施設の緯度経度マッピング (名称キーワード: (緯度, 経度, 正式名称/住所))
 FACILITY_LOCATIONS = {
     "中央図書館": (35.706142, 139.869214, "江戸川区立中央図書館（東京都江戸川区中央3-1-3）"),
@@ -84,6 +107,31 @@ def fetch_html(url, params=None):
     except Exception as e:
         print(f"Warning: Failed to fetch {url}: {e}")
         return None
+
+
+def is_noise_or_news(title, block_text=""):
+    """Return True if the item is a general news post, closure notice, or UI navigation label."""
+    combined = f"{title} {block_text}"
+    if any(kw in combined for kw in EXCLUDE_KEYWORDS):
+        return True
+    # 公開日 + 「ニュース」パターンの除外 (例: 2026.11.14 ニュース ...)
+    if re.search(r"20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*ニュース", combined):
+        return True
+    # タイトルが日付のみの場合 (例: 2027-01-24)
+    if re.fullmatch(r"\d{4}[-/年.]\d{1,2}[-/月.]\d{1,2}日?", title.strip()):
+        return True
+    return False
+
+
+def clean_event_title(raw_title):
+    """Remove leading publication dates and boilerplate prefixes from event titles."""
+    t = raw_title.strip()
+    # 先頭の公開日表記を削除 (例: "2026.11.21 ", "2026/11/21 ", "2026年11月21日 ")
+    t = re.sub(r"^20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", t)
+    # 先頭の定型ラベルを削除 (例: "イベント ", "主催共催公演 ", "【受付中】")
+    t = re.sub(r"^(?:イベント|主催共催公演|共催公演|企画展|特別展)\s+", "", t)
+    t = re.sub(r"^【(?:受付中|募集中|事前申込制|当日受付)】\s*", "", t)
+    return t.strip() or raw_title.strip()
 
 
 def extract_first_image_url(page_url):
@@ -157,9 +205,10 @@ def parse_month_events(year, month):
             if not a_tag:
                 continue
             full_url = urljoin(BASE_URL, a_tag["href"])
-            title = a_tag.get_text(" ", strip=True)
-            if not title:
+            raw_title = a_tag.get_text(" ", strip=True)
+            if not raw_title or is_noise_or_news(raw_title):
                 continue
+            title = clean_event_title(raw_title)
 
             cat_span = li.find("span")
             category = cat_span.get_text(strip=True) if cat_span else "区イベント"
@@ -178,11 +227,16 @@ def parse_month_events(year, month):
 
 
 def extract_dates_from_text(text, default_year=None):
-    """Extract Japanese dates (YYYY年MM月DD日 / MM月DD日 / YYYY.MM.DD) from text."""
+    """Extract future/upcoming Japanese event dates while ignoring leading publication dates."""
     now = datetime.now(JST)
+    today = now.date()
     base_year = default_year or now.year
+
+    # テキスト先頭にある記事公開日 (例: 2026.11.21 ...) を取り除いてから開催日を探す
+    cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", text)
+
     parsed_dates = set()
-    matches = re.findall(r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?", text)
+    matches = re.findall(r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?", cleaned_text)
     for y_str, m_str, d_str in matches:
         try:
             m = int(m_str)
@@ -193,7 +247,10 @@ def extract_dates_from_text(text, default_year=None):
                 y = int(y_str)
             else:
                 y = base_year if m >= now.month - 1 else base_year + 1
-            parsed_dates.add(datetime(y, m, d, tzinfo=JST).date())
+            candidate = datetime(y, m, d, tzinfo=JST).date()
+            # 1ヶ月以上前の過去日付は公開日や過去ログとみなして除外
+            if candidate >= today - timedelta(days=30):
+                parsed_dates.add(candidate)
         except ValueError:
             continue
     return parsed_dates
@@ -221,15 +278,19 @@ def parse_generic_facility_events(url, category, default_venue=""):
             continue
 
         full_url = urljoin(url, href)
-        title = link.get_text(" ", strip=True)
-        if not title or len(title) < 3 or title in ("詳細はこちら", "もっと見る", "一覧へ"):
+        raw_title = link.get_text(" ", strip=True)
+        if not raw_title or len(raw_title) < 3 or raw_title in ("詳細はこちら", "もっと見る", "一覧へ"):
             heading = block.find(["h2", "h3", "h4", "dt", "p"])
             if heading:
-                title = heading.get_text(" ", strip=True)
-        if not title or len(title) < 3:
+                raw_title = heading.get_text(" ", strip=True)
+        if not raw_title or len(raw_title) < 3:
             continue
 
         block_text = block.get_text(" ", strip=True)
+        if is_noise_or_news(raw_title, block_text):
+            continue
+
+        title = clean_event_title(raw_title)
         parsed_dates = extract_dates_from_text(block_text)
         if not parsed_dates:
             continue
@@ -284,9 +345,10 @@ def parse_sports_kintone_events():
             link = row.find("a", href=True)
             full_url = urljoin(SPORTS_KINTONE_URL, link["href"]) if link else f"{SPORTS_KINTONE_URL}#event-{idx}"
             title_el = row.find(["h2", "h3", "h4", "a", "td"])
-            title = title_el.get_text(" ", strip=True) if title_el else text[:50]
-            if not title or len(title) < 2:
+            raw_title = title_el.get_text(" ", strip=True) if title_el else text[:50]
+            if not raw_title or len(raw_title) < 2 or is_noise_or_news(raw_title, text):
                 continue
+            title = clean_event_title(raw_title)
 
             venue = "江戸川区スポーツセンター"
             for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
@@ -333,11 +395,15 @@ def parse_library_events():
             continue
 
         full_url = urljoin(LIBRARY_EVENT_URL, href)
-        title = link.get_text(" ", strip=True)
-        if not title or len(title) < 2:
+        raw_title = link.get_text(" ", strip=True)
+        if not raw_title or len(raw_title) < 2:
             continue
 
         block_text = block.get_text(" ", strip=True)
+        if is_noise_or_news(raw_title, block_text):
+            continue
+
+        title = clean_event_title(raw_title)
         date_matches = re.findall(r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?", block_text)
         parsed_dates = set()
         for y_str, m_str, d_str in date_matches:
