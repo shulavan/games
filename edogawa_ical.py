@@ -130,7 +130,7 @@ def fetch_html(url, params=None):
     last_err = None
     for attempt in range(2):
         try:
-            resp = SESSION.get(url, params=params, timeout=30)
+            resp = SESSION.get(url, params=params, timeout=25)
             resp.raise_for_status()
             if resp.encoding is None or resp.encoding.lower() == "iso-8859-1":
                 resp.encoding = resp.apparent_encoding or "utf-8"
@@ -138,7 +138,7 @@ def fetch_html(url, params=None):
         except Exception as e:
             last_err = e
             if attempt == 0:
-                time.sleep(1.5)
+                time.sleep(1.0)
     print(f"Warning: Failed to fetch {url}: {last_err}")
     return None
 
@@ -307,12 +307,18 @@ def parse_edogawa_city_calendar(year, month):
 
 
 def extract_dates_from_text(text, default_year=None):
-    """Extract event dates from Japanese text while avoiding leading publication dates."""
+    """Extract event dates from Japanese text while avoiding leading publication dates or ticket sales dates."""
     now = datetime.now(JST)
     today = now.date()
     base_year = default_year or now.year
 
+    # 発売日・申込開始日・受付開始日などの日付を除外する
     cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", text)
+    cleaned_text = re.sub(
+        r"(?:発売日|発売開始|申込開始|受付開始|応募開始|販売開始)[：:\s]*(?:20\d{2}[年/\.]?)?\d{1,2}[月/\.]\d{1,2}日?",
+        "",
+        cleaned_text,
+    )
 
     parsed_dates = set()
     range_matches = re.findall(
@@ -325,7 +331,7 @@ def extract_dates_from_text(text, default_year=None):
             start_dt = datetime(sy, int(m1), int(d1), tzinfo=JST).date()
             ey = int(y2) if y2 else (sy if int(m2) >= int(m1) else sy + 1)
             end_dt = datetime(ey, int(m2), int(d2), tzinfo=JST).date()
-            if end_dt >= today - timedelta(days=14) and (end_dt - start_dt).days <= 120:
+            if end_dt >= today - timedelta(days=7) and (end_dt - start_dt).days <= 120:
                 cur = max(start_dt, today - timedelta(days=7))
                 while cur <= end_dt:
                     parsed_dates.add(cur)
@@ -345,7 +351,7 @@ def extract_dates_from_text(text, default_year=None):
             else:
                 y = base_year if m >= now.month - 2 else base_year + 1
             candidate = datetime(y, m, d, tzinfo=JST).date()
-            if today - timedelta(days=14) <= candidate <= today + timedelta(days=180):
+            if today - timedelta(days=7) <= candidate <= today + timedelta(days=180):
                 parsed_dates.add(candidate)
         except ValueError:
             continue
