@@ -10,14 +10,14 @@ name: Update Edogawa Events iCal
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-      uses: actions/checkout@v4
+    uses: actions/checkout@v4
       ​- name: Set up Python
-      uses: actions/setup-python@v5
+    uses: actions/setup-python@v5
         with:
         python-version: "3.11"
 ​      - name: Install dependencies and Playwright
-      run: pip install requests beautifulsoup4 playwright && playwright install chromium --with-deps
+    run: pip install requests beautifulsoup4 playwright && playwright install chromium --with-deps
       ​- name: Run Edogawa event scraper
-      run: python edogawa_ical.py
+    run: python edogawa_ical.py
       ​- name: Commit and push updated iCal file
-      run: git config user.name bot && git config user.email bot@noreply.github.com && git add -A && git commit -m up && git push || true
+    run: git config user.name bot && git config user.email bot@noreply.github.com && git add -A && git commit -m up && git push || true
