@@ -45,6 +45,9 @@ EXCLUDE_KEYWORDS = (
     "掲載申込書",
     "サイトリニューアル",
     "正門の位置が変わります",
+    "休館日",
+    "休園日",
+    "開催日",
 )
 
 # 江戸川区内主要施設・全12図書館・公園・文化施設の緯度経度マッピング
@@ -127,8 +130,8 @@ def is_noise_or_news(title, block_text=""):
     # 公開日 + 「ニュース」パターンの除外 (例: 2026.11.14 ニュース ...)
     if re.search(r"20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*ニュース", f"{t} {block_text}"):
         return True
-    # タイトルが日付のみの場合 (例: 2027-01-24)
-    if re.fullmatch(r"\d{4}[-/年.]\d{1,2}[-/月.]\d{1,2}日?", t):
+    # タイトルが日付・年号のみの場合 (例: 2027-01-24, 2026年)
+    if re.fullmatch(r"\d{4}[-/年.]\d{1,2}[-/月.]\d{1,2}日?", t) or re.fullmatch(r"\d{4}年", t):
         return True
     return False
 
@@ -360,15 +363,21 @@ def parse_generic_facility_events(url, category, default_venue=""):
             continue
 
         full_url = urljoin(url, href)
-        # 一覧ページ自身やページネーションへのリンクを除外
-        if full_url.rstrip("/") == url.rstrip("/") or "/page/" in full_url:
+        # 一覧ページ自身や年別インデックス・ページネーションへのリンクを除外
+        if (
+            full_url.rstrip("/") == url.rstrip("/")
+            or "/page/" in full_url
+            or re.search(r"/news/\d{4}/index\.html$", full_url)
+        ):
             continue
 
         raw_title = link.get_text(" ", strip=True)
-        if not raw_title or len(raw_title) < 3 or raw_title in ("詳細はこちら", "もっと見る", "一覧へ", "詳細を見る", "チケット購入"):
+        if not raw_title or len(raw_title) < 3 or raw_title in ("詳細はこちら", "もっと見る", "一覧へ", "詳細を見る", "チケット購入", "開催日"):
             heading = block.find(["h2", "h3", "h4", "dt", "p"])
             if heading:
-                raw_title = heading.get_text(" ", strip=True)
+                candidate_title = heading.get_text(" ", strip=True)
+                if candidate_title not in ("開催日", "2026年", "2027年"):
+                    raw_title = candidate_title
         if not raw_title or len(raw_title) < 3:
             continue
 
@@ -485,222 +494,4 @@ def parse_sports_kintone_events():
             text = row.get_text(" ", strip=True)
             parsed_dates = extract_dates_from_text(text)
             if not parsed_dates:
-                continue
-
-            link = row.find("a", href=True)
-            full_url = urljoin(SPORTS_KINTONE_URL, link["href"]) if link else f"{SPORTS_KINTONE_URL}#event-{idx}"
-            title_el = row.find(["h2", "h3", "h4", "a", "td"])
-            if title_el:
-                raw_title = title_el.get_text(" ", strip=True)
-            else:
-                raw_title = text[:50]
-            if not raw_title or len(raw_title) < 2 or is_noise_or_news(raw_title, text):
-                continue
-            title = clean_event_title(raw_title)
-
-            venue = "江戸川区スポーツセンター"
-            for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
-                if kw in text:
-                    venue = kw
-                    break
-
-            key = f"{title}_{min(parsed_dates)}"
-            if key not in events:
-                events[key] = {
-                    "title": title,
-                    "url": full_url,
-                    "category": "スポーツ",
-                    "venue": venue,
-                    "dates": set(),
-                    "image_url": extract_image_from_element(row, SPORTS_KINTONE_URL),
-                }
-            events[key]["dates"].update(parsed_dates)
-    except Exception as e:
-        print(f"Warning: Failed to scrape kintone sports events: {e}")
-
-    return list(events.values())
-
-
-def escape_ics_text(text):
-    """Escape special characters according to RFC 5545."""
-    if not text:
-        return ""
-    text = text.replace("\\", "\\\\")
-    text = text.replace(";", "\\;")
-    text = text.replace(",", "\\,")
-    text = text.replace("\r\n", "\\n").replace("\n", "\\n")
-    return text
-
-
-def fold_ics_line(line):
-    """Fold lines longer than 75 octets per RFC 5545."""
-    encoded = line.encode("utf-8")
-    if len(encoded) <= 75:
-        return line
-    chunks = []
-    current = ""
-    for char in line:
-        if len((current + char).encode("utf-8")) > 73:
-            chunks.append(current)
-            current = " " + char
-        else:
-            current += char
-    if current:
-        chunks.append(current)
-    return "\r\n".join(chunks)
-
-
-def generate_ics(all_events):
-    """Build an RFC 5545 compliant iCalendar string from aggregated events."""
-    now_utc = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    lines = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//Edogawa City Event Aggregator//JP",
-        "CALSCALE:GREGORIAN",
-        "METHOD:PUBLISH",
-        "X-WR-CALNAME:江戸川区イベントカレンダー（全体）",
-        "X-WR-TIMEZONE:Asia/Tokyo",
-        "X-WR-CALDESC:江戸川区公式ホームページおよび区内公共施設のイベントカレンダー全件まとめ",
-    ]
-
-    for ev in all_events:
-        sorted_dates = sorted(ev["dates"])
-        if not sorted_dates:
-            continue
-
-        spans = []
-        span_start = sorted_dates[0]
-        prev_date = sorted_dates[0]
-        for d in sorted_dates[1:]:
-            if (d - prev_date).days == 1:
-                prev_date = d
-            else:
-                spans.append((span_start, prev_date))
-                span_start = d
-                prev_date = d
-        spans.append((span_start, prev_date))
-
-        for start_d, end_d in spans:
-            dtstart_str = start_d.strftime("%Y%m%d")
-            dtend_str = (end_d + timedelta(days=1)).strftime("%Y%m%d")
-
-            uid_seed = f"{ev['url']}_{dtstart_str}_{dtend_str}"
-            uid_hash = hashlib.sha256(uid_seed.encode("utf-8")).hexdigest()[:24]
-            uid = f"{uid_hash}@edogawa-events.local"
-
-            summary = ev["title"]
-            if ev.get("category"):
-                summary = f"[{ev['category']}] {summary}"
-
-            geo_info = resolve_location(f"{ev.get('venue', '')} {ev['title']}")
-            image_url = ev.get("image_url")
-
-            description_lines = [f"詳細・申込情報: {ev['url']}"]
-            if geo_info:
-                lat, lon, loc_name = geo_info
-                description_lines.append(f"会場: {loc_name}")
-                description_lines.append(f"地図: https://maps.google.com/?q={lat},{lon}")
-            if image_url:
-                description_lines.append(f"画像URL: {image_url}")
-
-            description = "\n".join(description_lines)
-
-            vevent_lines = [
-                "BEGIN:VEVENT",
-                f"UID:{uid}",
-                f"DTSTAMP:{now_utc}",
-                f"DTSTART;VALUE=DATE:{dtstart_str}",
-                f"DTEND;VALUE=DATE:{dtend_str}",
-                fold_ics_line(f"SUMMARY:{escape_ics_text(summary)}"),
-                fold_ics_line(f"DESCRIPTION:{escape_ics_text(description)}"),
-                fold_ics_line(f"URL:{ev['url']}"),
-            ]
-
-            if geo_info:
-                lat, lon, loc_name = geo_info
-                vevent_lines.append(fold_ics_line(f"LOCATION:{escape_ics_text(loc_name)}"))
-                vevent_lines.append(f"GEO:{lat:.6f};{lon:.6f}")
-
-            vevent_lines.append("END:VEVENT")
-            lines.extend(vevent_lines)
-
-    lines.append("END:VCALENDAR")
-    return "\r\n".join(lines) + "\r\n"
-
-
-def main():
-    print("=== Starting Edogawa Events Aggregation ===")
-    merged_events = {}
-
-    def add_events(source_name, items):
-        print(f"  -> {source_name}: {len(items)} events fetched")
-        for item in items:
-            url = item["url"]
-            if url not in merged_events:
-                merged_events[url] = item
-            else:
-                merged_events[url]["dates"].update(item["dates"])
-                if item.get("venue") and not merged_events[url].get("venue"):
-                    merged_events[url]["venue"] = item["venue"]
-                if item.get("image_url") and not merged_events[url].get("image_url"):
-                    merged_events[url]["image_url"] = item["image_url"]
-
-    # 1. 江戸川区公式イベントカレンダー (今月〜3ヶ月先)
-    for year, month in get_target_months(months_ahead=3):
-        items = parse_edogawa_city_calendar(year, month)
-        add_events(f"江戸川区公式 ({year}-{month:02d})", items)
-        time.sleep(0.8)
-
-    # 2. 江戸川区立図書館 (全12館)
-    add_events("江戸川区立図書館", parse_library_events())
-
-    # 3. タワーホール船堀
-    add_events("タワーホール船堀", parse_generic_facility_events(TOWERHALL_EVENT_URL, "船堀タワー", "タワーホール船堀"))
-
-    # 4. 江戸川区総合文化センター (今後の公演予定一覧 + カレンダー)
-    add_events("江戸川区総合文化センター(予定一覧)", parse_generic_facility_events(BUNKACENTER_EVENT_URL, "総合文化センター", "江戸川区総合文化センター"))
-    add_events("江戸川区総合文化センター(カレンダー)", parse_generic_facility_events(BUNKACENTER_CAL_URL, "総合文化センター", "江戸川区総合文化センター"))
-
-    # 5. 江戸川区スポーツイベント (kintone)
-    add_events("江戸川区スポーツ", parse_sports_kintone_events())
-
-    # 6. 葛西海浜公園 & 葛西臨海公園
-    add_events("葛西海浜公園", parse_generic_facility_events(KASAI_KAIHIN_PARK_URL, "葛西海浜公園", "葛西海浜公園"))
-    add_events("葛西臨海公園", parse_generic_facility_events(KASAI_RINKAI_PARK_URL, "葛西臨海公園", "葛西臨海公園"))
-
-    # 7. 地下鉄博物館
-    add_events("地下鉄博物館", parse_generic_facility_events(CHIKAHAKU_EVENT_URL, "地下鉄博物館", "地下鉄博物館"))
-
-    # 8. 江戸川区自然動物園 & ポニーランド
-    add_events("江戸川区自然動物園", parse_generic_facility_events(EDOGAWA_ZOO_EVENT_URL, "自然動物園", "江戸川区自然動物園"))
-    add_events("ポニーランド", parse_generic_facility_events(PONYLAND_EVENT_URL, "ポニーランド", "篠崎ポニーランド"))
-
-    # 9. 魔法の文学館
-    add_events("魔法の文学館", parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "魔法の文学館", "魔法の文学館"))
-
-    # 10. 葛西臨海水族園
-    add_events("葛西臨海水族園", parse_generic_facility_events(KASAI_AQUARIUM_URL, "葛西臨海水族園", "葛西臨海水族園"))
-
-    event_list = list(merged_events.values())
-    print(f"Total unique events merged: {len(event_list)}")
-
-    # 一覧ページでサムネイルが取れなかったイベントのみ詳細ページから1つ画像URLを補完（上限80件でタイムアウト防止）
-    detail_checked = 0
-    for ev in event_list:
-        if ev.get("image_url"):
-            continue
-        if detail_checked >= 80:
-            break
-        ev["image_url"] = extract_first_image_from_page(ev["url"])
-        detail_checked += 1
-        time.sleep(0.15)
-
-    ics_content = generate_ics(event_list)
-    with open(OUTPUT_ICS, "w", encoding="utf-8", newline="") as f:
-        f.write(ics_content)
-    print(f"Successfully generated {OUTPUT_ICS} with {len(event_list)} events.")
-
-
-if __name__ == "__main__":
-    main()
+     
