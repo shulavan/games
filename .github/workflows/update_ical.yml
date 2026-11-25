@@ -20,4 +20,4 @@ name: Update Edogawa Events iCal
       ​- name: Run Edogawa event scraper
       run: python edogawa_ical.py
       ​- name: Commit and push updated iCal file
-      run: git config user.name "bot" && git config user.email "bot@users.noreply.github.com" && git add edogawa_events.ics && git commit -m "update" || exit 0
+      run: git config user.name bot && git config user.email bot@noreply.github.com && git add -A && git commit -m up && git push || true
