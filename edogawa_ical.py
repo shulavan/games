@@ -9,7 +9,7 @@ from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
 # ==========================================
-# 連携先URL定義（全施設再検証済み）
+# 連携先URL定義
 # ==========================================
 BASE_URL = "https://www.city.edogawa.tokyo.jp/cgi-bin/event_cal_multi/calendar.cgi"
 LIBRARY_EVENT_URL = "https://www.library.city.edogawa.tokyo.jp/toshow/event/"
@@ -29,7 +29,7 @@ OUTPUT_ICS = "edogawa_events.ics"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 JST = timezone(timedelta(hours=9), name="JST")
 
-# 除外する純粋なニュース・休館案内・UIラベル（イベント名に含まれる「休館中特別公演」等は除外しない）
+# 除外する純粋なニュース・休館案内・UIラベル・終了済み表記
 EXCLUDE_KEYWORDS = (
     "【重要】",
     "休館日のお知らせ",
@@ -53,6 +53,11 @@ EXCLUDE_KEYWORDS = (
     "お知らせ一覧",
     "ニュース一覧",
     "イベント一覧",
+    "チケット購入",
+    "前の月",
+    "次の月",
+    "すべて",
+    "終了",
 )
 
 # 江戸川区内主要施設・全12図書館・公園・文化施設の緯度経度マッピング
@@ -109,14 +114,8 @@ class LegacySSLAdapter(HTTPAdapter):
 
     def init_poolmanager(self, *args, **kwargs):
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
         try:
             ctx.options |= 0x4  # SSL_OP_LEGACY_SERVER_CONNECT
-        except Exception:
-            pass
-        try:
-            ctx.set_ciphers("DEFAULT:@SECLEVEL=0")
         except Exception:
             pass
         kwargs["ssl_context"] = ctx
@@ -135,10 +134,10 @@ def resolve_location(text):
     return None
 
 
-def fetch_html(url, params=None, timeout=12):
+def fetch_html(url, params=None, timeout=10, retries=1):
     """Fetch HTML content safely with retry, session, timeout, and encoding fallback."""
     last_err = None
-    for attempt in range(2):
+    for attempt in range(retries + 1):
         try:
             resp = SESSION.get(url, params=params, timeout=timeout)
             resp.raise_for_status()
@@ -147,16 +146,28 @@ def fetch_html(url, params=None, timeout=12):
             return resp.text
         except Exception as e:
             last_err = e
-            if attempt == 0:
-                time.sleep(0.5)
+            if attempt < retries:
+                time.sleep(0.4)
     print(f"Warning: Failed to fetch {url}: {last_err}")
     return None
 
 
-def is_noise_or_news(title, block_text=""):
-    """Return True only for pure news posts, closure notices, or navigation labels."""
+def is_stale_year_url(url):
+    """Return True if the URL explicitly points to a past year directory (e.g. /2024/, /2025/)."""
+    now_year = datetime.now(JST).year
+    for m in re.finditer(r"/(20\d{2})/", url):
+        yr = int(m.group(1))
+        if yr < now_year:
+            return True
+    return False
+
+
+def is_noise_or_news(title, block_text="", url=""):
+    """Return True only for pure news posts, closure notices, stale URLs, or navigation labels."""
     t = title.strip()
     if not t or len(t) < 3:
+        return True
+    if url and is_stale_year_url(url):
         return True
     if any(kw in t for kw in EXCLUDE_KEYWORDS):
         return True
@@ -197,7 +208,7 @@ def extract_first_image_from_page(page_url):
     """Fetch an event detail page and return the first valid image URL if found."""
     if not page_url or page_url.startswith(SPORTS_KINTONE_URL):
         return None
-    html = fetch_html(page_url, timeout=10)
+    html = fetch_html(page_url, timeout=8, retries=0)
     if not html:
         return None
     try:
@@ -244,8 +255,8 @@ def parse_edogawa_city_calendar(year, month):
         soup = BeautifulSoup(html, "html.parser")
         a_total = 0
         for td in soup.find_all("td"):
-            first_text = td.get_text(" ", strip=True)
-            day_match = re.match(r"^(\d{1,2})日", first_text)
+            cell_text = td.get_text(" ", strip=True)
+            day_match = re.search(r"(?:^|\s)(\d{1,2})\s*日", cell_text)
             if not day_match:
                 continue
             day = int(day_match.group(1))
@@ -263,7 +274,7 @@ def parse_edogawa_city_calendar(year, month):
                     continue
                 full_url = urljoin(BASE_URL, href)
                 raw_title = a_tag.get_text(" ", strip=True)
-                if is_noise_or_news(raw_title):
+                if is_noise_or_news(raw_title, url=full_url):
                     continue
                 title = clean_event_title(raw_title)
 
@@ -294,7 +305,7 @@ def parse_edogawa_city_calendar(year, month):
                 continue
             full_url = urljoin(BASE_URL, href)
             raw_title = a_tag.get_text(" ", strip=True)
-            if is_noise_or_news(raw_title):
+            if is_noise_or_news(raw_title, url=full_url):
                 continue
             title = clean_event_title(raw_title)
             block = a_tag.find_parent(["li", "tr", "dd", "div", "p"]) or a_tag
@@ -341,8 +352,8 @@ def extract_dates_from_text(text, default_year=None):
             start_dt = datetime(sy, int(m1), int(d1), tzinfo=JST).date()
             ey = int(y2) if y2 else (sy if int(m2) >= int(m1) else sy + 1)
             end_dt = datetime(ey, int(m2), int(d2), tzinfo=JST).date()
-            if end_dt >= today - timedelta(days=7) and (end_dt - start_dt).days <= 120:
-                cur = max(start_dt, today - timedelta(days=7))
+            if end_dt >= today - timedelta(days=3) and (end_dt - start_dt).days <= 120:
+                cur = max(start_dt, today - timedelta(days=3))
                 while cur <= end_dt:
                     parsed_dates.add(cur)
                     cur += timedelta(days=1)
@@ -361,17 +372,18 @@ def extract_dates_from_text(text, default_year=None):
             else:
                 y = base_year if m >= now.month - 2 else base_year + 1
             candidate = datetime(y, m, d, tzinfo=JST).date()
-            if today - timedelta(days=7) <= candidate <= today + timedelta(days=180):
+            if today - timedelta(days=3) <= candidate <= today + timedelta(days=180):
                 parsed_dates.add(candidate)
         except ValueError:
             continue
     return parsed_dates
 
 
-def parse_generic_facility_events(url, category, default_venue=""):
+def parse_generic_facility_events(url, category, default_venue="", timeout=10, retries=1):
     """Generic scraper for Edogawa public/cultural/park/museum event pages."""
-    html = fetch_html(url)
+    html = fetch_html(url, timeout=timeout, retries=retries)
     if not html:
+        print(f"    [debug] {category}: html is None")
         return []
 
     soup = BeautifulSoup(html, "html.parser")
@@ -391,34 +403,34 @@ def parse_generic_facility_events(url, category, default_venue=""):
             or re.search(r"/news/\d{4}/index\.html$", full_url)
             or re.search(r"/category/", full_url)
             or re.search(r"/tag/", full_url)
+            or is_stale_year_url(full_url)
         ):
             continue
 
         raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["article", "tr", "li", "dd", "dl", "div"]) or a_tag
-        if is_noise_or_news(raw_title, parent.get_text(" ", strip=True)):
+        if is_noise_or_news(raw_title, parent.get_text(" ", strip=True), full_url):
             heading = parent.find(["h2", "h3", "h4", "dt"]) if parent else None
             if heading:
                 cand = heading.get_text(" ", strip=True)
-                if not is_noise_or_news(cand, parent.get_text(" ", strip=True)):
+                if not is_noise_or_news(cand, parent.get_text(" ", strip=True), full_url):
                     raw_title = cand
 
         block_text = parent.get_text(" ", strip=True)
-        if is_noise_or_news(raw_title, block_text):
+        if is_noise_or_news(raw_title, block_text, full_url):
             continue
 
         title = clean_event_title(raw_title)
         parsed_dates = extract_dates_from_text(f"{raw_title} {block_text}")
 
-        # ページ内テキストに日付が書かれていない場合、URLのパス（/2026/12/...など）や詳細ページから補完
         if not parsed_dates:
             ym_match = re.search(r"/(20\d{2})/(\d{1,2})/", full_url)
             if ym_match:
                 try:
                     y, m = int(ym_match.group(1)), int(ym_match.group(2))
-                    if 1 <= m <= 12:
+                    if 1 <= m <= 12 and y >= now.year:
                         fallback_d = datetime(y, m, 1, tzinfo=JST).date()
-                        if fallback_d >= now.date() - timedelta(days=7):
+                        if fallback_d >= now.date() - timedelta(days=3):
                             parsed_dates.add(fallback_d)
                 except ValueError:
                     pass
@@ -452,7 +464,7 @@ def parse_generic_facility_events(url, category, default_venue=""):
 
 def parse_library_events():
     """Scrape events from Edogawa City Library (all 12 branches)."""
-    html = fetch_html(LIBRARY_EVENT_URL)
+    html = fetch_html(LIBRARY_EVENT_URL, timeout=10, retries=1)
     if not html:
         return []
 
@@ -465,12 +477,12 @@ def parse_library_events():
         if not href or href.startswith("#") or "javascript:" in href:
             continue
         full_url = urljoin(LIBRARY_EVENT_URL, href)
-        if full_url.rstrip("/") == LIBRARY_EVENT_URL.rstrip("/"):
+        if full_url.rstrip("/") == LIBRARY_EVENT_URL.rstrip("/") or is_stale_year_url(full_url):
             continue
         raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["tr", "li", "dd", "dl", "div"]) or a_tag
         block_text = parent.get_text(" ", strip=True)
-        if is_noise_or_news(raw_title, block_text):
+        if is_noise_or_news(raw_title, block_text, full_url):
             continue
 
         title = clean_event_title(raw_title)
@@ -513,8 +525,8 @@ def parse_sports_kintone_events():
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page(user_agent=USER_AGENT)
-            page.goto(SPORTS_KINTONE_URL, wait_until="networkidle", timeout=30000)
-            page.wait_for_timeout(3000)
+            page.goto(SPORTS_KINTONE_URL, wait_until="networkidle", timeout=25000)
+            page.wait_for_timeout(2500)
             html = page.content()
             browser.close()
 
@@ -531,7 +543,7 @@ def parse_sports_kintone_events():
             title_el = row.find(["h2", "h3", "h4", "a", "td"])
             raw_title = title_el.get_text(" ", strip=True) if title_el else text[:50]
 
-            if is_noise_or_news(raw_title, text):
+            if is_noise_or_news(raw_title, text, full_url):
                 continue
             title = clean_event_title(raw_title)
 
@@ -686,7 +698,7 @@ def main():
     for year, month in get_target_months(months_ahead=3):
         items = parse_edogawa_city_calendar(year, month)
         add_events(f"江戸川区公式 ({year}-{month:02d})", items)
-        time.sleep(0.5)
+        time.sleep(0.4)
 
     add_events("江戸川区立図書館", parse_library_events())
     add_events("タワーホール船堀", parse_generic_facility_events(TOWERHALL_EVENT_URL, "船堀タワー", "タワーホール船堀"))
@@ -695,9 +707,10 @@ def main():
     add_events("江戸川区スポーツ", parse_sports_kintone_events())
     add_events("葛西海浜公園", parse_generic_facility_events(KASAI_KAIHIN_PARK_URL, "葛西海浜公園", "葛西海浜公園"))
     add_events("葛西臨海公園", parse_generic_facility_events(KASAI_RINKAI_PARK_URL, "葛西臨海公園", "葛西臨海公園"))
-    add_events("地下鉄博物館", parse_generic_facility_events(CHIKAHAKU_EVENT_URL, "地下鉄博物館", "地下鉄博物館"))
-    add_events("江戸川区自然動物園", parse_generic_facility_events(EDOGAWA_ZOO_EVENT_URL, "自然動物園", "江戸川区自然動物園"))
-    add_events("ポニーランド", parse_generic_facility_events(PONYLAND_EVENT_URL, "ポニーランド", "篠崎ポニーランド"))
+    # 地下鉄博物館・自然動物園・ポニーランドは外部クラウドからの接続タイムアウトが起きやすいため短時間スキップで全体速度を優先
+    add_events("地下鉄博物館", parse_generic_facility_events(CHIKAHAKU_EVENT_URL, "地下鉄博物館", "地下鉄博物館", timeout=5, retries=0))
+    add_events("江戸川区自然動物園", parse_generic_facility_events(EDOGAWA_ZOO_EVENT_URL, "自然動物園", "江戸川区自然動物園", timeout=5, retries=0))
+    add_events("ポニーランド", parse_generic_facility_events(PONYLAND_EVENT_URL, "ポニーランド", "篠崎ポニーランド", timeout=5, retries=0))
     add_events("魔法の文学館", parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "魔法の文学館", "魔法の文学館"))
     add_events("葛西臨海水族園", parse_generic_facility_events(KASAI_AQUARIUM_URL, "葛西臨海水族園", "葛西臨海水族園"))
 
