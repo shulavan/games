@@ -276,9 +276,16 @@ def resolve_location(text):
 def fetch_html(url, params=None, timeout=10, retries=1):
     """Fetch HTML content safely with retry, session, timeout, and encoding fallback."""
     last_err = None
+    extra_headers = {}
+    if "city.edogawa.tokyo.jp" in url:
+        extra_headers = {
+            "Referer": EDOGAWA_TOP_URL,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "ja,en-US;q=0.7,en;q=0.3",
+        }
     for attempt in range(retries + 1):
         try:
-            resp = SESSION.get(url, params=params, timeout=timeout)
+            resp = SESSION.get(url, params=params, headers=extra_headers, timeout=timeout)
             resp.raise_for_status()
             if resp.encoding is None or resp.encoding.lower() == "iso-8859-1":
                 resp.encoding = resp.apparent_encoding or "utf-8"
@@ -297,6 +304,7 @@ def discover_fallback_url(base_url, path_hints=("event", "news", "info", "calend
     if not html:
         return None
     soup = BeautifulSoup(html, "html.parser")
+    candidates = []
     for a_tag in soup.find_all("a", href=True):
         href = a_tag["href"].strip()
         label = a_tag.get_text(" ", strip=True)
@@ -305,19 +313,11 @@ def discover_fallback_url(base_url, path_hints=("event", "news", "info", "calend
         ):
             cand = urljoin(base_url, href)
             if cand.rstrip("/") != base_url.rstrip("/"):
-                return cand
-    return None
-
-
-def is_stale_year_url(url):
-    """Return True if the URL explicitly points to a past year directory (e.g. /2024/, /2025/)."""
-    now_year = datetime.now(JST).year
-    for m in re.finditer(r"/(20\d{2})/", url):
-        yr = int(m.group(1))
-        if yr < now_year:
-            return True
-    return False
-
+                candidates.append(cand)
+    for cand in candidates:
+        if "/event/" in cand or "event" in cand.lower():
+            return cand
+    return candidates[0] if candidates else None
 
 def is_past_report_text(text):
     """Return True if the text describes an already completed event in past tense."""
@@ -505,7 +505,13 @@ def parse_edogawa_city_calendar(year, month):
         a_total = 0
         for td in soup.find_all("td"):
             cell_text = td.get_text(" ", strip=True)
-            day_match = re.search(r"(?:^|\s)(\d{1,2})\s*日?", normalize_japanese_text(cell_text))
+            norm_cell = normalize_japanese_text(cell_text)
+            day_match = re.search(
+                r"(?:^|\s|\[|【|\()(\d{1,2})\s*(?:日|\([月火水木金土日祝・]+\))",
+                norm_cell,
+            )
+            if not day_match:
+                day_match = re.match(r"^(\d{1,2})(?:\D|$)", norm_cell.strip())
             if not day_match:
                 continue
             day = int(day_match.group(1))
