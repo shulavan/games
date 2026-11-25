@@ -490,4 +490,5 @@ def parse_sports_kintone_events():
             link = row.find("a", href=True)
             full_url = urljoin(SPORTS_KINTONE_URL, link["href"]) if link else f"{SPORTS_KINTONE_URL}#event-{idx}"
             title_el = row.find(["h2", "h3", "h4", "a", "td"])
-            raw_title = title_el.get_text(" ", strip=True) if title_el
+            if title_el:
+                raw_title = title_el.get_text
