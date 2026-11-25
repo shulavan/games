@@ -63,6 +63,7 @@ EXCLUDE_KEYWORDS = (
     "リスト表示",
     "詳細を見る",
     "もっと見る",
+    "詳細検索へ",
     "掲載申込書",
     "サイトリニューアル",
     "正門の位置が変わります",
@@ -88,6 +89,22 @@ EXCLUDE_KEYWORDS = (
     "アクセス",
     "お問い合わせ",
     "プライバシーポリシー",
+    "座席表",
+    "地図（こちら）",
+    "連盟",
+    "ホームページ",
+)
+
+OUT_OF_DISTRICT_KEYWORDS = (
+    "埼玉県",
+    "三郷市",
+    "千葉県",
+    "市川市",
+    "浦安市",
+    "船橋市",
+    "松戸市",
+    "横浜市",
+    "川崎市",
 )
 
 PAST_REPORT_PATTERNS = (
@@ -275,16 +292,20 @@ def is_past_report_text(text):
 
 
 def is_noise_or_news(title, block_text="", url=""):
-    """Return True for pure news posts, closure notices, stale URLs, or navigation labels."""
+    """Return True for pure news posts, closure notices, stale URLs, out-of-district events, or navigation labels."""
     t = title.strip()
     if not t or len(t) < 3:
         return True
     if is_past_report_text(t):
         return True
+    if any(ok in t for ok in OUT_OF_DISTRICT_KEYWORDS):
+        return True
     if url and (
         is_stale_year_url(url)
         or "/archive/" in url
         or "/tickets" in url
+        or "/access" in url
+        or "/event/list" in url
         or url.rstrip("/").endswith("/news/index.html")
     ):
         return True
@@ -316,7 +337,7 @@ def extract_image_from_element(element, base_url):
             continue
         full_img_url = urljoin(base_url, src)
         lower_url = full_img_url.lower()
-        if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark")):
+        if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark", "lazy-load", "1x1")):
             continue
         if re.search(r"\.(jpg|jpeg|png|webp|gif)(\?|$)", lower_url):
             return full_img_url
@@ -325,7 +346,7 @@ def extract_image_from_element(element, base_url):
 
 def extract_first_image_from_page(page_url):
     """Fetch an event detail page and return the first valid image URL if found."""
-    if not page_url or page_url.startswith(SPORTS_KINTONE_URL):
+    if not page_url or page_url.startswith(SPORTS_KINTONE_URL) or "mypl.net/shop/" in page_url:
         return None
     html = fetch_html(page_url, timeout=8, retries=0)
     if not html:
@@ -349,7 +370,7 @@ def extract_first_image_from_page(page_url):
                 continue
             full_img_url = urljoin(page_url, src)
             lower_url = full_img_url.lower()
-            if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark", "qr", "dummy")):
+            if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark", "qr", "dummy", "lazy-load", "1x1")):
                 continue
             if re.search(r"\.(jpg|jpeg|png|webp|gif)(\?|$)", lower_url):
                 return full_img_url
