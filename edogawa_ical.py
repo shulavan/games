@@ -25,6 +25,9 @@ KIKIS_MUSEUM_EVENT_URL = "https://kikismuseum.jp/category/event/"
 KASAI_AQUARIUM_URL = "https://www.tokyo-zoo.net/zoo/kasai/"
 SHINOZAKI_PARK_URL = "https://www.tokyo-park.or.jp/park/shinozaki/news/index.html"
 OJIMA_KOMATSUGAWA_PARK_URL = "https://www.tokyo-park.or.jp/park/ojima-komatsugawa/news/index.html"
+EDOGAWA_ATHLETICS_URL = "https://www.kubota-spears.com/lp_edogawa-athletics/schedule/"
+EDOGAWA_BASEBALL_URL = "https://www.edogawa-3field.jp/baseball/taikaiguid/"
+EDOGAWA_MYPL_EVENT_URL = "https://edogawa.mypl.net/event/"
 
 # ==========================================
 # 優先順位2: 友好都市物産展・フリーマーケット・商業施設・学校
@@ -151,6 +154,10 @@ FACILITY_LOCATIONS = {
     "総合レクリエーション公園": (35.661812, 139.862514, "総合レクリエーション公園（東京都江戸川区南葛西・西葛西）"),
     "スポーツランド": (35.718512, 139.903214, "江戸川区スポーツランド（東京都江戸川区東篠崎1-8-1）"),
     "スポーツセンター": (35.668912, 139.862124, "江戸川区スポーツセンター（東京都江戸川区西葛西4-2-20）"),
+    "江戸川陸上競技場": (35.666812, 139.874218, "江戸川区陸上競技場（東京都江戸川区清新町2-1-1）"),
+    "陸上競技場": (35.666812, 139.874218, "江戸川区陸上競技場（東京都江戸川区清新町2-1-1）"),
+    "江戸川球場": (35.719214, 139.898412, "江戸川区球場（東京都江戸川区東篠崎1-9-1）"),
+    "球場": (35.719214, 139.898412, "江戸川区球場（東京都江戸川区東篠崎1-9-1）"),
     "アリオ葛西": (35.656214, 139.872518, "アリオ葛西（東京都江戸川区東葛西9-3-3）"),
     "都立江戸川高校": (35.707214, 139.863512, "東京都立江戸川高等学校（東京都江戸川区松島2-38-1）"),
     "都立小松川高校": (35.697512, 139.852114, "東京都立小松川高等学校（東京都江戸川区平井1-27-10）"),
@@ -949,6 +956,39 @@ def main():
     add_events("都立大島小松川公園", parse_generic_facility_events(OJIMA_KOMATSUGAWA_PARK_URL, "公共・大島小松川公園", "大島小松川公園", timeout=15, retries=1), priority_rank=11)
     add_events("魔法の文学館", parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "公共・魔法の文学館", "魔法の文学館"), priority_rank=12)
     add_events("葛西臨海水族園", parse_generic_facility_events(KASAI_AQUARIUM_URL, "公共・葛西臨海水族園", "葛西臨海水族園"), priority_rank=13)
+    add_events(
+        "江戸川陸上競技場",
+        parse_generic_facility_events(
+            EDOGAWA_ATHLETICS_URL,
+            "公共・江戸川陸上競技場",
+            "江戸川陸上競技場",
+            timeout=12,
+            retries=1,
+        ),
+        priority_rank=14,
+    )
+    add_events(
+        "江戸川球場",
+        parse_generic_facility_events(
+            EDOGAWA_BASEBALL_URL,
+            "公共・江戸川球場",
+            "江戸川球場",
+            timeout=12,
+            retries=1,
+        ),
+        priority_rank=15,
+    )
+    add_events(
+        "江戸川まいぷれ",
+        parse_generic_facility_events(
+            EDOGAWA_MYPL_EVENT_URL,
+            "地域・江戸川まいぷれ",
+            "江戸川区役所",
+            timeout=12,
+            retries=1,
+        ),
+        priority_rank=16,
+    )
 
     # ------------------------------------------
     # 次点（Priority 20〜22）: 友好都市物産展・フリーマーケット・商業施設
