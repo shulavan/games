@@ -8,7 +8,7 @@ X-WR-TIMEZONE:Asia/Tokyo
 X-WR-CALDESC:江戸川区公式ホームページおよび区内公共施設のイベントカレンダー全件まとめ
 BEGIN:VEVENT
 UID:32eb37e2a225f7e8dc909d33@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[船堀タワー] 第70回大妻女子大学合唱団定期演奏
@@ -24,7 +24,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:7b71b727bfc48ba6d63e5f5b@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261213
 DTEND;VALUE=DATE:20261214
 SUMMARY:[船堀タワー] 第47回　江戸川区音楽祭
@@ -39,7 +39,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:3fecd6c032f5e282624e0d7d@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261216
 DTEND;VALUE=DATE:20261217
 SUMMARY:[船堀タワー] Xマスコンサートとオペラ「アイー
@@ -55,7 +55,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:9d2755a34b2ef2e4a3dbb21f@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261217
 DTEND;VALUE=DATE:20261220
 SUMMARY:[船堀タワー] 江戸川区退職教職員の会
@@ -70,7 +70,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:e5b431204655e82dd6c561a8@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261226
 DTEND;VALUE=DATE:20261227
 SUMMARY:[船堀タワー] 霜月音楽団第3回定期演奏会
@@ -85,7 +85,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:903a888867d213197b8eab0c@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20270220
 DTEND;VALUE=DATE:20270221
 SUMMARY:[船堀タワー] 医系弦楽オーケストラアンサンブル
@@ -100,7 +100,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:1c97e47aa4fb5608aa387352@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20270515
 DTEND;VALUE=DATE:20270516
 SUMMARY:[船堀タワー] 江戸川ギター・マンドリンクラブ
@@ -115,104 +115,188 @@ LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
-UID:3c1a4df5c79e2ef750da2aba@edogawa-events.local
-DTSTAMP:20261125T120208Z
+UID:6a2ea993eb466f38cb9b065f@edogawa-events.local
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261202
 DTEND;VALUE=DATE:20261203
-SUMMARY:[総合文化センター] 江戸川区総合文化センター 
- 休館中特別公演 第167回江戸川落語会
-DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
- r/2026/12/491/\n会場: 小松川さくらホール（東京都江戸川
- 区平井1-11-26）\n地図: https://maps.google.com/?q=35.694885\,139.8
- 49215\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026
- /03/edogawa167-710x1000.jpg
-URL:https://edogawa-bunkacenter.jp/calendar/2026/12/491/
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
 LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
  ）
 GEO:35.694885;139.849215
 END:VEVENT
 BEGIN:VEVENT
-UID:3be25f8231393e3f92227290@edogawa-events.local
-DTSTAMP:20261125T120208Z
-DTSTART;VALUE=DATE:20270110
-DTEND;VALUE=DATE:20270111
-SUMMARY:[総合文化センター] 第6回 えどがわ BOXART展 ＜作
- 品募集＞
-DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
- r/2027/01/2837/\n会場: グリーンパレス（東京都江戸川区
- 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
- 1\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/10/
- abd1476407127a2686a3f0e366b52aac.jpg
-URL:https://edogawa-bunkacenter.jp/calendar/2027/01/2837/
-LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
-GEO:35.698912;139.866421
+UID:63d59371db01b78a7e555443@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261207
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
+LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
+ ）
+GEO:35.694885;139.849215
 END:VEVENT
 BEGIN:VEVENT
-UID:f344085d14dbeb5ac20d6174@edogawa-events.local
-DTSTAMP:20261125T120208Z
+UID:08f94b7d0110812ed7e9767c@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
+LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
+ ）
+GEO:35.694885;139.849215
+END:VEVENT
+BEGIN:VEVENT
+UID:4710e0880ccdf3d9b7562736@edogawa-events.local
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20270131
 DTEND;VALUE=DATE:20270201
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
+LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
+ ）
+GEO:35.694885;139.849215
+END:VEVENT
+BEGIN:VEVENT
+UID:2cf8cb05cfb22e93b88d2efa@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270213
+DTEND;VALUE=DATE:20270214
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
+LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
+ ）
+GEO:35.694885;139.849215
+END:VEVENT
+BEGIN:VEVENT
+UID:bf7e28c82f0ab5948df0ed30@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270227
+DTEND;VALUE=DATE:20270228
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
+LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
+ ）
+GEO:35.694885;139.849215
+END:VEVENT
+BEGIN:VEVENT
+UID:d7eba2204ce944b9a09e2c5a@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270319
+DTEND;VALUE=DATE:20270320
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
+LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
+ ）
+GEO:35.694885;139.849215
+END:VEVENT
+BEGIN:VEVENT
+UID:f2fe6373676e3df19d33fe48@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270325
+DTEND;VALUE=DATE:20270326
+SUMMARY:[総合文化センター] チケット購入方法
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/tickets
+ /\n会場: 小松川さくらホール（東京都江戸川区平井1-11
+ -26）\n地図: https://maps.google.com/?q=35.694885\,139.849215\n画像
+ URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/03/edogawa16
+ 7-710x1000.jpg
+URL:https://edogawa-bunkacenter.jp/tickets/
+LOCATION:小松川さくらホール（東京都江戸川区平井1-11-26
+ ）
+GEO:35.694885;139.849215
+END:VEVENT
+BEGIN:VEVENT
+UID:60188bdfc49f459ccfbb8e48@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:[総合文化センター] 江戸川区総合文化センター 
+ 休館中特別公演 第167回江戸川落語会
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
+ r/2026/12/491/\n会場: 江戸川区総合文化センター（東京都
+ 江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70812
+ 5\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uplo
+ ads/2026/03/OGP.jpg
+URL:https://edogawa-bunkacenter.jp/calendar/2026/12/491/
+LOCATION:江戸川区総合文化センター（東京都江戸川区中
+ 央4-14-1）
+GEO:35.708125;139.868514
+END:VEVENT
+BEGIN:VEVENT
+UID:2b070f70b80a9116d3300d30@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270101
+DTEND;VALUE=DATE:20270102
 SUMMARY:[総合文化センター] 第6回 えどがわ BOXART展 ＜作
  品募集＞
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
- r/2027/01/2837/\n会場: グリーンパレス（東京都江戸川区
- 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
- 1\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/10/
- abd1476407127a2686a3f0e366b52aac.jpg
+ r/2027/01/2837/\n会場: 江戸川区総合文化センター（東京
+ 都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
+ 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
+ ploads/2026/03/OGP.jpg
 URL:https://edogawa-bunkacenter.jp/calendar/2027/01/2837/
-LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
-GEO:35.698912;139.866421
+LOCATION:江戸川区総合文化センター（東京都江戸川区中
+ 央4-14-1）
+GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
-UID:0daa1f78f87dae3b0a1c674e@edogawa-events.local
-DTSTAMP:20261125T120208Z
-DTSTART;VALUE=DATE:20270110
-DTEND;VALUE=DATE:20270111
+UID:71fac83ddd04eb75fc56c28a@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270201
+DTEND;VALUE=DATE:20270202
 SUMMARY:[総合文化センター] 第6回えどがわBOXART展
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
- r/2027/02/2836/\n会場: グリーンパレス（東京都江戸川区
- 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
- 1\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/10/
- DSCF3676-1-710x1000.jpg
+ r/2027/02/2836/\n会場: 江戸川区総合文化センター（東京
+ 都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
+ 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
+ ploads/2026/03/OGP.jpg
 URL:https://edogawa-bunkacenter.jp/calendar/2027/02/2836/
-LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
-GEO:35.698912;139.866421
+LOCATION:江戸川区総合文化センター（東京都江戸川区中
+ 央4-14-1）
+GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
-UID:c72be2fd3d94f91f18b7ab9a@edogawa-events.local
-DTSTAMP:20261125T120208Z
-DTSTART;VALUE=DATE:20270213
-DTEND;VALUE=DATE:20270214
-SUMMARY:[総合文化センター] 第6回えどがわBOXART展
-DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
- r/2027/02/2836/\n会場: グリーンパレス（東京都江戸川区
- 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
- 1\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/10/
- DSCF3676-1-710x1000.jpg
-URL:https://edogawa-bunkacenter.jp/calendar/2027/02/2836/
-LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
-GEO:35.698912;139.866421
-END:VEVENT
-BEGIN:VEVENT
-UID:b91d32b0c3212cb110fc667a@edogawa-events.local
-DTSTAMP:20261125T120208Z
-DTSTART;VALUE=DATE:20270227
-DTEND;VALUE=DATE:20270228
-SUMMARY:[総合文化センター] 第6回えどがわBOXART展
-DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
- r/2027/02/2836/\n会場: グリーンパレス（東京都江戸川区
- 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
- 1\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads/2026/10/
- DSCF3676-1-710x1000.jpg
-URL:https://edogawa-bunkacenter.jp/calendar/2027/02/2836/
-LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
-GEO:35.698912;139.866421
-END:VEVENT
-BEGIN:VEVENT
-UID:205a4468c89e2ad2a2a45649@edogawa-events.local
-DTSTAMP:20261125T120208Z
-DTSTART;VALUE=DATE:20270227
-DTEND;VALUE=DATE:20270228
+UID:ca154fb902722fb29cfaa561@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270201
+DTEND;VALUE=DATE:20270202
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
  休館中特別公演 東儀秀樹コンサート 悠久なる雅楽の
  伝統と革新
@@ -220,32 +304,15 @@ DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/02/492/\n会場: 江戸川区総合文化センター（東京都
  江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70812
  5\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uplo
- ads/2026/03/TogiO-710x1000.jpg
+ ads/2026/03/OGP.jpg
 URL:https://edogawa-bunkacenter.jp/calendar/2027/02/492/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
 GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
-UID:90b1b0ea8391ebd54988caa3@edogawa-events.local
-DTSTAMP:20261125T120208Z
-DTSTART;VALUE=DATE:20261206
-DTEND;VALUE=DATE:20261207
-SUMMARY:[総合文化センター] 江戸川区総合文化センター 
- 休館中特別公演 季節のお便りコンサート　春／光
-DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
- r/2027/03/3028/\n会場: 江戸川区総合文化センター（東京
- 都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
- 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/11/04e1dcedc1a24e554fad08ddac93b8df.png
-URL:https://edogawa-bunkacenter.jp/calendar/2027/03/3028/
-LOCATION:江戸川区総合文化センター（東京都江戸川区中
- 央4-14-1）
-GEO:35.708125;139.868514
-END:VEVENT
-BEGIN:VEVENT
 UID:de5a8d0cd6ba68ada17c0271@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20270110
 DTEND;VALUE=DATE:20270111
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -254,7 +321,24 @@ DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/03/3028/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
  8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/11/04e1dcedc1a24e554fad08ddac93b8df.png
+ ploads/2026/03/OGP.jpg
+URL:https://edogawa-bunkacenter.jp/calendar/2027/03/3028/
+LOCATION:江戸川区総合文化センター（東京都江戸川区中
+ 央4-14-1）
+GEO:35.708125;139.868514
+END:VEVENT
+BEGIN:VEVENT
+UID:44dc28dff6db6d7fdd2ed824@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270301
+DTEND;VALUE=DATE:20270302
+SUMMARY:[総合文化センター] 江戸川区総合文化センター 
+ 休館中特別公演 季節のお便りコンサート　春／光
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
+ r/2027/03/3028/\n会場: 江戸川区総合文化センター（東京
+ 都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
+ 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
+ ploads/2026/03/OGP.jpg
 URL:https://edogawa-bunkacenter.jp/calendar/2027/03/3028/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -262,7 +346,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:1db95436b9038065135ef0db@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20270319
 DTEND;VALUE=DATE:20270320
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -271,15 +355,41 @@ DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/03/3028/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
  8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/11/04e1dcedc1a24e554fad08ddac93b8df.png
+ ploads/2026/03/OGP.jpg
 URL:https://edogawa-bunkacenter.jp/calendar/2027/03/3028/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
 GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
+UID:ab303bd9be6e3b1057a7e214@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261207
+SUMMARY:[総合文化センター] チケット購入
+DESCRIPTION:詳細・申込情報: https://piagettii.s2.e-get.jp/edogawa/
+ pt/\n会場: タワーホール船堀（東京都江戸川区船堀4-1-1
+ ）\n地図: https://maps.google.com/?q=35.683812\,139.861924
+URL:https://piagettii.s2.e-get.jp/edogawa/pt/
+LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
+GEO:35.683812;139.861924
+END:VEVENT
+BEGIN:VEVENT
+UID:372962f148a1e39c330e4cca@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:[総合文化センター] チケット購入
+DESCRIPTION:詳細・申込情報: https://piagettii.s2.e-get.jp/edogawa/
+ pt/\n会場: タワーホール船堀（東京都江戸川区船堀4-1-1
+ ）\n地図: https://maps.google.com/?q=35.683812\,139.861924
+URL:https://piagettii.s2.e-get.jp/edogawa/pt/
+LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
+GEO:35.683812;139.861924
+END:VEVENT
+BEGIN:VEVENT
 UID:ac2a2d1910471bf762294ee5@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -288,7 +398,24 @@ DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/03/1051/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
  8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/03/edogawa168-710x1000.jpg
+ ploads/2026/03/OGP.jpg
+URL:https://edogawa-bunkacenter.jp/calendar/2027/03/1051/
+LOCATION:江戸川区総合文化センター（東京都江戸川区中
+ 央4-14-1）
+GEO:35.708125;139.868514
+END:VEVENT
+BEGIN:VEVENT
+UID:883039acdb7ff5fdeb491171@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270301
+DTEND;VALUE=DATE:20270302
+SUMMARY:[総合文化センター] 江戸川区総合文化センター 
+ 休館中特別公演 第168回江戸川落語会
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
+ r/2027/03/1051/\n会場: 江戸川区総合文化センター（東京
+ 都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
+ 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
+ ploads/2026/03/OGP.jpg
 URL:https://edogawa-bunkacenter.jp/calendar/2027/03/1051/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -296,7 +423,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:41d9a3f487f919716dec85d2@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20270325
 DTEND;VALUE=DATE:20270326
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -305,15 +432,406 @@ DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/03/1051/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
  8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/03/edogawa168-710x1000.jpg
+ ploads/2026/03/OGP.jpg
 URL:https://edogawa-bunkacenter.jp/calendar/2027/03/1051/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
 GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
+UID:5bfb48f2d9eb9bfdbbcbdf94@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270201
+DTEND;VALUE=DATE:20270202
+SUMMARY:[総合文化センター] 前の月
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
+ r/2027/02/\n会場: 江戸川区総合文化センター（東京都江
+ 戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.708125\,
+ 139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads
+ /2026/03/OGP.jpg
+URL:https://edogawa-bunkacenter.jp/calendar/2027/02/
+LOCATION:江戸川区総合文化センター（東京都江戸川区中
+ 央4-14-1）
+GEO:35.708125;139.868514
+END:VEVENT
+BEGIN:VEVENT
+UID:bf012f2d8dba719ece41328b@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270301
+DTEND;VALUE=DATE:20270302
+SUMMARY:[総合文化センター] すべて
+DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
+ r/2027/03/\n会場: 江戸川区総合文化センター（東京都江
+ 戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.708125\,
+ 139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uploads
+ /2026/03/OGP.jpg
+URL:https://edogawa-bunkacenter.jp/calendar/2027/03/
+LOCATION:江戸川区総合文化センター（東京都江戸川区中
+ 央4-14-1）
+GEO:35.708125;139.868514
+END:VEVENT
+BEGIN:VEVENT
+UID:4717e68995c082104c876024@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270308
+DTEND;VALUE=DATE:20270309
+SUMMARY:[葛西臨海公園] 3/8(土) Art Marche in KASAI Seaside Park　
+ ～アートマルシェ イン 葛西臨海公園
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2025/3_8_art_marche_in_kasai_seaside_park.html\n会場: 葛
+ 西臨海公園（東京都江戸川区臨海町6-2-1）\n地図: https:
+ //maps.google.com/?q=35.642514\,139.859812
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2025/3_8_art_march
+ e_in_kasai_seaside_park.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:2df2ac911d4403b370338ae5@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270331
+DTEND;VALUE=DATE:20270401
+SUMMARY:[葛西臨海公園] ＼開催中／ ヒクイナ企画展　3/31
+ (月)まで
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2025/park_info_28.html\n会場: 葛西臨海公園（東京
+ 都江戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.
+ 642514\,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairi
+ nkai/assets/%E3%83%92%E3%82%AF%E3%82%A4%E3%83%8A%E5%B1%95.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2025/park_info_28.
+ html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:2620bcaa5a5faff6c081734f@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270208
+DTEND;VALUE=DATE:20270209
+SUMMARY:[葛西臨海公園] 葛西臨海公園 水仙まつり ～2月8
+ 日・9日開催～
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2025/2_8_9.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/%E3%83%81%E3%83%A9%E3%82%B7_%E6%B0%B4%E4%BB%99%E3%81%BE%E3%81%A4%E
+ 3%82%8A2025%28%E8%A1%A8%29.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2025/2_8_9.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:4876f8a9bae17de1da75e7d2@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261226
+DTEND;VALUE=DATE:20270108
+SUMMARY:[葛西臨海公園] 鳥類園で楽しむ冬休みイベント
+ カレンダー 12/26～1/7
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/12_26_1_7.html\n会場: 葛西臨海公園（東京都
+ 江戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642
+ 514\,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinka
+ i/assets/%E5%86%AC%E4%BC%91%E3%81%BF%E3%82%AB%E3%83%AC%E3%83%B3%E3%83%80
+ %E3%83%BC_2024_01.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/12_26_1_7.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:583511a8e1a1a017967fe280@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:[葛西臨海公園] ＼12/15終了／コスモスの開花状況
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/12_15_1.html\n会場: 葛西臨海公園（東京都
+ 江戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642
+ 514\,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinka
+ i/assets/%E8%91%9B%E8%A5%BF%E8%87%A8%E6%B5%B7%E5%85%AC%E5%9C%92241213%E3
+ %82%B3%E3%82%B9%E3%83%A2%E3%82%B9%20%281%29.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/12_15_1.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:e621ebd920dc5e68814290a1@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:[葛西臨海公園] ＼12/15終了／コスモスの開花状況
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/12_15.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/%E8%91%9B%E8%A5%BF%E8%87%A8%E6%B5%B7%E5%85%AC%E5%9C%92241207%E3%82
+ %B3%E3%82%B9%E3%83%A2%E3%82%B9.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/12_15.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:a318faf57b04e1ab49a557a7@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:[葛西臨海公園] 11/30(土)秋の公園フェスティバル
+ 　開催
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/11_30.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/%E8%91%9B%E8%A5%BF%E8%87%A8%E6%B5%B7%E5%85%AC%E5%9C%92%E7%A7%8B%E3
+ %81%AE%E5%85%AC%E5%9C%92%E3%83%95%E3%82%A7%E3%82%B9%E3%83%86%E3%82%A3%E3
+ %83%90%E3%83%AB_2.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/11_30.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:a5fea600ed38bdd2bd76cae0@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261124
+DTEND;VALUE=DATE:20261125
+SUMMARY:[葛西臨海公園] 11/24(日)鳥類園 開園30周年記念「
+ いきものまつり」開催！
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/11_24_30.html\n会場: 葛西臨海公園（東京都
+ 江戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642
+ 514\,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinka
+ i/assets/%E3%83%81%E3%83%A9%E3%82%B7_30%E5%91%A8%E5%B9%B41.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/11_24_30.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:dd9c10eef3c457f127a8bb38@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270401
+DTEND;VALUE=DATE:20270402
+SUMMARY:[葛西臨海公園] 鳥類園ウォッチングセンター再
+ 開のお知らせ【4月1日～】
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/4_1.html\n会場: 葛西臨海公園（東京都江戸
+ 川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514\,1
+ 39.859812
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/4_1.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:b714ccce390fc9593ea6682d@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270203
+DTEND;VALUE=DATE:20270204
+SUMMARY:[葛西臨海公園] 葛西臨海公園 水仙まつり ～2月3
+ 日・4日開催～
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/54184.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/images/%E8%91%9B%E8%A5%BF%E8%87%A8%E6%B5%B7%E5%85%AC%E5%9C%9223021
+ 1%E6%B0%B4%E4%BB%99%E3%81%BE%E3%81%A4%E3%82%8A1%E6%97%A5%E7%9B%AE%20%284
+ %29-thumb-240xauto-110967.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/54184.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:dbbd128e83e6f8f5d524bab4@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270126
+DTEND;VALUE=DATE:20270226
+SUMMARY:[葛西臨海公園] 花と光のムーブメントが葛西臨
+ 海公園で開催されます 1/26～2/25
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2024/54159.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/iamges/%E6%98%8E%E3%82%8B%E3%81%95%E8%AA%BF%E6%95%B4E9B73A4E-EB87-
+ 426B-B6EA-AE3E4B734119-thumb-240xauto-110883.jpeg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2024/54159.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:23fa1c7d96ab8458deb5c180@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20270110
+SUMMARY:[葛西臨海公園] 鳥類園冬休みイベントカレンダ
+ ー ～12/23～1/9～
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2023/54011.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/images/%E6%B5%9C%E9%9B%A2%E5%AE%AE%E6%81%A9%E8%B3%9C%E5%BA%AD%E5%9
+ C%92231213%E7%B4%85%E8%91%89%E3%81%A8%E3%83%84%E3%83%AF%E3%83%96%E3%82%A
+ D-thumb-240xauto-110285.jpg
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2023/54011.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:d642dd4977d7bc945cd27f23@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261203
+DTEND;VALUE=DATE:20261204
+SUMMARY:[葛西臨海公園] 鳥類園でクリスマスリース作り 
+ ～12月3日・12月17日開催～
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2023/53852.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/news/2023/20231130_05.webp
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2023/53852.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:52d33cee72da7b6a316be9a0@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261217
+DTEND;VALUE=DATE:20261218
+SUMMARY:[葛西臨海公園] 鳥類園でクリスマスリース作り 
+ ～12月3日・12月17日開催～
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2023/53852.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/news/2023/20231130_05.webp
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2023/53852.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:0c962eaa95beb82059e6f28c@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270714
+DTEND;VALUE=DATE:20270814
+SUMMARY:[葛西臨海公園] 花と光のムーブメント 開催中で
+ す！ 7/14～8/13
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2023/52829.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/news/2023/20230714_01.webp
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2023/52829.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:e9c59c378233a3270d34acdc@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270714
+DTEND;VALUE=DATE:20270814
+SUMMARY:[葛西臨海公園] 花と光のムーブメントが葛西臨
+ 海公園で開催されます 7/14～8/13
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2023/52804.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2023/52804.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:4512b81bd046e969eb5aea28@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261217
+DTEND;VALUE=DATE:20261218
+SUMMARY:[葛西臨海公園] 【募集は終了しました】クリス
+ マスリース作り ～12月17日開催～
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2022/51500.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/news/2022/20221130_05.webp
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2022/51500.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:d8a0fcd7e74431cc290215ca@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270401
+DTEND;VALUE=DATE:20270402
+SUMMARY:[葛西臨海公園] 鳥類園ウォッチングセンターの
+ 休館について（令和3年4月1日～開館時期未定）
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2022/48243.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2022/48243.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:29d9a59b074fa7873c82804b@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270504
+DTEND;VALUE=DATE:20270505
+SUMMARY:[葛西臨海公園] 鳥類園 シギ・チドリまつり【5/4
+ ・5】
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2022/50288.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812\n画像URL: https://www.tokyo-park.or.jp/park/kasairinkai/a
+ ssets/news/2023/67_220503_sigi01.webp
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2022/50288.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:5b85d693e73db68d50ad957b@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261218
+DTEND;VALUE=DATE:20261219
+SUMMARY:[葛西臨海公園] 【募集終了しました】12/18(土) ク
+ リスマスリース作り
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2021/49455.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2021/49455.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:40f46cc7e0ebe57dd677d3bb@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20270601
+DTEND;VALUE=DATE:20270909
+SUMMARY:[葛西臨海公園] 葛西臨海公園駐車場閉鎖のお知
+ らせ（6月1日～9月8日(予定)）
+DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/kasa
+ irinkai/news/2021/48446.html\n会場: 葛西臨海公園（東京都江
+ 戸川区臨海町6-2-1）\n地図: https://maps.google.com/?q=35.642514
+ \,139.859812
+URL:https://www.tokyo-park.or.jp/park/kasairinkai/news/2021/48446.html
+LOCATION:葛西臨海公園（東京都江戸川区臨海町6-2-1）
+GEO:35.642514;139.859812
+END:VEVENT
+BEGIN:VEVENT
+UID:b2e68296cda7a252089cb0c5@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261121
+DTEND;VALUE=DATE:20261122
+SUMMARY:[葛西臨海水族園] 12/6（日）開催！「水族館をつ
+ なぐハンドブック」を一緒につくる中学生・高校生を
+ 募集します！
+DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
+ 4079/index.html\n会場: 東京都葛西臨海水族園（東京都江
+ 戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112
+ \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/handbook_SNS.jp
+ g
+URL:https://www.tokyo-zoo.net/kasai/news/14079/index.html
+LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
+ -2-3）
+GEO:35.640112;139.862214
+END:VEVENT
+BEGIN:VEVENT
 UID:d9e5396262ded151b88c8100@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[葛西臨海水族園] 12/6（日）開催！「水族館をつ
@@ -330,8 +848,25 @@ LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
 GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
+UID:b94559abe4ad3575a8657e72@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261119
+DTEND;VALUE=DATE:20261120
+SUMMARY:[葛西臨海水族園] 1/6　障がいのある方とそのご
+ 家族をご招待 「のんびり楽しむ水族園 ドリームデイ
+ 」を開催します
+DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
+ 3810/index.html\n会場: 東京都葛西臨海水族園（東京都江
+ 戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112
+ \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/kasai.jpg
+URL:https://www.tokyo-zoo.net/kasai/news/13810/index.html
+LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
+ -2-3）
+GEO:35.640112;139.862214
+END:VEVENT
+BEGIN:VEVENT
 UID:0c526e881ce014817c2e4636@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20270106
 DTEND;VALUE=DATE:20270107
 SUMMARY:[葛西臨海水族園] 1/6　障がいのある方とそのご
@@ -347,8 +882,25 @@ LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
 GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
+UID:66f2166ee95b27a45a45a73a@edogawa-events.local
+DTSTAMP:20261125T122244Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:[葛西臨海水族園] 12/12 参加者募集 野生動物の保
+ 全に向けて──「東京動物園協会野生生物保全基金」
+ 報告講演会 先着順で受け付けます
+DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
+ 4034/index.html\n会場: 東京都葛西臨海水族園（東京都江
+ 戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112
+ \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/13976_12.png
+URL:https://www.tokyo-zoo.net/kasai/news/14034/index.html
+LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
+ -2-3）
+GEO:35.640112;139.862214
+END:VEVENT
+BEGIN:VEVENT
 UID:5f13df946941d23716262176@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261212
 DTEND;VALUE=DATE:20261213
 SUMMARY:[葛西臨海水族園] 12/12 参加者募集 野生動物の保
@@ -365,7 +917,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:8bea7de247b67a1a961119e2@edogawa-events.local
-DTSTAMP:20261125T120208Z
+DTSTAMP:20261125T122244Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261129
 SUMMARY:[葛西臨海水族園] 11/28、29 海鳥イベント「つどえ
