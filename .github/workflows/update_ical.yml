@@ -10,9 +10,6 @@ build-ical:
 runs-on: ubuntu-latest
 steps:
 - uses: actions/checkout@v4
-- uses: actions/setup-python@v5
-with:
-python-version: "3.11"
 - run: pip install requests beautifulsoup4 playwright && playwright install chromium --with-deps
 - run: python edogawa_ical.py
 - run: git config user.name bot && git config user.email bot@noreply.github.com && git add -A && git commit -m up && git push || true
