@@ -8,7 +8,7 @@ X-WR-TIMEZONE:Asia/Tokyo
 X-WR-CALDESC:江戸川区公式ホームページおよび区内公共施設のイベントカレンダー全件まとめ
 BEGIN:VEVENT
 UID:9d0c02cc8a75fc0040e84be5@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270130
 DTEND;VALUE=DATE:20270131
 SUMMARY:[区イベント] 手話講習会　受講生募集（タワー
@@ -16,15 +16,15 @@ SUMMARY:[区イベント] 手話講習会　受講生募集（タワー
 DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
  t/r8shuwakoshu.html\n会場: タワーホール船堀（東京都江戸
  川区船堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.
- 861924\n画像URL: https://www.city.edogawa.tokyo.jp/shared/site_rn/imag
- es/sns/logo.png
+ 861924\n画像URL: https://www.city.edogawa.tokyo.jp/images/74513/syuwa.
+ png
 URL:https://www.city.edogawa.tokyo.jp/event/r8shuwakoshu.html
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:32eb37e2a225f7e8dc909d33@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[船堀タワー] 第70回大妻女子大学合唱団定期演奏
@@ -40,7 +40,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:7b71b727bfc48ba6d63e5f5b@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261213
 DTEND;VALUE=DATE:20261214
 SUMMARY:[船堀タワー] 第47回　江戸川区音楽祭
@@ -55,7 +55,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:3fecd6c032f5e282624e0d7d@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261216
 DTEND;VALUE=DATE:20261217
 SUMMARY:[船堀タワー] Xマスコンサートとオペラ「アイー
@@ -71,7 +71,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:9d2755a34b2ef2e4a3dbb21f@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261217
 DTEND;VALUE=DATE:20261220
 SUMMARY:[船堀タワー] 江戸川区退職教職員の会
@@ -86,7 +86,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:e5b431204655e82dd6c561a8@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261226
 DTEND;VALUE=DATE:20261227
 SUMMARY:[船堀タワー] 霜月音楽団第3回定期演奏会
@@ -101,7 +101,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:903a888867d213197b8eab0c@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270220
 DTEND;VALUE=DATE:20270221
 SUMMARY:[船堀タワー] 医系弦楽オーケストラアンサンブル
@@ -116,7 +116,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:1c97e47aa4fb5608aa387352@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270515
 DTEND;VALUE=DATE:20270516
 SUMMARY:[船堀タワー] 江戸川ギター・マンドリンクラブ
@@ -132,7 +132,7 @@ GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:60188bdfc49f459ccfbb8e48@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261201
 DTEND;VALUE=DATE:20261202
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -149,7 +149,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:2b070f70b80a9116d3300d30@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270101
 DTEND;VALUE=DATE:20270102
 SUMMARY:[総合文化センター] 第6回 えどがわ BOXART展 ＜作
@@ -166,7 +166,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:71fac83ddd04eb75fc56c28a@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270201
 DTEND;VALUE=DATE:20270202
 SUMMARY:[総合文化センター] 第6回えどがわBOXART展
@@ -182,7 +182,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:ca154fb902722fb29cfaa561@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270201
 DTEND;VALUE=DATE:20270202
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -200,7 +200,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:44dc28dff6db6d7fdd2ed824@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270301
 DTEND;VALUE=DATE:20270302
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -217,7 +217,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:883039acdb7ff5fdeb491171@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270301
 DTEND;VALUE=DATE:20270302
 SUMMARY:[総合文化センター] 江戸川区総合文化センター 
@@ -234,7 +234,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:63d59371db01b78a7e555443@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[総合文化センター] カレンダー
@@ -250,7 +250,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:08f94b7d0110812ed7e9767c@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270110
 DTEND;VALUE=DATE:20270111
 SUMMARY:[総合文化センター] カレンダー
@@ -266,7 +266,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:d7eba2204ce944b9a09e2c5a@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270319
 DTEND;VALUE=DATE:20270320
 SUMMARY:[総合文化センター] カレンダー
@@ -282,7 +282,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:f2fe6373676e3df19d33fe48@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270325
 DTEND;VALUE=DATE:20270326
 SUMMARY:[総合文化センター] カレンダー
@@ -298,7 +298,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:d9e5396262ded151b88c8100@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[葛西臨海水族園] 12/6（日）開催！「水族館をつ
@@ -307,8 +307,7 @@ SUMMARY:[葛西臨海水族園] 12/6（日）開催！「水族館をつ
 DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
  4079/index.html\n会場: 東京都葛西臨海水族園（東京都江
  戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112
- \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/handbook_SNS.jp
- g
+ \,139.862214
 URL:https://www.tokyo-zoo.net/kasai/news/14079/index.html
 LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
  -2-3）
@@ -316,7 +315,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:0c526e881ce014817c2e4636@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20270106
 DTEND;VALUE=DATE:20270107
 SUMMARY:[葛西臨海水族園] 1/6　障がいのある方とそのご
@@ -333,7 +332,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:5f13df946941d23716262176@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261212
 DTEND;VALUE=DATE:20261213
 SUMMARY:[葛西臨海水族園] 12/12 参加者募集 野生動物の保
@@ -350,7 +349,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:8bea7de247b67a1a961119e2@edogawa-events.local
-DTSTAMP:20261125T130120Z
+DTSTAMP:20261125T210200Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261129
 SUMMARY:[葛西臨海水族園] 11/28、29 海鳥イベント「つどえ
@@ -361,358 +360,6 @@ DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
  \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/kasai/news/1381
  9_06.jpg
 URL:https://www.tokyo-zoo.net/kasai/news/13819/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:cea1f122f8fb59b1c221ca0d@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261128
-DTEND;VALUE=DATE:20261129
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:e2f95b1352420c0ca67c1e2a@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261203
-DTEND;VALUE=DATE:20261204
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:4e730c8600a3068e86f88c28@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261206
-DTEND;VALUE=DATE:20261207
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:3218bfacc73a0f80644f6d1f@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261212
-DTEND;VALUE=DATE:20261213
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:5e364515945554f918be0528@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270106
-DTEND;VALUE=DATE:20270107
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:29ecf7bddc173655c7fbb450@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270203
-DTEND;VALUE=DATE:20270204
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:944d75ba4608fcaff1e4ad57@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270205
-DTEND;VALUE=DATE:20270225
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:3665fd52c0250aff702d3b9c@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270303
-DTEND;VALUE=DATE:20270304
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:21747e39c8b026111a1d8335@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270507
-DTEND;VALUE=DATE:20270509
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:1a23dcb547e92aefd831df57@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270512
-DTEND;VALUE=DATE:20270513
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:c1c76361f4733a390fbe9074@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270621
-DTEND;VALUE=DATE:20270708
-SUMMARY:[葛西臨海水族園] 一覧はこちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/i
- ndex.html\n会場: 東京都葛西臨海水族園（東京都江戸川
- 区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112\,139.
- 862214\n画像URL: https://www.tokyo-zoo.net/image/dummy666.jpg
-URL:https://www.tokyo-zoo.net/kasai/news/index.html
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:0510fa94af41c83224829fdf@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261128
-DTEND;VALUE=DATE:20261129
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:b02f285c07272f982df49cb5@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261203
-DTEND;VALUE=DATE:20261204
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:6116eaec12f42473ac33144e@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261206
-DTEND;VALUE=DATE:20261207
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:783d499846c384f819f08141@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20261212
-DTEND;VALUE=DATE:20261213
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:a436dd167db734ac61ffdeed@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270106
-DTEND;VALUE=DATE:20270107
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:ae2441a4d073e45df5586b3f@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270203
-DTEND;VALUE=DATE:20270204
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:55cd7e491b07be8f4f1ca15f@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270205
-DTEND;VALUE=DATE:20270225
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:2bb6c6fd8f52355d40aefb13@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270303
-DTEND;VALUE=DATE:20270304
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:a0fd390d6d16982e661f9640@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270507
-DTEND;VALUE=DATE:20270509
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:12791ad80a39275311dbae23@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270512
-DTEND;VALUE=DATE:20270513
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
-LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
- -2-3）
-GEO:35.640112;139.862214
-END:VEVENT
-BEGIN:VEVENT
-UID:86f788293d79a9f96a60dfa8@edogawa-events.local
-DTSTAMP:20261125T130120Z
-DTSTART;VALUE=DATE:20270621
-DTEND;VALUE=DATE:20270708
-SUMMARY:[葛西臨海水族園] 2025年12月までのお知らせはこ
- ちら
-DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/archive/inde
- x.html?category=kasai\n会場: 東京都葛西臨海水族園（東京
- 都江戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.
- 640112\,139.862214\n画像URL: https://www.tokyo-zoo.net/common/img/meta
- /ogp/ogp_tokyozoonet.png
-URL:https://www.tokyo-zoo.net/archive/index.html?category=kasai
 LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
  -2-3）
 GEO:35.640112;139.862214
