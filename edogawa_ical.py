@@ -21,25 +21,17 @@ BUNKACENTER_CAL_URL = "https://edogawa-bunkacenter.jp/calendar/"
 SPORTS_KINTONE_URL = "https://2f01466f.viewer.kintoneapp.com/public/2288685cd0240ea5379b822175def1d520d606ea6a20c595b5c7602fc6c29368"
 KASAI_KAIHIN_PARK_URL = "https://kasaikaihinpark.com/event/"
 KASAI_RINKAI_PARK_URL = "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html"
-CHIKAHAKU_EVENT_URL = "https://www.chikahaku.jp/event/"
-EDOGAWA_ZOO_EVENT_URL = "https://www.edogawa-kankyozaidan.jp/zoo/event/"
-PONYLAND_EVENT_URL = "https://www.edogawa-kankyozaidan.jp/ponyland/event/"
 KIKIS_MUSEUM_EVENT_URL = "https://kikismuseum.jp/category/event/"
 KASAI_AQUARIUM_URL = "https://www.tokyo-zoo.net/zoo/kasai/"
 SHINOZAKI_PARK_URL = "https://www.tokyo-park.or.jp/park/shinozaki/news/index.html"
 OJIMA_KOMATSUGAWA_PARK_URL = "https://www.tokyo-park.or.jp/park/ojima-komatsugawa/news/index.html"
-TOBU_FRIEND_HALL_URL = "https://www.edogawa-kankyozaidan.jp/tobu-friend/"
-KOIWA_URBAN_PLAZA_URL = "https://www.edogawa-kankyozaidan.jp/koiwa-urban/"
-SHINKAWA_SAKURAKAN_URL = "https://www.edogawa-kankyozaidan.jp/shinkawa-sakurakan/"
 
 # ==========================================
-# 優先順位2: 友好都市物産展・フリーマーケット・商店街・商業施設・学校
+# 優先順位2: 友好都市物産展・フリーマーケット・商業施設・学校
 # ==========================================
 TSURUOKA_BUSSAN_URL = "https://www.city.tsuruoka.lg.jp/kanko/kankou-sonota/tokyo01.html"
 TRX_FLEAMARKET_URL = "https://trx.jp/"
 ARIO_KASAI_EVENT_URL = "https://kasai.ario.jp/event/"
-SHAPO_KOIWA_EVENT_URL = "https://shapo.jrtk.jp/koiwa/event/"
-EDOGAWA_SYOUTENGAI_URL = "https://www.edogawa-syoutengai.jp/"
 
 SCHOOL_EVENT_SOURCES = [
     ("都立江戸川高校", "https://www.metro.ed.jp/edogawa-h/news/index.html", "都立江戸川高校"),
@@ -48,16 +40,12 @@ SCHOOL_EVENT_SOURCES = [
     ("都立葛西南高校", "https://www.metro.ed.jp/kasaiminami-h/news/index.html", "都立葛西南高校"),
     ("都立紅葉川高校", "https://www.metro.ed.jp/momijigawa-h/news/index.html", "都立紅葉川高校"),
     ("都立篠崎高校", "https://www.metro.ed.jp/shinozaki-h/news/index.html", "都立篠崎高校"),
-    ("江戸川女子中学・高校", "https://www.edojo.jp/news/", "江戸川女子中学・高等学校"),
-    ("関東第一高校", "https://www.kanto-ichiko.ac.jp/news/", "関東第一高校"),
-    ("東京スクール・オブ・ミュージック", "https://www.tsm.ac.jp/event/", "東京スクール・オブ・ミュージック＆ダンス専門学校"),
 ]
 
 OUTPUT_ICS = "edogawa_events.ics"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 JST = timezone(timedelta(hours=9), name="JST")
 
-# 除外する純粋なニュース・休館案内・UIラベル
 EXCLUDE_KEYWORDS = (
     "【重要】",
     "休館日のお知らせ",
@@ -99,7 +87,6 @@ EXCLUDE_KEYWORDS = (
     "プライバシーポリシー",
 )
 
-# 開催済み・報告記事（過去形）の除外パターン
 PAST_REPORT_PATTERNS = (
     r"開催しました[!！。]?$",
     r"実施しました[!！。]?$",
@@ -109,7 +96,6 @@ PAST_REPORT_PATTERNS = (
     r"を行いました[!！。]?$",
 )
 
-# 学校サイトで拾う公開イベント関連キーワード（保護者限定行事を避けるため）
 SCHOOL_PUBLIC_KEYWORDS = (
     "文化祭",
     "学園祭",
@@ -125,7 +111,6 @@ SCHOOL_PUBLIC_KEYWORDS = (
     "バザー",
 )
 
-# 江戸川区内主要施設・区役所・全12図書館・公園・駅前広場・商業施設・学校の緯度経度マッピング
 FACILITY_LOCATIONS = {
     "江戸川区役所": (35.706612, 139.868324, "江戸川区役所（東京都江戸川区中央1-4-1）"),
     "区役所": (35.706612, 139.868324, "江戸川区役所（東京都江戸川区中央1-4-1）"),
@@ -153,13 +138,11 @@ FACILITY_LOCATIONS = {
     "タワーホール船堀": (35.683812, 139.861924, "タワーホール船堀（東京都江戸川区船堀4-1-1）"),
     "船堀タワー": (35.683812, 139.861924, "タワーホール船堀（東京都江戸川区船堀4-1-1）"),
     "グリーンパレス": (35.698912, 139.866421, "グリーンパレス（東京都江戸川区松島1-38-1）"),
-    "地下鉄博物館": (35.663412, 139.873215, "地下鉄博物館（東京都江戸川区東葛西6-3-1 東京メトロ東西線葛西駅高架下）"),
     "自然動物園": (35.671312, 139.858724, "江戸川区自然動物園（東京都江戸川区北葛西3-2-1 行船公園内）"),
     "行船公園": (35.671312, 139.858724, "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）"),
     "平成庭園": (35.671312, 139.858724, "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）"),
     "篠崎ポニーランド": (35.714512, 139.910214, "篠崎ポニーランド（東京都江戸川区篠崎町3-12-17）"),
     "なぎさポニーランド": (35.647812, 139.873912, "なぎさポニーランド（東京都江戸川区南葛西7-3 なぎさ公園内）"),
-    "ポニーランド": (35.714512, 139.910214, "篠崎ポニーランド（東京都江戸川区篠崎町3-12-17）"),
     "葛西臨海水族園": (35.640112, 139.862214, "東京都葛西臨海水族園（東京都江戸川区臨海町6-2-3）"),
     "葛西臨海公園": (35.642514, 139.859812, "葛西臨海公園（東京都江戸川区臨海町6-2-1）"),
     "葛西海浜公園": (35.637812, 139.856214, "葛西海浜公園（東京都江戸川区臨海町6-2-4）"),
@@ -168,27 +151,13 @@ FACILITY_LOCATIONS = {
     "総合レクリエーション公園": (35.661812, 139.862514, "総合レクリエーション公園（東京都江戸川区南葛西・西葛西）"),
     "スポーツランド": (35.718512, 139.903214, "江戸川区スポーツランド（東京都江戸川区東篠崎1-8-1）"),
     "スポーツセンター": (35.668912, 139.862124, "江戸川区スポーツセンター（東京都江戸川区西葛西4-2-20）"),
-    "江戸川区球場": (35.665812, 139.861514, "江戸川区球場（東京都江戸川区西葛西7-2-1）"),
-    "陸上競技場": (35.660112, 139.874512, "江戸川区陸上競技場（東京都江戸川区清新町2-1-1）"),
-    "臨海球技場": (35.646212, 139.868912, "江戸川区臨海球技場（東京都江戸川区臨海町1-1-2）"),
-    "水辺のスポーツガーデン": (35.684512, 139.914215, "水辺のスポーツガーデン（東京都江戸川区東篠崎2-3-1）"),
-    "東部フレンドホール": (35.691542, 139.898124, "東部フレンドホール（東京都江戸川区瑞江2-5-7）"),
-    "小岩アーバンプラザ": (35.736812, 139.888514, "小岩アーバンプラザ（東京都江戸川区北小岩1-17-1）"),
-    "小松川さくらホール": (35.694885, 139.849215, "小松川さくらホール（東京都江戸川区平井1-11-26）"),
-    "一之江抹香亭": (35.686124, 139.882514, "一之江抹香亭（東京都江戸川区一之江5-13-16）"),
-    "新川さくら館": (35.668124, 139.878912, "新川さくら館（東京都江戸川区船堀7-15-12）"),
     "アリオ葛西": (35.656214, 139.872518, "アリオ葛西（東京都江戸川区東葛西9-3-3）"),
-    "シャポー小岩": (35.733215, 139.881912, "シャポー小岩（東京都江戸川区南小岩7-24-15）"),
-    "江戸川区商店街": (35.706612, 139.868324, "江戸川区内各商店街（江戸川区商店街連合会）"),
     "都立江戸川高校": (35.707214, 139.863512, "東京都立江戸川高等学校（東京都江戸川区松島2-38-1）"),
     "都立小松川高校": (35.697512, 139.852114, "東京都立小松川高等学校（東京都江戸川区平井1-27-10）"),
     "都立小岩高校": (35.724812, 139.889514, "東京都立小岩高等学校（東京都江戸川区本一色3-10-1）"),
     "都立葛西南高校": (35.652514, 139.863218, "東京都立葛西南高等学校（東京都江戸川区南葛西1-11-1）"),
     "都立紅葉川高校": (35.657812, 139.875214, "東京都立紅葉川高等学校（東京都江戸川区臨海町2-1-1）"),
     "都立篠崎高校": (35.716214, 139.908512, "東京都立篠崎高等学校（東京都江戸川区東篠崎1-10-1）"),
-    "江戸川女子中学・高校": (35.736214, 139.886215, "江戸川女子中学・高等学校（東京都江戸川区東小岩5-22-1）"),
-    "関東第一高校": (35.710512, 139.861214, "関東第一高等学校（東京都江戸川区松島2-10-11）"),
-    "東京スクール・オブ・ミュージック": (35.664512, 139.859814, "東京スクール・オブ・ミュージック＆ダンス専門学校（東京都江戸川区西葛西3-14-8）"),
 }
 
 SESSION = requests.Session()
@@ -201,7 +170,7 @@ class LegacySSLAdapter(HTTPAdapter):
     def init_poolmanager(self, *args, **kwargs):
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         try:
-            ctx.options |= 0x4  # SSL_OP_LEGACY_SERVER_CONNECT
+            ctx.options |= 0x4
         except Exception:
             pass
         kwargs["ssl_context"] = ctx
@@ -210,6 +179,17 @@ class LegacySSLAdapter(HTTPAdapter):
 
 SESSION.mount("https://www.library.city.edogawa.tokyo.jp", LegacySSLAdapter())
 SESSION.mount("https://library.city.edogawa.tokyo.jp", LegacySSLAdapter())
+
+
+def normalize_japanese_text(text):
+    """Convert full-width ASCII digits and slashes/tildes to half-width for reliable date parsing."""
+    if not text:
+        return ""
+    trans_map = str.maketrans(
+        "０１２３４５６７８９／．～〜－−",
+        "0123456789//..~~--",
+    )
+    return text.translate(trans_map)
 
 
 def resolve_location(text):
@@ -373,7 +353,8 @@ def extract_dates_from_text(text, default_year=None):
     today = now.date()
     base_year = default_year or now.year
 
-    cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", text)
+    norm_text = normalize_japanese_text(text)
+    cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", norm_text)
     cleaned_text = re.sub(
         r"(?:発売日|発売開始|申込開始|受付開始|応募開始|販売開始)[：:\s]*(?:20\d{2}[年/\.]?)?\d{1,2}[月/\.]\d{1,2}日?",
         "",
@@ -382,7 +363,7 @@ def extract_dates_from_text(text, default_year=None):
 
     parsed_dates = set()
     range_matches = re.findall(
-        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?\s*[～〜\-－]\s*(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?",
+        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?\s*[~～\-]+\s*(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?",
         cleaned_text,
     )
     for y1, m1, d1, y2, m2, d2 in range_matches:
@@ -428,7 +409,7 @@ def parse_edogawa_city_calendar(year, month):
         a_total = 0
         for td in soup.find_all("td"):
             cell_text = td.get_text(" ", strip=True)
-            day_match = re.search(r"(?:^|\s)(\d{1,2})\s*日?", cell_text)
+            day_match = re.search(r"(?:^|\s)(\d{1,2})\s*日?", normalize_japanese_text(cell_text))
             if not day_match:
                 continue
             day = int(day_match.group(1))
@@ -640,7 +621,8 @@ def parse_generic_facility_events(
             continue
 
         title = clean_event_title(raw_title)
-        parsed_dates = extract_dates_from_text(combined_text)
+        title_dates = extract_dates_from_text(title)
+        parsed_dates = title_dates if title_dates else extract_dates_from_text(combined_text)
 
         if not parsed_dates:
             ym_match = re.search(r"/(20\d{2})/(\d{1,2})/", full_url)
@@ -705,7 +687,8 @@ def parse_library_events():
             continue
 
         title = clean_event_title(raw_title)
-        parsed_dates = extract_dates_from_text(block_text, default_year=now.year)
+        title_dates = extract_dates_from_text(title, default_year=now.year)
+        parsed_dates = title_dates if title_dates else extract_dates_from_text(block_text, default_year=now.year)
         if not parsed_dates:
             continue
 
@@ -921,7 +904,7 @@ def main():
                     merged_events[key]["image_url"] = item_copy["image_url"]
 
     # ------------------------------------------
-    # 最優先（Priority 01〜19）: 江戸川区役所・江戸川区公式・区内公共施設
+    # 最優先（Priority 01〜16）: 江戸川区役所・江戸川区公式・区内公共施設
     # ------------------------------------------
     for year, month in get_target_months(months_ahead=3):
         items = parse_edogawa_city_calendar(year, month)
@@ -949,17 +932,11 @@ def main():
     add_events("葛西臨海公園", parse_generic_facility_events(KASAI_RINKAI_PARK_URL, "公共・葛西臨海公園", "葛西臨海公園", timeout=20, retries=1), priority_rank=9)
     add_events("都立篠崎公園", parse_generic_facility_events(SHINOZAKI_PARK_URL, "公共・篠崎公園", "篠崎公園", timeout=15, retries=1), priority_rank=10)
     add_events("都立大島小松川公園", parse_generic_facility_events(OJIMA_KOMATSUGAWA_PARK_URL, "公共・大島小松川公園", "大島小松川公園", timeout=15, retries=1), priority_rank=11)
-    add_events("東部フレンドホール", parse_generic_facility_events(TOBU_FRIEND_HALL_URL, "公共・東部フレンドホール", "東部フレンドホール", timeout=6, retries=0), priority_rank=12)
-    add_events("小岩アーバンプラザ", parse_generic_facility_events(KOIWA_URBAN_PLAZA_URL, "公共・小岩アーバンプラザ", "小岩アーバンプラザ", timeout=6, retries=0), priority_rank=13)
-    add_events("新川さくら館", parse_generic_facility_events(SHINKAWA_SAKURAKAN_URL, "公共・新川さくら館", "新川さくら館", timeout=6, retries=0), priority_rank=14)
-    add_events("魔法の文学館", parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "公共・魔法の文学館", "魔法の文学館"), priority_rank=15)
-    add_events("葛西臨海水族園", parse_generic_facility_events(KASAI_AQUARIUM_URL, "公共・葛西臨海水族園", "葛西臨海水族園"), priority_rank=16)
-    add_events("地下鉄博物館", parse_generic_facility_events(CHIKAHAKU_EVENT_URL, "公共・地下鉄博物館", "地下鉄博物館", timeout=5, retries=0), priority_rank=17)
-    add_events("江戸川区自然動物園", parse_generic_facility_events(EDOGAWA_ZOO_EVENT_URL, "公共・自然動物園", "江戸川区自然動物園", timeout=5, retries=0), priority_rank=18)
-    add_events("ポニーランド", parse_generic_facility_events(PONYLAND_EVENT_URL, "公共・ポニーランド", "篠崎ポニーランド", timeout=5, retries=0), priority_rank=19)
+    add_events("魔法の文学館", parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "公共・魔法の文学館", "魔法の文学館"), priority_rank=12)
+    add_events("葛西臨海水族園", parse_generic_facility_events(KASAI_AQUARIUM_URL, "公共・葛西臨海水族園", "葛西臨海水族園"), priority_rank=13)
 
     # ------------------------------------------
-    # 次点（Priority 20〜24）: 友好都市物産展・フリーマーケット・商店街・商業施設
+    # 次点（Priority 20〜22）: 友好都市物産展・フリーマーケット・商業施設
     # ------------------------------------------
     add_events("山形県鶴岡市 観光物産展", parse_tsuruoka_bussan_events(), priority_rank=20)
     add_events(
@@ -975,11 +952,9 @@ def main():
         priority_rank=21,
     )
     add_events("アリオ葛西", parse_generic_facility_events(ARIO_KASAI_EVENT_URL, "商業・アリオ葛西", "アリオ葛西", timeout=12, retries=1), priority_rank=22)
-    add_events("シャポー小岩", parse_generic_facility_events(SHAPO_KOIWA_EVENT_URL, "商業・シャポー小岩", "シャポー小岩", timeout=12, retries=1), priority_rank=23)
-    add_events("江戸川区商店街連合会", parse_generic_facility_events(EDOGAWA_SYOUTENGAI_URL, "商店街", "江戸川区商店街", timeout=10, retries=1), priority_rank=24)
 
     # ------------------------------------------
-    # 次点（Priority 40〜49）: 学校・学園祭・公開イベント
+    # 次点（Priority 40〜45）: 学校・学園祭・公開イベント
     # ------------------------------------------
     for idx, (school_label, school_url, school_venue) in enumerate(SCHOOL_EVENT_SOURCES):
         add_events(
@@ -995,7 +970,6 @@ def main():
             priority_rank=40 + idx,
         )
 
-    # 優先順位（_priority）と開催日順で整列
     event_list = sorted(
         merged_events.values(),
         key=lambda x: (
@@ -1005,7 +979,6 @@ def main():
     )
     print(f"Total unique events merged: {len(event_list)}")
 
-    # 優先度の高いイベントから優先的に画像URLを補完（最大120件）
     detail_checked = 0
     for ev in event_list:
         if ev.get("image_url"):
