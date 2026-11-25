@@ -93,6 +93,7 @@ EXCLUDE_KEYWORDS = (
     "地図（こちら）",
     "連盟",
     "ホームページ",
+    "公式SNS一覧",
 )
 
 MYPL_EVENT_KEYWORDS = (
@@ -174,6 +175,7 @@ FACILITY_LOCATIONS = {
     "船堀駅北口広場": (35.684412, 139.864518, "船堀駅 北口広場（東京都江戸川区船堀3-5）"),
     "船堀駅 北口広場": (35.684412, 139.864518, "船堀駅 北口広場（東京都江戸川区船堀3-5）"),
     "船堀駅北口": (35.684412, 139.864518, "船堀駅 北口広場（東京都江戸川区船堀3-5）"),
+    "船堀駅前": (35.684412, 139.864518, "船堀駅 北口広場（東京都江戸川区船堀3-5）"),
     "中央図書館": (35.706142, 139.869214, "江戸川区立中央図書館（東京都江戸川区中央3-1-3）"),
     "小岩図書館": (35.730268, 139.883718, "江戸川区立小岩図書館（東京都江戸川区東小岩6-15-2）"),
     "松江図書館": (35.697631, 139.865382, "江戸川区立松江図書館（東京都江戸川区松江2-1-10）"),
@@ -192,6 +194,28 @@ FACILITY_LOCATIONS = {
     "タワーホール船堀": (35.683812, 139.861924, "タワーホール船堀（東京都江戸川区船堀4-1-1）"),
     "船堀タワー": (35.683812, 139.861924, "タワーホール船堀（東京都江戸川区船堀4-1-1）"),
     "グリーンパレス": (35.698912, 139.866421, "グリーンパレス（東京都江戸川区松島1-38-1）"),
+    "新川さくら館": (35.688450, 139.874210, "新川さくら館（東京都江戸川区船堀7-14-12）"),
+    "一之江抹香亭": (35.686920, 139.887340, "一之江抹香亭（東京都江戸川区一之江3-5-14）"),
+    "えどがわエコセンター": (35.684120, 139.893510, "えどがわエコセンター（東京都江戸川区春江町2-41-20）"),
+    "小松川さくらホール": (35.694520, 139.845610, "小松川さくらホール（東京都江戸川区小松川3-6-2）"),
+    "葛西区民館": (35.663210, 139.864820, "葛西区民館（東京都江戸川区中葛西3-19-12）"),
+    "小松川区民館": (35.695120, 139.847320, "小松川区民館（東京都江戸川区小松川2-2-1）"),
+    "東部区民館": (35.691820, 139.897640, "東部区民館（東京都江戸川区東瑞江1-17-1）"),
+    "松江区民プラザ": (35.697840, 139.865920, "松江区民プラザ（東京都江戸川区松江1-17-11）"),
+    "鹿骨区民館": (35.716540, 139.892120, "鹿骨区民館（東京都江戸川区鹿骨1-54-2）"),
+    "コミュニティプラザ一之江": (35.685420, 139.886120, "コミュニティプラザ一之江（東京都江戸川区一之江7-35-22）"),
+    "船堀コミュニティ会館": (35.682910, 139.865420, "船堀コミュニティ会館（東京都江戸川区船堀2-17-13）"),
+    "南小岩コミュニティ会館": (35.729410, 139.877820, "南小岩コミュニティ会館（東京都江戸川区南小岩3-25-2）"),
+    "松島コミュニティ会館": (35.702410, 139.867920, "松島コミュニティ会館（東京都江戸川区松島3-17-12）"),
+    "篠崎コミュニティ会館": (35.704320, 139.900120, "篠崎コミュニティ会館（東京都江戸川区篠崎町2-4-8）"),
+    "上一色コミュニティセンター": (35.723120, 139.872840, "上一色コミュニティセンター（東京都江戸川区上一色3-5-2）"),
+    "小岩健康サポートセンター": (35.731840, 139.879420, "小岩健康サポートセンター（東京都江戸川区南小岩7-24-21）"),
+    "東部健康サポートセンター": (35.691420, 139.898240, "東部健康サポートセンター（東京都江戸川区東瑞江1-17-1）"),
+    "なぎさ健康サポートセンター": (35.651240, 139.865820, "なぎさ健康サポートセンター（東京都江戸川区南葛西6-15-8）"),
+    "小松川健康サポートセンター": (35.695240, 139.847120, "小松川健康サポートセンター（東京都江戸川区小松川2-2-1）"),
+    "鹿骨健康サポートセンター": (35.716620, 139.892340, "鹿骨健康サポートセンター（東京都江戸川区鹿骨1-54-2）"),
+    "清新町健康サポートセンター": (35.655120, 139.857420, "清新町健康サポートセンター（東京都江戸川区清新町1-1-34）"),
+    "葛西健康サポートセンター": (35.663120, 139.864920, "葛西健康サポートセンター（東京都江戸川区中葛西3-19-12）"),
     "自然動物園": (35.671312, 139.858724, "江戸川区自然動物園（東京都江戸川区北葛西3-2-1 行船公園内）"),
     "行船公園": (35.671312, 139.858724, "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）"),
     "平成庭園": (35.671312, 139.858724, "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）"),
@@ -285,6 +309,16 @@ def resolve_location(text):
         if kw in text:
             return FACILITY_LOCATIONS[kw]
     return None
+
+
+def infer_venue_from_text(text, default_venue="江戸川区役所"):
+    """Infer specific Edogawa facility name from event text when available."""
+    for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
+        if kw in ("江戸川区役所", "区役所"):
+            continue
+        if kw in text:
+            return kw
+    return default_venue
 
 
 def fetch_html(url, params=None, timeout=10, retries=1):
@@ -459,11 +493,20 @@ def get_target_months(months_ahead=3):
     return targets
 
 
+def _resolve_year_for_month(month, now_date, default_year=None):
+    """Infer calendar year accurately around year-end boundaries (Nov/Dec vs Jan/Feb)."""
+    base = default_year or now_date.year
+    if now_date.month >= 11 and month <= 3:
+        return base + 1 if base == now_date.year else base
+    if now_date.month <= 2 and month >= 11:
+        return base - 1 if base == now_date.year else base
+    return base
+
+
 def extract_dates_from_text(text, default_year=None):
     """Extract event dates from Japanese text while avoiding leading publication dates or ticket sales dates."""
     now = datetime.now(JST)
     today = now.date()
-    base_year = default_year or now.year
 
     norm_text = normalize_japanese_text(text)
     cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", norm_text)
@@ -480,12 +523,14 @@ def extract_dates_from_text(text, default_year=None):
     )
     for y1, m1, d1, y2, m2, d2 in range_matches:
         try:
-            sy = int(y1) if y1 else (base_year if int(m1) >= now.month - 2 else base_year + 1)
-            start_dt = datetime(sy, int(m1), int(d1), tzinfo=JST).date()
-            ey = int(y2) if y2 else (sy if int(m2) >= int(m1) else sy + 1)
-            end_dt = datetime(ey, int(m2), int(d2), tzinfo=JST).date()
-            if end_dt >= today - timedelta(days=3) and (end_dt - start_dt).days <= 120:
-                cur = max(start_dt, today - timedelta(days=3))
+            m1_i, d1_i = int(m1), int(d1)
+            m2_i, d2_i = int(m2), int(d2)
+            sy = int(y1) if y1 else _resolve_year_for_month(m1_i, today, default_year)
+            start_dt = datetime(sy, m1_i, d1_i, tzinfo=JST).date()
+            ey = int(y2) if y2 else (sy if m2_i >= m1_i else sy + 1)
+            end_dt = datetime(ey, m2_i, d2_i, tzinfo=JST).date()
+            if end_dt >= today and (end_dt - start_dt).days <= 120:
+                cur = max(start_dt, today)
                 while cur <= end_dt:
                     parsed_dates.add(cur)
                     cur += timedelta(days=1)
@@ -499,12 +544,9 @@ def extract_dates_from_text(text, default_year=None):
             d = int(d_str)
             if not (1 <= m <= 12 and 1 <= d <= 31):
                 continue
-            if y_str:
-                y = int(y_str)
-            else:
-                y = base_year if m >= now.month - 2 else base_year + 1
+            y = int(y_str) if y_str else _resolve_year_for_month(m, today, default_year)
             candidate = datetime(y, m, d, tzinfo=JST).date()
-            if today - timedelta(days=3) <= candidate <= today + timedelta(days=180):
+            if today <= candidate <= today + timedelta(days=180):
                 parsed_dates.add(candidate)
         except ValueError:
             continue
@@ -541,6 +583,7 @@ def _extract_day_from_td(td):
 def parse_edogawa_city_calendar(year, month):
     """Scrape all events from Edogawa City official calendar (calendar view and list view)."""
     events = {}
+    today = datetime.now(JST).date()
 
     html = fetch_html(BASE_URL, params={"type": "1", "year": str(year), "month": str(month)})
     if html:
@@ -553,6 +596,8 @@ def parse_edogawa_city_calendar(year, month):
             try:
                 current_date = datetime(year, month, day, tzinfo=JST).date()
             except ValueError:
+                continue
+            if current_date < today:
                 continue
 
             cell_text = td.get_text(" ", strip=True)
@@ -577,11 +622,7 @@ def parse_edogawa_city_calendar(year, month):
                 if not category or "申込" in category or len(category) > 15:
                     category = "区役所・区公式"
 
-                venue = "江戸川区役所"
-                for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
-                    if kw != "江戸川区役所" and kw != "区役所" and kw in f"{title} {cell_text}":
-                        venue = kw
-                        break
+                venue = infer_venue_from_text(f"{title} {cell_text}", default_venue="江戸川区役所")
 
                 if full_url not in events:
                     events[full_url] = {
@@ -593,6 +634,8 @@ def parse_edogawa_city_calendar(year, month):
                         "image_url": extract_image_from_element(parent, BASE_URL),
                     }
                 events[full_url]["dates"].add(current_date)
+                if venue != "江戸川区役所":
+                    events[full_url]["venue"] = venue
         print(f"    [debug] 区公式({year}-{month:02d}): anchors_in_dated_td={a_total}, parsed={len(events)}")
 
     list_html = fetch_html(BASE_URL, params={"type": "2", "year": str(year), "month": str(month)})
@@ -609,15 +652,11 @@ def parse_edogawa_city_calendar(year, month):
             title = clean_event_title(raw_title)
             block = a_tag.find_parent(["li", "tr", "dd", "div", "p"]) or a_tag
             block_text = block.get_text(" ", strip=True)
-            parsed_dates = extract_dates_from_text(block_text, default_year=year)
+            parsed_dates = {d for d in extract_dates_from_text(block_text, default_year=year) if d >= today}
             if not parsed_dates:
                 continue
 
-            venue = "江戸川区役所"
-            for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
-                if kw != "江戸川区役所" and kw != "区役所" and kw in f"{title} {block_text}":
-                    venue = kw
-                    break
+            venue = infer_venue_from_text(f"{title} {block_text}", default_venue="江戸川区役所")
 
             if full_url not in events:
                 events[full_url] = {
@@ -629,6 +668,8 @@ def parse_edogawa_city_calendar(year, month):
                     "image_url": extract_image_from_element(block, BASE_URL),
                 }
             events[full_url]["dates"].update(parsed_dates)
+            if venue != "江戸川区役所":
+                events[full_url]["venue"] = venue
 
     return list(events.values())
 
@@ -725,7 +766,7 @@ def parse_generic_facility_events(
     events = {}
     all_links = soup.find_all("a", href=True)
     dated_candidates = 0
-    now = datetime.now(JST)
+    today = datetime.now(JST).date()
 
     for a_tag in all_links:
         href = a_tag["href"].strip()
@@ -765,27 +806,12 @@ def parse_generic_facility_events(
         title_dates = extract_dates_from_text(title)
         parsed_dates = title_dates if title_dates else extract_dates_from_text(combined_text)
 
-        if not parsed_dates:
-            ym_match = re.search(r"/(20\d{2})/(\d{1,2})/", full_url)
-            if ym_match:
-                try:
-                    y, m = int(ym_match.group(1)), int(ym_match.group(2))
-                    if 1 <= m <= 12 and y >= now.year:
-                        fallback_d = datetime(y, m, 1, tzinfo=JST).date()
-                        if fallback_d >= now.date() - timedelta(days=3):
-                            parsed_dates.add(fallback_d)
-                except ValueError:
-                    pass
-
+        # Avoid guessing day=1 when no concrete date is mentioned in text
         if not parsed_dates:
             continue
         dated_candidates += 1
 
-        venue = default_venue
-        for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
-            if kw in block_text:
-                venue = kw
-                break
+        venue = infer_venue_from_text(combined_text, default_venue=default_venue)
 
         if full_url not in events:
             events[full_url] = {
@@ -833,11 +859,7 @@ def parse_library_events():
         if not parsed_dates:
             continue
 
-        venue = ""
-        for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
-            if kw in block_text:
-                venue = kw
-                break
+        venue = infer_venue_from_text(block_text, default_venue="")
 
         if full_url not in events:
             events[full_url] = {
@@ -890,11 +912,7 @@ def parse_sports_kintone_events():
                 continue
             title = clean_event_title(raw_title)
 
-            venue = "江戸川区スポーツセンター"
-            for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
-                if kw in text:
-                    venue = kw
-                    break
+            venue = infer_venue_from_text(text, default_venue="江戸川区スポーツセンター")
 
             key = f"{title}_{min(parsed_dates)}"
             if key not in events:
@@ -945,6 +963,7 @@ def fold_ics_line(line):
 def generate_ics(all_events):
     """Build an RFC 5545 compliant iCalendar string from aggregated events."""
     now_utc = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    today = datetime.now(JST).date()
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -957,7 +976,7 @@ def generate_ics(all_events):
     ]
 
     for ev in all_events:
-        sorted_dates = sorted(ev["dates"])
+        sorted_dates = sorted(d for d in ev["dates"] if d >= today)
         if not sorted_dates:
             continue
 
@@ -1024,11 +1043,16 @@ def generate_ics(all_events):
 def main():
     print("=== Starting Edogawa Events Aggregation (City Hall & Public Priority) ===")
     merged_events = {}
+    today = datetime.now(JST).date()
 
     def add_events(source_name, items, priority_rank=50):
         print(f"  -> [{priority_rank:02d}] {source_name}: {len(items)} events fetched")
         for item in items:
+            future_dates = {d for d in item.get("dates", set()) if d >= today}
+            if not future_dates:
+                continue
             item_copy = dict(item)
+            item_copy["dates"] = future_dates
             item_copy["_priority"] = priority_rank
             key = f"{item_copy['url']}_{item_copy.get('venue', '')}_{item_copy['title']}"
             if key not in merged_events:
@@ -1039,7 +1063,10 @@ def main():
                     merged_events[key]["_priority"] = priority_rank
                     if item_copy.get("category"):
                         merged_events[key]["category"] = item_copy["category"]
-                if item_copy.get("venue") and not merged_events[key].get("venue"):
+                if item_copy.get("venue") and (
+                    not merged_events[key].get("venue")
+                    or merged_events[key].get("venue") == "江戸川区役所"
+                ):
                     merged_events[key]["venue"] = item_copy["venue"]
                 if item_copy.get("image_url") and not merged_events[key].get("image_url"):
                     merged_events[key]["image_url"] = item_copy["image_url"]
