@@ -95,6 +95,40 @@ EXCLUDE_KEYWORDS = (
     "ホームページ",
 )
 
+MYPL_EVENT_KEYWORDS = (
+    "開催",
+    "イベント",
+    "フェス",
+    "フェスティバル",
+    "マルシェ",
+    "体験",
+    "講座",
+    "教室",
+    "セミナー",
+    "相談会",
+    "説明会",
+    "見学会",
+    "見学のご案内",
+    "ライブ",
+    "コンサート",
+    "公演",
+    "舞台",
+    "展示",
+    "展覧会",
+    "まつり",
+    "祭り",
+    "お餅つき",
+    "餅つき",
+    "出展",
+    "出店",
+    "オープン",
+    "キャンペーン",
+    "抽選会",
+    "ワークショップ",
+    "フリマ",
+    "フリーマーケット",
+)
+
 OUT_OF_DISTRICT_KEYWORDS = (
     "埼玉県",
     "三郷市",
@@ -291,7 +325,27 @@ def is_past_report_text(text):
     return any(re.search(pat, t) for pat in PAST_REPORT_PATTERNS)
 
 
-def is_noise_or_news(title, block_text="", url=""):
+def is_mypl_event_post(title, block_text=""):
+    """Return True only when a MyPl entry looks like a genuine event/催し rather than a truncated or casual post."""
+    t = title.strip()
+    if not t or len(t) < 6:
+        return False
+    if t.endswith("…") or t.endswith("..."):
+        return False
+    if re.search(r"^(?:【江戸川区】)?\d{1,2}月\d{1,2}日[「『\"【]?\s*$", t):
+        return False
+    combined = f"{t} {block_text}"
+    has_event_kw = any(kw in combined for kw in MYPL_EVENT_KEYWORDS)
+    has_date_mention = bool(
+        re.search(
+            r"(?:\d{1,2}月\d{1,2}日|\d{1,2}/\d{1,2})\s*(?:\([月火水木金土日祝・]+\))?\s*(?:開催|実施|予定|出展|出店|オープン|見学|相談)",
+            normalize_japanese_text(combined),
+        )
+    )
+    return has_event_kw or has_date_mention
+
+
+def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
     """Return True for pure news posts, closure notices, stale URLs, out-of-district events, or navigation labels."""
     t = title.strip()
     if not t or len(t) < 3:
@@ -314,6 +368,8 @@ def is_noise_or_news(title, block_text="", url=""):
     if re.search(r"20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*ニュース", f"{t} {block_text}"):
         return True
     if re.fullmatch(r"\d{4}[-/年.]\d{1,2}[-/月.]\d{1,2}日?", t) or re.fullmatch(r"\d{4}年", t):
+        return True
+    if strict_mypl and not is_mypl_event_post(t, block_text):
         return True
     return False
 
@@ -609,6 +665,7 @@ def parse_generic_facility_events(
     require_keywords=None,
     area_keywords=None,
     fallback_base_url=None,
+    strict_mypl=False,
 ):
     """Generic scraper for Edogawa public/cultural/park/commercial/school event pages with URL fallback."""
     html = fetch_html(url, timeout=timeout, retries=retries)
@@ -646,15 +703,15 @@ def parse_generic_facility_events(
 
         raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["article", "tr", "li", "dd", "dl", "div"]) or a_tag
-        if is_noise_or_news(raw_title, parent.get_text(" ", strip=True), full_url):
+        if is_noise_or_news(raw_title, parent.get_text(" ", strip=True), full_url, strict_mypl=strict_mypl):
             heading = parent.find(["h2", "h3", "h4", "dt"]) if parent else None
             if heading:
                 cand = heading.get_text(" ", strip=True)
-                if not is_noise_or_news(cand, parent.get_text(" ", strip=True), full_url):
+                if not is_noise_or_news(cand, parent.get_text(" ", strip=True), full_url, strict_mypl=strict_mypl):
                     raw_title = cand
 
         block_text = parent.get_text(" ", strip=True)
-        if is_noise_or_news(raw_title, "", full_url):
+        if is_noise_or_news(raw_title, block_text, full_url, strict_mypl=strict_mypl):
             continue
 
         combined_text = f"{raw_title} {block_text}"
@@ -1007,6 +1064,7 @@ def main():
             "江戸川区役所",
             timeout=12,
             retries=1,
+            strict_mypl=True,
         ),
         priority_rank=16,
     )
