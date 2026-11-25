@@ -29,7 +29,7 @@ OUTPUT_ICS = "edogawa_events.ics"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 JST = timezone(timedelta(hours=9), name="JST")
 
-# 除外する純粋なニュース・休館案内・UIラベル・終了済み表記
+# 除外する純粋なニュース・休館案内・UIラベル
 EXCLUDE_KEYWORDS = (
     "【重要】",
     "休館日のお知らせ",
@@ -54,10 +54,11 @@ EXCLUDE_KEYWORDS = (
     "ニュース一覧",
     "イベント一覧",
     "チケット購入",
+    "チケット購入方法",
+    "主催共催公演",
     "前の月",
     "次の月",
     "すべて",
-    "終了",
 )
 
 # 江戸川区内主要施設・全12図書館・公園・文化施設の緯度経度マッピング
@@ -163,7 +164,7 @@ def is_stale_year_url(url):
 
 
 def is_noise_or_news(title, block_text="", url=""):
-    """Return True only for pure news posts, closure notices, stale URLs, or navigation labels."""
+    """Return True for pure news posts, closure notices, stale URLs, or navigation labels."""
     t = title.strip()
     if not t or len(t) < 3:
         return True
@@ -256,7 +257,7 @@ def parse_edogawa_city_calendar(year, month):
         a_total = 0
         for td in soup.find_all("td"):
             cell_text = td.get_text(" ", strip=True)
-            day_match = re.search(r"(?:^|\s)(\d{1,2})\s*日", cell_text)
+            day_match = re.search(r"(?:^|\s)(\d{1,2})\s*日?", cell_text)
             if not day_match:
                 continue
             day = int(day_match.group(1))
@@ -417,7 +418,7 @@ def parse_generic_facility_events(url, category, default_venue="", timeout=10, r
                     raw_title = cand
 
         block_text = parent.get_text(" ", strip=True)
-        if is_noise_or_news(raw_title, block_text, full_url):
+        if is_noise_or_news(raw_title, "", full_url):
             continue
 
         title = clean_event_title(raw_title)
@@ -482,7 +483,7 @@ def parse_library_events():
         raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["tr", "li", "dd", "dl", "div"]) or a_tag
         block_text = parent.get_text(" ", strip=True)
-        if is_noise_or_news(raw_title, block_text, full_url):
+        if is_noise_or_news(raw_title, "", full_url):
             continue
 
         title = clean_event_title(raw_title)
@@ -543,7 +544,7 @@ def parse_sports_kintone_events():
             title_el = row.find(["h2", "h3", "h4", "a", "td"])
             raw_title = title_el.get_text(" ", strip=True) if title_el else text[:50]
 
-            if is_noise_or_news(raw_title, text, full_url):
+            if is_noise_or_news(raw_title, "", full_url):
                 continue
             title = clean_event_title(raw_title)
 
