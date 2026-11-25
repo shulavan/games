@@ -86,6 +86,42 @@ def fetch_html(url, params=None):
         return None
 
 
+def extract_first_image_url(page_url):
+    """Fetch an event detail page and return the first valid image URL if found."""
+    if not page_url or "#" in page_url and page_url.startswith(SPORTS_KINTONE_URL):
+        return None
+
+    html = fetch_html(page_url)
+    if not html:
+        return None
+
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+
+        # 1. Check Open Graph image first
+        og_img = soup.find("meta", property="og:image")
+        if og_img and og_img.get("content"):
+            candidate = urljoin(page_url, og_img["content"].strip())
+            if re.match(r"^https?://", candidate, re.I):
+                return candidate
+
+        # 2. Fallback to first content image tag with an image-like URL
+        for img in soup.find_all("img", src=True):
+            src = img["src"].strip()
+            if not src or src.startswith("data:"):
+                continue
+            full_img_url = urljoin(page_url, src)
+            lower_url = full_img_url.lower()
+            if any(skip in lower_url for skip in ("logo", "icon", "banner_btn", "spacer", "loading", "arrow", "sns")):
+                continue
+            if re.search(r"\.(jpg|jpeg|png|webp|gif)(\?|$)", lower_url) or "image" in lower_url or "photo" in lower_url or "upload" in lower_url:
+                return full_img_url
+    except Exception as e:
+        print(f"Warning: Failed to parse image from {page_url}: {e}")
+
+    return None
+
+
 def get_target_months(months_ahead=3):
     """Return list of (year, month) tuples from current month to months_ahead."""
     now = datetime.now(JST)
@@ -415,12 +451,15 @@ def generate_ics(all_events):
                 summary = f"[{ev['category']}] {summary}"
 
             geo_info = resolve_location(f"{ev.get('venue', '')} {ev['title']}")
+            image_url = ev.get("image_url")
 
             description_lines = [f"詳細・申込情報: {ev['url']}"]
             if geo_info:
                 lat, lon, loc_name = geo_info
                 description_lines.append(f"会場: {loc_name}")
                 description_lines.append(f"地図: https://maps.google.com/?q={lat},{lon}")
+            if image_url:
+                description_lines.append(f"画像URL: {image_url}")
 
             description = "\n".join(description_lines)
 
@@ -498,6 +537,16 @@ def main():
 
     event_list = list(merged_events.values())
     print(f"Total unique events collected: {len(event_list)}")
+
+    image_cache = {}
+    for idx, ev in enumerate(event_list, start=1):
+        ev_url = ev.get("url", "")
+        if ev_url not in image_cache:
+            image_cache[ev_url] = extract_first_image_url(ev_url)
+            time.sleep(0.2)
+        ev["image_url"] = image_cache[ev_url]
+        if idx % 25 == 0 or idx == len(event_list):
+            print(f"Checked images for {idx}/{len(event_list)} events...")
 
     ics_content = generate_ics(event_list)
     with open(OUTPUT_ICS, "w", encoding="utf-8", newline="") as f:
