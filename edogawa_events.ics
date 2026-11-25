@@ -7,117 +7,4440 @@ X-WR-CALNAME:江戸川区イベントカレンダー（区役所・公共優先�
 X-WR-TIMEZONE:Asia/Tokyo
 X-WR-CALDESC:江戸川区役所・区公式・区内公共施設を最優先に、公園・友好都市物産展・商業施設・学校のイベントをまとめたカレンダー
 BEGIN:VEVENT
+UID:242260d4d385adb4f7fa936a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:[区役所・区公式] 本でつながる えどがわ探検ス
+ タンプラリー
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/1027edogawastamprally.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74549/01.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/1027edogawastamprally.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3c21322bcfd76991742f7ba1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:[区役所・区公式] 第2回江戸川区文化芸術祭　美
+ 術展
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261031grandart_bijutsu.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73663/bij
+ utsu-1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261031grandart_bijutsu.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:fd064a1b907cc2f798d977f5@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:[区役所・区公式] 第36回一之江コミュニティ会館
+ まつり
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/i_matsuri.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/57798/ichikomi-poste
+ r.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/i_matsuri.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:63eb564ef7571d1d96b42502@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:[区役所・区公式] 第5回江戸川区羽根田卓也杯カ
+ ヌー大会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/hanedatakuyahai5.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/72422/hanedatak
+ uya.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/hanedatakuyahai5.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:269ac8ff7905173152cd3b0f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+SUMMARY:[区役所・区公式] 第48回北小岩まつり
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261101kitakoiwa.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73268/suteji01.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261101kitakoiwa.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:bc86848f0aab92afaba1fbc8@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261102
+DTEND;VALUE=DATE:20261103
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 小
+ 岩健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan2.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68917/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:2ac895dd725eb88be9ea0d89@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270208
+DTEND;VALUE=DATE:20270209
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 小
+ 岩健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan2.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68917/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:55fd035688f3806ccd04dced@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261103
+DTEND;VALUE=DATE:20261104
+SUMMARY:[区役所・区公式] 重度の障害のある方向け【親
+ 子で楽しむプールひろば】
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/poolhiroba.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/soutai01.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/poolhiroba.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5040152f619869cb8cd83c69@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261103
+DTEND;VALUE=DATE:20261104
+SUMMARY:[区役所・区公式] EDORIKUパラ陸上教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260923edorikupara.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73068/r8edor
+ iku.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/260923edorikupara.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:97951e1d655471bf28f8fc01@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261103
+DTEND;VALUE=DATE:20261104
+SUMMARY:[区役所・区公式] 銭湯と！昔あそびの会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08mukashi.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73199/mukashiasobi_r
+ 80804mini.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08mukashi.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7c98d4f65c994df820155a00@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261104
+DTEND;VALUE=DATE:20261105
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 東
+ 部健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan3.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68919/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:d90b7bf11236f49c4040eb4f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261202
+DTEND;VALUE=DATE:20261203
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 東
+ 部健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan3.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68919/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5282e73635c1ce62986d1f09@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261104
+DTEND;VALUE=DATE:20261105
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 な
+ ぎさ健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan8.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68930/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:95c03d33f1623fefaa53f2c8@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261208
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 な
+ ぎさ健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan8.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68930/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c0056f6f7bcf770e59d2f8af@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 な
+ ぎさ健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan8.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68930/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0aa78a76da7e47a6e303c814@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261104
+DTEND;VALUE=DATE:20261105
+SUMMARY:[区役所・区公式] リズム運動体験教室（コミュ
+ ニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken5.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73240/komipura.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken5.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:710fa2a3625edf324339253b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261202
+DTEND;VALUE=DATE:20261203
+SUMMARY:[区役所・区公式] リズム運動体験教室（コミュ
+ ニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken5.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73240/komipura.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken5.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:89be0b93a89c78074c426644@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270113
+DTEND;VALUE=DATE:20270114
+SUMMARY:[区役所・区公式] リズム運動体験教室（コミュ
+ ニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken5.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73240/komipura.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken5.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3342dad78b3f414871680d26@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261105
+DTEND;VALUE=DATE:20261106
+SUMMARY:[区役所・区公式] 「拉致を風化させないために
+ 　～今伝えたいこと～」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261105_rachi.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/70745/1105endomote
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261105_rachi.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:51d5d29aadb24721d2079ad5@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261105
+DTEND;VALUE=DATE:20261106
+SUMMARY:[区役所・区公式] 【申込は終了しました】初心
+ 者のための音訳講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261008onyaku.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_palac
+ e.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261008onyaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:77cf80f290a8d67fde9f053b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261119
+DTEND;VALUE=DATE:20261120
+SUMMARY:[区役所・区公式] 【申込は終了しました】初心
+ 者のための音訳講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261008onyaku.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_palac
+ e.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261008onyaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:af42ddc05dbd64e7839fe15e@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261126
+DTEND;VALUE=DATE:20261127
+SUMMARY:[区役所・区公式] 【申込は終了しました】初心
+ 者のための音訳講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261008onyaku.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_palac
+ e.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261008onyaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:8ed67691acb919d556d527c3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261105
+DTEND;VALUE=DATE:20261106
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　葛西区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261008ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73711/kasai.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261008ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:a9a736e4f88d638c103a9265@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261119
+DTEND;VALUE=DATE:20261120
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　葛西区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261008ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73711/kasai.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261008ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f73a8d9bcb649b00d0857b59@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270218
+DTEND;VALUE=DATE:20270219
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　葛西区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261008ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73711/kasai.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261008ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3a425a62885afaeca2aae7d2@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261105
+DTEND;VALUE=DATE:20261106
+SUMMARY:[区役所・区公式] 成年後見制度セミナー「任意
+ 後見制度を知っていますか？」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261105kokenseido.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_pa
+ lace.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261105kokenseido.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:471d22e5a83c17af6b70d988@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261106
+DTEND;VALUE=DATE:20261107
+SUMMARY:[区役所・区公式] ファミリーサポート会員を募
+ 集します
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/fs20261106.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73547/family_support
+ _flyer.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/fs20261106.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:1653caed470faadf93ff476a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261106
+DTEND;VALUE=DATE:20261107
+SUMMARY:[区役所・区公式] 第2回江戸川区文化芸術祭　書
+ 道展・書道体験教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261106grandart_shodo.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73675/sho
+ do-1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261106grandart_shodo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:58179147a4408803a394a1be@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261108
+DTEND;VALUE=DATE:20261109
+SUMMARY:[区役所・区公式] 第2回江戸川区文化芸術祭　書
+ 道展・書道体験教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261106grandart_shodo.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73675/sho
+ do-1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261106grandart_shodo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f2d809f52a667c2cf77e7e3b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261106
+DTEND;VALUE=DATE:20261107
+SUMMARY:[区役所・区公式] 家族のための精神保健講演会
+ ～こころの不調を抱えた家族へのかかわり方～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/seishin.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/74365/seishin.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/seishin.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:60f9e3285e1420ba3b358fd2@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261106
+DTEND;VALUE=DATE:20261107
+SUMMARY:[区役所・区公式] フードドライブ
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261106fooddrive.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74950/shinozaki
+ _p_1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261106fooddrive.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:be4e6afb9d594bbf9cc99adf@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261107
+DTEND;VALUE=DATE:20261108
+SUMMARY:[区役所・区公式] 江戸川区ひきこもり地域家族
+ 会エバーグリーン
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/07_kazokukai.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/61609/evergreen.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/07_kazokukai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:13e5e2802eb7164f837b142f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270206
+DTEND;VALUE=DATE:20270207
+SUMMARY:[区役所・区公式] 江戸川区ひきこもり地域家族
+ 会エバーグリーン
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/07_kazokukai.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/61609/evergreen.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/07_kazokukai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:058075b5acac355b44622ec3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261107
+DTEND;VALUE=DATE:20261108
+SUMMARY:[区役所・区公式] ディワリフェスタ西葛西
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261107dewali.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73290/diwali2026.p
+ ng
+URL:https://www.city.edogawa.tokyo.jp/event/261107dewali.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:65d130d3d4f85005d711ab19@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261107
+DTEND;VALUE=DATE:20261108
+SUMMARY:[区役所・区公式] ひらい圓藏亭落語教室（第6期）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2609rakugo.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73350/2609rakugogym.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2609rakugo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:50a217138bc716fb190249e1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270123
+DTEND;VALUE=DATE:20270124
+SUMMARY:[区役所・区公式] ひらい圓藏亭落語教室（第6期）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2609rakugo.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73350/2609rakugogym.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2609rakugo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3b54a215db2dc4e8791a6143@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270223
+DTEND;VALUE=DATE:20270224
+SUMMARY:[区役所・区公式] ひらい圓藏亭落語教室（第6期）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2609rakugo.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73350/2609rakugogym.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2609rakugo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0bcc25d25b9fd2837fde0663@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261108
+DTEND;VALUE=DATE:20261109
+SUMMARY:[区役所・区公式] 一之江抹香亭江戸園芸植物展
+ 示「菊花展」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/makko1107.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74560/kikka.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/makko1107.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:34164209a56072750735e0b0@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261108
+DTEND;VALUE=DATE:20261109
+SUMMARY:[区役所・区公式] 第50回東部地域祭
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261108tobuchiikisai.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/58490/50tiik
+ isaiposter.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261108tobuchiikisai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7433dce233d1e455544601f7@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261108
+DTEND;VALUE=DATE:20261109
+SUMMARY:[区役所・区公式] 分譲マンションセミナー＆座
+ 談会、分譲マンション個別相談会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026semina0705.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/66773/semina-.p
+ ng
+URL:https://www.city.edogawa.tokyo.jp/event/2026semina0705.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c8fc55efbe664c49822c2459@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261108
+DTEND;VALUE=DATE:20261109
+SUMMARY:[区役所・区公式] 住まいの耐震相談会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261108taishin.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/soudan.j
+ pg
+URL:https://www.city.edogawa.tokyo.jp/event/20261108taishin.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:399baccf3031bea3aba82362@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261109
+DTEND;VALUE=DATE:20261110
+SUMMARY:[区役所・区公式] リズム運動体験教室（小松川
+ 区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken1.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/komatsugawa_k
+ uminkan.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:48d472cec22e6ee6469371a1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261214
+DTEND;VALUE=DATE:20261215
+SUMMARY:[区役所・区公式] リズム運動体験教室（小松川
+ 区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken1.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/komatsugawa_k
+ uminkan.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:75568ee9c115c695cc0ef198@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270118
+DTEND;VALUE=DATE:20270119
+SUMMARY:[区役所・区公式] リズム運動体験教室（小松川
+ 区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken1.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/komatsugawa_k
+ uminkan.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:8cb75cf79a09c403f801ae24@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270208
+DTEND;VALUE=DATE:20270209
+SUMMARY:[区役所・区公式] リズム運動体験教室（小松川
+ 区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken1.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/komatsugawa_k
+ uminkan.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:4c071f4a1bf3b9e5f4091a8d@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261109
+DTEND;VALUE=DATE:20261110
+SUMMARY:[区役所・区公式] 令和8年度第4回 発達が気にな
+ る子の親支援講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/oyashien_119.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/74617/oyashien4.pn
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/oyashien_119.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b9482578726623e456a26a12@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261109
+DTEND;VALUE=DATE:20261110
+SUMMARY:[区役所・区公式] 女性デジタルカレッジ事業（
+ 入門コース）Word・Excel基礎科
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611womendigitalcollege.html\n会場: 江戸川区役所（東京都
+ 江戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612
+ \,139.868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74281/
+ towerhallhunabori.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2611womendigitalcollege.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b5aef8f9532efd841a37af76@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　東部区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261006ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73702/tobu.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261006ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:34b0508501b5b6ee61c822f3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261124
+DTEND;VALUE=DATE:20261125
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　東部区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261006ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73702/tobu.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261006ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f139639fd0cbfcdfb8040426@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270216
+DTEND;VALUE=DATE:20270217
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　東部区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261006ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73702/tobu.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261006ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3d1c08259d625e95020cea27@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:[区役所・区公式] Blue Sky Market（雨天のため中止）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8bsm1110.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/70362/1110.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8bsm1110.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:9eee29f20bb47bd393f44258@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:[区役所・区公式] リズム運動体験教室（南小岩
+ コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken2.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/minamikoiwa.j
+ pg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b2c50c02f44ce142c8c758c2@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:[区役所・区公式] リズム運動体験教室（南小岩
+ コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken2.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/minamikoiwa.j
+ pg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:43301641272b45749081fd6a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270112
+DTEND;VALUE=DATE:20270113
+SUMMARY:[区役所・区公式] リズム運動体験教室（南小岩
+ コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken2.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/minamikoiwa.j
+ pg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0d8049e3ee2ca8625e71786f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270209
+DTEND;VALUE=DATE:20270210
+SUMMARY:[区役所・区公式] リズム運動体験教室（南小岩
+ コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken2.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/minamikoiwa.j
+ pg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:51b0f916212ec2a8b32d464b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261111
+DTEND;VALUE=DATE:20261112
+SUMMARY:[区役所・区公式] 秋の史跡ウォーク
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026aki.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/73611/2026aki2.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2026aki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b460e78ebadfa73760e82866@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261111
+DTEND;VALUE=DATE:20261112
+SUMMARY:[区役所・区公式] あそぶ木の実　考える木の実
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611kinomi.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74647/1111iroha.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2611kinomi.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:76c2fa487dd1f64984760494@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261111
+DTEND;VALUE=DATE:20261112
+SUMMARY:[区役所・区公式] 五代目円楽一門会若手落語会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611enraku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74502/2611enraku.png
+URL:https://www.city.edogawa.tokyo.jp/event/2611enraku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:26f9abe0a14fecb2c9af3019@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:[区役所・区公式] 五代目円楽一門会若手落語会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611enraku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74502/2611enraku.png
+URL:https://www.city.edogawa.tokyo.jp/event/2611enraku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:d28a0594c3b7b7df8a8539bf@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261127
+DTEND;VALUE=DATE:20261128
+SUMMARY:[区役所・区公式] 五代目円楽一門会若手落語会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611enraku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74502/2611enraku.png
+URL:https://www.city.edogawa.tokyo.jp/event/2611enraku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:24af9a261209ea7a0841b7cf@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261112
+DTEND;VALUE=DATE:20261113
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　北小岩コミュニティ会館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261001ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73698/kitakoiwa.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/261001ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:190733bd1bf94c72f63f69bd@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270218
+DTEND;VALUE=DATE:20270219
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　北小岩コミュニティ会館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261001ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73698/kitakoiwa.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/261001ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:36f5abf8ae7b27dad2121990@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261112
+DTEND;VALUE=DATE:20261113
+SUMMARY:[区役所・区公式] ひらい圓藏亭　川柳教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2602senryu.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/68337/2602senryuu.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/2602senryu.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:141403c1e9fc923c1fbe98ac@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261112
+DTEND;VALUE=DATE:20261113
+SUMMARY:[区役所・区公式] リズム運動体験教室（東部区
+ 民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken7.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/c_toubu.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken7.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f4b880107398bdde73c83d82@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261210
+DTEND;VALUE=DATE:20261211
+SUMMARY:[区役所・区公式] リズム運動体験教室（東部区
+ 民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken7.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/c_toubu.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken7.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0678c19ddc156e05f7b6e696@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270114
+DTEND;VALUE=DATE:20270115
+SUMMARY:[区役所・区公式] リズム運動体験教室（東部区
+ 民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken7.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/c_toubu.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken7.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:29e6d9f2047b326c3b87593f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270218
+DTEND;VALUE=DATE:20270219
+SUMMARY:[区役所・区公式] リズム運動体験教室（東部区
+ 民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken7.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/c_toubu.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken7.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:d11ed71ed8b187ad30c70c4a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261113
+DTEND;VALUE=DATE:20261114
+SUMMARY:[区役所・区公式] 環境をよくする絵画コンクー
+ ル作品展示会（中央地区）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/kankyou.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/59425/r0011287.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/kankyou.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:478b844a60ba359ed4ad56fb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261115
+DTEND;VALUE=DATE:20261116
+SUMMARY:[区役所・区公式] 環境をよくする絵画コンクー
+ ル作品展示会（中央地区）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/kankyou.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/59425/r0011287.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/kankyou.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:96c8747e5a6509a685d99146@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261113
+DTEND;VALUE=DATE:20261114
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 小
+ 松川健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan7.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68928/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan7.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:a9100ce7ef92b885f9b41e2c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270113
+DTEND;VALUE=DATE:20270114
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 小
+ 松川健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan7.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68928/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan7.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:8bbfea0dfa1829df0cba9cc8@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270212
+DTEND;VALUE=DATE:20270213
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 小
+ 松川健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan7.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68928/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan7.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:9dde6793fe73b6f4924c9354@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261114
+DTEND;VALUE=DATE:20261116
+SUMMARY:[区役所・区公式] 第2回江戸川区文化芸術祭　華
+ 道展・茶会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261114grandart_kado.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73688/kasado
+ -1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261114grandart_kado.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:daa55c6e4ed30737f42c115b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261114
+DTEND;VALUE=DATE:20261115
+SUMMARY:[区役所・区公式] Art Marché in KASAI Seaside Park
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/artmarche0811.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73746/marche_a2_20
+ 2611142.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/artmarche0811.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:63c6722d4a678f1e4cd5e669@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261114
+DTEND;VALUE=DATE:20261115
+SUMMARY:[区役所・区公式] 江戸川病院 医療情報セミナー
+ 「お悩み解決！ 排尿トラブル」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261114.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kouza.gif
+URL:https://www.city.edogawa.tokyo.jp/event/20261114.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:aec801ea1dbb6eb1d9360f46@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261115
+DTEND;VALUE=DATE:20261116
+SUMMARY:[区役所・区公式] 第2回江戸川区文化芸術祭　囲
+ 碁大会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261115grandart_igo.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73690/igo-1.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261115grandart_igo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:68a0dbc035f77a976303591f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261115
+DTEND;VALUE=DATE:20261116
+SUMMARY:[区役所・区公式] 第2回江戸川区文化芸術祭　ヨ
+ ガ秋の祭典
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261115grandart_yoga.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73694/yoga-1
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261115grandart_yoga.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5b5a2c39382c817da5699819@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261115
+DTEND;VALUE=DATE:20261116
+SUMMARY:[区役所・区公式] 江戸名所図会を歩く
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611zue.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/74506/gaikan.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2611zue.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:695806d8419f59d9b4600b15@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261116
+DTEND;VALUE=DATE:20261117
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:09dc82a836e2e16e365da224@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261120
+DTEND;VALUE=DATE:20261121
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:05712cd2fd9f361eb55d3898@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:838c755df9d3cf7513155c9a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261208
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c1690a657f3a8ae109333cc7@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:17e367d4bf2a414f31c566a1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270219
+DTEND;VALUE=DATE:20270220
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7c0d37e5ea1cecc227319a71@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270222
+DTEND;VALUE=DATE:20270223
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:a9efdd513d23bbb42546492b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270226
+DTEND;VALUE=DATE:20270227
+SUMMARY:[区役所・区公式] シニアのための初めてのパソ
+ コン教室
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20260615pc.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/67739/pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:1bd01293b66f83fac2011483@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261116
+DTEND;VALUE=DATE:20261117
+SUMMARY:[区役所・区公式] ボランティア入門講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261116volunteer.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_pa
+ lace.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261116volunteer.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e5ae76b3090847abf63ccfbe@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261117
+DTEND;VALUE=DATE:20261118
+SUMMARY:[区役所・区公式] 小規模保育所就職フェア
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/shushoku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/towerholl_1_1
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/shushoku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5e50d50baea0b3b9215f469b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261117
+DTEND;VALUE=DATE:20261118
+SUMMARY:[区役所・区公式] あるある！「じぶん」ラボ
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/aruarulab_117.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/74616/aruaru1109ur
+ a.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/aruarulab_117.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3ea66a11c7a529dfb66c3f54@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261117
+DTEND;VALUE=DATE:20261118
+SUMMARY:[区役所・区公式] 初冬からの生ごみ堆肥づくり
+ 講習会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/1101event2.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74893/gomi_namagomi.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/1101event2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:4b2579fff90edc1fc14e2748@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261117
+DTEND;VALUE=DATE:20261118
+SUMMARY:[区役所・区公式] 第1回さく等を見る会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/sakura1.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/75036/2611sakura.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/sakura1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:cb22e8d926771ec5553e461c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:[区役所・区公式] リズム運動体験教室（船堀コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken4.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/funabori_c.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken4.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:bc47d203db965b49cab846cf@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261216
+DTEND;VALUE=DATE:20261217
+SUMMARY:[区役所・区公式] リズム運動体験教室（船堀コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken4.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/funabori_c.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken4.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:83da005141c607d32395c1df@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270120
+DTEND;VALUE=DATE:20270121
+SUMMARY:[区役所・区公式] リズム運動体験教室（船堀コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken4.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/funabori_c.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken4.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:6b104670df691229841d18cc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270217
+DTEND;VALUE=DATE:20270218
+SUMMARY:[区役所・区公式] リズム運動体験教室（船堀コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken4.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/funabori_c.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken4.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e439b19671b5b44f601bef1c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　小松川区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261007ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73708/komatsugawa.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261007ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:bb773754aef51a9af4b2ab1e@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270217
+DTEND;VALUE=DATE:20270218
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　小松川区民館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261007ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73708/komatsugawa.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261007ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0d48eebb841edb6995e3fd50@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　松江区民プラザ
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261007ikiki2.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73709/matsue.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261007ikiki2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:df1967ba7bed963d18039693@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270217
+DTEND;VALUE=DATE:20270218
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　松江区民プラザ
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261007ikiki2.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73709/matsue.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261007ikiki2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:fa6d51eccd64d10332916318@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261119
+DTEND;VALUE=DATE:20261120
+SUMMARY:[区役所・区公式] リズム運動体験教室（葛西区
+ 民館・木曜）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken6.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kasaikuminkan
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken6.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b15a2d87628a3ee125155793@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261217
+DTEND;VALUE=DATE:20261218
+SUMMARY:[区役所・区公式] リズム運動体験教室（葛西区
+ 民館・木曜）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken6.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kasaikuminkan
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken6.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:1e6e42a98e40e9360fc8cb81@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270121
+DTEND;VALUE=DATE:20270122
+SUMMARY:[区役所・区公式] リズム運動体験教室（葛西区
+ 民館・木曜）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken6.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kasaikuminkan
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken6.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:32f3982555efe95f82f1faa1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270218
+DTEND;VALUE=DATE:20270219
+SUMMARY:[区役所・区公式] リズム運動体験教室（葛西区
+ 民館・木曜）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken6.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kasaikuminkan
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken6.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5152e0f518bbec2f87dc0072@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261119
+DTEND;VALUE=DATE:20261120
+SUMMARY:[区役所・区公式] 自転車の正しいルールと青切符
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261119ao.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74516/ticket.png
+URL:https://www.city.edogawa.tokyo.jp/event/20261119ao.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:8b0ca734e1ada8c818f2ecbe@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261120
+DTEND;VALUE=DATE:20261121
+SUMMARY:[区役所・区公式] 家庭教育セミナー　幼児コース
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/kateikyoiku26-11.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74225/kateikyou
+ iku2024.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/kateikyoiku26-11.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3ac29fd50a18368cf12b7e66@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261120
+DTEND;VALUE=DATE:20261121
+SUMMARY:[区役所・区公式] ともだちつくろう！（松島コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/c_matsushima.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/48659/r8-789tomoda
+ chi.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/c_matsushima.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:cc01209909ecbf61ee170355@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261120
+DTEND;VALUE=DATE:20261121
+SUMMARY:[区役所・区公式] 第28回産業ときめきフェア in ED
+ OGAWA
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/28tokimeki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/70831/2025edstf-s-03
+ 7.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/28tokimeki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:93a95f6416ce67b3f076361d@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261120
+DTEND;VALUE=DATE:20261121
+SUMMARY:[区役所・区公式] 障害者施設で陶芸体験をしよう
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/togei.html\n会場: 江戸川区役所（東京都江戸川区中央1-
+ 4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画像
+ URL: https://www.city.edogawa.tokyo.jp/images/73378/togei1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/togei.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ea4fd817a02da14604200431@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261121
+DTEND;VALUE=DATE:20261122
+SUMMARY:[区役所・区公式] えどがわエコセンターおもち
+ ゃの病院
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/1101event1.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74892/omocha.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/1101event1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:40b258e1988461eebb396ef7@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261121
+DTEND;VALUE=DATE:20261122
+SUMMARY:[区役所・区公式] 第55回松島土曜寄席
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/55rakugo.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74388/matsushimarado
+ youyose.png
+URL:https://www.city.edogawa.tokyo.jp/event/55rakugo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:828258b922fa33f21fe44ddb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261121
+DTEND;VALUE=DATE:20261122
+SUMMARY:[区役所・区公式] 鹿骨区民館 駐車場（北側）で
+ 大型プラスチックボックス臨時回収を行います。
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/26purashishibone.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74262/ogatapura
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/26purashishibone.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:9cc486d1d8c6e56aa4fb3998@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261121
+DTEND;VALUE=DATE:20261123
+SUMMARY:[区役所・区公式] えどがわ楽市2026 ～笑顔がつな
+ がる2日間～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/rakuichi2026.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/74579/edogawarakui
+ chi.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/rakuichi2026.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:11fb08273727a598903d31e3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261122
+DTEND;VALUE=DATE:20261123
+SUMMARY:[区役所・区公式] ひとり親家庭のためのパソコ
+ ン講習会・基礎講座編・ITリテラシー(動画配信)
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/pc-kiso.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/74641/computer_income_b
+ usinesswoman.png
+URL:https://www.city.edogawa.tokyo.jp/event/pc-kiso.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:37ba9c672a6f8b2dba8583c3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261122
+DTEND;VALUE=DATE:20261123
+SUMMARY:[区役所・区公式] 新川さくら館　冬ざくらイル
+ ミネーション
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/26fuyusakura.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/75153/img_2440.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/26fuyusakura.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:4adf705bf943202d1d195381@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261122
+DTEND;VALUE=DATE:20261123
+SUMMARY:[区役所・区公式] えどがわパラスポーツ体験会in
+ スポーツセンター
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261122_parafesta.html\n会場: 江戸川区スポーツセンター（
+ 東京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com
+ /?q=35.668912\,139.862124\n画像URL: https://www.city.edogawa.tokyo.jp/
+ images/74233/parafesta_pic.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261122_parafesta.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:e00a836d53ffdea765a9e24e@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261122
+DTEND;VALUE=DATE:20261123
+SUMMARY:[区役所・区公式] 合唱隊群星第5回定期演奏会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/5gunsei.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/74389/gunsei.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/5gunsei.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7f7188f0fa348533d502490e@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261123
+DTEND;VALUE=DATE:20261124
+SUMMARY:[区役所・区公式] ウオーキングフェスタえどが
+ わ2026
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261123walking.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/49504/uokin.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261123walking.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:564daa99f9b58f9ec4226167@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261123
+DTEND;VALUE=DATE:20261124
+SUMMARY:[区役所・区公式] 第42回江戸川区視覚障害者福祉
+ 協会　文化祭
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/eshikyor8.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kouza.gif
+URL:https://www.city.edogawa.tokyo.jp/event/eshikyor8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:50c7f5028d9aed287cf08e69@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261123
+DTEND;VALUE=DATE:20261124
+SUMMARY:[区役所・区公式] 第167回小岩で落語を聴く会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/167koiwa.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74387/rakugo_koiwa.p
+ ng
+URL:https://www.city.edogawa.tokyo.jp/event/167koiwa.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:1b2e246ad1fd2f84ec28ecf6@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261124
+DTEND;VALUE=DATE:20261125
+SUMMARY:[区役所・区公式] ひょっこり相談会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/hyokkorisodan2.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73674/hyokkori2
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/hyokkorisodan2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:eff972e05f78a22646d54c27@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261124
+DTEND;VALUE=DATE:20261125
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　コミュニティプラザ一之江
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261006ikiiki2.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73707/ichinoe.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261006ikiiki2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0adef1f0e097c245d35d4f31@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270216
+DTEND;VALUE=DATE:20270217
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　コミュニティプラザ一之江
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261006ikiiki2.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73707/ichinoe.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261006ikiiki2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:25d478a6f3c912be7e199bf8@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261125
+DTEND;VALUE=DATE:20261126
+SUMMARY:[区役所・区公式] リズム運動体験教室（グリー
+ ンパレス）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken3.html\n会場: グリーンパレス（東京都江戸川区
+ 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
+ 1\n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_pala
+ ce_1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken3.html
+LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
+GEO:35.698912;139.866421
+END:VEVENT
+BEGIN:VEVENT
+UID:6da6d112a78edd920d50c4ea@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:[区役所・区公式] リズム運動体験教室（グリー
+ ンパレス）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken3.html\n会場: グリーンパレス（東京都江戸川区
+ 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
+ 1\n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_pala
+ ce_1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken3.html
+LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
+GEO:35.698912;139.866421
+END:VEVENT
+BEGIN:VEVENT
+UID:ba6ba8687994b10d9fd3b3fe@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270127
+DTEND;VALUE=DATE:20270128
+SUMMARY:[区役所・区公式] リズム運動体験教室（グリー
+ ンパレス）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken3.html\n会場: グリーンパレス（東京都江戸川区
+ 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
+ 1\n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_pala
+ ce_1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken3.html
+LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
+GEO:35.698912;139.866421
+END:VEVENT
+BEGIN:VEVENT
+UID:18ae2ae662feef25c9b0a874@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270224
+DTEND;VALUE=DATE:20270225
+SUMMARY:[区役所・区公式] リズム運動体験教室（グリー
+ ンパレス）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken3.html\n会場: グリーンパレス（東京都江戸川区
+ 松島1-38-1）\n地図: https://maps.google.com/?q=35.698912\,139.86642
+ 1\n画像URL: https://www.city.edogawa.tokyo.jp/shared_images/green_pala
+ ce_1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken3.html
+LOCATION:グリーンパレス（東京都江戸川区松島1-38-1）
+GEO:35.698912;139.866421
+END:VEVENT
+BEGIN:VEVENT
+UID:75f699f72e02ddab621b0325@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261125
+DTEND;VALUE=DATE:20261126
+SUMMARY:[区役所・区公式] 令和8年度外国人支援実践講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261125yoseikoza.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74507/suppor
+ ter.png
+URL:https://www.city.edogawa.tokyo.jp/event/20261125yoseikoza.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b03e1901cc540c5e4b55ed50@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261210
+DTEND;VALUE=DATE:20261211
+SUMMARY:[区役所・区公式] 令和8年度外国人支援実践講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261125yoseikoza.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74507/suppor
+ ter.png
+URL:https://www.city.edogawa.tokyo.jp/event/20261125yoseikoza.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:af13518d2f88190b97545f65@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:[区役所・区公式] 令和8年度外国人支援実践講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261125yoseikoza.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74507/suppor
+ ter.png
+URL:https://www.city.edogawa.tokyo.jp/event/20261125yoseikoza.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:bf3da932d67dc1aeb0052055@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261125
+DTEND;VALUE=DATE:20261126
+SUMMARY:[区役所・区公式] ハンググライダーをつくって
+ あそぼう
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611hangglider.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74648/1125hangg
+ lider.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2611hangglider.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:4f20d3de917ac501970b668a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261127
+DTEND;VALUE=DATE:20261128
+SUMMARY:[区役所・区公式] リズム運動体験教室（篠崎コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken8.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/shinozaki.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:a1b1e847fabfa766a37275da@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261225
+DTEND;VALUE=DATE:20261226
+SUMMARY:[区役所・区公式] リズム運動体験教室（篠崎コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken8.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/shinozaki.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:47fc5e234f5ba63ad3d902d6@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270122
+DTEND;VALUE=DATE:20270123
+SUMMARY:[区役所・区公式] リズム運動体験教室（篠崎コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken8.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/shinozaki.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:aed75fb8175fb99da8fd9049@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270226
+DTEND;VALUE=DATE:20270227
+SUMMARY:[区役所・区公式] リズム運動体験教室（篠崎コ
+ ミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken8.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/shinozaki.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken8.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c1b9fa1cd67fb4383914f1c9@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261127
+DTEND;VALUE=DATE:20261128
+SUMMARY:[区役所・区公式] 六人廻し　トリネタを研鑽す
+ る会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2611rokunin.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/74505/2611rokunin.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2611rokunin.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0eafc350884e7259b473fb24@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261128
+DTEND;VALUE=DATE:20261130
+SUMMARY:[区役所・区公式] 小岩地区　環境をよくする絵
+ 画コンクール　作品展示会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/24koiwakankyou.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/58563/pb171152.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/24koiwakankyou.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:d211ac734e177ff8b1d4aa01@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:[区役所・区公式] 小岩地区　環境をよくする絵
+ 画コンクール　作品展示会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/24koiwakankyou.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/58563/pb171152.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/24koiwakankyou.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0bcf2ff6b9a873bffa979cb1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261128
+DTEND;VALUE=DATE:20261129
+SUMMARY:[区役所・区公式] 第3回はるえフェス　未来をつ
+ なぐ福祉体験型スタンプラリー！
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/1128fes.html\n会場: 江戸川区役所（東京都江戸川区中央
+ 1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n画
+ 像URL: https://www.city.edogawa.tokyo.jp/images/73616/1128fes.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/1128fes.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3eb5326c004e00e01c4fcc8e@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261128
+DTEND;VALUE=DATE:20261129
+SUMMARY:[区役所・区公式] おうち食堂・おとなりさん事
+ 業　支援員登録研修
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261128ochiotonari.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/261128ochiotonari.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:a0eecc8aa8f52d7f0f8db4fb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261129
+DTEND;VALUE=DATE:20261130
+SUMMARY:[区役所・区公式] 東部地区環境をよくする絵画
+ コンクール作品展示会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261128kaiga.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/75125/tenji.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261128kaiga.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:93784e267358068435f85fea@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:[区役所・区公式] 東部地区環境をよくする絵画
+ コンクール作品展示会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261128kaiga.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/75125/tenji.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261128kaiga.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:8ead584d82bb577f10dc5f2d@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261129
+DTEND;VALUE=DATE:20261130
+SUMMARY:[区役所・区公式] 第46回青年カーニバル
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/46seikani.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73673/mikoshi.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/46seikani.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ca4276b24ef253011d20f229@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261129
+DTEND;VALUE=DATE:20261130
+SUMMARY:[区役所・区公式] 第6回江戸川区長杯カヌー・ス
+ ラローム大会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/kuchohai6.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74357/kutyohai1129.p
+ ng
+URL:https://www.city.edogawa.tokyo.jp/event/kuchohai6.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ac517758b25982497b444d6a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261129
+DTEND;VALUE=DATE:20261130
+SUMMARY:[区役所・区公式] 銭湯　イベント湯　毎月開催
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/eventyu2026sec.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74457/event_pos
+ ter_b2.png
+URL:https://www.city.edogawa.tokyo.jp/event/eventyu2026sec.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5dc8bd451450f0aea055d2ba@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261222
+DTEND;VALUE=DATE:20261223
+SUMMARY:[区役所・区公式] 銭湯　イベント湯　毎月開催
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/eventyu2026sec.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74457/event_pos
+ ter_b2.png
+URL:https://www.city.edogawa.tokyo.jp/event/eventyu2026sec.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:79b1a6d02336a93ef16e3e78@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270102
+SUMMARY:[区役所・区公式] 銭湯　イベント湯　毎月開催
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/eventyu2026sec.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74457/event_pos
+ ter_b2.png
+URL:https://www.city.edogawa.tokyo.jp/event/eventyu2026sec.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:038afa3688a47b7d79621351@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270131
+DTEND;VALUE=DATE:20270201
+SUMMARY:[区役所・区公式] 銭湯　イベント湯　毎月開催
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/eventyu2026sec.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74457/event_pos
+ ter_b2.png
+URL:https://www.city.edogawa.tokyo.jp/event/eventyu2026sec.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:707ccc689d8d60e364abf9dc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270228
+DTEND;VALUE=DATE:20270301
+SUMMARY:[区役所・区公式] 銭湯　イベント湯　毎月開催
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/eventyu2026sec.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74457/event_pos
+ ter_b2.png
+URL:https://www.city.edogawa.tokyo.jp/event/eventyu2026sec.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ccd80c8ac946025519658a5d@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261202
+SUMMARY:[区役所・区公式] 「いつまでも動けるからだづ
+ くり」パネル展
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undopanelten.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/75056/r7tenjifu
+ ukei.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undopanelten.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:152022eda4500c68037bd27f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:[区役所・区公式] 気軽に食材を使い切り（エコ
+ 料理教室）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261115event3.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/75076/lunch.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/20261115event3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3ec03c64a2eafe0298803066@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 鹿
+ 骨健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan6.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68925/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan6.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:93d245fd6d1c64330e102c9b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261201
+DTEND;VALUE=DATE:20261202
+SUMMARY:[区役所・区公式] Blue Sky Market～ミラクル×都立白
+ 鷺特別支援学校が船堀駅前で販売会をします～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8bsm1201.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/70363/1201bsm.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8bsm1201.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:614452147837c006c1d0fa98@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261203
+DTEND;VALUE=DATE:20261204
+SUMMARY:[区役所・区公式] 障害者週間
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8shogaishashukan.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74984/r8shog
+ aishashukan.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8shogaishashukan.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b7b191692ec3789ff16754e8@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261207
+SUMMARY:[区役所・区公式] 障害者週間
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8shogaishashukan.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74984/r8shog
+ aishashukan.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8shogaishashukan.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:6d5f384479598a82bc6baacc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261204
+DTEND;VALUE=DATE:20261205
+SUMMARY:[区役所・区公式] 総合相談会～生きるのに悩ん
+ でいる、あなたへ～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/sodankai1204.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/73823/r8soudankai.
+ png
+URL:https://www.city.edogawa.tokyo.jp/event/sodankai1204.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:03046edb36de5d27106a9827@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261205
+DTEND;VALUE=DATE:20261206
+SUMMARY:[区役所・区公式] リズム運動体験教室（葛西区
+ 民館・土曜）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken9.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kasaikuminkan
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken9.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:8770dedb017b8312d75bc6c2@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270109
+DTEND;VALUE=DATE:20270110
+SUMMARY:[区役所・区公式] リズム運動体験教室（葛西区
+ 民館・土曜）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8taiken9.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/shared_images/kasaikuminkan
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken9.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:578a5d343845204e328f375f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261207
+SUMMARY:[区役所・区公式] 区民のためのツボ健康講座～
+ イキイキ生活で健康寿命を延ばそう～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/tsubokenkokoza.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73779/tsubokenk
+ okoza.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/tsubokenkokoza.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f909e60ea0f72b21255ee852@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261207
+SUMMARY:[区役所・区公式] 一之江抹香亭「ふれあい茶席」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/makko1206.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75071/chaseki.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/makko1206.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b72f52d6a62f922a5a88e397@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261207
+SUMMARY:[区役所・区公式] 樹と友達になろう
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261115event4.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/75077/ki.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/20261115event4.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ef13b9b7f0083df9b6cdeb45@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:[区役所・区公式] ファミリーサポート会員を募
+ 集します
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/fs20261208.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/74411/20260401_famis
+ apomeister_1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/fs20261208.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:45f42e18718e5fc8dbd636bc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:[区役所・区公式] 女性しごと応援キャラバンin船
+ 堀
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/womencaravan.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/74583/1208caravan1
+ .png
+URL:https://www.city.edogawa.tokyo.jp/event/womencaravan.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f22f61a8f7a4ba1212405e80@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261208
+DTEND;VALUE=DATE:20261209
+SUMMARY:[区役所・区公式] 若者きずな塾「PRを学ぼう」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/0812kizuna.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75133/raitoon12.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/0812kizuna.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:6109c820697746d2f4570d0d@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:[区役所・区公式] 若者きずな塾「PRを学ぼう」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/0812kizuna.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75133/raitoon12.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/0812kizuna.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:086ca1790724cec92330d8a1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261209
+DTEND;VALUE=DATE:20261210
+SUMMARY:[区役所・区公式] 五代目円楽一門会若手落語会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612enraku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75157/2612enraku.png
+URL:https://www.city.edogawa.tokyo.jp/event/2612enraku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f4d6d79c2253c3e5525b8468@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261216
+DTEND;VALUE=DATE:20261217
+SUMMARY:[区役所・区公式] 五代目円楽一門会若手落語会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612enraku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75157/2612enraku.png
+URL:https://www.city.edogawa.tokyo.jp/event/2612enraku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:de6a9905c8a42ac0deb02a65@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261209
+DTEND;VALUE=DATE:20261210
+SUMMARY:[区役所・区公式] 圓藏亭落語会 暮れの夜噺連続
+ 三夜
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612enrakusanya.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/75162/2612enzos
+ pecial.png
+URL:https://www.city.edogawa.tokyo.jp/event/2612enrakusanya.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:49569f3915256a016782c02a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261209
+DTEND;VALUE=DATE:20261210
+SUMMARY:[区役所・区公式] 静電気であそぼう
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612seidenki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/75141/1209seidenki
+ .jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2612seidenki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5257e60a7f114d97e228b1c0@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261210
+DTEND;VALUE=DATE:20261211
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 清
+ 新町健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan4.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68922/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan4.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:2237a213b3daf8cb69e1b88a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270114
+DTEND;VALUE=DATE:20270115
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 清
+ 新町健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan4.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/68922/minnadekinto
+ re.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan4.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e3a84544ad9fdb27b336bbdd@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261210
+DTEND;VALUE=DATE:20261211
+SUMMARY:[区役所・区公式] 第15回　桂小右治勉強会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612koji.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75163/rakugo_kouza.p
+ ng
+URL:https://www.city.edogawa.tokyo.jp/event/2612koji.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5a238f112aa3207cc66b4b32@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261211
+DTEND;VALUE=DATE:20261212
+SUMMARY:[区役所・区公式] 令和8年度江戸川区障害者就労
+ 支援・就学進路フェア「障害者就職面接会」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8shogaimensetsu.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74991/r8mensets
+ u2.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8shogaimensetsu.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:cd062721cad0230912d15897@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261211
+DTEND;VALUE=DATE:20261212
+SUMMARY:[区役所・区公式] 令和8年度江戸川区障害者就労
+ 支援・就学進路フェア～つながる未来を応援～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8shogaishurofair.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/75129/r8shur
+ oshienfair.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/r8shogaishurofair.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:35f73cecad577257dd13c261@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261211
+DTEND;VALUE=DATE:20261212
+SUMMARY:[区役所・区公式] 六人廻し　トリネタを研鑽す
+ る会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612rokunin.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/75164/2612rokunin.
+ jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2612rokunin.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:75c8b9fe039702aea5e9e48f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261212
+DTEND;VALUE=DATE:20261213
+SUMMARY:[区役所・区公式] ペット防災セミナー開催のお
+ 知らせ
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261212petbosai.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74480/pextutobo
+ usai.png
+URL:https://www.city.edogawa.tokyo.jp/event/20261212petbosai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5a6c0dc9a498cdfd2ba82fbc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261212
+DTEND;VALUE=DATE:20261213
+SUMMARY:[区役所・区公式] 人形劇『ねずみのすもう』（
+ 上一色コミュニティセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261212nezumi-2.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/75062/nezuminos
+ umou.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261212nezumi-2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:94c886573feca7e548cf5391@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261212
+DTEND;VALUE=DATE:20261213
+SUMMARY:[区役所・区公式] 冬の親子ポニー飼育体験
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261206pony.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75101/91.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261206pony.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:da4d7f06a90cc4cdcba5520a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261219
+DTEND;VALUE=DATE:20261221
+SUMMARY:[区役所・区公式] 冬の親子ポニー飼育体験
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261206pony.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75101/91.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261206pony.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ac28837b790d98a82fabecad@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261212
+DTEND;VALUE=DATE:20261213
+SUMMARY:[区役所・区公式] サウンド・オブ・サイエンス
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612sound_of_science.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/75111/121
+ 2choompa.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2612sound_of_science.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:4cac06762d3ce536fc1a97eb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261213
+DTEND;VALUE=DATE:20261214
+SUMMARY:[区役所・区公式] 江戸川区郷土資料室令和8年度
+ 企画展「利根川と江戸川区ーその舟運と治水ー」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kikaku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75152/tonegawatoedog
+ awaku.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2026kikaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:41db6117ab628b688b921800@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270101
+DTEND;VALUE=DATE:20270102
+SUMMARY:[区役所・区公式] 江戸川区郷土資料室令和8年度
+ 企画展「利根川と江戸川区ーその舟運と治水ー」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kikaku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75152/tonegawatoedog
+ awaku.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2026kikaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c1a8f7f3c7973e4fbab1abe0@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270103
+DTEND;VALUE=DATE:20270104
+SUMMARY:[区役所・区公式] 江戸川区郷土資料室令和8年度
+ 企画展「利根川と江戸川区ーその舟運と治水ー」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kikaku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75152/tonegawatoedog
+ awaku.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2026kikaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:70c5a2cb3eb4ce6228cd7fff@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270201
+DTEND;VALUE=DATE:20270202
+SUMMARY:[区役所・区公式] 江戸川区郷土資料室令和8年度
+ 企画展「利根川と江戸川区ーその舟運と治水ー」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kikaku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75152/tonegawatoedog
+ awaku.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2026kikaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:eb8b045409e80689ff00c51a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270207
+DTEND;VALUE=DATE:20270208
+SUMMARY:[区役所・区公式] 江戸川区郷土資料室令和8年度
+ 企画展「利根川と江戸川区ーその舟運と治水ー」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kikaku.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75152/tonegawatoedog
+ awaku.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/2026kikaku.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:27aaf2b3ffbca48c0204abea@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261213
+DTEND;VALUE=DATE:20261214
+SUMMARY:[区役所・区公式] 一之江抹香亭江戸園芸植物展
+ 示「春の七草展」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/makko1212.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75170/nanakusaten.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/makko1212.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:acbf18299e30f776e0d74b31@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270103
+DTEND;VALUE=DATE:20270104
+SUMMARY:[区役所・区公式] 一之江抹香亭江戸園芸植物展
+ 示「春の七草展」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/makko1212.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/75170/nanakusaten.jp
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/makko1212.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c0151f1dc072bbc03a8bf3c1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261213
+DTEND;VALUE=DATE:20261214
+SUMMARY:[区役所・区公式] 第2回江戸川区文化芸術祭　音
+ 楽祭
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261213grandart_ongakusai.html\n会場: 江戸川区役所（東京都
+ 江戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612
+ \,139.868324\n画像URL: https://www.city.edogawa.tokyo.jp/images/73696/
+ ongaku-1.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261213grandart_ongakusai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:fb8a9b2525e3264bf2b43c63@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261213
+DTEND;VALUE=DATE:20261214
+SUMMARY:[区役所・区公式] 第20回記念くにいファミリーコ
+ ンサート
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/kunifamily2026.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74585/kunifamil
+ yconcert.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/kunifamily2026.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:51b06cae2d173a3c662c761c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261213
+DTEND;VALUE=DATE:20261214
+SUMMARY:[区役所・区公式] 介護の担い手研修
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261212kaigo.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+ \n画像URL: https://www.city.edogawa.tokyo.jp/images/74953/kaigo.jpg
+URL:https://www.city.edogawa.tokyo.jp/event/261212kaigo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:5cb82f4fd0ae5e8eaa7fbd73@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261214
+DTEND;VALUE=DATE:20261215
+SUMMARY:[区役所・区公式] 弱視通級指導学級による目の
+ 相談会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08me_sodan.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324\n
+ 画像URL: https://www.city.edogawa.tokyo.jp/images/73651/menosoudan.jpe
+ g
+URL:https://www.city.edogawa.tokyo.jp/event/08me_sodan.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:d0f1cdb45e6ebfbeb60d43ff@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:[区役所・区公式] 冷凍食品講習会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261215reitokoshu.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74939/r8_reitok
+ oshu.png
+URL:https://www.city.edogawa.tokyo.jp/event/261215reitokoshu.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e5dffa7bedbd53e7ee73adda@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261216
+DTEND;VALUE=DATE:20261217
+SUMMARY:[区役所・区公式] 東京アプリ生活応援事業の対
+ 面サポート
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261216_tokyoapp.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324\n画像URL: https://www.city.edogawa.tokyo.jp/images/74933/taimensup
+ port_thumbnail_pc.png
+URL:https://www.city.edogawa.tokyo.jp/event/261216_tokyoapp.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7b0fa2728b5097f7af6e62bb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261217
+DTEND;VALUE=DATE:20261218
+SUMMARY:[区役所・区公式] 年末！お掃除＋お片づけ講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/20261217soji.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/20261217soji.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:645950f3bea26f7f7258aeb0@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261218
+DTEND;VALUE=DATE:20261219
+SUMMARY:[区役所・区公式] 柳家あお馬勉強会　寄ってっ亭
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612aoba.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/2612aoba.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f492054a6ee1d1541f5fc1d2@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261218
+DTEND;VALUE=DATE:20261219
+SUMMARY:[区役所・区公式] 子育てママパパの縫い物ひろば
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/csp44.html\n会場: 江戸川区役所（東京都江戸川区中央1-
+ 4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/csp44.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0898b5a8877f5c75bebe5f30@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261219
+DTEND;VALUE=DATE:20261220
+SUMMARY:[区役所・区公式] マジック（上一色コミュニテ
+ ィセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261215magic.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/261215magic.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:41afa28f8cbb617c92480ce8@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261219
+DTEND;VALUE=DATE:20261220
+SUMMARY:[区役所・区公式] 夢いっぱい☆クリスマスコン
+ サート
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612christmas_concert.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324
+URL:https://www.city.edogawa.tokyo.jp/event/2612christmas_concert.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7493aea753730295ea8d3893@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261220
+DTEND;VALUE=DATE:20261221
+SUMMARY:[区役所・区公式] 【全4回講座】ひるまの天文学
+ ：太陽をおいかけて
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2606_sun.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/2606_sun.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f3399f40a7aff401a92fad83@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261220
+DTEND;VALUE=DATE:20261221
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:88054250576b35ac34ef00fa@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261227
+DTEND;VALUE=DATE:20261228
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:a5717613c24323e115171e7b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270101
+DTEND;VALUE=DATE:20270102
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:d9af7e56758a34ede2e18c22@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270103
+DTEND;VALUE=DATE:20270104
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:a14ab3fbda99384dbcaa1d26@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:370e67dbc2a0f5e387111802@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270117
+DTEND;VALUE=DATE:20270118
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:6ec68bbcbd97fcb1ba4bcfed@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270124
+DTEND;VALUE=DATE:20270125
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:7174a6f409ff29fd056283e2@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270131
+DTEND;VALUE=DATE:20270202
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:4d851d932fe7bf123180d8d7@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270207
+DTEND;VALUE=DATE:20270208
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:6c26cc639f62210281465179@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270228
+DTEND;VALUE=DATE:20270301
+SUMMARY:[区役所・区公式] 令和8年度ぜんそく児のための
+ 風の子水泳教室（スポーツセンター）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kazenoko.html\n会場: 江戸川区スポーツセンター（東
+ 京都江戸川区西葛西4-2-20）\n地図: https://maps.google.com/?q
+ =35.668912\,139.862124
+URL:https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html
+LOCATION:江戸川区スポーツセンター（東京都江戸川区西
+ 葛西4-2-20）
+GEO:35.668912;139.862124
+END:VEVENT
+BEGIN:VEVENT
+UID:5e2dc083094527fbab5b5561@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261220
+DTEND;VALUE=DATE:20261221
+SUMMARY:[区役所・区公式] 銭湯スタンプラリー「ぶらり
+ 湯らりスタンプらり～」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/26stamprally.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/26stamprally.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:4c0d810e98410ce4c465d51b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261227
+DTEND;VALUE=DATE:20261228
+SUMMARY:[区役所・区公式] 銭湯スタンプラリー「ぶらり
+ 湯らりスタンプらり～」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/26stamprally.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/26stamprally.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:03678ee4406efdbffb3f2190@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261220
+DTEND;VALUE=DATE:20261221
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:6a519de0f93d2a8d795881ff@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261227
+DTEND;VALUE=DATE:20261228
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f981c9d55dc17d2ec160e941@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270101
+DTEND;VALUE=DATE:20270102
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ccf29373137d1402d81aa540@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270103
+DTEND;VALUE=DATE:20270104
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7950ff088545eb3003504d9a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3533b8477de56781022fadc1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270117
+DTEND;VALUE=DATE:20270118
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:2e8e4fdc6c3d3db78db57dd1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270131
+DTEND;VALUE=DATE:20270202
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:be07fd348354536fce6e95e5@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270207
+DTEND;VALUE=DATE:20270208
+SUMMARY:[区役所・区公式] 新川さくら館　いきいきひろ
+ ば健康講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/260920iki.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/260920iki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:d386fa1ad6e6ed9115888dfb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261221
+DTEND;VALUE=DATE:20261222
+SUMMARY:[区役所・区公式] えどさと里親説明会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/setumeikai.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/setumeikai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c327bed9842278d2cb0962a6@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270130
+DTEND;VALUE=DATE:20270131
+SUMMARY:[区役所・区公式] えどさと里親説明会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/setumeikai.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/setumeikai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3830cb3a481b81ac22e41b1b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270225
+DTEND;VALUE=DATE:20270226
+SUMMARY:[区役所・区公式] えどさと里親説明会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/setumeikai.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/setumeikai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:144f867536f098b534f0461c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261221
+DTEND;VALUE=DATE:20261222
+SUMMARY:[区役所・区公式] 江戸川区家庭料理検定
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2026kateiryourikentei.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324
+URL:https://www.city.edogawa.tokyo.jp/event/2026kateiryourikentei.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ad6cb4c2664d0726f1f65443@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261224
+DTEND;VALUE=DATE:20261225
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 中
+ 央健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan1.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:75d37c52548ef7a9afe0e57a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270108
+DTEND;VALUE=DATE:20270109
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 中
+ 央健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan1.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:dcf7fcc3ac5cee4922f9d6bb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261226
+DTEND;VALUE=DATE:20261227
+SUMMARY:[区役所・区公式] 書道を通した交流会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/csp38.html\n会場: 江戸川区役所（東京都江戸川区中央1-
+ 4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/csp38.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:62ca6a8c5c4eae6b91e1df5f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261227
+DTEND;VALUE=DATE:20261228
+SUMMARY:[区役所・区公式] 微生物パワー
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612biseibutsu.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324
+URL:https://www.city.edogawa.tokyo.jp/event/2612biseibutsu.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:ddbcbd819a36b3d86f37f0b9@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20261227
+DTEND;VALUE=DATE:20261228
+SUMMARY:[区役所・区公式] 圓藏亭落語会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2612enzo.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/2612enzo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:57781af3fc000fb6e4ebe4d3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270101
+DTEND;VALUE=DATE:20270102
+SUMMARY:[区役所・区公式] 第13回小松菜グルメスタンプラ
+ リー2026-27
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/komatsunastamp202627.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324
+URL:https://www.city.edogawa.tokyo.jp/event/komatsunastamp202627.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c088e238afe283bd487035a6@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270103
+DTEND;VALUE=DATE:20270104
+SUMMARY:[区役所・区公式] 第13回小松菜グルメスタンプラ
+ リー2026-27
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/komatsunastamp202627.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324
+URL:https://www.city.edogawa.tokyo.jp/event/komatsunastamp202627.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:40e550fa721ab8ce42158a32@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（葛西区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha1.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7f2adf14fbbe8795330b3762@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270117
+DTEND;VALUE=DATE:20270118
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（葛西区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha1.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:88be028d6b004b9520694159@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270124
+DTEND;VALUE=DATE:20270125
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（葛西区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha1.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f54b0c9aa891b32190f0bba8@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270214
+DTEND;VALUE=DATE:20270215
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（葛西区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha1.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c40257aa05fb5408a0b6f1b0@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270221
+DTEND;VALUE=DATE:20270222
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（葛西区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha1.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:1538ade36af22b45a181e632@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270228
+DTEND;VALUE=DATE:20270301
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（葛西区民館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha1.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha1.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c99ee9ef7fe4959a8074c36d@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:581e9ae44020001a6a95ce71@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270117
+DTEND;VALUE=DATE:20270118
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e4cd864665f7fc85ac0bd169@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270124
+DTEND;VALUE=DATE:20270125
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:bc5df67c79fa2f9f4792a0ca@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270131
+DTEND;VALUE=DATE:20270201
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f610dd6f989706099d146a24@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270207
+DTEND;VALUE=DATE:20270208
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:75aac39e56c11f13a17d8c70@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270214
+DTEND;VALUE=DATE:20270215
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:cd7c23498ed2ecd9e9673f39@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270221
+DTEND;VALUE=DATE:20270222
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:25e7129957b1c2349f24eb90@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270228
+DTEND;VALUE=DATE:20270301
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（南小岩コミュニティ会館）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha2.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:9fe3d62c827f2147015e8387@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:fa0ce72be93999c7ec305ebb@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270117
+DTEND;VALUE=DATE:20270118
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f9ac75b999364de04fba1f78@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270124
+DTEND;VALUE=DATE:20270125
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b6b7042d7449de7069938747@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270131
+DTEND;VALUE=DATE:20270201
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e19fc8c88ee73a3a8d3d96ca@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270207
+DTEND;VALUE=DATE:20270208
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:257b316d4fb6e978fc52ee2b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270214
+DTEND;VALUE=DATE:20270215
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e4f9b401484955fb09c325a9@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270221
+DTEND;VALUE=DATE:20270222
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:9a7286c39f4cadbab3bee432@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270228
+DTEND;VALUE=DATE:20270301
+SUMMARY:[区役所・区公式] 男性限定　初めてのリズム運
+ 動教室（コミュニティプラザ一之江）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8danseishoshinsha3.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha3.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e1c66ca994a85c9d6ae4bdfc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270113
+DTEND;VALUE=DATE:20270114
+SUMMARY:[区役所・区公式] 初心者のための手話ボランテ
+ ィア養成講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270113shuwa.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/270113shuwa.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:49fe9941168b8bd9b90863da@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270120
+DTEND;VALUE=DATE:20270121
+SUMMARY:[区役所・区公式] 初心者のための手話ボランテ
+ ィア養成講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270113shuwa.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/270113shuwa.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:aa38cf7b2747f3b2fba417ad@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270127
+DTEND;VALUE=DATE:20270128
+SUMMARY:[区役所・区公式] 初心者のための手話ボランテ
+ ィア養成講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270113shuwa.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/270113shuwa.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:aebd7620937d0f89f310dedc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270210
+DTEND;VALUE=DATE:20270211
+SUMMARY:[区役所・区公式] 初心者のための手話ボランテ
+ ィア養成講座
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270113shuwa.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/270113shuwa.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:67d46ec733fb99981db5234b@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270115
+DTEND;VALUE=DATE:20270116
+SUMMARY:[区役所・区公式] 総合相談会～生きるのに悩ん
+ でいる、あなたへ～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/sodankai0115.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/sodankai0115.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:f30ad1ae53b27d3c1ed20cbd@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270115
+DTEND;VALUE=DATE:20270116
+SUMMARY:[区役所・区公式] 短期ペアレントトレーニング
+ 講座「お子さんと保護者のための勉強＆座談会」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/parent_koza.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/parent_koza.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:75a832dafc93726c64b83531@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270219
+DTEND;VALUE=DATE:20270220
+SUMMARY:[区役所・区公式] 短期ペアレントトレーニング
+ 講座「お子さんと保護者のための勉強＆座談会」
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/parent_koza.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/parent_koza.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:cacb8763a7154646e7658abf@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270116
+DTEND;VALUE=DATE:20270117
+SUMMARY:[区役所・区公式] 地域スポーツ推進員養成講習会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/yoseikoshukai.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/yoseikoshukai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:692399ab6d873f9c21b55f0c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270116
+DTEND;VALUE=DATE:20270117
+SUMMARY:[区役所・区公式] 小岩健康サポートセンター 駐
+ 車場で大型プラスチックボックス臨時回収を行います
+ 。
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/26purakoiwa.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/26purakoiwa.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:0b06d33d18d825336930c4e1@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270116
+DTEND;VALUE=DATE:20270117
+SUMMARY:[区役所・区公式] 手話講習会　受講生募集（タ
+ ワーホール船堀 307会議室）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8shuwakoshu.html\n会場: タワーホール船堀（東京都江戸
+ 川区船堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.
+ 861924
+URL:https://www.city.edogawa.tokyo.jp/event/r8shuwakoshu.html
+LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
+GEO:35.683812;139.861924
+END:VEVENT
+BEGIN:VEVENT
+UID:31034cb5358e24271466f0e2@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270118
+DTEND;VALUE=DATE:20270119
+SUMMARY:[区役所・区公式] ファミリーサポート会員を募
+ 集します
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/fs20270118.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/fs20270118.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:05e72d72ab0cfe8859bcabaa@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270119
+DTEND;VALUE=DATE:20270120
+SUMMARY:[区役所・区公式] Blue Sky Market～ミラクル×都立白
+ 鷺特別支援学校が船堀駅前で販売会をします～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8bsm0119.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8bsm0119.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c2fac6d8d31c57279f44e133@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270122
+DTEND;VALUE=DATE:20270123
+SUMMARY:[区役所・区公式] 各すくすくスクールの紹介パ
+ ネル展示
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/080116paneru.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/080116paneru.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:050763c175d94a78d9b7a62a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270124
+DTEND;VALUE=DATE:20270125
+SUMMARY:[区役所・区公式] 各すくすくスクールの紹介パ
+ ネル展示
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/080116paneru.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/080116paneru.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:a2d14740bb161752acba82ff@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270201
+DTEND;VALUE=DATE:20270202
+SUMMARY:[区役所・区公式] 各すくすくスクールの紹介パ
+ ネル展示
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/080116paneru.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/080116paneru.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:30caebd3aecda2891e37450a@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270123
+DTEND;VALUE=DATE:20270124
+SUMMARY:[区役所・区公式] おうち食堂・おとなりさん事
+ 業　支援員登録研修
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270123ochiotonari.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/270123ochiotonari.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7a26cd42ff9a54deec7735cc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270126
+DTEND;VALUE=DATE:20270127
+SUMMARY:[区役所・区公式] 【小岩児童発達支援センター
+ 】ひょっこり相談会（12月~2月）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/hyokkori12.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/hyokkori12.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:dceda203513ff89c657aba87@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270216
+DTEND;VALUE=DATE:20270217
+SUMMARY:[区役所・区公式] 【小岩児童発達支援センター
+ 】ひょっこり相談会（12月~2月）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/hyokkori12.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/hyokkori12.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:fc04fa7604a16222fab537d0@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270129
+DTEND;VALUE=DATE:20270130
+SUMMARY:[区役所・区公式] 就職ガイダンスセミナー
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/2701guidance.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/2701guidance.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:c88fe5e4dfe7e1f5fe73cdab@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270130
+DTEND;VALUE=DATE:20270131
+SUMMARY:[区役所・区公式] ひきこもりメタバース居場所
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/07_metaibasyo.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/07_metaibasyo.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:daf5e21ba799d79d3e8c0024@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270201
+DTEND;VALUE=DATE:20270202
+SUMMARY:[区役所・区公式] 女性デジタルカレッジ事業（
+ 入門コース）Word・Excel基礎科
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/0902digital.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/0902digital.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:824fee43ba99ebb886b2635f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270209
+DTEND;VALUE=DATE:20270210
+SUMMARY:[区役所・区公式] 令和8年度小松川さくらホール
+ 水泳教室（第3期）実施の件
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8-3th-swim.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8-3th-swim.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:8051357db4896633679ba73c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270216
+DTEND;VALUE=DATE:20270217
+SUMMARY:[区役所・区公式] 令和8年度小松川さくらホール
+ 水泳教室（第3期）実施の件
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8-3th-swim.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8-3th-swim.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:167cba0f35ade2f26c4c2094@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270213
+DTEND;VALUE=DATE:20270214
+SUMMARY:[区役所・区公式] 西洋美術史への扉
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/26art.html\n会場: 江戸川区役所（東京都江戸川区中央1-
+ 4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/26art.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7f92fb5bf5ac5cfd75283379@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270214
+DTEND;VALUE=DATE:20270215
+SUMMARY:[区役所・区公式] 令和8年度すくすくスクールフ
+ ェスタを開催します
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/sukufesevent01.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324
+URL:https://www.city.edogawa.tokyo.jp/event/sukufesevent01.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:e80e8ded34464b5005a0bfb6@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270214
+DTEND;VALUE=DATE:20270215
+SUMMARY:[区役所・区公式] 一般社団法人江戸川ろう者協
+ 会　創立75周年記念大会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/75shunenkinentaikai.html\n会場: 江戸川区役所（東京都江戸
+ 川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.
+ 868324
+URL:https://www.city.edogawa.tokyo.jp/event/75shunenkinentaikai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:fb6e81ed827b50bfbc6a0efe@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270216
+DTEND;VALUE=DATE:20270217
+SUMMARY:[区役所・区公式] Blue Sky Market～ミラクル×都立白
+ 鷺特別支援学校が船堀駅前で販売会をします～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/r8bsm0216.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/r8bsm0216.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:48d3423cf27b904fd41798ff@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270218
+DTEND;VALUE=DATE:20270219
+SUMMARY:[区役所・区公式] 個別のリハビリ・運動相談 葛
+ 西健康サポートセンター（予約制）
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/08undosodan5.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/08undosodan5.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:85ec0e2eee3e1778c951108f@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270219
+DTEND;VALUE=DATE:20270220
+SUMMARY:[区役所・区公式] 【申込は終了しました】活き
+ 活きけんこう塾　新田コミュニティ会館
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/261002ikiiki.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/261002ikiiki.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:3138545fff7bdaf602bc0ab3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270219
+DTEND;VALUE=DATE:20270220
+SUMMARY:[区役所・区公式] ファミリーサポート会員を募
+ 集します
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/fs20270219.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/fs20270219.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:1437bced90336c9999dfddfc@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270220
+DTEND;VALUE=DATE:20270221
+SUMMARY:[区役所・区公式] 第173回サロンコンサート「郷
+ 愁のメロディ」～弦合奏で紡ぐ日本の歌～
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/173salon.html\n会場: 江戸川区役所（東京都江戸川区中
+ 央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/173salon.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:17a5c9f61b1e59ddcc0947f3@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270221
+DTEND;VALUE=DATE:20270222
+SUMMARY:[区役所・区公式] 初級パラスポーツ指導員養成
+ 講習会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270206shokyupara.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324
+URL:https://www.city.edogawa.tokyo.jp/event/270206shokyupara.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:d8adfdcd4d9d57db741a2539@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270227
+DTEND;VALUE=DATE:20270228
+SUMMARY:[区役所・区公式] 初級パラスポーツ指導員養成
+ 講習会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270206shokyupara.html\n会場: 江戸川区役所（東京都江戸川
+ 区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868
+ 324
+URL:https://www.city.edogawa.tokyo.jp/event/270206shokyupara.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:7ad335a70870e6b448f0ad7c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270221
+DTEND;VALUE=DATE:20270222
+SUMMARY:[区役所・区公式] 第39回心をつなげる福祉マラソ
+ ン大会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/270221fukushimarathon.html\n会場: 江戸川区役所（東京都江
+ 戸川区中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,1
+ 39.868324
+URL:https://www.city.edogawa.tokyo.jp/event/270221fukushimarathon.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:a6429236ec087edc438e17cf@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270227
+DTEND;VALUE=DATE:20270228
+SUMMARY:[区役所・区公式] えどさと里親カフェ
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/satooyacafe.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/satooyacafe.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:25778311c82c63122fad98b7@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270227
+DTEND;VALUE=DATE:20270228
+SUMMARY:[区役所・区公式] ひきこもりの状態にある方・
+ 家族向け対話交流会
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/taiwakoryukai.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/taiwakoryukai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
+UID:b50d4e8a0e3a46645d37fd3c@edogawa-events.local
+DTSTAMP:20261125T233902Z
+DTSTART;VALUE=DATE:20270227
+DTEND;VALUE=DATE:20270228
+SUMMARY:[区役所・区公式] 葛西清掃事務所 駐車場で大型
+ プラスチックボックス臨時回収を行います。
+DESCRIPTION:詳細・申込情報: https://www.city.edogawa.tokyo.jp/even
+ t/26purakasai.html\n会場: 江戸川区役所（東京都江戸川区
+ 中央1-4-1）\n地図: https://maps.google.com/?q=35.706612\,139.868324
+URL:https://www.city.edogawa.tokyo.jp/event/26purakasai.html
+LOCATION:江戸川区役所（東京都江戸川区中央1-4-1）
+GEO:35.706612;139.868324
+END:VEVENT
+BEGIN:VEVENT
 UID:41b2d899cf0d9c05cf97c3c1@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[公共・船堀タワー] 第70回大妻女子大学合唱団定
  期演奏会
 DESCRIPTION:詳細・申込情報: https://www.towerhall.jp/event/tribe_e
  vents-7433/\n会場: タワーホール船堀（東京都江戸川区船
- 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924\n
- 画像URL: https://www.towerhall.jp/tower/wp-content/themes/twp/img/page
- top.png
+ 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924
 URL:https://www.towerhall.jp/event/tribe_events-7433/
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:26133be23e0532033183dbaf@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261213
 DTEND;VALUE=DATE:20261214
 SUMMARY:[公共・船堀タワー] 第47回　江戸川区音楽祭
 DESCRIPTION:詳細・申込情報: https://www.towerhall.jp/event/tribe_e
  vents-7346/\n会場: タワーホール船堀（東京都江戸川区船
- 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924\n
- 画像URL: https://www.towerhall.jp/tower/wp-content/themes/twp/img/page
- top.png
+ 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924
 URL:https://www.towerhall.jp/event/tribe_events-7346/
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:1cce1748cd9b2cea76f8ee66@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261216
 DTEND;VALUE=DATE:20261217
 SUMMARY:[公共・船堀タワー] Xマスコンサートとオペラ「
  アイーダ」ハイライト
 DESCRIPTION:詳細・申込情報: https://www.towerhall.jp/event/tribe_e
  vents-7420/\n会場: タワーホール船堀（東京都江戸川区船
- 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924\n
- 画像URL: https://www.towerhall.jp/tower/wp-content/themes/twp/img/page
- top.png
+ 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924
 URL:https://www.towerhall.jp/event/tribe_events-7420/
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:c7ae60dc95d5bb9672c6f99f@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261217
 DTEND;VALUE=DATE:20261220
 SUMMARY:[公共・船堀タワー] 江戸川区退職教職員の会
 DESCRIPTION:詳細・申込情報: https://www.towerhall.jp/event/tribe_e
  vents-7355/\n会場: タワーホール船堀（東京都江戸川区船
- 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924\n
- 画像URL: https://www.towerhall.jp/tower/wp-content/themes/twp/img/page
- top.png
+ 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924
 URL:https://www.towerhall.jp/event/tribe_events-7355/
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:221c6388079d64fcc7b71afe@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261226
 DTEND;VALUE=DATE:20261227
 SUMMARY:[公共・船堀タワー] 霜月音楽団第3回定期演奏会
 DESCRIPTION:詳細・申込情報: https://www.towerhall.jp/event/tribe_e
  vents-7387/\n会場: タワーホール船堀（東京都江戸川区船
- 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924\n
- 画像URL: https://www.towerhall.jp/tower/wp-content/themes/twp/img/page
- top.png
+ 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924
 URL:https://www.towerhall.jp/event/tribe_events-7387/
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:b77376cc60abb3996e8983f6@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270220
 DTEND;VALUE=DATE:20270221
 SUMMARY:[公共・船堀タワー] 医系弦楽オーケストラアン
  サンブル
 DESCRIPTION:詳細・申込情報: https://www.towerhall.jp/event/tribe_e
  vents-7416/\n会場: タワーホール船堀（東京都江戸川区船
- 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924\n
- 画像URL: https://www.towerhall.jp/tower/wp-content/themes/twp/img/page
- top.png
+ 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924
 URL:https://www.towerhall.jp/event/tribe_events-7416/
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:4b0357867634119f2a256187@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270515
 DTEND;VALUE=DATE:20270516
 SUMMARY:[公共・船堀タワー] 江戸川ギター・マンドリン
  クラブ第36回定期演奏会
 DESCRIPTION:詳細・申込情報: https://www.towerhall.jp/event/tribe_e
  vents-7475/\n会場: タワーホール船堀（東京都江戸川区船
- 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924\n
- 画像URL: https://www.towerhall.jp/tower/wp-content/themes/twp/img/page
- top.png
+ 堀4-1-1）\n地図: https://maps.google.com/?q=35.683812\,139.861924
 URL:https://www.towerhall.jp/event/tribe_events-7475/
 LOCATION:タワーホール船堀（東京都江戸川区船堀4-1-1）
 GEO:35.683812;139.861924
 END:VEVENT
 BEGIN:VEVENT
 UID:f7d169cba249c906f1ce2dcd@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261201
 DTEND;VALUE=DATE:20261202
 SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
@@ -125,8 +4448,7 @@ SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2026/12/491/\n会場: 江戸川区総合文化センター（東京都
  江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70812
- 5\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uplo
- ads/2026/03/OGP.jpg
+ 5\,139.868514
 URL:https://edogawa-bunkacenter.jp/calendar/2026/12/491/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -134,7 +4456,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:eb37219da7f3c7884a66aafb@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270101
 DTEND;VALUE=DATE:20270102
 SUMMARY:[公共・総合文化センター] 第6回 えどがわ BOXART
@@ -142,8 +4464,7 @@ SUMMARY:[公共・総合文化センター] 第6回 えどがわ BOXART
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/01/2837/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
- 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/03/OGP.jpg
+ 8125\,139.868514
 URL:https://edogawa-bunkacenter.jp/calendar/2027/01/2837/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -151,15 +4472,14 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:cd98394aaceaa933d56398e0@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270201
 DTEND;VALUE=DATE:20270202
 SUMMARY:[公共・総合文化センター] 第6回えどがわBOXART展
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/02/2836/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
- 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/03/OGP.jpg
+ 8125\,139.868514
 URL:https://edogawa-bunkacenter.jp/calendar/2027/02/2836/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -167,7 +4487,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:aeb53943932ad75f36a594cf@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270201
 DTEND;VALUE=DATE:20270202
 SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
@@ -176,8 +4496,7 @@ SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/02/492/\n会場: 江戸川区総合文化センター（東京都
  江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70812
- 5\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/uplo
- ads/2026/03/OGP.jpg
+ 5\,139.868514
 URL:https://edogawa-bunkacenter.jp/calendar/2027/02/492/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -185,7 +4504,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:06c4258a09f7875d6fbdf67c@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270301
 DTEND;VALUE=DATE:20270302
 SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
@@ -194,8 +4513,7 @@ SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/03/3028/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
- 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/03/OGP.jpg
+ 8125\,139.868514
 URL:https://edogawa-bunkacenter.jp/calendar/2027/03/3028/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -203,7 +4521,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:ba02037db4f355f9139c5d15@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270301
 DTEND;VALUE=DATE:20270302
 SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
@@ -211,8 +4529,7 @@ SUMMARY:[公共・総合文化センター] 江戸川区総合文化セ
 DESCRIPTION:詳細・申込情報: https://edogawa-bunkacenter.jp/calenda
  r/2027/03/1051/\n会場: 江戸川区総合文化センター（東京
  都江戸川区中央4-14-1）\n地図: https://maps.google.com/?q=35.70
- 8125\,139.868514\n画像URL: https://edogawa-bunkacenter.jp/wp-content/u
- ploads/2026/03/OGP.jpg
+ 8125\,139.868514
 URL:https://edogawa-bunkacenter.jp/calendar/2027/03/1051/
 LOCATION:江戸川区総合文化センター（東京都江戸川区中
  央4-14-1）
@@ -220,7 +4537,7 @@ GEO:35.708125;139.868514
 END:VEVENT
 BEGIN:VEVENT
 UID:a1d7c71441136821fb2fcc33@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261213
 DTEND;VALUE=DATE:20261214
 SUMMARY:[公共・篠崎公園] 篠崎公園ふれあいフェスティ
@@ -228,17 +4545,14 @@ SUMMARY:[公共・篠崎公園] 篠崎公園ふれあいフェスティ
 DESCRIPTION:詳細・申込情報: https://www.tokyo-park.or.jp/park/shin
  ozaki/news/2026/8_12_13.html\n会場: 都立篠崎公園（東京都江
  戸川区上篠崎1-25-1）\n地図: https://maps.google.com/?q=35.71381
- 2\,139.903514\n画像URL: https://www.tokyo-park.or.jp/park/shinozaki/as
- sets/%E7%AF%A0%E5%B4%8E%E5%85%AC%E5%9C%92%E3%81%B5%E3%82%8C%E3%81%82%E3%
- 81%84%E3%83%95%E3%82%A7%E3%82%B9%E3%83%86%E3%82%A3%E3%83%90%E3%83%AB2026
- .png
+ 2\,139.903514
 URL:https://www.tokyo-park.or.jp/park/shinozaki/news/2026/8_12_13.html
 LOCATION:都立篠崎公園（東京都江戸川区上篠崎1-25-1）
 GEO:35.713812;139.903514
 END:VEVENT
 BEGIN:VEVENT
 UID:fd3c1daa2a73939a2e297813@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261129
 SUMMARY:[公共・葛西臨海水族園] 11/28、29 海鳥イベント「
@@ -246,8 +4560,7 @@ SUMMARY:[公共・葛西臨海水族園] 11/28、29 海鳥イベント「
 DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
  3819/index.html\n会場: 東京都葛西臨海水族園（東京都江
  戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112
- \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/kasai/news/1381
- 9_06.jpg
+ \,139.862214
 URL:https://www.tokyo-zoo.net/kasai/news/13819/index.html
 LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
  -2-3）
@@ -255,7 +4568,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:b367779673d57e904aa04245@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261206
 DTEND;VALUE=DATE:20261207
 SUMMARY:[公共・葛西臨海水族園] 12/6（日）開催！「水族
@@ -272,7 +4585,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:a7e5e7846899a530afca08bf@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261212
 DTEND;VALUE=DATE:20261213
 SUMMARY:[公共・葛西臨海水族園] 12/12 参加者募集 野生動
@@ -281,7 +4594,7 @@ SUMMARY:[公共・葛西臨海水族園] 12/12 参加者募集 野生動
 DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
  4034/index.html\n会場: 東京都葛西臨海水族園（東京都江
  戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112
- \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/13976_12.png
+ \,139.862214
 URL:https://www.tokyo-zoo.net/kasai/news/14034/index.html
 LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
  -2-3）
@@ -289,7 +4602,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:96f50a96e277db743303d5ee@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270106
 DTEND;VALUE=DATE:20270107
 SUMMARY:[公共・葛西臨海水族園] 1/6　障がいのある方と
@@ -298,7 +4611,7 @@ SUMMARY:[公共・葛西臨海水族園] 1/6　障がいのある方と
 DESCRIPTION:詳細・申込情報: https://www.tokyo-zoo.net/kasai/news/1
  3810/index.html\n会場: 東京都葛西臨海水族園（東京都江
  戸川区臨海町6-2-3）\n地図: https://maps.google.com/?q=35.640112
- \,139.862214\n画像URL: https://www.tokyo-zoo.net/image/kasai.jpg
+ \,139.862214
 URL:https://www.tokyo-zoo.net/kasai/news/13810/index.html
 LOCATION:東京都葛西臨海水族園（東京都江戸川区臨海町6
  -2-3）
@@ -306,7 +4619,7 @@ GEO:35.640112;139.862214
 END:VEVENT
 BEGIN:VEVENT
 UID:860856f26386887fb5fbfc3e@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261127
 DTEND;VALUE=DATE:20261128
 SUMMARY:[地域・江戸川まいぷれ] 【11月27日（金）開催】
@@ -321,7 +4634,7 @@ GEO:35.706612;139.868324
 END:VEVENT
 BEGIN:VEVENT
 UID:92b4bcfeddd5e68bf0e88ab8@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261129
 DTEND;VALUE=DATE:20261130
 SUMMARY:[地域・江戸川まいぷれ] 【11月29日開催】第39回 
@@ -336,7 +4649,7 @@ GEO:35.706612;139.868324
 END:VEVENT
 BEGIN:VEVENT
 UID:2ddb115a420b004845bb3303@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261129
 DTEND;VALUE=DATE:20261130
 SUMMARY:[地域・江戸川まいぷれ] 【プレゼントあり⭐︎
@@ -351,7 +4664,7 @@ GEO:35.706612;139.868324
 END:VEVENT
 BEGIN:VEVENT
 UID:e9c6c580f9662117d5e5e856@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261204
 DTEND;VALUE=DATE:20261205
 SUMMARY:[地域・江戸川まいぷれ] 江戸川区からも通える
@@ -366,7 +4679,7 @@ GEO:35.706612;139.868324
 END:VEVENT
 BEGIN:VEVENT
 UID:ed7be208dcaf6f408ce19d6e@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261205
 DTEND;VALUE=DATE:20261206
 SUMMARY:[地域・江戸川まいぷれ] 【12月5日開催】心の不
@@ -381,7 +4694,7 @@ GEO:35.706612;139.868324
 END:VEVENT
 BEGIN:VEVENT
 UID:1c0c28d0a7a4212ae9e7cfb7@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261203
 DTEND;VALUE=DATE:20261204
 SUMMARY:[物産展・友好都市] 鶴岡市（西葛西駅 南口広場）
@@ -396,7 +4709,7 @@ GEO:35.664182;139.859214
 END:VEVENT
 BEGIN:VEVENT
 UID:663cb47d05d5bb5c3660249c@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270218
 DTEND;VALUE=DATE:20270219
 SUMMARY:[物産展・友好都市] 鶴岡市（西葛西駅 南口広場）
@@ -411,7 +4724,7 @@ GEO:35.664182;139.859214
 END:VEVENT
 BEGIN:VEVENT
 UID:cf6d6a9f81e350efe2901ea3@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270416
 DTEND;VALUE=DATE:20270417
 SUMMARY:[物産展・友好都市] 鶴岡市（西葛西駅 南口広場）
@@ -426,7 +4739,7 @@ GEO:35.664182;139.859214
 END:VEVENT
 BEGIN:VEVENT
 UID:1a5645554d56b217056ef3d3@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270214
 DTEND;VALUE=DATE:20270215
 SUMMARY:[物産展・友好都市] 鶴岡市（船堀駅 北口広場）
@@ -441,7 +4754,7 @@ GEO:35.684412;139.864518
 END:VEVENT
 BEGIN:VEVENT
 UID:05069e4c8be28291cd1516d3@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270304
 DTEND;VALUE=DATE:20270305
 SUMMARY:[物産展・友好都市] 鶴岡市（船堀駅 北口広場）
@@ -456,7 +4769,7 @@ GEO:35.684412;139.864518
 END:VEVENT
 BEGIN:VEVENT
 UID:ef1b31a7f74ae4085373c69b@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261130
 SUMMARY:[商業・アリオ葛西] 買う・キャンペーン 10/23(金)
@@ -472,22 +4785,21 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:eaff843f565f74c2d2fce05d@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261201
 SUMMARY:[商業・アリオ葛西] 買う 11/01(日) 〜 11/30(月) 11月
  のお得なLINEクーポン
 DESCRIPTION:詳細・申込情報: https://kasai.ario.jp/special/16000061
  20\n会場: アリオ葛西（東京都江戸川区東葛西9-3-3）\n
- 地図: https://maps.google.com/?q=35.656214\,139.872518\n画像URL: htt
- ps://kasai.ario.jp/app/16/img/special/1600006120/
+ 地図: https://maps.google.com/?q=35.656214\,139.872518
 URL:https://kasai.ario.jp/special/1600006120
 LOCATION:アリオ葛西（東京都江戸川区東葛西9-3-3）
 GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:3d8c71fc22b2ece05fd29e04@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261201
 SUMMARY:[商業・アリオ葛西] 買う・食べる 11/02(月) 〜 11/3
@@ -502,7 +4814,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:4acd8358bbc2311af516b2ba@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261201
 SUMMARY:[商業・アリオ葛西] 見る・学ぶ 11/01(日) 〜 11/30(
@@ -518,7 +4830,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:144e4cf1047bdc86bb1d193b@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261201
 SUMMARY:[商業・アリオ葛西] 遊ぶ・キャンペーン・イベ
@@ -534,7 +4846,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:514703929e3c685e8b233e37@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261221
 SUMMARY:[商業・アリオ葛西] 特集 11/20(金) 〜 12/20(日) 新
@@ -549,7 +4861,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:066966487e3b09382c6d21cc@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261228
 SUMMARY:[商業・アリオ葛西] 買う・キャンペーン 11/20(金)
@@ -564,7 +4876,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:2efdf94692947664bd65944c@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261123
 DTEND;VALUE=DATE:20261124
 SUMMARY:[商業・アリオ葛西] 遊ぶ・体験する 11/21(土) 〜 1
@@ -580,7 +4892,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:c036c4b441e1c7652117e0aa@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261130
 SUMMARY:[商業・アリオ葛西] 遊ぶ・体験する 11/21(土) 〜 1
@@ -596,7 +4908,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:ed132c4032a9143606852261@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261129
 SUMMARY:[商業・アリオ葛西] 食べる 11/28(土) 「なるとキ
@@ -611,7 +4923,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:bd4719387bf4ebd307c8e4f7@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261130
 SUMMARY:[商業・アリオ葛西] 遊ぶ 11/28(土) 〜 11/29(日) 12/05
@@ -627,7 +4939,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:1315c002dfffda79cd6c8718@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261205
 DTEND;VALUE=DATE:20261207
 SUMMARY:[商業・アリオ葛西] 遊ぶ 11/28(土) 〜 11/29(日) 12/05
@@ -643,7 +4955,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:3f0aebbe80587e5c5ffbdbfe@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261212
 DTEND;VALUE=DATE:20261214
 SUMMARY:[商業・アリオ葛西] 遊ぶ 11/28(土) 〜 11/29(日) 12/05
@@ -659,7 +4971,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:85044bf4224244ca8338a371@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261128
 DTEND;VALUE=DATE:20261129
 SUMMARY:[商業・アリオ葛西] 買う・キャンペーン・イベ
@@ -675,7 +4987,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:3c7149730e676dda9f414d02@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261129
 DTEND;VALUE=DATE:20261130
 SUMMARY:[商業・アリオ葛西] 見る・イベント 11/29(日) ア
@@ -691,7 +5003,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:773aae953686f6de985aee93@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261209
 DTEND;VALUE=DATE:20261210
 SUMMARY:[商業・アリオ葛西] 見る・買う 12/09(水) 利生み
@@ -706,7 +5018,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:0ae0d0cd17aae9c478bf419f@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261212
 DTEND;VALUE=DATE:20261214
 SUMMARY:[商業・アリオ葛西] 遊ぶ・体験する・作る 12/12(
@@ -721,7 +5033,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:58d31dab3b86a5f98bbac1f0@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270415
 DTEND;VALUE=DATE:20270416
 SUMMARY:[商業・アリオ葛西] キャンペーン 04/15(火) 〜 ア
@@ -736,7 +5048,7 @@ GEO:35.656214;139.872518
 END:VEVENT
 BEGIN:VEVENT
 UID:962512aca1a9b6c85845db36@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261126
 DTEND;VALUE=DATE:20261127
 SUMMARY:[学校・学園祭] 【11/26締切】学校説明会 申込み
@@ -744,8 +5056,7 @@ SUMMARY:[学校・学園祭] 【11/26締切】学校説明会 申込み
 DESCRIPTION:詳細・申込情報: https://www.metro.ed.jp/edogawa-h/news
  /2026/11/newsentry_206.html\n会場: 東京都立江戸川高等学校
  （東京都江戸川区松島2-38-1）\n地図: https://maps.google.com
- /?q=35.707214\,139.863512\n画像URL: https://www.metro.ed.jp/edogawa-h/
- img_sub/kosyo.png
+ /?q=35.707214\,139.863512
 URL:https://www.metro.ed.jp/edogawa-h/news/2026/11/newsentry_206.html
 LOCATION:東京都立江戸川高等学校（東京都江戸川区松島2
  -38-1）
@@ -753,15 +5064,14 @@ GEO:35.707214;139.863512
 END:VEVENT
 BEGIN:VEVENT
 UID:63f685757f729256f03db0d9@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270509
 DTEND;VALUE=DATE:20270510
 SUMMARY:[学校・学園祭] 5月9日の授業公開のご案内
 DESCRIPTION:詳細・申込情報: https://www.metro.ed.jp/edogawa-h/news
  /2026/04/5_9.html\n会場: 東京都立江戸川高等学校（東京都
  江戸川区松島2-38-1）\n地図: https://maps.google.com/?q=35.70721
- 4\,139.863512\n画像URL: https://www.metro.ed.jp/edogawa-h/img_sub/kosy
- o.png
+ 4\,139.863512
 URL:https://www.metro.ed.jp/edogawa-h/news/2026/04/5_9.html
 LOCATION:東京都立江戸川高等学校（東京都江戸川区松島2
  -38-1）
@@ -769,7 +5079,7 @@ GEO:35.707214;139.863512
 END:VEVENT
 BEGIN:VEVENT
 UID:5447e5a312c1ff979954e33f@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261212
 DTEND;VALUE=DATE:20261213
 SUMMARY:[学校・学園祭] １２／１２（土）第３回学校説
@@ -777,8 +5087,7 @@ SUMMARY:[学校・学園祭] １２／１２（土）第３回学校説
 DESCRIPTION:詳細・申込情報: https://www.metro.ed.jp/kasaiminami-h/
  news/2026/11/newsentry_399.html\n会場: 東京都立葛西南高等学
  校（東京都江戸川区南葛西1-11-1）\n地図: https://maps.goog
- le.com/?q=35.652514\,139.863218\n画像URL: https://www.metro.ed.jp/kasa
- iminami-h/img_sub/kosyo.png
+ le.com/?q=35.652514\,139.863218
 URL:https://www.metro.ed.jp/kasaiminami-h/news/2026/11/newsentry_399.html
 LOCATION:東京都立葛西南高等学校（東京都江戸川区南葛
  西1-11-1）
@@ -786,15 +5095,14 @@ GEO:35.652514;139.863218
 END:VEVENT
 BEGIN:VEVENT
 UID:f209f7dc6f161a916eabc5de@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270330
 DTEND;VALUE=DATE:20270331
 SUMMARY:[学校・学園祭] 軽音学部３年生　卒業ライブ　3/30
 DESCRIPTION:詳細・申込情報: https://www.metro.ed.jp/kasaiminami-h/
  news/2026/04/3_30.html\n会場: 東京都立葛西南高等学校（東
  京都江戸川区南葛西1-11-1）\n地図: https://maps.google.com/?q
- =35.652514\,139.863218\n画像URL: https://www.metro.ed.jp/kasaiminami-h
- /img_sub/kosyo.png
+ =35.652514\,139.863218
 URL:https://www.metro.ed.jp/kasaiminami-h/news/2026/04/3_30.html
 LOCATION:東京都立葛西南高等学校（東京都江戸川区南葛
  西1-11-1）
@@ -802,7 +5110,7 @@ GEO:35.652514;139.863218
 END:VEVENT
 BEGIN:VEVENT
 UID:47e52ef4f758f312ae3f5062@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20261205
 DTEND;VALUE=DATE:20261206
 SUMMARY:[学校・学園祭] 【今年度最後】12/5(土)学校説明
@@ -810,8 +5118,7 @@ SUMMARY:[学校・学園祭] 【今年度最後】12/5(土)学校説明
 DESCRIPTION:詳細・申込情報: https://www.metro.ed.jp/shinozaki-h/ne
  ws/2026/11/12_5.html\n会場: 東京都立篠崎高等学校（東京都
  江戸川区東篠崎1-10-1）\n地図: https://maps.google.com/?q=35.71
- 6214\,139.908512\n画像URL: https://www.metro.ed.jp/shinozaki-h/img_sub
- /kosyo.png
+ 6214\,139.908512
 URL:https://www.metro.ed.jp/shinozaki-h/news/2026/11/12_5.html
 LOCATION:東京都立篠崎高等学校（東京都江戸川区東篠崎1
  -10-1）
@@ -819,15 +5126,14 @@ GEO:35.716214;139.908512
 END:VEVENT
 BEGIN:VEVENT
 UID:a92f135db0fa19c7fabc5aaa@edogawa-events.local
-DTSTAMP:20261125T233134Z
+DTSTAMP:20261125T233902Z
 DTSTART;VALUE=DATE:20270325
 DTEND;VALUE=DATE:20270326
 SUMMARY:[学校・学園祭] 3/25(水)新入生説明会のご案内
 DESCRIPTION:詳細・申込情報: https://www.metro.ed.jp/shinozaki-h/ne
  ws/2026/03/3_25.html\n会場: 東京都立篠崎高等学校（東京都
  江戸川区東篠崎1-10-1）\n地図: https://maps.google.com/?q=35.71
- 6214\,139.908512\n画像URL: https://www.metro.ed.jp/shinozaki-h/img_sub
- /kosyo.png
+ 6214\,139.908512
 URL:https://www.metro.ed.jp/shinozaki-h/news/2026/03/3_25.html
 LOCATION:東京都立篠崎高等学校（東京都江戸川区東篠崎1
  -10-1）
