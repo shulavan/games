@@ -59,6 +59,10 @@ EXCLUDE_KEYWORDS = (
     "前の月",
     "次の月",
     "すべて",
+    "一覧はこちら",
+    "お知らせはこちら",
+    "アーカイブ",
+    "もっと見る",
 )
 
 # 江戸川区内主要施設・全12図書館・公園・文化施設の緯度経度マッピング
@@ -168,7 +172,7 @@ def is_noise_or_news(title, block_text="", url=""):
     t = title.strip()
     if not t or len(t) < 3:
         return True
-    if url and is_stale_year_url(url):
+    if url and (is_stale_year_url(url) or "/archive/" in url or url.rstrip("/").endswith("/news/index.html")):
         return True
     if any(kw in t for kw in EXCLUDE_KEYWORDS):
         return True
@@ -217,7 +221,11 @@ def extract_first_image_from_page(page_url):
         og_img = soup.find("meta", property="og:image")
         if og_img and og_img.get("content"):
             candidate = urljoin(page_url, og_img["content"].strip())
-            if re.match(r"^https?://", candidate, re.I) and "noimage" not in candidate.lower():
+            lower_cand = candidate.lower()
+            if (
+                re.match(r"^https?://", candidate, re.I)
+                and not any(skip in lower_cand for skip in ("noimage", "logo", "sns", "icon", "dummy"))
+            ):
                 return candidate
 
         main_area = soup.find(["main", "article"]) or soup.body or soup
@@ -227,7 +235,7 @@ def extract_first_image_from_page(page_url):
                 continue
             full_img_url = urljoin(page_url, src)
             lower_url = full_img_url.lower()
-            if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark", "qr")):
+            if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark", "qr", "dummy")):
                 continue
             if re.search(r"\.(jpg|jpeg|png|webp|gif)(\?|$)", lower_url):
                 return full_img_url
@@ -707,7 +715,7 @@ def main():
     add_events("江戸川区総合文化センター(カレンダー)", parse_generic_facility_events(BUNKACENTER_CAL_URL, "総合文化センター", "江戸川区総合文化センター"))
     add_events("江戸川区スポーツ", parse_sports_kintone_events())
     add_events("葛西海浜公園", parse_generic_facility_events(KASAI_KAIHIN_PARK_URL, "葛西海浜公園", "葛西海浜公園"))
-    add_events("葛西臨海公園", parse_generic_facility_events(KASAI_RINKAI_PARK_URL, "葛西臨海公園", "葛西臨海公園"))
+    add_events("葛西臨海公園", parse_generic_facility_events(KASAI_RINKAI_PARK_URL, "葛西臨海公園", "葛西臨海公園", timeout=20, retries=1))
     # 地下鉄博物館・自然動物園・ポニーランドは外部クラウドからの接続タイムアウトが起きやすいため短時間スキップで全体速度を優先
     add_events("地下鉄博物館", parse_generic_facility_events(CHIKAHAKU_EVENT_URL, "地下鉄博物館", "地下鉄博物館", timeout=5, retries=0))
     add_events("江戸川区自然動物園", parse_generic_facility_events(EDOGAWA_ZOO_EVENT_URL, "自然動物園", "江戸川区自然動物園", timeout=5, retries=0))
