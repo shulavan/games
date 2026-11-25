@@ -326,23 +326,20 @@ def is_past_report_text(text):
 
 
 def is_mypl_event_post(title, block_text=""):
-    """Return True only when a MyPl entry looks like a genuine event/催し rather than a truncated or casual post."""
+    """Return True only when a MyPl entry looks like a genuine event/催し with concrete name or date."""
     t = title.strip()
-    if not t or len(t) < 6:
+    if not t or len(t) < 8:
         return False
     if t.endswith("…") or t.endswith("..."):
         return False
     if re.search(r"^(?:【江戸川区】)?\d{1,2}月\d{1,2}日[「『\"【]?\s*$", t):
         return False
-    combined = f"{t} {block_text}"
-    has_event_kw = any(kw in combined for kw in MYPL_EVENT_KEYWORDS)
-    has_date_mention = bool(
-        re.search(
-            r"(?:\d{1,2}月\d{1,2}日|\d{1,2}/\d{1,2})\s*(?:\([月火水木金土日祝・]+\))?\s*(?:開催|実施|予定|出展|出店|オープン|見学|相談)",
-            normalize_japanese_text(combined),
-        )
-    )
-    return has_event_kw or has_date_mention
+    if re.search(r"^\d+(?:\.\d+)+歳のおともだちへ", t):
+        return False
+    norm_t = normalize_japanese_text(t)
+    has_date_in_title = bool(re.search(r"(?:\d{1,2}月\d{1,2}日|\d{1,2}/\d{1,2})", norm_t))
+    has_event_kw_in_title = any(kw in t for kw in MYPL_EVENT_KEYWORDS)
+    return has_date_in_title or has_event_kw_in_title
 
 
 def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
