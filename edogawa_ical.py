@@ -206,6 +206,8 @@ FACILITY_LOCATIONS = {
     "コミュニティプラザ一之江": (35.685420, 139.886120, "コミュニティプラザ一之江（東京都江戸川区一之江7-35-22）"),
     "船堀コミュニティ会館": (35.682910, 139.865420, "船堀コミュニティ会館（東京都江戸川区船堀2-17-13）"),
     "南小岩コミュニティ会館": (35.729410, 139.877820, "南小岩コミュニティ会館（東京都江戸川区南小岩3-25-2）"),
+    "北小岩コミュニティ会館": (35.736210, 139.882410, "北小岩コミュニティ会館（東京都江戸川区北小岩2-15-10）"),
+    "新田コミュニティ会館": (35.724810, 139.867520, "新田コミュニティ会館（東京都江戸川区新田1-17-12）"),
     "松島コミュニティ会館": (35.702410, 139.867920, "松島コミュニティ会館（東京都江戸川区松島3-17-12）"),
     "篠崎コミュニティ会館": (35.704320, 139.900120, "篠崎コミュニティ会館（東京都江戸川区篠崎町2-4-8）"),
     "上一色コミュニティセンター": (35.723120, 139.872840, "上一色コミュニティセンター（東京都江戸川区上一色3-5-2）"),
@@ -216,6 +218,7 @@ FACILITY_LOCATIONS = {
     "鹿骨健康サポートセンター": (35.716620, 139.892340, "鹿骨健康サポートセンター（東京都江戸川区鹿骨1-54-2）"),
     "清新町健康サポートセンター": (35.655120, 139.857420, "清新町健康サポートセンター（東京都江戸川区清新町1-1-34）"),
     "葛西健康サポートセンター": (35.663120, 139.864920, "葛西健康サポートセンター（東京都江戸川区中葛西3-19-12）"),
+    "葛西清掃事務所": (35.665420, 139.873910, "葛西清掃事務所（東京都江戸川区東葛西6-12-12）"),
     "自然動物園": (35.671312, 139.858724, "江戸川区自然動物園（東京都江戸川区北葛西3-2-1 行船公園内）"),
     "行船公園": (35.671312, 139.858724, "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）"),
     "平成庭園": (35.671312, 139.858724, "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）"),
@@ -259,6 +262,7 @@ CHAR_NORMALIZE_MAP = {
     ord("〜"): "~",
     ord("－"): "-",
     ord("−"): "-",
+    ord("ー"): "-",
 }
 
 SESSION = requests.Session()
@@ -503,12 +507,34 @@ def _resolve_year_for_month(month, now_date, default_year=None):
     return base
 
 
+def _japanese_era_to_western_year(era_char, era_year_str):
+    """Convert Japanese era year (R/令和, H/平成) to 4-digit Western year."""
+    try:
+        yr = int(era_year_str)
+    except ValueError:
+        return None
+    ec = era_char.upper()
+    if ec in ("R", "令"):
+        return 2018 + yr
+    if ec in ("H", "平"):
+        return 1988 + yr
+    return None
+
+
 def extract_dates_from_text(text, default_year=None):
     """Extract event dates from Japanese text while avoiding leading publication dates or ticket sales dates."""
     now = datetime.now(JST)
     today = now.date()
 
     norm_text = normalize_japanese_text(text)
+    # Normalize Japanese era dates like 令和8年12月13日 or R8.12.13 -> 2026年12月13日
+    norm_text = re.sub(
+        r"(?:令和|R)(\d{1,2})\s*[年/.]\s*(\d{1,2})\s*[月/.]\s*(\d{1,2})\s*日?",
+        lambda m: f"{_japanese_era_to_western_year(m.group(0)[0], m.group(1)) or (default_year or today.year)}/{int(m.group(2))}/{int(m.group(3))}",
+        norm_text,
+        flags=re.I,
+    )
+
     cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", norm_text)
     cleaned_text = re.sub(
         r"(?:発売日|発売開始|申込開始|受付開始|応募開始|販売開始)[：:\s]*(?:20\d{2}[年/\.]?)?\d{1,2}[月/\.]\d{1,2}日?",
@@ -517,14 +543,16 @@ def extract_dates_from_text(text, default_year=None):
     )
 
     parsed_dates = set()
+    # Match date ranges including optional year/month on end date (e.g., 11/28(土)〜29(日) or 11/28〜12/1)
     range_matches = re.findall(
-        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?\s*[~～\-]+\s*(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?",
+        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?\s*[~～\-]+\s*(?:(\d{4})[年/\.])?(?:(\d{1,2})[月/\.])?(\d{1,2})日?",
         cleaned_text,
     )
     for y1, m1, d1, y2, m2, d2 in range_matches:
         try:
             m1_i, d1_i = int(m1), int(d1)
-            m2_i, d2_i = int(m2), int(d2)
+            m2_i = int(m2) if m2 else m1_i
+            d2_i = int(d2)
             sy = int(y1) if y1 else _resolve_year_for_month(m1_i, today, default_year)
             start_dt = datetime(sy, m1_i, d1_i, tzinfo=JST).date()
             ey = int(y2) if y2 else (sy if m2_i >= m1_i else sy + 1)
@@ -748,6 +776,7 @@ def parse_generic_facility_events(
     area_keywords=None,
     fallback_base_url=None,
     strict_mypl=False,
+    allow_mypl_default_venue=False,
 ):
     """Generic scraper for Edogawa public/cultural/park/commercial/school event pages with URL fallback."""
     html = fetch_html(url, timeout=timeout, retries=retries)
@@ -811,7 +840,8 @@ def parse_generic_facility_events(
             continue
         dated_candidates += 1
 
-        venue = infer_venue_from_text(combined_text, default_venue=default_venue)
+        fallback_v = default_venue if (default_venue != "江戸川区役所" or allow_mypl_default_venue) else ""
+        venue = infer_venue_from_text(combined_text, default_venue=fallback_v)
 
         if full_url not in events:
             events[full_url] = {
