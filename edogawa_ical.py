@@ -265,6 +265,20 @@ def normalize_japanese_text(text):
     return text.translate(CHAR_NORMALIZE_MAP)
 
 
+def is_stale_year_url(url):
+    """Return True if a URL explicitly points to an old year or past fiscal year directory."""
+    if not url:
+        return False
+    now_year = datetime.now(JST).year
+    for m in re.finditer(r"/(?:news|event|calendar|topics|info)/(20\d{2})/", url):
+        yr = int(m.group(1))
+        if yr < now_year:
+            return True
+    if re.search(r"/(?:h\d{1,2}|s\d{1,2}|r[1-6])_", url.lower()):
+        return True
+    return False
+
+
 def resolve_location(text):
     """Find matching facility coordinates (lat, lon, full_name) from event text."""
     for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
@@ -280,8 +294,9 @@ def fetch_html(url, params=None, timeout=10, retries=1):
     if "city.edogawa.tokyo.jp" in url:
         extra_headers = {
             "Referer": EDOGAWA_TOP_URL,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "ja,en-US;q=0.7,en;q=0.3",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+            "Upgrade-Insecure-Requests": "1",
         }
     for attempt in range(retries + 1):
         try:
@@ -299,8 +314,8 @@ def fetch_html(url, params=None, timeout=10, retries=1):
 
 
 def discover_fallback_url(base_url, path_hints=("event", "news", "info", "calendar")):
-    """Discover alternative event/news URLs from a base page when a path changes."""
-    html = fetch_html(base_url, timeout=8, retries=0)
+    """Discover alternative event/news URLs from a base page when a path changes or returns 403."""
+    html = fetch_html(base_url, timeout=10, retries=1)
     if not html:
         return None
     soup = BeautifulSoup(html, "html.parser")
@@ -309,10 +324,10 @@ def discover_fallback_url(base_url, path_hints=("event", "news", "info", "calend
         href = a_tag["href"].strip()
         label = a_tag.get_text(" ", strip=True)
         if any(h in href.lower() for h in path_hints) or any(
-            k in label for k in ("イベント", "催し", "お知らせ", "行事")
+            k in label for k in ("イベント", "催し", "お知らせ", "行事", "文化", "子育て", "健康")
         ):
             cand = urljoin(base_url, href)
-            if cand.rstrip("/") != base_url.rstrip("/"):
+            if cand.rstrip("/") != base_url.rstrip("/") and "city.edogawa.tokyo.jp" in cand:
                 candidates.append(cand)
     for cand in candidates:
         if "/event/" in cand or "event" in cand.lower():
@@ -512,6 +527,11 @@ def parse_edogawa_city_calendar(year, month):
             )
             if not day_match:
                 day_match = re.match(r"^(\d{1,2})(?:\D|$)", norm_cell.strip())
+            if not day_match:
+                header_like = td.find(["span", "div", "p", "a", "strong", "em"])
+                if header_like:
+                    h_text = normalize_japanese_text(header_like.get_text(" ", strip=True))
+                    day_match = re.match(r"^(\d{1,2})(?:日|\([月火水木金土日祝・]+\))?$", h_text.strip())
             if not day_match:
                 continue
             day = int(day_match.group(1))
