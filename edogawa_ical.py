@@ -160,6 +160,25 @@ FACILITY_LOCATIONS = {
     "都立篠崎高校": (35.716214, 139.908512, "東京都立篠崎高等学校（東京都江戸川区東篠崎1-10-1）"),
 }
 
+CHAR_NORMALIZE_MAP = {
+    ord("０"): "0",
+    ord("１"): "1",
+    ord("２"): "2",
+    ord("３"): "3",
+    ord("４"): "4",
+    ord("５"): "5",
+    ord("６"): "6",
+    ord("７"): "7",
+    ord("８"): "8",
+    ord("９"): "9",
+    ord("／"): "/",
+    ord("．"): ".",
+    ord("～"): "~",
+    ord("〜"): "~",
+    ord("－"): "-",
+    ord("−"): "-",
+}
+
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": USER_AGENT})
 
@@ -185,11 +204,7 @@ def normalize_japanese_text(text):
     """Convert full-width ASCII digits and slashes/tildes to half-width for reliable date parsing."""
     if not text:
         return ""
-    trans_map = str.maketrans(
-        "０１２３４５６７８９／．～〜－−",
-        "0123456789//..~~--",
-    )
-    return text.translate(trans_map)
+    return text.translate(CHAR_NORMALIZE_MAP)
 
 
 def resolve_location(text):
