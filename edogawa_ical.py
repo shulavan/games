@@ -99,6 +99,16 @@ EXCLUDE_KEYWORDS = (
     "プライバシーポリシー",
 )
 
+# 開催済み・報告記事（過去形）の除外パターン
+PAST_REPORT_PATTERNS = (
+    r"開催しました[!！。]?$",
+    r"実施しました[!！。]?$",
+    r"行われました[!！。]?$",
+    r"終了しました[!！。]?$",
+    r"参加しました[!！。]?$",
+    r"を行いました[!！。]?$",
+)
+
 # 学校サイトで拾う公開イベント関連キーワード（保護者限定行事を避けるため）
 SCHOOL_PUBLIC_KEYWORDS = (
     "文化祭",
@@ -256,10 +266,18 @@ def is_stale_year_url(url):
     return False
 
 
+def is_past_report_text(text):
+    """Return True if the text describes an already completed event in past tense."""
+    t = text.strip()
+    return any(re.search(pat, t) for pat in PAST_REPORT_PATTERNS)
+
+
 def is_noise_or_news(title, block_text="", url=""):
     """Return True for pure news posts, closure notices, stale URLs, or navigation labels."""
     t = title.strip()
     if not t or len(t) < 3:
+        return True
+    if is_past_report_text(t):
         return True
     if url and (
         is_stale_year_url(url)
@@ -438,12 +456,18 @@ def parse_edogawa_city_calendar(year, month):
                 if not category or "申込" in category or len(category) > 15:
                     category = "区役所・区公式"
 
+                venue = "江戸川区役所"
+                for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
+                    if kw != "江戸川区役所" and kw != "区役所" and kw in f"{title} {cell_text}":
+                        venue = kw
+                        break
+
                 if full_url not in events:
                     events[full_url] = {
                         "title": title,
                         "url": full_url,
                         "category": category,
-                        "venue": "江戸川区役所",
+                        "venue": venue,
                         "dates": set(),
                         "image_url": extract_image_from_element(parent, BASE_URL),
                     }
@@ -468,12 +492,18 @@ def parse_edogawa_city_calendar(year, month):
             if not parsed_dates:
                 continue
 
+            venue = "江戸川区役所"
+            for kw in sorted(FACILITY_LOCATIONS.keys(), key=len, reverse=True):
+                if kw != "江戸川区役所" and kw != "区役所" and kw in f"{title} {block_text}":
+                    venue = kw
+                    break
+
             if full_url not in events:
                 events[full_url] = {
                     "title": title,
                     "url": full_url,
                     "category": "区役所・区公式",
-                    "venue": "江戸川区役所",
+                    "venue": venue,
                     "dates": set(),
                     "image_url": extract_image_from_element(block, BASE_URL),
                 }
@@ -891,7 +921,7 @@ def main():
                     merged_events[key]["image_url"] = item_copy["image_url"]
 
     # ------------------------------------------
-    # 最優先（Priority 01〜15）: 江戸川区役所・江戸川区公式・区内公共施設
+    # 最優先（Priority 01〜19）: 江戸川区役所・江戸川区公式・区内公共施設
     # ------------------------------------------
     for year, month in get_target_months(months_ahead=3):
         items = parse_edogawa_city_calendar(year, month)
@@ -929,7 +959,7 @@ def main():
     add_events("ポニーランド", parse_generic_facility_events(PONYLAND_EVENT_URL, "公共・ポニーランド", "篠崎ポニーランド", timeout=5, retries=0), priority_rank=19)
 
     # ------------------------------------------
-    # 次点（Priority 20〜39）: 友好都市物産展・フリーマーケット・商店街・商業施設
+    # 次点（Priority 20〜24）: 友好都市物産展・フリーマーケット・商店街・商業施設
     # ------------------------------------------
     add_events("山形県鶴岡市 観光物産展", parse_tsuruoka_bussan_events(), priority_rank=20)
     add_events(
