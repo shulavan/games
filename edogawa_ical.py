@@ -277,6 +277,12 @@ def parse_edogawa_city_calendar(year, month):
         print(f"    [debug] 区公式({year}-{month:02d}) type=1: len={len(html)}, td={td_count}, li={li_count}, parsed={len(events)}")
     else:
         print(f"    [debug] 区公式({year}-{month:02d}) type=1: html is None")
+
+    list_html = fetch_html(BASE_URL, params={"type": "2", "year": str(year), "month": str(month)})
+    if list_html:
+        list_soup = BeautifulSoup(list_html, "html.parser")
+        for block in list_soup.find_all(["li", "tr", "dd", "div"]):
+            a_tag = block.find("a", href=True)
             if not a_tag:
                 continue
             href = a_tag["href"]
