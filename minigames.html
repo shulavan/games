@@ -195,6 +195,15 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
     var S = load();
     var $ = function(id){ return document.getElementById(id); };
     var cur = null;   // { g, i, frame, all, delta, ended, timers:[] }
+    // 結果の金額：たいていのゲームは delta を送ってきますが、送ってこないゲームは双六と同じ計算で出します
+    //   緑道自転車：100点＝￥100（100円未満切り捨て）／しりとり：得点＝円／カヌー：自分の行の賞金−参加費
+    function gainOf(k, d){
+      if(d.delta != null || d.prize != null || d.reward != null) return Math.round(Number(d.delta != null ? d.delta : (d.prize != null ? d.prize : d.reward)) || 0);
+      if(k === 'bicycle' && d.bicycle) return Math.floor(Math.max(0, Math.round(Number(d.bicycle.totalScore) || 0)) / 100) * 100;
+      if(k === 'shiritori') return Math.max(0, Math.round(Number(d.shiritori && d.shiritori.score != null ? d.shiritori.score : d.score) || 0));
+      if(k === 'canoe' && Array.isArray(d.results)){ var r = d.results.filter(function(x){ return x && String(x.id) === '0'; })[0]; return r ? Math.round(Number(r.delta) || 0) : 0; }
+      return 0;
+    }
 
     // 別に作ったゲーム（別窓で開きます。「全部つづけて遊ぶ」には入りません）
     var EXT = [
@@ -355,7 +364,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       if(t === 'EDOGAWA_HIDE_START_READY'){ var my = cur; later(function(){ if(cur === my){ my.started = true; sendStart(); } }, 2200); return; }
       if(t === 'EDOGAWA_MINIGAME_RESULT'){
         if(cur.delta != null) return;
-        var delta = Math.round(Number(d.delta != null ? d.delta : (d.prize != null ? d.prize : d.reward)) || 0);
+        var delta = gainOf(cur.g.k, d);
         if(d.kind === 'buy') delta = -Math.round(Number(d.cost) || 0);
         cur.delta = delta;
         S.money = Math.max(0, (Number(S.money) || 0) + delta); if(delta > 0) S.total = (Number(S.total) || 0) + delta; save(S);
