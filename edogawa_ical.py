@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.2"
+APP_VERSION = "3.2.3"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -142,8 +142,74 @@ def outside_facility_mention(text: str) -> str | None:
     return None
 
 
+APPLICATION_CLOSED_TERMS = ("申込は終了しました", "申し込みは終了しました", "募集終了", "受付終了")
+FOOTER_CUTOFF_TERMS = (
+    "イベント情報をiPhone・iPad端末", "イベント情報をiPhone/iPad端末",
+    "このページに関するお問い合わせ", "このページに関するお問合せ",
+    "このページに関するお問い合わせ先", "このページに関するお問合せ先",
+)
+
+
+def normalize_event_url(value: str) -> str:
+    """比較用のイベントURL正規形。追跡パラメータとフラグメントのみ除去する。"""
+    if not value:
+        return ""
+    parsed = urlparse(value.strip())
+    if parsed.scheme.lower() not in ("http", "https") or not parsed.netloc:
+        return ""
+    host = parsed.netloc.lower()
+    if host.startswith("www."):
+        host = host[4:]
+    path = re.sub(r"/{2,}", "/", parsed.path or "/")
+    if path != "/":
+        path = path.rstrip("/")
+    query = []
+    for key, vals in parse_qs(parsed.query, keep_blank_values=True).items():
+        lk = key.casefold()
+        if lk.startswith("utm_") or lk in {"fbclid", "gclid", "yclid", "_ga", "mc_cid", "mc_eid", "ref"}:
+            continue
+        for val in vals:
+            query.append((key, val))
+    query.sort()
+    return f"https://{host}{path}" + ("?" + urlencode(query, doseq=True) if query else "")
+
+
+def clean_location_text(value: str) -> str:
+    """会場欄に混入したCMSリンク文言を除去する。"""
+    text = norm(value)
+    text = re.split(r"\s*ホームページ\s*", text, maxsplit=1)[0]
+    return text.strip(" ・|｜")
+
+
+def clean_description_text(value: str) -> str:
+    """イベント本文からカレンダー取込案内・問い合わせ等のフッターを除去。"""
+    text = str(value or "").replace("\r\n", "\n").replace("\r", "\n")
+    cut = len(text)
+    for marker in FOOTER_CUTOFF_TERMS:
+        pos = text.find(marker)
+        if pos >= 0:
+            cut = min(cut, pos)
+    text = text[:cut]
+    lines = [norm(line) for line in text.splitlines()]
+    return "\n".join(line for line in lines if line)
+
+
+def is_application_closed(title: str) -> bool:
+    return any(term in norm(title) for term in APPLICATION_CLOSED_TERMS)
+
+
+def is_annual_overview_page(title: str, url: str = "") -> bool:
+    t = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title)).casefold()
+    if t in {"イベントカレンダー", "年間イベント", "年間行事", "区内の主なイベント"}:
+        return True
+    path = urlparse(url).path.casefold() if url else ""
+    return path.endswith("/kankomidokoro/event/index.html") or path.endswith("/kankomidokoro/event/")
+
+
 def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
     """案内・カテゴリ・FAQ等をイベントとして誤登録しないための共通ゲート。"""
+    if is_annual_overview_page(title, url) or is_application_closed(title):
+        return True
     t = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title)).casefold()
     if not t or t in {re.sub(r"[\s　・･/／｜|:：()（）]+", "", x).casefold()
                     for x in NON_EVENT_PAGE_TITLES}:
@@ -880,8 +946,11 @@ def make_event(title: str, span: tuple[date, date], venue: str, address: str, ur
                start_time: str | None = None, end_time: str | None = None,
                image_url: str | None = None, description: str = "", priority: int = 4,
                lat: float | None = None, lon: float | None = None) -> Event | None:
-    if is_non_event_page(title, description, url):
+    if is_application_closed(title) or is_annual_overview_page(title, url) or is_non_event_page(title, description, url):
         return None
+    venue = clean_location_text(venue)
+    address = clean_location_text(address)
+    description = clean_description_text(description)
     if outside_facility_mention(description) or outside_facility_mention(venue) or outside_facility_mention(address):
         return None
     valid_span, _span_reason = valid_event_span(span)
@@ -935,10 +1004,34 @@ def _title_fingerprint(value: str) -> str:
     return t
 
 
+def _source_rank(ev: Event) -> int:
+    source = norm(ev.source + " " + ev.category)
+    if "江戸川区公式イベントカレンダー" in source or ("区公式" in source and "オープンデータ" not in source):
+        return 0
+    if "オープンデータ" in source or "OpenData" in source:
+        return 1
+    if "まいぷれ" in source or "地域" in source:
+        return 2
+    return 3
+
+
+def _is_generic_image(url: str | None) -> bool:
+    if not url:
+        return True
+    return bool(re.search(r"(?:^|[/_-])(?:logo|icon|dummy|noimage|default)(?:[._/-]|$)", url, re.I))
+
+
 def _events_are_same(a: Event, b: Event) -> bool:
-    # 同一URLならタイトル変更・説明更新があっても同一イベントとして扱う。
-    urls_a, urls_b = set(a.source_urls + ([a.url] if a.url else [])), set(b.source_urls + ([b.url] if b.url else []))
-    if urls_a.intersection(urls_b) and a.start_date == b.start_date and norm(a.venue) == norm(b.venue):
+    # 同一の正規化イベントURLかつ同じ開催日なら情報源横断で統合。
+    # 同日複数回開催で双方の時刻が異なる場合は別イベントとして保持する。
+    urls_a = {normalize_event_url(x) for x in (a.source_urls + ([a.url] if a.url else []))}
+    urls_b = {normalize_event_url(x) for x in (b.source_urls + ([b.url] if b.url else []))}
+    urls_a.discard(""); urls_b.discard("")
+    if urls_a.intersection(urls_b) and a.start_date == b.start_date:
+        if a.start_time and b.start_time and a.start_time != b.start_time:
+            return False
+        if a.end_time and b.end_time and a.end_time != b.end_time:
+            return False
         return True
     if a.start_date != b.start_date:
         return False
@@ -956,36 +1049,51 @@ def _events_are_same(a: Event, b: Event) -> bool:
 
 
 def merge_events(events: Iterable[Event]) -> list[Event]:
-    """重複イベントを統合。採用元URL・画像・座標・時刻・説明を欠損補完する。"""
+    """URL・開催日単位で統合。公式HTMLの開催情報とCSV個別画像を優先して良いとこ取り。"""
     merged: list[Event] = []
-    for ev in sorted(events, key=lambda e: (e.priority, e.start_date, e.title)):
+    for ev in sorted(events, key=lambda e: (_source_rank(e), e.priority, e.start_date, e.title)):
+        ev.venue = clean_location_text(ev.venue)
+        ev.address = clean_location_text(ev.address)
+        ev.description = clean_description_text(ev.description)
+        if is_application_closed(ev.title) or is_annual_overview_page(ev.title, ev.url):
+            continue
         match = next((old for old in merged if _events_are_same(old, ev)), None)
         if match is None:
             merged.append(ev)
             continue
         match.source_urls = sorted(set(match.source_urls + ev.source_urls + ([match.url] if match.url else []) + ([ev.url] if ev.url else [])))
-        if ev.priority < match.priority:
-            match.priority, match.category, match.source = ev.priority, ev.category, ev.source
-        if len(ev.title) > len(match.title) and ev.priority <= match.priority:
-            match.title = ev.title
-        if not match.image_url and ev.image_url:
+        # HTML公式を優先して日時・会場・本文を採用。公式HTMLがなければ既存の高品質情報を維持。
+        if _source_rank(ev) < _source_rank(match):
+            match.title = ev.title or match.title
+            match.category = ev.category or match.category
+            match.source = ev.source or match.source
+            match.url = ev.url or match.url
+            match.venue = ev.venue or match.venue
+            match.address = ev.address or match.address
+            match.start_time = ev.start_time or match.start_time
+            match.end_time = ev.end_time or match.end_time
+            match.description = ev.description or match.description
+            if ev.latitude is not None and ev.longitude is not None:
+                match.latitude, match.longitude = ev.latitude, ev.longitude
+                match.coordinate_quality = ev.coordinate_quality
+            match.priority = min(match.priority, ev.priority)
+        else:
+            if not match.start_time and ev.start_time: match.start_time = ev.start_time
+            if not match.end_time and ev.end_time: match.end_time = ev.end_time
+            if not match.venue and ev.venue: match.venue = ev.venue
+            if not match.address and ev.address: match.address = ev.address
+            if not match.description and ev.description: match.description = ev.description
+            if (match.latitude is None or match.longitude is None) and ev.latitude is not None and ev.longitude is not None:
+                match.latitude, match.longitude = ev.latitude, ev.longitude
+                match.coordinate_quality = ev.coordinate_quality
+            match.priority = min(match.priority, ev.priority)
+        # 個別チラシ画像を優先し、logo.png等の汎用画像は個別画像で置換。
+        if not _is_generic_image(ev.image_url) and (_is_generic_image(match.image_url) or _source_rank(ev) == 1):
             match.image_url = ev.image_url
-        if (match.latitude is None or match.longitude is None) and ev.latitude is not None and ev.longitude is not None:
-            match.latitude, match.longitude = ev.latitude, ev.longitude
-            match.coordinate_quality = ev.coordinate_quality
-        if not match.start_time and ev.start_time:
-            match.start_time = ev.start_time
-        if not match.end_time and ev.end_time:
-            match.end_time = ev.end_time
-        if not match.description and ev.description:
-            match.description = ev.description
-        if not match.address and ev.address:
-            match.address = ev.address
-        if not match.venue and ev.venue:
-            match.venue = ev.venue
-        # 期間表記が異なる同一イベントは、確認できた開催期間の広い方を保持。
-        if ev.end_date > match.end_date:
-            match.end_date = ev.end_date
+        elif not match.image_url and ev.image_url:
+            match.image_url = ev.image_url
+        # 期間表記が異なる場合は開催日の独立性を守り、終了日をむやみに拡張しない。
+        # v3.2.2以降は原則1日単位VEVENTなので、同日統合後も開催日を維持。
     return sorted(merged, key=lambda e: (e.start_date, e.start_time or "99:99", e.priority, e.title))
 
 
@@ -1926,14 +2034,14 @@ def fold_ics(line: str) -> str:
 
 def make_uid(ev: Event) -> str:
     # タイトルや終了日が修正されても、同じ詳細ページ・同一開催日のイベントは同じUIDを維持。
-    seed = "|".join((ev.url or "", norm(ev.venue).casefold(), ev.start_date, ev.start_time or ""))
+    seed = "|".join((normalize_event_url(ev.url), ev.start_date, ev.start_time or ""))
     return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:32] + "@edogawa-events.local"
 
 
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.2//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.3//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2028,7 +2136,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.2//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.3//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
