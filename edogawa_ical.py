@@ -1,12 +1,13 @@
-import re
-import time
 import hashlib
+import re
 import ssl
+import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urljoin
+
 import requests
-from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
 
 # ==========================================
 # 優先順位1: 江戸川区役所・江戸川区公式・区内公共施設（最優先・最前面）
@@ -18,13 +19,18 @@ LIBRARY_EVENT_URL = "https://www.library.city.edogawa.tokyo.jp/toshow/event/"
 TOWERHALL_EVENT_URL = "https://www.towerhall.jp/events/list/"
 BUNKACENTER_EVENT_URL = "https://edogawa-bunkacenter.jp/calendar-host-fiscal/"
 BUNKACENTER_CAL_URL = "https://edogawa-bunkacenter.jp/calendar/"
-SPORTS_KINTONE_URL = "https://2f01466f.viewer.kintoneapp.com/public/2288685cd0240ea5379b822175def1d520d606ea6a20c595b5c7602fc6c29368"
+SPORTS_KINTONE_URL = (
+    "https://2f01466f.viewer.kintoneapp.com/public/"
+    "2288685cd0240ea5379b822175def1d520d606ea6a20c595b5c7602fc6c29368"
+)
 KASAI_KAIHIN_PARK_URL = "https://kasaikaihinpark.com/event/"
 KASAI_RINKAI_PARK_URL = "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html"
 KIKIS_MUSEUM_EVENT_URL = "https://kikismuseum.jp/category/event/"
 KASAI_AQUARIUM_URL = "https://www.tokyo-zoo.net/zoo/kasai/"
 SHINOZAKI_PARK_URL = "https://www.tokyo-park.or.jp/park/shinozaki/news/index.html"
-OJIMA_KOMATSUGAWA_PARK_URL = "https://www.tokyo-park.or.jp/park/ojima-komatsugawa/news/index.html"
+OJIMA_KOMATSUGAWA_PARK_URL = (
+    "https://www.tokyo-park.or.jp/park/ojima-komatsugawa/news/index.html"
+)
 EDOGAWA_ATHLETICS_URL = "https://www.kubota-spears.com/lp_edogawa-athletics/schedule/"
 EDOGAWA_BASEBALL_URL = "https://www.edogawa-3field.jp/baseball/taikaiguid/"
 EDOGAWA_MYPL_EVENT_URL = "https://edogawa.mypl.net/event/"
@@ -46,7 +52,10 @@ SCHOOL_EVENT_SOURCES = [
 ]
 
 OUTPUT_ICS = "edogawa_events.ics"
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
 JST = timezone(timedelta(hours=9), name="JST")
 
 EXCLUDE_KEYWORDS = (
@@ -338,7 +347,10 @@ def fetch_html(url, params=None, timeout=10, retries=1):
     if "city.edogawa.tokyo.jp" in url:
         extra_headers = {
             "Referer": EDOGAWA_TOP_URL,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept": (
+                "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                "image/avif,image/webp,*/*;q=0.8"
+            ),
             "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
             "Upgrade-Insecure-Requests": "1",
         }
@@ -358,7 +370,7 @@ def fetch_html(url, params=None, timeout=10, retries=1):
 
 
 def discover_fallback_url(base_url, path_hints=("event", "news", "info", "calendar")):
-    """Discover alternative event/news URLs from a base page when a path changes or returns 403."""
+    """Discover alternative event/news URLs from a base page when a path changes or fails."""
     html = fetch_html(base_url, timeout=10, retries=1)
     if not html:
         return None
@@ -451,7 +463,22 @@ def extract_image_from_element(element, base_url):
             continue
         full_img_url = urljoin(base_url, src)
         lower_url = full_img_url.lower()
-        if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark", "lazy-load", "1x1")):
+        if any(
+            skip in lower_url
+            for skip in (
+                "logo",
+                "icon",
+                "btn",
+                "spacer",
+                "loading",
+                "arrow",
+                "sns",
+                "ico_",
+                "mark",
+                "lazy-load",
+                "1x1",
+            )
+        ):
             continue
         if re.search(r"\.(jpg|jpeg|png|webp|gif)(\?|$)", lower_url):
             return full_img_url
@@ -484,7 +511,24 @@ def extract_first_image_from_page(page_url):
                 continue
             full_img_url = urljoin(page_url, src)
             lower_url = full_img_url.lower()
-            if any(skip in lower_url for skip in ("logo", "icon", "btn", "spacer", "loading", "arrow", "sns", "ico_", "mark", "qr", "dummy", "lazy-load", "1x1")):
+            if any(
+                skip in lower_url
+                for skip in (
+                    "logo",
+                    "icon",
+                    "btn",
+                    "spacer",
+                    "loading",
+                    "arrow",
+                    "sns",
+                    "ico_",
+                    "mark",
+                    "qr",
+                    "dummy",
+                    "lazy-load",
+                    "1x1",
+                )
+            ):
                 continue
             if re.search(r"\.(jpg|jpeg|png|webp|gif)(\?|$)", lower_url):
                 return full_img_url
@@ -534,24 +578,29 @@ def extract_dates_from_text(text, default_year=None):
     today = now.date()
 
     norm_text = normalize_japanese_text(text)
-    # Normalize Japanese era dates like 令和8年12月13日 or R8.12.13 -> YYYY/MM/DD
     norm_text = re.sub(
         r"(?:令和|R)(\d{1,2})\s*[年/.]\s*(\d{1,2})\s*[月/.]\s*(\d{1,2})\s*日?",
-        lambda m: f"{_japanese_era_to_western_year(m.group(0)[0], m.group(1)) or (default_year or today.year)}/{int(m.group(2))}/{int(m.group(3))}",
+        lambda m: (
+            f"{_japanese_era_to_western_year(m.group(0)[0], m.group(1)) or (default_year or today.year)}/"
+            f"{int(m.group(2))}/{int(m.group(3))}"
+        ),
         norm_text,
         flags=re.I,
     )
-    # Normalize Japanese era year-month like 令和8年12月 -> YYYY/MM
     norm_text = re.sub(
         r"(?:令和|R)(\d{1,2})\s*年\s*(\d{1,2})\s*月",
-        lambda m: f"{_japanese_era_to_western_year(m.group(0)[0], m.group(1)) or (default_year or today.year)}/{int(m.group(2))}",
+        lambda m: (
+            f"{_japanese_era_to_western_year(m.group(0)[0], m.group(1)) or (default_year or today.year)}/"
+            f"{int(m.group(2))}"
+        ),
         norm_text,
         flags=re.I,
     )
 
     cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", norm_text)
     cleaned_text = re.sub(
-        r"(?:発売日|発売開始|申込開始|受付開始|応募開始|販売開始|募集期間|申込期間)[：:\s]*(?:20\d{2}[年/\.]?)?\d{1,2}[月/\.]\d{1,2}日?(?:\s*[~～\-]+\s*(?:\d{1,2}[月/\.]?)?\d{1,2}日?)?",
+        r"(?:発売日|発売開始|申込開始|受付開始|応募開始|販売開始|募集期間|申込期間)[：:\s]*"
+        r"(?:20\d{2}[年/\.]?)?\d{1,2}[月/\.]\d{1,2}日?(?:\s*[~～\-]+\s*(?:\d{1,2}[月/\.]?)?\d{1,2}日?)?",
         "",
         cleaned_text,
     )
@@ -559,7 +608,8 @@ def extract_dates_from_text(text, default_year=None):
     parsed_dates = set()
     # 1) Date ranges such as 11/28(土)〜11/29(日), 11/28〜29, or 12/31〜1/1
     range_matches = re.findall(
-        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?\s*[~～\-]+\s*(?:(\d{4})[年/\.])?(?:(\d{1,2})[月/\.])?(\d{1,2})日?",
+        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?\s*[~～\-]+\s*"
+        r"(?:(\d{4})[年/\.])?(?:(\d{1,2})[月/\.])?(\d{1,2})日?",
         cleaned_text,
     )
     for y1, m1, d1, y2, m2, d2 in range_matches:
@@ -571,7 +621,7 @@ def extract_dates_from_text(text, default_year=None):
             start_dt = datetime(sy, m1_i, d1_i, tzinfo=JST).date()
             ey = int(y2) if y2 else (sy if m2_i >= m1_i else sy + 1)
             end_dt = datetime(ey, m2_i, d2_i, tzinfo=JST).date()
-            if end_dt >= today and (end_dt - start_dt).days <= 60:
+            if end_dt >= today and (end_dt - start_dt).days <= 90:
                 cur = max(start_dt, today)
                 while cur <= end_dt:
                     parsed_dates.add(cur)
@@ -584,7 +634,8 @@ def extract_dates_from_text(text, default_year=None):
 
     # 2) Comma/slash separated day lists after a full date like "11/28、29" or "12月6日、13日"
     for seq_match in re.finditer(
-        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?((?:\s*[、,・/／]\s*\d{1,2}日?)+)",
+        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*\([月火水木金土日祝・]+\))?"
+        r"((?:\s*[、,・/／]\s*\d{1,2}日?)+)",
         cleaned_text,
     ):
         y_str, m_str, d1_str, tail_str = seq_match.groups()
@@ -602,7 +653,10 @@ def extract_dates_from_text(text, default_year=None):
         except ValueError:
             pass
 
-    # 3) All explicit YYYY/MM/DD or MM/DD dates in text
+    if parsed_dates:
+        return parsed_dates
+
+    # 3) Explicit YYYY/MM/DD or MM/DD dates in text
     matches = re.findall(r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?", cleaned_text)
     for y_str, m_str, d_str in matches:
         try:
@@ -666,7 +720,6 @@ def parse_edogawa_city_calendar(year, month):
             if current_date < today:
                 continue
 
-            cell_text = td.get_text(" ", strip=True)
             for a_tag in td.find_all("a", href=True):
                 href = a_tag["href"].strip()
                 raw_title = a_tag.get_text(" ", strip=True)
@@ -688,7 +741,8 @@ def parse_edogawa_city_calendar(year, month):
                 if not category or "申込" in category or len(category) > 15:
                     category = "区役所・区公式"
 
-                venue = infer_venue_from_text(f"{title} {cell_text}", default_venue="")
+                local_ctx = parent.get_text(" ", strip=True) if parent else raw_title
+                venue = infer_venue_from_text(f"{title} {local_ctx}", default_venue="")
 
                 if full_url not in events:
                     events[full_url] = {
@@ -702,7 +756,10 @@ def parse_edogawa_city_calendar(year, month):
                 events[full_url]["dates"].add(current_date)
                 if venue:
                     events[full_url]["venue"] = venue
-        print(f"    [debug] 区公式({year}-{month:02d}): anchors_in_dated_td={a_total}, parsed={len(events)}")
+        print(
+            f"    [debug] 区公式({year}-{month:02d}): "
+            f"anchors_in_dated_td={a_total}, parsed={len(events)}"
+        )
 
     list_html = fetch_html(BASE_URL, params={"type": "2", "year": str(year), "month": str(month)})
     if list_html:
@@ -718,7 +775,9 @@ def parse_edogawa_city_calendar(year, month):
             title = clean_event_title(raw_title)
             block = a_tag.find_parent(["li", "tr", "dd", "div", "p"]) or a_tag
             block_text = block.get_text(" ", strip=True)
-            parsed_dates = {d for d in extract_dates_from_text(block_text, default_year=year) if d >= today}
+            parsed_dates = {
+                d for d in extract_dates_from_text(block_text, default_year=year) if d >= today
+            }
             if not parsed_dates:
                 continue
 
@@ -748,7 +807,12 @@ def parse_tsuruoka_bussan_events():
         return []
 
     soup = BeautifulSoup(html, "html.parser")
-    main_area = soup.find(["main", "article"]) or soup.find("div", id=re.compile(r"content|main", re.I)) or soup.body or soup
+    main_area = (
+        soup.find(["main", "article"])
+        or soup.find("div", id=re.compile(r"content|main", re.I))
+        or soup.body
+        or soup
+    )
     h1 = soup.find("h1")
     base_title = h1.get_text(" ", strip=True) if h1 else "山形県鶴岡市 観光物産展"
     base_title = re.sub(r"\s+", " ", base_title).strip()
@@ -833,7 +897,6 @@ def parse_generic_facility_events(
     events = {}
     all_links = soup.find_all("a", href=True)
     dated_candidates = 0
-    today = datetime.now(JST).date()
 
     for a_tag in all_links:
         href = a_tag["href"].strip()
@@ -876,7 +939,6 @@ def parse_generic_facility_events(
         time_dates = extract_dates_from_text(time_text) if time_text else set()
         parsed_dates = title_dates or time_dates or extract_dates_from_text(block_text)
 
-        # Avoid guessing day=1 when no concrete date is mentioned in text
         if not parsed_dates:
             continue
         dated_candidates += 1
@@ -897,7 +959,10 @@ def parse_generic_facility_events(
         if venue:
             events[full_url]["venue"] = venue
 
-    print(f"    [debug] {category}: html_len={len(html)}, links={len(all_links)}, dated={dated_candidates}, unique={len(events)}")
+    print(
+        f"    [debug] {category}: html_len={len(html)}, "
+        f"links={len(all_links)}, dated={dated_candidates}, unique={len(events)}"
+    )
     return list(events.values())
 
 
@@ -982,7 +1047,6 @@ def parse_sports_kintone_events():
             if is_noise_or_news(raw_title, "", full_url):
                 continue
             title = clean_event_title(raw_title)
-
             venue = infer_venue_from_text(text, default_venue="江戸川区スポーツセンター")
 
             key = f"{title}_{min(parsed_dates)}"
@@ -1043,7 +1107,10 @@ def generate_ics(all_events):
         "METHOD:PUBLISH",
         "X-WR-CALNAME:江戸川区イベントカレンダー（区役所・公共優先）",
         "X-WR-TIMEZONE:Asia/Tokyo",
-        "X-WR-CALDESC:江戸川区役所・区公式・区内公共施設を最優先に、公園・友好都市物産展・商業施設・学校のイベントをまとめたカレンダー",
+        (
+            "X-WR-CALDESC:江戸川区役所・区公式・区内公共施設を最優先に、"
+            "公園・友好都市物産展・商業施設・学校のイベントをまとめたカレンダー"
+        ),
     ]
 
     for ev in all_events:
@@ -1077,8 +1144,9 @@ def generate_ics(all_events):
             if ev.get("category"):
                 summary = f"[{ev['category']}] {summary}"
 
-            # Prefer explicit venue first so events at specific facilities never get overwritten by "江戸川区役所"
-            geo_info = resolve_location(ev.get("venue", "")) or resolve_location(f"{ev.get('venue', '')} {ev['title']}")
+            geo_info = resolve_location(ev.get("venue", "")) or resolve_location(
+                f"{ev.get('venue', '')} {ev['title']}"
+            )
             image_url = ev.get("image_url")
 
             description_lines = [f"詳細・申込情報: {ev['url']}"]
@@ -1158,16 +1226,62 @@ def main():
         time.sleep(0.35)
 
     add_events("江戸川区立図書館", parse_library_events(), priority_rank=3)
-    add_events("タワーホール船堀", parse_generic_facility_events(TOWERHALL_EVENT_URL, "公共・船堀タワー", "タワーホール船堀"), priority_rank=4)
-    add_events("江戸川区総合文化センター(予定一覧)", parse_generic_facility_events(BUNKACENTER_EVENT_URL, "公共・総合文化センター", "江戸川区総合文化センター"), priority_rank=5)
-    add_events("江戸川区総合文化センター(カレンダー)", parse_generic_facility_events(BUNKACENTER_CAL_URL, "公共・総合文化センター", "江戸川区総合文化センター"), priority_rank=6)
+    add_events(
+        "タワーホール船堀",
+        parse_generic_facility_events(TOWERHALL_EVENT_URL, "公共・船堀タワー", "タワーホール船堀"),
+        priority_rank=4,
+    )
+    add_events(
+        "江戸川区総合文化センター(予定一覧)",
+        parse_generic_facility_events(
+            BUNKACENTER_EVENT_URL, "公共・総合文化センター", "江戸川区総合文化センター"
+        ),
+        priority_rank=5,
+    )
+    add_events(
+        "江戸川区総合文化センター(カレンダー)",
+        parse_generic_facility_events(
+            BUNKACENTER_CAL_URL, "公共・総合文化センター", "江戸川区総合文化センター"
+        ),
+        priority_rank=6,
+    )
     add_events("江戸川区スポーツ", parse_sports_kintone_events(), priority_rank=7)
-    add_events("葛西海浜公園", parse_generic_facility_events(KASAI_KAIHIN_PARK_URL, "公共・葛西海浜公園", "葛西海浜公園"), priority_rank=8)
-    add_events("葛西臨海公園", parse_generic_facility_events(KASAI_RINKAI_PARK_URL, "公共・葛西臨海公園", "葛西臨海公園", timeout=20, retries=1), priority_rank=9)
-    add_events("都立篠崎公園", parse_generic_facility_events(SHINOZAKI_PARK_URL, "公共・篠崎公園", "篠崎公園", timeout=15, retries=1), priority_rank=10)
-    add_events("都立大島小松川公園", parse_generic_facility_events(OJIMA_KOMATSUGAWA_PARK_URL, "公共・大島小松川公園", "大島小松川公園", timeout=15, retries=1), priority_rank=11)
-    add_events("魔法の文学館", parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "公共・魔法の文学館", "魔法の文学館"), priority_rank=12)
-    add_events("葛西臨海水族園", parse_generic_facility_events(KASAI_AQUARIUM_URL, "公共・葛西臨海水族園", "葛西臨海水族園"), priority_rank=13)
+    add_events(
+        "葛西海浜公園",
+        parse_generic_facility_events(KASAI_KAIHIN_PARK_URL, "公共・葛西海浜公園", "葛西海浜公園"),
+        priority_rank=8,
+    )
+    add_events(
+        "葛西臨海公園",
+        parse_generic_facility_events(
+            KASAI_RINKAI_PARK_URL, "公共・葛西臨海公園", "葛西臨海公園", timeout=20, retries=1
+        ),
+        priority_rank=9,
+    )
+    add_events(
+        "都立篠崎公園",
+        parse_generic_facility_events(
+            SHINOZAKI_PARK_URL, "公共・篠崎公園", "篠崎公園", timeout=15, retries=1
+        ),
+        priority_rank=10,
+    )
+    add_events(
+        "都立大島小松川公園",
+        parse_generic_facility_events(
+            OJIMA_KOMATSUGAWA_PARK_URL, "公共・大島小松川公園", "大島小松川公園", timeout=15, retries=1
+        ),
+        priority_rank=11,
+    )
+    add_events(
+        "魔法の文学館",
+        parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "公共・魔法の文学館", "魔法の文学館"),
+        priority_rank=12,
+    )
+    add_events(
+        "葛西臨海水族園",
+        parse_generic_facility_events(KASAI_AQUARIUM_URL, "公共・葛西臨海水族園", "葛西臨海水族園"),
+        priority_rank=13,
+    )
     add_events(
         "江戸川陸上競技場",
         parse_generic_facility_events(
@@ -1219,7 +1333,13 @@ def main():
         ),
         priority_rank=21,
     )
-    add_events("アリオ葛西", parse_generic_facility_events(ARIO_KASAI_EVENT_URL, "商業・アリオ葛西", "アリオ葛西", timeout=12, retries=1), priority_rank=22)
+    add_events(
+        "アリオ葛西",
+        parse_generic_facility_events(
+            ARIO_KASAI_EVENT_URL, "商業・アリオ葛西", "アリオ葛西", timeout=12, retries=1
+        ),
+        priority_rank=22,
+    )
 
     # ------------------------------------------
     # 次点（Priority 40〜45）: 学校・学園祭・公開イベント
