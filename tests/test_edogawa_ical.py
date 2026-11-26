@@ -20,6 +20,13 @@ class DateParsingTests(unittest.TestCase):
         with patch.object(app, "TODAY", date(2026, 11, 26)):
             self.assertEqual(app.parse_date_spans("4月10日開催"), [(date(2027, 4, 10), date(2027, 4, 10))])
 
+    def test_month_day_shorthand_range_is_parsed(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            self.assertEqual(app.parse_date_spans("2026年12月1日（火）～5日（土）"),
+                             [(date(2026, 12, 1), date(2026, 12, 5))])
+            self.assertEqual(app.parse_date_spans("12月1日から5日まで"),
+                             [(date(2026, 12, 1), date(2026, 12, 5))])
+
     def test_year_crossing_range(self):
         with patch.object(app, "TODAY", date(2026, 11, 26)):
             spans = app.parse_date_spans("2026年12月12日から2027年3月14日")
@@ -177,9 +184,11 @@ class MergeAndIcalTests(unittest.TestCase):
         with patch.object(app, "TODAY", date(2026, 11, 26)), patch.object(app, "fetch_text", return_value=(csv_text, meta)):
             events, status = app.parse_csv_source("https://example.jp/data.csv", "test")
         self.assertEqual(status["status"], "ok")
-        self.assertEqual(len(events), 1)
-        self.assertEqual((events[0].start_date, events[0].end_date), ("2026-12-12", "2026-12-13"))
-        self.assertEqual((events[0].start_time, events[0].end_time), ("09:30", "15:00"))
+        self.assertEqual(len(events), 2)
+        self.assertEqual([(e.start_date, e.end_date) for e in events],
+                         [("2026-12-12", "2026-12-12"), ("2026-12-13", "2026-12-13")])
+        self.assertTrue(all((e.start_time, e.end_time) == ("09:30", "15:00") for e in events))
+        self.assertTrue(all(e.priority == 9 for e in events))
 
     def test_csv_outside_municipality_is_rejected(self):
         csv_text = ("市区町村コード,市区町村名,イベント名,開始日,終了日,場所名称,住所\n"
@@ -407,11 +416,11 @@ class QualityFilterTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertEqual(status["rejected"].get("no_event_date"), 1)
 
-    def test_ics_and_status_use_v321_version(self):
+    def test_ics_and_status_use_v322_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.1//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.1")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.2//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.2")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -473,7 +482,7 @@ class QualityFilterTests(unittest.TestCase):
 
 
 
-class V321RegressionTests(unittest.TestCase):
+class V322RegressionTests(unittest.TestCase):
     def test_real_city_csv_headers_map_to_actual_address_url_image_fields(self):
         headers = ["都道府県コード", "都道府県", "市区町村", "イベント名", "開催日", "終了日",
                    "場所名称（おでかけスポット）", "町名番地", "イベント画像のURL", "ホームページURL", "PR文"]
@@ -519,6 +528,109 @@ class V321RegressionTests(unittest.TestCase):
         with patch.object(app, "TODAY", date(2026, 11, 1)):
             spans = app.expand_recurring_spans("毎月第3日曜日（全3回）", [(date(2026, 11, 1), date(2027, 1, 31))])
         self.assertEqual([x[0] for x in spans], [date(2026, 11, 15), date(2026, 12, 20), date(2027, 1, 17)])
+
+    def test_multi_day_span_over_duration_limit_is_not_expanded(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans("長期開催", [(date(2026, 1, 1), date(2027, 2, 1))])
+        self.assertEqual(got, [])
+
+    def test_multi_day_csv_keeps_low_priority_when_only_last_day_is_future(self):
+        csv_text = ("市区町村コード,市区町村名,イベント名,開始日,終了日,場所名称,住所,URL,緯度,経度\n"
+                    "131237,江戸川区,複数日イベント,2026-12-12,2026-12-13,区民館,東京都江戸川区中央1丁目,https://example.jp/e,35.70,139.86\n")
+        meta = {"url": "https://example.jp/data.csv", "http_status": 200, "bytes": len(csv_text), "error": None}
+        with patch.object(app, "TODAY", date(2026, 12, 13)), patch.object(app, "fetch_text", return_value=(csv_text, meta)):
+            events, _ = app.parse_csv_source("https://example.jp/data.csv", "test")
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].start_date, "2026-12-13")
+        self.assertEqual(events[0].priority, 9)
+
+    def test_multi_day_event_is_split_into_daily_records(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans("2026年12月1日から12月5日まで開催",
+                                             [(date(2026, 12, 1), date(2026, 12, 5))])
+        self.assertEqual([x[0] for x in got], [date(2026, 12, d) for d in range(1, 6)])
+        self.assertTrue(all(a == b for a, b in got))
+
+    def test_weekly_total_count_counts_past_sessions_before_filtering(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans("毎週木曜日（全36回）",
+                    [(date(2026, 4, 9), date(2027, 3, 11))])
+        self.assertEqual(len(got), 3)
+        self.assertEqual([x[0] for x in got], [date(2026, 11, 26), date(2026, 12, 3), date(2026, 12, 10)])
+
+    def test_kazenoko_official_detail_fixture_expands_each_future_thursday(self):
+        html = """<html><body><main><h1>令和8年度ぜんそく児のための風の子水泳教室（スポーツセンター）</h1>
+        <h2>開催日時</h2><ul><li>2026年4月9日（木曜日）から2027年3月11日（木曜日）</li></ul>
+        <p>毎週木曜日(全36回)16時15分から18時</p><p>ただし、夏季・冬季・春季の休暇期間は除く</p>
+        <h2>場所</h2><p>スポーツセンター</p><h2>住所</h2><p>江戸川区西葛西4丁目2番20号</p>
+        </main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://www.city.edogawa.tokyo.jp/event/2026kazenoko.html")
+            got = app.expand_recurring_spans(detail["text"], detail["spans"])
+        self.assertEqual(detail["spans"], [(date(2026, 4, 9), date(2027, 3, 11))])
+        self.assertEqual((detail["start_time"], detail["end_time"]), ("16:15", "18:00"))
+        self.assertEqual(detail["venue"], "スポーツセンター")
+        self.assertEqual(got[0][0], date(2026, 11, 26))
+        self.assertEqual(got[-1][0], date(2027, 3, 11))
+        self.assertTrue(all(d.weekday() == 3 and a == d for d, a in got))
+
+    def test_vacation_clause_without_exact_dates_does_not_truncate_weekly_series(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans(
+                "毎週木曜日（全36回）16時15分から18時。ただし、夏季・冬季・春季の休暇期間は除く",
+                [(date(2026, 4, 9), date(2027, 3, 11))])
+        self.assertEqual(got[0][0], date(2026, 11, 26))
+        self.assertEqual(got[-1][0], date(2027, 3, 11))
+        self.assertGreater(len(got), 3)
+
+    def test_explicit_weekday_closure_is_removed(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans("毎日開催。月曜日は休館日です。",
+                    [(date(2026, 11, 26), date(2026, 12, 2))])
+        self.assertNotIn((date(2026, 11, 30), date(2026, 11, 30)), got)
+        self.assertEqual(len(got), 6)
+
+    def test_explicit_closed_date_range_is_removed(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans("開催期間 2026年12月1日から12月5日。休館日：2026年12月3日",
+                    [(date(2026, 12, 1), date(2026, 12, 5))])
+        self.assertEqual([x[0] for x in got], [date(2026, 12, 1), date(2026, 12, 2), date(2026, 12, 4), date(2026, 12, 5)])
+
+    def test_closure_date_does_not_remove_entire_event_range_on_same_line(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans(
+                "開催期間 2026年12月1日から5日、休館日：12月3日",
+                [(date(2026, 12, 1), date(2026, 12, 5))])
+        self.assertEqual([x[0] for x in got],
+                         [date(2026, 12, 1), date(2026, 12, 2), date(2026, 12, 4), date(2026, 12, 5)])
+
+    def test_event_title_containing_休館中_is_not_treated_as_closed_day(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            got = app.expand_recurring_spans("休館中特別公演 第167回江戸川落語会 2026年12月2日開催",
+                    [(date(2026, 12, 2), date(2026, 12, 2))])
+        self.assertEqual(got, [(date(2026, 12, 2), date(2026, 12, 2))])
+
+    def test_approximate_dates_are_not_converted_to_fake_calendar_dates(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            for text in ("11月上旬開催", "12月下旬予定", "来年夏開催予定"):
+                self.assertEqual(app.parse_date_spans(text), [], text)
+
+    def test_contact_page_title_is_rejected(self):
+        self.assertTrue(app.is_non_event_page("このページに関するお問い合わせ"))
+
+    def test_ics_and_map_share_generation_identity(self):
+        ev = app.make_event("同一生成ID", (date(2026, 12, 10), date(2026, 12, 10)),
+                            "なぎさポニーランド", "東京都江戸川区南葛西7丁目3番",
+                            "https://example.jp/e", "test")
+        stamp = "2026-11-26T20:00:00+09:00"
+        execution_id = "abc123456789abcd"
+        ics = app.build_ics([ev], stamp, execution_id)
+        payload = app.to_map_json([ev], {"generated_at": stamp, "execution_id": execution_id, "sources": {}})
+        self.assertIn("X-EDOGAWA-EXECUTION-ID:" + execution_id, ics)
+        self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
+        self.assertEqual(payload["execution_id"], execution_id)
+        self.assertEqual(payload["generated_at"], stamp)
+        self.assertEqual(payload["app_version"], "3.2.2")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
