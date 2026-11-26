@@ -282,5 +282,71 @@ class FeedAndSourceHealthTests(unittest.TestCase):
         self.assertIsNone(ev.longitude)
 
 
+class QualityFilterTests(unittest.TestCase):
+    def _event(self, title, start, end=None, venue="なぎさポニーランド", url="https://example.jp/event/1"):
+        end = end or start
+        return app.make_event(title, (date.fromisoformat(start), date.fromisoformat(end)),
+                              venue, "東京都江戸川区南葛西7丁目3番", url, "test")
+
+    def test_article_publication_date_is_not_used_as_event_date(self):
+        html = """<html><body><main><h1>イベント開催のお知らせ</h1>
+        <p>公開日：2026年11月26日</p><p>更新日：2026年11月27日</p>
+        <p>12月10日に開催されたイベントを紹介します。</p>
+        <h2>会場</h2><p>なぎさポニーランド</p></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://example.jp/news/1")
+        self.assertEqual(detail["spans"], [])
+
+    def test_news_sentence_with_future_event_cue_is_used(self):
+        html = """<html><body><main><h1>冬のイベントのお知らせ</h1>
+        <p>公開日：2026年11月26日</p><p>12月10日に親子体験イベントを開催します。</p>
+        <h2>会場</h2><p>なぎさポニーランド</p></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://example.jp/news/1")
+        self.assertEqual(detail["spans"], [(date(2026, 12, 10), date(2026, 12, 10))])
+
+    def test_explicit_future_event_date_is_used_not_publication_date(self):
+        html = """<html><body><main><h1>冬の体験会</h1>
+        <p>公開日：2026年11月26日</p>
+        <h2>開催日時</h2><p>2026年12月10日 10時00分から11時00分</p>
+        <h2>会場</h2><p>なぎさポニーランド</p></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://example.jp/event/1")
+        self.assertEqual(detail["spans"], [(date(2026, 12, 10), date(2026, 12, 10))])
+
+    def test_past_event_is_rejected(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            self.assertIsNone(self._event("過去の講座", "2026-11-25"))
+
+    def test_ongoing_event_started_yesterday_is_kept(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            self.assertIsNotNone(self._event("開催中の展示", "2026-11-25", "2026-11-30"))
+
+    def test_abnormally_long_event_is_rejected(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            self.assertIsNone(self._event("長期誤登録", "2021-10-17", "2027-10-25"))
+
+    def test_non_event_information_pages_are_rejected(self):
+        for title in ("くらし・手続き", "よくある問い合わせQ&A", "サイトマップ",
+                      "スポーツ・文化", "健康・医療・福祉", "組織図と組織一覧"):
+            with self.subTest(title=title):
+                self.assertTrue(app.is_non_event_page(title))
+                self.assertIsNone(self._event(title, "2026-12-10"))
+
+    def test_similar_duplicate_titles_merge_and_keep_both_urls(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            a = self._event("冬の親子ポニー飼育体験", "2026-12-10", url="https://a.example/event/1")
+            b = self._event("冬の親子ポニー飼育体験 開催のお知らせ", "2026-12-10", url="https://b.example/event/2")
+        merged = app.merge_events([a, b])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(set(merged[0].source_urls), {"https://a.example/event/1", "https://b.example/event/2"})
+
+    def test_different_events_at_same_venue_and_date_are_not_merged(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            a = self._event("親子ポニー飼育体験", "2026-12-10", url="https://a.example/event/1")
+            b = self._event("クリスマス工作教室", "2026-12-10", url="https://b.example/event/2")
+        self.assertEqual(len(app.merge_events([a, b])), 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
