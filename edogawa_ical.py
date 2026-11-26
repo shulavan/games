@@ -26,6 +26,7 @@ import io
 import json
 import os
 import re
+import ssl
 import sys
 import time
 import threading
@@ -40,13 +41,14 @@ from urllib.parse import urljoin, urlparse, parse_qs, urlencode
 from zoneinfo import ZoneInfo
 
 import requests
+from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
 ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.0"
+APP_VERSION = "3.2.1"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -55,6 +57,7 @@ OUTPUT_PREVIEW_ICS = ROOT / "edogawa_events_preview.ics"
 OUTPUT_PREVIEW_JSON = ROOT / "edogawa_events_preview.json"
 OUTPUT_PREVIEW_STATUS = ROOT / "source_status_preview.json"
 VENUES_FILE = ROOT / "edogawa_venues.json"
+GEOCODE_CACHE_FILE = ROOT / "geocoding_cache.json"
 
 CITY_BASE = "https://www.city.edogawa.tokyo.jp/cgi-bin/event_cal_multi/calendar.cgi"
 CITY_CALENDAR_SITES = ((6, "江戸川区公式"), (7, "子ども未来館"), (8, "プロテクトミライ"))
@@ -109,7 +112,7 @@ NON_EVENT_TITLE_PREFIXES = (
     "サイトマップ", "よくある質問", "よくある問い合わせ", "組織図", "組織一覧",
     "施設案内", "カテゴリ一覧", "カテゴリー一覧", "ジャンル一覧", "お知らせ一覧",
     "ニュース一覧", "イベント一覧", "くらし・手続き", "健康・医療・福祉",
-    "フロア案内", "フロアガイド", "館内案内", "外国の方向け生活情報",
+    "フロア案内", "フロアガイド", "館内案内", "外国の方向け生活情報", "イベント",
     "区内の主なイベント", "子育て・教育", "まちづくり・環境", "施設情報",
 )
 MAX_EVENT_LOOKAHEAD_DAYS = 550
@@ -185,7 +188,9 @@ EVENT_WORDS = (
     "イベント", "開催", "フェス", "フェスタ", "まつり", "祭り", "講座", "教室",
     "体験", "コンサート", "公演", "展示", "展覧会", "マルシェ", "大会", "セミナー",
     "ワークショップ", "見学会", "説明会", "マルシェ", "音楽会", "発表会",
-    "物産展", "フリーマーケット", "フリマ",
+    "物産展", "フリーマーケット", "フリマ", "おはなし会", "上映会", "読書会",
+    "人形劇", "工作会", "相談会", "説明会", "学校見学会", "授業公開", "部活動体験",
+    "ボードゲーム", "科学あそび", "演芸", "落語会", "スポーツ教室", "試合", "大会等予定表",
 )
 # 江戸川区以外の東京都23区・近隣自治体を明示。会場住所に含まれる場合は必ず除外。
 OUTSIDE_WARD_TERMS = (
@@ -209,16 +214,16 @@ OUTSIDE_WARD_TERMS = (
 # CSV列名はデータ提供元で表記揺れがあるため、別名候補を複数持つ。
 CSV_ALIASES = {
     "title": ("イベント名", "催し名", "催事名", "イベントタイトル", "タイトル", "名称", "件名", "name", "title", "event_name"),
-    "start": ("開催日", "開催日時", "開催開始日", "開催期間", "開始日", "開始日時", "日付", "start_date", "start", "開始日", "event_date", "日程"),
+    "start": ("開催日", "開催日時", "開催開始日", "開催期間", "開始日", "開始日時", "日付", "start_date", "start", "event_date", "日程"),
     "end": ("終了日", "終了日時", "開催終了日", "end_date", "end"),
-    "venue": ("場所名称", "場所・名称", "会場", "開催場所", "場所", "施設名", "施設名称", "会場名", "venue", "place"),
-    "address": ("住所", "所在地", "会場住所", "開催場所住所", "address", "住所詳細"),
-    "city": ("市区町村名", "市町村名", "自治体名", "city_name", "city"),
+    "venue": ("場所名称（おでかけスポット）", "場所名称", "場所・名称", "会場", "開催場所", "場所", "施設名", "施設名称", "会場名", "venue", "place"),
+    "address": ("所在地_連結表記", "町名番地", "住所", "会場住所", "開催場所住所", "所在地", "address", "住所詳細"),
+    "city": ("市区町村名", "市区町村", "所在地_市区町村", "市町村名", "自治体名", "city_name", "city"),
     "city_code": ("市区町村コード", "全国地方公共団体コード", "localgov_code", "city_code"),
     "pref": ("都道府県名", "都道府県", "prefecture", "pref"),
-    "url": ("詳細URL", "URL", "ホームページ", "関連URL", "リンク", "url", "web"),
-    "image": ("画像URL", "写真URL", "サムネイル", "画像", "image_url", "image"),
-    "description": ("説明", "内容", "概要", "イベント内容", "description", "summary"),
+    "url": ("ホームページURL", "コンテンツURL", "詳細URL", "関連URL", "リンク", "URL", "url", "web"),
+    "image": ("イベント画像のURL", "画像URL", "写真URL", "サムネイル", "画像", "image_url", "image"),
+    "description": ("PR文", "紹介PR文", "概要", "説明", "内容", "イベント内容", "description", "summary"),
     "lat": ("緯度", "latitude", "lat"),
     "lon": ("経度", "longitude", "lon", "lng"),
     "start_time": ("開始時刻", "開始時間", "開始時間", "start_time"),
@@ -504,6 +509,13 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     main = soup.find(["main", "article"]) or soup.find(id=re.compile("main|content", re.I)) or soup.body or soup
     title_el = main.find("h1") or soup.find("h1") or main.find(["h2", "h3"])
     title = norm(title_el.get_text(" ", strip=True)) if title_el else ""
+    # 図書館など「イベント情報」がH1、個別イベント名がH3/H4のCMSに対応。
+    if is_non_event_page(title, url=page_url):
+        for heading in reversed(main.find_all(["h2", "h3", "h4"])):
+            candidate_title = norm(heading.get_text(" ", strip=True))
+            if candidate_title and not is_non_event_page(candidate_title, url=page_url):
+                title_el, title = heading, candidate_title
+                break
     lines = [norm(x) for x in main.get_text("\n", strip=True).splitlines() if norm(x)]
     # 開催日見出しの配下だけを開催日根拠にする。記事公開日・更新日・掲載日を
     # ページ全体から拾う旧方式は、ニュース記事を「今日開催」と誤登録するため廃止。
@@ -563,6 +575,26 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
             "outside_facility_mention": outside_facility}
 
 
+class TLS12FallbackAdapter(HTTPAdapter):
+    """一部の自治体サイト向けにTLS1.2/低セキュリティレベルを限定利用する接続アダプター。"""
+    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
+        context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        context.maximum_version = ssl.TLSVersion.TLSv1_2
+        context.set_ciphers("DEFAULT:@SECLEVEL=1")
+        pool_kwargs["ssl_context"] = context
+        return super().init_poolmanager(connections, maxsize, block=block, **pool_kwargs)
+
+def fetch_library_tls12(url: str, params: dict[str, Any] | None = None, timeout: int = 20):
+    """図書館サイトのTLSハンドシェイク失敗時のみTLS1.2で再取得する。"""
+    session = requests.Session()
+    session.headers.update(SESSION.headers)
+    session.mount("https://", TLS12FallbackAdapter())
+    response = session.get(url, params=params, timeout=timeout)
+    response.raise_for_status()
+    response.encoding = response.apparent_encoding or "utf-8"
+    return response.text, len(response.content), response.status_code
+
 def fetch_text(url: str, params: dict[str, Any] | None = None, timeout: int = 15) -> tuple[str | None, dict[str, Any]]:
     """成功ページを実行中だけキャッシュし、一時的な通信障害のみ1回再試行する。"""
     query = urlencode(sorted((params or {}).items()), doseq=True)
@@ -593,6 +625,15 @@ def fetch_text(url: str, params: dict[str, Any] | None = None, timeout: int = 15
             return body, meta
         except Exception as e:
             meta["error"] = f"{type(e).__name__}: {e}"
+            if "library.city.edogawa.tokyo.jp" in (urlparse(url).hostname or "") and isinstance(e, requests.exceptions.SSLError):
+                try:
+                    body, size, code = fetch_library_tls12(url, params=params, timeout=timeout)
+                    meta.update({"http_status": code, "bytes": size, "error": None, "tls_fallback": "TLS1.2"})
+                    with _FETCH_CACHE_LOCK:
+                        _FETCH_CACHE[cache_key] = (body, dict(meta))
+                    return body, meta
+                except Exception as tls_error:
+                    meta["tls_fallback_error"] = f"{type(tls_error).__name__}: {tls_error}"
             if attempt == 0 and (meta.get("http_status") is None or meta.get("http_status") in transient_statuses):
                 time.sleep(0.5)
                 continue
@@ -618,6 +659,145 @@ def clean_title(title: str) -> str:
     t = re.sub(r"\s*(?:開催のお知らせ|イベント情報)$", "", t)
     return t.strip(" ・|｜")
 
+
+# 会場座標の補完。住所は国土地理院住所検索API、施設名のみの場合はNominatimを利用。
+_GEOCODE_CACHE: dict[str, dict[str, Any]] = {}
+_GEOCODE_CACHE_LOADED = False
+_GEOCODE_LAST_NOMINATIM = 0.0
+GEOCODE_STATS = {"cache_hits": 0, "gsi_queries": 0, "nominatim_queries": 0,
+                 "success": 0, "failed": 0, "outside": 0}
+
+def _load_geocode_cache() -> None:
+    global _GEOCODE_CACHE_LOADED
+    if _GEOCODE_CACHE_LOADED:
+        return
+    _GEOCODE_CACHE_LOADED = True
+    try:
+        data = json.loads(GEOCODE_CACHE_FILE.read_text(encoding="utf-8"))
+        if isinstance(data, dict):
+            _GEOCODE_CACHE.update(data)
+    except Exception:
+        pass
+
+def _inside_edogawa_bounds(lat: float, lon: float) -> bool:
+    # 区の外周を囲む安全側の検索範囲。行政区名も別途照合する。
+    return 35.58 <= lat <= 35.80 and 139.80 <= lon <= 139.95
+
+def geocode_edogawa_location(address: str, venue: str = "") -> tuple[float | None, float | None, str | None]:
+    """江戸川区内と行政区名まで確認できた座標だけ返す。失敗時はNone。"""
+    global _GEOCODE_LAST_NOMINATIM
+    _load_geocode_cache()
+    raw_address = norm(address)
+    raw_venue = norm(venue)
+    # 区のイベント詳細欄に混入する「ホームページ」「アクセス」以降のリンク文字列を除去。
+    clean_address = re.split(r"(?:ホームページ|アクセス方法|関連リンク|地図)", raw_address, maxsplit=1)[0].strip(" ・,、")
+    clean_venue = re.split(r"(?:講師|出演者|主催|ホームページ|アクセス)", raw_venue, maxsplit=1)[0].strip(" ・,、")
+    query = clean_address or (f"東京都江戸川区{clean_venue}" if clean_venue else "")
+    if not query or contains_outside_region(query):
+        return None, None, None
+    key = _compact_address(query)
+    cached = _GEOCODE_CACHE.get(key)
+    if cached:
+        GEOCODE_STATS["cache_hits"] += 1
+        if cached.get("municipality") == "江戸川区":
+            return float(cached["lat"]), float(cached["lon"]), cached.get("provider", "geocoding_cache")
+        return None, None, None
+    # GSI住所検索は日本国内住所の無償API。返却住所に江戸川区を含む候補だけ採用。
+    if "江戸川区" in query:
+        try:
+            GEOCODE_STATS["gsi_queries"] += 1
+            r = SESSION.get("https://msearch.gsi.go.jp/address-search/AddressSearch",
+                            params={"q": query}, timeout=12)
+            r.raise_for_status()
+            candidates = r.json()
+            for item in candidates if isinstance(candidates, list) else []:
+                title = norm(item.get("properties", {}).get("title", ""))
+                coords = item.get("geometry", {}).get("coordinates", [])
+                # 「東京都江戸川区」だけの行政区域代表点は会場座標として採用しない。
+                if "江戸川区" not in title or len(coords) < 2 or not re.search(r"\d|丁目", title):
+                    continue
+                lon, lat = float(coords[0]), float(coords[1])
+                if _inside_edogawa_bounds(lat, lon):
+                    value = {"lat": lat, "lon": lon, "municipality": "江戸川区", "provider": "GSI"}
+                    _GEOCODE_CACHE[key] = value
+                    GEOCODE_STATS["success"] += 1
+                    return lat, lon, "GSI"
+                GEOCODE_STATS["outside"] += 1
+        except Exception:
+            pass
+    # 施設名のみの会場はNominatimで検索。公開APIの利用規約に従い毎秒1件以下に制限。
+    if raw_venue:
+        try:
+            wait = 1.1 - (time.monotonic() - _GEOCODE_LAST_NOMINATIM)
+            if wait > 0:
+                time.sleep(wait)
+            _GEOCODE_LAST_NOMINATIM = time.monotonic()
+            GEOCODE_STATS["nominatim_queries"] += 1
+            r = SESSION.get("https://nominatim.openstreetmap.org/search",
+                            params={"q": f"{clean_venue}, 江戸川区, 東京都, 日本", "format": "jsonv2",
+                                    "addressdetails": 1, "limit": 5, "countrycodes": "jp"}, timeout=15,
+                            headers={"User-Agent": "EdogawaEventCalendar/3.2.1 (https://github.com/shulavan/games)"})
+            r.raise_for_status()
+            for item in (r.json() if isinstance(r.json(), list) else []):
+                ad = item.get("address", {})
+                municipality = " ".join(str(ad.get(k, "")) for k in
+                                         ("city", "borough", "city_district", "town", "municipality"))
+                lat, lon = float(item["lat"]), float(item["lon"])
+                if "江戸川区" in municipality and _inside_edogawa_bounds(lat, lon):
+                    value = {"lat": lat, "lon": lon, "municipality": "江戸川区", "provider": "Nominatim"}
+                    _GEOCODE_CACHE[key] = value
+                    GEOCODE_STATS["success"] += 1
+                    return lat, lon, "Nominatim"
+                GEOCODE_STATS["outside"] += 1
+        except Exception:
+            pass
+    GEOCODE_STATS["failed"] += 1
+    return None, None, None
+
+def save_geocode_cache() -> None:
+    if _GEOCODE_CACHE:
+        try:
+            GEOCODE_CACHE_FILE.write_text(json.dumps(_GEOCODE_CACHE, ensure_ascii=False, indent=2), encoding="utf-8")
+        except OSError:
+            pass
+
+def expand_recurring_spans(text: str, spans: list[tuple[date, date]]) -> list[tuple[date, date]]:
+    """明示された毎週/毎月の開催規則を個別開催日に展開する。"""
+    t = norm(text)
+    if not spans:
+        return spans
+    weekdays = {"月":0,"火":1,"水":2,"木":3,"金":4,"土":5,"日":6}
+    m = re.search(r"毎週\s*([月火水木金土日])曜", t)
+    if m:
+        start, end = spans[0]
+        target = weekdays[m.group(1)]
+        first = start + timedelta(days=(target - start.weekday()) % 7)
+        count_m = re.search(r"全\s*(\d+)\s*回", t)
+        limit = int(count_m.group(1)) if count_m else 100
+        dates = []
+        d = first
+        while d <= end and len(dates) < limit:
+            if d >= TODAY:
+                dates.append((d, d))
+            d += timedelta(days=7)
+        return dates or spans
+    m = re.search(r"(?:毎月)?\s*第([1-5])\s*([月火水木金土日])曜", t)
+    if m:
+        start, end = spans[0]
+        nth, wd = int(m.group(1)), weekdays[m.group(2)]
+        count_m = re.search(r"全\s*(\d+)\s*回", t)
+        limit = int(count_m.group(1)) if count_m else 24
+        dates = []
+        y, mo = start.year, start.month
+        while date(y, mo, 1) <= end and len(dates) < limit:
+            first = date(y, mo, 1)
+            d = first + timedelta(days=(wd-first.weekday())%7 + 7*(nth-1))
+            if d.month == mo and start <= d <= end and d >= TODAY:
+                dates.append((d,d))
+            mo += 1
+            if mo == 13: y, mo = y+1, 1
+        return dates or spans
+    return spans
 
 def make_event(title: str, span: tuple[date, date], venue: str, address: str, url: str,
                source: str, category: str = "地域イベント", default_venue: str | None = None,
@@ -649,11 +829,15 @@ def make_event(title: str, span: tuple[date, date], venue: str, address: str, ur
         quality = registry.get("coordinate_quality") if lat is not None and lon is not None else None
     else:
         quality = "csv_coordinates" if lat is not None and lon is not None else None
-    # 地図の誤ピン防止。江戸川区の概略範囲外の座標は採用しない。
-    if lat is not None or lon is not None:
-        if lat is None or lon is None or not (35.5 <= lat <= 35.9 and 139.7 <= lon <= 140.0):
-            lat = lon = None
-            quality = None
+    # 座標がない会場は住所ジオコーディングで補完。解決できなければイベント自体を掲載しない。
+    if lat is None or lon is None:
+        lat, lon, geocode_provider = geocode_edogawa_location(address, venue)
+        if lat is None or lon is None:
+            return None
+        quality = f"geocoded_{geocode_provider}"
+    # 行政区内の住所でも、外れた座標・片側だけの座標は安全側に除外。
+    if lat is None or lon is None or not _inside_edogawa_bounds(float(lat), float(lon)):
+        return None
     return Event(title=clean_title(title), start_date=span[0].isoformat(), end_date=span[1].isoformat(),
                  venue=norm(venue), address=norm(address), url=url, category=category,
                  source=source, source_urls=[url] if url else [], start_time=start_time,
@@ -747,6 +931,13 @@ def _map_csv_columns(headers: list[str]) -> dict[str, str | None]:
         if not match:
             for h in headers:
                 hn = norm(h).casefold()
+                # 列名の一部一致は誤割当てを生みやすい列では禁止し、固有名を優先する。
+                if field_name == "address" and ("コード" in hn or "町字id" in hn):
+                    continue
+                if field_name == "url" and ("画像" in hn or "予約" in hn):
+                    continue
+                if field_name == "image" and "ホームページ" in hn:
+                    continue
                 if any(norm(a).casefold() in hn for a in aliases if len(a) >= 3):
                     match = h
                     break
@@ -860,15 +1051,17 @@ def parse_csv_source(url: str, name: str, priority: int = 1) -> tuple[list[Event
         time_s, time_e = get("start_time") or None, get("end_time") or None
         if not (time_s and time_e):
             time_s, time_e = parse_time_range(start_raw + " " + end_raw)
-        ev = make_event(title, span, venue, address, url_v, name,
-                        category="区公式オープンデータ", default_venue=None,
-                        start_time=time_s, end_time=time_e, image_url=image,
-                        description=description, priority=priority, lat=lat, lon=lon)
-        if ev:
-            events.append(ev)
-            status["accepted"] += 1
-        else:
-            status["rejected"]["outside_or_unverified_location"] = status["rejected"].get("outside_or_unverified_location", 0) + 1
+        expanded_spans = expand_recurring_spans(description, [span])
+        for event_span in expanded_spans:
+            ev = make_event(title, event_span, venue, address, url_v, name,
+                            category="区公式オープンデータ", default_venue=None,
+                            start_time=time_s, end_time=time_e, image_url=image,
+                            description=description, priority=priority, lat=lat, lon=lon)
+            if ev:
+                events.append(ev)
+                status["accepted"] += 1
+            else:
+                status["rejected"]["outside_or_unverified_location"] = status["rejected"].get("outside_or_unverified_location", 0) + 1
     status["status"] = "ok" if events else "zero_valid_rows"
     return events, status
 
@@ -896,7 +1089,9 @@ def parse_venue_catalog(url: str, name: str) -> dict[str, Any]:
         return None
     c_name = find_col(("施設名", "施設名称", "場所名称", "会場名", "会場名称", "イベント会場名",
                        "図書館名", "公園名", "学校名", "施設の名称", "名称", "name"))
-    c_addr = find_col(("所在地", "住所", "施設所在地", "会場住所", "所在地住所", "住所（所在地）", "address"))
+    c_addr = find_col(("所在地_連結表記", "所在地", "住所", "施設所在地", "会場住所", "所在地住所", "住所（所在地）", "address"))
+    if c_addr and ("コード" in norm(c_addr) or "町字id" in norm(c_addr)):
+        c_addr = next((h for h in headers if ("連結表記" in norm(h) or norm(h) in ("所在地", "住所"))), None)
     c_city = find_col(("市区町村名", "市町村名", "自治体名", "city_name", "city"))
     c_code = find_col(("市区町村コード", "全国地方公共団体コード", "localgov_code", "city_code"))
     c_lat = find_col(("緯度", "latitude", "lat", "緯度（世界測地系）", "緯度(WGS84)"))
@@ -1272,6 +1467,16 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
             continue
         parent = a.find_parent(["article", "li", "tr", "section", "div"]) or a.parent
         context = norm(parent.get_text(" ", strip=True)) if parent else title
+        if cfg.get("context_ancestors"):
+            for ancestor in a.parents:
+                if getattr(ancestor, "name", None) in ("body", "html"):
+                    break
+                candidate_context = norm(ancestor.get_text(" ", strip=True))
+                if (candidate_context and len(candidate_context) <= 2500
+                        and parse_date_spans(candidate_context) and lookup_venue(candidate_context)):
+                    context = candidate_context
+                    parent = ancestor
+                    break
         time_el = parent.find("time") if parent else None
         time_text = norm(time_el.get("datetime", "") + " " + time_el.get_text(" ", strip=True)) if time_el else ""
         if not any(w in (title + " " + context) for w in EVENT_WORDS) and not cfg.get("accept_all_detail_links"):
@@ -1292,8 +1497,9 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
         d = details.get(rec["url"], {})
         if d.get("http_status"):
             status["detail_success"] += 1
-        title = d.get("title") or rec["title"]
-        if d.get("is_non_event_page") or is_non_event_page(title, d.get("text", ""), rec["url"]):
+        title = rec["title"] if cfg.get("prefer_listing_title") else (d.get("title") or rec["title"])
+        if ((d.get("is_non_event_page") and not cfg.get("prefer_listing_title"))
+                or is_non_event_page(title, d.get("text", ""), rec["url"])):
             status["rejected"]["non_event_page"] = status["rejected"].get("non_event_page", 0) + 1
             continue
         external_name = d.get("outside_facility_mention") or outside_facility_mention(d.get("text", ""))
@@ -1304,9 +1510,12 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
         # 一覧カードの<time>は記事公開日・更新日である場合が多いため、開催日として流用しない。
         # 詳細ページに開催日が明示されていない場合は、安全側に倒して除外する。
         spans = d.get("spans") or []
+        if not spans and cfg.get("date_from_context"):
+            spans = parse_date_spans(rec.get("context", ""))
         if not spans:
             status["rejected"]["no_event_date"] = status["rejected"].get("no_event_date", 0) + 1
             continue
+        spans = expand_recurring_spans(d.get("text", "") + " " + rec.get("context", ""), spans)
         if cfg.get("require_public_keyword") and not any(k in f"{title} {rec['context']} {d.get('text', '')}" for k in cfg["require_public_keyword"]):
             status["rejected"]["not_public_event_keyword"] = status["rejected"].get("not_public_event_keyword", 0) + 1
             continue
@@ -1315,6 +1524,10 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
             r = lookup_venue(f"{title} {rec['context']}")
             if r:
                 venue = r.get("name", "")
+        if not venue and cfg.get("venue_from_context"):
+            r = lookup_venue(rec.get("context", "")) or lookup_library_venue(rec.get("context", ""))
+            if r:
+                venue, address = r.get("name", ""), r.get("address", "")
         ok, _, reason = verify_edogawa_location(address, venue, default_venue=cfg.get("default_venue"))
         if not ok:
             status["rejected"][reason] = status["rejected"].get(reason, 0) + 1
@@ -1340,6 +1553,23 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
     return events, status
 
 
+LIBRARY_BRANCH_ALIASES = {
+    "篠崎子ども": "篠崎子ども図書館", "清新町": "清新町コミュニティ図書館",
+    "鹿骨": "鹿骨コミュニティ図書館", "西葛西": "西葛西図書館",
+    "東葛西": "東葛西図書館", "小松川": "小松川図書館",
+    "松江": "松江図書館", "東部": "東部図書館", "中央": "中央図書館",
+    "葛西": "葛西図書館", "小岩": "小岩図書館", "篠崎": "篠崎図書館",
+}
+
+def lookup_library_venue(context: str) -> dict[str, Any] | None:
+    value = norm(context)
+    for branch, full_name in sorted(LIBRARY_BRANCH_ALIASES.items(), key=lambda x: len(x[0]), reverse=True):
+        if branch in value:
+            reg = lookup_venue(full_name)
+            if reg:
+                return reg
+    return None
+
 LISTING_SOURCES = [
     {"name": "葛西海浜公園", "url": "https://kasaikaihinpark.com/event/", "default_venue": "葛西海浜公園", "category": "区内公共・公園", "priority": 2, "max_details": 80},
     {"name": "葛西臨海公園", "url": "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html", "default_venue": "葛西臨海公園", "category": "区内公共・公園", "priority": 2, "max_details": 80},
@@ -1352,8 +1582,8 @@ LISTING_SOURCES = [
     {"name": "葛西臨海水族園", "url": "https://www.tokyo-zoo.net/zoo/kasai/", "default_venue": "葛西臨海水族園", "category": "区内公共・文化", "priority": 2, "max_details": 80},
     {"name": "江戸川レクリエーション公園", "url": "https://edogawa-recreation.com/event/", "default_venue": "総合レクリエーション公園サービスセンター", "category": "区内公共・公園", "priority": 2, "max_details": 100},
     {"name": "新川さくら館", "url": "https://sakurakan-edogawa.jp/topics/", "default_venue": "新川さくら館", "category": "区内公共・文化", "priority": 2, "max_details": 70},
-    {"name": "えどがわエコセンター", "url": "https://edogawa-ecocenter.jp/", "default_venue": "えどがわエコセンター", "category": "区内公共・環境", "priority": 2, "max_details": 80},
-    {"name": "江戸川区立図書館", "url": "https://www.library.city.edogawa.tokyo.jp/toshow/event/", "default_venue": None, "category": "区内公共・図書館", "priority": 2, "max_details": 80},
+    {"name": "えどがわエコセンター", "url": "https://edogawa-ecocenter.jp/event/", "default_venue": "えどがわエコセンター", "category": "区内公共・環境", "priority": 2, "max_details": 120, "accept_all_detail_links": True},
+    {"name": "江戸川区立図書館", "url": "https://www.library.city.edogawa.tokyo.jp/toshow/event/", "default_venue": None, "category": "区内公共・図書館", "priority": 2, "max_details": 160, "accept_all_detail_links": True, "venue_from_context": True, "date_from_context": True, "context_ancestors": True},
     {"name": "江戸川まいぷれ", "url": "https://edogawa.mypl.net/event/", "default_venue": None, "category": "地域・まいぷれ", "priority": 4, "max_details": 120},
     {"name": "アリオ葛西", "url": "https://kasai.ario.jp/event/", "default_venue": "アリオ葛西", "category": "商業施設", "priority": 8, "max_details": 80},
     {"name": "TRXフリーマーケット", "url": "https://trx.jp/", "default_venue": None, "category": "地域・フリーマーケット", "priority": 4, "max_details": 100},
@@ -1424,6 +1654,17 @@ def parse_kviewer_api() -> tuple[list[Event], dict[str, Any]]:
               "viewer_url": KVIEWER_PUBLIC_URL, "accepted": 0,
               "note": "KViewerの外部公開API URLが未設定のため未取得"}
     if not api_url:
+        # 公開ビューURLも確認し、未設定を単なる0件として隠さない。
+        viewer_html, viewer_meta = fetch_text(KVIEWER_PUBLIC_URL, timeout=25)
+        status["viewer_probe"] = viewer_meta
+        if viewer_html:
+            viewer_soup = BeautifulSoup(viewer_html, "html.parser")
+            status["viewer_title"] = norm(viewer_soup.title.get_text(" ", strip=True)) if viewer_soup.title else ""
+            status["viewer_table_count"] = len(viewer_soup.find_all("table"))
+            status["viewer_link_count"] = len(viewer_soup.find_all("a", href=True))
+            status["status"] = "public_view_accessible_api_not_configured"
+        else:
+            status["status"] = "public_view_unreachable_api_not_configured"
         return [], status
     raw, meta = fetch_text(api_url, timeout=25)
     status.update(meta)
@@ -1529,7 +1770,7 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
                         "コンサート", "展示", "フェスタ", "まつり", "バザー", "見学会", "教室")
         for label, url in SCHOOL_SOURCES:
             cfg = {"name": label, "url": url, "default_venue": label,
-                   "category": "学校公開イベント", "priority": 5, "max_details": 50,
+                   "category": "学校公開イベント", "priority": 5, "max_details": 250,
                    "require_public_keyword": public_terms}
             events, status = parse_listing_source(cfg)
             all_events.extend(events); reports["sources"][label] = status
@@ -1539,6 +1780,8 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
         all_events.extend(kv_events); reports["sources"]["Kintone/KViewer"] = kv_status
 
     merged = merge_events(all_events)
+    save_geocode_cache()
+    reports["geocoding"] = dict(GEOCODE_STATS)
     reports["totals"] = {
         "raw_records": len(all_events), "unique_events": len(merged),
         "deduplicated_records": len(all_events) - len(merged),
@@ -1555,10 +1798,18 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
         if old_count > 0 and now_count == 0 and source_report.get("status") not in ("not_configured",):
             source_report["regression_warning"] = True
             reports["warnings"].append(f"{source_name}: 前回{old_count}件→今回0件。HTML変更/掲載なし/日付条件を確認")
+        has_candidates = (int(source_report.get("candidate_links", 0) or 0) > 0
+                          or int(source_report.get("candidate_rows", 0) or 0) > 0)
+        has_successful_details = int(source_report.get("detail_success", 0) or 0) > 0
+        if now_count == 0 and has_candidates and (has_successful_details or "CSV" in source_name):
+            source_report["unexpected_zero"] = True
+            reports["warnings"].append(f"{source_name}: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認")
     for source_name, source_report in reports["sources"].items():
         print(f"[SOURCE] {source_name}: status={source_report.get('status')} "
               f"accepted={source_report.get('accepted', 0)} "
               f"candidates={source_report.get('candidate_rows', source_report.get('candidate_links', source_report.get('candidate_urls', '-')))}")
+    if any(x.get("unexpected_zero") for x in reports["sources"].values()):
+        reports["coverage_complete"] = False
     city_status = reports["sources"].get("江戸川区公式イベントカレンダー", {})
     if city_status.get("day_detail_page_failures", 0):
         reports["warnings"].append(
@@ -1597,7 +1848,7 @@ def make_uid(ev: Event) -> str:
 
 def build_ics(events: list[Event]) -> str:
     now_utc = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.0//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.1//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -1648,7 +1899,7 @@ def to_map_json(events: list[Event], reports: dict[str, Any], mode: str = "live"
                       "image_url": ev.image_url, "details_url": ev.url,
                       "source": ev.source, "source_urls": ev.source_urls,
                       "priority": ev.priority, "description": ev.description})
-    return {"schema_version": "1.0", "generated_at": datetime.now(JST).isoformat(),
+    return {"schema_version": "1.0", "generated_at": reports.get("generated_at") or datetime.now(JST).isoformat(),
             "timezone": "Asia/Tokyo", "scope": "東京都江戸川区内のみ",
             "mode": mode, "strict_location_filter": True,
             "events": items,
@@ -1675,10 +1926,9 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         location_ok, _, reason = verify_edogawa_location(e.address, e.venue)
         if not e.verified_location or not location_ok:
             raise RuntimeError(f"Non-verified/out-of-ward location found ({reason}): {e.title} / {e.venue} / {e.address}")
-        if (e.latitude is not None or e.longitude is not None) and (
-            e.latitude is None or e.longitude is None
-            or not (35.5 <= e.latitude <= 35.9 and 139.7 <= e.longitude <= 140.0)
-        ):
+        if e.latitude is None or e.longitude is None:
+            raise RuntimeError(f"Missing geocoded coordinates: {e.title} / {e.venue} / {e.address}")
+        if not _inside_edogawa_bounds(float(e.latitude), float(e.longitude)):
             raise RuntimeError(f"Out-of-area coordinates found: {e.title} / {e.latitude}, {e.longitude}")
 
 
@@ -1742,9 +1992,13 @@ def main() -> int:
         events, reports = scrape_all(months=args.months, include_supplements=not args.skip_supplements)
         mode = "live"
         official = reports["sources"].get("江戸川区公式イベントカレンダー", {})
-        recognized_csv = any(
+        csv_schema_recognized = any(
             "CSV" in n and s.get("status") in ("ok", "zero_valid_rows") and s.get("headers")
             and int(s.get("candidate_rows", 0) or 0) > 0
+            for n, s in reports["sources"].items()
+        )
+        recognized_csv = any(
+            "CSV" in n and s.get("status") == "ok" and int(s.get("accepted", 0) or 0) > 0
             for n, s in reports["sources"].items()
         )
         primary_event_success = any(
@@ -1756,6 +2010,7 @@ def main() -> int:
         calendar_requested = int(official.get("calendar_months_requested", args.months) or args.months)
         calendar_healthy = calendar_success >= max(1, int(calendar_requested * 0.6 + 0.999))
         reports["primary_source_health"] = {
+            "event_csv_schema_recognized": csv_schema_recognized,
             "recognized_event_csv": recognized_csv,
             "calendar_months_successful": calendar_success,
             "calendar_months_requested": calendar_requested,
@@ -1763,11 +2018,12 @@ def main() -> int:
             "healthy": recognized_csv or calendar_healthy,
             "primary_event_success": primary_event_success,
         }
-        if not events or not reports["primary_source_health"]["healthy"] or not primary_event_success:
+        if (not events or not reports["primary_source_health"]["healthy"] or not primary_event_success
+            or any(e.latitude is None or e.longitude is None for e in events)):
             atomic_write(OUTPUT_STATUS, json.dumps(reports, ensure_ascii=False, indent=2))
             raise RuntimeError("イベントが0件、一次取得元の稼働確認失敗、または一次情報から有効イベントを確認できません。既存ICS/JSONは保持しました。")
         if not recognized_csv:
-            reports["warnings"].append("CSVの認識済み取得がありません。公式カレンダーHTMLを一次情報として使用しています。")
+            reports["warnings"].append("イベントCSVは列構成を認識できても有効イベント0件の可能性があります。各CSVのrejected内訳を確認してください。公式カレンダーHTMLで補完しています。")
         if official.get("status") != "ok" and not recognized_csv:
             reports["warnings"].append("公式カレンダーで有効イベントを確認できません。source_status.jsonの月別・詳細ページ状態を確認してください。")
         if any("CSV" in n and s.get("status") == "schema_unrecognized" for n, s in reports["sources"].items()):
