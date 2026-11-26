@@ -110,6 +110,7 @@ EXCLUDE_KEYWORDS = (
     "会員を募集します",
     "を募集します",
     "参加者募集",
+    "作品募集",
     "よくある質問",
     "団体利用",
     "施設概要",
@@ -119,6 +120,8 @@ EXCLUDE_KEYWORDS = (
     "支援制度・授業料等",
     "学力検査問題等",
     "行事・学校生活",
+    "進路状況",
+    "進路指導・キャリア教育",
     "主催者に確認した情報のみを掲載しています",
     "公園・庭園・ 植物園",
     "公園協会について",
@@ -132,6 +135,7 @@ EXCLUDE_KEYWORDS = (
     "えほんが更新",
     "フォトスポット",
     "ご利用の皆様へ",
+    "対象外店舗",
 )
 
 GENERIC_NON_EVENT_TITLES = {
@@ -151,6 +155,8 @@ GENERIC_NON_EVENT_TITLES = {
     "進路情報",
     "入試情報",
     "学校案内",
+    "進路状況",
+    "進路指導・キャリア教育",
     "Q&A",
     "葛西臨海公園",
     "篠崎公園",
@@ -184,6 +190,7 @@ MYPL_EVENT_KEYWORDS = (
     "舞台",
     "展示",
     "展覧会",
+    "個展",
     "まつり",
     "祭り",
     "お餅つき",
@@ -247,6 +254,8 @@ SCHOOL_PUBLIC_KEYWORDS = (
     "フェスタ",
     "まつり",
     "バザー",
+    "見学会",
+    "教室",
 )
 
 FACILITY_LOCATIONS = {
@@ -445,7 +454,9 @@ def is_news_index_or_category_url(url, source_url=""):
     s = source_url.rstrip("/")
     if s and u == s:
         return True
-    if u.endswith("/movie.html"):
+    if u.endswith("/movie.html") or "/area/tokyo" in u:
+        return True
+    if "/career/" in path:
         return True
     if path == "" or path == "/index.html" or re.fullmatch(r"/[^/]+(?:/index\.html)?", path):
         if "/event/" not in path and "/news/" not in path and "/calendar/" not in path:
@@ -500,7 +511,7 @@ def infer_venue_from_text(text, default_venue=""):
     return default_venue
 
 
-def fetch_html(url, params=None, timeout=10, retries=1):
+def fetch_html(url, params=None, timeout=12, retries=1):
     """Fetch HTML content safely with retry, session, timeout, and encoding fallback."""
     last_err = None
     extra_headers = {}
@@ -745,7 +756,7 @@ def extract_first_image_from_page(page_url):
         or "twitter.com" in page_url
     ):
         return None
-    html = fetch_html(page_url, timeout=8, retries=0)
+    html = fetch_html(page_url, timeout=10, retries=0)
     if not html:
         return None
     try:
@@ -1124,7 +1135,7 @@ def parse_generic_facility_events(
     url,
     category,
     default_venue="",
-    timeout=10,
+    timeout=12,
     retries=1,
     require_keywords=None,
     area_keywords=None,
@@ -1157,6 +1168,9 @@ def parse_generic_facility_events(
     detail_date_checks = 0
     seen_detail_urls = set()
     today = datetime.now(JST).date()
+    is_tokyo_park = "tokyo-park.or.jp" in url
+    detail_timeout = 14 if is_tokyo_park else 8
+    detail_retries = 1 if is_tokyo_park else 0
 
     for a_tag in all_links:
         href = a_tag["href"].strip()
@@ -1210,7 +1224,7 @@ def parse_generic_facility_events(
                 continue
             seen_detail_urls.add(full_url)
             detail_date_checks += 1
-            detail_html = fetch_html(full_url, timeout=8, retries=0)
+            detail_html = fetch_html(full_url, timeout=detail_timeout, retries=detail_retries)
             if detail_html:
                 detail_title, detail_dates, detail_text = _extract_title_and_dates_from_detail(
                     detail_html, full_url, fallback_title=raw_title
@@ -1451,6 +1465,33 @@ def fold_ics_line(line):
     return "\r\n".join(chunks)
 
 
+def build_date_spans(sorted_dates, title=""):
+    """Group consecutive dates into spans and avoid merging distant non-exhibition dates."""
+    if not sorted_dates:
+        return []
+    spans = []
+    span_start = sorted_dates[0]
+    prev_date = sorted_dates[0]
+    for d in sorted_dates[1:]:
+        if (d - prev_date).days == 1:
+            prev_date = d
+        else:
+            spans.append((span_start, prev_date))
+            span_start = d
+            prev_date = d
+    spans.append((span_start, prev_date))
+
+    is_exhibition = bool(re.search(r"(?:展示|展覧会|個展|パネル展|ウィーク|週間)$", title.strip()))
+    if (
+        is_exhibition
+        and len(spans) >= 2
+        and (sorted_dates[-1] - sorted_dates[0]).days <= 60
+        and max((spans[i][0] - spans[i - 1][1]).days for i in range(1, len(spans))) <= 7
+    ):
+        return [(sorted_dates[0], sorted_dates[-1])]
+    return spans
+
+
 def generate_ics(all_events):
     """Build an RFC 5545 compliant iCalendar string from aggregated events."""
     now_utc = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -1476,21 +1517,7 @@ def generate_ics(all_events):
         if not sorted_dates:
             continue
 
-        is_exhibition = any(k in ev.get("title", "") for k in ("展", "フェスタ", "フェア", "ウィーク", "週間"))
-        if is_exhibition and len(sorted_dates) >= 2 and (sorted_dates[-1] - sorted_dates[0]).days <= 90:
-            spans = [(sorted_dates[0], sorted_dates[-1])]
-        else:
-            spans = []
-            span_start = sorted_dates[0]
-            prev_date = sorted_dates[0]
-            for d in sorted_dates[1:]:
-                if (d - prev_date).days == 1:
-                    prev_date = d
-                else:
-                    spans.append((span_start, prev_date))
-                    span_start = d
-                    prev_date = d
-            spans.append((span_start, prev_date))
+        spans = build_date_spans(sorted_dates, title=ev.get("title", ""))
 
         for start_d, end_d in spans:
             dtstart_str = start_d.strftime("%Y%m%d")
