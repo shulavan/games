@@ -1,7 +1,8 @@
 {
+  "app_version": "3.2.0",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-26T17:56:46.705209+09:00",
+  "generated_at": "2026-11-26T19:19:11.082816+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1542,22 +1543,23 @@
           "error": null
         }
       ],
-      "candidate_urls": 267,
-      "detail_success": 267,
-      "accepted": 836,
+      "candidate_urls": 263,
+      "detail_success": 263,
+      "accepted": 328,
       "rejected": {
-        "location_unverified": 23,
-        "outside_or_unverified_location": 14,
+        "location_unverified": 21,
+        "non_event_page": 5,
+        "outside_or_unverified_location": 2,
         "address_conflicts_or_incomplete": 1,
         "outside_address": 1
       },
       "calendar_view_links": 0,
-      "list_view_links": 1190,
+      "list_view_links": 1142,
       "calendar_months_successful": 12,
       "calendar_months_requested": 12,
       "day_detail_pages_requested": 145,
       "day_detail_pages_success": 145,
-      "day_detail_event_links": 3174,
+      "day_detail_event_links": 2799,
       "day_detail_page_failures": 0,
       "day_detail_coverage_ratio": 1.0,
       "site_coverage": {
@@ -1577,7 +1579,7 @@
           "months_requested": 12
         }
       },
-      "previous_accepted": 1351
+      "previous_accepted": 836
     },
     "葛西海浜公園": {
       "name": "葛西海浜公園",
@@ -1625,7 +1627,7 @@
       "total_links": 274,
       "same_site_links": 0,
       "candidate_links": 44,
-      "detail_success": 44,
+      "detail_success": 41,
       "accepted": 5,
       "rejected": {
         "no_event_date": 38,
@@ -1634,7 +1636,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 42
+      "previous_accepted": 5
     },
     "篠崎公園": {
       "name": "篠崎公園",
@@ -1657,7 +1659,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 10
+      "previous_accepted": 1
     },
     "大島小松川公園": {
       "name": "大島小松川公園",
@@ -1730,13 +1732,13 @@
         }
       ],
       "truncated_candidates": 0,
-      "previous_accepted": 27
+      "previous_accepted": 6
     },
     "タワーホール船堀": {
       "name": "タワーホール船堀",
       "url": "https://www.towerhall.jp/events/list/",
       "http_status": 200,
-      "bytes": 103758,
+      "bytes": 103759,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -1764,7 +1766,7 @@
         }
       ],
       "truncated_candidates": 0,
-      "previous_accepted": 7
+      "previous_accepted": 1
     },
     "総合文化センター・公演予定": {
       "name": "総合文化センター・公演予定",
@@ -1786,8 +1788,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 6,
-      "regression_warning": true
+      "previous_accepted": 0
     },
     "総合文化センター・月間カレンダー": {
       "name": "総合文化センター・月間カレンダー",
@@ -1809,8 +1810,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 4,
-      "regression_warning": true
+      "previous_accepted": 0
     },
     "葛西臨海水族園": {
       "name": "葛西臨海水族園",
@@ -1825,14 +1825,17 @@
       "same_site_links": 0,
       "candidate_links": 35,
       "detail_success": 35,
-      "accepted": 4,
+      "accepted": 2,
       "rejected": {
-        "no_event_date": 31
+        "no_event_date": 27,
+        "outside_facility_mention:上野動物園": 4,
+        "outside_facility_mention:国立科学博物館": 1,
+        "outside_facility_mention:恩賜上野動物園": 1
       },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 40
+      "previous_accepted": 4
     },
     "江戸川レクリエーション公園": {
       "name": "江戸川レクリエーション公園",
@@ -1842,19 +1845,20 @@
       "error": null,
       "attempts": 1,
       "cache_hit": false,
-      "status": "ok",
+      "status": "zero_valid_events",
       "total_links": 37,
       "same_site_links": 0,
       "candidate_links": 13,
       "detail_success": 13,
-      "accepted": 1,
+      "accepted": 0,
       "rejected": {
-        "no_event_date": 12
+        "non_event_page": 13
       },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 13
+      "previous_accepted": 1,
+      "regression_warning": true
     },
     "新川さくら館": {
       "name": "新川さくら館",
@@ -1871,7 +1875,8 @@
       "detail_success": 22,
       "accepted": 3,
       "rejected": {
-        "no_event_date": 18,
+        "non_event_page": 2,
+        "no_event_date": 16,
         "outside_or_unverified_location": 1
       },
       "feed_urls": [
@@ -1898,7 +1903,7 @@
         }
       ],
       "truncated_candidates": 0,
-      "previous_accepted": 8
+      "previous_accepted": 3
     },
     "えどがわエコセンター": {
       "name": "えどがわエコセンター",
@@ -1915,13 +1920,13 @@
       "detail_success": 11,
       "accepted": 0,
       "rejected": {
-        "no_event_date": 11
+        "no_event_date": 10,
+        "non_event_page": 1
       },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 6,
-      "regression_warning": true
+      "previous_accepted": 0
     },
     "江戸川区立図書館": {
       "name": "江戸川区立図書館",
@@ -1944,19 +1949,20 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 63339,
+      "bytes": 63503,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "ok",
-      "total_links": 214,
+      "total_links": 216,
       "same_site_links": 0,
       "candidate_links": 21,
       "detail_success": 21,
       "accepted": 7,
       "rejected": {
-        "no_event_date": 16,
-        "location_unverified": 1
+        "no_event_date": 15,
+        "location_unverified": 1,
+        "non_event_page": 1
       },
       "feed_urls": [],
       "feed_candidates": 0,
@@ -1971,17 +1977,20 @@
       "error": null,
       "attempts": 1,
       "cache_hit": false,
-      "status": "ok",
+      "status": "zero_valid_events",
       "total_links": 29,
       "same_site_links": 0,
       "candidate_links": 6,
       "detail_success": 6,
-      "accepted": 6,
-      "rejected": {},
+      "accepted": 0,
+      "rejected": {
+        "non_event_page": 6
+      },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 6
+      "previous_accepted": 6,
+      "regression_warning": true
     },
     "TRXフリーマーケット": {
       "name": "TRXフリーマーケット",
@@ -2049,18 +2058,45 @@
     "江戸川球場": {
       "name": "江戸川球場",
       "url": "https://www.edogawa-3field.jp/baseball/taikaiguid/",
-      "http_status": null,
-      "bytes": 0,
-      "error": "ConnectTimeout: HTTPSConnectionPool(host='www.edogawa-3field.jp', port=443): Max retries exceeded with url: /baseball/taikaiguid/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.edogawa-3field.jp', port=443) at 0x73c88aecd100>, 'Connection to www.edogawa-3field.jp timed out. (connect timeout=16)'))",
-      "attempts": 2,
+      "http_status": 200,
+      "bytes": 55933,
+      "error": null,
+      "attempts": 1,
       "cache_hit": false,
-      "status": "failed",
-      "total_links": 0,
+      "status": "zero_valid_events",
+      "total_links": 47,
       "same_site_links": 0,
-      "candidate_links": 0,
-      "detail_success": 0,
+      "candidate_links": 33,
+      "detail_success": 33,
       "accepted": 0,
-      "rejected": {},
+      "rejected": {
+        "non_event_page": 32,
+        "no_event_date": 1
+      },
+      "feed_urls": [
+        "https://www.edogawa-3field.jp/baseball/feed/",
+        "https://www.edogawa-3field.jp/baseball/taikaiguid/feed/"
+      ],
+      "feed_candidates": 15,
+      "feed_checks": [
+        {
+          "url": "https://www.edogawa-3field.jp/baseball/feed/",
+          "http_status": 200,
+          "bytes": 30166,
+          "error": null,
+          "attempts": 1,
+          "cache_hit": false
+        },
+        {
+          "url": "https://www.edogawa-3field.jp/baseball/taikaiguid/feed/",
+          "http_status": 200,
+          "bytes": 7489,
+          "error": null,
+          "attempts": 1,
+          "cache_hit": false
+        }
+      ],
+      "truncated_candidates": 0,
       "previous_accepted": 0
     },
     "都立江戸川高校": {
@@ -2083,30 +2119,30 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 124,
-      "previous_accepted": 38,
-      "regression_warning": true
+      "previous_accepted": 0
     },
     "都立小松川高校": {
       "name": "都立小松川高校",
       "url": "https://www.metro.ed.jp/komatsugawa-h/news/index.html",
       "http_status": 200,
-      "bytes": 106796,
+      "bytes": 107075,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "ok",
-      "total_links": 446,
+      "total_links": 447,
       "same_site_links": 0,
-      "candidate_links": 393,
+      "candidate_links": 394,
       "detail_success": 50,
       "accepted": 2,
       "rejected": {
-        "no_event_date": 48
+        "no_event_date": 47,
+        "outside_facility_mention:国立科学博物館": 1
       },
       "feed_urls": [],
       "feed_candidates": 0,
-      "truncated_candidates": 343,
-      "previous_accepted": 37
+      "truncated_candidates": 344,
+      "previous_accepted": 2
     },
     "都立小岩高校": {
       "name": "都立小岩高校",
@@ -2128,7 +2164,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 24,
-      "previous_accepted": 32
+      "previous_accepted": 1
     },
     "都立葛西南高校": {
       "name": "都立葛西南高校",
@@ -2150,8 +2186,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 642,
-      "previous_accepted": 15,
-      "regression_warning": true
+      "previous_accepted": 0
     },
     "都立紅葉川高校": {
       "name": "都立紅葉川高校",
@@ -2174,7 +2209,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 125,
-      "previous_accepted": 27
+      "previous_accepted": 1
     },
     "都立篠崎高校": {
       "name": "都立篠崎高校",
@@ -2196,7 +2231,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 402,
-      "previous_accepted": 41
+      "previous_accepted": 7
     },
     "鶴岡市・江戸川区内物産展": {
       "name": "鶴岡市・江戸川区内物産展",
@@ -2222,11 +2257,8 @@
     }
   },
   "warnings": [
-    "総合文化センター・公演予定: 前回6件→今回0件。HTML変更/掲載なし/日付条件を確認",
-    "総合文化センター・月間カレンダー: 前回4件→今回0件。HTML変更/掲載なし/日付条件を確認",
-    "えどがわエコセンター: 前回6件→今回0件。HTML変更/掲載なし/日付条件を確認",
-    "都立江戸川高校: 前回38件→今回0件。HTML変更/掲載なし/日付条件を確認",
-    "都立葛西南高校: 前回15件→今回0件。HTML変更/掲載なし/日付条件を確認"
+    "江戸川レクリエーション公園: 前回1件→今回0件。HTML変更/掲載なし/日付条件を確認",
+    "アリオ葛西: 前回6件→今回0件。HTML変更/掲載なし/日付条件を確認"
   ],
   "limitations": [
     "取得元の全ページを網羅できたかはサイト構造・公開範囲に依存します。",
@@ -2234,11 +2266,11 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "totals": {
-    "raw_records": 894,
-    "unique_events": 891,
+    "raw_records": 377,
+    "unique_events": 374,
     "deduplicated_records": 3,
-    "with_coordinates": 706,
-    "without_coordinates": 185,
+    "with_coordinates": 312,
+    "without_coordinates": 62,
     "strict_edogawa_only": true
   },
   "primary_source_health": {
