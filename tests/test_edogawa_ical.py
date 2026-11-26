@@ -825,3 +825,31 @@ class Version324RegressionTests(unittest.TestCase):
         unfolded = ics.replace("\r\n ", "")
         self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
         self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
+
+
+class Version3241HotfixTests(unittest.TestCase):
+    def test_nested_removed_navigation_does_not_crash_detail_parser(self):
+        # 親のglobal-navをdecomposeした後、find_allのResultSetに残った子孫Tagが
+        # attrs=Noneになるケースを再現する。
+        html = """<html><body><main>
+        <div class="global-nav"><div class="nav-inner"><span>共通メニュー</span></div></div>
+        <article><h1>江戸川区の講座</h1>
+        <h2>開催日時</h2><p>2026年12月12日 14:00～15:00</p>
+        <h2>会場</h2><p>江戸川区民館</p>
+        <h2>住所</h2><p>東京都江戸川区中央1丁目1番1号</p>
+        <p>講座の詳しい内容です。</p></article>
+        </main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://edogawa.mypl.net/event/hotfix")
+        self.assertEqual(detail["spans"], [(date(2026, 12, 12), date(2026, 12, 12))])
+        self.assertEqual(detail["start_time"], "14:00")
+        self.assertNotIn("共通メニュー", detail["text"])
+
+    def test_string_class_attribute_is_handled_safely(self):
+        html = """<html><body><main><div class="global-nav">共通メニュー</div>
+        <article><h1>講座</h1><h2>開催日時</h2><p>2026年12月12日</p>
+        <h2>会場</h2><p>江戸川区民館</p><h2>住所</h2>
+        <p>東京都江戸川区中央1丁目1番1号</p></article></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://example.jp/event")
+        self.assertNotIn("共通メニュー", detail["text"])
