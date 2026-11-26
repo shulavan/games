@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.4"
+APP_VERSION = "3.2.5"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -178,7 +178,7 @@ def clean_location_text(value: str) -> str:
     """会場欄のナビ・交通案内・重複を除去する。"""
     text = norm(value)
     text = re.split(r"\s*ホームページ\s*", text, maxsplit=1)[0]
-    text = re.split(r"(?:【(?:電車|バス|車|徒歩)|(?:電車|バス|車)をご利用の場合|アクセス方法|交通アクセス)", text, maxsplit=1)[0]
+    text = re.split(r"(?:【(?:電車|バス|車|徒歩|公共交通機関)|(?:電車|バス|車|公共交通機関)をご利用の場合|アクセス方法|交通アクセス|公共交通機関)", text, maxsplit=1)[0]
     return text.strip(" ・|｜")
 
 
@@ -611,10 +611,16 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     for el in soup.find_all(["nav", "footer", "header", "aside", "script", "style", "form"]):
         el.decompose()
     # MyPlue等、main/articleタグを使わずコンテンツ用クラスを持つページを優先。
+    # まいぷれはページによってmain/articleを使わず、イベント詳細を独自カラムに格納する。
+    # 詳細カラム候補を先に探し、ページ全体の共通ナビ・カテゴリ一覧を本文へ混ぜない。
+    detail_pattern = re.compile(r"(?:event[-_]?detail|detail[-_]?event|event[-_]?contents?|event[-_]?body|main[-_]?contents?|contents[-_]?main|article[-_]?body|eventDetail|mainContents)", re.I)
+    detail_candidates = soup.find_all(["div", "section"], attrs={"class": detail_pattern})
+    detail_candidates += soup.find_all(["div", "section"], id=detail_pattern)
+    detail_candidates = [x for x in detail_candidates if getattr(x, "attrs", None) is not None]
+    # 最小の詳細コンテナを選ぶ。外側のラッパーを選ぶとサイドバーまで含むため。
+    detail_candidates.sort(key=lambda x: len(x.find_all(True)))
     main = (soup.find("main") or soup.find("article") or
-            soup.find(id=re.compile(r"(?:main|contents?|event[-_]?detail|detail[-_]?contents)", re.I)) or
-            soup.find(class_=re.compile(r"(?:main[-_]?contents?|event[-_]?detail|detail[-_]?contents|event[-_]?body)", re.I)) or
-            soup.body or soup)
+            (detail_candidates[0] if detail_candidates else None) or soup.body or soup)
     for el in main.find_all(["nav", "footer", "header", "aside", "form"]):
         el.decompose()
     # ResultSetは走査開始時点の子孫一覧を保持するため、親要素をdecompose()
@@ -642,6 +648,11 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
                 title_el, title = heading, candidate_title
                 break
     lines = [norm(x) for x in main.get_text("\n", strip=True).splitlines() if norm(x)]
+    # 共通メニューがdiv/spanの連続テキストとして埋め込まれた場合の保険。
+    # イベント本文や見出しは残し、ジャンル・店舗カテゴリのナビ行だけを落とす。
+    mypl_nav_markers = ("地元暮らしをちょっぴり楽しく", "グルメ", "ショッピング", "美容・健康", "暮らし・相談", "全て", "すべて")
+    if "mypl.net" in urlparse(page_url).netloc.lower():
+        lines = [line for line in lines if not any(marker in line for marker in mypl_nav_markers)]
     # 開催日見出しの配下だけを開催日根拠にする。記事公開日・更新日・掲載日を
     # ページ全体から拾う旧方式は、ニュース記事を「今日開催」と誤登録するため廃止。
     date_lines = section_lines_after_heading(lines, EVENT_DATE_HEADINGS, stop=STOP_HEADINGS)
@@ -1074,6 +1085,22 @@ def _is_generic_image(url: str | None) -> bool:
     return bool(re.search(r"(?:^|[/_-])(?:logo|icon|dummy|noimage|default)(?:[._/-]|$)", url, re.I))
 
 
+def _is_city_official_url(value: str) -> bool:
+    host = urlparse(value or "").netloc.lower()
+    return host.endswith("city.edogawa.tokyo.jp")
+
+
+def _official_url_basename(value: str) -> str:
+    if not _is_city_official_url(value):
+        return ""
+    return urlparse(value).path.rstrip("/").rsplit("/", 1)[-1].casefold()
+
+
+def _official_source(ev: Event) -> bool:
+    label = norm(ev.source + " " + ev.category)
+    return "区公式" in label and "オープンデータ" not in label
+
+
 def _events_are_same(a: Event, b: Event) -> bool:
     # 同一の正規化イベントURLかつ同じ開催日なら情報源横断で統合。
     # 同日複数回開催で双方の時刻が異なる場合は別イベントとして保持する。
@@ -1088,6 +1115,33 @@ def _events_are_same(a: Event, b: Event) -> bool:
         return True
     if a.start_date != b.start_date:
         return False
+    # 区公式URLのフルパス/ショートパス差を吸収。末尾ファイル名だけで確定せず、
+    # 同日・タイトル一致も必須にして別ページの誤統合を防ぐ。
+    official_names_a = {_official_url_basename(x) for x in (a.source_urls + ([a.url] if a.url else []))}
+    official_names_b = {_official_url_basename(x) for x in (b.source_urls + ([b.url] if b.url else []))}
+    official_names_a.discard(""); official_names_b.discard("")
+    ta, tb = _title_fingerprint(a.title), _title_fingerprint(b.title)
+    title_ratio = difflib.SequenceMatcher(None, ta, tb).ratio() if ta and tb else 0.0
+    same_official_file = bool(official_names_a.intersection(official_names_b))
+    if same_official_file and title_ratio >= 0.78:
+        if a.start_time and b.start_time and a.start_time != b.start_time:
+            return False
+        if a.end_time and b.end_time and a.end_time != b.end_time:
+            return False
+        return True
+    # 区公式ページ同士で同日・同タイトル、住所が軽微な表記差だけの場合も統合。
+    # 会場名が明確に異なるケースは除外する。
+    if _official_source(a) and _official_source(b) and title_ratio >= 0.94:
+        va, vb = norm(a.venue).casefold(), norm(b.venue).casefold()
+        if va and vb and va != vb and difflib.SequenceMatcher(None, va, vb).ratio() < 0.90:
+            return False
+        aa, ab = _compact_address(a.address), _compact_address(b.address)
+        if aa and ab and difflib.SequenceMatcher(None, aa, ab).ratio() >= 0.90:
+            if a.start_time and b.start_time and a.start_time != b.start_time:
+                return False
+            if a.end_time and b.end_time and a.end_time != b.end_time:
+                return False
+            return True
     if _compact_address(a.address) and _compact_address(b.address):
         if _compact_address(a.address) != _compact_address(b.address):
             return False
@@ -2108,7 +2162,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.4//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.5//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2203,7 +2257,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.4//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.5//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
