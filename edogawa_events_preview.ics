@@ -1,0 +1,332 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Edogawa Ward Events//JP v2.0//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:江戸川区内イベントカレンダー（確認済みプレビュー・未完成）
+X-WR-TIMEZONE:Asia/Tokyo
+X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー
+BEGIN:VEVENT
+UID:7d955174d70cf4d673b8755964102657@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261206T010000Z
+DTEND:20261206T060000Z
+SUMMARY:[区公式] 第12回 新川みどりとごちそう市&ミニミ
+ ニ動物園
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612_gochiso.
+ html\n会場: 新川さくら館\n住所: 東京都江戸川区船堀7
+ 丁目15番12号\n情報元: 公式ページ確認済み・プレビュ
+ ー\n画像: https://www.city.edogawa.tokyo.jp/images/75173/market_zoo1.
+ jpg\n参照元: https://www.city.edogawa.tokyo.jp/event/2612_gochiso.htm
+ l
+URL:https://www.city.edogawa.tokyo.jp/event/2612_gochiso.html
+LOCATION:新川さくら館 東京都江戸川区船堀7丁目15番12号
+PRIORITY:1
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
+ 173/market_zoo1.jpg
+END:VEVENT
+BEGIN:VEVENT
+UID:8868214ff474e00337af7110b2f63354@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T000000Z
+DTEND:20261228T080000Z
+SUMMARY:[区公式] 一之江抹香亭 江戸園芸植物展示「春の
+ 七草展」
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/makko1212.htm
+ l\n会場: 一之江抹香亭\n住所: 東京都江戸川区一之江5
+ 丁目13番16号\n情報元: 公式ページ確認済み・プレビュ
+ ー\n参照元: https://www.city.edogawa.tokyo.jp/event/makko1212.html
+URL:https://www.city.edogawa.tokyo.jp/event/makko1212.html
+LOCATION:一之江抹香亭 東京都江戸川区一之江5丁目13番16
+ 号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:1588ac1a4671f7ecbe28652806bbed66@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T003000Z
+DTEND:20261212T053500Z
+SUMMARY:[区公式] 介護の担い手研修
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261212kaigo.h
+ tml\n会場: 葛西区民館 集会室第1\n住所: 東京都江戸川
+ 区中葛西3丁目10番1号\n情報元: 公式ページ確認済み・
+ プレビュー\n参照元: https://www.city.edogawa.tokyo.jp/event/2612
+ 12kaigo.html
+URL:https://www.city.edogawa.tokyo.jp/event/261212kaigo.html
+LOCATION:葛西区民館 集会室第1 東京都江戸川区中葛西3丁
+ 目10番1号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:a0ae682df39c8b12e257335d4cad0655@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T010000Z
+DTEND:20261212T024500Z
+SUMMARY:[区公式] 冬の親子ポニー飼育体験
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261206pony.ht
+ ml\n会場: なぎさポニーランド\n住所: 東京都江戸川区
+ 南葛西7丁目3番\n情報元: 公式ページ確認済み・プレビ
+ ュー\n参照元: https://www.city.edogawa.tokyo.jp/event/261206pony.ht
+ ml
+URL:https://www.city.edogawa.tokyo.jp/event/261206pony.html
+LOCATION:なぎさポニーランド 東京都江戸川区南葛西7丁
+ 目3番
+GEO:35.647812;139.873912
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:bb9a15236a549ea32017bc09fe897d46@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T043000Z
+DTEND:20261212T060000Z
+SUMMARY:[区公式] 認知症サポーター養成講座
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/ninsapo261212
+ .html\n会場: うらら一之江\n住所: 東京都江戸川区一之
+ 江7丁目50番6号\n情報元: 公式ページ確認済み・プレビ
+ ュー\n参照元: https://www.city.edogawa.tokyo.jp/event/ninsapo261212
+ .html
+URL:https://www.city.edogawa.tokyo.jp/event/ninsapo261212.html
+LOCATION:うらら一之江 東京都江戸川区一之江7丁目50番6
+ 号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:c4e41de3c13150616fccaace9415d394@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T050000Z
+DTEND:20261212T070000Z
+SUMMARY:[区公式] はじめてロボット教室
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612robot.htm
+ l\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町3
+ 丁目12番10号\n情報元: 公式ページ確認済み・プレビュ
+ ー\n参照元: https://www.city.edogawa.tokyo.jp/event/2612robot.html
+URL:https://www.city.edogawa.tokyo.jp/event/2612robot.html
+LOCATION:子ども未来館 東京都江戸川区篠崎町3丁目12番10
+ 号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:5684822658b708c532581eb17c12adfc@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T050000Z
+DTEND:20261212T070000Z
+SUMMARY:[区公式] サウンド・オブ・サイエンス
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612sound_of_
+ science.html\n会場: 子ども未来館\n住所: 東京都江戸川区
+ 篠崎町3丁目12番10号\n情報元: 公式ページ確認済み・プ
+ レビュー\n参照元: https://www.city.edogawa.tokyo.jp/event/2612sou
+ nd_of_science.html
+URL:https://www.city.edogawa.tokyo.jp/event/2612sound_of_science.html
+LOCATION:子ども未来館 東京都江戸川区篠崎町3丁目12番10
+ 号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:866ee1332f0dd353b4835d60afb31bd5@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T050000Z
+DTEND:20261212T060000Z
+SUMMARY:[区公式] ペット防災セミナー
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20261212petbo
+ sai.html\n会場: 臨海町2丁目地先\n住所: 東京都江戸川区
+ 臨海町2丁目地先\n情報元: 公式ページ確認済み・プレ
+ ビュー\n参照元: https://www.city.edogawa.tokyo.jp/event/20261212pe
+ tbosai.html
+URL:https://www.city.edogawa.tokyo.jp/event/20261212petbosai.html
+LOCATION:臨海町2丁目地先 東京都江戸川区臨海町2丁目地
+ 先
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:2e539ea84c3dff76bec91cef1946155b@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T050000Z
+DTEND:20261212T054500Z
+SUMMARY:[区公式] 人形劇『ねずみのすもう』
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261212nezumi-
+ 2.html\n会場: 上一色コミュニティセンター\n住所: 東京
+ 都江戸川区上一色2丁目6番10号\n情報元: 公式ページ確
+ 認済み・プレビュー\n参照元: https://www.city.edogawa.tokyo.j
+ p/event/261212nezumi-2.html
+URL:https://www.city.edogawa.tokyo.jp/event/261212nezumi-2.html
+LOCATION:上一色コミュニティセンター 東京都江戸川区上
+ 一色2丁目6番10号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:8f019b510fd1eaa2598c7cecff181ac0@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T050000Z
+DTEND:20261212T061500Z
+SUMMARY:[区公式] 西洋美術史への扉
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/26art.html\n
+ 会場: しのざき文化プラザ\n住所: 東京都江戸川区篠崎
+ 町7丁目20番9号\n情報元: 公式ページ確認済み・プレビ
+ ュー\n参照元: https://www.city.edogawa.tokyo.jp/event/26art.html
+URL:https://www.city.edogawa.tokyo.jp/event/26art.html
+LOCATION:しのざき文化プラザ 東京都江戸川区篠崎町7丁
+ 目20番9号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:3604e15b69f6a060f48fafc11752834c@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261212
+DTEND;VALUE=DATE:20270315
+SUMMARY:[区公式] 江戸川区郷土資料室企画展「利根川と
+ 江戸川区」
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2026kikaku.ht
+ ml\n会場: 江戸川区郷土資料室\n住所: 東京都江戸川区
+ 篠崎町7丁目20番19号 篠崎ツインプレイス3階\n情報元: 
+ 公式ページ確認済み・プレビュー\n参照元: https://www.ci
+ ty.edogawa.tokyo.jp/event/2026kikaku.html
+URL:https://www.city.edogawa.tokyo.jp/event/2026kikaku.html
+LOCATION:江戸川区郷土資料室 東京都江戸川区篠崎町7丁
+ 目20番19号 篠崎ツインプレイス3階
+GEO:35.706812;139.903845
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:60efc9d948be91534cb25b47891ed8a5@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261213T003000Z
+DTEND:20261213T064000Z
+SUMMARY:[区公式] 介護の担い手研修
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261212kaigo.h
+ tml\n会場: 葛西区民館 集会室第1\n住所: 東京都江戸川
+ 区中葛西3丁目10番1号\n情報元: 公式ページ確認済み・
+ プレビュー\n参照元: https://www.city.edogawa.tokyo.jp/event/2612
+ 12kaigo.html
+URL:https://www.city.edogawa.tokyo.jp/event/261212kaigo.html
+LOCATION:葛西区民館 集会室第1 東京都江戸川区中葛西3丁
+ 目10番1号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:3321bd5d725ba564fc91c9a9230d0a42@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270104T000000Z
+DTEND:20270107T080000Z
+SUMMARY:[区公式] 一之江抹香亭 江戸園芸植物展示「春の
+ 七草展」
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/makko1212.htm
+ l\n会場: 一之江抹香亭\n住所: 東京都江戸川区一之江5
+ 丁目13番16号\n情報元: 公式ページ確認済み・プレビュ
+ ー\n参照元: https://www.city.edogawa.tokyo.jp/event/makko1212.html
+URL:https://www.city.edogawa.tokyo.jp/event/makko1212.html
+LOCATION:一之江抹香亭 東京都江戸川区一之江5丁目13番16
+ 号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:dcbd1e76088ee8acd88e52077595d4a9@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270109T080000Z
+DTEND:20270109T091500Z
+SUMMARY:[区公式] 西洋美術史への扉
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/26art.html\n
+ 会場: しのざき文化プラザ\n住所: 東京都江戸川区篠崎
+ 町7丁目20番9号\n情報元: 公式ページ確認済み・プレビ
+ ュー\n参照元: https://www.city.edogawa.tokyo.jp/event/26art.html
+URL:https://www.city.edogawa.tokyo.jp/event/26art.html
+LOCATION:しのざき文化プラザ 東京都江戸川区篠崎町7丁
+ 目20番9号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:47c46b8c6b4d046463b03672ffc12ffa@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270123T050000Z
+DTEND:20270123T061500Z
+SUMMARY:[区公式] 西洋美術史への扉
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/26art.html\n
+ 会場: しのざき文化プラザ\n住所: 東京都江戸川区篠崎
+ 町7丁目20番9号\n情報元: 公式ページ確認済み・プレビ
+ ュー\n参照元: https://www.city.edogawa.tokyo.jp/event/26art.html
+URL:https://www.city.edogawa.tokyo.jp/event/26art.html
+LOCATION:しのざき文化プラザ 東京都江戸川区篠崎町7丁
+ 目20番9号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:31158f4c7add365a2511c5ddf74f0af0@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270213T050000Z
+DTEND:20270213T061500Z
+SUMMARY:[区公式] 西洋美術史への扉
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/26art.html\n
+ 会場: しのざき文化プラザ\n住所: 東京都江戸川区篠崎
+ 町7丁目20番9号\n情報元: 公式ページ確認済み・プレビ
+ ュー\n参照元: https://www.city.edogawa.tokyo.jp/event/26art.html
+URL:https://www.city.edogawa.tokyo.jp/event/26art.html
+LOCATION:しのざき文化プラザ 東京都江戸川区篠崎町7丁
+ 目20番9号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+BEGIN:VEVENT
+UID:40ce6782fb14e0e2ff45081a1f406f3a@edogawa-events.local
+DTSTAMP:20261126T050928Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270306T050000Z
+DTEND:20270306T061500Z
+SUMMARY:[区公式] 西洋美術史への扉
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/26art.html\n
+ 会場: しのざき文化プラザ\n住所: 東京都江戸川区篠崎
+ 町7丁目20番9号\n情報元: 公式ページ確認済み・プレビ
+ ュー\n参照元: https://www.city.edogawa.tokyo.jp/event/26art.html
+URL:https://www.city.edogawa.tokyo.jp/event/26art.html
+LOCATION:しのざき文化プラザ 東京都江戸川区篠崎町7丁
+ 目20番9号
+PRIORITY:1
+CATEGORIES:区公式
+END:VEVENT
+END:VCALENDAR

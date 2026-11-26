@@ -1,0 +1,10 @@
+{
+  "mode": "bootstrap-preview",
+  "complete": false,
+  "warning": "2026-11-26時点で個別詳細ページを確認できたイベントのみ。全件収集ではありません。",
+  "sources": {},
+  "totals": {
+    "unique_events": 17,
+    "strict_edogawa_only": true
+  }
+}

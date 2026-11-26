@@ -1,0 +1,576 @@
+{
+  "江戸川区役所": {
+    "name": "江戸川区役所",
+    "address": "江戸川区役所（東京都江戸川区中央1-4-1）",
+    "latitude": 35.706612,
+    "longitude": 139.868324,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "区役所": {
+    "name": "江戸川区役所",
+    "address": "江戸川区役所（東京都江戸川区中央1-4-1）",
+    "latitude": 35.706612,
+    "longitude": 139.868324,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "西葛西駅南口広場": {
+    "name": "西葛西駅 南口広場",
+    "address": "西葛西駅 南口広場（東京都江戸川区西葛西6-14）",
+    "latitude": 35.664182,
+    "longitude": 139.859214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "西葛西駅 南口広場": {
+    "name": "西葛西駅 南口広場",
+    "address": "西葛西駅 南口広場（東京都江戸川区西葛西6-14）",
+    "latitude": 35.664182,
+    "longitude": 139.859214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "西葛西駅南口": {
+    "name": "西葛西駅 南口広場",
+    "address": "西葛西駅 南口広場（東京都江戸川区西葛西6-14）",
+    "latitude": 35.664182,
+    "longitude": 139.859214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "船堀駅北口広場": {
+    "name": "船堀駅 北口広場",
+    "address": "船堀駅 北口広場（東京都江戸川区船堀3-5）",
+    "latitude": 35.684412,
+    "longitude": 139.864518,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "船堀駅 北口広場": {
+    "name": "船堀駅 北口広場",
+    "address": "船堀駅 北口広場（東京都江戸川区船堀3-5）",
+    "latitude": 35.684412,
+    "longitude": 139.864518,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "船堀駅北口": {
+    "name": "船堀駅 北口広場",
+    "address": "船堀駅 北口広場（東京都江戸川区船堀3-5）",
+    "latitude": 35.684412,
+    "longitude": 139.864518,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "船堀駅前": {
+    "name": "船堀駅 北口広場",
+    "address": "船堀駅 北口広場（東京都江戸川区船堀3-5）",
+    "latitude": 35.684412,
+    "longitude": 139.864518,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "中央図書館": {
+    "name": "江戸川区立中央図書館",
+    "address": "江戸川区立中央図書館（東京都江戸川区中央3-1-3）",
+    "latitude": 35.706142,
+    "longitude": 139.869214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "小岩図書館": {
+    "name": "江戸川区立小岩図書館",
+    "address": "江戸川区立小岩図書館（東京都江戸川区東小岩6-15-2）",
+    "latitude": 35.730268,
+    "longitude": 139.883718,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "松江図書館": {
+    "name": "江戸川区立松江図書館",
+    "address": "江戸川区立松江図書館（東京都江戸川区松江2-1-10）",
+    "latitude": 35.697631,
+    "longitude": 139.865382,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "小松川図書館": {
+    "name": "江戸川区立小松川図書館",
+    "address": "江戸川区立小松川図書館（東京都江戸川区平井1-11-26）",
+    "latitude": 35.694885,
+    "longitude": 139.849215,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "篠崎図書館": {
+    "name": "江戸川区立篠崎図書館",
+    "address": "江戸川区立篠崎図書館（東京都江戸川区篠崎町7-20-19）",
+    "latitude": 35.706812,
+    "longitude": 139.903845,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "葛西図書館": {
+    "name": "江戸川区立葛西図書館",
+    "address": "江戸川区立葛西図書館（東京都江戸川区江戸川6-24-1）",
+    "latitude": 35.661284,
+    "longitude": 139.865412,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "西葛西図書館": {
+    "name": "江戸川区立西葛西図書館",
+    "address": "江戸川区立西葛西図書館（東京都江戸川区西葛西5-10-47）",
+    "latitude": 35.666941,
+    "longitude": 139.857321,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "東葛西図書館": {
+    "name": "江戸川区立東葛西図書館",
+    "address": "江戸川区立東葛西図書館（東京都江戸川区東葛西8-22-1）",
+    "latitude": 35.662519,
+    "longitude": 139.881423,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "東部図書館": {
+    "name": "江戸川区立東部図書館",
+    "address": "江戸川区立東部図書館（東京都江戸川区東瑞江1-17-1）",
+    "latitude": 35.691542,
+    "longitude": 139.898124,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "鹿骨コミュニティ図書館": {
+    "name": "江戸川区立鹿骨コミュニティ図書館",
+    "address": "江戸川区立鹿骨コミュニティ図書館（東京都江戸川区鹿骨1-54-2）",
+    "latitude": 35.716892,
+    "longitude": 139.892415,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "清新町コミュニティ図書館": {
+    "name": "江戸川区立清新町コミュニティ図書館",
+    "address": "江戸川区立清新町コミュニティ図書館（東京都江戸川区清新町1-1-34）",
+    "latitude": 35.654812,
+    "longitude": 139.856912,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "篠崎子ども図書館": {
+    "name": "江戸川区立篠崎子ども図書館",
+    "address": "江戸川区立篠崎子ども図書館（東京都江戸川区篠崎町3-12-20）",
+    "latitude": 35.702145,
+    "longitude": 139.906128,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "魔法の文学館": {
+    "name": "魔法の文学館",
+    "address": "魔法の文学館（江戸川区角野栄子児童文学館・東京都江戸川区南葛西7-3-1）",
+    "latitude": 35.649124,
+    "longitude": 139.855892,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "角野栄子児童文学館": {
+    "name": "魔法の文学館",
+    "address": "魔法の文学館（江戸川区角野栄子児童文学館・東京都江戸川区南葛西7-3-1）",
+    "latitude": 35.649124,
+    "longitude": 139.855892,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "総合文化センター": {
+    "name": "江戸川区総合文化センター",
+    "address": "江戸川区総合文化センター（東京都江戸川区中央4-14-1）",
+    "latitude": 35.708125,
+    "longitude": 139.868514,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "タワーホール船堀": {
+    "name": "タワーホール船堀",
+    "address": "タワーホール船堀（東京都江戸川区船堀4-1-1）",
+    "latitude": 35.683812,
+    "longitude": 139.861924,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "船堀タワー": {
+    "name": "タワーホール船堀",
+    "address": "タワーホール船堀（東京都江戸川区船堀4-1-1）",
+    "latitude": 35.683812,
+    "longitude": 139.861924,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "グリーンパレス": {
+    "name": "グリーンパレス",
+    "address": "グリーンパレス（東京都江戸川区松島1-38-1）",
+    "latitude": 35.698912,
+    "longitude": 139.866421,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "新川さくら館": {
+    "name": "新川さくら館",
+    "address": "東京都江戸川区船堀7丁目15番12号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  },
+  "一之江抹香亭": {
+    "name": "一之江抹香亭",
+    "address": "東京都江戸川区一之江5丁目13番16号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  },
+  "えどがわエコセンター": {
+    "name": "えどがわエコセンター",
+    "address": "えどがわエコセンター（東京都江戸川区春江町2-41-20）",
+    "latitude": 35.68412,
+    "longitude": 139.89351,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "小松川さくらホール": {
+    "name": "小松川さくらホール",
+    "address": "小松川さくらホール（東京都江戸川区小松川3-6-2）",
+    "latitude": 35.69452,
+    "longitude": 139.84561,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "葛西区民館": {
+    "name": "葛西区民館",
+    "address": "東京都江戸川区中葛西3丁目10番1号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  },
+  "小松川区民館": {
+    "name": "小松川区民館",
+    "address": "小松川区民館（東京都江戸川区小松川2-2-1）",
+    "latitude": 35.69512,
+    "longitude": 139.84732,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "東部区民館": {
+    "name": "東部区民館",
+    "address": "東部区民館（東京都江戸川区東瑞江1-17-1）",
+    "latitude": 35.69182,
+    "longitude": 139.89764,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "松江区民プラザ": {
+    "name": "松江区民プラザ",
+    "address": "松江区民プラザ（東京都江戸川区松江1-17-11）",
+    "latitude": 35.69784,
+    "longitude": 139.86592,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "鹿骨区民館": {
+    "name": "鹿骨区民館",
+    "address": "鹿骨区民館（東京都江戸川区鹿骨1-54-2）",
+    "latitude": 35.71654,
+    "longitude": 139.89212,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "篠崎コミュニティ会館": {
+    "name": "篠崎コミュニティ会館",
+    "address": "篠崎コミュニティ会館（東京都江戸川区篠崎町2-4-8）",
+    "latitude": 35.70432,
+    "longitude": 139.90012,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "上一色コミュニティセンター": {
+    "name": "上一色コミュニティセンター",
+    "address": "東京都江戸川区上一色2丁目6番10号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  },
+  "コミュニティプラザ一之江": {
+    "name": "コミュニティプラザ一之江",
+    "address": "コミュニティプラザ一之江（東京都江戸川区一之江7-35-22）",
+    "latitude": 35.68542,
+    "longitude": 139.88612,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "船堀コミュニティ会館": {
+    "name": "船堀コミュニティ会館",
+    "address": "船堀コミュニティ会館（東京都江戸川区船堀2-17-13）",
+    "latitude": 35.68291,
+    "longitude": 139.86542,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "南小岩コミュニティ会館": {
+    "name": "南小岩コミュニティ会館",
+    "address": "南小岩コミュニティ会館（東京都江戸川区南小岩3-25-2）",
+    "latitude": 35.72941,
+    "longitude": 139.87782,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "北小岩コミュニティ会館": {
+    "name": "北小岩コミュニティ会館",
+    "address": "北小岩コミュニティ会館（東京都江戸川区北小岩2-15-10）",
+    "latitude": 35.73621,
+    "longitude": 139.88241,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "新田コミュニティ会館": {
+    "name": "新田コミュニティ会館",
+    "address": "新田コミュニティ会館（東京都江戸川区新田1-17-12）",
+    "latitude": 35.72481,
+    "longitude": 139.86752,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "小岩健康サポートセンター": {
+    "name": "小岩健康サポートセンター",
+    "address": "小岩健康サポートセンター（東京都江戸川区南小岩7-24-21）",
+    "latitude": 35.73184,
+    "longitude": 139.87942,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "東部健康サポートセンター": {
+    "name": "東部健康サポートセンター",
+    "address": "東部健康サポートセンター（東京都江戸川区東瑞江1-17-1）",
+    "latitude": 35.69142,
+    "longitude": 139.89824,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "なぎさ健康サポートセンター": {
+    "name": "なぎさ健康サポートセンター",
+    "address": "なぎさ健康サポートセンター（東京都江戸川区南葛西6-15-8）",
+    "latitude": 35.65124,
+    "longitude": 139.86582,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "小松川健康サポートセンター": {
+    "name": "小松川健康サポートセンター",
+    "address": "小松川健康サポートセンター（東京都江戸川区小松川2-2-1）",
+    "latitude": 35.69524,
+    "longitude": 139.84712,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "鹿骨健康サポートセンター": {
+    "name": "鹿骨健康サポートセンター",
+    "address": "鹿骨健康サポートセンター（東京都江戸川区鹿骨1-54-2）",
+    "latitude": 35.71662,
+    "longitude": 139.89234,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "清新町健康サポートセンター": {
+    "name": "清新町健康サポートセンター",
+    "address": "清新町健康サポートセンター（東京都江戸川区清新町1-1-34）",
+    "latitude": 35.65512,
+    "longitude": 139.85742,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "葛西健康サポートセンター": {
+    "name": "葛西健康サポートセンター",
+    "address": "葛西健康サポートセンター（東京都江戸川区中葛西3-19-12）",
+    "latitude": 35.66312,
+    "longitude": 139.86492,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "中央健康サポートセンター": {
+    "name": "中央健康サポートセンター",
+    "address": "中央健康サポートセンター（東京都江戸川区中央1-4-1）",
+    "latitude": 35.706612,
+    "longitude": 139.868324,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "葛西清掃事務所": {
+    "name": "葛西清掃事務所",
+    "address": "葛西清掃事務所（東京都江戸川区東葛西6-12-12）",
+    "latitude": 35.66542,
+    "longitude": 139.87391,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "自然動物園": {
+    "name": "江戸川区自然動物園",
+    "address": "江戸川区自然動物園（東京都江戸川区北葛西3-2-1 行船公園内）",
+    "latitude": 35.671312,
+    "longitude": 139.858724,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "行船公園": {
+    "name": "行船公園・平成庭園",
+    "address": "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）",
+    "latitude": 35.671312,
+    "longitude": 139.858724,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "平成庭園": {
+    "name": "行船公園・平成庭園",
+    "address": "行船公園・平成庭園（東京都江戸川区北葛西3-2-1）",
+    "latitude": 35.671312,
+    "longitude": 139.858724,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "篠崎ポニーランド": {
+    "name": "篠崎ポニーランド",
+    "address": "篠崎ポニーランド（東京都江戸川区篠崎町3-12-17）",
+    "latitude": 35.714512,
+    "longitude": 139.910214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "なぎさポニーランド": {
+    "name": "なぎさポニーランド",
+    "address": "東京都江戸川区南葛西7丁目3番",
+    "latitude": 35.647812,
+    "longitude": 139.873912,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "葛西臨海水族園": {
+    "name": "東京都葛西臨海水族園",
+    "address": "東京都葛西臨海水族園（東京都江戸川区臨海町6-2-3）",
+    "latitude": 35.640112,
+    "longitude": 139.862214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "葛西臨海公園": {
+    "name": "葛西臨海公園",
+    "address": "葛西臨海公園（東京都江戸川区臨海町6-2-1）",
+    "latitude": 35.642514,
+    "longitude": 139.859812,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "葛西海浜公園": {
+    "name": "葛西海浜公園",
+    "address": "葛西海浜公園（東京都江戸川区臨海町6-2-4）",
+    "latitude": 35.637812,
+    "longitude": 139.856214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "篠崎公園": {
+    "name": "都立篠崎公園",
+    "address": "都立篠崎公園（東京都江戸川区上篠崎1-25-1）",
+    "latitude": 35.713812,
+    "longitude": 139.903514,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "大島小松川公園": {
+    "name": "都立大島小松川公園",
+    "address": "都立大島小松川公園（東京都江戸川区小松川1-7）",
+    "latitude": 35.693215,
+    "longitude": 139.847512,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "総合レクリエーション公園": {
+    "name": "総合レクリエーション公園",
+    "address": "総合レクリエーション公園（東京都江戸川区南葛西・西葛西）",
+    "latitude": 35.661812,
+    "longitude": 139.862514,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "スポーツランド": {
+    "name": "江戸川区スポーツランド",
+    "address": "江戸川区スポーツランド（東京都江戸川区東篠崎1-8-1）",
+    "latitude": 35.718512,
+    "longitude": 139.903214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "スポーツセンター": {
+    "name": "江戸川区スポーツセンター",
+    "address": "江戸川区スポーツセンター（東京都江戸川区西葛西4-2-20）",
+    "latitude": 35.668912,
+    "longitude": 139.862124,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "江戸川陸上競技場": {
+    "name": "江戸川区陸上競技場",
+    "address": "江戸川区陸上競技場（東京都江戸川区清新町2-1-1）",
+    "latitude": 35.666812,
+    "longitude": 139.874218,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "陸上競技場": {
+    "name": "江戸川区陸上競技場",
+    "address": "江戸川区陸上競技場（東京都江戸川区清新町2-1-1）",
+    "latitude": 35.666812,
+    "longitude": 139.874218,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "江戸川球場": {
+    "name": "江戸川区球場",
+    "address": "江戸川区球場（東京都江戸川区東篠崎1-9-1）",
+    "latitude": 35.719214,
+    "longitude": 139.898412,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "球場": {
+    "name": "江戸川区球場",
+    "address": "江戸川区球場（東京都江戸川区東篠崎1-9-1）",
+    "latitude": 35.719214,
+    "longitude": 139.898412,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "アリオ葛西": {
+    "name": "アリオ葛西",
+    "address": "アリオ葛西（東京都江戸川区東葛西9-3-3）",
+    "latitude": 35.656214,
+    "longitude": 139.872518,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "都立江戸川高校": {
+    "name": "東京都立江戸川高等学校",
+    "address": "東京都立江戸川高等学校（東京都江戸川区松島2-38-1）",
+    "latitude": 35.707214,
+    "longitude": 139.863512,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "都立小松川高校": {
+    "name": "東京都立小松川高等学校",
+    "address": "東京都立小松川高等学校（東京都江戸川区平井1-27-10）",
+    "latitude": 35.697512,
+    "longitude": 139.852114,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "都立小岩高校": {
+    "name": "東京都立小岩高等学校",
+    "address": "東京都立小岩高等学校（東京都江戸川区本一色3-10-1）",
+    "latitude": 35.724812,
+    "longitude": 139.889514,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "都立葛西南高校": {
+    "name": "東京都立葛西南高等学校",
+    "address": "東京都立葛西南高等学校（東京都江戸川区南葛西1-11-1）",
+    "latitude": 35.652514,
+    "longitude": 139.863218,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "都立紅葉川高校": {
+    "name": "東京都立紅葉川高等学校",
+    "address": "東京都立紅葉川高等学校（東京都江戸川区臨海町2-1-1）",
+    "latitude": 35.657812,
+    "longitude": 139.875214,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "都立篠崎高校": {
+    "name": "東京都立篠崎高等学校",
+    "address": "東京都立篠崎高等学校（東京都江戸川区東篠崎1-10-1）",
+    "latitude": 35.716214,
+    "longitude": 139.908512,
+    "coordinate_quality": "legacy_approximate"
+  },
+  "子ども未来館": {
+    "name": "子ども未来館",
+    "address": "東京都江戸川区篠崎町3丁目12番10号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  },
+  "郷土資料室": {
+    "name": "江戸川区郷土資料室",
+    "address": "東京都江戸川区篠崎町7丁目20番19号 篠崎ツインプレイス3階",
+    "latitude": 35.706812,
+    "longitude": 139.903845,
+    "coordinate_quality": "legacy_facility_coordinate_approximate"
+  },
+  "しのざき文化プラザ": {
+    "name": "しのざき文化プラザ",
+    "address": "東京都江戸川区篠崎町7丁目20番9号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  },
+  "うらら一之江": {
+    "name": "うらら一之江",
+    "address": "東京都江戸川区一之江7丁目50番6号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  },
+  "葛西海浜公園・西なぎさ": {
+    "name": "葛西海浜公園 西なぎさ",
+    "address": "東京都江戸川区臨海町6丁目地先",
+    "latitude": 35.637812,
+    "longitude": 139.856214,
+    "coordinate_quality": "legacy_park_approximate"
+  },
+  "総合レクリエーション公園サービスセンター": {
+    "name": "総合レクリエーション公園サービスセンター",
+    "address": "東京都江戸川区南葛西3丁目17番1号",
+    "latitude": null,
+    "longitude": null,
+    "coordinate_quality": "address_verified_no_coordinate"
+  }
+}
