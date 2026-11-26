@@ -46,7 +46,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.1.0"
+APP_VERSION = "3.2.0"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -102,14 +102,37 @@ NON_EVENT_PAGE_TITLES = {
     "スポーツ文化", "健康医療福祉", "組織図と組織一覧", "組織図", "組織一覧",
     "区政情報", "区の紹介", "施設案内", "アクセス", "交通アクセス", "お問い合わせ",
     "お知らせ", "ニュース", "イベント情報", "イベント一覧", "新着情報", "トップページ",
+    "フロア案内", "フロアガイド", "館内案内", "施設概要", "外国の方向け生活情報",
+    "区内の主なイベント", "子育て教育", "まちづくり環境", "施設情報",
 }
 NON_EVENT_TITLE_PREFIXES = (
     "サイトマップ", "よくある質問", "よくある問い合わせ", "組織図", "組織一覧",
     "施設案内", "カテゴリ一覧", "カテゴリー一覧", "ジャンル一覧", "お知らせ一覧",
     "ニュース一覧", "イベント一覧", "くらし・手続き", "健康・医療・福祉",
+    "フロア案内", "フロアガイド", "館内案内", "外国の方向け生活情報",
+    "区内の主なイベント", "子育て・教育", "まちづくり・環境", "施設情報",
 )
 MAX_EVENT_LOOKAHEAD_DAYS = 550
 MAX_EVENT_DURATION_DAYS = 366
+
+# 江戸川区外の代表的な施設名。会場名だけでなく詳細本文にも適用する。
+# 特に施設運営者のニュース一覧に、別施設で開催する催事が掲載されるケースを防ぐ。
+OUTSIDE_FACILITY_TERMS = (
+    "恩賜上野動物園", "東京都恩賜上野動物園", "上野動物園", "上野公園",
+    "上野恩賜公園", "東京国立博物館", "国立科学博物館", "東京都美術館",
+    "東京文化会館", "浅草文化観光センター", "東京ビッグサイト",
+    "日本科学未来館", "葛飾区郷土と天文の博物館", "すみだ水族館",
+    "千葉市動物公園", "市川市動植物園", "浦安市文化会館",
+)
+
+
+def outside_facility_mention(text: str) -> str | None:
+    """区外施設名の記載を検出。表記揺れを吸収して最初に一致した施設名を返す。"""
+    value = norm(text)
+    for term in sorted(OUTSIDE_FACILITY_TERMS, key=len, reverse=True):
+        if term in value:
+            return term
+    return None
 
 
 def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
@@ -118,8 +141,12 @@ def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
     if not t or t in {re.sub(r"[\s　・･/／｜|:：()（）]+", "", x).casefold()
                     for x in NON_EVENT_PAGE_TITLES}:
         return True
-    if any(norm(title).startswith(x) for x in NON_EVENT_TITLE_PREFIXES):
+    normalized_title = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title))
+    normalized_prefixes = [re.sub(r"[\s　・･/／｜|:：()（）]+", "", x) for x in NON_EVENT_TITLE_PREFIXES]
+    if any(normalized_title.startswith(x) for x in normalized_prefixes):
         return True
+    # 施設紹介ページはタイトル語で判定する。本文中の一般的な「施設紹介」は
+    # イベントの説明にも登場するため、本文だけを根拠に除外しない。
     # URLがカテゴリ/サイト案内で、タイトルもイベント名らしくないものを除外。
     path = urlparse(url).path.lower() if url else ""
     if any(x in path for x in ("/sitemap", "/faq", "/organization", "/about/", "/category/")):
@@ -385,6 +412,10 @@ def verify_edogawa_location(address: str, venue: str, default_venue: str | None 
         return False, None, "outside_address"
     if contains_outside_region(v):
         return False, None, "outside_venue"
+    if outside_facility_mention(a):
+        return False, None, "outside_facility_address"
+    if outside_facility_mention(v):
+        return False, None, "outside_facility_venue"
     if a and "江戸川区" in a:
         return True, lookup_venue(v) or lookup_venue(a), "address_edogawa"
 
@@ -522,10 +553,14 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
             if not re.search(r"(?:logo|icon|btn|dummy|noimage|1x1)", candidate, re.I):
                 image_url = candidate
                 break
+    full_text = " ".join(lines)
+    non_event = is_non_event_page(title, full_text, page_url)
+    outside_facility = outside_facility_mention(full_text)
     return {"title": title, "date_text": date_text, "spans": spans,
             "start_time": time_start, "end_time": time_end, "venue": venue,
-            "address": address, "image_url": image_url, "text": " ".join(lines),
-            "venue_registry": venue_reg}
+            "address": address, "image_url": image_url, "text": full_text,
+            "venue_registry": venue_reg, "is_non_event_page": non_event,
+            "outside_facility_mention": outside_facility}
 
 
 def fetch_text(url: str, params: dict[str, Any] | None = None, timeout: int = 15) -> tuple[str | None, dict[str, Any]]:
@@ -590,6 +625,8 @@ def make_event(title: str, span: tuple[date, date], venue: str, address: str, ur
                image_url: str | None = None, description: str = "", priority: int = 4,
                lat: float | None = None, lon: float | None = None) -> Event | None:
     if is_non_event_page(title, description, url):
+        return None
+    if outside_facility_mention(description) or outside_facility_mention(venue) or outside_facility_mention(address):
         return None
     valid_span, _span_reason = valid_event_span(span)
     if not valid_span:
@@ -805,13 +842,21 @@ def parse_csv_source(url: str, name: str, priority: int = 1) -> tuple[list[Event
             venue = venue or detail.get("venue", "")
             address = address or detail.get("address", "")
             image = image or detail.get("image_url")
-            description = description or detail.get("text", "")[:1000]
+            description = " ".join(x for x in (description, detail.get("text", "")[:2000]) if x)
         # CSV座標は緯度経度の両方が存在し、住所が区内と確認できるときだけ採用。
         try:
             lat = float(get("lat")) if get("lat") else None
             lon = float(get("lon")) if get("lon") else None
         except ValueError:
             lat = lon = None
+        external_name = outside_facility_mention(" ".join((title, venue, address, description)))
+        if external_name:
+            key = "outside_facility_mention:" + external_name
+            status["rejected"][key] = status["rejected"].get(key, 0) + 1
+            continue
+        if is_non_event_page(title, description, url_v):
+            status["rejected"]["non_event_page"] = status["rejected"].get("non_event_page", 0) + 1
+            continue
         time_s, time_e = get("start_time") or None, get("end_time") or None
         if not (time_s and time_e):
             time_s, time_e = parse_time_range(start_raw + " " + end_raw)
@@ -1088,6 +1133,13 @@ def parse_city_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
         if d.get("http_status"):
             status["detail_success"] += 1
         title = d.get("title") or item["title"]
+        if d.get("is_non_event_page") or is_non_event_page(title, d.get("text", ""), url):
+            status["rejected"]["non_event_page"] = status["rejected"].get("non_event_page", 0) + 1
+            continue
+        external_name = d.get("outside_facility_mention") or outside_facility_mention(d.get("text", ""))
+        if external_name:
+            status["rejected"]["outside_facility_mention:" + external_name] = status["rejected"].get("outside_facility_mention:" + external_name, 0) + 1
+            continue
         venue, address = d.get("venue") or "", d.get("address") or ""
         reg = d.get("venue_registry") or lookup_venue(f"{venue} {title}")
         if not venue and reg:
@@ -1109,7 +1161,8 @@ def parse_city_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
                 continue
             ev = make_event(title, span, venue, address, url, "江戸川区公式イベントカレンダー",
                             category="区公式", start_time=event_start_time, end_time=event_end_time,
-                            image_url=d.get("image_url") or item.get("image"), priority=1)
+                            image_url=d.get("image_url") or item.get("image"), priority=1,
+                            description=d.get("text", "")[:2000])
             if ev:
                 events.append(ev); status["accepted"] += 1
             else:
@@ -1240,9 +1293,17 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
         if d.get("http_status"):
             status["detail_success"] += 1
         title = d.get("title") or rec["title"]
-        # 一覧カードの本文には掲載日が混在するため、詳細ページの開催日を優先。
-        # 詳細に開催日がない場合は、<time datetime> が明示されたときだけ補完。
-        spans = d.get("spans") or parse_date_spans(rec.get("time_text", ""))
+        if d.get("is_non_event_page") or is_non_event_page(title, d.get("text", ""), rec["url"]):
+            status["rejected"]["non_event_page"] = status["rejected"].get("non_event_page", 0) + 1
+            continue
+        external_name = d.get("outside_facility_mention") or outside_facility_mention(d.get("text", ""))
+        if external_name:
+            key = "outside_facility_mention:" + external_name
+            status["rejected"][key] = status["rejected"].get(key, 0) + 1
+            continue
+        # 一覧カードの<time>は記事公開日・更新日である場合が多いため、開催日として流用しない。
+        # 詳細ページに開催日が明示されていない場合は、安全側に倒して除外する。
+        spans = d.get("spans") or []
         if not spans:
             status["rejected"]["no_event_date"] = status["rejected"].get("no_event_date", 0) + 1
             continue
@@ -1262,7 +1323,8 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
             ev = make_event(title, span, venue, address, rec["url"], name,
                             category=cfg.get("category", "地域イベント"), default_venue=cfg.get("default_venue"),
                             start_time=d.get("start_time"), end_time=d.get("end_time"),
-                            image_url=d.get("image_url"), priority=cfg.get("priority", 4))
+                            image_url=d.get("image_url"), priority=cfg.get("priority", 4),
+                            description=d.get("text", "")[:2000])
             if ev:
                 events.append(ev); status["accepted"] += 1
             else:
@@ -1426,7 +1488,7 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
             previous_reports = previous_obj.get("sources", {})
     except Exception:
         pass
-    reports: dict[str, Any] = {"mode": "live", "coverage_complete": False,
+    reports: dict[str, Any] = {"app_version": APP_VERSION, "mode": "live", "coverage_complete": False,
                                "generated_at": datetime.now(JST).isoformat(),
                                "timezone": "Asia/Tokyo", "months_requested": months,
                                "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1535,7 +1597,7 @@ def make_uid(ev: Event) -> str:
 
 def build_ics(events: list[Event]) -> str:
     now_utc = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.0//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.0//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -1659,7 +1721,7 @@ def main() -> int:
     args = parser.parse_args()
     if args.bootstrap_preview:
         events = bootstrap_events()
-        reports = {"mode": "bootstrap-preview", "complete": False,
+        reports = {"app_version": APP_VERSION, "mode": "bootstrap-preview", "complete": False,
                    "warning": "2026-11-26時点で個別詳細ページを確認できたイベントのみ。全件収集ではありません。",
                    "sources": {}, "totals": {"unique_events": len(events), "strict_edogawa_only": True}}
         mode = "bootstrap-preview"
