@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.5"
+APP_VERSION = "3.2.6"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -107,7 +107,7 @@ NON_EVENT_PAGE_TITLES = {
     "区政情報", "区の紹介", "施設案内", "アクセス", "交通アクセス", "お問い合わせ",
     "お知らせ", "ニュース", "イベント情報", "イベント一覧", "新着情報", "トップページ",
     "フロア案内", "フロアガイド", "館内案内", "施設概要", "外国の方向け生活情報",
-    "区内の主なイベント", "子育て教育", "まちづくり環境", "施設情報",
+    "区内の主なイベント", "子育て教育", "まちづくり環境", "施設情報", "people",
     "このページに関するお問い合わせ", "このページに関するお問い合わせ先",
     "このページに関するお問合せ", "このページに関するお問合せ先",
 }
@@ -227,6 +227,9 @@ def is_annual_overview_page(title: str, url: str = "") -> bool:
 def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
     """案内・カテゴリ・FAQ等をイベントとして誤登録しないための共通ゲート。"""
     if is_annual_overview_page(title, url) or is_application_closed(title):
+        return True
+    path_for_exclusion = urlparse(url).path.casefold() if url else ""
+    if path_for_exclusion.rstrip("/").endswith("/e027/kosodate/kenzenikusei/mirai/index.html"):
         return True
     t = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title)).casefold()
     if not t or t in {re.sub(r"[\s　・･/／｜|:：()（）]+", "", x).casefold()
@@ -619,7 +622,9 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     detail_candidates = [x for x in detail_candidates if getattr(x, "attrs", None) is not None]
     # 最小の詳細コンテナを選ぶ。外側のラッパーを選ぶとサイドバーまで含むため。
     detail_candidates.sort(key=lambda x: len(x.find_all(True)))
-    main = (soup.find("main") or soup.find("article") or
+    is_mypl = "mypl.net" in urlparse(page_url).netloc.lower()
+    main = ((detail_candidates[0] if detail_candidates else None) if is_mypl else None) or (
+            soup.find("main") or soup.find("article") or
             (detail_candidates[0] if detail_candidates else None) or soup.body or soup)
     for el in main.find_all(["nav", "footer", "header", "aside", "form"]):
         el.decompose()
@@ -651,8 +656,14 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     # 共通メニューがdiv/spanの連続テキストとして埋め込まれた場合の保険。
     # イベント本文や見出しは残し、ジャンル・店舗カテゴリのナビ行だけを落とす。
     mypl_nav_markers = ("地元暮らしをちょっぴり楽しく", "グルメ", "ショッピング", "美容・健康", "暮らし・相談", "全て", "すべて")
-    if "mypl.net" in urlparse(page_url).netloc.lower():
+    if is_mypl:
         lines = [line for line in lines if not any(marker in line for marker in mypl_nav_markers)]
+        # MyPlueの一部ページでは共通ナビがmain内に混在する。
+        # イベント詳細のH1より前はサイト共通領域として本文から除外する。
+        if title:
+            title_line_index = next((i for i, line in enumerate(lines) if line == title or title in line), None)
+            if title_line_index is not None:
+                lines = lines[title_line_index:]
     # 開催日見出しの配下だけを開催日根拠にする。記事公開日・更新日・掲載日を
     # ページ全体から拾う旧方式は、ニュース記事を「今日開催」と誤登録するため廃止。
     date_lines = section_lines_after_heading(lines, EVENT_DATE_HEADINGS, stop=STOP_HEADINGS)
@@ -2162,7 +2173,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.5//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.6//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2257,7 +2268,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.5//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.6//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
