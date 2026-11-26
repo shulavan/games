@@ -617,8 +617,19 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
             soup.body or soup)
     for el in main.find_all(["nav", "footer", "header", "aside", "form"]):
         el.decompose()
-    for el in main.find_all(True):
-        marker = " ".join((str(el.get("id", "")), " ".join(el.get("class", [])))).casefold()
+    # ResultSetは走査開始時点の子孫一覧を保持するため、親要素をdecompose()
+    # した後も、その子孫が一覧に残る。分解済みTagはattrs=Noneになるので、
+    # そのままget()すると AttributeError で全収集処理が停止してしまう。
+    # attrsを確認し、クラス属性が文字列の場合も安全に正規化する。
+    for el in list(main.find_all(True)):
+        attrs = getattr(el, "attrs", None)
+        if attrs is None:
+            continue
+        el_id = attrs.get("id", "")
+        classes = attrs.get("class", [])
+        if isinstance(classes, str):
+            classes = classes.split()
+        marker = " ".join([str(el_id), " ".join(str(c) for c in classes)]).casefold()
         if re.search(r"(?:global[-_ ]?nav|site[-_ ]?nav|gnav|breadcrumb|side[-_ ]?menu|footer[-_ ]?menu|header[-_ ]?menu)", marker):
             el.decompose()
     title_el = main.find("h1") or soup.find("h1") or main.find(["h2", "h3"])
