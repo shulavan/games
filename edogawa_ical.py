@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import difflib
 import io
 import json
 import os
@@ -45,6 +46,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
+APP_VERSION = "3.1.0"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -82,7 +84,7 @@ KVIEWER_PUBLIC_URL = (
 )
 
 USER_AGENT = (
-    "Mozilla/5.0 (compatible; EdogawaEventCalendar/2.0; "
+    "Mozilla/5.0 (compatible; EdogawaEventCalendar/3.0; "
     "+https://github.com/shulavan/games)"
 )
 SESSION = requests.Session()
@@ -94,6 +96,51 @@ EXCLUDED_TEXT = (
     "詳細検索へ", "一覧はこちら", "もっと見る", "ニュース一覧", "イベント一覧",
     "お知らせ一覧", "アクセス", "フロアガイド", "チケット購入", "募集終了",
 )
+# ページ自体がイベントではないことが明らかなタイトル。完全一致・見出し語の双方で除外する。
+NON_EVENT_PAGE_TITLES = {
+    "くらし手続き", "よくある問い合わせqa", "よくある質問", "faq", "サイトマップ",
+    "スポーツ文化", "健康医療福祉", "組織図と組織一覧", "組織図", "組織一覧",
+    "区政情報", "区の紹介", "施設案内", "アクセス", "交通アクセス", "お問い合わせ",
+    "お知らせ", "ニュース", "イベント情報", "イベント一覧", "新着情報", "トップページ",
+}
+NON_EVENT_TITLE_PREFIXES = (
+    "サイトマップ", "よくある質問", "よくある問い合わせ", "組織図", "組織一覧",
+    "施設案内", "カテゴリ一覧", "カテゴリー一覧", "ジャンル一覧", "お知らせ一覧",
+    "ニュース一覧", "イベント一覧", "くらし・手続き", "健康・医療・福祉",
+)
+MAX_EVENT_LOOKAHEAD_DAYS = 550
+MAX_EVENT_DURATION_DAYS = 366
+
+
+def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
+    """案内・カテゴリ・FAQ等をイベントとして誤登録しないための共通ゲート。"""
+    t = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title)).casefold()
+    if not t or t in {re.sub(r"[\s　・･/／｜|:：()（）]+", "", x).casefold()
+                    for x in NON_EVENT_PAGE_TITLES}:
+        return True
+    if any(norm(title).startswith(x) for x in NON_EVENT_TITLE_PREFIXES):
+        return True
+    # URLがカテゴリ/サイト案内で、タイトルもイベント名らしくないものを除外。
+    path = urlparse(url).path.lower() if url else ""
+    if any(x in path for x in ("/sitemap", "/faq", "/organization", "/about/", "/category/")):
+        if not any(w in norm(title) for w in EVENT_WORDS):
+            return True
+    return False
+
+
+def valid_event_span(span: tuple[date, date], today: date | None = None) -> tuple[bool, str]:
+    """過去イベント・遠すぎる日付・異常な長期開催を安全側に除外。"""
+    today = today or TODAY
+    start, end = span
+    if end < start:
+        return False, "invalid_date_range"
+    if end < today:
+        return False, "past_event"
+    if start > today + timedelta(days=MAX_EVENT_LOOKAHEAD_DAYS):
+        return False, "date_too_far"
+    if (end - start).days > MAX_EVENT_DURATION_DAYS:
+        return False, "abnormally_long_event"
+    return True, "ok"
 APPLICATION_DATE_TERMS = (
     "申込期間", "申し込み期間", "申込開始", "申込締切", "申込期限", "受付期間",
     "受付開始", "受付締切", "応募期間", "応募開始", "応募締切", "販売期間",
@@ -427,9 +474,26 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     title_el = main.find("h1") or soup.find("h1") or main.find(["h2", "h3"])
     title = norm(title_el.get_text(" ", strip=True)) if title_el else ""
     lines = [norm(x) for x in main.get_text("\n", strip=True).splitlines() if norm(x)]
+    # 開催日見出しの配下だけを開催日根拠にする。記事公開日・更新日・掲載日を
+    # ページ全体から拾う旧方式は、ニュース記事を「今日開催」と誤登録するため廃止。
     date_lines = section_lines_after_heading(lines, EVENT_DATE_HEADINGS, stop=STOP_HEADINGS)
     if not date_lines:
-        date_lines = [x for x in lines if not any(k in x for k in APPLICATION_DATE_TERMS)]
+        # CMSによっては見出しを使わず「開催日：」形式で記載するため、明示ラベルを許可。
+        date_lines = [x.split("：", 1)[-1].split(":", 1)[-1].strip()
+                      for x in lines
+                      if re.match(r"^(?:開催日|開催日時|開催期間|実施日|実施日時|会期)\s*[：:]", x)
+                      and not any(k in x for k in APPLICATION_DATE_TERMS)]
+    # ニュース形式の告知は開催日見出しがない場合がある。
+    # 「12月10日に開催」「12月10日に実施します」等、同じ文中に開催意図が明記された行だけ補う。
+    publication_terms = ("公開日", "掲載日", "投稿日", "更新日", "配信日", "発信日", "お知らせ日", "更新", "掲載", "公開")
+    event_cues = ("開催します", "開催いたします", "開催されます", "開催予定", "開催する予定",
+                  "実施します", "実施いたします", "行います", "行ないます", "開きます", "会期")
+    for line in lines:
+        if any(term in line for term in publication_terms) or is_contingency_date_line(line):
+            continue
+        if any(cue in line for cue in event_cues) and parse_date_spans(line):
+            if line not in date_lines:
+                date_lines.append(line)
     date_text = " ".join(x for x in date_lines if not is_contingency_date_line(x))
     spans = parse_date_spans(date_text)
     # 時刻は開催日時欄だけから取る。申込期間・開館時間を誤って開催時刻にしない。
@@ -525,6 +589,11 @@ def make_event(title: str, span: tuple[date, date], venue: str, address: str, ur
                start_time: str | None = None, end_time: str | None = None,
                image_url: str | None = None, description: str = "", priority: int = 4,
                lat: float | None = None, lon: float | None = None) -> Event | None:
+    if is_non_event_page(title, description, url):
+        return None
+    valid_span, _span_reason = valid_event_span(span)
+    if not valid_span:
+        return None
     ok, registry, _why = verify_edogawa_location(address, venue, default_venue=default_venue)
     if not ok:
         return None
@@ -562,23 +631,65 @@ def event_key(ev: Event) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def _title_fingerprint(value: str) -> str:
+    t = norm(value).casefold()
+    t = re.sub(r"[【】\[\]（）()「」『』・･,，。:：!！?？\s　]+", "", t)
+    t = re.sub(r"(?:開催のお知らせ|イベント情報|イベント|開催)", "", t)
+    return t
+
+
+def _events_are_same(a: Event, b: Event) -> bool:
+    # 同一URLならタイトル変更・説明更新があっても同一イベントとして扱う。
+    urls_a, urls_b = set(a.source_urls + ([a.url] if a.url else [])), set(b.source_urls + ([b.url] if b.url else []))
+    if urls_a.intersection(urls_b) and a.start_date == b.start_date and norm(a.venue) == norm(b.venue):
+        return True
+    if a.start_date != b.start_date:
+        return False
+    if _compact_address(a.address) and _compact_address(b.address):
+        if _compact_address(a.address) != _compact_address(b.address):
+            return False
+    elif norm(a.venue).casefold() != norm(b.venue).casefold():
+        return False
+    if a.start_time and b.start_time and a.start_time != b.start_time:
+        return False
+    ta, tb = _title_fingerprint(a.title), _title_fingerprint(b.title)
+    if not ta or not tb:
+        return False
+    return ta == tb or difflib.SequenceMatcher(None, ta, tb).ratio() >= 0.88
+
+
 def merge_events(events: Iterable[Event]) -> list[Event]:
-    merged: dict[str, Event] = {}
-    for ev in events:
-        k = event_key(ev)
-        if k not in merged:
-            merged[k] = ev
+    """重複イベントを統合。採用元URL・画像・座標・時刻・説明を欠損補完する。"""
+    merged: list[Event] = []
+    for ev in sorted(events, key=lambda e: (e.priority, e.start_date, e.title)):
+        match = next((old for old in merged if _events_are_same(old, ev)), None)
+        if match is None:
+            merged.append(ev)
             continue
-        old = merged[k]
-        old.source_urls = sorted(set(old.source_urls + ev.source_urls))
-        if ev.priority < old.priority:
-            old.priority, old.category, old.source = ev.priority, ev.category, ev.source
-        if not old.image_url and ev.image_url: old.image_url = ev.image_url
-        if (old.latitude is None or old.longitude is None) and ev.latitude is not None and ev.longitude is not None:
-            old.latitude, old.longitude = ev.latitude, ev.longitude
-            old.coordinate_quality = ev.coordinate_quality
-        if not old.description and ev.description: old.description = ev.description
-    return sorted(merged.values(), key=lambda e: (e.start_date, e.start_time or "99:99", e.priority, e.title))
+        match.source_urls = sorted(set(match.source_urls + ev.source_urls + ([match.url] if match.url else []) + ([ev.url] if ev.url else [])))
+        if ev.priority < match.priority:
+            match.priority, match.category, match.source = ev.priority, ev.category, ev.source
+        if len(ev.title) > len(match.title) and ev.priority <= match.priority:
+            match.title = ev.title
+        if not match.image_url and ev.image_url:
+            match.image_url = ev.image_url
+        if (match.latitude is None or match.longitude is None) and ev.latitude is not None and ev.longitude is not None:
+            match.latitude, match.longitude = ev.latitude, ev.longitude
+            match.coordinate_quality = ev.coordinate_quality
+        if not match.start_time and ev.start_time:
+            match.start_time = ev.start_time
+        if not match.end_time and ev.end_time:
+            match.end_time = ev.end_time
+        if not match.description and ev.description:
+            match.description = ev.description
+        if not match.address and ev.address:
+            match.address = ev.address
+        if not match.venue and ev.venue:
+            match.venue = ev.venue
+        # 期間表記が異なる同一イベントは、確認できた開催期間の広い方を保持。
+        if ev.end_date > match.end_date:
+            match.end_date = ev.end_date
+    return sorted(merged, key=lambda e: (e.start_date, e.start_time or "99:99", e.priority, e.title))
 
 
 def _parse_csv_reader(raw: str):
@@ -860,7 +971,7 @@ def parse_city_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
                                     except (TypeError, ValueError):
                                         pass
                                 continue
-                            if not title or len(title) < 3 or any(k in title for k in EXCLUDED_TEXT):
+                            if not title or len(title) < 3 or any(k in title for k in EXCLUDED_TEXT) or is_non_event_page(title, url=full):
                                 continue
                             path = urlparse(full).path
                             if not _same_host(full, CITY_BASE) or not ("/event/" in path or path.endswith(".html")):
@@ -896,7 +1007,7 @@ def parse_city_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
                                 except (TypeError, ValueError):
                                     pass
                             continue
-                        if not title or len(title) < 3 or any(k in title for k in EXCLUDED_TEXT):
+                        if not title or len(title) < 3 or any(k in title for k in EXCLUDED_TEXT) or is_non_event_page(title, url=full):
                             continue
                         path = urlparse(full).path
                         if not _same_host(full, CITY_BASE) or not ("/event/" in path or path.endswith(".html")):
@@ -933,7 +1044,7 @@ def parse_city_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
                 m_date = re.search(r"20\d{2}年\d{1,2}月\d{1,2}日", raw)
                 title = raw[:m_date.start()].strip(" ・|｜") if m_date else clean_title(raw)
                 title = clean_title(title)
-                if not title or len(title) < 3 or any(k in title for k in EXCLUDED_TEXT):
+                if not title or len(title) < 3 or any(k in title for k in EXCLUDED_TEXT) or is_non_event_page(title, url=full):
                     continue
                 rec = candidates.setdefault(full, {"url": full, "title": title, "dates": set(),
                                                     "listed_spans": [], "listed_start_time": None,
@@ -1085,7 +1196,7 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
         if not feed_raw:
             continue
         for entry in parse_feed_entries(feed_raw, url):
-            if entry["url"] not in candidates and (cfg.get("accept_all_detail_links") or
+            if entry["url"] not in candidates and not is_non_event_page(entry["title"], entry.get("context", ""), entry["url"]) and (cfg.get("accept_all_detail_links") or
                     any(w in (entry["title"] + " " + entry["context"]) for w in EVENT_WORDS)):
                 candidates[entry["url"]] = entry
                 status["feed_candidates"] += 1
@@ -1096,9 +1207,11 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
         title = clean_title(a.get_text(" ", strip=True))
         if not href or href.startswith(("#", "mailto:")) or not title or len(title) < 3:
             continue
-        if any(k in title for k in EXCLUDED_TEXT):
+        if any(k in title for k in EXCLUDED_TEXT) or is_non_event_page(title):
             continue
         full = urljoin(url, href)
+        if is_non_event_page(title, url=full):
+            continue
         if not _same_host(full, url) or full.rstrip("/") == url.rstrip("/"):
             continue
         path = urlparse(full).path.lower()
@@ -1366,6 +1479,7 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
     merged = merge_events(all_events)
     reports["totals"] = {
         "raw_records": len(all_events), "unique_events": len(merged),
+        "deduplicated_records": len(all_events) - len(merged),
         "with_coordinates": sum(1 for e in merged if e.latitude is not None and e.longitude is not None),
         "without_coordinates": sum(1 for e in merged if e.latitude is None or e.longitude is None),
         "strict_edogawa_only": True,
@@ -1421,7 +1535,7 @@ def make_uid(ev: Event) -> str:
 
 def build_ics(events: list[Event]) -> str:
     now_utc = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v2.0//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.0//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
