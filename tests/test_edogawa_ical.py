@@ -416,11 +416,11 @@ class QualityFilterTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertEqual(status["rejected"].get("no_event_date"), 1)
 
-    def test_ics_and_status_use_v322_version(self):
+    def test_ics_and_status_use_v323_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.2//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.2")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.3//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.3")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -618,7 +618,7 @@ class V322RegressionTests(unittest.TestCase):
     def test_contact_page_title_is_rejected(self):
         self.assertTrue(app.is_non_event_page("このページに関するお問い合わせ"))
 
-    def test_ics_and_map_share_generation_identity(self):
+    def test_ics_and_map_share_generation_identity_v323(self):
         ev = app.make_event("同一生成ID", (date(2026, 12, 10), date(2026, 12, 10)),
                             "なぎさポニーランド", "東京都江戸川区南葛西7丁目3番",
                             "https://example.jp/e", "test")
@@ -630,7 +630,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.2")
+        self.assertEqual(payload["app_version"], "3.2.3")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -671,6 +671,69 @@ class V322RegressionTests(unittest.TestCase):
             event = app.make_event("座標不明イベント", (date(2026, 12, 1), date(2026, 12, 1)),
                                    "未登録会場", "東京都江戸川区未確認", "https://example.jp/e", "test")
         self.assertIsNone(event)
+
+
+class V323RegressionTests(unittest.TestCase):
+    def _event(self, *, source, category="地域イベント", url="https://www.city.edogawa.tokyo.jp/event/a.html",
+               day="2026-11-28", start=None, end=None, venue="会場A", image=None,
+               title="野菜の収穫体験", description="詳細"):
+        return app.Event(title=title, start_date=day, end_date=day, venue=venue,
+                         address="東京都江戸川区中央一丁目1番1号", url=url, source=source, category=category,
+                         source_urls=[url], start_time=start, end_time=end, image_url=image,
+                         latitude=35.70, longitude=139.86, coordinate_quality="test",
+                         priority=1, description=description)
+
+    def test_url_normalization_removes_tracking_and_trailing_slash(self):
+        a = "https://www.city.edogawa.tokyo.jp/event/a.html/?utm_source=mail&fbclid=abc"
+        b = "https://city.edogawa.tokyo.jp/event/a.html"
+        self.assertEqual(app.normalize_event_url(a), app.normalize_event_url(b))
+
+    def test_official_html_and_open_data_merge_good_fields(self):
+        html = self._event(source="江戸川区公式イベントカレンダー", category="区公式",
+                           start="10:00", end="12:00", venue="篠崎コミュニティ会館",
+                           image="https://www.city.edogawa.tokyo.jp/images/logo.png", description="HTML詳細")
+        csv = self._event(source="江戸川区イベントカレンダーCSV", category="区公式オープンデータ",
+                          url="https://city.edogawa.tokyo.jp/event/a.html?utm_medium=csv",
+                          venue="", image="https://city.edogawa.tokyo.jp/images/flyer-123.jpg", description="CSV本文")
+        merged = app.merge_events([csv, html])
+        self.assertEqual(len(merged), 1)
+        ev = merged[0]
+        self.assertEqual((ev.start_time, ev.end_time), ("10:00", "12:00"))
+        self.assertEqual(ev.venue, "篠崎コミュニティ会館")
+        self.assertEqual(ev.description, "HTML詳細")
+        self.assertEqual(ev.image_url, "https://city.edogawa.tokyo.jp/images/flyer-123.jpg")
+        self.assertEqual(ev.category, "区公式")
+
+    def test_same_url_different_dates_are_not_merged(self):
+        a = self._event(source="江戸川区公式イベントカレンダー", category="区公式", day="2026-11-28")
+        b = self._event(source="江戸川区イベントカレンダーCSV", category="区公式オープンデータ", day="2026-11-29")
+        self.assertEqual(len(app.merge_events([a, b])), 2)
+
+    def test_same_day_distinct_times_are_not_merged(self):
+        a = self._event(source="江戸川区公式イベントカレンダー", category="区公式", start="10:00", end="11:00")
+        b = self._event(source="江戸川区イベントカレンダーCSV", category="区公式オープンデータ", start="14:00", end="15:00")
+        self.assertEqual(len(app.merge_events([a, b])), 2)
+
+    def test_application_closed_events_are_rejected(self):
+        self.assertTrue(app.is_non_event_page("【申込は終了しました】活き活きけんこう塾"))
+        self.assertTrue(app.is_non_event_page("募集終了 ピックルボール"))
+        self.assertTrue(app.is_non_event_page("受付終了 省エネ講座"))
+
+    def test_annual_calendar_index_is_rejected(self):
+        self.assertTrue(app.is_non_event_page("イベントカレンダー", url="https://www.city.edogawa.tokyo.jp/e004/sports/kankomidokoro/event/index.html"))
+        self.assertTrue(app.is_non_event_page("区内の主なイベント", url="https://www.city.edogawa.tokyo.jp/e004/sports/kankomidokoro/event/index.html"))
+
+    def test_location_and_description_footer_cleanup(self):
+        self.assertEqual(app.clean_location_text("篠崎コミュニティ会館 集会室1・2 江戸川区上篠崎4丁目21番8号 ホームページ リズム運動体験教室"),
+                         "篠崎コミュニティ会館 集会室1・2 江戸川区上篠崎4丁目21番8号")
+        text = "講座の内容\n開催日時 10:00\nイベント情報をiPhone・iPad端末のカレンダーに取り込めます。\nこのページに関するお問い合わせ"
+        self.assertEqual(app.clean_description_text(text), "講座の内容\n開催日時 10:00")
+
+    def test_make_event_does_not_accept_closed_or_annual_page(self):
+        self.assertIsNone(app.make_event("【申込は終了しました】講座", (date(2026, 12, 1), date(2026, 12, 1)),
+                                         "会場", "東京都江戸川区中央一丁目", "https://example.jp/a", "test"))
+        self.assertIsNone(app.make_event("イベントカレンダー", (date(2026, 12, 1), date(2026, 12, 1)),
+                                         "会場", "東京都江戸川区中央一丁目", "https://www.city.edogawa.tokyo.jp/e004/sports/kankomidokoro/event/index.html", "test"))
 
 
 if __name__ == "__main__":
