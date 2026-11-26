@@ -416,11 +416,11 @@ class QualityFilterTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertEqual(status["rejected"].get("no_event_date"), 1)
 
-    def test_ics_and_status_use_v323_version(self):
+    def test_ics_and_status_use_v324_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.3//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.3")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.4//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.4")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -618,7 +618,7 @@ class V322RegressionTests(unittest.TestCase):
     def test_contact_page_title_is_rejected(self):
         self.assertTrue(app.is_non_event_page("このページに関するお問い合わせ"))
 
-    def test_ics_and_map_share_generation_identity_v323(self):
+    def test_ics_and_map_share_generation_identity_v324(self):
         ev = app.make_event("同一生成ID", (date(2026, 12, 10), date(2026, 12, 10)),
                             "なぎさポニーランド", "東京都江戸川区南葛西7丁目3番",
                             "https://example.jp/e", "test")
@@ -630,7 +630,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.3")
+        self.assertEqual(payload["app_version"], "3.2.4")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -738,3 +738,90 @@ class V323RegressionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class Version324RegressionTests(unittest.TestCase):
+    def test_csv_row_with_official_html_detail_url_is_suppressed(self):
+        csv_text = (
+            "イベント名,開催日,終了日,会場,住所,URL\n"
+            "リズム運動体験教室,2026年11月27日,2026年12月31日,篠崎コミュニティ会館,"
+            "東京都江戸川区篠崎町7丁目,https://www.city.edogawa.tokyo.jp/event/r8taiken8.html\n"
+        )
+        meta = {"url": "https://example.jp/data.csv", "http_status": 200,
+                "bytes": len(csv_text), "error": None}
+        official = {app.normalize_event_url("https://www.city.edogawa.tokyo.jp/event/r8taiken8.html")}
+        with patch.object(app, "fetch_text", return_value=(csv_text, meta)):
+            events, status = app.parse_csv_source("https://example.jp/data.csv", "test CSV",
+                                                  suppress_urls=official)
+        self.assertEqual(events, [])
+        self.assertEqual(status["suppressed_official_html_rows"], 1)
+        self.assertEqual(status["rejected"]["official_html_has_same_detail_url"], 1)
+
+    def test_mypl_detail_uses_main_content_and_extracts_official_url(self):
+        html = """<html><body>
+        <div class='global-nav'>地域情報 グルメ ショッピング メニュー</div>
+        <div id='event-detail'><h1>マッチングアプリSTARTセミナー</h1>
+        <h2>開催日時</h2><p>2026年11月28日 14:00～17:00</p>
+        <h2>会場</h2><p>タワーホール船堀</p>
+        <h2>住所</h2><p>東京都江戸川区船堀4丁目1番1号</p>
+        <p>イベント公式サイト：<a href='https://www.city.edogawa.tokyo.jp/event/matching.html'>公式ページ</a></p>
+        <p>セミナーの内容を紹介します。</p></div>
+        </body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://edogawa.mypl.net/event/123")
+        self.assertEqual(detail["spans"], [(date(2026, 11, 28), date(2026, 11, 28))])
+        self.assertEqual(detail["start_time"], "14:00")
+        self.assertEqual(detail["end_time"], "17:00")
+        self.assertEqual(detail["official_url"], "https://www.city.edogawa.tokyo.jp/event/matching.html")
+        self.assertNotIn("グルメ", detail["text"])
+        self.assertNotIn("ショッピング", detail["text"])
+
+    def test_location_access_directions_are_removed(self):
+        cleaned = app.clean_location_text(
+            "東京都江戸川区船堀4丁目1番1号【電車をご利用の場合】新宿駅から都営新宿線"
+        )
+        self.assertEqual(cleaned, "東京都江戸川区船堀4丁目1番1号")
+
+    def test_location_combination_does_not_repeat_venue(self):
+        self.assertEqual(
+            app.combine_location("タワーホール船堀", "東京都江戸川区船堀4丁目1番1号 タワーホール船堀"),
+            "東京都江戸川区船堀4丁目1番1号 タワーホール船堀",
+        )
+        self.assertEqual(
+            app.combine_location("船堀駅北口駅前広場", "船堀駅 北口広場(東京都江戸川区船堀3-5)"),
+            "船堀駅 北口広場(東京都江戸川区船堀3-5)",
+        )
+
+    def test_title_fingerprint_strips_official_date_suffix(self):
+        self.assertEqual(
+            app._title_fingerprint("マッチングアプリSTARTセミナーを開催します(令和8年11月28日)"),
+            app._title_fingerprint("マッチングアプリSTARTセミナー"),
+        )
+
+    def test_mypl_event_deduplicates_against_official_url_alias(self):
+        official = app.make_event("マッチングアプリSTARTセミナーを開催します(令和8年11月28日)",
+                                  (date(2026, 12, 12), date(2026, 12, 12)), "なぎさポニーランド",
+                                  "東京都江戸川区南葛西7丁目3番",
+                                  "https://www.city.edogawa.tokyo.jp/event/matching.html", "区公式")
+        mypl = app.make_event("マッチングアプリSTARTセミナー",
+                              (date(2026, 12, 12), date(2026, 12, 12)), "なぎさポニーランド",
+                              "東京都江戸川区南葛西7丁目3番",
+                              "https://edogawa.mypl.net/event/123", "地域・まいぷれ")
+        self.assertIsNotNone(official)
+        self.assertIsNotNone(mypl)
+        mypl.source_urls.append("https://www.city.edogawa.tokyo.jp/event/matching.html")
+        merged = app.merge_events([mypl, official])
+        self.assertEqual(len(merged), 1)
+        self.assertIn("https://edogawa.mypl.net/event/123", merged[0].source_urls)
+        self.assertIn("https://www.city.edogawa.tokyo.jp/event/matching.html", merged[0].source_urls)
+
+    def test_ics_uses_v324_prodid_and_nonduplicated_location(self):
+        ev = app.make_event("会場表記テスト", (date(2026, 12, 12), date(2026, 12, 12)),
+                            "タワーホール船堀", "東京都江戸川区船堀4丁目1番1号 タワーホール船堀",
+                            "https://example.jp/event", "test")
+        self.assertIsNotNone(ev)
+        ics = app.build_ics([ev])
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.4//EN", ics)
+        unfolded = ics.replace("\r\n ", "")
+        self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
+        self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
