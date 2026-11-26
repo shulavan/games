@@ -349,8 +349,35 @@ def is_stale_year_url(url):
             return True
         if yr == now_date.year and mo is not None and mo < now_date.month:
             # 翌年1〜3月に跨がる会期などは本文・日付側で精査するが、純粋な過去の月次ニュースは除外対象
-            return True
     if re.search(r"/(?:h\d{1,2}|s\d{1,2}|r[1-6])_", url.lower()):
+        return True
+    return False
+
+
+def is_news_index_or_category_url(url, source_url=""):
+    """Return True if URL is an archive/category/index page rather than an individual event/article page."""
+    if not url:
+        return False
+    u = url.rstrip("/")
+    s = source_url.rstrip("/")
+    if s and u == s:
+        return True
+    if (
+        "/page/" in u
+        or "/category/" in u
+        or "/tag/" in u
+        or "/archive/" in u
+        or "/tickets" in u
+        or "/access" in u
+        or "/event/list" in u
+        or "/events/list" in u
+        or u.endswith("/news/index.html")
+        or u.endswith("/news")
+        or u.endswith("/event")
+        or u.endswith("/events")
+        or re.search(r"/news/\d{4}/index\.html$", u)
+        or re.search(r"/news/\d{4}/\d{1,2}/index\.html$", u)
+    ):
         return True
     return False
 
@@ -482,12 +509,50 @@ def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
 
 def clean_event_title(raw_title):
     """Remove leading publication dates and boilerplate prefixes from event titles."""
-    t = raw_title.strip()
+    t = re.sub(r"\s+", " ", (raw_title or "").strip())
     t = re.sub(r"^20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", t)
     t = re.sub(r"^(?:イベント|主催共催公演|共催公演|特別展|企画展|NEW)\s*", "", t)
     t = re.sub(r"開催のお知らせ$", "", t).strip()
     t = re.sub(r"申込要(?:\(ONLINE\))?$", "", t).strip()
     return t or raw_title.strip()
+
+
+def _extract_best_link_title(a_tag, parent, grandparent, strict_mypl=False):
+    """Pick a meaningful event/article title from anchor text or nearby heading elements."""
+    raw_title = re.sub(r"\s+", " ", a_tag.get_text(" ", strip=True))
+    # よくある「詳細」「詳しくはこちら」「PDF」などの短いリンク文言は親/見出しから補完
+    is_generic_cta = bool(
+        re.fullmatch(
+            r"(?:詳細|詳細はこちら|詳しくはこちら|詳細を見る|もっと見る|申込|申し込み|PDF|pdf|チラシ|ポスター|一覧)",
+            raw_title,
+            flags=re.I,
+        )
+    )
+    if not is_generic_cta and not is_noise_or_news(
+        raw_title, parent.get_text(" ", strip=True) if parent else "", strict_mypl=strict_mypl
+    ):
+        return raw_title
+
+    for scope in (parent, grandparent):
+        if not scope:
+            continue
+        heading = scope.find(["h1", "h2", "h3", "h4", "dt", "strong"])
+        if heading:
+            cand = re.sub(r"\s+", " ", heading.get_text(" ", strip=True))
+            if len(cand) >= 4 and not is_noise_or_news(
+                cand, scope.get_text(" ", strip=True), strict_mypl=strict_mypl
+            ):
+                return cand
+
+    if parent:
+        p_text = re.sub(r"\s+", " ", parent.get_text(" ", strip=True))
+        # 日付やカテゴリを除いた先頭部分を候補にする
+        cand = re.sub(r"^(?:20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?|\d{1,2}[月/]\d{1,2}日?)\s*", "", p_text)
+        cand = cand[:80].strip()
+        if len(cand) >= 5 and not is_noise_or_news(cand, p_text, strict_mypl=strict_mypl):
+            return cand
+
+    return raw_title
 
 
 def extract_image_from_element(element, base_url):
@@ -618,6 +683,7 @@ def extract_dates_from_text(text, default_year=None, url=None):
     today = now.date()
 
     norm_text = normalize_japanese_text(text)
+    # 「令和8年12月13日」や「R8.12.13」などの和暦日付を西暦に変換
     norm_text = re.sub(
         r"(?:令和|R)(\d{1,2})\s*[年/.]\s*(\d{1,2})\s*[月/.]\s*(\d{1,2})\s*日?",
         lambda m: (
@@ -627,6 +693,7 @@ def extract_dates_from_text(text, default_year=None, url=None):
         norm_text,
         flags=re.I,
     )
+    # 「12月13日(日)」のような月日＋曜日表記を抽出しやすい形に整える
     norm_text = re.sub(
         r"(?:令和|R)(\d{1,2})\s*年\s*(\d{1,2})\s*月",
         lambda m: (
@@ -696,8 +763,11 @@ def extract_dates_from_text(text, default_year=None, url=None):
     if parsed_dates:
         return parsed_dates
 
-    # 3) Explicit YYYY/MM/DD or MM/DD dates in text
-    matches = re.findall(r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?", cleaned_text)
+    # 3) Explicit YYYY/MM/DD or MM/DD dates in text (including when followed by weekday like 12月13日（日）)
+    matches = re.findall(
+        r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?(?:\s*[（(]?[月火水木金土日祝・]+[）)]?)?",
+        cleaned_text,
+    )
     for y_str, m_str, d_str in matches:
         try:
             m = int(m_str)
@@ -919,6 +989,7 @@ def parse_generic_facility_events(
     fallback_base_url=None,
     strict_mypl=False,
     allow_mypl_default_venue=False,
+    allow_detail_date_lookup=False,
 ):
     """Generic scraper for Edogawa public/cultural/park/commercial/school event pages with URL fallback."""
     html = fetch_html(url, timeout=timeout, retries=retries)
@@ -937,23 +1008,17 @@ def parse_generic_facility_events(
     events = {}
     all_links = soup.find_all("a", href=True)
     dated_candidates = 0
+    detail_date_checks = 0
+    today = datetime.now(JST).date()
 
     for a_tag in all_links:
         href = a_tag["href"].strip()
         if not href or href.startswith("#") or "javascript:" in href or href.startswith("mailto:"):
             continue
         full_url = urljoin(url, href)
-        if (
-            full_url.rstrip("/") == url.rstrip("/")
-            or "/page/" in full_url
-            or re.search(r"/news/\d{4}/index\.html$", full_url)
-            or re.search(r"/category/", full_url)
-            or re.search(r"/tag/", full_url)
-            or is_stale_year_url(full_url)
-        ):
+        if is_news_index_or_category_url(full_url, source_url=url) or is_stale_year_url(full_url):
             continue
 
-        raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["article", "tr", "li", "dd", "dl", "div"]) or a_tag
         grandparent = parent.find_parent(["article", "tr", "li", "dl", "div"]) if parent else None
         prev_sib = parent.find_previous_sibling(["dt", "div", "p", "span", "time"]) if parent else None
@@ -962,20 +1027,12 @@ def parse_generic_facility_events(
             or (grandparent.find("time") if grandparent else None)
         )
         time_text = time_el.get_text(" ", strip=True) if time_el else ""
-        if is_noise_or_news(raw_title, parent.get_text(" ", strip=True), full_url, strict_mypl=strict_mypl):
-            heading = (
-                (parent.find(["h2", "h3", "h4", "dt"]) if parent else None)
-                or (grandparent.find(["h2", "h3", "h4", "dt"]) if grandparent else None)
-            )
-            if heading:
-                cand = heading.get_text(" ", strip=True)
-                if not is_noise_or_news(cand, parent.get_text(" ", strip=True), full_url, strict_mypl=strict_mypl):
-                    raw_title = cand
 
+        raw_title = _extract_best_link_title(a_tag, parent, grandparent, strict_mypl=strict_mypl)
         parent_text = parent.get_text(" ", strip=True) if parent else ""
         prev_text = prev_sib.get_text(" ", strip=True) if prev_sib else ""
         grand_text = ""
-        if grandparent and len(grandparent.get_text(" ", strip=True)) <= 400:
+        if grandparent and len(grandparent.get_text(" ", strip=True)) <= 500:
             grand_text = grandparent.get_text(" ", strip=True)
         block_text = f"{prev_text} {parent_text} {grand_text}".strip()
         if is_noise_or_news(raw_title, block_text, full_url, strict_mypl=strict_mypl):
@@ -997,6 +1054,22 @@ def parse_generic_facility_events(
             or extract_dates_from_text(parent_text, url=full_url)
             or extract_dates_from_text(grand_text, url=full_url)
         )
+
+        # 一覧ページに日付が書かれていない施設・学校・公園・フリマ記事は詳細ページ本文から開催日を抽出
+        if not parsed_dates and allow_detail_date_lookup and detail_date_checks < 25:
+            detail_date_checks += 1
+            detail_html = fetch_html(full_url, timeout=8, retries=0)
+            if detail_html:
+                detail_soup = BeautifulSoup(detail_html, "html.parser")
+                detail_main = detail_soup.find(["main", "article"]) or detail_soup.body or detail_soup
+                detail_text = detail_main.get_text(" ", strip=True)
+                if not is_past_report_text(detail_text[-200:]):
+                    detail_dates = {
+                        d for d in extract_dates_from_text(detail_text[:2500], url=full_url) if d >= today
+                    }
+                    if detail_dates:
+                        parsed_dates = detail_dates
+                        combined_text = f"{combined_text} {detail_text[:1000]}"
 
         if not parsed_dates:
             continue
@@ -1034,18 +1107,20 @@ def parse_library_events():
     soup = BeautifulSoup(html, "html.parser")
     events = {}
     now = datetime.now(JST)
+    today = now.date()
 
     for a_tag in soup.find_all("a", href=True):
         href = a_tag["href"].strip()
         if not href or href.startswith("#") or "javascript:" in href:
             continue
         full_url = urljoin(LIBRARY_EVENT_URL, href)
-        if full_url.rstrip("/") == LIBRARY_EVENT_URL.rstrip("/") or is_stale_year_url(full_url):
+        if is_news_index_or_category_url(full_url, source_url=LIBRARY_EVENT_URL) or is_stale_year_url(full_url):
             continue
-        raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["tr", "li", "dd", "dl", "div"]) or a_tag
+        grandparent = parent.find_parent(["tr", "li", "dl", "div"]) if parent else None
+        raw_title = _extract_best_link_title(a_tag, parent, grandparent)
         block_text = parent.get_text(" ", strip=True)
-        if is_noise_or_news(raw_title, "", full_url):
+        if is_noise_or_news(raw_title, block_text, full_url):
             continue
 
         title = clean_event_title(raw_title)
@@ -1054,9 +1129,20 @@ def parse_library_events():
             title_dates if title_dates else extract_dates_from_text(block_text, default_year=now.year, url=full_url)
         )
         if not parsed_dates:
+            detail_html = fetch_html(full_url, timeout=8, retries=0)
+            if detail_html:
+                d_soup = BeautifulSoup(detail_html, "html.parser")
+                d_main = d_soup.find(["main", "article"]) or d_soup.body or d_soup
+                d_text = d_main.get_text(" ", strip=True)
+                parsed_dates = {
+                    d for d in extract_dates_from_text(d_text[:2000], default_year=now.year, url=full_url) if d >= today
+                }
+                if parsed_dates:
+                    block_text = f"{block_text} {d_text[:600]}"
+        if not parsed_dates:
             continue
 
-        venue = infer_venue_from_text(block_text, default_venue="")
+        venue = infer_venue_from_text(block_text, default_venue="中央図書館")
 
         if full_url not in events:
             events[full_url] = {
@@ -1319,45 +1405,78 @@ def main():
     add_events(
         "江戸川区総合文化センター(カレンダー)",
         parse_generic_facility_events(
-            BUNKACENTER_CAL_URL, "公共・総合文化センター", "江戸川区総合文化センター"
+            BUNKACENTER_CAL_URL,
+            "公共・総合文化センター",
+            "江戸川区総合文化センター",
+            allow_detail_date_lookup=True,
         ),
         priority_rank=6,
     )
     add_events("江戸川区スポーツ", parse_sports_kintone_events(), priority_rank=7)
     add_events(
         "葛西海浜公園",
-        parse_generic_facility_events(KASAI_KAIHIN_PARK_URL, "公共・葛西海浜公園", "葛西海浜公園"),
+        parse_generic_facility_events(
+            KASAI_KAIHIN_PARK_URL,
+            "公共・葛西海浜公園",
+            "葛西海浜公園",
+            allow_detail_date_lookup=True,
+        ),
         priority_rank=8,
     )
     add_events(
         "葛西臨海公園",
         parse_generic_facility_events(
-            KASAI_RINKAI_PARK_URL, "公共・葛西臨海公園", "葛西臨海公園", timeout=20, retries=1
+            KASAI_RINKAI_PARK_URL,
+            "公共・葛西臨海公園",
+            "葛西臨海公園",
+            timeout=20,
+            retries=1,
+            allow_detail_date_lookup=True,
         ),
         priority_rank=9,
     )
     add_events(
         "都立篠崎公園",
         parse_generic_facility_events(
-            SHINOZAKI_PARK_URL, "公共・篠崎公園", "篠崎公園", timeout=15, retries=1
+            SHINOZAKI_PARK_URL,
+            "公共・篠崎公園",
+            "篠崎公園",
+            timeout=15,
+            retries=1,
+            allow_detail_date_lookup=True,
         ),
         priority_rank=10,
     )
     add_events(
         "都立大島小松川公園",
         parse_generic_facility_events(
-            OJIMA_KOMATSUGAWA_PARK_URL, "公共・大島小松川公園", "大島小松川公園", timeout=15, retries=1
+            OJIMA_KOMATSUGAWA_PARK_URL,
+            "公共・大島小松川公園",
+            "大島小松川公園",
+            timeout=15,
+            retries=1,
+            allow_detail_date_lookup=True,
         ),
         priority_rank=11,
     )
     add_events(
         "魔法の文学館",
-        parse_generic_facility_events(KIKIS_MUSEUM_EVENT_URL, "公共・魔法の文学館", "魔法の文学館"),
+        parse_generic_facility_events(
+            KIKIS_MUSEUM_EVENT_URL,
+            "公共・魔法の文学館",
+            "魔法の文学館",
+            allow_detail_date_lookup=True,
+        ),
         priority_rank=12,
     )
     add_events(
         "葛西臨海水族園",
-        parse_generic_facility_events(KASAI_AQUARIUM_URL, "公共・葛西臨海水族園", "葛西臨海水族園"),
+        parse_generic_facility_events(
+            KASAI_AQUARIUM_URL,
+            "公共・葛西臨海水族園",
+            "葛西臨海水族園",
+            allow_detail_date_lookup=True,
+        ),
         priority_rank=13,
     )
     add_events(
@@ -1368,6 +1487,7 @@ def main():
             "江戸川陸上競技場",
             timeout=12,
             retries=1,
+            allow_detail_date_lookup=True,
         ),
         priority_rank=14,
     )
@@ -1379,6 +1499,7 @@ def main():
             "江戸川球場",
             timeout=12,
             retries=1,
+            allow_detail_date_lookup=True,
         ),
         priority_rank=15,
     )
@@ -1408,6 +1529,7 @@ def main():
             timeout=10,
             retries=1,
             area_keywords=("江戸川", "葛西", "篠崎", "小松川", "船堀", "小岩", "平井"),
+            allow_detail_date_lookup=True,
         ),
         priority_rank=21,
     )
@@ -1432,6 +1554,7 @@ def main():
                 timeout=8,
                 retries=0,
                 require_keywords=SCHOOL_PUBLIC_KEYWORDS,
+                allow_detail_date_lookup=True,
             ),
             priority_rank=40 + idx,
         )
