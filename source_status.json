@@ -2,7 +2,7 @@
   "app_version": "3.2.2",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-26T21:18:56.552018+09:00",
+  "generated_at": "2026-11-27T02:09:22.708713+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -629,10 +629,10 @@
       "cache_hit": false,
       "status": "ok",
       "candidate_rows": 458,
-      "accepted": 4164,
+      "accepted": 4121,
       "detail_lookups": 80,
       "rejected": {
-        "outside_or_unverified_location": 520,
+        "outside_or_unverified_location": 514,
         "outside_facility_mention:恩賜上野動物園": 1
       },
       "headers": [
@@ -1557,9 +1557,9 @@
       "list_view_links": 1142,
       "calendar_months_successful": 12,
       "calendar_months_requested": 12,
-      "day_detail_pages_requested": 145,
-      "day_detail_pages_success": 145,
-      "day_detail_event_links": 2799,
+      "day_detail_pages_requested": 144,
+      "day_detail_pages_success": 144,
+      "day_detail_event_links": 2775,
       "day_detail_page_failures": 0,
       "day_detail_coverage_ratio": 1.0,
       "site_coverage": {
@@ -1950,19 +1950,19 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 63575,
+      "bytes": 64532,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "ok",
-      "total_links": 216,
+      "total_links": 221,
       "same_site_links": 0,
-      "candidate_links": 21,
-      "detail_success": 21,
-      "accepted": 7,
+      "candidate_links": 27,
+      "detail_success": 27,
+      "accepted": 12,
       "rejected": {
         "no_event_date": 15,
-        "location_unverified": 1,
+        "location_unverified": 2,
         "non_event_page": 1
       },
       "feed_urls": [],
@@ -1974,7 +1974,7 @@
       "name": "アリオ葛西",
       "url": "https://kasai.ario.jp/event/",
       "http_status": 200,
-      "bytes": 77633,
+      "bytes": 77653,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2177,14 +2177,14 @@
       "name": "都立葛西南高校",
       "url": "https://www.metro.ed.jp/kasaiminami-h/news/index.html",
       "http_status": 200,
-      "bytes": 181355,
+      "bytes": 181606,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "ok",
-      "total_links": 742,
+      "total_links": 743,
       "same_site_links": 0,
-      "candidate_links": 692,
+      "candidate_links": 693,
       "detail_success": 250,
       "accepted": 3,
       "rejected": {
@@ -2194,7 +2194,7 @@
       },
       "feed_urls": [],
       "feed_candidates": 0,
-      "truncated_candidates": 442,
+      "truncated_candidates": 443,
       "previous_accepted": 3
     },
     "都立紅葉川高校": {
@@ -2296,18 +2296,18 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "geocoding": {
-    "cache_hits": 3971,
+    "cache_hits": 3931,
     "gsi_queries": 232,
     "nominatim_queries": 44,
-    "success": 80,
-    "failed": 152,
+    "success": 81,
+    "failed": 151,
     "outside": 0
   },
   "totals": {
-    "raw_records": 4945,
-    "unique_events": 4792,
-    "deduplicated_records": 153,
-    "with_coordinates": 4792,
+    "raw_records": 4907,
+    "unique_events": 4756,
+    "deduplicated_records": 151,
+    "with_coordinates": 4756,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2320,5 +2320,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "86f92b897f24028b"
+  "execution_id": "f9e9c149faec3ddb"
 }
