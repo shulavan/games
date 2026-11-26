@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.5",
+  "app_version": "3.2.6",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T07:12:19.838511+09:00",
+  "generated_at": "2026-11-27T07:34:35.982970+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1344,9 +1344,9 @@
           "error": null
         }
       ],
-      "candidate_urls": 254,
-      "detail_success": 254,
-      "accepted": 508,
+      "candidate_urls": 253,
+      "detail_success": 253,
+      "accepted": 496,
       "rejected": {
         "location_unverified": 21,
         "non_event_page": 1,
@@ -1354,12 +1354,12 @@
         "outside_address": 1
       },
       "calendar_view_links": 0,
-      "list_view_links": 1069,
+      "list_view_links": 1045,
       "calendar_months_successful": 12,
       "calendar_months_requested": 12,
       "day_detail_pages_requested": 144,
       "day_detail_pages_success": 144,
-      "day_detail_event_links": 2603,
+      "day_detail_event_links": 2579,
       "day_detail_page_failures": 0,
       "day_detail_coverage_ratio": 1.0,
       "site_coverage": {
@@ -1379,7 +1379,7 @@
           "months_requested": 12
         }
       },
-      "previous_accepted": 496
+      "previous_accepted": 508
     },
     "江戸川区イベントカレンダーCSV": {
       "name": "江戸川区イベントカレンダーCSV",
@@ -1626,14 +1626,14 @@
       "url": "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html",
       "http_status": 200,
       "bytes": 113773,
-      "error": "ReadTimeout: HTTPSConnectionPool(host='www.tokyo-park.or.jp', port=443): Read timed out. (read timeout=16)",
-      "attempts": 2,
+      "error": null,
+      "attempts": 1,
       "cache_hit": false,
       "status": "ok",
       "total_links": 274,
       "same_site_links": 0,
       "candidate_links": 44,
-      "detail_success": 41,
+      "detail_success": 44,
       "accepted": 5,
       "rejected": {
         "no_event_date": 38
@@ -1954,7 +1954,7 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64505,
+      "bytes": 64567,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -1963,10 +1963,9 @@
       "same_site_links": 0,
       "candidate_links": 27,
       "detail_success": 27,
-      "accepted": 12,
+      "accepted": 14,
       "rejected": {
-        "no_event_date": 16,
-        "location_unverified": 2
+        "no_event_date": 16
       },
       "feed_urls": [],
       "feed_candidates": 0,
@@ -2299,18 +2298,18 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "geocoding": {
-    "cache_hits": 207,
-    "gsi_queries": 71,
+    "cache_hits": 196,
+    "gsi_queries": 70,
     "nominatim_queries": 44,
-    "success": 27,
+    "success": 26,
     "failed": 44,
     "outside": 0
   },
   "totals": {
-    "raw_records": 796,
-    "unique_events": 787,
+    "raw_records": 786,
+    "unique_events": 777,
     "deduplicated_records": 9,
-    "with_coordinates": 787,
+    "with_coordinates": 777,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2323,5 +2322,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "3a8465f394b77332"
+  "execution_id": "cda0f8f49ea707d7"
 }
