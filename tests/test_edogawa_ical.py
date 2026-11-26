@@ -347,6 +347,74 @@ class QualityFilterTests(unittest.TestCase):
             b = self._event("クリスマス工作教室", "2026-12-10", url="https://b.example/event/2")
         self.assertEqual(len(app.merge_events([a, b])), 2)
 
+    def test_floor_guide_is_not_an_event_page(self):
+        self.assertTrue(app.is_non_event_page("フロア案内"))
+        html = """<html><body><main><h1>フロア案内</h1>
+        <p>1階・2階・屋上の施設を紹介します。</p></main></body></html>"""
+        detail = app.extract_detail(html, "https://www.city.edogawa.tokyo.jp/example/floor.html")
+        self.assertTrue(detail["is_non_event_page"])
+        self.assertEqual(detail["spans"], [])
+
+    def test_other_information_pages_are_not_events(self):
+        for title in ("外国の方向け生活情報", "区内の主なイベント", "子育て・教育",
+                      "まちづくり・環境", "施設情報"):
+            with self.subTest(title=title):
+                self.assertTrue(app.is_non_event_page(title))
+
+    def test_ueno_zoo_is_rejected_as_actual_venue_even_with_kasai_default(self):
+        ok, _, reason = app.verify_edogawa_location(
+            "", "上野動物園内 管理事務所3階", "葛西臨海水族園"
+        )
+        self.assertFalse(ok)
+        self.assertEqual(reason, "outside_facility_venue")
+
+    def test_outside_facility_mention_in_detail_body_rejects_event(self):
+        html = """<html><body><main><h1>野生動物保全の報告講演会</h1>
+        <h2>開催日時</h2><p>2026年12月12日 10時から11時</p>
+        <h2>会場</h2><p>上野動物園内 管理事務所3階</p>
+        </main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            detail = app.extract_detail(html, "https://www.tokyo-zoo.net/news/event.html",
+                                        default_venue="葛西臨海水族園")
+        self.assertEqual(detail["venue"], "上野動物園内 管理事務所3階")
+        self.assertEqual(detail["outside_facility_mention"], "上野動物園")
+        self.assertIsNone(app.make_event(
+            detail["title"], detail["spans"][0], detail["venue"], detail["address"],
+            "https://www.tokyo-zoo.net/news/event.html", "葛西臨海水族園",
+            default_venue="葛西臨海水族園", description=detail["text"]
+        ))
+
+    def test_outside_facility_body_mention_is_rejected_even_if_default_venue_is_in_ward(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            self.assertIsNone(app.make_event(
+                "野生動物保全講演会", (date(2026, 12, 12), date(2026, 12, 12)),
+                "葛西臨海水族園", "東京都江戸川区臨海町6丁目", "https://example.jp/e", "test",
+                default_venue="葛西臨海水族園", description="会場は恩賜上野動物園内です。"
+            ))
+
+    def test_listing_publication_time_is_not_used_as_event_date(self):
+        listing = """<html><body><article><a href="/news/1">冬のイベント開催のお知らせ</a>
+        <time datetime="2026-12-10">2026年12月10日</time></article></body></html>"""
+        detail = """<html><body><main><h1>冬のイベント開催のお知らせ</h1>
+        <p>公開日：2026年12月10日</p><p>イベントの様子を紹介します。</p>
+        <h2>会場</h2><p>タワーホール船堀</p></main></body></html>"""
+        def fake_fetch(url, params=None, timeout=15):
+            body = listing if url.endswith("/events/") else detail
+            return body, {"url": url, "http_status": 200, "bytes": len(body), "error": None}
+        with patch.object(app, "TODAY", date(2026, 11, 26)), patch.object(app, "fetch_text", side_effect=fake_fetch):
+            events, status = app.parse_listing_source({
+                "name": "test listing", "url": "https://example.jp/events/",
+                "default_venue": "タワーホール船堀", "max_details": 10
+            })
+        self.assertEqual(events, [])
+        self.assertEqual(status["rejected"].get("no_event_date"), 1)
+
+    def test_ics_and_status_use_v320_version(self):
+        ev = self._event("バージョン確認イベント", "2026-12-10")
+        ics = app.build_ics([ev])
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.0//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.0")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
