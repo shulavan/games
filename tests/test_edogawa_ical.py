@@ -277,9 +277,7 @@ class FeedAndSourceHealthTests(unittest.TestCase):
         ev = app.make_event("座標テスト", (date(2026, 12, 12), date(2026, 12, 12)),
                             "会場名", "東京都江戸川区中央1丁目", "https://example.jp/1", "test",
                             lat=35.68, lon=139.55)
-        self.assertIsNotNone(ev)
-        self.assertIsNone(ev.latitude)
-        self.assertIsNone(ev.longitude)
+        self.assertIsNone(ev)
 
 
 class QualityFilterTests(unittest.TestCase):
@@ -409,11 +407,158 @@ class QualityFilterTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertEqual(status["rejected"].get("no_event_date"), 1)
 
-    def test_ics_and_status_use_v320_version(self):
+    def test_ics_and_status_use_v321_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.0//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.0")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.1//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.1")
+
+    def test_output_validation_rejects_event_without_coordinates(self):
+        ev = self._event("座標なし検証", "2026-12-10")
+        ev.latitude = None
+        ev.longitude = None
+        with self.assertRaisesRegex(RuntimeError, "Missing geocoded coordinates"):
+            app.validate_outputs(app.build_ics([ev]), [ev])
+
+    def test_library_cms_uses_individual_event_heading_not_generic_h1(self):
+        html = """<html><body><main><h1>イベント情報</h1><h2>東部図書館</h2>
+        <h3>Bettyさんスペシャル「ぬいぐるみといっしょにおはなし会」</h3>
+        <table><tr><th>日時</th><td>2026年11月28日 14時00分～15時00分</td></tr>
+        <tr><th>会場</th><td>東部図書館 2階 視聴覚室</td></tr></table></main></body></html>"""
+        d = app.extract_detail(html, "https://www.library.city.edogawa.tokyo.jp/toshow/event/event_10295.php")
+        self.assertEqual(d["title"], "Bettyさんスペシャル「ぬいぐるみといっしょにおはなし会」")
+        self.assertEqual(d["spans"][0][0], date(2026, 11, 28))
+        self.assertIn("東部図書館", d["venue"])
+
+
+    def test_library_ssl_failure_uses_tls12_fallback(self):
+        app._FETCH_CACHE.clear()
+        with patch.object(app.SESSION, "get", side_effect=app.requests.exceptions.SSLError("handshake")), \
+             patch.object(app, "fetch_library_tls12", return_value=("<html>ok</html>", 14, 200)) as fallback:
+            body, meta = app.fetch_text("https://www.library.city.edogawa.tokyo.jp/toshow/event/", timeout=10)
+        self.assertEqual(body, "<html>ok</html>")
+        self.assertEqual(meta["tls_fallback"], "TLS1.2")
+        fallback.assert_called_once()
+        app._FETCH_CACHE.clear()
+
+
+    def test_culture_center_listing_context_provides_event_date_and_venue(self):
+        listing = """<html><body><main><h1>主催共催公演</h1><div class='event-card'>
+        <a href='/event/sample/'>江戸川区総合文化センター 休館中特別公演 第167回江戸川落語会</a>
+        <p>2026年12月2日（水）18:30開演</p><p>会場 小松川さくらホール（東大島駅より徒歩約10分）</p>
+        </div></main></body></html>"""
+        detail = "<html><body><main><h1>主催共催公演</h1><p>詳細情報</p></main></body></html>"
+        def fake_fetch(url, params=None, timeout=15):
+            body = listing if url.endswith("/calendar/") else detail
+            return body, {"url": url, "http_status": 200, "bytes": len(body), "error": None}
+        with patch.object(app, "TODAY", date(2026, 11, 26)), patch.object(app, "fetch_text", side_effect=fake_fetch):
+            events, status = app.parse_listing_source({
+                "name": "culture center", "url": "https://example.jp/calendar/", "default_venue": None,
+                "category": "文化・公演", "priority": 2, "max_details": 10,
+                "date_from_context": True, "venue_from_context": True,
+                "context_ancestors": True, "prefer_listing_title": True
+            })
+        self.assertEqual(len(events), 1)
+        self.assertIn("第167回江戸川落語会", events[0].title)
+        self.assertEqual(events[0].start_date, "2026-12-02")
+        self.assertEqual(events[0].venue, "小松川さくらホール")
+
+
+    def test_map_json_uses_same_generated_at_as_source_status(self):
+        ev = app.make_event("生成時刻確認", (date(2026, 12, 10), date(2026, 12, 10)),
+                            "なぎさポニーランド", "東京都江戸川区南葛西7丁目3番", "https://example.jp/e", "test")
+        generated_at = "2026-11-26T17:56:46.705209+09:00"
+        payload = app.to_map_json([ev], {"generated_at": generated_at, "sources": {}}, mode="live")
+        self.assertEqual(payload["generated_at"], generated_at)
+
+
+
+class V321RegressionTests(unittest.TestCase):
+    def test_real_city_csv_headers_map_to_actual_address_url_image_fields(self):
+        headers = ["都道府県コード", "都道府県", "市区町村", "イベント名", "開催日", "終了日",
+                   "場所名称（おでかけスポット）", "町名番地", "イベント画像のURL", "ホームページURL", "PR文"]
+        mapped = app._map_csv_columns(headers)
+        self.assertEqual(mapped["city"], "市区町村")
+        self.assertEqual(mapped["address"], "町名番地")
+        self.assertEqual(mapped["venue"], "場所名称（おでかけスポット）")
+        self.assertEqual(mapped["url"], "ホームページURL")
+        self.assertEqual(mapped["image"], "イベント画像のURL")
+        self.assertEqual(mapped["description"], "PR文")
+
+    def test_real_city_csv_row_is_accepted_with_actual_headers(self):
+        csv_text = ("都道府県コード,都道府県,市区町村,イベント名,開催日,終了日,開始時間,終了時間,"
+                    "場所名称（おでかけスポット）,町名番地,緯度,経度,イベント画像のURL,ホームページURL,PR文\n"
+                    "13,東京都,江戸川区,テスト講座,2026-12-12,2026-12-12,10:00,11:00,"
+                    "テスト会場,中央1丁目,35.70,139.86,https://example.jp/img.jpg,https://example.jp/event,区内講座\n")
+        meta = {"url": "https://example.jp/city.csv", "http_status": 200, "bytes": len(csv_text), "error": None}
+        with patch.object(app, "TODAY", date(2026, 11, 26)), patch.object(app, "fetch_text", return_value=(csv_text, meta)):
+            events, status = app.parse_csv_source("https://example.jp/city.csv", "city")
+        self.assertEqual(status["status"], "ok")
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].address, "東京都江戸川区中央1丁目")
+        self.assertEqual(events[0].url, "https://example.jp/event")
+        self.assertEqual(events[0].image_url, "https://example.jp/img.jpg")
+
+    def test_real_tokyo_opendata_headers_do_not_map_city_code_as_address(self):
+        headers = ["全国地方公共団体コード", "地方公共団体名", "イベント名", "開始日", "終了日",
+                   "コンテンツURL", "場所名称", "所在地_全国地方公共団体コード",
+                   "所在地_連結表記", "所在地_都道府県", "所在地_市区町村", "緯度", "経度", "説明"]
+        mapped = app._map_csv_columns(headers)
+        self.assertEqual(mapped["address"], "所在地_連結表記")
+        self.assertEqual(mapped["start"], "開始日")
+        self.assertEqual(mapped["url"], "コンテンツURL")
+        self.assertEqual(mapped["city"], "所在地_市区町村")
+
+    def test_weekly_course_is_expanded_to_individual_days(self):
+        with patch.object(app, "TODAY", date(2026, 11, 26)):
+            spans = app.expand_recurring_spans("毎週木曜日（全4回）", [(date(2026, 11, 26), date(2026, 12, 31))])
+        self.assertEqual([x[0] for x in spans], [date(2026, 11, 26), date(2026, 12, 3), date(2026, 12, 10), date(2026, 12, 17)])
+        self.assertTrue(all(a == b for a, b in spans))
+
+    def test_monthly_nth_weekday_is_expanded(self):
+        with patch.object(app, "TODAY", date(2026, 11, 1)):
+            spans = app.expand_recurring_spans("毎月第3日曜日（全3回）", [(date(2026, 11, 1), date(2027, 1, 31))])
+        self.assertEqual([x[0] for x in spans], [date(2026, 11, 15), date(2026, 12, 20), date(2027, 1, 17)])
+
+    def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
+        class FakeResponse:
+            def raise_for_status(self): pass
+            def json(self):
+                return [{"properties": {"title": "東京都江戸川区中央一丁目"},
+                         "geometry": {"coordinates": [139.86, 35.70]}}]
+        with patch.object(app, "_GEOCODE_CACHE", {}), patch.object(app, "_GEOCODE_CACHE_LOADED", True), \
+             patch.object(app.SESSION, "get", return_value=FakeResponse()):
+            lat, lon, provider = app.geocode_edogawa_location("東京都江戸川区中央1丁目", "")
+        self.assertEqual((lat, lon, provider), (35.70, 139.86, "GSI"))
+
+    def test_geocoder_strips_homepage_suffix_before_query(self):
+        class FakeResponse:
+            def raise_for_status(self): pass
+            def json(self):
+                return [{"properties": {"title": "東京都江戸川区中央三丁目"},
+                         "geometry": {"coordinates": [139.86, 35.70]}}]
+        with patch.object(app, "_GEOCODE_CACHE", {}), patch.object(app, "_GEOCODE_CACHE_LOADED", True), \
+             patch.object(app.SESSION, "get", return_value=FakeResponse()) as mocked:
+            app.geocode_edogawa_location("江戸川区中央三丁目4番18号 ホームページ はあとポート", "はあとポート")
+        self.assertIn("中央三丁目4番18号", mocked.call_args.kwargs["params"]["q"])
+        self.assertNotIn("ホームページ", mocked.call_args.kwargs["params"]["q"])
+
+    def test_geocoder_rejects_non_edogawa_result(self):
+        class FakeResponse:
+            def raise_for_status(self): pass
+            def json(self):
+                return [{"properties": {"title": "東京都葛飾区小菅一丁目"},
+                         "geometry": {"coordinates": [139.82, 35.75]}}]
+        with patch.object(app, "_GEOCODE_CACHE", {}), patch.object(app, "_GEOCODE_CACHE_LOADED", True), \
+             patch.object(app.SESSION, "get", return_value=FakeResponse()):
+            lat, lon, provider = app.geocode_edogawa_location("東京都江戸川区の未確定住所", "")
+        self.assertEqual((lat, lon, provider), (None, None, None))
+
+    def test_make_event_never_emits_without_coordinates(self):
+        with patch.object(app, "geocode_edogawa_location", return_value=(None, None, None)):
+            event = app.make_event("座標不明イベント", (date(2026, 12, 1), date(2026, 12, 1)),
+                                   "未登録会場", "東京都江戸川区未確認", "https://example.jp/e", "test")
+        self.assertIsNone(event)
 
 
 if __name__ == "__main__":
