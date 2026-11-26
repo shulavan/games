@@ -16,6 +16,7 @@ BASE_URL = "https://www.city.edogawa.tokyo.jp/cgi-bin/event_cal_multi/calendar.c
 EDOGAWA_TOP_URL = "https://www.city.edogawa.tokyo.jp/"
 EDOGAWA_EVENT_TOP_URL = "https://www.city.edogawa.tokyo.jp/event/"
 LIBRARY_EVENT_URL = "https://www.library.city.edogawa.tokyo.jp/toshow/event/"
+LIBRARY_TOP_URL = "https://www.library.city.edogawa.tokyo.jp/"
 TOWERHALL_EVENT_URL = "https://www.towerhall.jp/events/list/"
 BUNKACENTER_EVENT_URL = "https://edogawa-bunkacenter.jp/calendar-host-fiscal/"
 BUNKACENTER_CAL_URL = "https://edogawa-bunkacenter.jp/calendar/"
@@ -26,6 +27,7 @@ SPORTS_KINTONE_URL = (
 KASAI_KAIHIN_PARK_URL = "https://kasaikaihinpark.com/event/"
 KASAI_RINKAI_PARK_URL = "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html"
 KIKIS_MUSEUM_EVENT_URL = "https://kikismuseum.jp/category/event/"
+KIKIS_MUSEUM_NEWS_URL = "https://kikismuseum.jp/news/"
 KASAI_AQUARIUM_URL = "https://www.tokyo-zoo.net/zoo/kasai/"
 SHINOZAKI_PARK_URL = "https://www.tokyo-park.or.jp/park/shinozaki/news/index.html"
 OJIMA_KOMATSUGAWA_PARK_URL = (
@@ -40,6 +42,7 @@ EDOGAWA_MYPL_EVENT_URL = "https://edogawa.mypl.net/event/"
 # ==========================================
 TSURUOKA_BUSSAN_URL = "https://www.city.tsuruoka.lg.jp/kanko/kankou-sonota/tokyo01.html"
 TRX_FLEAMARKET_URL = "https://trx.jp/"
+TRX_TOKYO_FLEAMARKET_URL = "https://trx.jp/area/tokyo/"
 ARIO_KASAI_EVENT_URL = "https://kasai.ario.jp/event/"
 
 SCHOOL_EVENT_SOURCES = [
@@ -300,10 +303,14 @@ SESSION.headers.update({"User-Agent": USER_AGENT})
 
 
 class LegacySSLAdapter(HTTPAdapter):
-    """Allow legacy renegotiation for older government/library TLS endpoints."""
+    """Allow legacy renegotiation and relaxed ciphers for older government/library TLS endpoints."""
 
     def init_poolmanager(self, *args, **kwargs):
         ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+        try:
+            ctx.set_ciphers("DEFAULT:@SECLEVEL=1")
+        except Exception:
+            pass
         try:
             ctx.options |= 0x4
         except Exception:
@@ -339,7 +346,7 @@ def extract_url_year_month(url):
 
 
 def is_stale_year_url(url):
-    """Return True if a URL explicitly points to an old year or past fiscal year directory."""
+    """Return True if a URL explicitly points to an old year or past month archive directory."""
     if not url:
         return False
     now_date = datetime.now(JST).date()
@@ -347,8 +354,9 @@ def is_stale_year_url(url):
     if yr is not None:
         if yr < now_date.year:
             return True
-        if yr == now_date.year and mo is not None and mo < now_date.month:
-            # 翌年1〜3月に跨がる会期などは本文・日付側で精査するが、純粋な過去の月次ニュースは除外対象
+        # 学校や施設ニュースで掲載月(mo)が前月以前の記事は、会期跨ぎの特別展URLを除き古い記事の可能性が高い
+        if yr == now_date.year and mo is not None and mo < now_date.month - 1:
+            return True
     if re.search(r"/(?:h\d{1,2}|s\d{1,2}|r[1-6])_", url.lower()):
         return True
     return False
@@ -445,7 +453,7 @@ def discover_fallback_url(base_url, path_hints=("event", "news", "info", "calend
             k in label for k in ("イベント", "催し", "お知らせ", "行事", "文化", "子育て", "健康")
         ):
             cand = urljoin(base_url, href)
-            if cand.rstrip("/") != base_url.rstrip("/") and "city.edogawa.tokyo.jp" in cand:
+            if cand.rstrip("/") != base_url.rstrip("/"):
                 candidates.append(cand)
     for cand in candidates:
         if "/event/" in cand or "event" in cand.lower():
@@ -459,23 +467,36 @@ def is_past_report_text(text):
     return any(re.search(pat, t) for pat in PAST_REPORT_PATTERNS)
 
 
-def is_mypl_event_post(title, block_text=""):
-    """Return True only when a MyPl entry looks like a genuine event/催し with concrete name or date."""
-    t = title.strip()
-    if not t or len(t) < 8:
+def has_only_past_dates(text, default_year=None, url=None):
+    """Return True if text contains explicit dates and ALL of them are strictly before today."""
+    today = datetime.now(JST).date()
+    norm = normalize_japanese_text(text)
+    norm = re.sub(
+        r"(?:令和|R)(\d{1,2})\s*[年/.]\s*(\d{1,2})\s*[月/.]\s*(\d{1,2})\s*日?",
+        lambda m: (
+            f"{_japanese_era_to_western_year(m.group(0)[0], m.group(1)) or (default_year or today.year)}/"
+            f"{int(m.group(2))}/{int(m.group(3))}"
+        ),
+        norm,
+        flags=re.I,
+    )
+    matches = re.findall(r"(?:(\d{4})[年/\.])?(\d{1,2})[月/\.](\d{1,2})日?", norm)
+    if not matches:
         return False
-    if t.endswith("…") or t.endswith("..."):
-        return False
-    if re.search(r"^(?:【江戸川区】)?\d{1,2}月\d{1,2}日[「『\"【]?\s*$", t):
-        return False
-    if re.search(r"^\d+(?:\.\d+)+歳のおともだちへ", t):
-        return False
-    norm_t = normalize_japanese_text(t)
-    has_date_in_title = bool(re.search(r"(?:\d{1,2}月\d{1,2}日|\d{1,2}/\d{1,2})", norm_t))
-    has_event_kw_in_title = any(kw in t for kw in MYPL_EVENT_KEYWORDS)
-    return has_date_in_title or has_event_kw_in_title
-
-
+    saw_valid = False
+    for y_str, m_str, d_str in matches:
+        try:
+            m, d = int(m_str), int(d_str)
+            if not (1 <= m <= 12 and 1 <= d <= 31):
+                continue
+            y = int(y_str) if y_str else _resolve_year_for_month(m, today, default_year, url=url)
+            cand = datetime(y, m, d, tzinfo=JST).date()
+            saw_valid = True
+            if cand >= today:
+                return False
+        except ValueError:
+            continue
+    return saw_valid
 def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
     """Return True for pure news posts, closure notices, stale URLs, out-of-district events, or navigation labels."""
     t = title.strip()
@@ -483,18 +504,11 @@ def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
         return True
     if t in GENERIC_NON_EVENT_TITLES:
         return True
-    if is_past_report_text(t):
+    if is_past_report_text(t) or is_past_report_text(block_text):
+        return True
+    if has_only_past_dates(t, url=url):
         return True
     if any(ok in t for ok in OUT_OF_DISTRICT_KEYWORDS):
-        return True
-    if url and (
-        is_stale_year_url(url)
-        or "/archive/" in url
-        or "/tickets" in url
-        or "/access" in url
-        or "/event/list" in url
-        or url.rstrip("/").endswith("/news/index.html")
-    ):
         return True
     if any(kw in t for kw in EXCLUDE_KEYWORDS):
         return True
@@ -510,6 +524,18 @@ def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
 def clean_event_title(raw_title):
     """Remove leading publication dates and boilerplate prefixes from event titles."""
     t = re.sub(r"\s+", " ", (raw_title or "").strip())
+    # アリオ葛西などの「買う・キャンペーン 10/23(金) 〜 11/29(日) タイトル」から先頭のカテゴリ・会期表記を整理
+    t = re.sub(
+        r"^(?:買う|食べる|遊ぶ|見る|学ぶ|体験する|作る|特集|キャンペーン|イベント)"
+        r"(?:[・/／](?:買う|食べる|遊ぶ|見る|学ぶ|体験する|作る|特集|キャンペーン|イベント))*\s+",
+        "",
+        t,
+    )
+    t = re.sub(
+        r"^(?:\d{1,2}[月/]\d{1,2}(?:\s*\([月火水木金土日祝・]+\))?(?:\s*[~～\-]+\s*(?:\d{1,2}[月/])?\d{1,2}(?:\s*\([月火水木金土日祝・]+\))?)?\s*)+",
+        "",
+        t,
+    )
     t = re.sub(r"^20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", t)
     t = re.sub(r"^(?:イベント|主催共催公演|共催公演|特別展|企画展|NEW)\s*", "", t)
     t = re.sub(r"開催のお知らせ$", "", t).strip()
@@ -520,7 +546,6 @@ def clean_event_title(raw_title):
 def _extract_best_link_title(a_tag, parent, grandparent, strict_mypl=False):
     """Pick a meaningful event/article title from anchor text or nearby heading elements."""
     raw_title = re.sub(r"\s+", " ", a_tag.get_text(" ", strip=True))
-    # よくある「詳細」「詳しくはこちら」「PDF」などの短いリンク文言は親/見出しから補完
     is_generic_cta = bool(
         re.fullmatch(
             r"(?:詳細|詳細はこちら|詳しくはこちら|詳細を見る|もっと見る|申込|申し込み|PDF|pdf|チラシ|ポスター|一覧)",
@@ -546,7 +571,6 @@ def _extract_best_link_title(a_tag, parent, grandparent, strict_mypl=False):
 
     if parent:
         p_text = re.sub(r"\s+", " ", parent.get_text(" ", strip=True))
-        # 日付やカテゴリを除いた先頭部分を候補にする
         cand = re.sub(r"^(?:20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?|\d{1,2}[月/]\d{1,2}日?)\s*", "", p_text)
         cand = cand[:80].strip()
         if len(cand) >= 5 and not is_noise_or_news(cand, p_text, strict_mypl=strict_mypl):
@@ -948,36 +972,39 @@ def parse_tsuruoka_bussan_events():
         else:
             venue = "西葛西駅 南口広場"
 
-        for d in sorted(parsed_dates):
-            key = f"{TSURUOKA_BUSSAN_URL}#{d.strftime('%Y%m%d')}_{venue}"
-            if key not in events:
-                events[key] = {
-                    "title": f"{base_title}（{venue}）",
-                    "url": TSURUOKA_BUSSAN_URL,
-                    "category": "物産展・友好都市",
-                    "venue": venue,
-                    "dates": {d},
-                    "image_url": image_url,
-                }
+def _extract_title_and_dates_from_detail(detail_html, page_url, fallback_title="", default_year=None):
+    """Extract clean article heading and future event dates from a detail page."""
+    today = datetime.now(JST).date()
+    soup = BeautifulSoup(detail_html, "html.parser")
+    # パンくず・サイドバー・フッターなど過去記事リンクを含む共通ナビ領域を除去
+    for nav in soup.find_all(["nav", "header", "footer", "aside"]):
+        nav.decompose()
+    main_el = soup.find(["main", "article"]) or soup.body or soup
+    title_el = main_el.find(["h1", "h2", "h3"]) or soup.find("h1")
+    detail_title = re.sub(r"\s+", " ", title_el.get_text(" ", strip=True)).strip() if title_el else ""
+    if not detail_title or len(detail_title) < 3 or is_noise_or_news(detail_title, url=page_url):
+        detail_title = fallback_title
 
-    if not events:
-        full_text = main_area.get_text(" ", strip=True)
-        parsed_dates = extract_dates_from_text(full_text, url=TSURUOKA_BUSSAN_URL)
-        if parsed_dates:
-            venue = "西葛西駅 南口広場" if "西葛西" in full_text else "船堀駅 北口広場"
-            events[TSURUOKA_BUSSAN_URL] = {
-                "title": f"{base_title}（{venue}）",
-                "url": TSURUOKA_BUSSAN_URL,
-                "category": "物産展・友好都市",
-                "venue": venue,
-                "dates": parsed_dates,
-                "image_url": image_url,
-            }
+    detail_text = re.sub(r"\s+", " ", main_el.get_text(" ", strip=True)).strip()
+    if is_past_report_text(detail_text[-250:]):
+        return detail_title, set(), detail_text
 
-    print(f"    [debug] 鶴岡物産展: parsed={len(events)}")
-    return list(events.values())
-
-
+    # 記事先頭の公開日（例: 2026年11月1日更新）を除外してから開催日を抽出
+    body_clean = re.sub(
+        r"^(?:公開日|更新日|掲載日)?\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*(?:更新|公開)?\s*",
+        "",
+        detail_text,
+    )
+    body_slices = [body_clean[:2000], body_clean]
+    parsed_dates = set()
+    for chunk in body_slices:
+        found = {
+            d for d in extract_dates_from_text(chunk, default_year=default_year, url=page_url) if d >= today
+        }
+        if found:
+            parsed_dates = found
+            break
+    return detail_title, parsed_dates, body_clean
 def parse_generic_facility_events(
     url,
     category,
@@ -990,6 +1017,7 @@ def parse_generic_facility_events(
     strict_mypl=False,
     allow_mypl_default_venue=False,
     allow_detail_date_lookup=False,
+    max_detail_lookups=45,
 ):
     """Generic scraper for Edogawa public/cultural/park/commercial/school event pages with URL fallback."""
     html = fetch_html(url, timeout=timeout, retries=retries)
@@ -1005,10 +1033,15 @@ def parse_generic_facility_events(
         return []
 
     soup = BeautifulSoup(html, "html.parser")
+    # サイドバー・フッター内の過去アーカイブリンク誤検出を防止
+    for nav in soup.find_all(["nav", "footer", "aside"]):
+        nav.decompose()
+
     events = {}
     all_links = soup.find_all("a", href=True)
     dated_candidates = 0
     detail_date_checks = 0
+    seen_detail_urls = set()
     today = datetime.now(JST).date()
 
     for a_tag in all_links:
@@ -1039,8 +1072,6 @@ def parse_generic_facility_events(
             continue
 
         combined_text = f"{time_text} {raw_title} {block_text}"
-        if require_keywords and not any(kw in combined_text for kw in require_keywords):
-            continue
         if area_keywords and not any(ak in combined_text for ak in area_keywords):
             continue
 
@@ -1055,22 +1086,27 @@ def parse_generic_facility_events(
             or extract_dates_from_text(grand_text, url=full_url)
         )
 
-        # 一覧ページに日付が書かれていない施設・学校・公園・フリマ記事は詳細ページ本文から開催日を抽出
-        if not parsed_dates and allow_detail_date_lookup and detail_date_checks < 25:
+        # 掲載日が過去であっても開催日が未来のケースがあるため、詳細ページ本文で実際の開催日を検証・補完
+        if not parsed_dates and allow_detail_date_lookup and detail_date_checks < max_detail_lookups:
+            if full_url in seen_detail_urls:
+                continue
+            seen_detail_urls.add(full_url)
             detail_date_checks += 1
             detail_html = fetch_html(full_url, timeout=8, retries=0)
             if detail_html:
-                detail_soup = BeautifulSoup(detail_html, "html.parser")
-                detail_main = detail_soup.find(["main", "article"]) or detail_soup.body or detail_soup
-                detail_text = detail_main.get_text(" ", strip=True)
-                if not is_past_report_text(detail_text[-200:]):
-                    detail_dates = {
-                        d for d in extract_dates_from_text(detail_text[:2500], url=full_url) if d >= today
-                    }
-                    if detail_dates:
-                        parsed_dates = detail_dates
-                        combined_text = f"{combined_text} {detail_text[:1000]}"
+                detail_title, detail_dates, detail_text = _extract_title_and_dates_from_detail(
+                    detail_html, full_url, fallback_title=raw_title
+                )
+                if detail_title and not is_noise_or_news(detail_title, detail_text[:300], full_url):
+                    title = clean_event_title(detail_title)
+                if detail_dates:
+                    parsed_dates = detail_dates
+                    combined_text = f"{combined_text} {detail_text[:1200]}"
 
+        if require_keywords and not any(kw in combined_text for kw in require_keywords):
+            continue
+
+        parsed_dates = {d for d in parsed_dates if d >= today}
         if not parsed_dates:
             continue
         dated_candidates += 1
@@ -1099,6 +1135,120 @@ def parse_generic_facility_events(
 
 
 def parse_library_events():
+    """Scrape events from Edogawa City Library (all 12 branches) with fallback to top news."""
+    html = fetch_html(LIBRARY_EVENT_URL, timeout=12, retries=1)
+    source_url = LIBRARY_EVENT_URL
+    if not html:
+        html = fetch_html(LIBRARY_TOP_URL, timeout=12, retries=1)
+        source_url = LIBRARY_TOP_URL
+    if not html:
+        print("    [debug] 区立図書館: html is None")
+        return []
+
+    soup = BeautifulSoup(html, "html.parser")
+    events = {}
+    now = datetime.now(JST)
+    today = now.date()
+    seen_detail_urls = set()
+
+    for a_tag in soup.find_all("a", href=True):
+        href = a_tag["href"].strip()
+        if not href or href.startswith("#") or "javascript:" in href:
+            continue
+        full_url = urljoin(source_url, href)
+        if is_news_index_or_category_url(full_url, source_url=source_url) or is_stale_year_url(full_url):
+            continue
+        parent = a_tag.find_parent(["tr", "li", "dd", "dl", "div"]) or a_tag
+        grandparent = parent.find_parent(["tr", "li", "dl", "div"]) if parent else None
+        raw_title = _extract_best_link_title(a_tag, parent, grandparent)
+        block_text = parent.get_text(" ", strip=True)
+        if is_noise_or_news(raw_title, block_text, full_url):
+            continue
+
+        title = clean_event_title(raw_title)
+        title_dates = extract_dates_from_text(title, default_year=now.year, url=full_url)
+        parsed_dates = (
+            title_dates if title_dates else extract_dates_from_text(block_text, default_year=now.year, url=full_url)
+        )
+        if not parsed_dates and full_url not in seen_detail_urls and len(seen_detail_urls) < 35:
+            seen_detail_urls.add(full_url)
+            detail_html = fetch_html(full_url, timeout=8, retries=0)
+            if detail_html:
+                d_title, d_dates, d_text = _extract_title_and_dates_from_detail(
+                    detail_html, full_url, fallback_title=raw_title, default_year=now.year
+                )
+                if d_title and not is_noise_or_news(d_title, d_text[:300], full_url):
+                    title = clean_event_title(d_title)
+                if d_dates:
+                    parsed_dates = d_dates
+                    block_text = f"{block_text} {d_text[:800]}"
+
+        parsed_dates = {d for d in parsed_dates if d >= today}
+        if not parsed_dates:
+            continue
+
+        venue = infer_venue_from_text(block_text, default_venue="中央図書館")
+
+        if full_url not in events:
+            events[full_url] = {
+                "title": title,
+                "url": full_url,
+                "category": "区立図書館",
+                "venue": venue,
+                "dates": set(),
+                "image_url": extract_image_from_element(parent, source_url),
+            }
+        events[full_url]["dates"].update(parsed_dates)
+        if venue and not events[full_url]["venue"]:
+            events[full_url]["venue"] = venue
+
+    print(f"    [debug] 区立図書館: unique={len(events)}")
+    return list(events.values())
+
+
+def parse_trx_fleamarket_events():
+    """Scrape Edogawa-area flea market dates from Tokyo Recycle (trx.jp) list/detail pages."""
+    today = datetime.now(JST).date()
+    events = {}
+    for list_url in (TRX_TOKYO_FLEAMARKET_URL, TRX_FLEAMARKET_URL):
+        html = fetch_html(list_url, timeout=12, retries=1)
+        if not html:
+            continue
+        soup = BeautifulSoup(html, "html.parser")
+        for block in soup.find_all(["tr", "li", "article", "div"]):
+            text = re.sub(r"\s+", " ", block.get_text(" ", strip=True))
+            if not text or len(text) > 350:
+                continue
+            if not any(
+                k in text
+                for k in ("葛西臨海公園", "篠崎公園", "大島小松川公園", "船堀", "江戸川区", "小岩", "平井")
+            ):
+                continue
+            parsed_dates = {d for d in extract_dates_from_text(text, url=list_url) if d >= today}
+            if not parsed_dates:
+                continue
+            link = block.find("a", href=True)
+            full_url = urljoin(list_url, link["href"]) if link else list_url
+            venue = infer_venue_from_text(text, default_venue="葛西臨海公園")
+            title = f"フリーマーケット（{venue}）"
+            key = f"{full_url}_{venue}"
+            if key not in events:
+                events[key] = {
+                    "title": title,
+                    "url": full_url,
+                    "category": "フリマ",
+                    "venue": venue,
+                    "dates": set(),
+                    "image_url": extract_image_from_element(block, list_url),
+                }
+            events[key]["dates"].update(parsed_dates)
+        if events:
+            break
+    print(f"    [debug] フリマ(trx.jp): unique={len(events)}")
+    return list(events.values())
+
+
+def parse_library_events():
     """Scrape events from Edogawa City Library (all 12 branches)."""
     html = fetch_html(LIBRARY_EVENT_URL, timeout=10, retries=1)
     if not html:
@@ -1107,7 +1257,7 @@ def parse_library_events():
     soup = BeautifulSoup(html, "html.parser")
     events = {}
     now = datetime.now(JST)
-    today = now.date()
+    seen_detail_urls = set()
 
     for a_tag in soup.find_all("a", href=True):
         href = a_tag["href"].strip()
@@ -1128,17 +1278,18 @@ def parse_library_events():
         parsed_dates = (
             title_dates if title_dates else extract_dates_from_text(block_text, default_year=now.year, url=full_url)
         )
-        if not parsed_dates:
+        if not parsed_dates and full_url not in seen_detail_urls:
+            seen_detail_urls.add(full_url)
             detail_html = fetch_html(full_url, timeout=8, retries=0)
             if detail_html:
-                d_soup = BeautifulSoup(detail_html, "html.parser")
-                d_main = d_soup.find(["main", "article"]) or d_soup.body or d_soup
-                d_text = d_main.get_text(" ", strip=True)
-                parsed_dates = {
-                    d for d in extract_dates_from_text(d_text[:2000], default_year=now.year, url=full_url) if d >= today
-                }
-                if parsed_dates:
-                    block_text = f"{block_text} {d_text[:600]}"
+                d_title, d_dates, d_text = _extract_title_and_dates_from_detail(
+                    detail_html, full_url, fallback_title=raw_title, default_year=now.year
+                )
+                if d_title and not is_noise_or_news(d_title, d_text[:300], full_url):
+                    title = clean_event_title(d_title)
+                if d_dates:
+                    parsed_dates = d_dates
+                    block_text = f"{block_text} {d_text[:800]}"
         if not parsed_dates:
             continue
 
@@ -1419,6 +1570,7 @@ def main():
             KASAI_KAIHIN_PARK_URL,
             "公共・葛西海浜公園",
             "葛西海浜公園",
+            fallback_base_url="https://kasaikaihinpark.com/",
             allow_detail_date_lookup=True,
         ),
         priority_rank=8,
@@ -1465,6 +1617,7 @@ def main():
             KIKIS_MUSEUM_EVENT_URL,
             "公共・魔法の文学館",
             "魔法の文学館",
+            fallback_base_url=KIKIS_MUSEUM_NEWS_URL,
             allow_detail_date_lookup=True,
         ),
         priority_rank=12,
@@ -1520,19 +1673,7 @@ def main():
     # 次点（Priority 20〜22）: 友好都市物産展・フリーマーケット・商業施設
     # ------------------------------------------
     add_events("山形県鶴岡市 観光物産展", parse_tsuruoka_bussan_events(), priority_rank=20)
-    add_events(
-        "フリーマーケット(江戸川区内)",
-        parse_generic_facility_events(
-            TRX_FLEAMARKET_URL,
-            "フリマ",
-            "葛西臨海公園",
-            timeout=10,
-            retries=1,
-            area_keywords=("江戸川", "葛西", "篠崎", "小松川", "船堀", "小岩", "平井"),
-            allow_detail_date_lookup=True,
-        ),
-        priority_rank=21,
-    )
+    add_events("フリーマーケット(江戸川区内)", parse_trx_fleamarket_events(), priority_rank=21)
     add_events(
         "アリオ葛西",
         parse_generic_facility_events(
