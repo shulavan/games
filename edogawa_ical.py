@@ -110,9 +110,23 @@ EXCLUDE_KEYWORDS = (
     "募集終了",
     "会員を募集します",
     "を募集します",
+    "よくある質問",
+    "団体利用",
+    "施設概要",
+    "利用案内",
+    "バリアフリー情報",
+    "学校運営方針",
+    "支援制度・授業料等",
+    "学力検査問題等",
+    "行事・学校生活",
+    "主催者に確認した情報のみを掲載しています",
+    "公園・庭園・ 植物園",
+    "公園協会について",
 )
 
 GENERIC_NON_EVENT_TITLES = {
+    "TOP",
+    "HOME",
     "学校の様子",
     "中学生の方へ",
     "在校生の方へ",
@@ -127,6 +141,17 @@ GENERIC_NON_EVENT_TITLES = {
     "進路情報",
     "入試情報",
     "学校案内",
+    "Q&A",
+    "葛西臨海公園",
+    "篠崎公園",
+    "大島小松川公園",
+    "葛西臨海水族園",
+    "東京都立江戸川高等学校",
+    "東京都立小松川高等学校",
+    "東京都立小岩高等学校",
+    "東京都立葛西南高等学校",
+    "東京都立紅葉川高等学校",
+    "東京都立篠崎高等学校",
 }
 
 MYPL_EVENT_KEYWORDS = (
@@ -400,26 +425,39 @@ def is_stale_year_url(url):
 
 
 def is_news_index_or_category_url(url, source_url=""):
-    """Return True if URL is an archive/category/index page rather than an individual event/article page."""
+    """Return True if URL is an archive/category/index/guide/top page rather than an individual event page."""
     if not url:
         return False
+    parsed = urlparse(url)
+    path = parsed.path.rstrip("/")
     u = url.rstrip("/")
     s = source_url.rstrip("/")
     if s and u == s:
         return True
+    if path == "" or path == "/index.html" or re.fullmatch(r"/[^/]+(?:/index\.html)?", path):
+        if "/event/" not in path and "/news/" not in path and "/calendar/" not in path:
+            return True
     if (
-        "/page/" in u
+        path.endswith(".pdf")
+        or "/page/" in u
         or "/category/" in u
         or "/tag/" in u
         or "/archive/" in u
         or "/tickets" in u
         or "/access" in u
+        or "/guide/" in u
+        or "/our_school/" in u
+        or "/visitor-info/" in u
+        or "/about/" in u
         or "/event/list" in u
         or "/events/list" in u
         or u.endswith("/news/index.html")
         or u.endswith("/news")
         or u.endswith("/event")
         or u.endswith("/events")
+        or u.endswith("/athletics")
+        or u.endswith("/baseball")
+        or u.endswith("/ballgame")
         or re.search(r"/news/\d{4}/index\.html$", u)
         or re.search(r"/news/\d{4}/\d{1,2}/index\.html$", u)
     ):
@@ -504,6 +542,33 @@ def is_past_report_text(text):
     return any(re.search(pat, t) for pat in PAST_REPORT_PATTERNS)
 
 
+def _japanese_era_to_western_year(era_char, era_year_str):
+    """Convert Japanese era year (R/令和, H/平成) to 4-digit Western year."""
+    try:
+        yr = int(era_year_str)
+    except ValueError:
+        return None
+    ec = era_char.upper()
+    if ec in ("R", "令"):
+        return 2018 + yr
+    if ec in ("H", "平"):
+        return 1988 + yr
+    return None
+
+
+def _resolve_year_for_month(month, now_date, default_year=None, url=None):
+    """Infer calendar year accurately around year-end boundaries and URL year paths."""
+    url_yr, _ = extract_url_year_month(url)
+    if url_yr is not None:
+        return url_yr
+    base = default_year or now_date.year
+    if now_date.month >= 11 and month <= 3:
+        return base + 1 if base == now_date.year else base
+    if now_date.month <= 2 and month >= 11:
+        return base - 1 if base == now_date.year else base
+    return base
+
+
 def has_only_past_dates(text, default_year=None, url=None):
     """Return True if text contains explicit dates and ALL of them are strictly before today."""
     today = datetime.now(JST).date()
@@ -542,6 +607,8 @@ def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
     if not t or len(t) < 3:
         return True
     if t in GENERIC_NON_EVENT_TITLES:
+        return True
+    if t.startswith("Language "):
         return True
     if is_past_report_text(t) or is_past_report_text(block_text):
         return True
@@ -718,33 +785,6 @@ def get_target_months(months_ahead=3):
         m = (now.month - 1 + i) % 12 + 1
         targets.append((y, m))
     return targets
-
-
-def _resolve_year_for_month(month, now_date, default_year=None, url=None):
-    """Infer calendar year accurately around year-end boundaries and URL year paths."""
-    url_yr, _ = extract_url_year_month(url)
-    if url_yr is not None:
-        return url_yr
-    base = default_year or now_date.year
-    if now_date.month >= 11 and month <= 3:
-        return base + 1 if base == now_date.year else base
-    if now_date.month <= 2 and month >= 11:
-        return base - 1 if base == now_date.year else base
-    return base
-
-
-def _japanese_era_to_western_year(era_char, era_year_str):
-    """Convert Japanese era year (R/令和, H/平成) to 4-digit Western year."""
-    try:
-        yr = int(era_year_str)
-    except ValueError:
-        return None
-    ec = era_char.upper()
-    if ec in ("R", "令"):
-        return 2018 + yr
-    if ec in ("H", "平"):
-        return 1988 + yr
-    return None
 
 
 def extract_dates_from_text(text, default_year=None, url=None):
@@ -1135,6 +1175,9 @@ def parse_generic_facility_events(
             continue
 
         title = clean_event_title(raw_title)
+        if is_noise_or_news(title, block_text, full_url, strict_mypl=strict_mypl):
+            continue
+
         title_dates = extract_dates_from_text(title, url=full_url)
         time_dates = extract_dates_from_text(time_text, url=full_url) if time_text else set()
         parsed_dates = (
@@ -1226,6 +1269,9 @@ def parse_library_events():
             continue
 
         title = clean_event_title(raw_title)
+        if is_noise_or_news(title, block_text, full_url):
+            continue
+
         title_dates = extract_dates_from_text(title, default_year=now.year, url=full_url)
         parsed_dates = (
             title_dates if title_dates else extract_dates_from_text(block_text, default_year=now.year, url=full_url)
@@ -1342,6 +1388,8 @@ def parse_sports_kintone_events():
             if is_noise_or_news(raw_title, "", full_url):
                 continue
             title = clean_event_title(raw_title)
+            if is_noise_or_news(title, "", full_url):
+                continue
             venue = infer_venue_from_text(text, default_venue="江戸川区スポーツセンター")
 
             key = f"{title}_{min(parsed_dates)}"
