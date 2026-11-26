@@ -419,8 +419,8 @@ class QualityFilterTests(unittest.TestCase):
     def test_ics_and_status_use_v325_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.6//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.6")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.7//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.7")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -630,7 +630,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.6")
+        self.assertEqual(payload["app_version"], "3.2.7")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -821,7 +821,7 @@ class Version324RegressionTests(unittest.TestCase):
                             "https://example.jp/event", "test")
         self.assertIsNotNone(ev)
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.6//EN", ics)
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.7//EN", ics)
         unfolded = ics.replace("\r\n ", "")
         self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
         self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
@@ -908,3 +908,55 @@ class Version326RegressionTests(unittest.TestCase):
     def test_myplue_transport_access_does_not_leak_into_location(self):
         value = "東京都江戸川区篠崎町7丁目【公共交通機関】都営新宿線篠崎駅から京成バスで約5分"
         self.assertEqual(app.clean_location_text(value), "東京都江戸川区篠崎町7丁目")
+
+
+class Version327RegressionTests(unittest.TestCase):
+    def test_category_aliases_are_shortened(self):
+        cases = {
+            "区公式オープンデータ": "区公式",
+            "区公式": "区公式",
+            "区内公共・公園": "区内公園",
+            "区内公共・文化": "区内文化",
+            "学校公開イベント": "学校公開",
+            "地域・まいぷれ": "まいぷれ",
+            "友好都市・物産展": "友好都市・物産展",
+        }
+        for source, expected in cases.items():
+            with self.subTest(source=source):
+                self.assertEqual(app.normalize_category(source), expected)
+
+    def test_ics_title_precedes_category_and_category_is_shortened(self):
+        ev = app.Event(title="えどがわ朝日創業塾", start_date="2026-12-12",
+                       end_date="2026-12-12", venue="", address="",
+                       url="https://example.jp/event", category="区公式オープンデータ")
+        ics = app.build_ics([ev])
+        self.assertIn("SUMMARY:えどがわ朝日創業塾 [区公式]", ics)
+        self.assertNotIn("SUMMARY:[区公式オープンデータ]", ics)
+
+    def test_city_page_id_intro_is_removed_but_following_text_remains(self):
+        lines = app.clean_source_boilerplate_lines([
+            "ページID：123456 ここから本文です。",
+            "イベントの内容",
+            "開催日時",
+        ])
+        self.assertEqual(lines, ["イベントの内容", "開催日時"])
+
+    def test_park_year_archive_navigation_is_removed(self):
+        lines = app.clean_source_boilerplate_lines([
+            "年別 2026年 2025年 2024年 2023年 2022年 2021年",
+            "クリスマス自然観察会",
+        ])
+        self.assertEqual(lines, ["クリスマス自然観察会"])
+
+    def test_park_year_archive_navigation_split_into_separate_lines_is_removed(self):
+        lines = app.clean_source_boilerplate_lines([
+            "年別", "2026年", "2025年", "2024年", "2023年", "2022年", "2021年",
+            "公園の自然観察会",
+        ])
+        self.assertEqual(lines, ["公園の自然観察会"])
+
+    def test_school_site_common_navigation_is_removed(self):
+        nav = ["ニュース", "お知らせ", "学校生活・行事等", "総合的な探究の時間",
+               "YouTube", "受検生の方", "卒業生の方", "経営企画室より", "同窓会(輝篠会)より"]
+        lines = app.clean_source_boilerplate_lines(nav + ["学校公開・授業見学会", "開催日時"])
+        self.assertEqual(lines, ["学校公開・授業見学会", "開催日時"])
