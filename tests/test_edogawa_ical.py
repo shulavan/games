@@ -419,8 +419,8 @@ class QualityFilterTests(unittest.TestCase):
     def test_ics_and_status_use_v325_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.5//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.5")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.6//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.6")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -630,7 +630,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.5")
+        self.assertEqual(payload["app_version"], "3.2.6")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -821,7 +821,7 @@ class Version324RegressionTests(unittest.TestCase):
                             "https://example.jp/event", "test")
         self.assertIsNotNone(ev)
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.5//EN", ics)
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.6//EN", ics)
         unfolded = ics.replace("\r\n ", "")
         self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
         self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
@@ -879,3 +879,32 @@ class Version325RegressionTests(unittest.TestCase):
         self.assertIn("講座の内容です", detail["text"])
         self.assertNotIn("居酒屋", detail["text"])
         self.assertNotIn("地元暮らし", detail["text"])
+
+
+class Version326RegressionTests(unittest.TestCase):
+    def test_people_index_url_is_rejected_even_if_listing_title_is_people(self):
+        url = "https://www.city.edogawa.tokyo.jp/e027/kosodate/kenzenikusei/mirai/index.html"
+        self.assertTrue(app.is_non_event_page("People", url=url))
+
+    def test_people_title_is_rejected(self):
+        self.assertTrue(app.is_non_event_page("People"))
+
+    def test_myplue_navigation_before_event_title_is_removed(self):
+        html = """<html><body><main>
+        <div class='site-menu'>文字サイズ ジャンルから探す 場所で探す 居酒屋・ダイニングバー グルメ
+        美容・健康 ショッピング</div>
+        <section class='event-detail'><h1>はれやか発声講座</h1>
+        <h2>開催日時</h2><p>2026年12月5日 10:00～11:00</p>
+        <h2>会場</h2><p>篠崎コミュニティ会館</p>
+        <h2>住所</h2><p>東京都江戸川区篠崎町7丁目</p>
+        <p>声を出して健康づくりを楽しむ講座です。</p></section></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 27)):
+            detail = app.extract_detail(html, "https://edogawa.mypl.net/event/12345/")
+        self.assertIn("声を出して健康づくり", detail["text"])
+        self.assertNotIn("文字サイズ", detail["text"])
+        self.assertNotIn("居酒屋・ダイニングバー", detail["text"])
+        self.assertEqual(detail["title"], "はれやか発声講座")
+
+    def test_myplue_transport_access_does_not_leak_into_location(self):
+        value = "東京都江戸川区篠崎町7丁目【公共交通機関】都営新宿線篠崎駅から京成バスで約5分"
+        self.assertEqual(app.clean_location_text(value), "東京都江戸川区篠崎町7丁目")
