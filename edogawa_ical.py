@@ -48,11 +48,12 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.1"
+APP_VERSION = "3.2.2"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
 OUTPUT_STATUS = ROOT / "source_status.json"
+OUTPUT_FAILED_STATUS = ROOT / "source_status_failed.json"
 OUTPUT_PREVIEW_ICS = ROOT / "edogawa_events_preview.ics"
 OUTPUT_PREVIEW_JSON = ROOT / "edogawa_events_preview.json"
 OUTPUT_PREVIEW_STATUS = ROOT / "source_status_preview.json"
@@ -107,12 +108,15 @@ NON_EVENT_PAGE_TITLES = {
     "お知らせ", "ニュース", "イベント情報", "イベント一覧", "新着情報", "トップページ",
     "フロア案内", "フロアガイド", "館内案内", "施設概要", "外国の方向け生活情報",
     "区内の主なイベント", "子育て教育", "まちづくり環境", "施設情報",
+    "このページに関するお問い合わせ", "このページに関するお問い合わせ先",
+    "このページに関するお問合せ", "このページに関するお問合せ先",
 }
 NON_EVENT_TITLE_PREFIXES = (
     "サイトマップ", "よくある質問", "よくある問い合わせ", "組織図", "組織一覧",
     "施設案内", "カテゴリ一覧", "カテゴリー一覧", "ジャンル一覧", "お知らせ一覧",
     "ニュース一覧", "イベント一覧", "くらし・手続き", "健康・医療・福祉",
-    "フロア案内", "フロアガイド", "館内案内", "外国の方向け生活情報", "イベント",
+    "フロア案内", "フロアガイド", "館内案内", "外国の方向け生活情報",
+    "このページに関するお問い合わせ", "このページに関するお問合せ",
     "区内の主なイベント", "子育て・教育", "まちづくり・環境", "施設情報",
 )
 MAX_EVENT_LOOKAHEAD_DAYS = 550
@@ -176,7 +180,7 @@ APPLICATION_DATE_TERMS = (
     "受付開始", "受付締切", "応募期間", "応募開始", "応募締切", "販売期間",
     "発売日", "更新日", "掲載日", "公開日", "投稿日", "募集期間",
 )
-EVENT_DATE_HEADINGS = ("開催日時", "開催日", "開催期間", "日時", "日程", "実施日時")
+EVENT_DATE_HEADINGS = ("開催日時", "開催日", "開催期間", "開催日程", "開催スケジュール", "実施日", "実施日時", "実施期間", "日時", "日程")
 VENUE_HEADINGS = ("場所", "会場", "開催場所", "実施場所", "施設")
 ADDRESS_HEADINGS = ("住所", "所在地", "会場住所", "開催場所住所")
 STOP_HEADINGS = (
@@ -314,7 +318,7 @@ def _parse_date_token(token: str, base_year: int | None = None) -> date | None:
     return None
 
 
-def parse_date_spans(raw: str, base_year: int | None = None) -> list[tuple[date, date]]:
+def parse_date_spans(raw: str, base_year: int | None = None, include_past: bool = False) -> list[tuple[date, date]]:
     """開催日欄にある日付を範囲/単日として取得。申込・掲載日欄には使わない。"""
     text = era_to_western(raw)
     text = norm(text).replace("（", "(").replace("）", ")")
@@ -344,10 +348,26 @@ def parse_date_spans(raw: str, base_year: int | None = None) -> list[tuple[date,
         except ValueError:
             pass
     found.sort(key=lambda x: x[1])
+    # 「12月1日～5日」「12/1～5」のように月を省略した終了日も補完する。
+    shorthand: list[tuple[date, int, int]] = []
+    for d1, _a, e1 in list(found):
+        tail = text[e1:]
+        m_short = re.match(r"\s*(?:[（(][月火水木金土日](?:曜日)?[）)])?\s*(?:から|～|〜|~|−|―|ー|-)\s*(?!20\d{2}\s*年)(\d{1,2})\s*日?", tail)
+        if m_short:
+            day2 = int(m_short.group(1))
+            year2, month2 = d1.year, d1.month
+            try:
+                d2 = date(year2, month2, day2)
+                if d2 < d1:
+                    d2 = date(year2 + 1, month2, day2)
+                shorthand.append((d2, e1 + m_short.start(1), e1 + m_short.end(1)))
+            except ValueError:
+                pass
+    found.extend(shorthand)
     # 重複 token (和暦変換後とISOなど) を整理
     unique = []
     seen = set()
-    for d, a, b in found:
+    for d, a, b in sorted(found, key=lambda x: x[1]):
         if d not in seen:
             unique.append((d, a, b)); seen.add(d)
     spans: list[tuple[date, date]] = []
@@ -364,7 +384,7 @@ def parse_date_spans(raw: str, base_year: int | None = None) -> list[tuple[date,
                     except ValueError: pass
                 spans.append((d1, d2)); i += 2; continue
         spans.append((d1, d1)); i += 1
-    return [(a, b) for a, b in spans if b >= TODAY and a <= TODAY + timedelta(days=550)]
+    return [(a, b) for a, b in spans if (include_past or b >= TODAY) and a <= TODAY + timedelta(days=550)]
 
 
 def parse_time_range(raw: str) -> tuple[str | None, str | None]:
@@ -565,7 +585,7 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
             if not re.search(r"(?:logo|icon|btn|dummy|noimage|1x1)", candidate, re.I):
                 image_url = candidate
                 break
-    full_text = " ".join(lines)
+    full_text = "\n".join(lines)
     non_event = is_non_event_page(title, full_text, page_url)
     outside_facility = outside_facility_mention(full_text)
     return {"title": title, "date_text": date_text, "spans": spans,
@@ -762,42 +782,98 @@ def save_geocode_cache() -> None:
             pass
 
 def expand_recurring_spans(text: str, spans: list[tuple[date, date]]) -> list[tuple[date, date]]:
-    """明示された毎週/毎月の開催規則を個別開催日に展開する。"""
-    t = norm(text)
+    """開催可能日を1日単位に展開。定期開催・既知の休館日/休講日も反映する。
+
+    全N回は開始日から数えた総開催回数として扱い、過去分を数えた後に
+    今日以降だけを返す。期間イベントは日ごとのVEVENTに分割する。
+    """
+    t = str(text or "")
+    normalized = norm(t)
     if not spans:
-        return spans
-    weekdays = {"月":0,"火":1,"水":2,"木":3,"金":4,"土":5,"日":6}
-    m = re.search(r"毎週\s*([月火水木金土日])曜", t)
-    if m:
-        start, end = spans[0]
-        target = weekdays[m.group(1)]
+        return []
+    spans = [span for span in spans if valid_event_span(span)[0]]
+    if not spans:
+        return []
+    weekdays = {"月": 0, "火": 1, "水": 2, "木": 3, "金": 4, "土": 5, "日": 6}
+    excluded_weekdays: set[int] = set()
+    # 「月曜日定休」「休館日は月曜日」「毎週月曜休館」など明記された休みだけ除外。
+    for m in re.finditer(r"([月火水木金土日])曜(?:日)?(?:は|が|を)?(?:定休|休館|休業|休講|休み)", normalized):
+        excluded_weekdays.add(weekdays[m.group(1)])
+    for m in re.finditer(r"(?:定休日|休館日|休業日|休講日)\s*(?:は|：|:)?\s*([月火水木金土日])曜(?:日)?", normalized):
+        excluded_weekdays.add(weekdays[m.group(1)])
+
+    # 「休館日：2026年12月28日～2027年1月4日」など明示された日付休止期間。
+    excluded_dates: set[date] = set()
+    for line in re.split(r"[\n\r。;；]", t):
+        marker = re.search(r"休館日|休業日|定休日|休講日|休暇期間|開催しない|開催なし|お休み|休み", line)
+        if not marker:
+            continue
+        # 休みを示す語より後ろの日付だけを休止日として読む。
+        # 「開催期間12/1～5、休館日12/3」の開催期間全体を誤って消さない。
+        date_text = line[marker.end():].lstrip(" ：:はが")
+        closed_spans = parse_date_spans(date_text)
+        if not closed_spans:
+            # 「2026年12月3日は休館日」のように日付が休み語の直前にある表記。
+            before = line[:marker.start()]
+            m_before = re.search(r"((?:20\d{2}\s*年\s*)?\d{1,2}\s*月\s*\d{1,2}\s*日?)\s*(?:は|が)?\s*$", before)
+            if m_before:
+                closed_spans = parse_date_spans(m_before.group(1))
+        for a, b in closed_spans:
+            if (b - a).days > 62:
+                continue
+            d = a
+            while d <= b:
+                excluded_dates.add(d)
+                d += timedelta(days=1)
+
+    start, end = spans[0]
+    count_m = re.search(r"全\s*(\d+)\s*回", normalized)
+    total_limit = int(count_m.group(1)) if count_m else None
+    # 「休暇期間を除く」とだけ記載され、休暇の日付が公開されていない場合、
+    # 全N回を開始日から機械的に数えると開催期間の後半を誤って消してしまう。
+    # その場合は終了日まで曜日を展開し、公式に特定できた休止日だけ除外する。
+    unspecified_breaks = bool(re.search(r"(?:夏季|冬季|春季)?休暇期間(?:中)?は除く|休業期間(?:中)?は除く", normalized))
+    if unspecified_breaks:
+        total_limit = None
+    recurrence_dates: list[date] | None = None
+
+    weekly = re.search(r"毎週\s*([月火水木金土日])曜", normalized)
+    nth_monthly = re.search(r"(?:毎月\s*)?第([1-5])\s*([月火水木金土日])曜", normalized)
+    if weekly:
+        target = weekdays[weekly.group(1)]
         first = start + timedelta(days=(target - start.weekday()) % 7)
-        count_m = re.search(r"全\s*(\d+)\s*回", t)
-        limit = int(count_m.group(1)) if count_m else 100
-        dates = []
+        recurrence_dates = []
         d = first
-        while d <= end and len(dates) < limit:
-            if d >= TODAY:
-                dates.append((d, d))
+        while d <= end and (total_limit is None or len(recurrence_dates) < total_limit):
+            if d.weekday() not in excluded_weekdays and d not in excluded_dates:
+                recurrence_dates.append(d)
             d += timedelta(days=7)
-        return dates or spans
-    m = re.search(r"(?:毎月)?\s*第([1-5])\s*([月火水木金土日])曜", t)
-    if m:
-        start, end = spans[0]
-        nth, wd = int(m.group(1)), weekdays[m.group(2)]
-        count_m = re.search(r"全\s*(\d+)\s*回", t)
-        limit = int(count_m.group(1)) if count_m else 24
-        dates = []
+    elif nth_monthly:
+        nth, target = int(nth_monthly.group(1)), weekdays[nth_monthly.group(2)]
+        recurrence_dates = []
         y, mo = start.year, start.month
-        while date(y, mo, 1) <= end and len(dates) < limit:
+        while date(y, mo, 1) <= end and (total_limit is None or len(recurrence_dates) < total_limit):
             first = date(y, mo, 1)
-            d = first + timedelta(days=(wd-first.weekday())%7 + 7*(nth-1))
-            if d.month == mo and start <= d <= end and d >= TODAY:
-                dates.append((d,d))
+            d = first + timedelta(days=(target - first.weekday()) % 7 + 7 * (nth - 1))
+            if d.month == mo and start <= d <= end and d.weekday() not in excluded_weekdays and d not in excluded_dates:
+                recurrence_dates.append(d)
             mo += 1
-            if mo == 13: y, mo = y+1, 1
-        return dates or spans
-    return spans
+            if mo == 13:
+                y, mo = y + 1, 1
+
+    if recurrence_dates is not None:
+        return [(d, d) for d in recurrence_dates if d >= TODAY]
+
+    # 通常の複数日開催は、毎日を独立VEVENTとして保持する。
+    expanded: list[tuple[date, date]] = []
+    for a, b in spans:
+        d = a
+        while d <= b:
+            if d >= TODAY and d.weekday() not in excluded_weekdays and d not in excluded_dates:
+                expanded.append((d, d))
+            d += timedelta(days=1)
+    # 複数の開催日が同じ入力にある場合も重複を排除して日付順にする。
+    return sorted(set(expanded), key=lambda x: x[0])
 
 def make_event(title: str, span: tuple[date, date], venue: str, address: str, url: str,
                source: str, category: str = "地域イベント", default_venue: str | None = None,
@@ -957,8 +1033,8 @@ def _map_csv_columns(headers: list[str]) -> dict[str, str | None]:
 
 
 def _csv_date_span(start_raw: str, end_raw: str) -> tuple[date, date] | None:
-    starts = parse_date_spans(start_raw) if start_raw else []
-    ends = parse_date_spans(end_raw) if end_raw else []
+    starts = parse_date_spans(start_raw, include_past=True) if start_raw else []
+    ends = parse_date_spans(end_raw, include_past=True) if end_raw else []
     if starts:
         start_date = starts[0][0]
         end_date = ends[-1][1] if ends else starts[-1][1]
@@ -966,7 +1042,7 @@ def _csv_date_span(start_raw: str, end_raw: str) -> tuple[date, date] | None:
             return None
         if end_date <= TODAY + timedelta(days=550):
             return start_date, end_date
-    combined = parse_date_spans(" ".join(x for x in (start_raw, end_raw) if x))
+    combined = parse_date_spans(" ".join(x for x in (start_raw, end_raw) if x), include_past=True)
     return combined[0] if combined else None
 
 
@@ -1051,12 +1127,12 @@ def parse_csv_source(url: str, name: str, priority: int = 1) -> tuple[list[Event
         time_s, time_e = get("start_time") or None, get("end_time") or None
         if not (time_s and time_e):
             time_s, time_e = parse_time_range(start_raw + " " + end_raw)
-        expanded_spans = expand_recurring_spans(description, [span])
+        expanded_spans = expand_recurring_spans(" ".join((description, start_raw, end_raw)), [span])
         for event_span in expanded_spans:
             ev = make_event(title, event_span, venue, address, url_v, name,
                             category="区公式オープンデータ", default_venue=None,
                             start_time=time_s, end_time=time_e, image_url=image,
-                            description=description, priority=priority, lat=lat, lon=lon)
+                            description=description, priority=(9 if len(expanded_spans) > 1 or span[0] != span[1] else priority), lat=lat, lon=lon)
             if ev:
                 events.append(ev)
                 status["accepted"] += 1
@@ -1351,12 +1427,14 @@ def parse_city_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
             spans = [(x, x) for x in sorted(item["dates"])]
         event_start_time = d.get("start_time") or item.get("listed_start_time")
         event_end_time = d.get("end_time") or item.get("listed_end_time")
+        was_multi_day_or_multi_date = len(spans) > 1 or any(a != b for a, b in spans)
+        spans = expand_recurring_spans(d.get("text", ""), spans)
         for span in spans:
             if span[1] < TODAY:
                 continue
             ev = make_event(title, span, venue, address, url, "江戸川区公式イベントカレンダー",
                             category="区公式", start_time=event_start_time, end_time=event_end_time,
-                            image_url=d.get("image_url") or item.get("image"), priority=1,
+                            image_url=d.get("image_url") or item.get("image"), priority=(9 if len(spans) > 1 or was_multi_day_or_multi_date else 1),
                             description=d.get("text", "")[:2000])
             if ev:
                 events.append(ev); status["accepted"] += 1
@@ -1515,6 +1593,7 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
         if not spans:
             status["rejected"]["no_event_date"] = status["rejected"].get("no_event_date", 0) + 1
             continue
+        was_multi_day_or_multi_date = len(spans) > 1 or any(a != b for a, b in spans)
         spans = expand_recurring_spans(d.get("text", "") + " " + rec.get("context", ""), spans)
         if cfg.get("require_public_keyword") and not any(k in f"{title} {rec['context']} {d.get('text', '')}" for k in cfg["require_public_keyword"]):
             status["rejected"]["not_public_event_keyword"] = status["rejected"].get("not_public_event_keyword", 0) + 1
@@ -1536,7 +1615,7 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
             ev = make_event(title, span, venue, address, rec["url"], name,
                             category=cfg.get("category", "地域イベント"), default_venue=cfg.get("default_venue"),
                             start_time=d.get("start_time"), end_time=d.get("end_time"),
-                            image_url=d.get("image_url"), priority=cfg.get("priority", 4),
+                            image_url=d.get("image_url"), priority=(9 if len(spans) > 1 or was_multi_day_or_multi_date else cfg.get("priority", 4)),
                             description=d.get("text", "")[:2000])
             if ev:
                 events.append(ev); status["accepted"] += 1
@@ -1633,6 +1712,8 @@ def parse_tsuruoka_source() -> tuple[list[Event], dict[str, Any]]:
         if not reg:
             status["rejected"]["venue_not_registered"] = status["rejected"].get("venue_not_registered", 0) + 1
             continue
+        was_multi_day_or_multi_date = len(spans) > 1 or any(a != b for a, b in spans)
+        spans = expand_recurring_spans(text, spans)
         for span in spans:
             fingerprint = (venue, f"{span[0]}_{span[1]}")
             if fingerprint in seen:
@@ -1641,7 +1722,7 @@ def parse_tsuruoka_source() -> tuple[list[Event], dict[str, Any]]:
             title = f"{base_title}（{venue}）"
             ev = make_event(title, span, venue, reg.get("address", ""), url,
                             "鶴岡市公式・江戸川区内会場", category="友好都市・物産展",
-                            image_url=image_url, priority=4)
+                            image_url=image_url, priority=(9 if len(spans) > 1 or was_multi_day_or_multi_date else 4))
             if ev:
                 out.append(ev); status["accepted"] += 1
     status["status"] = "ok" if out else ("no_event_candidates" if not status["candidate_blocks"] else "zero_valid_events")
@@ -1709,9 +1790,12 @@ def parse_kviewer_api() -> tuple[list[Event], dict[str, Any]]:
         venue = pick(("会場", "場所", "施設名", "venue"))
         address = pick(("住所", "所在地", "address"))
         link = pick(("URL", "詳細URL", "url")) or api_url
-        for span in parse_date_spans(dtext):
+        original_spans = parse_date_spans(dtext)
+        was_multi_day_or_multi_date = len(original_spans) > 1 or any(a != b for a, b in original_spans)
+        spans = expand_recurring_spans(dtext, original_spans)
+        for span in spans:
             ev = make_event(title, span, venue, address, link, "Kintone公開API",
-                            category="区内スポーツ", priority=3)
+                            category="区内スポーツ", priority=(9 if len(spans) > 1 or was_multi_day_or_multi_date else 3))
             if ev: events.append(ev)
     status["status"] = "ok" if events else ("zero_records" if not records else "zero_valid_events")
     status["accepted"] = len(events)
@@ -1846,12 +1930,16 @@ def make_uid(ev: Event) -> str:
     return hashlib.sha256(seed.encode("utf-8")).hexdigest()[:32] + "@edogawa-events.local"
 
 
-def build_ics(events: list[Event]) -> str:
-    now_utc = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.1//EN",
+def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
+    generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
+    now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.2//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
+    if execution_id:
+        lines.append(f"X-EDOGAWA-EXECUTION-ID:{execution_id}")
+    lines.append("X-EDOGAWA-GENERATED-AT:" + generated.isoformat())
     for ev in events:
         sd, ed = date.fromisoformat(ev.start_date), date.fromisoformat(ev.end_date)
         lines.extend(["BEGIN:VEVENT", f"UID:{make_uid(ev)}", f"DTSTAMP:{now_utc}", "SEQUENCE:0", "TRANSP:OPAQUE"])
@@ -1899,7 +1987,9 @@ def to_map_json(events: list[Event], reports: dict[str, Any], mode: str = "live"
                       "image_url": ev.image_url, "details_url": ev.url,
                       "source": ev.source, "source_urls": ev.source_urls,
                       "priority": ev.priority, "description": ev.description})
-    return {"schema_version": "1.0", "generated_at": reports.get("generated_at") or datetime.now(JST).isoformat(),
+    return {"schema_version": "1.0", "app_version": APP_VERSION,
+            "generated_at": reports.get("generated_at") or datetime.now(JST).isoformat(),
+            "execution_id": reports.get("execution_id"),
             "timezone": "Asia/Tokyo", "scope": "東京都江戸川区内のみ",
             "mode": mode, "strict_location_filter": True,
             "events": items,
@@ -1915,11 +2005,31 @@ def atomic_write(path: Path, content: str) -> None:
     os.replace(tmp, path)
 
 
+def atomic_write_bundle(files: dict[Path, str]) -> None:
+    """同一実行で作った複数成果物をすべて一時保存してから置換する。"""
+    staged: list[tuple[Path, Path]] = []
+    try:
+        for path, content in files.items():
+            tmp = path.with_suffix(path.suffix + ".tmp")
+            tmp.write_text(content, encoding="utf-8", newline="")
+            staged.append((tmp, path))
+        for tmp, path in staged:
+            os.replace(tmp, path)
+    finally:
+        for tmp, _ in staged:
+            try:
+                tmp.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+
 def validate_outputs(ics_text: str, events: list[Event]) -> None:
     if "BEGIN:VCALENDAR" not in ics_text or "END:VCALENDAR" not in ics_text:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.2//EN" not in ics_text:
+        raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
     for e in events:
@@ -1975,15 +2085,17 @@ def main() -> int:
                    "warning": "2026-11-26時点で個別詳細ページを確認できたイベントのみ。全件収集ではありません。",
                    "sources": {}, "totals": {"unique_events": len(events), "strict_edogawa_only": True}}
         mode = "bootstrap-preview"
-        ics = build_ics(events).replace(
+        reports["generated_at"] = datetime.now(JST).isoformat()
+        reports["execution_id"] = hashlib.sha256(reports["generated_at"].encode("utf-8")).hexdigest()[:16]
+        ics = build_ics(events, reports["generated_at"], reports["execution_id"]).replace(
             "X-WR-CALNAME:江戸川区内イベントカレンダー",
             "X-WR-CALNAME:江戸川区内イベントカレンダー（確認済みプレビュー・未完成）"
         )
         payload = to_map_json(events, reports, mode=mode)
         validate_outputs(ics, events)
-        atomic_write(OUTPUT_PREVIEW_ICS, ics)
-        atomic_write(OUTPUT_PREVIEW_JSON, json.dumps(payload, ensure_ascii=False, indent=2))
-        atomic_write(OUTPUT_PREVIEW_STATUS, json.dumps(reports, ensure_ascii=False, indent=2))
+        atomic_write_bundle({OUTPUT_PREVIEW_ICS: ics,
+                             OUTPUT_PREVIEW_JSON: json.dumps(payload, ensure_ascii=False, indent=2),
+                             OUTPUT_PREVIEW_STATUS: json.dumps(reports, ensure_ascii=False, indent=2)})
         print(f"Generated preview: {OUTPUT_PREVIEW_ICS.name} ({len(events)} events)")
         print(f"Generated preview: {OUTPUT_PREVIEW_JSON.name}")
         print(f"Mode: {mode}; complete: false; strict Edogawa-only filter: ON")
@@ -2020,20 +2132,26 @@ def main() -> int:
         }
         if (not events or not reports["primary_source_health"]["healthy"] or not primary_event_success
             or any(e.latitude is None or e.longitude is None for e in events)):
-            atomic_write(OUTPUT_STATUS, json.dumps(reports, ensure_ascii=False, indent=2))
-            raise RuntimeError("イベントが0件、一次取得元の稼働確認失敗、または一次情報から有効イベントを確認できません。既存ICS/JSONは保持しました。")
+            atomic_write(OUTPUT_FAILED_STATUS, json.dumps(reports, ensure_ascii=False, indent=2))
+            raise RuntimeError("イベントが0件、一次取得元の稼働確認失敗、または一次情報から有効イベントを確認できません。公開中のiCal/JSON/ステータスはすべて保持し、失敗診断のみsource_status_failed.jsonへ出力しました。")
         if not recognized_csv:
             reports["warnings"].append("イベントCSVは列構成を認識できても有効イベント0件の可能性があります。各CSVのrejected内訳を確認してください。公式カレンダーHTMLで補完しています。")
         if official.get("status") != "ok" and not recognized_csv:
             reports["warnings"].append("公式カレンダーで有効イベントを確認できません。source_status.jsonの月別・詳細ページ状態を確認してください。")
         if any("CSV" in n and s.get("status") == "schema_unrecognized" for n, s in reports["sources"].items()):
             reports.setdefault("warnings", []).append("CSV列構成が未認識。CSVは採用せず、公式HTMLカレンダー等で補完しました。")
-    ics = build_ics(events)
+    reports["generated_at"] = datetime.now(JST).isoformat()
+    reports["execution_id"] = hashlib.sha256(reports["generated_at"].encode("utf-8")).hexdigest()[:16]
+    ics = build_ics(events, reports["generated_at"], reports["execution_id"])
     payload = to_map_json(events, reports, mode=mode)
     validate_outputs(ics, events)
-    atomic_write(OUTPUT_ICS, ics)
-    atomic_write(OUTPUT_JSON, json.dumps(payload, ensure_ascii=False, indent=2))
-    atomic_write(OUTPUT_STATUS, json.dumps(reports, ensure_ascii=False, indent=2))
+    atomic_write_bundle({OUTPUT_ICS: ics,
+                         OUTPUT_JSON: json.dumps(payload, ensure_ascii=False, indent=2),
+                         OUTPUT_STATUS: json.dumps(reports, ensure_ascii=False, indent=2)})
+    try:
+        OUTPUT_FAILED_STATUS.unlink(missing_ok=True)
+    except OSError:
+        pass
     print(f"Generated: {OUTPUT_ICS.name} ({len(events)} events)")
     print(f"Generated: {OUTPUT_JSON.name}")
     print(f"Generated: {OUTPUT_STATUS.name}")
