@@ -1,13 +1,15 @@
 # 江戸川双六：Supabase（無料プラン）の自動一時停止を防ぐため、週2回データベースに軽く問い合わせます
 # 置き場所：GitHub リポジトリの .github/workflows/supabase-keepalive.yml
-# 事前準備：リポジトリの Settings → Secrets and variables → Actions → New repository secret
-#   名前：SUPABASE_PUBLISHABLE_KEY　値：sb_publishable_…（sugoroku.html に入っているものと同じ公開用キー）
-#   ※ service_role キーは使わないでください
+# 事前準備：不要です。
+#   公開用（publishable）キーは sugoroku.html にも書かれている「見られても大丈夫なキー」なので、ここに直接書いています。
+#   キーを変えたときは、下の DEFAULT_KEY を書きかえるか、Secrets に SUPABASE_PUBLISHABLE_KEY を登録してください（登録があればそちらを使います）。
+#   ※ service_role キーは絶対にここへ書かないでください
 #
 # 【2026-11 見直し】
 #   ・一時的な通信の失敗で「失敗」メールが届かないよう、最大3回（30秒あけて）試します
 #   ・失敗したときは、ログに原因の目安（キーの設定・一時停止 など）を出します
 #   ・ubuntu-latest の案内（Ubuntu 26 への移行）は、ただのお知らせです（動きには関係ありません）
+#   ・Secrets が無くても動くようにしました（2026-11-26：Secrets 未登録で失敗していたため）
 name: Supabase keepalive
 
 on:
@@ -22,13 +24,12 @@ jobs:
     steps:
       - name: データベースに軽く問い合わせる（最大3回）
         env:
-          KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          SECRET_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          DEFAULT_KEY: sb_publishable_OYHGr5kwFfedoA2mH0oN3A_56Uv3Bfr
           BASE: https://iboywxukmqevlwyszbff.supabase.co/rest/v1
         run: |
-          if [ -z "${KEY}" ]; then
-            echo "::error::Secrets に SUPABASE_PUBLISHABLE_KEY がありません（Settings → Secrets and variables → Actions で登録してください）"
-            exit 1
-          fi
+          KEY="${SECRET_KEY:-$DEFAULT_KEY}"
+          if [ -n "${SECRET_KEY}" ]; then echo "キー：Secrets の SUPABASE_PUBLISHABLE_KEY を使います"; else echo "キー：このファイルの DEFAULT_KEY を使います"; fi
           for i in 1 2 3; do
             # 訪問記録（なければ順位表）を1件だけ読みます。どちらかが 200 ならOK
             for t in visited_entries minigame_scores; do
@@ -42,7 +43,7 @@ jobs:
             sleep 30
           done
           case "${code}" in
-            401|403) echo "::error::キーが受けつけられませんでした（HTTP ${code}）。Supabase の Project Settings → API Keys の publishable キーと、GitHub の Secret が同じか確かめてください" ;;
+            401|403) echo "::error::キーが受けつけられませんでした（HTTP ${code}）。Supabase の Project Settings → API Keys の publishable キーと、このファイルの DEFAULT_KEY（または GitHub の Secret）が同じか確かめてください" ;;
             000)     echo "::error::Supabase につながりませんでした。プロジェクトが一時停止（Paused）していないか、ダッシュボードで確かめてください" ;;
             5*)      echo "::error::Supabase 側のエラーです（HTTP ${code}）。一時停止中・メンテナンス中の可能性があります。ダッシュボードで確かめてください" ;;
             *)       echo "::error::問い合わせに失敗しました（HTTP ${code}）" ;;
