@@ -109,6 +109,23 @@ EXCLUDE_KEYWORDS = (
     "を募集します",
 )
 
+GENERIC_NON_EVENT_TITLES = {
+    "学校の様子",
+    "中学生の方へ",
+    "在校生の方へ",
+    "保護者の方へ",
+    "卒業生の方へ",
+    "地域の方へ",
+    "お知らせ",
+    "ニュース",
+    "トピックス",
+    "活動報告",
+    "部活動",
+    "進路情報",
+    "入試情報",
+    "学校案内",
+}
+
 MYPL_EVENT_KEYWORDS = (
     "開催",
     "イベント",
@@ -306,14 +323,32 @@ def normalize_japanese_text(text):
     return text.translate(CHAR_NORMALIZE_MAP)
 
 
+def extract_url_year_month(url):
+    """Extract (year, month) or (year, None) if URL path contains explicit year/month segments."""
+    if not url:
+        return None, None
+    m_ym = re.search(r"/(?:news|event|calendar|topics|info)/(20\d{2})/(\d{1,2})/", url)
+    if m_ym:
+        yr, mo = int(m_ym.group(1)), int(m_ym.group(2))
+        if 1 <= mo <= 12:
+            return yr, mo
+    m_y = re.search(r"/(?:news|event|calendar|topics|info)/(20\d{2})/", url)
+    if m_y:
+        return int(m_y.group(1)), None
+    return None, None
+
+
 def is_stale_year_url(url):
     """Return True if a URL explicitly points to an old year or past fiscal year directory."""
     if not url:
         return False
-    now_year = datetime.now(JST).year
-    for m in re.finditer(r"/(?:news|event|calendar|topics|info)/(20\d{2})/", url):
-        yr = int(m.group(1))
-        if yr < now_year:
+    now_date = datetime.now(JST).date()
+    yr, mo = extract_url_year_month(url)
+    if yr is not None:
+        if yr < now_date.year:
+            return True
+        if yr == now_date.year and mo is not None and mo < now_date.month:
+            # 翌年1〜3月に跨がる会期などは本文・日付側で精査するが、純粋な過去の月次ニュースは除外対象
             return True
     if re.search(r"/(?:h\d{1,2}|s\d{1,2}|r[1-6])_", url.lower()):
         return True
@@ -418,6 +453,8 @@ def is_noise_or_news(title, block_text="", url="", strict_mypl=False):
     """Return True for pure news posts, closure notices, stale URLs, out-of-district events, or navigation labels."""
     t = title.strip()
     if not t or len(t) < 3:
+        return True
+    if t in GENERIC_NON_EVENT_TITLES:
         return True
     if is_past_report_text(t):
         return True
@@ -548,8 +585,11 @@ def get_target_months(months_ahead=3):
     return targets
 
 
-def _resolve_year_for_month(month, now_date, default_year=None):
-    """Infer calendar year accurately around year-end boundaries (Nov/Dec vs Jan/Feb)."""
+def _resolve_year_for_month(month, now_date, default_year=None, url=None):
+    """Infer calendar year accurately around year-end boundaries and URL year paths."""
+    url_yr, _ = extract_url_year_month(url)
+    if url_yr is not None:
+        return url_yr
     base = default_year or now_date.year
     if now_date.month >= 11 and month <= 3:
         return base + 1 if base == now_date.year else base
@@ -572,7 +612,7 @@ def _japanese_era_to_western_year(era_char, era_year_str):
     return None
 
 
-def extract_dates_from_text(text, default_year=None):
+def extract_dates_from_text(text, default_year=None, url=None):
     """Extract event dates from Japanese text while avoiding leading publication dates or ticket sales dates."""
     now = datetime.now(JST)
     today = now.date()
@@ -617,7 +657,7 @@ def extract_dates_from_text(text, default_year=None):
             m1_i, d1_i = int(m1), int(d1)
             m2_i = int(m2) if m2 else m1_i
             d2_i = int(d2)
-            sy = int(y1) if y1 else _resolve_year_for_month(m1_i, today, default_year)
+            sy = int(y1) if y1 else _resolve_year_for_month(m1_i, today, default_year, url=url)
             start_dt = datetime(sy, m1_i, d1_i, tzinfo=JST).date()
             ey = int(y2) if y2 else (sy if m2_i >= m1_i else sy + 1)
             end_dt = datetime(ey, m2_i, d2_i, tzinfo=JST).date()
@@ -643,7 +683,7 @@ def extract_dates_from_text(text, default_year=None):
             m = int(m_str)
             if not (1 <= m <= 12):
                 continue
-            y = int(y_str) if y_str else _resolve_year_for_month(m, today, default_year)
+            y = int(y_str) if y_str else _resolve_year_for_month(m, today, default_year, url=url)
             day_tokens = [int(d1_str)] + [int(x) for x in re.findall(r"\d{1,2}", tail_str)]
             for d_val in day_tokens:
                 if 1 <= d_val <= 31:
@@ -664,7 +704,7 @@ def extract_dates_from_text(text, default_year=None):
             d = int(d_str)
             if not (1 <= m <= 12 and 1 <= d <= 31):
                 continue
-            y = int(y_str) if y_str else _resolve_year_for_month(m, today, default_year)
+            y = int(y_str) if y_str else _resolve_year_for_month(m, today, default_year, url=url)
             candidate = datetime(y, m, d, tzinfo=JST).date()
             if today <= candidate <= today + timedelta(days=180):
                 parsed_dates.add(candidate)
@@ -776,7 +816,7 @@ def parse_edogawa_city_calendar(year, month):
             block = a_tag.find_parent(["li", "tr", "dd", "div", "p"]) or a_tag
             block_text = block.get_text(" ", strip=True)
             parsed_dates = {
-                d for d in extract_dates_from_text(block_text, default_year=year) if d >= today
+                d for d in extract_dates_from_text(block_text, default_year=year, url=full_url) if d >= today
             }
             if not parsed_dates:
                 continue
@@ -827,7 +867,7 @@ def parse_tsuruoka_bussan_events():
         if not any(v in text for v in ("西葛西", "船堀")):
             continue
 
-        parsed_dates = extract_dates_from_text(text)
+        parsed_dates = extract_dates_from_text(text, url=TSURUOKA_BUSSAN_URL)
         if not parsed_dates:
             continue
 
@@ -852,7 +892,7 @@ def parse_tsuruoka_bussan_events():
 
     if not events:
         full_text = main_area.get_text(" ", strip=True)
-        parsed_dates = extract_dates_from_text(full_text)
+        parsed_dates = extract_dates_from_text(full_text, url=TSURUOKA_BUSSAN_URL)
         if parsed_dates:
             venue = "西葛西駅 南口広場" if "西葛西" in full_text else "船堀駅 北口広場"
             events[TSURUOKA_BUSSAN_URL] = {
@@ -948,14 +988,14 @@ def parse_generic_facility_events(
             continue
 
         title = clean_event_title(raw_title)
-        title_dates = extract_dates_from_text(title)
-        time_dates = extract_dates_from_text(time_text) if time_text else set()
+        title_dates = extract_dates_from_text(title, url=full_url)
+        time_dates = extract_dates_from_text(time_text, url=full_url) if time_text else set()
         parsed_dates = (
             title_dates
             or time_dates
-            or extract_dates_from_text(prev_text)
-            or extract_dates_from_text(parent_text)
-            or extract_dates_from_text(grand_text)
+            or extract_dates_from_text(prev_text, url=full_url)
+            or extract_dates_from_text(parent_text, url=full_url)
+            or extract_dates_from_text(grand_text, url=full_url)
         )
 
         if not parsed_dates:
@@ -1009,8 +1049,10 @@ def parse_library_events():
             continue
 
         title = clean_event_title(raw_title)
-        title_dates = extract_dates_from_text(title, default_year=now.year)
-        parsed_dates = title_dates if title_dates else extract_dates_from_text(block_text, default_year=now.year)
+        title_dates = extract_dates_from_text(title, default_year=now.year, url=full_url)
+        parsed_dates = (
+            title_dates if title_dates else extract_dates_from_text(block_text, default_year=now.year, url=full_url)
+        )
         if not parsed_dates:
             continue
 
@@ -1139,10 +1181,8 @@ def generate_ics(all_events):
         if not sorted_dates:
             continue
 
-        # 企画展・展示会などで複数日に跨がる場合、極端な飛び日（例: 12/13 と 1/1 のみ）は連続会期として扱うか精査
         is_exhibition = any(k in ev.get("title", "") for k in ("展", "フェスタ", "フェア", "ウィーク", "週間"))
         if is_exhibition and len(sorted_dates) >= 2:
-            # 最初と最後の日付の間が90日以内なら会期初日〜最終日として1つの期間にまとめる
             if (sorted_dates[-1] - sorted_dates[0]).days <= 90:
                 spans = [(sorted_dates[0], sorted_dates[-1])]
             else:
