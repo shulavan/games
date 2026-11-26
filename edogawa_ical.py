@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.6"
+APP_VERSION = "3.2.7"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -172,6 +172,56 @@ def normalize_event_url(value: str) -> str:
             query.append((key, val))
     query.sort()
     return f"https://{host}{path}" + ("?" + urlencode(query, doseq=True) if query else "")
+
+
+def normalize_category(value: str) -> str:
+    """利用者向けにカテゴリ名を短く統一する。"""
+    category = norm(value).strip("[]［］")
+    aliases = {
+        "区公式オープンデータ": "区公式",
+        "区内公共・公園": "区内公園",
+        "区内公共・文化": "区内文化",
+        "学校公開イベント": "学校公開",
+        "地域・まいぷれ": "まいぷれ",
+    }
+    return aliases.get(category, category)
+
+
+def clean_source_boilerplate_lines(lines: list[str]) -> list[str]:
+    """区公式・公園・学校公開ページの共通ナビゲーションを除去する。"""
+    school_nav = {
+        "ニュース", "お知らせ", "学校生活・行事等", "総合的な探究の時間",
+        "youtube", "受検生の方", "卒業生の方", "経営企画室より", "同窓会(輝篠会)より",
+    }
+    cleaned: list[str] = []
+    in_park_year_nav = False
+    for raw in lines:
+        line = norm(raw)
+        if not line:
+            continue
+        if line == "年別":
+            in_park_year_nav = True
+            continue
+        if in_park_year_nav and re.fullmatch(r"20(?:26|25|24|23|22|21)年", line):
+            continue
+        if in_park_year_nav:
+            in_park_year_nav = False
+        # 江戸川区公式ページの定型導入文
+        line = re.sub(r"^ページID\s*[：:]?\s*\d+\s*ここから本文です。?\s*", "", line)
+        line = re.sub(r"^ページID\s*[：:]?\s*\d+\s*", "", line)
+        line = line.replace("ここから本文です。", "").strip()
+        if not line:
+            continue
+        # 公園サイトの年別アーカイブナビゲーション
+        if re.search(r"年別.*2026年.*2025年.*2024年.*2023年.*2022年.*2021年", line):
+            continue
+        if re.fullmatch(r"年別(?:\s*20(?:26|25|24|23|22|21)年)+", line):
+            continue
+        # 学校サイト共通ナビ。単独行だけを対象にし、本文中の語句は残す。
+        if line.casefold() in {x.casefold() for x in school_nav}:
+            continue
+        cleaned.append(line)
+    return cleaned
 
 
 def clean_location_text(value: str) -> str:
@@ -664,6 +714,7 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
             title_line_index = next((i for i, line in enumerate(lines) if line == title or title in line), None)
             if title_line_index is not None:
                 lines = lines[title_line_index:]
+    lines = clean_source_boilerplate_lines(lines)
     # 開催日見出しの配下だけを開催日根拠にする。記事公開日・更新日・掲載日を
     # ページ全体から拾う旧方式は、ニュース記事を「今日開催」と誤登録するため廃止。
     date_lines = section_lines_after_heading(lines, EVENT_DATE_HEADINGS, stop=STOP_HEADINGS)
@@ -2173,7 +2224,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.6//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.7//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2192,7 +2243,8 @@ def build_ics(events: list[Event], generated_at: str | None = None, execution_id
             lines.extend([f"DTSTART:{st}", f"DTEND:{et}"])
         else:
             lines.extend([f"DTSTART;VALUE=DATE:{sd:%Y%m%d}", f"DTEND;VALUE=DATE:{(ed + timedelta(days=1)):%Y%m%d}"])
-        summary = f"[{ev.category}] {ev.title}" if ev.category else ev.title
+        category_label = normalize_category(ev.category)
+        summary = f"{ev.title} [{category_label}]" if category_label else ev.title
         lines.append(fold_ics("SUMMARY:" + escape_ics(summary)))
         desc = [f"詳細: {ev.url}", f"会場: {ev.venue}", f"住所: {ev.address}", f"情報元: {ev.source}"]
         if ev.image_url: desc.append(f"画像: {ev.image_url}")
@@ -2205,7 +2257,7 @@ def build_ics(events: list[Event], generated_at: str | None = None, execution_id
         if ev.latitude is not None and ev.longitude is not None:
             lines.append(f"GEO:{ev.latitude:.6f};{ev.longitude:.6f}")
         lines.extend([f"PRIORITY:{max(1, min(9, ev.priority))}",
-                      fold_ics("CATEGORIES:" + escape_ics(ev.category.upper().replace("・", "-")))])
+                      fold_ics("CATEGORIES:" + escape_ics(category_label.upper().replace("・", "-")))])
         if ev.image_url:
             lines.append(fold_ics("IMAGE;VALUE=URI;DISPLAY=BADGE:" + ev.image_url))
         lines.append("END:VEVENT")
@@ -2216,7 +2268,7 @@ def build_ics(events: list[Event], generated_at: str | None = None, execution_id
 def to_map_json(events: list[Event], reports: dict[str, Any], mode: str = "live") -> dict[str, Any]:
     items = []
     for ev in events:
-        items.append({"id": make_uid(ev), "title": ev.title, "category": ev.category,
+        items.append({"id": make_uid(ev), "title": ev.title, "category": normalize_category(ev.category),
                       "start_date": ev.start_date, "end_date": ev.end_date,
                       "start_time": ev.start_time, "end_time": ev.end_time,
                       "all_day": ev.all_day, "timezone": "Asia/Tokyo",
@@ -2268,7 +2320,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.6//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.7//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
