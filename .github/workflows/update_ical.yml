@@ -30,6 +30,20 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Verify application version and quality filters
+        run: |
+          python - <<'PY'
+          import pathlib, edogawa_ical
+          print("Loaded module:", pathlib.Path(edogawa_ical.__file__).resolve())
+          print("Application version:", getattr(edogawa_ical, "APP_VERSION", "MISSING"))
+          required = ("is_non_event_page", "valid_event_span", "make_event", "extract_detail")
+          missing = [name for name in required if not hasattr(edogawa_ical, name)]
+          if missing:
+              raise SystemExit("Required v3 functions are missing: " + ", ".join(missing))
+          if getattr(edogawa_ical, "APP_VERSION", None) != "3.1.0":
+              raise SystemExit("Wrong edogawa_ical.py loaded. Replace the repository-root file with v3.1.0.")
+          PY
+
       - name: Unit tests
         run: python -m unittest discover -s tests -v
 
