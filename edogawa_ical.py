@@ -42,7 +42,6 @@ EDOGAWA_MYPL_EVENT_URL = "https://edogawa.mypl.net/event/"
 # ==========================================
 TSURUOKA_BUSSAN_URL = "https://www.city.tsuruoka.lg.jp/kanko/kankou-sonota/tokyo01.html"
 TRX_FLEAMARKET_URL = "https://trx.jp/"
-TRX_TOKYO_FLEAMARKET_URL = "https://trx.jp/area/tokyo/"
 ARIO_KASAI_EVENT_URL = "https://kasai.ario.jp/event/"
 
 SCHOOL_EVENT_SOURCES = [
@@ -110,6 +109,7 @@ EXCLUDE_KEYWORDS = (
     "募集終了",
     "会員を募集します",
     "を募集します",
+    "参加者募集",
     "よくある質問",
     "団体利用",
     "施設概要",
@@ -122,6 +122,16 @@ EXCLUDE_KEYWORDS = (
     "主催者に確認した情報のみを掲載しています",
     "公園・庭園・ 植物園",
     "公園協会について",
+    "読書マラソン",
+    "中間結果",
+    "快挙",
+    "受賞",
+    "スクラッチくじ",
+    "新店オープン",
+    "お得なLINEクーポン",
+    "えほんが更新",
+    "フォトスポット",
+    "ご利用の皆様へ",
 )
 
 GENERIC_NON_EVENT_TITLES = {
@@ -221,6 +231,7 @@ PAST_REPORT_PATTERNS = (
     r"終了しました[!！。]?$",
     r"参加しました[!！。]?$",
     r"を行いました[!！。]?$",
+    r"始まりました[!！。]?$",
 )
 
 SCHOOL_PUBLIC_KEYWORDS = (
@@ -434,9 +445,13 @@ def is_news_index_or_category_url(url, source_url=""):
     s = source_url.rstrip("/")
     if s and u == s:
         return True
+    if u.endswith("/movie.html"):
+        return True
     if path == "" or path == "/index.html" or re.fullmatch(r"/[^/]+(?:/index\.html)?", path):
         if "/event/" not in path and "/news/" not in path and "/calendar/" not in path:
             return True
+    if re.fullmatch(r"/park/[^/]+/index\.html", path):
+        return True
     if (
         path.endswith(".pdf")
         or "/page/" in u
@@ -508,6 +523,8 @@ def fetch_html(url, params=None, timeout=10, retries=1):
             return resp.text
         except Exception as e:
             last_err = e
+            if getattr(getattr(e, "response", None), "status_code", None) == 404:
+                return None
             if attempt < retries:
                 time.sleep(0.4)
     print(f"Warning: Failed to fetch {url}: {last_err}")
@@ -1316,10 +1333,8 @@ def parse_trx_fleamarket_events():
     """Scrape Edogawa-area flea market dates from Tokyo Recycle (trx.jp) list/detail pages."""
     today = datetime.now(JST).date()
     events = {}
-    for list_url in (TRX_TOKYO_FLEAMARKET_URL, TRX_FLEAMARKET_URL):
-        html = fetch_html(list_url, timeout=12, retries=1)
-        if not html:
-            continue
+    html = fetch_html(TRX_FLEAMARKET_URL, timeout=12, retries=1)
+    if html:
         soup = BeautifulSoup(html, "html.parser")
         for block in soup.find_all(["tr", "li", "article", "div"]):
             text = re.sub(r"\s+", " ", block.get_text(" ", strip=True))
@@ -1330,11 +1345,11 @@ def parse_trx_fleamarket_events():
                 for k in ("葛西臨海公園", "篠崎公園", "大島小松川公園", "船堀", "江戸川区", "小岩", "平井")
             ):
                 continue
-            parsed_dates = {d for d in extract_dates_from_text(text, url=list_url) if d >= today}
+            parsed_dates = {d for d in extract_dates_from_text(text, url=TRX_FLEAMARKET_URL) if d >= today}
             if not parsed_dates:
                 continue
             link = block.find("a", href=True)
-            full_url = urljoin(list_url, link["href"]) if link else list_url
+            full_url = urljoin(TRX_FLEAMARKET_URL, link["href"]) if link else TRX_FLEAMARKET_URL
             venue = infer_venue_from_text(text, default_venue="葛西臨海公園")
             title = f"フリーマーケット（{venue}）"
             key = f"{full_url}_{venue}"
@@ -1345,11 +1360,9 @@ def parse_trx_fleamarket_events():
                     "category": "フリマ",
                     "venue": venue,
                     "dates": set(),
-                    "image_url": extract_image_from_element(block, list_url),
+                    "image_url": extract_image_from_element(block, TRX_FLEAMARKET_URL),
                 }
             events[key]["dates"].update(parsed_dates)
-        if events:
-            break
     print(f"    [debug] フリマ(trx.jp): unique={len(events)}")
     return list(events.values())
 
@@ -1464,21 +1477,8 @@ def generate_ics(all_events):
             continue
 
         is_exhibition = any(k in ev.get("title", "") for k in ("展", "フェスタ", "フェア", "ウィーク", "週間"))
-        if is_exhibition and len(sorted_dates) >= 2:
-            if (sorted_dates[-1] - sorted_dates[0]).days <= 90:
-                spans = [(sorted_dates[0], sorted_dates[-1])]
-            else:
-                spans = []
-                span_start = sorted_dates[0]
-                prev_date = sorted_dates[0]
-                for d in sorted_dates[1:]:
-                    if (d - prev_date).days == 1:
-                        prev_date = d
-                    else:
-                        spans.append((span_start, prev_date))
-                        span_start = d
-                        prev_date = d
-                spans.append((span_start, prev_date))
+        if is_exhibition and len(sorted_dates) >= 2 and (sorted_dates[-1] - sorted_dates[0]).days <= 90:
+            spans = [(sorted_dates[0], sorted_dates[-1])]
         else:
             spans = []
             span_start = sorted_dates[0]
@@ -1554,6 +1554,8 @@ def main():
     def add_events(source_name, items, priority_rank=50):
         print(f"  -> [{priority_rank:02d}] {source_name}: {len(items)} events fetched")
         for item in items:
+            if is_noise_or_news(item.get("title", ""), url=item.get("url", "")):
+                continue
             future_dates = {d for d in item.get("dates", set()) if d >= today}
             if not future_dates:
                 continue
