@@ -915,16 +915,29 @@ def parse_generic_facility_events(
 
         raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["article", "tr", "li", "dd", "dl", "div"]) or a_tag
-        time_el = parent.find("time") if parent else None
+        grandparent = parent.find_parent(["article", "tr", "li", "dl", "div"]) if parent else None
+        prev_sib = parent.find_previous_sibling(["dt", "div", "p", "span", "time"]) if parent else None
+        time_el = (
+            (parent.find("time") if parent else None)
+            or (grandparent.find("time") if grandparent else None)
+        )
         time_text = time_el.get_text(" ", strip=True) if time_el else ""
         if is_noise_or_news(raw_title, parent.get_text(" ", strip=True), full_url, strict_mypl=strict_mypl):
-            heading = parent.find(["h2", "h3", "h4", "dt"]) if parent else None
+            heading = (
+                (parent.find(["h2", "h3", "h4", "dt"]) if parent else None)
+                or (grandparent.find(["h2", "h3", "h4", "dt"]) if grandparent else None)
+            )
             if heading:
                 cand = heading.get_text(" ", strip=True)
                 if not is_noise_or_news(cand, parent.get_text(" ", strip=True), full_url, strict_mypl=strict_mypl):
                     raw_title = cand
 
-        block_text = parent.get_text(" ", strip=True)
+        parent_text = parent.get_text(" ", strip=True) if parent else ""
+        prev_text = prev_sib.get_text(" ", strip=True) if prev_sib else ""
+        grand_text = ""
+        if grandparent and len(grandparent.get_text(" ", strip=True)) <= 400:
+            grand_text = grandparent.get_text(" ", strip=True)
+        block_text = f"{prev_text} {parent_text} {grand_text}".strip()
         if is_noise_or_news(raw_title, block_text, full_url, strict_mypl=strict_mypl):
             continue
 
@@ -937,7 +950,13 @@ def parse_generic_facility_events(
         title = clean_event_title(raw_title)
         title_dates = extract_dates_from_text(title)
         time_dates = extract_dates_from_text(time_text) if time_text else set()
-        parsed_dates = title_dates or time_dates or extract_dates_from_text(block_text)
+        parsed_dates = (
+            title_dates
+            or time_dates
+            or extract_dates_from_text(prev_text)
+            or extract_dates_from_text(parent_text)
+            or extract_dates_from_text(grand_text)
+        )
 
         if not parsed_dates:
             continue
@@ -1120,17 +1139,36 @@ def generate_ics(all_events):
         if not sorted_dates:
             continue
 
-        spans = []
-        span_start = sorted_dates[0]
-        prev_date = sorted_dates[0]
-        for d in sorted_dates[1:]:
-            if (d - prev_date).days == 1:
-                prev_date = d
+        # 企画展・展示会などで複数日に跨がる場合、極端な飛び日（例: 12/13 と 1/1 のみ）は連続会期として扱うか精査
+        is_exhibition = any(k in ev.get("title", "") for k in ("展", "フェスタ", "フェア", "ウィーク", "週間"))
+        if is_exhibition and len(sorted_dates) >= 2:
+            # 最初と最後の日付の間が90日以内なら会期初日〜最終日として1つの期間にまとめる
+            if (sorted_dates[-1] - sorted_dates[0]).days <= 90:
+                spans = [(sorted_dates[0], sorted_dates[-1])]
             else:
+                spans = []
+                span_start = sorted_dates[0]
+                prev_date = sorted_dates[0]
+                for d in sorted_dates[1:]:
+                    if (d - prev_date).days == 1:
+                        prev_date = d
+                    else:
+                        spans.append((span_start, prev_date))
+                        span_start = d
+                        prev_date = d
                 spans.append((span_start, prev_date))
-                span_start = d
-                prev_date = d
-        spans.append((span_start, prev_date))
+        else:
+            spans = []
+            span_start = sorted_dates[0]
+            prev_date = sorted_dates[0]
+            for d in sorted_dates[1:]:
+                if (d - prev_date).days == 1:
+                    prev_date = d
+                else:
+                    spans.append((span_start, prev_date))
+                    span_start = d
+                    prev_date = d
+            spans.append((span_start, prev_date))
 
         for start_d, end_d in spans:
             dtstart_str = start_d.strftime("%Y%m%d")
