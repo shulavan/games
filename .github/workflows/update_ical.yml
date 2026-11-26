@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
@@ -28,29 +28,52 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt
 
-      - name: Verify application version and quality filters
+      - name: Verify application version
         run: |
           python - <<'PY'
           import pathlib, edogawa_ical
           print("Loaded module:", pathlib.Path(edogawa_ical.__file__).resolve())
-          print("Application version:", getattr(edogawa_ical, "APP_VERSION", "MISSING"))
-          required = ("is_non_event_page", "valid_event_span", "make_event", "extract_detail", "outside_facility_mention", "geocode_edogawa_location", "expand_recurring_spans")
+          print("Application version:", edogawa_ical.APP_VERSION)
+          if edogawa_ical.APP_VERSION != "3.2.2":
+              raise SystemExit("Wrong edogawa_ical.py loaded; expected v3.2.2")
+          required = ("expand_recurring_spans", "extract_detail", "is_non_event_page",
+                      "verify_edogawa_location", "geocode_edogawa_location", "atomic_write_bundle")
           missing = [name for name in required if not hasattr(edogawa_ical, name)]
           if missing:
-              raise SystemExit("Required v3 functions are missing: " + ", ".join(missing))
-          if getattr(edogawa_ical, "APP_VERSION", None) != "3.2.1":
-              raise SystemExit("Wrong edogawa_ical.py loaded. Replace the repository-root file with v3.2.1.")
+              raise SystemExit("Required v3.2.2 functions are missing: " + ", ".join(missing))
           PY
 
-      - name: Unit tests
+      - name: Unit tests (Python 3.12)
         run: python -m unittest discover -s tests -v
 
       - name: Generate iCal and map JSON
         env:
           KVIEWER_API_URL: ${{ secrets.KVIEWER_API_URL }}
         run: python -u edogawa_ical.py --months 12
+
+      - name: Verify generated files are from the same run
+        run: |
+          python - <<'PY'
+          import json, pathlib, re
+          status = json.loads(pathlib.Path("source_status.json").read_text(encoding="utf-8"))
+          data = json.loads(pathlib.Path("edogawa_events.json").read_text(encoding="utf-8"))
+          ics = pathlib.Path("edogawa_events.ics").read_text(encoding="utf-8")
+          expected = ("3.2.2", status.get("execution_id"), status.get("generated_at"))
+          actual = (data.get("app_version"), data.get("execution_id"), data.get("generated_at"))
+          if expected != actual:
+              raise SystemExit(f"JSON/status generation mismatch: {actual!r} != {expected!r}")
+          if status.get("app_version") != "3.2.2":
+              raise SystemExit("source_status.json version mismatch")
+          for marker in (f"PRODID:-//Edogawa Ward Events//JP v3.2.2//EN",
+                         f"X-EDOGAWA-EXECUTION-ID:{status['execution_id']}",
+                         f"X-EDOGAWA-GENERATED-AT:{status['generated_at']}"):
+              if marker not in ics:
+                  raise SystemExit("iCal/status generation mismatch: " + marker)
+          print("Verified v3.2.2 generation:", status["execution_id"], status["generated_at"])
+          print("Events:", status.get("totals", {}).get("unique_events"))
+          PY
 
       - name: Upload source diagnostics
         if: always()
@@ -59,13 +82,14 @@ jobs:
           name: edogawa-ical-diagnostics
           path: |
             source_status.json
+            source_status_failed.json
             edogawa_events.ics
             edogawa_events.json
             edogawa_venues.json
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Commit generated data
+      - name: Commit all generated outputs together
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -73,6 +97,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No calendar data changes"
           else
-            git commit -m "Update Edogawa events calendar"
+            git commit -m "Update Edogawa events calendar (v3.2.2)"
             git push
           fi
