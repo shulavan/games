@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.3"
+APP_VERSION = "3.2.4"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -175,10 +175,28 @@ def normalize_event_url(value: str) -> str:
 
 
 def clean_location_text(value: str) -> str:
-    """会場欄に混入したCMSリンク文言を除去する。"""
+    """会場欄のナビ・交通案内・重複を除去する。"""
     text = norm(value)
     text = re.split(r"\s*ホームページ\s*", text, maxsplit=1)[0]
+    text = re.split(r"(?:【(?:電車|バス|車|徒歩)|(?:電車|バス|車)をご利用の場合|アクセス方法|交通アクセス)", text, maxsplit=1)[0]
     return text.strip(" ・|｜")
+
+
+def combine_location(venue: str, address: str) -> str:
+    """会場名と住所を重複なく連結する。"""
+    venue, address = clean_location_text(venue), clean_location_text(address)
+    if not venue:
+        return address
+    if not address:
+        return venue
+    compact_v = re.sub(r"[\s　]", "", venue)
+    compact_a = re.sub(r"[\s　]", "", address)
+    venue_core = compact_v.replace("駅前", "")
+    if compact_v and (compact_v in compact_a or (venue_core and venue_core in compact_a)):
+        return address
+    if compact_a and compact_a in compact_v:
+        return venue
+    return venue + " " + address
 
 
 def clean_description_text(value: str) -> str:
@@ -590,9 +608,19 @@ def is_contingency_date_line(line: str) -> bool:
 
 def extract_detail(html: str, page_url: str, default_venue: str | None = None) -> dict[str, Any]:
     soup = BeautifulSoup(html, "html.parser")
-    for el in soup.find_all(["nav", "footer", "header", "aside", "script", "style"]):
+    for el in soup.find_all(["nav", "footer", "header", "aside", "script", "style", "form"]):
         el.decompose()
-    main = soup.find(["main", "article"]) or soup.find(id=re.compile("main|content", re.I)) or soup.body or soup
+    # MyPlue等、main/articleタグを使わずコンテンツ用クラスを持つページを優先。
+    main = (soup.find("main") or soup.find("article") or
+            soup.find(id=re.compile(r"(?:main|contents?|event[-_]?detail|detail[-_]?contents)", re.I)) or
+            soup.find(class_=re.compile(r"(?:main[-_]?contents?|event[-_]?detail|detail[-_]?contents|event[-_]?body)", re.I)) or
+            soup.body or soup)
+    for el in main.find_all(["nav", "footer", "header", "aside", "form"]):
+        el.decompose()
+    for el in main.find_all(True):
+        marker = " ".join((str(el.get("id", "")), " ".join(el.get("class", [])))).casefold()
+        if re.search(r"(?:global[-_ ]?nav|site[-_ ]?nav|gnav|breadcrumb|side[-_ ]?menu|footer[-_ ]?menu|header[-_ ]?menu)", marker):
+            el.decompose()
     title_el = main.find("h1") or soup.find("h1") or main.find(["h2", "h3"])
     title = norm(title_el.get_text(" ", strip=True)) if title_el else ""
     # 図書館など「イベント情報」がH1、個別イベント名がH3/H4のCMSに対応。
@@ -629,6 +657,9 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     time_start, time_end = parse_time_range(date_text)
     venue_text = section_after_heading(lines, VENUE_HEADINGS, stop=ADDRESS_HEADINGS + STOP_HEADINGS)
     address_text = section_after_heading(lines, ADDRESS_HEADINGS, stop=("内容", "対象", "定員", "費用", "料金", "問合せ", "主催", "備考"))
+    address_text = clean_location_text(address_text)
+    # アクセス案内が住所欄に連結されたサイトでは、住所の先頭部分だけを残す。
+    address_text = re.split(r"(?:【(?:電車|バス|車)|(?:電車|バス|車)をご利用の場合|アクセス方法|交通アクセス)", address_text, maxsplit=1)[0].strip()
     venue_reg = lookup_venue(venue_text) or lookup_venue(title) or lookup_venue(" ".join(lines[:100]))
     # 固定施設の専用イベント一覧では、詳細記事に会場欄がないことがある。
     # その場合だけ、取得元に設定した既知の施設会場を住所マスタに結びつける。
@@ -652,11 +683,21 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
                 image_url = candidate
                 break
     full_text = "\n".join(lines)
+    official_url = None
+    for a in main.find_all("a", href=True):
+        href = urljoin(page_url, a.get("href", "").strip())
+        label = norm(a.get_text(" ", strip=True) + " " + a.get("title", ""))
+        if ("city.edogawa.tokyo.jp" in urlparse(href).netloc.lower() and
+                (any(k in label for k in ("公式", "詳細", "イベントページ", "ホームページ", "開催案内")) or
+                 "/event/" in urlparse(href).path.lower() or urlparse(href).path.lower().endswith(".html"))):
+            official_url = href
+            break
     non_event = is_non_event_page(title, full_text, page_url)
     outside_facility = outside_facility_mention(full_text)
     return {"title": title, "date_text": date_text, "spans": spans,
             "start_time": time_start, "end_time": time_end, "venue": venue,
             "address": address, "image_url": image_url, "text": full_text,
+            "official_url": official_url,
             "venue_registry": venue_reg, "is_non_event_page": non_event,
             "outside_facility_mention": outside_facility}
 
@@ -999,8 +1040,9 @@ def event_key(ev: Event) -> str:
 
 def _title_fingerprint(value: str) -> str:
     t = norm(value).casefold()
+    t = re.sub(r"[（(【\[]?(?:令和|平成|昭和)?[0-9０-９]{1,4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日?(?:[^）)】\]]*)[）)】\]]?", "", t)
     t = re.sub(r"[【】\[\]（）()「」『』・･,，。:：!！?？\s　]+", "", t)
-    t = re.sub(r"(?:開催のお知らせ|イベント情報|イベント|開催)", "", t)
+    t = re.sub(r"(?:を開催します|開催いたします|開催されます|開催のお知らせ|イベント情報|イベント|開催)", "", t)
     return t
 
 
@@ -1154,7 +1196,8 @@ def _csv_date_span(start_raw: str, end_raw: str) -> tuple[date, date] | None:
     return combined[0] if combined else None
 
 
-def parse_csv_source(url: str, name: str, priority: int = 1) -> tuple[list[Event], dict[str, Any]]:
+def parse_csv_source(url: str, name: str, priority: int = 1,
+                     suppress_urls: set[str] | None = None) -> tuple[list[Event], dict[str, Any]]:
     raw, meta = fetch_text(url, timeout=30)
     status = {"name": name, **meta, "status": "failed", "candidate_rows": 0,
               "accepted": 0, "detail_lookups": 0, "rejected": {}, "headers": []}
@@ -1172,6 +1215,9 @@ def parse_csv_source(url: str, name: str, priority: int = 1) -> tuple[list[Event
 
     events: list[Event] = []
     detail_cache: dict[str, dict[str, Any]] = {}
+    suppress = {normalize_event_url(x) for x in (suppress_urls or set())}
+    suppress.discard("")
+    status["suppressed_official_html_rows"] = 0
     for row in reader:
         status["candidate_rows"] += 1
         def get(k: str) -> str:
@@ -1201,6 +1247,10 @@ def parse_csv_source(url: str, name: str, priority: int = 1) -> tuple[list[Event
             address = "東京都江戸川区" + address
 
         url_v = get("url") or url
+        if normalize_event_url(url_v) in suppress:
+            status["suppressed_official_html_rows"] += 1
+            status["rejected"]["official_html_has_same_detail_url"] = status["rejected"].get("official_html_has_same_detail_url", 0) + 1
+            continue
         image = get("image") or None
         description = get("description")
         # オープンデータで場所が省略される場合、レコードの詳細URLからのみ補完する。
@@ -1726,6 +1776,8 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
                             image_url=d.get("image_url"), priority=(9 if len(spans) > 1 or was_multi_day_or_multi_date else cfg.get("priority", 4)),
                             description=d.get("text", "")[:2000])
             if ev:
+                if d.get("official_url"):
+                    ev.source_urls = sorted(set(ev.source_urls + [d["official_url"]]))
                 events.append(ev); status["accepted"] += 1
             else:
                 status["rejected"]["outside_or_unverified_location"] = status["rejected"].get("outside_or_unverified_location", 0) + 1
@@ -1943,16 +1995,20 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
     except OSError as e:
         reports.setdefault("warnings", []).append(f"会場マスタ保存失敗: {e}")
 
+    # 先に区公式HTMLを取得し、同じ詳細URLを持つOpenData行はCSV側から除外する。
+    # HTMLが存在するイベントの期間CSV展開による「開催日でない日」の大量生成を防ぐ。
+    official_events, official_status = parse_city_calendar(months=months)
+    all_events.extend(official_events)
+    reports["sources"]["江戸川区公式イベントカレンダー"] = official_status
+    official_detail_urls = {normalize_event_url(x) for ev in official_events
+                            for x in (ev.source_urls + ([ev.url] if ev.url else []))}
+    official_detail_urls.discard("")
     for name, url, prio in (
         ("江戸川区イベントカレンダーCSV", CITY_EVENT_CSV, 1),
         ("東京都OpenData江戸川区イベント一覧CSV", TOKYO_EVENT_CSV, 1),
     ):
-        events, status = parse_csv_source(url, name, priority=prio)
+        events, status = parse_csv_source(url, name, priority=prio, suppress_urls=official_detail_urls)
         all_events.extend(events); reports["sources"][name] = status
-
-    official_events, official_status = parse_city_calendar(months=months)
-    all_events.extend(official_events)
-    reports["sources"]["江戸川区公式イベントカレンダー"] = official_status
 
     if include_supplements:
         for cfg in LISTING_SOURCES:
@@ -2041,7 +2097,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.3//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.4//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2069,7 +2125,7 @@ def build_ics(events: list[Event], generated_at: str | None = None, execution_id
         lines.append(fold_ics("DESCRIPTION:" + escape_ics("\n".join(x for x in desc if x))))
         if ev.url: lines.append(fold_ics("URL:" + ev.url))
         if ev.venue or ev.address:
-            lines.append(fold_ics("LOCATION:" + escape_ics(" ".join(x for x in (ev.venue, ev.address) if x))))
+            lines.append(fold_ics("LOCATION:" + escape_ics(combine_location(ev.venue, ev.address))))
         if ev.latitude is not None and ev.longitude is not None:
             lines.append(f"GEO:{ev.latitude:.6f};{ev.longitude:.6f}")
         lines.extend([f"PRIORITY:{max(1, min(9, ev.priority))}",
@@ -2136,7 +2192,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.3//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.4//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
