@@ -165,7 +165,9 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       '#next .bx{width:min(340px,100%);background:#111a2e;border:1px solid #334a7a;border-radius:20px;padding:20px 16px;text-align:center}#next .r{font-size:14px;font-weight:800;color:#cbd5e1;min-height:20px}' +
       '#next .r b{color:#fde68a;font-size:18px}#next .t{margin-top:10px;font-size:12px;color:#94a3b8;font-weight:800}#next .g{margin-top:4px;font-size:20px;font-weight:900;color:#fff}#next .g .ic{font-size:40px;display:block;margin-bottom:4px}' +
       '#next .bt{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}#next .bt button{border:0;border-radius:12px;padding:12px 6px;font-size:14px;font-weight:900;background:#334155;color:#fff}#next .bt .go{background:#f59e0b}' +
-      '.hd .inst{margin-left:auto;flex:0 0 auto;width:42px;height:42px;border-radius:14px;border:1px solid #f59e0b;background:rgba(245,158,11,.14);font-size:22px;line-height:1;box-shadow:0 0 0 0 rgba(245,158,11,.6);animation:instP 2s ease-in-out infinite}' +
+      '.hd .hb{margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:8px}' +
+      '.hd .shr{width:42px;height:42px;border-radius:14px;border:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:pointer}.hd .shr:active{transform:scale(.95)}.hd .shr img{width:22px;height:22px;display:block;pointer-events:none}' +
+      '.hd .inst{flex:0 0 auto;width:42px;height:42px;border-radius:14px;border:1px solid #f59e0b;background:rgba(245,158,11,.14);font-size:22px;line-height:1;box-shadow:0 0 0 0 rgba(245,158,11,.6);animation:instP 2s ease-in-out infinite}' +
       '@keyframes instP{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.55)}50%{box-shadow:0 0 0 7px rgba(245,158,11,0)}}' +
       '#inst{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.78)}#inst.show{display:flex}' +
       '#inst .bx{width:min(380px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:#111a2e;border:1px solid #f59e0b;border-radius:20px;padding:20px 16px;text-align:center}' +
@@ -212,10 +214,25 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       { ic:'🀄️', n:'じゃんじゃじゃじゃん', s:'ひらがじゃんもアリ', u:'https://shulavan.github.io/games/mahjong.html' },
       { ic:'🎲', n:'江戸川双六', s:'本物マップリアル双六', u:'https://shulavan.github.io/games/sugoroku.html' }
     ];
+    // シェア（江戸川双六と同じボタン。対戦の機能はなく、このページのURLを送ります）
+    function shareMini(){
+      var url = location.origin + location.pathname;
+      var text = '江戸川双六のミニゲームが、何回でも遊べる！🎮（全' + list.length + 'ゲーム）';
+      function copied(){ toast('🔗 URLをコピーしました。LINEなどに貼りつけて送ってください。', 3200); }
+      function copy(){
+        try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text + '\n' + url).then(copied, function(){ toast(esc(url), 5000); }); return; } }catch(e){}
+        toast(esc(url), 5000);
+      }
+      try{
+        if(navigator.share){ navigator.share({ title:'ミニゲーム', text:text, url:url }).catch(function(e){ if(!(e && e.name === 'AbortError')) copy(); }); return; }
+      }catch(e){}
+      copy();
+    }
     function menu(){
       var nextI = (Number(S.idx) || 0) % list.length;
       $('menu').innerHTML = '<div class="hd"><span class="lg">🎮</span><h1>ミニゲーム<small>江戸川双六のミニゲームを、何回でも遊べます</small></h1>' +
-          (installable() ? '<button type="button" id="b-install" class="inst" aria-label="アプリをインストール">📲</button>' : '') + '</div>' +
+          '<div class="hb">' + (installable() ? '<button type="button" id="b-install" class="inst" aria-label="アプリをインストール">📲</button>' : '') +
+          '<button type="button" id="b-share" class="shr" title="ミニゲームをシェア" aria-label="シェア"><img alt="シェア" src="https://shulavan.github.io/img/shareBlack.png" referrerpolicy="no-referrer"></button></div></div>' +
         '<div class="wal"><div><div class="k">所持金</div><div class="v" id="w-m">' + yen(S.money) + '</div></div><div><div class="k">ミニゲームで稼いだ合計</div><div class="v">' + yen(S.total) + '</div></div></div>' +
         '<button type="button" class="all" id="b-all">▶ 全部つづけて遊ぶ<small>' + (nextI ? (nextI + 1) + '番目の「' + esc(list[nextI].n) + '」から（全' + list.length + 'ゲーム）' : '上から順に、終わったら次のゲームへ（全' + list.length + 'ゲーム）') + '</small></button>' +
         '<div class="grid">' + list.map(function(g, i){
@@ -230,6 +247,7 @@ window.__EDOGAWA_SHARED_PARTS = ["<script id=\"edogawa-speech-bridge\">\n(functi
       $('b-all').onclick = function(){ full(); start((Number(S.idx) || 0) % list.length, true); };
       [].forEach.call(document.querySelectorAll('.gb[data-i]'), function(b){ b.onclick = function(){ full(); start(Number(b.getAttribute('data-i')), false); }; });
       if($('b-install')) $('b-install').onclick = function(){ openInstall(); };
+      if($('b-share')) $('b-share').onclick = shareMini;
       $('b-reset').onclick = function(){ if(!confirmBox()) return; S = { money:C.startMoney, total:0, best:{}, plays:{}, idx:0 }; save(S); menu(); };
     }
     // 【ver1.6.2】ゲームのボタンを押したら、全画面にします（できないブラウザではそのまま）
