@@ -96,6 +96,8 @@ EXCLUDE_KEYWORDS = (
     "申込は終了しました",
     "申込終了",
     "募集終了",
+    "会員を募集します",
+    "を募集します",
 )
 
 MYPL_EVENT_KEYWORDS = (
@@ -434,6 +436,7 @@ def clean_event_title(raw_title):
     t = raw_title.strip()
     t = re.sub(r"^20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", t)
     t = re.sub(r"^(?:イベント|主催共催公演|共催公演|特別展|企画展|NEW)\s*", "", t)
+    t = re.sub(r"開催のお知らせ$", "", t).strip()
     t = re.sub(r"申込要(?:\(ONLINE\))?$", "", t).strip()
     return t or raw_title.strip()
 
@@ -548,7 +551,7 @@ def extract_dates_from_text(text, default_year=None):
 
     cleaned_text = re.sub(r"^\s*20\d{2}[./年]\d{1,2}[./月]\d{1,2}日?\s*", "", norm_text)
     cleaned_text = re.sub(
-        r"(?:発売日|発売開始|申込開始|受付開始|応募開始|販売開始)[：:\s]*(?:20\d{2}[年/\.]?)?\d{1,2}[月/\.]\d{1,2}日?",
+        r"(?:発売日|発売開始|申込開始|受付開始|応募開始|販売開始|募集期間|申込期間)[：:\s]*(?:20\d{2}[年/\.]?)?\d{1,2}[月/\.]\d{1,2}日?(?:\s*[~～\-]+\s*(?:\d{1,2}[月/\.]?)?\d{1,2}日?)?",
         "",
         cleaned_text,
     )
@@ -568,13 +571,16 @@ def extract_dates_from_text(text, default_year=None):
             start_dt = datetime(sy, m1_i, d1_i, tzinfo=JST).date()
             ey = int(y2) if y2 else (sy if m2_i >= m1_i else sy + 1)
             end_dt = datetime(ey, m2_i, d2_i, tzinfo=JST).date()
-            if end_dt >= today and (end_dt - start_dt).days <= 120:
+            if end_dt >= today and (end_dt - start_dt).days <= 60:
                 cur = max(start_dt, today)
                 while cur <= end_dt:
                     parsed_dates.add(cur)
                     cur += timedelta(days=1)
         except ValueError:
             pass
+
+    if parsed_dates:
+        return parsed_dates
 
     # 2) Comma/slash separated day lists after a full date like "11/28、29" or "12月6日、13日"
     for seq_match in re.finditer(
@@ -846,6 +852,8 @@ def parse_generic_facility_events(
 
         raw_title = a_tag.get_text(" ", strip=True)
         parent = a_tag.find_parent(["article", "tr", "li", "dd", "dl", "div"]) or a_tag
+        time_el = parent.find("time") if parent else None
+        time_text = time_el.get_text(" ", strip=True) if time_el else ""
         if is_noise_or_news(raw_title, parent.get_text(" ", strip=True), full_url, strict_mypl=strict_mypl):
             heading = parent.find(["h2", "h3", "h4", "dt"]) if parent else None
             if heading:
@@ -857,7 +865,7 @@ def parse_generic_facility_events(
         if is_noise_or_news(raw_title, block_text, full_url, strict_mypl=strict_mypl):
             continue
 
-        combined_text = f"{raw_title} {block_text}"
+        combined_text = f"{time_text} {raw_title} {block_text}"
         if require_keywords and not any(kw in combined_text for kw in require_keywords):
             continue
         if area_keywords and not any(ak in combined_text for ak in area_keywords):
@@ -865,7 +873,8 @@ def parse_generic_facility_events(
 
         title = clean_event_title(raw_title)
         title_dates = extract_dates_from_text(title)
-        parsed_dates = title_dates if title_dates else extract_dates_from_text(combined_text)
+        time_dates = extract_dates_from_text(time_text) if time_text else set()
+        parsed_dates = title_dates or time_dates or extract_dates_from_text(block_text)
 
         # Avoid guessing day=1 when no concrete date is mentioned in text
         if not parsed_dates:
@@ -1148,18 +1157,6 @@ def main():
         add_events(f"江戸川区役所・区公式 ({year}-{month:02d})", items, priority_rank=1)
         time.sleep(0.35)
 
-    add_events(
-        "江戸川区役所・区イベント一覧",
-        parse_generic_facility_events(
-            EDOGAWA_EVENT_TOP_URL,
-            "区役所・区公式",
-            "江戸川区役所",
-            timeout=10,
-            retries=1,
-            fallback_base_url=EDOGAWA_TOP_URL,
-        ),
-        priority_rank=2,
-    )
     add_events("江戸川区立図書館", parse_library_events(), priority_rank=3)
     add_events("タワーホール船堀", parse_generic_facility_events(TOWERHALL_EVENT_URL, "公共・船堀タワー", "タワーホール船堀"), priority_rank=4)
     add_events("江戸川区総合文化センター(予定一覧)", parse_generic_facility_events(BUNKACENTER_EVENT_URL, "公共・総合文化センター", "江戸川区総合文化センター"), priority_rank=5)
