@@ -36,12 +36,12 @@ jobs:
           import pathlib, edogawa_ical
           print("Loaded module:", pathlib.Path(edogawa_ical.__file__).resolve())
           print("Application version:", getattr(edogawa_ical, "APP_VERSION", "MISSING"))
-          required = ("is_non_event_page", "valid_event_span", "make_event", "extract_detail", "outside_facility_mention")
+          required = ("is_non_event_page", "valid_event_span", "make_event", "extract_detail", "outside_facility_mention", "geocode_edogawa_location", "expand_recurring_spans")
           missing = [name for name in required if not hasattr(edogawa_ical, name)]
           if missing:
               raise SystemExit("Required v3 functions are missing: " + ", ".join(missing))
-          if getattr(edogawa_ical, "APP_VERSION", None) != "3.2.0":
-              raise SystemExit("Wrong edogawa_ical.py loaded. Replace the repository-root file with v3.2.0.")
+          if getattr(edogawa_ical, "APP_VERSION", None) != "3.2.1":
+              raise SystemExit("Wrong edogawa_ical.py loaded. Replace the repository-root file with v3.2.1.")
           PY
 
       - name: Unit tests
