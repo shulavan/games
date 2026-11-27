@@ -1,265 +1,275 @@
 #!/usr/bin/env python3
-"""Extract Edogawa Baseball Stadium monthly schedule with Gemini URL Context.
-
-This is an isolated pilot. It does not modify the main Edogawa iCal generator.
-All Gemini requests use the Gemini Developer API free-tier model configured below.
-"""
+# -*- coding: utf-8 -*-
+"""江戸川区球場の大会等予定表をGemini API無料枠で読み取る専用処理。"""
 from __future__ import annotations
 
-import argparse
 import json
 import os
 import re
-import sys
-from datetime import date, datetime
-from pathlib import Path
+from datetime import date
 from typing import Any
 from urllib.parse import urljoin, urlparse
-from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
 
 INDEX_URL = "https://www.edogawa-3field.jp/baseball/taikaiguid/"
+MODEL_NAME = "gemini-3.5-flash-lite"  # Google公式料金表でFree Tier対象を確認
 VENUE = "江戸川区球場"
-TIMEZONE = ZoneInfo("Asia/Tokyo")
-DEFAULT_MODEL = "gemini-3.5-flash-lite"
-USER_AGENT = "EdogawaStadiumSchedulePilot/1.0 (+https://shulavan.github.io/games/)"
+ADDRESS = "東京都江戸川区西葛西7丁目2番1号"
+SOURCE_NAME = "江戸川区球場・Gemini大会予定表"
+MAX_ASSET_BYTES = 12 * 1024 * 1024
 
-JSON_SCHEMA: dict[str, Any] = {
+EVENT_SCHEMA = {
     "type": "OBJECT",
     "properties": {
-        "venue": {"type": "STRING"},
-        "year": {"type": "INTEGER"},
-        "month": {"type": "INTEGER"},
         "events": {
             "type": "ARRAY",
             "items": {
                 "type": "OBJECT",
                 "properties": {
-                    "date": {"type": "STRING", "description": "YYYY-MM-DD"},
-                    "weekday": {"type": "STRING", "enum": ["月", "火", "水", "木", "金", "土", "日"]},
-                    "title": {"type": "STRING"},
-                    "event_type": {"type": "STRING", "enum": ["大会", "試合", "教室", "施設利用", "予備日", "休場", "その他"]},
-                    "status": {"type": "STRING", "enum": ["開催予定", "予備日", "休場", "未定"]},
-                    "start_time": {"type": "STRING", "nullable": True, "description": "HH:MM; unknown or not printed must be null"},
-                    "end_time": {"type": "STRING", "nullable": True, "description": "HH:MM; unknown or not printed must be null"},
-                    "notes": {"type": "STRING"},
-                    "confidence": {"type": "NUMBER", "minimum": 0, "maximum": 1}
+                    "date": {"type": "STRING", "description": "開催日 YYYY-MM-DD"},
+                    "title": {"type": "STRING", "description": "大会・試合・利用予定の名称"},
+                    "start_time": {"type": "STRING", "description": "開始時刻 HH:MM。不明なら空文字"},
+                    "end_time": {"type": "STRING", "description": "終了時刻 HH:MM。不明なら空文字"},
+                    "kind": {"type": "STRING", "description": "event / reserve / closure / maintenance / other"},
+                    "notes": {"type": "STRING", "description": "対戦相手、予備日、備考など画像に明記された情報"},
                 },
-                "required": ["date", "weekday", "title", "event_type", "status", "start_time", "end_time", "notes", "confidence"]
-            }
-        },
-        "warnings": {"type": "ARRAY", "items": {"type": "STRING"}}
+                "required": ["date", "title", "start_time", "end_time", "kind", "notes"],
+            },
+        }
     },
-    "required": ["venue", "year", "month", "events", "warnings"]
+    "required": ["events"],
 }
 
-PROMPT = """あなたは日本語の野球場月間予定表を読み取るデータ抽出エンジンです。
-指定された江戸川区球場の公式ページと、そのページに掲載された月間予定表画像/PDFだけを根拠に、対象月の予定を全件抽出してください。
 
-厳守事項:
-1. 画像/PDFの表の行・列・結合セルを視覚的に読み取り、日付と内容の対応を正確に復元する。
-2. 「2(月)・9(月)」のように複数日が同じ行にある場合、日付ごとに別イベントを作り、weekdayも各日付に対応させる。
-3. 時刻が印字されていない予定に時刻を推測して付けない。start_time/end_time は null。
-4. 空欄の日をイベントとして作らない。予備日・休場日と明記された場合はstatusで区別する。
-5. 年月は画像見出しを優先し、指定年月と異なる古い画像や別月の情報を混ぜない。
-6. 同じ予定が複数画像に重複掲載されている場合は1件に統合する。
-7. 文字が読めない場合は推測せずwarningsに記載し、confidenceを下げる。
-8. 試合開始時刻と施設利用時間を混同しない。画像にない終了時刻はnull。
-9. ページの掲載日、過去記事、別記事の大会説明を予定表の予定として追加しない。
-10. titleは予定表の「内容」欄の名称を簡潔に保持する。
-
-対象: 江戸川区球場、{year}年{month}月。
-出力は指定JSONスキーマに従う。説明文やMarkdownは出力しない。
-"""
-
-
-def normalize_text(value: str) -> str:
-    return re.sub(r"\s+", " ", value or "").strip()
-
-
-def fetch_html(url: str, timeout: int = 30) -> str:
-    response = requests.get(url, timeout=timeout, headers={"User-Agent": USER_AGENT})
+def _get(url: str, timeout: int = 25) -> requests.Response:
+    response = requests.get(url, timeout=timeout, headers={
+        "User-Agent": "Mozilla/5.0 (compatible; EdogawaEventCalendar/3.2.12)",
+        "Accept-Language": "ja,en-US;q=0.8,en;q=0.6",
+    })
     response.raise_for_status()
-    response.encoding = response.apparent_encoding or response.encoding
-    return response.text
+    return response
 
 
-def find_month_article(index_html: str, year: int, month: int, base_url: str = INDEX_URL) -> str:
-    soup = BeautifulSoup(index_html, "html.parser")
-    patterns = [
-        re.compile(rf"{year}\s*\(令和\s*\d+\)\s*年\s*{month}\s*月\s*大会等予定表"),
-        re.compile(rf"{year}\s*年\s*{month}\s*月\s*大会等予定表"),
-    ]
+def _month_from_title(title: str, app: Any) -> tuple[int, int] | None:
+    text = app.era_to_western(title)
+    text = re.sub(r"[（(]令和\s*\d{1,2}[）)]", "", text)
+    match = re.search(r"(20\d{2})\s*年[^0-9]{0,12}(\d{1,2})\s*月", text)
+    if not match:
+        match = re.search(r"(20\d{2})\s*年\s*(\d{1,2})\s*月", text)
+    if not match:
+        return None
+    year, month = int(match.group(1)), int(match.group(2))
+    return (year, month) if 1 <= month <= 12 else None
+
+
+def _discover_month_pages(html: str, app: Any) -> list[dict[str, str]]:
+    soup = BeautifulSoup(html, "html.parser")
+    pages: dict[str, dict[str, str]] = {}
+    # 年月の見出しを含むリンクを優先。月ページのURLは公式サイトのリンクからのみ取得する。
     for anchor in soup.find_all("a", href=True):
-        label = normalize_text(anchor.get_text(" ", strip=True))
-        if any(p.search(label) for p in patterns):
-            return urljoin(base_url, anchor["href"])
-    raise ValueError(f"{year}年{month}月の大会等予定表リンクが見つかりません")
+        title = app.norm(anchor.get_text(" ", strip=True) or anchor.get("title", ""))
+        href = urljoin(INDEX_URL, anchor["href"].strip())
+        if "大会等予定表" not in title and "大会等予定表" not in app.norm(anchor.parent.get_text(" ", strip=True) if anchor.parent else ""):
+            continue
+        month = _month_from_title(title + " " + app.norm(anchor.parent.get_text(" ", strip=True) if anchor.parent else ""), app)
+        if not month or urlparse(href).netloc != urlparse(INDEX_URL).netloc:
+            continue
+        pages[href] = {"url": href, "title": title or f"{month[0]}年{month[1]}月大会等予定表",
+                       "year": str(month[0]), "month": str(month[1])}
+    # 詳細ページURLをリンクから取れないCMS変更時は、トップページ内の年月見出し直下の画像を使う。
+    if not pages:
+        month = _month_from_title(soup.get_text(" ", strip=True), app)
+        if month:
+            pages[INDEX_URL] = {"url": INDEX_URL, "title": f"{month[0]}年{month[1]}月大会等予定表",
+                                "year": str(month[0]), "month": str(month[1])}
+    # 取得対象は当月から先12か月。過去の年度アーカイブをGeminiに送らず、
+    # 無料枠の消費と過去予定の再登録を防ぐ。
+    current = (app.TODAY.year, app.TODAY.month)
+    upper_index = current[0] * 12 + current[1] + 12
+    selected = []
+    for page in pages.values():
+        ym_index = int(page["year"]) * 12 + int(page["month"])
+        if current[0] * 12 + current[1] <= ym_index <= upper_index:
+            selected.append(page)
+    return sorted(selected, key=lambda x: (int(x["year"]), int(x["month"])))
 
 
-def discover_media_urls(article_html: str, article_url: str) -> list[str]:
-    soup = BeautifulSoup(article_html, "html.parser")
-    found: list[str] = []
-    allowed = {".png", ".jpg", ".jpeg", ".bmp", ".webp", ".pdf"}
-
-    def add(raw: str | None) -> None:
-        if not raw:
-            return
-        raw = raw.strip()
-        if not raw or raw.startswith(("data:", "javascript:", "#")):
-            return
-        absolute = urljoin(article_url, raw)
-        path = urlparse(absolute).path.lower()
-        if any(path.endswith(ext) for ext in allowed) and absolute not in found:
-            found.append(absolute)
-
-    for tag in soup.find_all(["img", "a"]):
-        if tag.name == "img":
-            for attr in ("src", "data-src", "data-lazy-src", "data-original"):
-                add(tag.get(attr))
-            srcset = tag.get("srcset") or tag.get("data-srcset")
-            if srcset:
-                for candidate in srcset.split(","):
-                    add(candidate.strip().split(" ")[0])
-        else:
-            add(tag.get("href"))
-    return found
-
-
-def collect_source_urls(year: int, month: int, fetcher=fetch_html) -> dict[str, Any]:
-    index_html = fetcher(INDEX_URL)
-    article_url = find_month_article(index_html, year, month)
-    article_html = fetcher(article_url)
-    media_urls = discover_media_urls(article_html, article_url)
-    if not media_urls:
-        raise ValueError("対象月の記事ページから画像/PDFが見つかりません")
-    # URL Context supports up to 20 URLs per request. Include the index and article
-    # as context, then every schedule image/PDF discovered from that article.
-    urls = [INDEX_URL, article_url, *media_urls]
-    if len(urls) > 20:
-        raise ValueError(f"対象URLが20件を超えています: {len(urls)}")
-    return {
-        "venue": VENUE,
-        "year": year,
-        "month": month,
-        "index_url": INDEX_URL,
-        "article_url": article_url,
-        "media_urls": media_urls,
-        "gemini_urls": urls,
-    }
-
-
-def validate_result(data: dict[str, Any], year: int, month: int) -> list[str]:
-    errors: list[str] = []
-    if data.get("venue") != VENUE:
-        errors.append("venueが江戸川区球場ではありません")
-    if data.get("year") != year or data.get("month") != month:
-        errors.append("出力年月が対象年月と一致しません")
-    seen: set[tuple[str, str, str | None, str | None]] = set()
-    for i, event in enumerate(data.get("events", [])):
+def _assets_for_page(html: str, page_url: str) -> list[tuple[str, bytes, str]]:
+    soup = BeautifulSoup(html, "html.parser")
+    urls: list[str] = []
+    for node in soup.find_all("img"):
+        src = node.get("src") or node.get("data-src") or node.get("data-original")
+        if src:
+            full = urljoin(page_url, src.strip())
+            if urlparse(full).scheme in ("http", "https"):
+                urls.append(full)
+    for anchor in soup.find_all("a", href=True):
+        href = urljoin(page_url, anchor["href"].strip())
+        if urlparse(href).path.lower().endswith((".pdf", ".png", ".jpg", ".jpeg", ".webp")):
+            urls.append(href)
+    out: list[tuple[str, bytes, str]] = []
+    seen: set[str] = set()
+    for url in urls:
+        if url in seen:
+            continue
+        seen.add(url)
+        path = urlparse(url).path.lower()
+        if re.search(r"(?:logo|icon|banner|sns|facebook|instagram|noimage)", path):
+            continue
         try:
-            d = date.fromisoformat(event.get("date", ""))
-            if d.year != year or d.month != month:
-                errors.append(f"events[{i}]の日付が対象月外です: {event.get('date')}")
-        except (TypeError, ValueError):
-            errors.append(f"events[{i}]の日付形式が不正です")
-        weekday_map = {"月": 0, "火": 1, "水": 2, "木": 3, "金": 4, "土": 5, "日": 6}
-        weekday = event.get("weekday")
-        if weekday not in weekday_map or ("date" in event and isinstance(event.get("date"), str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", event["date"]) and date.fromisoformat(event["date"]).weekday() != weekday_map.get(weekday, -1)):
-            errors.append(f"events[{i}]の曜日が日付と一致しません")
-        title = normalize_text(event.get("title", ""))
-        if not title:
-            errors.append(f"events[{i}]のタイトルが空です")
-        for key in ("start_time", "end_time"):
-            value = event.get(key)
-            if value is not None and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", str(value)):
-                errors.append(f"events[{i}].{key}の時刻形式が不正です: {value}")
-        start, end = event.get("start_time"), event.get("end_time")
-        if start and end and end <= start:
-            errors.append(f"events[{i}]の終了時刻が開始時刻以前です")
-        if not isinstance(event.get("confidence"), (int, float)) or not 0 <= event["confidence"] <= 1:
-            errors.append(f"events[{i}]のconfidenceが0〜1の範囲外です")
-        elif event["confidence"] < 0.75:
-            errors.append(f"events[{i}]のconfidenceが低いため人手確認が必要です")
-        key = (event.get("date", ""), title, start, end)
-        if key in seen:
-            errors.append(f"重複イベント: {key}")
-        seen.add(key)
-    return errors
+            response = _get(url, timeout=25)
+            data = response.content
+            if not data or len(data) > MAX_ASSET_BYTES:
+                continue
+            content_type = response.headers.get("Content-Type", "").split(";", 1)[0].lower()
+            if path.endswith(".pdf") or content_type == "application/pdf":
+                mime = "application/pdf"
+            elif path.endswith(".png") or content_type == "image/png":
+                mime = "image/png"
+            elif path.endswith(".webp") or content_type == "image/webp":
+                mime = "image/webp"
+            else:
+                mime = "image/jpeg"
+            if mime == "application/pdf" or mime.startswith("image/"):
+                out.append((url, data, mime))
+        except Exception:
+            continue
+    return out
 
 
-def call_gemini(source: dict[str, Any], api_key: str, model: str = DEFAULT_MODEL) -> dict[str, Any]:
-    try:
-        from google import genai
-        from google.genai import types
-    except ImportError as exc:
-        raise RuntimeError("google-genaiが未インストールです。pip install -r requirements-gemini.txt") from exc
+def _gemini_extract(client: Any, page: dict[str, str], assets: list[tuple[str, bytes, str]], page_text: str) -> dict[str, Any]:
+    from google.genai import types
 
-    client = genai.Client(api_key=api_key)
-    prompt = PROMPT.format(year=source["year"], month=source["month"])
-    prompt += "\n\n解析対象URL一覧:\n" + "\n".join(source["gemini_urls"])
+    year, month = int(page["year"]), int(page["month"])
+    prompt = f"""あなたは日本の野球場の月間予定表を読み取るデータ抽出器です。
+対象施設はオーエンススタジアム江戸川（江戸川区球場）、対象月は{year}年{month}月です。
+添付の公式予定表画像/PDFとページ本文を読み、表の行・列・曜日・日付の対応を保って全予定を抽出してください。
+
+重要なルール:
+- 表の見出しにある年・月を基準にし、dateは必ず{year}-{month:02d}-DD形式にする。
+- 1日に複数の大会・試合がある場合は、イベントを分けて複数件出す。
+- 1つの行の「2日・9日」のように同じ大会が複数日に記載されている場合は、日付ごとに1件ずつ出す。
+- 大会名、試合名、対戦カード、開始時刻・終了時刻は書かれている範囲で正確に抽出する。
+- 予備日・予備日程はkind=reserve、休場・休館はclosure、整備・点検等はmaintenance。
+- 通常の大会・試合はkind=event。空欄、単なる曜日、欄外の凡例はイベント化しない。
+- 予定がない日を補完しない。表にある予定だけを抽出する。
+- 年月が対象月と違う日付、読み取れない日付、推測した時刻は出力しない。
+- 備考には対戦相手、予備日条件、雨天時対応など、表に明記された短い情報だけを入れる。
+- 同じセルを重複して読み取らない。ただし同じ日に別試合がある場合は両方残す。
+- 出力は指定JSONスキーマに従う。
+
+ページ本文:
+{page_text[:9000]}
+
+資料URL:
+{page['url']}
+"""
+    contents: list[Any] = [prompt]
+    for _url, data, mime in assets:
+        contents.append(types.Part.from_bytes(data=data, mime_type=mime))
     response = client.models.generate_content(
-        model=model,
-        contents=prompt,
+        model=MODEL_NAME,
+        contents=contents,
         config=types.GenerateContentConfig(
-            tools=[types.Tool(url_context=types.UrlContext())],
             response_mime_type="application/json",
-            response_schema=JSON_SCHEMA,
+            response_schema=EVENT_SCHEMA,
             temperature=0,
         ),
     )
-    if not response.text:
-        raise RuntimeError("GeminiからJSON応答がありません")
-    data = json.loads(response.text)
-    # Keep provenance outside the model-authored schema.
-    data["source"] = {
-        "index_url": source["index_url"],
-        "article_url": source["article_url"],
-        "media_urls": source["media_urls"],
-        "model": model,
-        "retrieved_at": datetime.now(TIMEZONE).isoformat(),
-    }
-    metadata = getattr(response.candidates[0], "url_context_metadata", None) if response.candidates else None
-    if metadata:
-        data["url_context_metadata"] = str(metadata)
-    return data
+    text = getattr(response, "text", None)
+    if not text:
+        raise RuntimeError("Gemini returned an empty response")
+    parsed = json.loads(text)
+    if not isinstance(parsed, dict) or not isinstance(parsed.get("events"), list):
+        raise ValueError("Gemini JSON schema mismatch: events array missing")
+    return parsed
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="江戸川区球場の月間大会予定表をGeminiでJSON化")
-    parser.add_argument("--year", type=int, help="対象年（省略時は今月）")
-    parser.add_argument("--month", type=int, help="対象月（省略時は今月）")
-    parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", DEFAULT_MODEL))
-    parser.add_argument("--discover-only", action="store_true", help="URL一覧だけ取得し、Gemini APIを呼ばない")
-    parser.add_argument("--output", default="edogawa_stadium_events.json")
-    args = parser.parse_args()
-    now = datetime.now(TIMEZONE)
-    year, month = args.year or now.year, args.month or now.month
-    if not 1 <= month <= 12:
-        parser.error("--monthは1〜12で指定してください")
-
-    source = collect_source_urls(year, month)
-    if args.discover_only:
-        result: dict[str, Any] = {"source_discovery": source}
-    else:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise RuntimeError("GEMINI_API_KEYが設定されていません")
-        result = call_gemini(source, api_key, args.model)
-        errors = validate_result(result, year, month)
-        result["validation"] = {"ok": not errors, "errors": errors}
-        if errors:
-            print("検証エラーがあるため、正常データとして採用しないでください:", file=sys.stderr)
-            for error in errors:
-                print(f"- {error}", file=sys.stderr)
-    Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"出力: {args.output}")
-    if not args.discover_only and result.get("validation", {}).get("errors"):
-        return 2
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+def collect_stadium_events(app: Any) -> tuple[list[Any], dict[str, Any]]:
+    """公式の月別画像/PDFをGeminiで解釈し、検証済みEventだけを返す。"""
+    status: dict[str, Any] = {"name": SOURCE_NAME, "url": INDEX_URL, "status": "not_configured",
+                              "model": MODEL_NAME, "tier": "free_only", "accepted": 0,
+                              "months": [], "rejected": {}}
+    api_key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not api_key:
+        status["note"] = "GEMINI_API_KEY未設定のためGemini処理をスキップ"
+        return [], status
+    try:
+        from google import genai
+    except Exception as exc:
+        status.update({"status": "dependency_missing", "error": str(exc)})
+        return [], status
+    try:
+        index_response = _get(INDEX_URL)
+        index_html = index_response.text
+        pages = _discover_month_pages(index_html, app)
+        status["discovered_month_pages"] = len(pages)
+        if not pages:
+            status.update({"status": "no_month_pages", "error": "公式ページから年月付き予定表リンクを発見できません"})
+            return [], status
+        client = genai.Client(api_key=api_key)
+        events: list[Any] = []
+        seen: set[tuple[str, str, str]] = set()
+        for page in pages:
+            month_status = {"title": page["title"], "url": page["url"], "assets": 0,
+                            "accepted": 0, "rejected": {}}
+            try:
+                page_response = _get(page["url"])
+                page_soup = BeautifulSoup(page_response.text, "html.parser")
+                page_text = app.norm(page_soup.get_text(" ", strip=True))
+                assets = _assets_for_page(page_response.text, page["url"])
+                month_status["assets"] = len(assets)
+                if not assets:
+                    month_status["status"] = "no_schedule_assets"
+                    status["months"].append(month_status)
+                    continue
+                parsed = _gemini_extract(client, page, assets, page_text)
+                for row in parsed["events"]:
+                    try:
+                        event_date = date.fromisoformat(str(row.get("date", "")))
+                        if event_date.year != int(page["year"]) or event_date.month != int(page["month"]):
+                            raise ValueError("date_outside_target_month")
+                        title = app.norm(row.get("title", ""))
+                        if not title or title in {"-", "―", "なし", "予定なし"}:
+                            raise ValueError("empty_title")
+                        start_time = app.norm(row.get("start_time", "")) or None
+                        end_time = app.norm(row.get("end_time", "")) or None
+                        for value in (start_time, end_time):
+                            if value and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
+                                raise ValueError("invalid_time")
+                        kind = app.norm(row.get("kind", "event")).lower()
+                        prefix = {"reserve": "【予備日】", "closure": "【休場】",
+                                  "maintenance": "【整備】"}.get(kind, "")
+                        if prefix and not title.startswith(prefix):
+                            title = prefix + title
+                        notes = app.norm(row.get("notes", ""))
+                        ev = app.make_event(
+                            title, (event_date, event_date), VENUE, ADDRESS, page["url"], SOURCE_NAME,
+                            category="区内スポーツ", start_time=start_time, end_time=end_time,
+                            description=notes, priority=2,
+                        )
+                        if not ev:
+                            raise ValueError("event_validation_or_geocoding_failed")
+                        key = (ev.start_date, app._title_fingerprint(ev.title), ev.start_time or "")
+                        if key in seen:
+                            raise ValueError("duplicate")
+                        seen.add(key)
+                        ev.source_urls = sorted(set(ev.source_urls + [INDEX_URL] + [a[0] for a in assets]))
+                        events.append(ev)
+                        month_status["accepted"] += 1
+                    except Exception as exc:
+                        reason = str(exc) or type(exc).__name__
+                        month_status["rejected"][reason] = month_status["rejected"].get(reason, 0) + 1
+                month_status["status"] = "ok" if month_status["accepted"] else "zero_valid_events"
+            except Exception as exc:
+                month_status["status"] = "failed"
+                month_status["error"] = f"{type(exc).__name__}: {exc}"
+            status["months"].append(month_status)
+        status["accepted"] = len(events)
+        status["status"] = "ok" if events else "zero_valid_events"
+        return events, status
+    except Exception as exc:
+        status.update({"status": "failed", "error": f"{type(exc).__name__}: {exc}"})
+        return [], status

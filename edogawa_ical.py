@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.11"
+APP_VERSION = "3.2.12"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -282,8 +282,10 @@ def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
     if path_for_exclusion.rstrip("/").endswith("/e027/kosodate/kenzenikusei/mirai/index.html"):
         return True
     t = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title)).casefold()
+    field_only_titles = {"主催", "後援", "協力", "共催", "問合せ", "問い合わせ", "お問い合わせ",
+                         "開催日", "開催日時", "開催場所", "場所", "会場", "住所", "所在地", "内容", "対象", "定員", "費用", "料金"}
     if not t or t in {re.sub(r"[\s　・･/／｜|:：()（）]+", "", x).casefold()
-                    for x in NON_EVENT_PAGE_TITLES}:
+                    for x in NON_EVENT_PAGE_TITLES | field_only_titles}:
         return True
     normalized_title = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title))
     normalized_prefixes = [re.sub(r"[\s　・･/／｜|:：()（）]+", "", x) for x in NON_EVENT_TITLE_PREFIXES]
@@ -471,7 +473,10 @@ def parse_date_spans(raw: str, base_year: int | None = None, include_past: bool 
             d = date(yy, mo, day)
         except ValueError:
             continue
-        if y is None and d < TODAY - timedelta(days=30):
+        # base_year は記事公開年・資料見出し年など、ソースから確認した年。
+        # その場合は過去日を翌年へ勝手に繰り越さない。年が本当に不明な場合だけ
+        # 近い将来日へ補正する。これにより古い記事の11月3日が翌年へ化けるのを防ぐ。
+        if y is None and base_year is None and d < TODAY - timedelta(days=30):
             try:
                 d = date(yy + 1, mo, day)
             except ValueError:
@@ -697,12 +702,36 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     title = norm(title_el.get_text(" ", strip=True)) if title_el else ""
     # 図書館など「イベント情報」がH1、個別イベント名がH3/H4のCMSに対応。
     if is_non_event_page(title, url=page_url):
-        for heading in reversed(main.find_all(["h2", "h3", "h4"])):
+        # H1が「主催」「開催日」などの項目ラベルになっているCMSでは、
+        # 本文のイベント見出しを優先する。ページ共通タイトルはイベント名にしない。
+        candidates = list(reversed(main.find_all(["h2", "h3", "h4"])))
+        for heading in candidates:
             candidate_title = norm(heading.get_text(" ", strip=True))
             if candidate_title and not is_non_event_page(candidate_title, url=page_url):
                 title_el, title = heading, candidate_title
                 break
     lines = [norm(x) for x in main.get_text("\n", strip=True).splitlines() if norm(x)]
+    # 記事公開年を取得し、開催日欄に年が省略されている場合の基準年にする。
+    # 記事公開日自体は開催日として使わない。
+    published_year = None
+    for meta_name in ("article:published_time", "datePublished", "pubdate", "publishdate"):
+        node = soup.find("meta", attrs={"property": meta_name}) or soup.find("meta", attrs={"name": meta_name})
+        value = node.get("content", "") if node else ""
+        match = re.search(r"(20\d{2})", str(value))
+        if match:
+            published_year = int(match.group(1)); break
+    if published_year is None:
+        for time_node in soup.find_all("time"):
+            value = time_node.get("datetime", "") or time_node.get_text(" ", strip=True)
+            match = re.search(r"(20\d{2})", norm(value))
+            if match:
+                published_year = int(match.group(1)); break
+    if published_year is None:
+        for line in lines[:30]:
+            if any(term in line for term in ("公開日", "掲載日", "投稿日", "更新日")):
+                match = re.search(r"(20\d{2})年?", era_to_western(line))
+                if match:
+                    published_year = int(match.group(1)); break
     # まいぷれは詳細本文の前後に開催中止の注意書き・シェア導線・媒体案内が
     # 同じカラムへ連結されることがある。本文抽出の前後をイベント見出しで囲う。
     if is_mypl:
@@ -756,18 +785,18 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     for line in lines:
         if any(term in line for term in publication_terms) or is_contingency_date_line(line):
             continue
-        if any(cue in line for cue in event_cues) and parse_date_spans(line):
+        if any(cue in line for cue in event_cues) and parse_date_spans(line, base_year=published_year):
             if line not in date_lines:
                 date_lines.append(line)
     date_text = " ".join(x for x in date_lines if not is_contingency_date_line(x))
-    spans = parse_date_spans(date_text)
+    spans = parse_date_spans(date_text, base_year=published_year)
     # 時刻は開催日時欄だけから取る。申込期間・開館時間を誤って開催時刻にしない。
     time_start, time_end = parse_time_range(date_text)
     # 日ごとに開催時刻が異なる案内に対応し、開催日時欄の各行を個別セッション化。
     # 例: 11/30 13:00～15:00、12/1 10:00～12:00。
     sessions: list[dict[str, Any]] = []
     for date_line in date_lines:
-        line_spans = parse_date_spans(date_line)
+        line_spans = parse_date_spans(date_line, base_year=published_year)
         if not line_spans:
             continue
         line_start, line_end = parse_time_range(date_line)
@@ -818,7 +847,7 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
             "address": address, "image_url": image_url, "text": full_text,
             "official_url": official_url,
             "venue_registry": venue_reg, "is_non_event_page": non_event,
-            "outside_facility_mention": outside_facility}
+            "outside_facility_mention": outside_facility, "published_year": published_year}
 
 
 class TLS12FallbackAdapter(HTTPAdapter):
@@ -1973,7 +2002,7 @@ def parse_listing_source(cfg: dict[str, Any]) -> tuple[list[Event], dict[str, An
         # 詳細ページに開催日が明示されていない場合は、安全側に倒して除外する。
         spans = d.get("spans") or []
         if not spans and cfg.get("date_from_context"):
-            spans = parse_date_spans(rec.get("context", ""))
+            spans = parse_date_spans(rec.get("context", ""), base_year=d.get("published_year"))
         if not spans:
             status["rejected"]["no_event_date"] = status["rejected"].get("no_event_date", 0) + 1
             continue
@@ -2301,7 +2330,6 @@ LISTING_SOURCES = [
     {"name": "江戸川まいぷれ", "url": "https://edogawa.mypl.net/event/", "default_venue": None, "category": "地域・まいぷれ", "priority": 4, "max_details": 120},
     {"name": "アリオ葛西", "url": "https://kasai.ario.jp/event/", "default_venue": "アリオ葛西", "category": "商業施設", "priority": 8, "max_details": 80},
     {"name": "TRXフリーマーケット", "url": "https://trx.jp/", "default_venue": None, "category": "地域・フリーマーケット", "priority": 4, "max_details": 100},
-    {"name": "江戸川球場", "url": "https://www.edogawa-3field.jp/baseball/taikaiguid/", "default_venue": "江戸川球場", "category": "スポーツ", "priority": 3, "max_details": 80},
 ]
 
 SCHOOL_SOURCES = [
@@ -2472,6 +2500,10 @@ def parse_asahi_startup_course() -> tuple[list[Event], dict[str, Any]]:
     year_match = re.search(r"(20\d{2})年", western_date_text)
     base_year = int(year_match.group(1)) if year_match else TODAY.year
     spans = parse_date_spans(western_date_text, base_year=base_year, include_past=True)
+    # 開催期間の開始日～終了日だけしか取得できない場合は、期間イベントにしない。
+    # この講座は公式ページに列挙された5回の個別開催日だけを登録する。
+    if len(spans) == 1 and spans[0][0] != spans[0][1]:
+        spans = []
     if not spans:
         status["status"] = "zero_valid_rows"
         status["rejected"]["course_dates_not_found"] = 1
@@ -2503,7 +2535,14 @@ def suppress_csv_events_replaced_by_asahi(events: list[Event], asahi_status: dic
 
     専用ページの取得失敗時も、CSVの期間を毎日開催として誤出力しない。
     """
-    kept = [ev for ev in events if "朝日創業塾" not in _title_fingerprint(ev.title)]
+    def is_asahi_course_event(ev: Event) -> bool:
+        title = norm(ev.title)
+        url = norm(ev.url)
+        fingerprint = _title_fingerprint(title)
+        return (("朝日" in title and "創業塾" in title)
+                or "search_seminar/list/detail/id=1454" in url
+                or "asahi" in fingerprint and "創業塾" in title)
+    kept = [ev for ev in events if not is_asahi_course_event(ev)]
     removed = len(events) - len(kept)
     if removed and asahi_status.get("status") != "ok":
         asahi_status.setdefault("warnings", []).append(
@@ -2555,6 +2594,16 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
     asahi_events, asahi_status = parse_asahi_startup_course()
     all_events.extend(asahi_events)
     reports["sources"][asahi_status.get("name", "えどがわ朝日創業塾（朝日信用金庫公開日程）")] = asahi_status
+    # 江戸川球場は表形式の画像/PDFをGeminiで解釈する専用パーサーを使用。
+    try:
+        from edogawa_stadium_gemini import collect_stadium_events
+        stadium_events, stadium_status = collect_stadium_events(sys.modules[__name__])
+        all_events.extend(stadium_events)
+    except Exception as stadium_error:
+        stadium_events = []
+        stadium_status = {"name": "江戸川区球場・Gemini大会予定表", "status": "failed",
+                          "accepted": 0, "error": f"{type(stadium_error).__name__}: {stadium_error}"}
+    reports["sources"][stadium_status.get("name", "江戸川区球場・Gemini大会予定表")] = stadium_status
     for name, url, prio in (
         ("江戸川区イベントカレンダーCSV", CITY_EVENT_CSV, 1),
         ("東京都OpenData江戸川区イベント一覧CSV", TOKYO_EVENT_CSV, 1),
@@ -2659,7 +2708,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.11//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.12//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2755,7 +2804,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.11//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.12//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
