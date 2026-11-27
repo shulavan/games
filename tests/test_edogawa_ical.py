@@ -428,8 +428,8 @@ class QualityFilterTests(unittest.TestCase):
     def test_ics_and_status_use_v325_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.12//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.12")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.13//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.13")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -640,7 +640,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.12")
+        self.assertEqual(payload["app_version"], "3.2.13")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -831,7 +831,7 @@ class Version324RegressionTests(unittest.TestCase):
                             "https://example.jp/event", "test")
         self.assertIsNotNone(ev)
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.12//EN", ics)
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.13//EN", ics)
         unfolded = ics.replace("\r\n ", "")
         self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
         self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
@@ -1125,9 +1125,9 @@ class Version329RegressionTests(unittest.TestCase):
         self.assertTrue(events)
         self.assertTrue(all("観光物産展" in event.title for event in events))
 
-    def test_version_markers_are_v3212(self):
-        self.assertEqual(app.APP_VERSION, "3.2.12")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.12//EN", app.build_ics([]))
+    def test_version_markers_are_v3213(self):
+        self.assertEqual(app.APP_VERSION, "3.2.13")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.13//EN", app.build_ics([]))
 
 
 class Version3210RegressionTests(unittest.TestCase):
@@ -1205,9 +1205,9 @@ class Version3210RegressionTests(unittest.TestCase):
             start_time="11:00", end_time="16:00")
         self.assertEqual(len(app.merge_events([a, b])), 2)
 
-    def test_version_markers_are_v3212(self):
-        self.assertEqual(app.APP_VERSION, "3.2.12")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.12//EN", app.build_ics([]))
+    def test_version_markers_are_v3213(self):
+        self.assertEqual(app.APP_VERSION, "3.2.13")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.13//EN", app.build_ics([]))
 
 
 class Version3211RegressionTests(unittest.TestCase):
@@ -1325,6 +1325,6 @@ class Version3211RegressionTests(unittest.TestCase):
         self.assertEqual([(e.start_date, e.start_time, e.end_time) for e in events], [
             ("2026-11-27", "18:30", "20:30"), ("2026-12-11", "18:30", "20:30")])
 
-    def test_version_markers_are_v3212(self):
-        self.assertEqual(app.APP_VERSION, "3.2.12")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.12//EN", app.build_ics([]))
+    def test_version_markers_are_v3213(self):
+        self.assertEqual(app.APP_VERSION, "3.2.13")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.13//EN", app.build_ics([]))
