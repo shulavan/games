@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.14"
+APP_VERSION = "3.2.15"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -279,7 +279,10 @@ def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
     if is_annual_overview_page(title, url) or is_application_closed(title):
         return True
     path_for_exclusion = urlparse(url).path.casefold() if url else ""
-    if path_for_exclusion.rstrip("/").endswith("/e027/kosodate/kenzenikusei/mirai/index.html"):
+    # 子ども未来館の施設トップページはキャッチコピーや開催日一覧を含む案内ページであり、
+    # 個別イベントではない。イベント詳細URLは除外しない。
+    if (path_for_exclusion.rstrip("/").endswith("/e027/kosodate/kenzenikusei/mirai/index.html")
+            or path_for_exclusion.rstrip("/") == "/miraikan/index.html"):
         return True
     t = re.sub(r"[\s　・･/／｜|:：()（）]+", "", norm(title)).casefold()
     field_only_titles = {"主催", "後援", "協力", "共催", "問合せ", "問い合わせ", "お問い合わせ",
@@ -299,6 +302,25 @@ def is_non_event_page(title: str, text: str = "", url: str = "") -> bool:
         if not any(w in norm(title) for w in EVENT_WORDS):
             return True
     return False
+
+
+def collapse_weekly_period_spans(title: str, spans: list[tuple[date, date]]) -> list[tuple[date, date]]:
+    """「週間/ウィーク」イベントの日別掲載を連続した1つの期間にまとめる。
+
+    区公式カレンダーの日別セルから同一URLが7件として集まるケースを対象にする。
+    日付に欠落がある場合は、別開催日の可能性があるため統合しない。
+    """
+    if not re.search(r"(?:週間|ウィーク)", norm(title), re.I) or len(spans) < 2:
+        return spans
+    ordered = sorted(set(spans), key=lambda item: (item[0], item[1]))
+    # 期間が重複または隣接している場合だけ連結する。間に空白日があれば維持。
+    start, end = ordered[0]
+    for next_start, next_end in ordered[1:]:
+        if next_start > end + timedelta(days=1):
+            return spans
+        if next_end > end:
+            end = next_end
+    return [(start, end)]
 
 
 def valid_event_span(span: tuple[date, date], today: date | None = None) -> tuple[bool, str]:
@@ -866,6 +888,16 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
         for line_span in line_spans:
             for daily_span in expand_recurring_spans(date_line, [line_span]):
                 sessions.append({"span": daily_span, "start_time": line_start, "end_time": line_end})
+    # 「障害者週間」等は公式カレンダーの日別セルで同一URLが複数日に
+    # 登録されることがある。日別の終日セッションが連続している場合だけ、
+    # 週間イベントとして1つの期間に戻す。時刻付き/不連続日程は変更しない。
+    if (re.search(r"(?:週間|ウィーク)", norm(title), re.I)
+            and sessions and all(x.get("start_time") is None and x.get("end_time") is None
+                                 and x["span"][0] == x["span"][1] for x in sessions)):
+        collapsed = collapse_weekly_period_spans(title, [x["span"] for x in sessions])
+        if len(collapsed) == 1:
+            spans = collapsed
+            sessions = [{"span": collapsed[0], "start_time": None, "end_time": None}]
     venue_text = section_after_heading(lines, VENUE_HEADINGS, stop=ADDRESS_HEADINGS + STOP_HEADINGS)
     address_text = section_after_heading(lines, ADDRESS_HEADINGS, stop=("内容", "対象", "定員", "費用", "料金", "問合せ", "主催", "備考"))
     address_text = clean_location_text(address_text)
@@ -1913,8 +1945,15 @@ def parse_city_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
         spans = d.get("spans") or sorted(set(item.get("listed_spans", [])))
         if not spans:
             spans = [(x, x) for x in sorted(item["dates"])]
+        weekly_spans = collapse_weekly_period_spans(title, spans)
+        is_collapsed_week = len(weekly_spans) == 1 and len(spans) > 1 and weekly_spans != spans
+        spans = weekly_spans
         event_start_time = d.get("start_time") or item.get("listed_start_time")
+        if is_collapsed_week:
+            event_start_time = None
         event_end_time = d.get("end_time") or item.get("listed_end_time")
+        if is_collapsed_week:
+            event_end_time = None
         was_multi_day_or_multi_date = len(spans) > 1 or any(a != b for a, b in spans)
         spans = expand_recurring_spans(d.get("text", ""), spans)
         for span in spans:
@@ -2783,7 +2822,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.14//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.15//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2879,7 +2918,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.14//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.15//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
