@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "app_version": "3.2.14",
-  "generated_at": "2026-11-27T17:28:21.654255+09:00",
-  "execution_id": "e15c0f061dddf630",
+  "app_version": "3.2.15",
+  "generated_at": "2026-11-27T17:48:59.164937+09:00",
+  "execution_id": "20a6db022512369a",
   "timezone": "Asia/Tokyo",
   "scope": "東京都江戸川区内のみ",
   "mode": "live",
@@ -709,31 +709,6 @@
       "description": "更新日:2026年10月9日\n若者きずな塾「紹介しよう」\n自立・就職に向けて仲間と一緒にスキルアップを目指しませんか。\n開催日時\n2026年11月10日(火曜日)18時30分から20時30分\n2026年11月24日(火曜日)18時30分から20時30分\n2026年11月28日(土曜日)13時00分から17時00分\n新規の会\n11月28日(土曜日)13時00分から14時00分\n(注)新規の会は初めて参加する方が対象です。\n申し込み\n不要\n場所\n船堀コミュニティ会館\n住所\n江戸川区船堀1丁目3番1号\n内容\n自分が好きなものや場所、人物等を題材に、プレゼンテーションをします。話し方や伝え方の工夫、時間配分を学び、聞き手のことを想像しながら発表するスキルを身につけます。プレゼンテーションを通じ、自己理解の促進や今後の目標にも目を向けませんか。他者の考えに触れることで視野を広げることができますよ。\nホームページ\n若者きずな塾\n対象\n16~35歳の方\n出演者(講師)\n狩野賢(かりのけん)(キャリアコンサルタント)\n費用\n無料\n問合せ\n生活就労支援係\n電話:03-5662-0976\n主催\n江戸川区\n関連リンク\n船堀コミュニティ会館"
     },
     {
-      "id": "a01f98abc99a7d18c170b0c8e074b6c2@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-11-28",
-      "end_date": "2026-11-28",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
-    },
-    {
       "id": "fdb4c28cc7b1f97e657b4898179c7de7@edogawa-events.local",
       "title": "きょうぷら ぷらっと秋祭まつり ~食と遊びのフェスティバル~(小岩)",
       "category": "区公式",
@@ -941,31 +916,6 @@
       ],
       "priority": 2,
       "description": ""
-    },
-    {
-      "id": "bd6991a31fb4a249b8c42fc697e06810@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-11-29",
-      "end_date": "2026-11-29",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
     },
     {
       "id": "c91fde3ebbd3d91fb2500af6dde8c7df@edogawa-events.local",
@@ -1770,31 +1720,6 @@
       "description": "2026/11/17\n【今年度最後】12/5(土)学校説明会を実施します!\n下記の日程で、\n学校説明会\nを実施いたします。\n今年度最後\nの説明会となります。\n本校受検をご検討いただいている方は、入学者選抜の詳細をお伝えしますので、ぜひご参加ください!!\nまた、ダンス部や生徒会を始めとした\n在校生たち\nの\n生の声\n、\n活動の様子\nをご紹介する予定です!\n本校に関心をお寄せくださる中学生の皆さん、保護者の皆様、学習塾関係者の皆様のご来場を\n心よりお待ちしております。\n申し込み受付期間は、~12月2日(水)23:59となります。\n申込URL\nhttps://logoform.jp/form/tmgform/1758769\n※申し込みなしでも\n当日参加可能\nです!\n※届いたメールにて、ご自身でキャンセルが可能です。\n日時:令和8年12月5日(土)\n13:25~受付 / 14:00~開始 (所要時間1時間程度)\n13:30を目安に生徒会からのご挨拶、13:45を目安にダンス部のパフォーマンスを行います。\n受付開始時間までは、学校公開を行っております。そちらも合わせてご参加ください!\n場所:体育館\nスリッパ・上履きをご持参ください。ご協力お願いします。"
     },
     {
-      "id": "452f796c858c11c2b5c637cb41666aff@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-05",
-      "end_date": "2026-12-05",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
-    },
-    {
       "id": "946296da54b4a433b98314bca38a913f@edogawa-events.local",
       "title": "障害者週間",
       "category": "区公式",
@@ -2044,31 +1969,6 @@
       ],
       "priority": 3,
       "description": "2026年12月6日 法大生と探検!自然の宝探し"
-    },
-    {
-      "id": "8bc123d0c1d8c0ccdf867d3d8086eaf8@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-06",
-      "end_date": "2026-12-06",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
     },
     {
       "id": "7fe225879b465b32887129154dc7d4dd@edogawa-events.local",
@@ -2444,31 +2344,6 @@
       ],
       "priority": 9,
       "description": "更新日:2026年11月11日\n圓藏亭落語会 暮れの夜噺連続三夜\n江戸川区内のみならず関東近郊、全国各地から腕っこきの社会人落語家が集う、圓藏亭落語会。\n年末ならではのお噺を集めた特別企画です。ぜひご来場ください。\n開催日時\n2026年12月9日(水曜日)19時00分から20時30分\n2026年12月10日(木曜日)19時00分から20時30分\n2026年12月11日(金曜日)19時00分から20時30分\n開場は開演の30分前です。\n申し込み\n必要\n申し込み期間\n11月17日(火曜日)13時30分から\nひらい圓藏亭で電話受付開始\n申し込み方法\nひらい圓藏亭に電話で申込み\n場所\nひらい圓藏亭\n住所\n江戸川区平井3丁目21番24号\n定員\n30名\n出演者(講師)\n9日(水曜日):松鈴亭竜扇、料亭彦柳、三崎家桜の輔、冨田はま松\n10日(木曜日):狐々亭さえの助、神楽坂圓ヶ朝、三崎家桜の輔、紅吉\n11日(金曜日):江戸川亭お~にゃん、河内家るぱん、三崎家桜の輔、墨亭右柳\n費用\n無料\n問合せ\nひらい圓藏亭\n電話:03-5626-3242(月曜休館、ただし祝休日の場合は開館)\n13時30分から17時まで\n主催\nひらい圓藏亭"
-    },
-    {
-      "id": "f93de104ec40f79a2d1ad94300a90306@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-09",
-      "end_date": "2026-12-09",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
     },
     {
       "id": "d8a8a0af5c7925bcb579a32bc94b9a16@edogawa-events.local",
@@ -3046,31 +2921,6 @@
       "description": "更新日:2026年11月12日\n西洋美術史への扉\n西洋美術史への扉 連続講座です。\n全5回の講座になります。\nぜひ、お気軽にご参加ください。\n開催日時\n2026年12月12日(土曜日)14時00分から15時15分\n2027年1月9日(土曜日)17時00分から18時15分\n2027年1月23日(土曜日)14時00分から15時15分\n2027年2月13日(土曜日)14時00分から15時15分\n2027年3月6日(土曜日)14時00分から15時15分\n申し込み\n必要\n申し込み方法\n申込フォームまたは窓口で受け付け\n申し込む\n場所\nしのざき文化プラザ\n住所\n江戸川区篠崎町7丁目20番9号\n定員\n24人(申込順)\n出演者(講師)\n長谷川浩一(美術史研究家)\n費用\n有料\n10,000円\n問合せ\nしのざき文化プラザ\n電話:03-3676-9071\n主催\nしのざき文化プラザ"
     },
     {
-      "id": "7681b9439b5c6178d9ac90ca70aa2355@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-12",
-      "end_date": "2026-12-12",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
-    },
-    {
       "id": "3615c51ff87ad490d411af1d4945380d@edogawa-events.local",
       "title": "一之江抹香亭江戸園芸植物展示「春の七草展」",
       "category": "区公式",
@@ -3369,31 +3219,6 @@
       ],
       "priority": 1,
       "description": "更新日:2026年8月31日\n第2回江戸川区文化芸術祭 音楽祭\n区内最大の音楽イベントです。オーケストラ、合唱、ハーモニカ、琴、三味線、マンドリンなど多彩なアンサンブルをお楽しみください。響け!江戸川のハーモニー♪\n開催日時\n2026年12月13日(日曜日)\n開場:12時30分\n開演:13時00分\n申し込み\n不要\n場所\nタワーホール船堀\n大ホール(5階)\n住所\n江戸川区船堀四丁目1番1号\nホームページ\n江戸川区文化芸術祭特設ページ\n費用\n無料\n問合せ\n文化課文化振興係 電話:03-5662-0300\n一般社団法人江戸川区文化芸術協会 電話:03-6231-5214\n主催\n江戸川区/一般社団法人江戸川区文化芸術協会\n関連リンク\n江戸川区音楽協議会"
-    },
-    {
-      "id": "b6285c74f2057c496d16f9ce94235ec4@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-13",
-      "end_date": "2026-12-13",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
     },
     {
       "id": "1c3cf796c9d864b9de2dd08dad085de4@edogawa-events.local",
@@ -4346,31 +4171,6 @@
       "description": "更新日:2026年11月19日\n三遊亭好青年勉強会\nスウェーデン出身の五代目円楽一門会所属の二つ目、三遊亭好青年の勉強会です。\n怪談牡丹灯籠より「おりえの変心」他、新作落語1席、古典落語1席を\nたっぷり口演予定です。ぜひお楽しみください。\n開催日時\n2026年12月19日(土曜日)14時00分から15時30分\n開場は開演の30分前です。\n申し込み\n必要\n申し込み期間\n12月2日(水曜日)13時30分からひらい圓藏亭で電話受付開始\n申し込み方法\nひらい圓藏亭に電話で申込み\n場所\nひらい圓藏亭\n住所\n江戸川区平井3丁目21番24号\n内容\n怪談牡丹灯籠より「おりえの変心」、新作落語一席、古典落語一席\n定員\n30名\n出演者(講師)\n三遊亭好青年\n費用\n有料\n2,000円\n問合せ\nひらい圓藏亭\n電話:03-5626-3242(月曜休館、ただし祝休日の場合は開館)\n13時30分から17時まで\n協力\nひらい圓藏亭"
     },
     {
-      "id": "b2ae5e8ebf1e33f70b0e5d8b3c15f646@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-19",
-      "end_date": "2026-12-19",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
-    },
-    {
       "id": "bc17c8dd4e1b36998785548e883ce3f9@edogawa-events.local",
       "title": "一之江抹香亭江戸園芸植物展示「春の七草展」",
       "category": "区公式",
@@ -4544,31 +4344,6 @@
       ],
       "priority": 1,
       "description": "更新日:2026年11月27日\n木目込み飾り講座\n木目込み飾り講座 干支「未」\n伝統工芸の魅力を感じながら、来年の干支「未」の置物飾りを作りましょう。\nお気軽にご参加ください。\n開催日時\n2026年12月20日(日曜日)14時00分から16時00分\n申し込み\n必要\n申し込み期間\n2026年12月3日(木曜日)14時から\n申し込み方法\n申込フォームまたは電話で\n申し込む\n場所\nしのざき文化プラザ\n住所\n江戸川区篠崎町7丁目20番地19号\n定員\n30人(申込順)\n出演者(講師)\n堀木香代子 他\n費用\n有料\n子ども料金\n2,800円\n大人料金\n2,800円\n問合せ\nしのざき文化プラザ\n電話:03-3676-9071\n主催\nしのざき文化プラザ"
-    },
-    {
-      "id": "c9504a66b8bab9da3faf28af9179a8ed@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-20",
-      "end_date": "2026-12-20",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
     },
     {
       "id": "66eb1eb23d407b675bcaad93560c1e7d@edogawa-events.local",
@@ -4794,31 +4569,6 @@
       ],
       "priority": 1,
       "description": "更新日:2026年11月13日\nメビウスのぐるぐるワールド\n「メビウスの輪(わ)」って知ってるかな。\nただの紙の輪を切りひらくと、どこまで行っても果てがない輪ができます。\nもうひとひねりすると鎖(くさり)や、ハート、四角になったりします。\nメビウス音楽も聴こう。\n開催日時\n2026年12月23日(水曜日)15時00分から16時00分\n申し込み\n不要\n当日受付です。\n午後2時40分から受付をはじめます。\n参加希望の人は、2時55分までに集まってください。\n2時55分の時点で定員をこえていた場合は、くじびきをします。\n場所\n子ども未来館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学校1年生から6年生まで\n定員\n20人\n費用\n無料\n問合せ\n子ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資料\nアカデミー通信12月号"
-    },
-    {
-      "id": "2fddce68f59403fd9aa060f08b43260d@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-23",
-      "end_date": "2026-12-23",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
     },
     {
       "id": "7ebef5405772756d0da9ef256f9c66c5@edogawa-events.local",
@@ -5194,31 +4944,6 @@
       ],
       "priority": 1,
       "description": "更新日:2026年11月13日\n微生物パワー\n微生物はわたしたちの敵?\nそれとも味方?パンを焼いて微生物パワーを調べよう。\n抗生物質やスパイスと微生物の相性も調べます。\n開催日時\n2026年12月27日(日曜日)14時00分から16時00分\n申し込み\n必要\n申し込み方法などくわしくは、下記リンク先「事前申し込みの講座の応募方法」をご覧ください。\n申し込み期間\n2026年11月13日(金曜日)から2026年12月8日(火曜日)\n上記期間はウェブサイトのしめきりです。\n往復はがきでのお申し込みはウェブサイトのしめきり前日までに子ども未来館に着くようにご投函ください。\n場所\n子ども未来館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学校4年生から6年生まで\n定員\n12人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資料\nアカデミー通信12月号(PDF:987KB)\n関連リンク\n事前申し込みの講座の応募方法"
-    },
-    {
-      "id": "076265392b86cca79fae44378713140b@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2026-12-27",
-      "end_date": "2026-12-27",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
     },
     {
       "id": "fb950b2a10f40d0bb915fa44d41d3ce0@edogawa-events.local",
@@ -9171,31 +8896,6 @@
       "description": "更新日:2026年5月15日\n【全4回講座】ひるまの天文学:太陽をおいかけて\n晴れた空に、かがやいている太陽。\nその動きを、夏至、秋分、冬至、春分と、季節ごとに1年間おってみます。\n1年とおして観測することで、新しい発見があるかもしれません。\nあいだはあきますが、忘れずに全部で4回、参加してください。\n開催日時\n2026年6月21日(日曜日)10時30分から12時30分\n2026年9月23日(水曜日)10時30分から12時30分\n2026年12月20日(日曜日)10時30分から12時30分\n2027年3月21日(日曜日)10時30分から12時30分\n申し込み\n必要\n申し込み方法などくわしくは、下記リンク先「事前申し込みの講座の応募方法」をご覧ください。\n申し込み期間\n2026年5月15日(金曜日)から2026年6月9日(火曜日)\n上記期間はウェブサイトのしめきりです。\n往復はがきでのお申し込みはウェブサイトのしめきり前日までに子ども未来館に着くようにご投函ください。\n場所\n子ども未来館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学校4年生から6年生まで\n定員\n16人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資料\nアカデミー通信6月号(PDF:1,144KB)\n関連リンク\n事前申し込みの講座の応募方法"
     },
     {
-      "id": "9a5c232d863db89006f75e7fa0002c8e@edogawa-events.local",
-      "title": "あたらしい夢との出会いが待ってます。",
-      "category": "区公式",
-      "start_date": "2027-03-21",
-      "end_date": "2027-03-21",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "江戸川区立篠崎子ども図書館",
-      "address": "江戸川区立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)",
-      "latitude": 35.702145,
-      "longitude": 139.906128,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://www.city.edogawa.tokyo.jp/images/9955/slide01.jpg",
-      "details_url": "https://www.city.edogawa.tokyo.jp/miraikan/index.html",
-      "source": "江戸川区公式イベントカレンダー",
-      "source_urls": [
-        "https://www.city.edogawa.tokyo.jp/miraikan/index.html"
-      ],
-      "priority": 9,
-      "description": "あたらしい夢との出会いが待ってます。\n子ども未来館の1階は図書館になっています。\n5万冊を越える児童図書を有する「篠崎子ども図書館」は、子どもアカデミーでの学びをしっかりサポートしています。\n篠崎子ども図書館サイト"
-    },
-    {
       "id": "793282b8955b636feb9b0ae1b2367d73@edogawa-events.local",
       "title": "令和8年度小松川さくらホール水泳教室(第3期)実施の件",
       "category": "区公式",
@@ -9597,15 +9297,15 @@
     }
   ],
   "map_summary": {
-    "total_events": 383,
-    "events_with_coordinates": 383,
+    "total_events": 371,
+    "events_with_coordinates": 371,
     "events_without_coordinates": 0
   },
   "source_status": {
-    "app_version": "3.2.14",
+    "app_version": "3.2.15",
     "mode": "live",
     "coverage_complete": false,
-    "generated_at": "2026-11-27T17:28:21.654255+09:00",
+    "generated_at": "2026-11-27T17:48:59.164937+09:00",
     "timezone": "Asia/Tokyo",
     "months_requested": 12,
     "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -10947,9 +10647,9 @@
             "error": null
           }
         ],
-        "candidate_urls": 260,
-        "detail_success": 260,
-        "accepted": 308,
+        "candidate_urls": 259,
+        "detail_success": 259,
+        "accepted": 296,
         "rejected": {
           "location_unverified": 21,
           "non_event_page": 1,
@@ -10957,12 +10657,12 @@
           "outside_address": 1
         },
         "calendar_view_links": 0,
-        "list_view_links": 1045,
+        "list_view_links": 1033,
         "calendar_months_successful": 12,
         "calendar_months_requested": 12,
         "day_detail_pages_requested": 144,
         "day_detail_pages_success": 144,
-        "day_detail_event_links": 2588,
+        "day_detail_event_links": 2576,
         "day_detail_page_failures": 0,
         "day_detail_coverage_ratio": 1.0,
         "site_coverage": {
@@ -10982,7 +10682,7 @@
             "months_requested": 12
           }
         },
-        "previous_accepted": 284
+        "previous_accepted": 308
       },
       "えどがわ朝日創業塾（朝日信用金庫公開日程）": {
         "name": "えどがわ朝日創業塾（朝日信用金庫公開日程）",
@@ -11373,8 +11073,8 @@
         "detail_success": 27,
         "accepted": 0,
         "rejected": {
-          "no_event_date": 9,
-          "non_event_page": 18
+          "non_event_page": 18,
+          "no_event_date": 9
         },
         "http_status": 200,
         "bytes": 74937,
@@ -11597,7 +11297,7 @@
         "feed_urls": [],
         "feed_candidates": 0,
         "truncated_candidates": 0,
-        "previous_accepted": 2
+        "previous_accepted": 3
       },
       "江戸川レクリエーション公園": {
         "name": "江戸川レクリエーション公園",
@@ -11669,7 +11369,7 @@
         "name": "江戸川まいぷれ",
         "url": "https://edogawa.mypl.net/event/",
         "http_status": 200,
-        "bytes": 65563,
+        "bytes": 65555,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
@@ -11941,10 +11641,10 @@
       "outside": 0
     },
     "totals": {
-      "raw_records": 386,
-      "unique_events": 383,
+      "raw_records": 374,
+      "unique_events": 371,
       "deduplicated_records": 3,
-      "with_coordinates": 383,
+      "with_coordinates": 371,
       "without_coordinates": 0,
       "strict_edogawa_only": true
     },
@@ -11957,6 +11657,6 @@
       "healthy": true,
       "primary_event_success": true
     },
-    "execution_id": "e15c0f061dddf630"
+    "execution_id": "20a6db022512369a"
   }
 }

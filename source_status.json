@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.14",
+  "app_version": "3.2.15",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T17:28:21.654255+09:00",
+  "generated_at": "2026-11-27T17:48:59.164937+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1344,9 +1344,9 @@
           "error": null
         }
       ],
-      "candidate_urls": 260,
-      "detail_success": 260,
-      "accepted": 308,
+      "candidate_urls": 259,
+      "detail_success": 259,
+      "accepted": 296,
       "rejected": {
         "location_unverified": 21,
         "non_event_page": 1,
@@ -1354,12 +1354,12 @@
         "outside_address": 1
       },
       "calendar_view_links": 0,
-      "list_view_links": 1045,
+      "list_view_links": 1033,
       "calendar_months_successful": 12,
       "calendar_months_requested": 12,
       "day_detail_pages_requested": 144,
       "day_detail_pages_success": 144,
-      "day_detail_event_links": 2588,
+      "day_detail_event_links": 2576,
       "day_detail_page_failures": 0,
       "day_detail_coverage_ratio": 1.0,
       "site_coverage": {
@@ -1379,7 +1379,7 @@
           "months_requested": 12
         }
       },
-      "previous_accepted": 284
+      "previous_accepted": 308
     },
     "えどがわ朝日創業塾（朝日信用金庫公開日程）": {
       "name": "えどがわ朝日創業塾（朝日信用金庫公開日程）",
@@ -1770,8 +1770,8 @@
       "detail_success": 27,
       "accepted": 0,
       "rejected": {
-        "no_event_date": 9,
-        "non_event_page": 18
+        "non_event_page": 18,
+        "no_event_date": 9
       },
       "http_status": 200,
       "bytes": 74937,
@@ -1994,7 +1994,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 2
+      "previous_accepted": 3
     },
     "江戸川レクリエーション公園": {
       "name": "江戸川レクリエーション公園",
@@ -2066,7 +2066,7 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 65563,
+      "bytes": 65555,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2338,10 +2338,10 @@
     "outside": 0
   },
   "totals": {
-    "raw_records": 386,
-    "unique_events": 383,
+    "raw_records": 374,
+    "unique_events": 371,
     "deduplicated_records": 3,
-    "with_coordinates": 383,
+    "with_coordinates": 371,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2354,5 +2354,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "e15c0f061dddf630"
+  "execution_id": "20a6db022512369a"
 }
