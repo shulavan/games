@@ -1,0 +1,2 @@
+9cc5eaf78d1fe5f0405b644e94ae50d4518d83e504767979887b8e9f4768191a  /mnt/data/edogawa_ical_v3_2_13.zip
+d0e085d50a7b1f1cc55da99861ba26c3cbfc625420d490e0a6d7bb27213e130a  /mnt/data/v3_2_13/edogawa_ical.py

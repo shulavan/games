@@ -1,14 +1,12 @@
-test_extracts_images_and_pdf_and_deduplicates (test_edogawa_stadium_gemini.DiscoveryTests.test_extracts_images_and_pdf_and_deduplicates) ... ok
-test_find_month_article (test_edogawa_stadium_gemini.DiscoveryTests.test_find_month_article) ... ok
-test_rejects_duplicate_event (test_edogawa_stadium_gemini.ValidationTests.test_rejects_duplicate_event) ... ok
-test_rejects_end_before_start (test_edogawa_stadium_gemini.ValidationTests.test_rejects_end_before_start) ... ok
-test_rejects_invalid_time (test_edogawa_stadium_gemini.ValidationTests.test_rejects_invalid_time) ... ok
-test_rejects_low_confidence (test_edogawa_stadium_gemini.ValidationTests.test_rejects_low_confidence) ... ok
-test_rejects_weekday_mismatch (test_edogawa_stadium_gemini.ValidationTests.test_rejects_weekday_mismatch) ... ok
-test_rejects_wrong_month (test_edogawa_stadium_gemini.ValidationTests.test_rejects_wrong_month) ... ok
-test_valid_unknown_times_are_allowed (test_edogawa_stadium_gemini.ValidationTests.test_valid_unknown_times_are_allowed) ... ok
+test_article_date_without_any_year_is_not_guessed (test_date_regressions_v3_2_13.DateRegressionV3213Tests.test_article_date_without_any_year_is_not_guessed) ... ok
+test_asahi_course_range_only_is_not_emitted_as_daily_events (test_date_regressions_v3_2_13.DateRegressionV3213Tests.test_asahi_course_range_only_is_not_emitted_as_daily_events) ... ok
+test_explicit_weekly_rule_still_expands (test_date_regressions_v3_2_13.DateRegressionV3213Tests.test_explicit_weekly_rule_still_expands) ... ok
+test_explicit_year_in_event_text_overrides_old_url_year (test_date_regressions_v3_2_13.DateRegressionV3213Tests.test_explicit_year_in_event_text_overrides_old_url_year) ... ok
+test_old_article_url_year_is_used_as_date_context (test_date_regressions_v3_2_13.DateRegressionV3213Tests.test_old_article_url_year_is_used_as_date_context) ... ok
+test_plain_multiday_period_is_not_expanded_to_daily_events (test_date_regressions_v3_2_13.DateRegressionV3213Tests.test_plain_multiday_period_is_not_expanded_to_daily_events) ... ok
+test_yearless_date_does_not_roll_forward (test_date_regressions_v3_2_13.DateRegressionV3213Tests.test_yearless_date_does_not_roll_forward) ... ok
 
 ----------------------------------------------------------------------
-Ran 9 tests in 0.001s
+Ran 7 tests in 0.005s
 
 OK
