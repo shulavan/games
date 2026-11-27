@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.8",
+  "app_version": "3.2.9",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T12:38:46.141698+09:00",
+  "generated_at": "2026-11-27T13:09:40.502922+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1391,13 +1391,12 @@
       "cache_hit": false,
       "status": "ok",
       "candidate_rows": 458,
-      "accepted": 153,
-      "detail_lookups": 70,
+      "accepted": 19,
+      "detail_lookups": 80,
       "rejected": {
         "official_html_has_same_detail_url": 150,
-        "outside_or_unverified_location": 403,
-        "non_event_page": 17,
-        "outside_facility_mention:恩賜上野動物園": 1
+        "outside_or_unverified_location": 84,
+        "non_event_page": 8
       },
       "headers": [
         "都道府県コード",
@@ -2027,7 +2026,7 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64681,
+      "bytes": 64730,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2036,9 +2035,10 @@
       "same_site_links": 0,
       "candidate_links": 28,
       "detail_success": 28,
-      "accepted": 15,
+      "accepted": 13,
       "rejected": {
-        "no_event_date": 16
+        "no_event_date": 16,
+        "location_unverified": 2
       },
       "feed_urls": [],
       "feed_candidates": 0,
@@ -2330,18 +2330,18 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "geocoding": {
-    "cache_hits": 196,
-    "gsi_queries": 70,
+    "cache_hits": 59,
+    "gsi_queries": 71,
     "nominatim_queries": 44,
-    "success": 26,
+    "success": 27,
     "failed": 44,
     "outside": 0
   },
   "totals": {
-    "raw_records": 794,
-    "unique_events": 785,
-    "deduplicated_records": 9,
-    "with_coordinates": 785,
+    "raw_records": 658,
+    "unique_events": 648,
+    "deduplicated_records": 10,
+    "with_coordinates": 648,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2354,5 +2354,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "642de88780248600"
+  "execution_id": "458b0f2347c4ce92"
 }
