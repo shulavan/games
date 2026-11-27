@@ -1,0 +1,13 @@
+既存テストの期待値更新（必須）
+
+1) tests/test_edogawa_ical.py と tests/test_v3_2_12.py 内で、APP_VERSION / payload["app_version"] / PRODID の期待値として書かれている "3.2.12" を "3.2.13" に更新してください。テスト名や過去バージョンの説明文まで機械的に置換する必要はありません。
+
+2) test_multi_day_event_is_split_into_daily_records は、今回の仕様変更によりテストの期待値が古くなっています。
+   通常の開催期間だけが記載された 2026-12-01～2026-12-05 は日別5件ではなく期間1件です。
+   そのテストの期待値は、got の開始日リストについて [date(2026, 12, 1)] としてください。テスト名も test_multi_day_period_is_kept_as_one_event 等に変更してください。
+
+3) test_explicit_daily_range_stays_separate_daily_records は変更しないでください。本文に「毎日開催」等の明示がある場合は従来どおり日別です。
+
+4) 休館日/休業日が明記されたテストも変更しないでください。明示された休止日だけを除外して日別化します。
+
+このテスト更新は v3.2.13 の仕様変更に伴う期待値の更新です。テストを削除・skip して通すものではありません。

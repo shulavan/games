@@ -417,12 +417,22 @@ def era_to_western(text: str) -> str:
 
 
 def _year_for_month(month: int, today: date = TODAY, base_year: int | None = None) -> int:
-    """年が省略された日付は記事/資料の基準年、なければ当年に固定する。
-
-    月日だけを根拠に翌年へ繰り越すことは禁止。過去記事の日付が未来年へ
-    化けるのを防ぎ、翌年開催は本文・URL等の明示年がある場合だけ採用する。
-    """
-    return int(base_year) if base_year is not None else today.year
+    """年なし日付は過去側に倒さず、今後365日以内の最も近い日付を選ぶ。"""
+    years = [today.year - 1, today.year, today.year + 1, today.year + 2]
+    candidates = []
+    for y in years:
+        if base_year and y < base_year - 1:
+            continue
+        try:
+            d = date(y, month, 1)
+        except ValueError:
+            continue
+        if d >= today.replace(day=1) - timedelta(days=1) and d <= today + timedelta(days=400):
+            candidates.append(y)
+    future = [y for y in candidates if date(y, month, 1) >= today - timedelta(days=1)]
+    if future:
+        return min(future)
+    return max(candidates) if candidates else today.year
 
 
 def _parse_date_token(token: str, base_year: int | None = None) -> date | None:
@@ -432,7 +442,10 @@ def _parse_date_token(token: str, base_year: int | None = None) -> date | None:
     if m:
         y = int(m.group(1)) if m.group(1) else (base_year or _year_for_month(int(m.group(2))))
         try:
-            return date(y, int(m.group(2)), int(m.group(3)))
+            d = date(y, int(m.group(2)), int(m.group(3)))
+            if not m.group(1) and d < TODAY - timedelta(days=30):
+                d = date(y + 1, d.month, d.day)
+            return d
         except ValueError:
             return None
     m = re.search(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})", t)
@@ -457,14 +470,20 @@ def parse_date_spans(raw: str, base_year: int | None = None, include_past: bool 
         if not (1 <= mo <= 12 and 1 <= day <= 31):
             continue
         if y is None and base_year is None and require_year:
+            # 詳細記事では開催年の根拠がない月日を未来日として採用しない。
             continue
         yy = y or (base_year or _year_for_month(mo))
         try:
             d = date(yy, mo, day)
         except ValueError:
             continue
-        # 年なし日付は基準年（記事URL/本文/公開情報）または当年に固定する。
-        # 過去日を翌年へ繰り越す推測は一切行わない。
+        # 汎用パーサーの従来互換は維持する。一方、詳細記事は require_year=True
+        # とし、本文/URL/公開情報で年を確定できない日付を採用しない。
+        if y is None and base_year is None and not require_year and d < TODAY - timedelta(days=30):
+            try:
+                d = date(yy + 1, mo, day)
+            except ValueError:
+                continue
         found.append((d, m.start(), m.end()))
     # ISO形式も補完
     for m in re.finditer(r"(20\d{2})[./-](\d{1,2})[./-](\d{1,2})", text):
@@ -478,14 +497,15 @@ def parse_date_spans(raw: str, base_year: int | None = None, include_past: bool 
     shorthand: list[tuple[date, int, int]] = []
     for d1, _a, e1 in list(found):
         tail = text[e1:]
-        m_short = re.match(r"\s*(?:[（(][月火水木金土日](?:曜日)?[）)])?\s*(?:から|～|〜|~|−|―|ー|-)\s*(?!20\d{2}\s*年)(\d{1,2})(?!\d|\s*月)\s*日?", tail)
+        m_short = re.match(r"\s*(?:[（(][月火水木金土日](?:曜日)?[）)])?\s*(?:から|～|〜|~|−|―|ー|-)\s*(?!20\d{2}\s*年)(\d{1,2})\s*日?", tail)
         if m_short:
             day2 = int(m_short.group(1))
             year2, month2 = d1.year, d1.month
             try:
                 d2 = date(year2, month2, day2)
                 if d2 < d1:
-                    d2 = date(year2 + 1, month2, day2)
+                    # 月/年を省略した年越しは根拠がないため採用しない。
+                    continue
                 shorthand.append((d2, e1 + m_short.start(1), e1 + m_short.end(1)))
             except ValueError:
                 pass
@@ -504,10 +524,10 @@ def parse_date_spans(raw: str, base_year: int | None = None, include_past: bool 
             d2, s2, _ = unique[i + 1]
             sep = text[e1:s2]
             if re.search(r"(?:から|～|〜|~|\-|−|―|ー|／)\s*$", sep) or re.search(r"^\s*(?:から|～|〜|~|\-|−|―)", sep):
-                # 終了側の年を推測で翌年にしない。年越し範囲は両端の年を
-                # 明示した表記でのみ確定させる。
-                if d2 < d1:
-                    spans.append((d1, d1)); i += 1; continue
+                # 12月→1月など、年なしの年越し範囲を補正
+                if d2 < d1 and re.search(r"\d{4}\s*年", text[e1:s2]) is False:
+                    try: d2 = date(d2.year + 1, d2.month, d2.day)
+                    except ValueError: pass
                 spans.append((d1, d2)); i += 2; continue
         spans.append((d1, d1)); i += 1
     return [(a, b) for a, b in spans if (include_past or b >= TODAY) and a <= TODAY + timedelta(days=550)]
@@ -649,16 +669,17 @@ def is_contingency_date_line(line: str) -> bool:
 
 
 def extract_url_year(url: str) -> int | None:
-    """URLのパス中に明示された西暦年を取得する（例: /2022/ や /news/2022/）。"""
+    """URLパスに明示された記事年を取得する（例: /2022/）。"""
     try:
         path = urlparse(url).path
     except Exception:
         return None
     matches = re.findall(r"(?<!\d)(20\d{2})(?!\d)", path)
-    if not matches:
-        return None
-    years = [int(x) for x in matches if 2000 <= int(x) <= TODAY.year + 1]
-    return years[0] if years else None
+    for value in matches:
+        year = int(value)
+        if 2000 <= year <= TODAY.year + 1:
+            return year
+    return None
 
 
 def extract_detail(html: str, page_url: str, default_venue: str | None = None) -> dict[str, Any]:
@@ -729,9 +750,8 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
                 match = re.search(r"(20\d{2})年?", era_to_western(line))
                 if match:
                     published_year = int(match.group(1)); break
-    # 記事本文の開催日欄に年が明記されていれば parse_date_spans 側で最優先される。
-    # 年が省略されている場合は、アーカイブURLの年を公開メタデータより優先して
-    # 記事の所属年として使う（古い /2022/ 記事の月日を2027年へ繰り越さない）。
+    # URLアーカイブ年は、公開メタデータが欠落している/更新日で上書きされる
+    # 古い記事の年なし開催日を未来へ繰り越さないための基準年として使う。
     url_year = extract_url_year(page_url)
     if url_year is not None:
         published_year = url_year
@@ -1040,10 +1060,10 @@ def save_geocode_cache() -> None:
             pass
 
 def expand_recurring_spans(text: str, spans: list[tuple[date, date]]) -> list[tuple[date, date]]:
-    """明示された定期開催だけを個別日に展開する。
+    """開催可能日を1日単位に展開。定期開催・既知の休館日/休講日も反映する。
 
-    単なる開催期間は日別イベントへ分割せず、元の期間 span のまま保持する。
-    全N回は開始日から数えた総開催回数として扱う。
+    全N回は開始日から数えた総開催回数として扱い、過去分を数えた後に
+    今日以降だけを返す。期間イベントは日ごとのVEVENTに分割する。
     """
     t = str(text or "")
     normalized = norm(t)
@@ -1122,10 +1142,20 @@ def expand_recurring_spans(text: str, spans: list[tuple[date, date]]) -> list[tu
     if recurrence_dates is not None:
         return [(d, d) for d in recurrence_dates if d >= TODAY]
 
-    # 明示的な毎週/第N曜日ルールがない期間は、開催期間として一件で保持する。
-    # 複数の独立した日付が入力されている場合は、parse_date_spans が個別 span
-    # を返しているため、その単位を維持する。日付のない日を自動生成しない。
-    return sorted(set((a, b) for a, b in spans if b >= TODAY), key=lambda x: x[0])
+    # 単なる開始日～終了日の期間は、毎日開催と明記されていない限り
+    # 期間イベント1件のまま保持する。休館日/休業日が明示された場合だけ
+    # その日を除外するために日別化し、「毎日開催」等の明示がある場合も日別化する。
+    explicitly_daily = bool(re.search(r"毎日|期間中(?:は)?(?:毎日)?開催|連日開催|連日実施", normalized))
+    if not explicitly_daily and not excluded_weekdays and not excluded_dates:
+        return sorted(set((a, b) for a, b in spans if b >= TODAY), key=lambda x: x[0])
+    expanded: list[tuple[date, date]] = []
+    for a, b in spans:
+        d = a
+        while d <= b:
+            if d >= TODAY and d.weekday() not in excluded_weekdays and d not in excluded_dates:
+                expanded.append((d, d))
+            d += timedelta(days=1)
+    return sorted(set(expanded), key=lambda x: x[0])
 
 def make_event(title: str, span: tuple[date, date], venue: str, address: str, url: str,
                source: str, category: str = "地域イベント", default_venue: str | None = None,
@@ -2495,8 +2525,8 @@ def parse_asahi_startup_course() -> tuple[list[Event], dict[str, Any]]:
     date_text = " ".join(section)
     western_date_text = era_to_western(date_text)
     year_match = re.search(r"(20\d{2})年", western_date_text)
-    base_year = int(year_match.group(1)) if year_match else None
-    spans = parse_date_spans(western_date_text, base_year=base_year, include_past=True, require_year=True)
+    base_year = int(year_match.group(1)) if year_match else TODAY.year
+    spans = parse_date_spans(western_date_text, base_year=base_year, include_past=True)
     # 開催期間の開始日～終了日だけしか取得できない場合は、期間イベントにしない。
     # この講座は公式ページに列挙された5回の個別開催日だけを登録する。
     if len(spans) == 1 and spans[0][0] != spans[0][1]:
