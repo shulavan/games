@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>江戸川区イベント情報スクレイパー & CSV出力</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans JP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+        }
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- ヘッダー -->
+    <header class="bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2.5 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-calendar-check text-2xl text-emerald-100"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold tracking-tight">江戸川区イベント収集・CSV生成ツール</h1>
+                    <p class="text-xs sm:text-sm text-emerald-100 mt-0.5">区内7施設のイベント情報を一括取得してCSVデータ化します</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button id="btn-scrape-all" class="bg-white text-emerald-800 hover:bg-emerald-50 font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 text-sm sm:text-base active:scale-95 cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span>一括スクレイピング実行</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- 通知メッセージボックス (alert代替) -->
+        <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+        <!-- 対象サイト一覧＆ステータスカード -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-emerald-600 text-lg"></i>
+                    <h2 class="text-lg font-bold text-slate-800">スクレイピング対象サイト (7施設)</h2>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-slate-500">
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block"></span> 未実行</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse inline-block"></span> 取得中</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> 完了</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> エラー/制限</span>
+                </div>
+            </div>
+
+            <!-- サイトグリッド -->
+            <div id="target-sites-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
+                <!-- JSで動的にカードを生成 -->
+            </div>
+
+            <!-- プロキシ・オプション設定バー -->
+            <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl">
+                <div class="flex flex-wrap items-center gap-4">
+                    <label class="flex items-center gap-1.5 cursor-pointer font-medium text-slate-700">
+                        <input type="checkbox" id="opt-pagination" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <span>次頁(ページネーション)を巡回 (最大<input type="number" id="opt-max-pages" value="3" min="1" max="10" class="w-10 mx-1 px-1 py-0.5 border border-slate-300 rounded text-center bg-white">頁)</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer font-medium text-slate-700">
+                        <input type="checkbox" id="opt-deep-scrape" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <span>詳細ページを取得 (詳細・画像・場所)</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 cursor-pointer font-medium text-slate-700">
+                        <input type="checkbox" id="opt-geocode" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <span>ジオコーディング(緯度・経度)取得</span>
+                    </label>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <label for="proxy-select" class="font-medium">取得方式:</label>
+                    <select id="proxy-select" class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="race">全プロキシ並列最速レース (推奨)</option>
+                        <option value="corsproxy">CorsProxy.io 優先</option>
+                        <option value="codetabs">CodeTabs Proxy 優先</option>
+                        <option value="jina">Jina Gateway 優先</option>
+                        <option value="allorigins_raw">AllOrigins Raw 優先</option>
+                        <option value="allorigins_json">AllOrigins JSON 優先</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- 取得結果・CSV操作セクション -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h2 class="text-lg font-bold text-slate-800">抽出イベント一覧</h2>
+                        <span id="event-count-badge" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">0 件</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">各セルをクリックして直接編集できます。日時は <code class="bg-slate-100 px-1 rounded">yyyy/mm/dd hh:mm</code> 形式で出力されます。</p>
+                </div>
+
+                <!-- アクションボタン群 -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="btn-add-row" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3.5 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-plus"></i> 行を追加
+                    </button>
+                    <button id="btn-clear-all" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium px-3.5 py-2 rounded-xl text-xs sm:text-sm transition-colors flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-trash-can"></i> クリア
+                    </button>
+                    <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                    <button id="btn-copy-csv" class="bg-teal-600 hover:bg-teal-700 text-white font-medium px-4 py-2 rounded-xl text-xs sm:text-sm shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-regular fa-copy"></i> CSVをコピー
+                    </button>
+                    <button id="btn-download-csv" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl text-xs sm:text-sm shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-file-csv"></i> CSVダウンロード (UTF-8 BOM付)
+                    </button>
+                </div>
+            </div>
+
+            <!-- フィルター・検索バー -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="filter-keyword" placeholder="イベント名・内容で絞り込み..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
+                </div>
+                <div>
+                    <select id="filter-facility" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
+                        <option value="ALL">すべての施設を表示</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-end gap-2 text-xs text-slate-500">
+                    <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                        <input type="checkbox" id="chk-deduplicate" checked class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <span>重複イベントを自動除外</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- テーブルコンテナ -->
+            <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left border-collapse min-w-[1350px]">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3 px-3 font-semibold w-40">施設名</th>
+                            <th class="py-3 px-3 font-semibold w-36">開始日時</th>
+                            <th class="py-3 px-3 font-semibold w-36">終了日時</th>
+                            <th class="py-3 px-3 font-semibold w-56">イベントタイトル</th>
+                            <th class="py-3 px-3 font-semibold w-64">イベント詳細</th>
+                            <th class="py-3 px-3 font-semibold w-44">場所・住所</th>
+                            <th class="py-3 px-3 font-semibold w-28">緯度</th>
+                            <th class="py-3 px-3 font-semibold w-28">経度</th>
+                            <th class="py-3 px-3 font-semibold w-24">画像</th>
+                            <th class="py-3 px-3 font-semibold w-28">詳細URL</th>
+                            <th class="py-3 px-3 font-semibold w-24">区分</th>
+                            <th class="py-3 px-3 font-semibold w-14 text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- 空状態 -->
+                        <tr id="empty-state-row">
+                            <td colspan="12" class="py-12 px-4 text-center text-slate-400">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <i class="fa-regular fa-folder-open text-4xl text-slate-300"></i>
+                                    <p class="font-medium text-slate-500">まだイベントデータがありません</p>
+                                    <p class="text-xs">右上の「一括スクレイピング実行」または各施設の「取得」ボタンを押してください。</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CSVプレビューアコーディオン -->
+            <details class="mt-4 bg-slate-50 rounded-xl border border-slate-200">
+                <summary class="px-4 py-3 text-xs font-semibold text-slate-600 cursor-pointer hover:text-slate-900 select-none flex items-center justify-between">
+                    <span><i class="fa-solid fa-code mr-1.5 text-emerald-600"></i>生成されるCSVテキストのプレビューを表示</span>
+                    <span class="text-slate-400 font-normal">クリックで開閉</span>
+                </summary>
+                <div class="p-4 pt-0">
+                    <textarea id="csv-preview-area" readonly rows="6" class="w-full font-mono text-xs bg-slate-900 text-emerald-300 p-3 rounded-lg border border-slate-700 focus:outline-none" placeholder="ここにCSVデータが表示されます..."></textarea>
+                </div>
+            </details>
+        </section>
+
+        <!-- 実行ログコンソール -->
+        <section class="bg-slate-900 text-slate-300 rounded-2xl shadow-sm p-4">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <i class="fa-solid fa-terminal text-emerald-400"></i>
+                    <span>スクレイピング実行ログ</span>
+                </div>
+                <button id="btn-clear-log" class="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer">ログ消去</button>
+            </div>
+            <div id="log-console" class="font-mono text-xs h-32 overflow-y-auto space-y-1 p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+                <div class="text-slate-500">[System] 準備完了。対象7施設のスクレイピング待機中です。</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            江戸川区イベント情報スクレイパー &bull; 取得したデータは各公式サイトの最新情報をご確認ください。
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * 対象となる江戸川区内7施設の定義と専用パーサー設定
+         */
+        const TARGET_SITES = [
+            {
+                id: 'kasai-kaihin',
+                name: '葛西海浜公園',
+                url: 'https://kasaikaihinpark.com/event/',
+                defaultLocation: '東京都江戸川区臨海町6丁目2番地先 葛西海浜公園',
+                badgeColor: 'bg-sky-100 text-sky-800',
+                parse: (doc, baseUrl) => {
+                    const items = [];
+                    const cards = doc.querySelectorAll('article, .event-list li, .post-list li, .entry-item, .p-event-list__item, .c-card');
+                    cards.forEach(el => {
+                        const titleEl = el.querySelector('h2, h3, h4, .title, .entry-title, .p-event-list__title, a');
+                        const dateEl = el.querySelector('time, .date, .entry-date, .p-event-list__date, .meta');
+                        const linkEl = el.querySelector('a') || (el.tagName === 'A' ? el : null);
+                        const imgEl = el.querySelector('img');
+                        if (titleEl && titleEl.textContent.trim().length > 2) {
+                            items.push({
+                                rawDate: cleanText(dateEl ? dateEl.textContent : el.textContent),
+                                title: cleanText(titleEl.textContent),
+                                url: resolveUrl(linkEl ? linkEl.getAttribute('href') : '', baseUrl),
+                                imageUrl: imgEl ? resolveUrl(imgEl.getAttribute('src') || imgEl.getAttribute('data-src'), baseUrl) : ''
+                    });
+                }
+            });
+            return items;
+        }
+    },
+    {
+        id: 'bunkacenter-fiscal',
+        name: '総合文化センター・公演予定',
+                url: 'https://edogawa-bunkacenter.jp/calendar-host-fiscal/',
+                defaultLocation: '東京都江戸川区中央4-14-1 江戸川区総合文化センター',
+                badgeColor: 'bg-purple-100 text-purple-800',
+                parse: (doc, baseUrl) => {
+                    const items = [];
+                    const rows = doc.querySelectorAll('.event-item, .calendar-item, tr, article, .list-item, .p-event__item');
+                    rows.forEach(el => {
+                        const titleEl = el.querySelector('.title, h3, h4, .event-title, td:nth-child(2) a, a');
+                        const dateEl = el.querySelector('.date, time, .event-date, td:first-child');
+                        const linkEl = el.querySelector('a');
+                        const imgEl = el.querySelector('img');
+                        const titleText = titleEl ? cleanText(titleEl.textContent) : '';
+                        if (titleText && titleText.length > 3 && !titleText.includes('公演日')) {
+                            items.push({
+                                rawDate: cleanText(dateEl ? dateEl.textContent : el.textContent),
+                                title: titleText,
+                                url: resolveUrl(linkEl ? linkEl.getAttribute('href') : '', baseUrl),
+                                imageUrl: imgEl ? resolveUrl(imgEl.getAttribute('src'), baseUrl) : ''
+                    });
+                }
+            });
+            return items;
+        }
+    },
+    {
+        id: 'bunkacenter-calendar',
+        name: '総合文化センター・月間カレンダー',
+                url: 'https://edogawa-bunkacenter.jp/calendar/',
+                defaultLocation: '東京都江戸川区中央4-14-1 江戸川区総合文化センター',
+                badgeColor: 'bg-indigo-100 text-indigo-800',
+                parse: (doc, baseUrl) => {
+                    const items = [];
+                    const cells = doc.querySelectorAll('.calendar-day, td, .event-list li, .schedule-item');
+                    cells.forEach(el => {
+                        const links = el.querySelectorAll('a');
+                        const dateEl = el.querySelector('.day, .date, th');
+                        links.forEach(a => {
+                            const t = cleanText(a.textContent);
+                            if (t.length > 3) {
+                                items.push({
+                                    rawDate: cleanText(dateEl ? dateEl.textContent : el.textContent),
+                                    title: t,
+                                    url: resolveUrl(a.getAttribute('href'), baseUrl),
+                                    imageUrl: ''
+                                });
+                            }
+                        });
+                    });
+                    return items;
+                }
+            },
+            {
+                id: 'edogawa-recreation',
+                name: '江戸川レクリエーション公園',
+                url: 'https://edogawa-recreation.com/event',
+                defaultLocation: '東京都江戸川区南葛西7-3 総合レクリエーション公園',
+                badgeColor: 'bg-emerald-100 text-emerald-800',
+                parse: (doc, baseUrl) => {
+                    const items = [];
+                    const nodes = doc.querySelectorAll('article, .event_list li, .news_list li, .post_item, a[href*="event"]');
+                    nodes.forEach(el => {
+                        const titleEl = el.querySelector('h2, h3, .ttl, .title') || el;
+                        const dateEl = el.querySelector('time, .date, span');
+                        const linkEl = el.tagName === 'A' ? el : el.querySelector('a');
+                        const imgEl = el.querySelector('img');
+                        const title = cleanText(titleEl.textContent);
+                        if (title.length > 4 && title.length < 120) {
+                            items.push({
+                                rawDate: cleanText(dateEl ? dateEl.textContent : el.textContent),
+                                title: title,
+                                url: resolveUrl(linkEl ? linkEl.getAttribute('href') : '', baseUrl),
+                                imageUrl: imgEl ? resolveUrl(imgEl.getAttribute('src'), baseUrl) : ''
+                    });
+                }
+            });
+            return items;
+        }
+    },
+    {
+        id: 'edogawa-ecocenter',
+        name: 'えどがわエコセンター',
+                url: 'https://edogawa-ecocenter.jp/event/all/',
+                defaultLocation: '東京都江戸川区船堀4-1-1 タワーホール船堀3階 えどがわエコセンター',
+                badgeColor: 'bg-lime-100 text-lime-800',
+                parse: (doc, baseUrl) => {
+                    const items = [];
+                    const articles = doc.querySelectorAll('article, .event-box, .post-item, .p-archive-event__item, li');
+                    articles.forEach(el => {
+                        const titleEl = el.querySelector('h2, h3, .title, .entry-title');
+                        const dateEl = el.querySelector('.date, time, .event-date');
+                        const linkEl = el.querySelector('a');
+                        const imgEl = el.querySelector('img');
+                        if (titleEl) {
+                            const title = cleanText(titleEl.textContent);
+                            if (title.length > 3) {
+                                items.push({
+                                    rawDate: cleanText(dateEl ? dateEl.textContent : el.textContent),
+                                    title: title,
+                                    url: resolveUrl(linkEl ? linkEl.getAttribute('href') : '', baseUrl),
+                                    imageUrl: imgEl ? resolveUrl(imgEl.getAttribute('src'), baseUrl) : ''
+                    });
+                }
+            }
+        });
+        return items;
+    }
+},
+{
+    id: 'edogawa-library',
+    name: '江戸川区立図書館',
+                url: 'https://www.library.city.edogawa.tokyo.jp/toshow/event/',
+                defaultLocation: '東京都江戸川区中央3-1-3 江戸川区立中央図書館',
+                badgeColor: 'bg-amber-100 text-amber-800',
+                parse: (doc, baseUrl) => {
+                    const items = [];
+                    const rows = doc.querySelectorAll('.eventList li, table tr, .newsList li, dl dt, .list-event li');
+                    rows.forEach(el => {
+                        const linkEl = el.querySelector('a');
+                        const dateEl = el.querySelector('.date, time, span');
+                        const imgEl = el.querySelector('img');
+                        if (linkEl) {
+                            const title = cleanText(linkEl.textContent);
+                            if (title.length > 3) {
+                                items.push({
+                                    rawDate: cleanText(dateEl ? dateEl.textContent : el.textContent),
+                                    title: title,
+                                    url: resolveUrl(linkEl.getAttribute('href'), baseUrl),
+                                    imageUrl: imgEl ? resolveUrl(imgEl.getAttribute('src'), baseUrl) : ''
+                    });
+                }
+            }
+        });
+        return items;
+    }
+},
+{
+    id: 'ario-kasai',
+    name: 'アリオ葛西',
+                url: 'https://kasai.ario.jp/event/',
+                defaultLocation: '東京都江戸川区東葛西9-3-3 アリオ葛西',
+                badgeColor: 'bg-rose-100 text-rose-800',
+                parse: (doc, baseUrl) => {
+                    const items = [];
+                    const cards = doc.querySelectorAll('.event-list__item, .c-event-card, article, li a[href*="/event/"]');
+                    cards.forEach(el => {
+                        const container = el.tagName === 'A' ? el.parentElement : el;
+                        const titleEl = container.querySelector('.title, h3, h4, .c-event-card__title') || el;
+                        const dateEl = container.querySelector('.date, time, .c-event-card__date');
+                        const linkEl = el.tagName === 'A' ? el : container.querySelector('a');
+                        const imgEl = container.querySelector('img');
+                        const title = cleanText(titleEl.textContent);
+                        if (title.length > 3 && !title.includes('イベント＆ニュース')) {
+                            items.push({
+                                rawDate: cleanText(dateEl ? dateEl.textContent : container.textContent),
+                                title: title,
+                                url: resolveUrl(linkEl ? linkEl.getAttribute('href') : '', baseUrl),
+                                imageUrl: imgEl ? resolveUrl(imgEl.getAttribute('src') || imgEl.getAttribute('data-src'), baseUrl) : ''
+                    });
+                }
+            });
+            return items;
+        }
+    }
+];
+
+// アプリケーション状態
+        let scrapedEvents = [];
+        let siteStatuses = {};
+        const geocodeCache = new Map(); // 住所 -> { lat, lng } キャッシュ
+
+        // 初期化処理
+        document.addEventListener('DOMContentLoaded', () => {
+            TARGET_SITES.forEach(site => {
+                siteStatuses[site.id] = { status: 'idle', count: 0 };
+            });
+
+            renderTargetSitesGrid();
+            populateFacilityFilter();
+            setupEventListeners();
+            updateTableAndCsv();
+        });
+
+        /**
+         * 対象サイト一覧グリッドの描画
+         */
+        function renderTargetSitesGrid() {
+            const grid = document.getElementById('target-sites-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            TARGET_SITES.forEach(site => {
+                const st = siteStatuses[site.id] || { status: 'idle', count: 0 };
+                let statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" title="未実行"></span>';
+                let statusLabel = '未実行';
+
+                if (st.status === 'loading') {
+                    statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse inline-block" title="取得中"></span>';
+                    statusLabel = '取得中...';
+                } else if (st.status === 'success') {
+                    statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" title="完了"></span>';
+                    statusLabel = `${st.count}件取得`;
+                } else if (st.status === 'empty') {
+                    statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block" title="該当なし"></span>';
+                    statusLabel = '0件';
+                } else if (st.status === 'error') {
+                    statusDot = '<span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" title="エラー"></span>';
+                    statusLabel = '取得失敗';
+                }
+
+                const card = document.createElement('div');
+                card.className = 'border border-slate-200 rounded-xl p-3.5 bg-slate-50/60 hover:bg-white hover:shadow-sm transition-all flex flex-col justify-between gap-2.5';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${site.badgeColor}">${escapeHtml(site.name)}</span>
+                            <div class="flex items-center gap-1.5 text-xs text-slate-500 shrink-0">
+                                ${statusDot}
+                                <span>${statusLabel}</span>
+                            </div>
+                        </div>
+                        <a href="${escapeHtml(site.url)}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-slate-400 hover:text-emerald-600 truncate block mt-1.5" title="${escapeHtml(site.url)}">
+                            ${escapeHtml(site.url)}
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                        <button onclick="scrapeSingleSite('${site.id}')" ${st.status === 'loading' ? 'disabled' : ''} class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white text-xs font-medium py-1.5 px-2.5 rounded-lg transition-colors flex items-center justify-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-rotate ${st.status === 'loading' ? 'fa-spin' : ''}"></i>
+                            <span>取得</span>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        /**
+         * 施設フィルタードロップダウンの生成
+         */
+        function populateFacilityFilter() {
+            const select = document.getElementById('filter-facility');
+            if (!select) return;
+            TARGET_SITES.forEach(site => {
+                const opt = document.createElement('option');
+                opt.value = site.name;
+                opt.textContent = site.name;
+                select.appendChild(opt);
+            });
+        }
+
+        /**
+         * 各種ボタン・入力欄のイベントリスナー設定
+         */
+        function setupEventListeners() {
+            document.getElementById('btn-scrape-all').addEventListener('click', scrapeAllSites);
+            document.getElementById('btn-add-row').addEventListener('click', addEmptyRow);
+            document.getElementById('btn-clear-all').addEventListener('click', () => {
+                scrapedEvents = [];
+                TARGET_SITES.forEach(s => siteStatuses[s.id] = { status: 'idle', count: 0 });
+                renderTargetSitesGrid();
+                updateTableAndCsv();
+                showToast('すべてのデータをクリアしました', 'info');
+            });
+            document.getElementById('btn-copy-csv').addEventListener('click', copyCsvToClipboard);
+            document.getElementById('btn-download-csv').addEventListener('click', downloadCsvFile);
+            document.getElementById('btn-clear-log').addEventListener('click', () => {
+                document.getElementById('log-console').innerHTML = '<div class="text-slate-500">[System] ログを消去しました。</div>';
+            });
+
+            document.getElementById('filter-keyword').addEventListener('input', updateTableAndCsv);
+            document.getElementById('filter-facility').addEventListener('change', updateTableAndCsv);
+            document.getElementById('chk-deduplicate').addEventListener('change', updateTableAndCsv);
+        }
+
+        /**
+         * 全7施設の一括スクレイピング実行
+         */
+        async function scrapeAllSites() {
+            const btn = document.getElementById('btn-scrape-all');
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            addLog('=== 全7施設の一括スクレイピングを開始します ===', 'info');
+
+            for (const site of TARGET_SITES) {
+                await scrapeSingleSite(site.id);
+                await sleep(300);
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            addLog('=== 全7施設の一括スクレイピングが完了しました ===', 'success');
+            showToast('全施設のスクレイピングが完了しました', 'success');
+        }
+
+        /**
+         * 単一サイトのスクレイピング処理（次頁巡回・詳細ページ取得・ジオコーディング対応）
+         */
+        async function scrapeSingleSite(siteId) {
+            const site = TARGET_SITES.find(s => s.id === siteId);
+            if (!site) return;
+
+            const enablePagination = document.getElementById('opt-pagination').checked;
+            const maxPages = enablePagination ? Math.max(1, parseInt(document.getElementById('opt-max-pages').value, 10) || 1) : 1;
+            const enableDeepScrape = document.getElementById('opt-deep-scrape').checked;
+            const enableGeocode = document.getElementById('opt-geocode').checked;
+
+            siteStatuses[site.id] = { status: 'loading', count: 0 };
+            renderTargetSitesGrid();
+            addLog(`[${site.name}] スクレイピング開始 (最大${maxPages}頁, 詳細取得:${enableDeepScrape ? 'ON' : 'OFF'})`, 'info');
+
+            try {
+                let rawExtractedList = [];
+                let currentUrl = site.url;
+                const visitedUrls = new Set();
+
+                // 1. 一覧ページおよび次頁（ページネーション）の巡回
+                for (let page = 1; page <= maxPages; page++) {
+                    if (!currentUrl || visitedUrls.has(currentUrl)) break;
+                    visitedUrls.add(currentUrl);
+
+                    addLog(`[${site.name}] 一覧ページ(${page}頁目)を取得中: ${currentUrl}`, 'info');
+                    const htmlText = await fetchWithProxyFallback(currentUrl);
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+
+                    let pageItems = site.parse(doc, currentUrl);
+                    if (!pageItems || pageItems.length === 0) {
+                        pageItems = genericEventParser(doc, currentUrl);
+                    }
+
+                    rawExtractedList.push(...pageItems);
+
+                    // 次頁リンクの探索
+                    if (page < maxPages) {
+                        const nextUrl = findNextPageUrl(doc, currentUrl, visitedUrls);
+                        if (nextUrl) {
+                            currentUrl = nextUrl;
+                            await sleep(300); // サーバー負荷軽減
+                        } else {
+                            break;
+                        }
+                    }
+                }
+
+                // URLベースで一覧の重複を除去
+                const uniqueRawMap = new Map();
+                rawExtractedList.forEach(item => {
+                    const key = `${item.title}::${item.url}`;
+                    if (!uniqueRawMap.has(key)) uniqueRawMap.set(key, item);
+                });
+                const uniqueRawItems = Array.from(uniqueRawMap.values());
+
+                // 既存の同施設データをクリア
+                scrapedEvents = scrapedEvents.filter(e => e.facility !== site.name);
+
+                if (uniqueRawItems.length > 0) {
+                    addLog(`[${site.name}] 一覧から ${uniqueRawItems.length} 件検出。詳細解析・日時整形を実行中...`, 'info');
+
+                    // 2. 個別イベント詳細ページの取得と解析（最大15件まで、3件ずつ並列バッチ処理で高速化）
+                    const targetItems = uniqueRawItems.slice(0, 15);
+                    const batchSize = 3;
+
+                    for (let i = 0; i < targetItems.length; i += batchSize) {
+                        const batch = targetItems.slice(i, i + batchSize);
+                        const batchResults = await Promise.all(batch.map(async (item, idx) => {
+                            const currentIndex = i + idx + 1;
+                            let detailData = {
+                                description: '',
+                                imageUrl: item.imageUrl || '',
+                                location: '',
+                                detailRawDate: ''
+                            };
+
+                            // 個別詳細ページが存在し、一覧URLと異なる場合のみ詳細ページをスクレイピング
+                            if (enableDeepScrape && item.url && item.url !== site.url && !visitedUrls.has(item.url)) {
+                                try {
+                                    addLog(`[${site.name}] 詳細ページ取得 (${currentIndex}/${targetItems.length}): ${item.title.slice(0, 18)}...`, 'info');
+                                    const detailHtml = await fetchWithProxyFallback(item.url);
+                                    const detailDoc = new DOMParser().parseFromString(detailHtml, 'text/html');
+                                    detailData = parseEventDetailPage(detailDoc, item.url, detailData.imageUrl);
+                                } catch (detailErr) {
+                                    addLog(`[${site.name}] 詳細ページ取得スキップ (${item.title.slice(0, 12)}...): ${detailErr.message}`, 'warn');
+                                }
+                            }
+
+                            // 開始日時・終了日時の yyyy/mm/dd hh:mm フォーマット化
+                            const combinedDateText = `${detailData.detailRawDate} ${item.rawDate}`;
+                            const { startDate, endDate } = parseAndFormatDateRange(combinedDateText);
+
+                            // 開催場所の決定（詳細ページから取れなければ施設のデフォルト住所）
+                            const resolvedLocation = detailData.location || site.defaultLocation;
+
+                            // 3. ジオコーディングAPIによる緯度・経度取得
+                            let lat = '';
+                            let lng = '';
+                            if (enableGeocode && resolvedLocation) {
+                                const coords = await geocodeAddress(resolvedLocation);
+                                if (coords) {
+                                    lat = coords.lat;
+                                    lng = coords.lng;
+                                }
+                            }
+
+                            return {
+                                id: crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random(),
+                                facility: site.name,
+                                startDate: startDate,
+                                endDate: endDate,
+                                title: item.title,
+                                description: detailData.description || `${site.name}で開催されるイベントです。詳細は公式ページをご確認ください。`,
+                                location: resolvedLocation,
+                                lat: lat,
+                                lng: lng,
+                                imageUrl: detailData.imageUrl,
+                                url: item.url || site.url,
+                                source: 'Web取得'
+                            };
+                        }));
+
+                        scrapedEvents.push(...batchResults);
+                        updateTableAndCsv(); // バッチ完了ごとに画面を逐次更新
+                    }
+
+                    siteStatuses[site.id] = { status: 'success', count: targetItems.length };
+                    addLog(`[${site.name}] 完了: ${targetItems.length}件のイベント詳細・座標を取得しました。`, 'success');
+                } else {
+                    siteStatuses[site.id] = { status: 'empty', count: 0 };
+                    addLog(`[${site.name}] 抽出できるイベントデータが見つかりませんでした（0件）。`, 'warn');
+                }
+            } catch (err) {
+                siteStatuses[site.id] = { status: 'error', count: 0 };
+                addLog(`[${site.name}] 通信/プロキシエラーにより取得できませんでした (${err.message})。`, 'error');
+            }
+
+            renderTargetSitesGrid();
+            updateTableAndCsv();
+        }
+
+        /**
+         * 単一プロキシからのHTML取得（プリフライト回避の単純GET・明示的タイムアウト・HTML/テキスト検証）
+         */
+        async function fetchSingleProxy(proxyKey, targetUrl, timeoutMs = 15000) {
+            const proxyBuilders = {
+                corsproxy: (u) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+                codetabs: (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+                jina: (u) => `https://r.jina.ai/${u}`,
+                allorigins_raw: (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+                allorigins_json: (u) => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`
+            };
+
+            const proxyUrl = proxyBuilders[proxyKey](targetUrl);
+
+            const fetchTask = (async () => {
+                // カスタムヘッダーを付けず単純リクエスト(Simple Request)にすることでCORSプリフライト失敗を防止
+                const response = await fetch(proxyUrl);
+
+                if (!response.ok) {
+                    throw new Error(`${proxyKey}: HTTP ${response.status}`);
+                }
+
+                let contentText = '';
+                if (proxyKey === 'allorigins_json') {
+                    const data = await response.json();
+                    contentText = data && data.contents ? data.contents : '';
+                } else {
+                    contentText = await response.text();
+                }
+
+                // Jina Gatewayの場合はMarkdown/テキストで返るため簡易HTMLラップしてDOMParserで扱えるようにする
+                if (proxyKey === 'jina' && contentText && !contentText.includes('<html')) {
+                    contentText = convertJinaMarkdownToHtml(contentText, targetUrl);
+                }
+
+                if (!contentText || contentText.length < 250) {
+                    throw new Error(`${proxyKey}: 空または短すぎるレスポンス`);
+                }
+
+                return contentText;
+            })();
+
+            const timeoutTask = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error(`${proxyKey}: タイムアウト(${timeoutMs / 1000}秒)`)), timeoutMs);
+            });
+
+            return Promise.race([fetchTask, timeoutTask]);
+        }
+
+        /**
+         * Jina Reader経由で取得したMarkdownテキストからリンク・日付・見出しを抽出し擬似HTML化
+         */
+        function convertJinaMarkdownToHtml(mdText, baseUrl) {
+            const lines = mdText.split('\n');
+            const itemsHtml = [];
+            const linkRegex = /\[([^\]]{4,100})\]\((https?:\/\/[^\s)]+)\)/g;
+
+            for (const line of lines) {
+                let match;
+                while ((match = linkRegex.exec(line)) !== null) {
+                    const title = escapeHtml(match[1].trim());
+                    const href = escapeHtml(match[2].trim());
+                    const context = escapeHtml(line.replace(match[0], '').trim());
+                    itemsHtml.push(`
+                        <article class="event-item">
+                            <span class="date">${context}</span>
+                            <h3><a href="${href}">${title}</a></h3>
+                        </article>
+                    `);
+                }
+            }
+            return `<!DOCTYPE html><html><body><main>${itemsHtml.join('\n')}</main></body></html>`;
+        }
+
+        /**
+         * プロキシ経由でのHTML取得（全プロキシ並列最速レース方式 & 順次フォールバック対応）
+         */
+        async function fetchWithProxyFallback(targetUrl) {
+            const mode = document.getElementById('proxy-select').value;
+            const allKeys = ['corsproxy', 'codetabs', 'jina', 'allorigins_raw', 'allorigins_json'];
+
+            // 1. 「全プロキシ並列最速レース」モード: 全プロキシへ同時にリクエストし、一番早く有効応答を返したものを即採用
+            if (mode === 'race') {
+                try {
+                    return await Promise.any(allKeys.map(k => fetchSingleProxy(k, targetUrl, 15000)));
+                } catch (aggErr) {
+                    const reasons = aggErr.errors ? aggErr.errors.map(e => e.message).join(' / ') : '全プロキシ応答なし';
+                    throw new Error(`全プロキシ取得失敗 (${reasons})`);
+                }
+            }
+
+            // 2. 個別プロキシ優先モード（指定プロキシを先に試し、失敗したら残りを並列レース）
+            try {
+                return await fetchSingleProxy(mode, targetUrl, 15000);
+            } catch (firstErr) {
+                const remaining = allKeys.filter(k => k !== mode);
+                try {
+                    return await Promise.any(remaining.map(k => fetchSingleProxy(k, targetUrl, 15000)));
+                } catch (aggErr) {
+                    const reasons = [firstErr.message, ...(aggErr.errors ? aggErr.errors.map(e => e.message) : [])].join(' / ');
+                    throw new Error(`全プロキシ取得失敗 (${reasons})`);
+                }
+            }
+        }
+
+        /**
+         * 汎用イベント一覧パーサー（専用パーサーで0件の場合のフォールバック）
+         */
+        function genericEventParser(doc, baseUrl) {
+            const items = [];
+            const links = doc.querySelectorAll('a[href]');
+            links.forEach(a => {
+                const text = cleanText(a.textContent);
+                const href = a.getAttribute('href') || '';
+                if (text.length >= 6 && text.length <= 100 && /(event|news|info|calendar|detail|article|post)/i.test(href)) {
+                    const parentText = cleanText(a.parentElement ? a.parentElement.textContent : text);
+                    items.push({
+                        rawDate: parentText,
+                        title: text,
+                        url: resolveUrl(href, baseUrl),
+                        imageUrl: ''
+                    });
+                }
+            });
+            return items;
+        }
+
+        /**
+         * ページネーション（次頁）URLの探索
+         */
+        function findNextPageUrl(doc, currentUrl, visitedUrls) {
+            const relNext = doc.querySelector('a[rel="next"], link[rel="next"]');
+            if (relNext && relNext.getAttribute('href')) {
+                const u = resolveUrl(relNext.getAttribute('href'), currentUrl);
+                if (!visitedUrls.has(u)) return u;
+            }
+            const anchors = doc.querySelectorAll('.pagination a, .pager a, .nav-links a, a');
+            for (const a of anchors) {
+                const txt = cleanText(a.textContent);
+                const cls = (a.className || '').toLowerCase();
+                if (/^(次へ|次のページ|next|»|›|>)$/i.test(txt) || cls.includes('next')) {
+                    const href = a.getAttribute('href');
+                    if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+                        const u = resolveUrl(href, currentUrl);
+                        if (!visitedUrls.has(u)) return u;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * 個別イベント詳細ページの解析（詳細本文・画像URL・開催場所/住所・日時抽出）
+         */
+        function parseEventDetailPage(doc, detailUrl, fallbackImgUrl) {
+            // メイン画像 (OGP優先 → 記事内画像)
+            let imageUrl = fallbackImgUrl || '';
+            const ogImg = doc.querySelector('meta[property="og:image"]');
+            if (ogImg && ogImg.getAttribute('content')) {
+                imageUrl = resolveUrl(ogImg.getAttribute('content'), detailUrl);
+            } else {
+                const contentImg = doc.querySelector('article img, main img, .entry-content img, .event-detail img');
+                if (contentImg) {
+                    const src = contentImg.getAttribute('src') || contentImg.getAttribute('data-src');
+                    if (src && !src.includes('icon') && !src.includes('logo')) {
+                        imageUrl = resolveUrl(src, detailUrl);
+                    }
+                }
+            }
+
+            // イベント詳細文の抽出
+            let description = '';
+            const mainArea = doc.querySelector('article, .entry-content, .event-detail, .post-content, main') || doc.body;
+            if (mainArea) {
+                const paragraphs = Array.from(mainArea.querySelectorAll('p'))
+                    .map(p => cleanText(p.textContent))
+                    .filter(t => t.length > 15 && !t.includes('Copyright'));
+                description = paragraphs.slice(0, 3).join(' ').slice(0, 240);
+            }
+            if (!description) {
+                const metaDesc = doc.querySelector('meta[name="description"]');
+                if (metaDesc) description = cleanText(metaDesc.getAttribute('content'));
+            }
+
+            // 開催場所・住所の抽出
+            let location = '';
+            const bodyText = mainArea ? mainArea.innerText || mainArea.textContent : '';
+            const locMatch = bodyText.match(/(?:開催場所|会場|場所|住所|ところ)[：:\s　]*([^\n\r。]{4,60})/);
+            if (locMatch && locMatch[1]) {
+                location = cleanText(locMatch[1]);
+            }
+
+            // 詳細ページ内の日時情報
+            const dateMatch = bodyText.match(/(?:日時|開催日|期間|とき)[：:\s　]*([^\n\r]{6,80})/);
+            const detailRawDate = dateMatch && dateMatch[1] ? cleanText(dateMatch[1]) : bodyText.slice(0, 300);
+
+            return { description, imageUrl, location, detailRawDate };
+        }
+
+        /**
+         * 日本語テキストから開始日時・終了日時を抽出し yyyy/mm/dd hh:mm 形式に正規化
+         */
+        function parseAndFormatDateRange(rawText) {
+            const now = new Date();
+            const defaultYear = now.getFullYear();
+            const text = String(rawText || '').replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+
+            // 年月日パターンの抽出 (例: 2026年11月28日 / 2026/11/28 / 11月28日)
+            const dateMatches = [...text.matchAll(/(?:(20\d{2})\s*[年\/\-]\s*)?(\d{1,2})\s*[月\/\-]\s*(\d{1,2})\s*日?/g)];
+            // 時刻パターンの抽出 (例: 10:00 / 10時30分)
+            const timeMatches = [...text.matchAll(/(\d{1,2})\s*[:：時]\s*(\d{2})?\s*分?/g)];
+
+            const pad = (n) => String(n).padStart(2, '0');
+
+            let startYear = defaultYear, startMonth = now.getMonth() + 1, startDay = now.getDate();
+            if (dateMatches.length > 0) {
+                startYear = dateMatches[0][1] ? parseInt(dateMatches[0][1], 10) : defaultYear;
+                startMonth = parseInt(dateMatches[0][2], 10);
+                startDay = parseInt(dateMatches[0][3], 10);
+            }
+
+            let endYear = startYear, endMonth = startMonth, endDay = startDay;
+            if (dateMatches.length > 1) {
+                endYear = dateMatches[1][1] ? parseInt(dateMatches[1][1], 10) : startYear;
+                endMonth = parseInt(dateMatches[1][2], 10);
+                endDay = parseInt(dateMatches[1][3], 10);
+            }
+
+            let startHour = '09', startMin = '00';
+            if (timeMatches.length > 0) {
+                const h = parseInt(timeMatches[0][1], 10);
+                if (h >= 0 && h <= 23) {
+                    startHour = pad(h);
+                    startMin = timeMatches[0][2] ? pad(parseInt(timeMatches[0][2], 10)) : '00';
+                }
+            }
+
+            let endHour = startHour, endMin = startMin;
+            if (timeMatches.length > 1) {
+                const h = parseInt(timeMatches[1][1], 10);
+                if (h >= 0 && h <= 23) {
+                    endHour = pad(h);
+                    endMin = timeMatches[1][2] ? pad(parseInt(timeMatches[1][2], 10)) : '00';
+                }
+            } else if (timeMatches.length === 1) {
+                const nextH = Math.min(23, parseInt(startHour, 10) + 2);
+                endHour = pad(nextH);
+            }
+
+            const startDate = `${startYear}/${pad(startMonth)}/${pad(startDay)} ${startHour}:${startMin}`;
+            const endDate = `${endYear}/${pad(endMonth)}/${pad(endDay)} ${endHour}:${endMin}`;
+            return { startDate, endDate };
+        }
+
+        /**
+         * ジオコーディングAPIによる緯度・経度取得（国土地理院API → OpenStreetMap Nominatim フォールバック）
+         */
+        async function geocodeAddress(address) {
+            if (!address) return null;
+            const query = address.includes('江戸川区') || address.includes('東京') ? address : `東京都江戸川区 ${address}`;
+            if (geocodeCache.has(query)) {
+                return geocodeCache.get(query);
+            }
+
+            // 1. 国土地理院 住所検索API
+            try {
+                const gsiUrl = `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`;
+                const res = await fetch(gsiUrl);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0 && data[0].geometry && Array.isArray(data[0].geometry.coordinates)) {
+                        const [lng, lat] = data[0].geometry.coordinates;
+                        const coords = { lat: Number(lat).toFixed(6), lng: Number(lng).toFixed(6) };
+                        geocodeCache.set(query, coords);
+                        return coords;
+                    }
+                }
+            } catch (e) { /* フォールバックへ */ }
+
+            // 2. OpenStreetMap Nominatim API
+            try {
+                const nomUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+                const res = await fetch(nomUrl);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        const coords = { lat: Number(data[0].lat).toFixed(6), lng: Number(data[0].lon).toFixed(6) };
+                        geocodeCache.set(query, coords);
+                        return coords;
+                    }
+                }
+            } catch (e) { /* 無視 */ }
+
+            geocodeCache.set(query, null);
+            return null;
+        }
+
+        /**
+         * テーブルとCSVプレビューの再描画・セル編集バインディング
+         */
+        function updateTableAndCsv() {
+            const tbody = document.getElementById('events-table-body');
+            const badge = document.getElementById('event-count-badge');
+            const previewArea = document.getElementById('csv-preview-area');
+            if (!tbody) return;
+
+            const filteredEvents = getCurrentFilteredEvents();
+            badge.textContent = `${filteredEvents.length} 件`;
+
+            if (filteredEvents.length === 0) {
+                tbody.innerHTML = `
+                    <tr id="empty-state-row">
+                        <td colspan="12" class="py-12 px-4 text-center text-slate-400">
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <i class="fa-regular fa-folder-open text-4xl text-slate-300"></i>
+                                <p class="font-medium text-slate-500">表示できるイベントデータがありません</p>
+                                <p class="text-xs">右上の「一括スクレイピング実行」または各施設の「取得」ボタンを押してください。</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                if (previewArea) previewArea.value = '';
+                return;
+            }
+
+            tbody.innerHTML = '';
+            filteredEvents.forEach(ev => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-emerald-50/40 transition-colors group';
+
+                const mapLink = (ev.lat && ev.lng)
+                    ? `<a href="https://www.google.com/maps?q=${encodeURIComponent(ev.lat)},${encodeURIComponent(ev.lng)}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-emerald-600 hover:underline block mt-0.5"><i class="fa-solid fa-location-dot mr-0.5"></i>地図</a>`
+                    : '';
+
+                const imgHtml = ev.imageUrl
+                    ? `<a href="${escapeHtml(ev.imageUrl)}" target="_blank" rel="noopener noreferrer" class="block w-16 h-11 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+                         <img src="${escapeHtml(ev.imageUrl)}" alt="event" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/120x80/e2e8f0/64748b?text=No+Img'">
+                       </a>`
+                    : `<span class="text-xs text-slate-400">なし</span>`;
+
+                tr.innerHTML = `
+                    <td contenteditable="true" data-id="${ev.id}" data-field="facility" class="py-2.5 px-3 font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.facility)}</td>
+                    <td contenteditable="true" data-id="${ev.id}" data-field="startDate" class="py-2.5 px-3 font-mono text-xs text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.startDate)}</td>
+                    <td contenteditable="true" data-id="${ev.id}" data-field="endDate" class="py-2.5 px-3 font-mono text-xs text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.endDate)}</td>
+                    <td contenteditable="true" data-id="${ev.id}" data-field="title" class="py-2.5 px-3 font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.title)}</td>
+                    <td contenteditable="true" data-id="${ev.id}" data-field="description" class="py-2.5 px-3 text-xs text-slate-600 line-clamp-3 focus:line-clamp-none focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.description)}</td>
+                    <td contenteditable="true" data-id="${ev.id}" data-field="location" class="py-2.5 px-3 text-xs text-slate-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.location)}</td>
+                    <td contenteditable="true" data-id="${ev.id}" data-field="lat" class="py-2.5 px-3 font-mono text-xs text-slate-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.lat)}${mapLink}</td>
+                    <td contenteditable="true" data-id="${ev.id}" data-field="lng" class="py-2.5 px-3 font-mono text-xs text-slate-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500">${escapeHtml(ev.lng)}</td>
+                    <td class="py-2.5 px-3">${imgHtml}</td>
+                    <td class="py-2.5 px-3 text-xs">
+                        <a href="${escapeHtml(ev.url)}" target="_blank" rel="noopener noreferrer" class="text-teal-600 hover:text-teal-800 underline flex items-center gap-1">
+                            <span>リンク</span><i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </td>
+                    <td class="py-2.5 px-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800">${escapeHtml(ev.source)}</span>
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <button onclick="deleteEventRow('${ev.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="削除">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+
+                tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                    cell.addEventListener('blur', (e) => {
+                        const targetId = e.target.getAttribute('data-id');
+                        const field = e.target.getAttribute('data-field');
+                        const item = scrapedEvents.find(x => String(x.id) === String(targetId));
+                        if (item && field) {
+                            item[field] = cleanText(e.target.textContent.replace(/地図$/, ''));
+                            if (previewArea) {
+                                previewArea.value = generateCsvString(getCurrentFilteredEvents());
+                            }
+                        }
+                    });
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            if (previewArea) {
+                previewArea.value = generateCsvString(filteredEvents);
+            }
+        }
+
+        /**
+         * 行の削除
+         */
+        function deleteEventRow(id) {
+            scrapedEvents = scrapedEvents.filter(e => String(e.id) !== String(id));
+            updateTableAndCsv();
+            showToast('1件のイベントを削除しました', 'info');
+        }
+
+        /**
+         * 手動での空行追加
+         */
+        function addEmptyRow() {
+            scrapedEvents.unshift({
+                id: crypto.randomUUID ? crypto.randomUUID() : Date.now() + Math.random(),
+                facility: '葛西海浜公園',
+                startDate: '2026/12/01 10:00',
+                endDate: '2026/12/01 12:00',
+                title: '新規イベント名（クリックして編集）',
+                description: 'イベントの詳細内容をここに入力します。',
+                location: '東京都江戸川区臨海町6-2 葛西海浜公園',
+                lat: '35.641389',
+                lng: '139.856944',
+                imageUrl: 'https://placehold.co/600x400/10b981/ffffff?text=New+Event',
+                url: 'https://kasaikaihinpark.com/event/',
+                source: '手動追加'
+            });
+            updateTableAndCsv();
+            showToast('新しい行を追加しました。セルをクリックして編集できます。', 'success');
+        }
+
+        /**
+         * 現在フィルタリングされているイベント配列を取得
+         */
+        function getCurrentFilteredEvents() {
+            const keyword = document.getElementById('filter-keyword').value.toLowerCase().trim();
+            const facilityFilter = document.getElementById('filter-facility').value;
+            const deduplicate = document.getElementById('chk-deduplicate').checked;
+
+            let filtered = scrapedEvents.filter(item => {
+                const matchFacility = facilityFilter === 'ALL' || item.facility === facilityFilter;
+                const matchKeyword = !keyword ||
+                    item.title.toLowerCase().includes(keyword) ||
+                    item.description.toLowerCase().includes(keyword) ||
+                    item.location.toLowerCase().includes(keyword) ||
+                    item.startDate.toLowerCase().includes(keyword) ||
+                    item.facility.toLowerCase().includes(keyword);
+                return matchFacility && matchKeyword;
+            });
+
+            if (deduplicate) {
+                const seen = new Set();
+                filtered = filtered.filter(item => {
+                    const key = `${item.facility}::${item.title}::${item.startDate}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+            }
+            return filtered;
+        }
+
+        /**
+         * CSV文字列の生成 (RFC 4180準拠エスケープ)
+         */
+        function generateCsvString(events) {
+            const headers = [
+                '施設名',
+                '開始日時',
+                '終了日時',
+                'イベントタイトル',
+                'イベント詳細',
+                '場所・住所',
+                '緯度',
+                '経度',
+                '画像URL',
+                '詳細URL',
+                '取得区分'
+            ];
+            const escapeCsvCell = (val) => {
+                const str = String(val ?? '').replace(/\r?\n/g, ' ').trim();
+                if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            const lines = [headers.join(',')];
+            events.forEach(ev => {
+                lines.push([
+                    escapeCsvCell(ev.facility),
+                    escapeCsvCell(ev.startDate),
+                    escapeCsvCell(ev.endDate),
+                    escapeCsvCell(ev.title),
+                    escapeCsvCell(ev.description),
+                    escapeCsvCell(ev.location),
+                    escapeCsvCell(ev.lat),
+                    escapeCsvCell(ev.lng),
+                    escapeCsvCell(ev.imageUrl),
+                    escapeCsvCell(ev.url),
+                    escapeCsvCell(ev.source)
+                ].join(','));
+            });
+            return lines.join('\r\n');
+        }
+
+        /**
+         * CSVファイルのダウンロード (Excel文字化け防止のUTF-8 BOM付き)
+         */
+        function downloadCsvFile() {
+            const events = getCurrentFilteredEvents();
+            if (events.length === 0) {
+                showToast('出力するイベントデータがありません', 'error');
+                return;
+            }
+
+            const csvContent = generateCsvString(events);
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            const filename = `edogawa_events_${timestamp}.csv`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            addLog(`CSVファイル (${filename}) をダウンロードしました (${events.length}件)。`, 'success');
+            showToast(`CSVファイルをダウンロードしました (${events.length}件)`, 'success');
+        }
+
+        /**
+         * クリップボードへCSVをコピー (document.execCommandを使用)
+         */
+        function copyCsvToClipboard() {
+            const events = getCurrentFilteredEvents();
+            if (events.length === 0) {
+                showToast('コピーするイベントデータがありません', 'error');
+                return;
+            }
+
+            const csvContent = generateCsvString(events);
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = csvContent;
+            tempTextarea.style.position = 'fixed';
+            tempTextarea.style.left = '-9999px';
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+
+            try {
+                document.execCommand('copy');
+                showToast(`CSVデータ (${events.length}件) をクリップボードにコピーしました`, 'success');
+                addLog('CSVデータをクリップボードにコピーしました。', 'info');
+            } catch (err) {
+                showToast('クリップボードへのコピーに失敗しました', 'error');
+            } finally {
+                document.body.removeChild(tempTextarea);
+            }
+        }
+
+        /**
+         * ユーティリティ関数群
+         */
+        function cleanText(str) {
+            if (!str) return '';
+            return str.replace(/\s+/g, ' ').trim();
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function resolveUrl(href, baseUrl) {
+            if (!href) return baseUrl;
+            try {
+                return new URL(href, baseUrl).href;
+            } catch (e) {
+                return baseUrl;
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function addLog(message, type = 'info') {
+            const consoleEl = document.getElementById('log-console');
+            const now = new Date().toLocaleTimeString('ja-JP');
+            const colorClass = type === 'success' ? 'text-emerald-400'
+                : type === 'error' ? 'text-rose-400'
+                : type === 'warn' ? 'text-amber-300'
+                : 'text-slate-300';
+
+            const line = document.createElement('div');
+            line.className = colorClass;
+            line.textContent = `[${now}] ${message}`;
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            const bgClass = type === 'success' ? 'bg-emerald-800 text-white border-emerald-600'
+                : type === 'error' ? 'bg-rose-800 text-white border-rose-600'
+                : 'bg-slate-800 text-white border-slate-600';
+
+            const icon = type === 'success' ? 'fa-circle-check text-emerald-300'
+                : type === 'error' ? 'fa-circle-exclamation text-rose-300'
+                : 'fa-circle-info text-sky-300';
+
+            toast.className = `${bgClass} border px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon} text-lg"></i>
+                <span class="font-medium">${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
