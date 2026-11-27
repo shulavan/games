@@ -1146,7 +1146,15 @@ def expand_recurring_spans(text: str, spans: list[tuple[date, date]]) -> list[tu
     # 期間イベント1件のまま保持する。休館日/休業日が明示された場合だけ
     # その日を除外するために日別化し、「毎日開催」等の明示がある場合も日別化する。
     explicitly_daily = bool(re.search(r"毎日|期間中(?:は)?(?:毎日)?開催|連日開催|連日実施", normalized))
-    if not explicitly_daily and not excluded_weekdays and not excluded_dates:
+    # 短い明示的な開催日範囲（例: 11/27～29、12/1から5日まで開催）は
+    # 従来どおり日別レコードにする。長期間の「開催期間」だけが記載された
+    # 案内は、日々の開催が確認できないため一つの期間イベントとして保持する。
+    has_explicit_session_wording = bool(
+        re.search(r"展示(?:会)?|公演|(?:イベント|講座|教室).{0,12}(?:開催|実施)|から.{0,12}まで開催", normalized)
+    ) and not bool(re.search(r"開催期間", normalized))
+    all_short_ranges = all((b - a).days <= 7 for a, b in spans)
+    if (not explicitly_daily and not excluded_weekdays and not excluded_dates
+            and not (all_short_ranges and has_explicit_session_wording)):
         return sorted(set((a, b) for a, b in spans if b >= TODAY), key=lambda x: x[0])
     expanded: list[tuple[date, date]] = []
     for a, b in spans:
@@ -2735,7 +2743,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.12//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.13//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2831,7 +2839,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.12//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.13//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
