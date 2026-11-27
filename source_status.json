@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.16",
+  "app_version": "3.2.17",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T18:07:57.834075+09:00",
+  "generated_at": "2026-11-28T08:33:49.167136+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1346,7 +1346,7 @@
       ],
       "candidate_urls": 259,
       "detail_success": 259,
-      "accepted": 290,
+      "accepted": 286,
       "rejected": {
         "location_unverified": 21,
         "non_event_page": 1,
@@ -1357,9 +1357,9 @@
       "list_view_links": 1033,
       "calendar_months_successful": 12,
       "calendar_months_requested": 12,
-      "day_detail_pages_requested": 144,
-      "day_detail_pages_success": 144,
-      "day_detail_event_links": 2576,
+      "day_detail_pages_requested": 143,
+      "day_detail_pages_success": 143,
+      "day_detail_event_links": 2549,
       "day_detail_page_failures": 0,
       "day_detail_coverage_ratio": 1.0,
       "site_coverage": {
@@ -1379,7 +1379,7 @@
           "months_requested": 12
         }
       },
-      "previous_accepted": 296
+      "previous_accepted": 290
     },
     "えどがわ朝日創業塾（朝日信用金庫公開日程）": {
       "name": "えどがわ朝日創業塾（朝日信用金庫公開日程）",
@@ -1422,18 +1422,18 @@
       "name": "江戸川区イベントカレンダーCSV",
       "url": "https://www.city.edogawa.tokyo.jp/shared/system/event_csv/event_info.csv",
       "http_status": 200,
-      "bytes": 489325,
+      "bytes": 495526,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "ok",
-      "candidate_rows": 458,
-      "accepted": 50,
-      "detail_lookups": 307,
+      "candidate_rows": 465,
+      "accepted": 49,
+      "detail_lookups": 309,
       "rejected": {
-        "official_html_has_same_detail_url": 151,
+        "official_html_has_same_detail_url": 156,
         "outside_or_unverified_location": 20,
-        "multi_day_performance_without_explicit_sessions": 2,
+        "multi_day_performance_without_explicit_sessions": 3,
         "outside_facility_mention:恩賜上野動物園": 1
       },
       "headers": [
@@ -1502,7 +1502,7 @@
         "start_time": "開始時間",
         "end_time": "終了時間"
       },
-      "suppressed_official_html_rows": 151,
+      "suppressed_official_html_rows": 156,
       "previous_accepted": 50
     },
     "東京都OpenData江戸川区イベント一覧CSV": {
@@ -1770,8 +1770,8 @@
       "detail_success": 27,
       "accepted": 0,
       "rejected": {
-        "no_event_date": 9,
-        "non_event_page": 18
+        "non_event_page": 18,
+        "no_event_date": 9
       },
       "http_status": 200,
       "bytes": 74937,
@@ -1781,6 +1781,45 @@
       "truncated_candidates": 0,
       "previous_accepted": 0,
       "unexpected_zero": true
+    },
+    "江戸川区公式・催しもの情報PDF": {
+      "name": "江戸川区公式・催しもの情報PDF",
+      "url": "https://www.city.edogawa.tokyo.jp/edg/event/event.pdf",
+      "status": "zero_valid_events",
+      "candidate_links": 0,
+      "detail_success": 0,
+      "accepted": 0,
+      "rejected": {
+        "pdf_title_unresolved": 5,
+        "pdf_venue_unregistered_or_ambiguous": 1,
+        "pdf_date_unparsed": 1
+      },
+      "http_status": 200,
+      "bytes": 428716,
+      "content_type": "application/pdf",
+      "pages": 2,
+      "blocks_seen": 94,
+      "date_place_blocks": 7,
+      "unparsed_blocks": 7,
+      "coverage_note": "日時・場所・タイトルが同一PDFテキストブロックで確認できた登録済み会場のみ採用。複数会場・画像文字・曖昧なブロックは保留。",
+      "previous_accepted": 0
+    },
+    "江戸川区・区内の主な年間イベント（監視のみ）": {
+      "name": "江戸川区・区内の主な年間イベント（監視のみ）",
+      "url": "https://www.city.edogawa.tokyo.jp/e004/sports/kankomidokoro/event/index.html",
+      "http_status": 200,
+      "bytes": 21359,
+      "error": null,
+      "attempts": 1,
+      "cache_hit": false,
+      "status": "ok",
+      "candidate_links": 47,
+      "exact_date_links": 0,
+      "seasonal_only_links": 13,
+      "accepted": 0,
+      "mode": "monitor_only_no_date_inference",
+      "note": "年間行事ページは『5月上旬』等の概略時期を示すため、開催日が個別に確定した詳細ページを確認するまでVEVENT化しない。",
+      "previous_accepted": 0
     },
     "葛西海浜公園": {
       "name": "葛西海浜公園",
@@ -1940,7 +1979,7 @@
       "name": "タワーホール船堀",
       "url": "https://www.towerhall.jp/events/list/",
       "http_status": 200,
-      "bytes": 103758,
+      "bytes": 103759,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2066,18 +2105,18 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 65542,
+      "bytes": 65074,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "zero_valid_events",
-      "total_links": 225,
+      "total_links": 223,
       "same_site_links": 0,
-      "candidate_links": 31,
-      "detail_success": 31,
+      "candidate_links": 30,
+      "detail_success": 30,
       "accepted": 0,
       "rejected": {
-        "no_event_date": 31
+        "no_event_date": 30
       },
       "feed_urls": [],
       "feed_candidates": 0,
@@ -2089,7 +2128,7 @@
       "name": "アリオ葛西",
       "url": "https://kasai.ario.jp/event/",
       "http_status": 200,
-      "bytes": 84196,
+      "bytes": 84265,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2112,7 +2151,7 @@
       "name": "TRXフリーマーケット",
       "url": "https://trx.jp/",
       "http_status": 200,
-      "bytes": 64690,
+      "bytes": 65341,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2227,14 +2266,14 @@
       "name": "都立葛西南高校",
       "url": "https://www.metro.ed.jp/kasaiminami-h/news/index.html",
       "http_status": 200,
-      "bytes": 181606,
+      "bytes": 181836,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "zero_valid_events",
-      "total_links": 743,
+      "total_links": 744,
       "same_site_links": 0,
-      "candidate_links": 693,
+      "candidate_links": 694,
       "detail_success": 250,
       "accepted": 0,
       "rejected": {
@@ -2244,7 +2283,7 @@
       },
       "feed_urls": [],
       "feed_candidates": 0,
-      "truncated_candidates": 443,
+      "truncated_candidates": 444,
       "previous_accepted": 0,
       "unexpected_zero": true
     },
@@ -2330,7 +2369,7 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "geocoding": {
-    "cache_hits": 69,
+    "cache_hits": 68,
     "gsi_queries": 22,
     "nominatim_queries": 1,
     "success": 21,
@@ -2338,12 +2377,20 @@
     "outside": 0
   },
   "totals": {
-    "raw_records": 368,
-    "unique_events": 365,
+    "raw_records": 363,
+    "unique_events": 360,
     "deduplicated_records": 3,
-    "with_coordinates": 365,
+    "with_coordinates": 360,
     "without_coordinates": 0,
     "strict_edogawa_only": true
+  },
+  "quality_audit": {
+    "unique_uid_count": 360,
+    "duplicate_uid_count": 0,
+    "missing_coordinates": 0,
+    "invalid_date_ranges": 0,
+    "outside_or_unverified_locations": 0,
+    "events_checked": 360
   },
   "primary_source_health": {
     "event_csv_schema_recognized": true,
@@ -2354,5 +2401,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "b9d26fa8d0b1c195"
+  "execution_id": "57cc0e38f7233a0f"
 }
