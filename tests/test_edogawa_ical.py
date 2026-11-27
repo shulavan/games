@@ -184,11 +184,11 @@ class MergeAndIcalTests(unittest.TestCase):
         with patch.object(app, "TODAY", date(2026, 11, 26)), patch.object(app, "fetch_text", return_value=(csv_text, meta)):
             events, status = app.parse_csv_source("https://example.jp/data.csv", "test")
         self.assertEqual(status["status"], "ok")
-        self.assertEqual(len(events), 2)
+        self.assertEqual(len(events), 1)
         self.assertEqual([(e.start_date, e.end_date) for e in events],
-                         [("2026-12-12", "2026-12-12"), ("2026-12-13", "2026-12-13")])
-        self.assertTrue(all((e.start_time, e.end_time) == ("09:30", "15:00") for e in events))
-        self.assertTrue(all(e.priority == 9 for e in events))
+                         [("2026-12-12", "2026-12-13")])
+        self.assertEqual((events[0].start_time, events[0].end_time), ("09:30", "15:00"))
+        self.assertEqual(events[0].priority, 9)
 
     def test_csv_outside_municipality_is_rejected(self):
         csv_text = ("市区町村コード,市区町村名,イベント名,開始日,終了日,場所名称,住所\n"
@@ -419,8 +419,8 @@ class QualityFilterTests(unittest.TestCase):
     def test_ics_and_status_use_v325_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.8//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.8")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.9//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.9")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -542,6 +542,7 @@ class V322RegressionTests(unittest.TestCase):
             events, _ = app.parse_csv_source("https://example.jp/data.csv", "test")
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0].start_date, "2026-12-13")
+        self.assertEqual(events[0].end_date, "2026-12-13")
         self.assertEqual(events[0].priority, 9)
 
     def test_multi_day_event_is_split_into_daily_records(self):
@@ -630,7 +631,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.8")
+        self.assertEqual(payload["app_version"], "3.2.9")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -821,7 +822,7 @@ class Version324RegressionTests(unittest.TestCase):
                             "https://example.jp/event", "test")
         self.assertIsNotNone(ev)
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.8//EN", ics)
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.9//EN", ics)
         unfolded = ics.replace("\r\n ", "")
         self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
         self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
@@ -1018,3 +1019,103 @@ class Version328DirectSourceTests(unittest.TestCase):
         self.assertEqual(events, [])
         self.assertEqual(status["rejected"].get("no_event_date"), 1)
         make.assert_not_called()
+
+
+class Version329RegressionTests(unittest.TestCase):
+    def test_mypl_footer_keywords_do_not_pollute_event_location(self):
+        html = """<html><body><div class='event-detail'>
+        <h1>地域交流イベント</h1><h2>開催日時</h2><p>2026年12月3日 10:00～12:00</p>
+        <h2>会場</h2><p>小岩昭和通り商店会</p><h2>住所</h2>
+        <p>東京都江戸川区南小岩8-7周辺</p>
+        <p>イベントの案内です。</p><h2>人気のキーワード</h2>
+        <p>江戸川区役所 江戸川区役所(東京都江戸川区中央1-4-1)</p>
+        </div></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 27)):
+            detail = app.extract_detail(html, "https://edogawa.mypl.net/event/12345/")
+        self.assertEqual(detail["venue"], "小岩昭和通り商店会")
+        self.assertNotIn("江戸川区役所", detail["text"])
+        self.assertNotIn("江戸川区役所", detail["address"])
+
+    def test_same_day_same_title_cross_domain_prefers_official_time_and_venue(self):
+        official = app.Event(
+            "気軽に食材を使い切り(エコ料理教室)", "2026-11-30", "2026-11-30",
+            "清新町コミュニティ会館", "東京都江戸川区清新町1丁目",
+            "https://www.city.edogawa.tokyo.jp/event/ecocooking.html", source="区公式",
+            start_time="10:30", end_time="13:30")
+        eco = app.Event(
+            "気軽に食材を使い切り(エコ料理教室)", "2026-11-30", "2026-11-30",
+            "えどがわエコセンター", "東京都江戸川区船堀4丁目",
+            "https://edogawa-ecocenter.jp/event/eco-cooking/", source="区内公共・環境")
+        merged = app.merge_events([eco, official])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0].venue, "清新町コミュニティ会館")
+        self.assertEqual((merged[0].start_time, merged[0].end_time), ("10:30", "13:30"))
+        self.assertIn(eco.url, merged[0].source_urls)
+        self.assertIn(official.url, merged[0].source_urls)
+
+    def test_csv_bare_date_range_is_not_expanded_into_daily_events(self):
+        csv_text = (
+            "イベント名,開催日,終了日,会場,住所,URL\n"
+            "五代目円楽一門会若手落語会,2026年11月27日,2026年12月1日,タワーホール船堀,"
+            "東京都江戸川区船堀4丁目1番1号,https://example.jp/rakugo\n"
+        )
+        meta = {"url": "https://example.jp/data.csv", "http_status": 200,
+                "bytes": len(csv_text), "error": None}
+        with patch.object(app, "TODAY", date(2026, 11, 27)), \
+             patch.object(app, "fetch_text", return_value=(csv_text, meta)):
+            events, _ = app.parse_csv_source("https://example.jp/data.csv", "test CSV")
+        self.assertEqual(len(events), 1)
+        self.assertEqual((events[0].start_date, events[0].end_date),
+                         ("2026-11-27", "2026-12-01"))
+
+    def test_csv_uses_detail_page_event_date_instead_of_csv_period(self):
+        csv_text = (
+            "イベント名,開催日,終了日,会場,住所,URL\n"
+            "五代目円楽一門会若手落語会,2026年11月27日,2026年12月1日,タワーホール船堀,"
+            "東京都江戸川区船堀4丁目1番1号,https://example.jp/rakugo\n"
+        )
+        detail_html = """<html><body><main><h1>五代目円楽一門会若手落語会</h1>
+        <h2>開催日時</h2><p>2026年11月30日 13:00～15:00</p>
+        <p>2026年12月1日 10:00～12:00</p><p>2026年12月2日 16:00～18:00</p>
+        <h2>会場</h2><p>タワーホール船堀</p><h2>住所</h2>
+        <p>東京都江戸川区船堀4丁目1番1号</p></main></body></html>"""
+        csv_meta = {"url": "https://example.jp/data.csv", "http_status": 200,
+                    "bytes": len(csv_text), "error": None}
+        detail_meta = {"url": "https://example.jp/rakugo", "http_status": 200,
+                       "bytes": len(detail_html), "error": None}
+        with patch.object(app, "TODAY", date(2026, 11, 27)), \
+             patch.object(app, "fetch_text", side_effect=[(csv_text, csv_meta), (detail_html, detail_meta)]):
+            events, status = app.parse_csv_source("https://example.jp/data.csv", "test CSV")
+        self.assertEqual(status["detail_lookups"], 1)
+        self.assertEqual(len(events), 3)
+        self.assertEqual([(event.start_date, event.start_time, event.end_time) for event in events], [
+            ("2026-11-30", "13:00", "15:00"),
+            ("2026-12-01", "10:00", "12:00"),
+            ("2026-12-02", "16:00", "18:00"),
+        ])
+
+    def test_explicit_daily_range_stays_separate_daily_records(self):
+        with patch.object(app, "TODAY", date(2026, 11, 27)):
+            spans = app.expand_recurring_spans("展示会 2026年11月27日～29日",
+                                               [(date(2026, 11, 27), date(2026, 11, 29))])
+        self.assertEqual(spans, [(date(2026, 11, 27), date(2026, 11, 27)),
+                                 (date(2026, 11, 28), date(2026, 11, 28)),
+                                 (date(2026, 11, 29), date(2026, 11, 29))])
+
+    def test_tsuruoka_title_includes_kanko_bussanten(self):
+        html = """<html><body><h1>鶴岡市</h1>
+        <p>2026年12月3日・12月4日 西葛西駅南口広場</p></body></html>"""
+        fake_event = lambda title, span, venue, address, url, source, **kw: app.Event(
+            title=title, start_date=span[0].isoformat(), end_date=span[1].isoformat(),
+            venue=venue, address=address, url=url, source=source, **kw)
+        with patch.object(app, "fetch_text", return_value=(html, {"http_status": 200})), \
+             patch.object(app, "lookup_venue", return_value={"address": "東京都江戸川区西葛西6丁目"}), \
+             patch.object(app, "make_event", side_effect=fake_event), \
+             patch.object(app, "TODAY", date(2026, 11, 27)):
+            events, _ = app.parse_tsuruoka_source()
+        self.assertTrue(events)
+        self.assertTrue(all("観光物産展" in event.title for event in events))
+
+    def test_version_markers_are_v329(self):
+        self.assertEqual(app.APP_VERSION, "3.2.9")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.9//EN", app.build_ics([]))
