@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
   "app_version": "3.2.8",
-  "generated_at": "2026-11-27T12:30:14.235733+09:00",
-  "execution_id": "bd14fca914862e14",
+  "generated_at": "2026-11-27T12:38:46.141698+09:00",
+  "execution_id": "642de88780248600",
   "timezone": "Asia/Tokyo",
   "scope": "東京都江戸川区内のみ",
   "mode": "live",
@@ -19653,7 +19653,7 @@
     "app_version": "3.2.8",
     "mode": "live",
     "coverage_complete": false,
-    "generated_at": "2026-11-27T12:30:14.235733+09:00",
+    "generated_at": "2026-11-27T12:38:46.141698+09:00",
     "timezone": "Asia/Tokyo",
     "months_requested": 12,
     "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -21030,7 +21030,7 @@
             "months_requested": 12
           }
         },
-        "previous_accepted": 496
+        "previous_accepted": 497
       },
       "江戸川区イベントカレンダーCSV": {
         "name": "江戸川区イベントカレンダーCSV",
@@ -21343,7 +21343,7 @@
           }
         ],
         "calendar_months_successful": 12,
-        "previous_accepted": 0
+        "previous_accepted": 2
       },
       "えどがわエコセンター": {
         "name": "えどがわエコセンター",
@@ -21358,7 +21358,7 @@
         "error": null,
         "attempts": 1,
         "cache_hit": false,
-        "previous_accepted": 0
+        "previous_accepted": 4
       },
       "江戸川区立図書館": {
         "name": "江戸川区立図書館",
@@ -21678,7 +21678,7 @@
         "name": "江戸川まいぷれ",
         "url": "https://edogawa.mypl.net/event/",
         "http_status": 200,
-        "bytes": 64738,
+        "bytes": 64681,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
@@ -22005,6 +22005,6 @@
       "healthy": true,
       "primary_event_success": true
     },
-    "execution_id": "bd14fca914862e14"
+    "execution_id": "642de88780248600"
   }
 }
