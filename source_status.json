@@ -2,7 +2,7 @@
   "app_version": "3.2.11",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T13:59:09.505395+09:00",
+  "generated_at": "2026-11-27T14:44:22.317539+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1480,7 +1480,7 @@
         "end_time": "終了時間"
       },
       "suppressed_official_html_rows": 150,
-      "previous_accepted": 63
+      "previous_accepted": 67
     },
     "東京都OpenData江戸川区イベント一覧CSV": {
       "name": "東京都OpenData江戸川区イベント一覧CSV",
@@ -1747,8 +1747,8 @@
       "detail_success": 27,
       "accepted": 0,
       "rejected": {
-        "no_event_date": 9,
-        "non_event_page": 18
+        "non_event_page": 18,
+        "no_event_date": 9
       },
       "http_status": 200,
       "bytes": 74937,
@@ -2041,7 +2041,7 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64668,
+      "bytes": 64636,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2057,8 +2057,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 13,
-      "regression_warning": true,
+      "previous_accepted": 0,
       "unexpected_zero": true
     },
     "アリオ葛西": {
@@ -2335,7 +2334,6 @@
     "江戸川陸上競技場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "葛西海浜公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川レクリエーション公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-    "江戸川まいぷれ: 前回13件→今回0件。HTML変更/掲載なし/日付条件を確認",
     "江戸川まいぷれ: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "アリオ葛西: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "TRXフリーマーケット: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
@@ -2372,5 +2370,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "3e2b98cfd77dc4e6"
+  "execution_id": "d5c93dc11a8d050b"
 }
