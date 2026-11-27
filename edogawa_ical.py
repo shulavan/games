@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.9"
+APP_VERSION = "3.2.10"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -1144,7 +1144,7 @@ def event_key(ev: Event) -> str:
 def _title_fingerprint(value: str) -> str:
     t = norm(value).casefold()
     t = re.sub(r"[（(【\[]?(?:令和|平成|昭和)?[0-9０-９]{1,4}年[0-9０-９]{1,2}月[0-9０-９]{1,2}日?(?:[^）)】\]]*)[）)】\]]?", "", t)
-    t = re.sub(r"[【】\[\]（）()「」『』・･,，。:：!！?？\s　]+", "", t)
+    t = re.sub(r"[【】\[\]（）()「」『』・･,，。:：!！?？&＆\s　]+", "", t)
     t = re.sub(r"(?:を開催します|開催いたします|開催されます|開催のお知らせ|イベント情報|イベント|開催)", "", t)
     return t
 
@@ -1234,6 +1234,22 @@ def _events_are_same(a: Event, b: Event) -> bool:
             return False
         if _source_rank(a) != _source_rank(b):
             return True
+    # 公式側が短い名称、まいぷれ側が副題（例:「＆ミニミニ動物園」）付きの名称でも、
+    # 同日・同時刻・同会場/住所であれば同一イベントとして扱う。短いタイトルは
+    # 10文字以上かつ長い側の70%以上を占める場合に限定し、類似イベントの誤統合を抑える。
+    if ta and tb and min(len(ta), len(tb)) >= 10:
+        shorter, longer = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
+        if longer.startswith(shorter) or shorter in longer:
+            if len(shorter) / len(longer) >= 0.65:
+                if a.start_time and b.start_time and a.start_time != b.start_time:
+                    return False
+                if a.end_time and b.end_time and a.end_time != b.end_time:
+                    return False
+                aa, ab = _compact_address(a.address), _compact_address(b.address)
+                va, vb = norm(a.venue).casefold(), norm(b.venue).casefold()
+                same_place = (aa and ab and difflib.SequenceMatcher(None, aa, ab).ratio() >= 0.80) or (va and vb and difflib.SequenceMatcher(None, va, vb).ratio() >= 0.80)
+                if same_place:
+                    return True
     if _compact_address(a.address) and _compact_address(b.address):
         if _compact_address(a.address) != _compact_address(b.address):
             return False
@@ -1287,7 +1303,7 @@ def merge_events(events: Iterable[Event]) -> list[Event]:
                 match.coordinate_quality = ev.coordinate_quality
             match.priority = min(match.priority, ev.priority)
         # 個別チラシ画像を優先し、logo.png等の汎用画像は個別画像で置換。
-        if not _is_generic_image(ev.image_url) and (_is_generic_image(match.image_url) or _source_rank(ev) == 1):
+        if not _is_generic_image(ev.image_url) and _is_generic_image(match.image_url):
             match.image_url = ev.image_url
         elif not match.image_url and ev.image_url:
             match.image_url = ev.image_url
@@ -1413,7 +1429,7 @@ def parse_csv_source(url: str, name: str, priority: int = 1,
         # 詳細URLがある場合は、会場情報の有無にかかわらず取得する。
         # CSVの期間値が募集期間・掲載期間だったり、実際の開催日が本文に
         # 個別記載されていたりするため、詳細HTMLの日付・時刻を優先する。
-        if url_v != url and url_v.startswith(("https://", "http://")) and url_v not in detail_cache and status["detail_lookups"] < 80:
+        if url_v != url and url_v.startswith(("https://", "http://")) and url_v not in detail_cache and status["detail_lookups"] < 300:
             dhtml, dmeta = fetch_text(url_v, timeout=12)
             status["detail_lookups"] += 1
             if dhtml:
@@ -2401,6 +2417,65 @@ def parse_kviewer_api() -> tuple[list[Event], dict[str, Any]]:
     return events, status
 
 
+
+ASAHI_STARTUP_DETAIL_URL = "https://www.shinkin-sogyo.net/search_seminar/list/detail/id=1454"
+
+def parse_asahi_startup_course() -> tuple[list[Event], dict[str, Any]]:
+    """朝日信用金庫の公開日程から、江戸川会場の実開催日だけを抽出する。"""
+    name = "えどがわ朝日創業塾（朝日信用金庫公開日程）"
+    html, meta = fetch_text(ASAHI_STARTUP_DETAIL_URL, timeout=20)
+    status = {"name": name, **meta, "status": "failed", "candidate_rows": 0, "accepted": 0, "rejected": {}}
+    if not html:
+        status["error"] = meta.get("error") or "download_failed"
+        return [], status
+    soup = BeautifulSoup(html, "html.parser")
+    for el in soup.find_all(["nav", "footer", "header", "aside", "script", "style", "form"]):
+        el.decompose()
+    lines = [norm(x) for x in soup.get_text("\n", strip=True).splitlines() if norm(x)]
+    status["candidate_rows"] = 1
+    try:
+        idx = next(i for i, line in enumerate(lines) if "〖えどがわ朝日創業塾〗" in line or "【えどがわ朝日創業塾】" in line)
+    except StopIteration:
+        status["status"] = "zero_valid_rows"
+        status["rejected"]["edogawa_course_section_missing"] = 1
+        return [], status
+    # 当該講座の見出しから共通開催時間の直前までを対象にする。台東会場の日程は混ぜない。
+    section = []
+    for line in lines[idx + 1:idx + 8]:
+        if "開催時間" in line or "会場" == line:
+            break
+        section.append(line)
+    date_text = " ".join(section)
+    western_date_text = era_to_western(date_text)
+    year_match = re.search(r"(20\d{2})年", western_date_text)
+    base_year = int(year_match.group(1)) if year_match else TODAY.year
+    spans = parse_date_spans(western_date_text, base_year=base_year, include_past=True)
+    if not spans:
+        status["status"] = "zero_valid_rows"
+        status["rejected"]["course_dates_not_found"] = 1
+        return [], status
+    # 2026年度の公開ページは「隔週金曜日」と明記。実際の日付リストを優先し、
+    # 期間内の金曜日を機械生成しない。時間は開催時間欄から取得する。
+    time_idx = next((i for i, line in enumerate(lines[idx + 1:idx + 12], idx + 1) if "開催時間" in line), None)
+    time_text = " ".join(lines[time_idx:time_idx + 2]) if time_idx is not None else ""
+    start_time, end_time = parse_time_range(time_text)
+    venue = "タワーホール船堀 産業振興センター"
+    address = "東京都江戸川区船堀4丁目1番1号"
+    events = []
+    for span in spans:
+        if span[0] < TODAY:
+            continue
+        ev = make_event("えどがわ朝日創業塾", span, venue, address, ASAHI_STARTUP_DETAIL_URL,
+                        name, category="区内公共・産業", start_time=start_time, end_time=end_time,
+                        description="朝日信用金庫が公開する隔週金曜日開催の日程。", priority=2)
+        if ev:
+            events.append(ev)
+    status["accepted"] = len(events)
+    status["status"] = "ok" if events else "zero_valid_rows"
+    if not events:
+        status["rejected"]["no_upcoming_sessions"] = 1
+    return events, status
+
 def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list[Event], dict[str, Any]]:
     all_events: list[Event] = []
     previous_reports: dict[str, Any] = {}
@@ -2442,15 +2517,23 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
     official_detail_urls = {normalize_event_url(x) for ev in official_events
                             for x in (ev.source_urls + ([ev.url] if ev.url else []))}
     official_detail_urls.discard("")
+    asahi_events, asahi_status = parse_asahi_startup_course()
+    all_events.extend(asahi_events)
+    reports["sources"][asahi_status.get("name", "えどがわ朝日創業塾（朝日信用金庫公開日程）")] = asahi_status
     for name, url, prio in (
         ("江戸川区イベントカレンダーCSV", CITY_EVENT_CSV, 1),
         ("東京都OpenData江戸川区イベント一覧CSV", TOKYO_EVENT_CSV, 1),
     ):
         events, status = parse_csv_source(url, name, priority=prio, suppress_urls=official_detail_urls)
+        if asahi_events:
+            before = len(events)
+            events = [ev for ev in events if "朝日創業塾" not in _title_fingerprint(ev.title)]
+            status.setdefault("rejected", {})["replaced_by_explicit_asahi_sessions"] = before - len(events)
+            status["accepted"] = len(events)
         all_events.extend(events); reports["sources"][name] = status
 
     if include_supplements:
-        # v3.2.9: 4施設は汎用リンク巡回を使わず、一覧の構造に合わせて取得する。
+        # v3.2.10: 4施設は汎用リンク巡回を使わず、一覧の構造に合わせて取得する。
         for parser in (parse_cultural_center_calendar, parse_ecocenter_listing,
                        parse_library_event_listing, parse_athletics_news_listing):
             events, status = parser()
@@ -2541,7 +2624,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.9//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.10//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2637,7 +2720,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.9//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.10//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
