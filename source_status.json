@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.12",
+  "app_version": "3.2.13",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T15:44:01.512493+09:00",
+  "generated_at": "2026-11-27T16:54:49.060397+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1346,7 +1346,7 @@
       ],
       "candidate_urls": 260,
       "detail_success": 260,
-      "accepted": 518,
+      "accepted": 284,
       "rejected": {
         "location_unverified": 21,
         "non_event_page": 1,
@@ -1432,7 +1432,7 @@
       "detail_lookups": 307,
       "rejected": {
         "official_html_has_same_detail_url": 151,
-        "outside_or_unverified_location": 176,
+        "outside_or_unverified_location": 20,
         "multi_day_performance_without_explicit_sessions": 2,
         "outside_facility_mention:恩賜上野動物園": 1
       },
@@ -1797,8 +1797,8 @@
       "detail_success": 3,
       "accepted": 0,
       "rejected": {
-        "outside_or_unverified_location": 44,
-        "no_event_date": 1
+        "outside_or_unverified_location": 1,
+        "no_event_date": 2
       },
       "feed_urls": [
         "https://kasaikaihinpark.com/event/feed/"
@@ -1826,19 +1826,21 @@
       "error": null,
       "attempts": 1,
       "cache_hit": false,
-      "status": "ok",
+      "status": "zero_valid_events",
       "total_links": 274,
       "same_site_links": 0,
       "candidate_links": 44,
       "detail_success": 44,
-      "accepted": 5,
+      "accepted": 0,
       "rejected": {
-        "no_event_date": 38
+        "no_event_date": 44
       },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 5
+      "previous_accepted": 5,
+      "regression_warning": true,
+      "unexpected_zero": true
     },
     "篠崎公園": {
       "name": "篠崎公園",
@@ -1855,7 +1857,7 @@
       "detail_success": 33,
       "accepted": 1,
       "rejected": {
-        "no_event_date": 31
+        "no_event_date": 32
       },
       "feed_urls": [],
       "feed_candidates": 0,
@@ -1890,14 +1892,14 @@
       "error": null,
       "attempts": 1,
       "cache_hit": false,
-      "status": "ok",
+      "status": "zero_valid_events",
       "total_links": 40,
       "same_site_links": 0,
       "candidate_links": 21,
       "detail_success": 21,
-      "accepted": 2,
+      "accepted": 0,
       "rejected": {
-        "no_event_date": 19
+        "no_event_date": 21
       },
       "feed_urls": [
         "https://kikismuseum.jp/feed/",
@@ -1932,7 +1934,9 @@
         }
       ],
       "truncated_candidates": 0,
-      "previous_accepted": 2
+      "previous_accepted": 2,
+      "regression_warning": true,
+      "unexpected_zero": true
     },
     "タワーホール船堀": {
       "name": "タワーホール船堀",
@@ -1972,7 +1976,7 @@
       "name": "葛西臨海水族園",
       "url": "https://www.tokyo-zoo.net/zoo/kasai/",
       "http_status": 200,
-      "bytes": 551889,
+      "bytes": 551883,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2030,9 +2034,9 @@
       "same_site_links": 0,
       "candidate_links": 22,
       "detail_success": 22,
-      "accepted": 3,
+      "accepted": 1,
       "rejected": {
-        "no_event_date": 19
+        "no_event_date": 21
       },
       "feed_urls": [
         "https://www.sakurakan-edogawa.jp/RSS.rdf",
@@ -2064,7 +2068,7 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64776,
+      "bytes": 64801,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2186,9 +2190,9 @@
       "same_site_links": 0,
       "candidate_links": 394,
       "detail_success": 250,
-      "accepted": 10,
+      "accepted": 2,
       "rejected": {
-        "no_event_date": 239,
+        "no_event_date": 243,
         "outside_facility_mention:国立科学博物館": 2,
         "outside_facility_mention:日本科学未来館": 1,
         "outside_facility_mention:東京ビッグサイト": 1,
@@ -2212,9 +2216,9 @@
       "same_site_links": 0,
       "candidate_links": 74,
       "detail_success": 74,
-      "accepted": 2,
+      "accepted": 1,
       "rejected": {
-        "no_event_date": 72
+        "no_event_date": 73
       },
       "feed_urls": [],
       "feed_candidates": 0,
@@ -2229,21 +2233,23 @@
       "error": null,
       "attempts": 1,
       "cache_hit": false,
-      "status": "ok",
+      "status": "zero_valid_events",
       "total_links": 743,
       "same_site_links": 0,
       "candidate_links": 693,
       "detail_success": 250,
-      "accepted": 3,
+      "accepted": 0,
       "rejected": {
-        "no_event_date": 245,
+        "no_event_date": 248,
         "outside_facility_mention:日本科学未来館": 1,
         "outside_facility_mention:東京文化会館": 1
       },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 443,
-      "previous_accepted": 3
+      "previous_accepted": 3,
+      "regression_warning": true,
+      "unexpected_zero": true
     },
     "都立紅葉川高校": {
       "name": "都立紅葉川高校",
@@ -2253,21 +2259,22 @@
       "error": null,
       "attempts": 1,
       "cache_hit": false,
-      "status": "ok",
+      "status": "zero_valid_events",
       "total_links": 222,
       "same_site_links": 0,
       "candidate_links": 176,
       "detail_success": 176,
-      "accepted": 5,
+      "accepted": 0,
       "rejected": {
-        "no_event_date": 169,
-        "location_unverified": 1,
+        "no_event_date": 175,
         "outside_facility_mention:日本科学未来館": 1
       },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 5
+      "previous_accepted": 5,
+      "regression_warning": true,
+      "unexpected_zero": true
     },
     "都立篠崎高校": {
       "name": "都立篠崎高校",
@@ -2282,9 +2289,9 @@
       "same_site_links": 0,
       "candidate_links": 452,
       "detail_success": 250,
-      "accepted": 17,
+      "accepted": 1,
       "rejected": {
-        "no_event_date": 236,
+        "no_event_date": 247,
         "outside_facility_mention:東京都美術館": 2
       },
       "feed_urls": [],
@@ -2302,7 +2309,7 @@
       "cache_hit": false,
       "status": "ok",
       "candidate_blocks": 11,
-      "accepted": 21,
+      "accepted": 11,
       "rejected": {},
       "previous_accepted": 21
     }
@@ -2311,11 +2318,19 @@
     "東京都OpenData江戸川区イベント一覧CSV: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川陸上競技場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "葛西海浜公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+    "葛西臨海公園: 前回5件→今回0件。HTML変更/掲載なし/日付条件を確認",
+    "葛西臨海公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+    "魔法の文学館: 前回2件→今回0件。HTML変更/掲載なし/日付条件を確認",
+    "魔法の文学館: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川レクリエーション公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川まいぷれ: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "アリオ葛西: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "TRXフリーマーケット: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-    "都立江戸川高校: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認"
+    "都立江戸川高校: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+    "都立葛西南高校: 前回3件→今回0件。HTML変更/掲載なし/日付条件を確認",
+    "都立葛西南高校: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+    "都立紅葉川高校: 前回5件→今回0件。HTML変更/掲載なし/日付条件を確認",
+    "都立紅葉川高校: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認"
   ],
   "limitations": [
     "取得元の全ページを網羅できたかはサイト構造・公開範囲に依存します。",
@@ -2323,18 +2338,18 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "geocoding": {
-    "cache_hits": 61,
-    "gsi_queries": 65,
-    "nominatim_queries": 44,
+    "cache_hits": 59,
+    "gsi_queries": 22,
+    "nominatim_queries": 1,
     "success": 21,
-    "failed": 44,
+    "failed": 1,
     "outside": 0
   },
   "totals": {
-    "raw_records": 647,
-    "unique_events": 641,
-    "deduplicated_records": 6,
-    "with_coordinates": 641,
+    "raw_records": 361,
+    "unique_events": 358,
+    "deduplicated_records": 3,
+    "with_coordinates": 358,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2347,5 +2362,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "cd6888f20add7bbf"
+  "execution_id": "b450736aa893b78e"
 }
