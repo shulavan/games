@@ -10,8 +10,8 @@ import edogawa_ical as app
 
 class V3214DateRegressionTests(unittest.TestCase):
     def test_version_is_3214(self):
-        self.assertEqual(app.APP_VERSION, "3.2.15")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.15//EN", app.build_ics([]))
+        self.assertEqual(app.APP_VERSION, "3.2.16")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.16//EN", app.build_ics([]))
 
     def test_multiple_date_rows_after_date_heading_are_all_retained(self):
         html = """<html><body><main><h1>家庭教育セミナー 幼児コース</h1>
