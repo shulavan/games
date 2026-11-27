@@ -128,6 +128,15 @@ test_mypl_footer_keywords_do_not_pollute_event_location (test_edogawa_ical.Versi
 test_same_day_same_title_cross_domain_prefers_official_time_and_venue (test_edogawa_ical.Version329RegressionTests.test_same_day_same_title_cross_domain_prefers_official_time_and_venue) ... ok
 test_tsuruoka_title_includes_kanko_bussanten (test_edogawa_ical.Version329RegressionTests.test_tsuruoka_title_includes_kanko_bussanten) ... ok
 test_version_markers_are_v3212 (test_edogawa_ical.Version329RegressionTests.test_version_markers_are_v3212) ... ok
+test_extracts_images_and_pdf_and_deduplicates (test_edogawa_stadium_gemini.DiscoveryTests.test_extracts_images_and_pdf_and_deduplicates) ... ok
+test_find_month_article (test_edogawa_stadium_gemini.DiscoveryTests.test_find_month_article) ... ok
+test_rejects_duplicate_event (test_edogawa_stadium_gemini.ValidationTests.test_rejects_duplicate_event) ... ok
+test_rejects_end_before_start (test_edogawa_stadium_gemini.ValidationTests.test_rejects_end_before_start) ... ok
+test_rejects_invalid_time (test_edogawa_stadium_gemini.ValidationTests.test_rejects_invalid_time) ... ok
+test_rejects_low_confidence (test_edogawa_stadium_gemini.ValidationTests.test_rejects_low_confidence) ... ok
+test_rejects_weekday_mismatch (test_edogawa_stadium_gemini.ValidationTests.test_rejects_weekday_mismatch) ... ok
+test_rejects_wrong_month (test_edogawa_stadium_gemini.ValidationTests.test_rejects_wrong_month) ... ok
+test_valid_unknown_times_are_allowed (test_edogawa_stadium_gemini.ValidationTests.test_valid_unknown_times_are_allowed) ... ok
 test_japanese_era_month_title (test_v3_2_12.StadiumGeminiTests.test_japanese_era_month_title) ... ok
 test_missing_api_key_skips_gemini_without_fallback (test_v3_2_12.StadiumGeminiTests.test_missing_api_key_skips_gemini_without_fallback) ... ok
 test_month_links_are_discovered_from_official_page (test_v3_2_12.StadiumGeminiTests.test_month_links_are_discovered_from_official_page) ... ok
@@ -141,6 +150,6 @@ test_old_article_publication_year_prevents_future_ghost_event (test_v3_2_12.Year
 test_yearless_spring_date_without_source_year_still_rolls_forward (test_v3_2_12.YearRegressionTests.test_yearless_spring_date_without_source_year_still_rolls_forward) ... ok
 
 ----------------------------------------------------------------------
-Ran 141 tests in 0.079s
+Ran 150 tests in 0.075s
 
 OK

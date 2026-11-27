@@ -43,6 +43,107 @@ EVENT_SCHEMA = {
 }
 
 
+
+def find_month_article(index_html: str, year: int, month: int, base_url: str = INDEX_URL) -> str | None:
+    """公式一覧HTMLから指定年月の『大会等予定表』ページURLを返す。
+
+    旧パイロット版のテスト・呼び出し元との互換性を保つ公開ヘルパー。
+    年月が明示されたリンクだけを対象にし、別年の同月ページを誤選択しない。
+    """
+    soup = BeautifulSoup(index_html, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        label = " ".join([anchor.get_text(" ", strip=True), str(anchor.get("title", ""))])
+        parent_text = anchor.parent.get_text(" ", strip=True) if anchor.parent else ""
+        combined = f"{label} {parent_text}"
+        normalized = re.sub(r"\s+", "", combined)
+        era = re.search(r"令和(\d{1,2})年", normalized)
+        match = re.search(r"(20\d{2}).{0,12}?年.{0,12}?(\d{1,2})月", normalized)
+        if match:
+            found_year, found_month = int(match.group(1)), int(match.group(2))
+        elif era:
+            found_year = 2018 + int(era.group(1))
+            m = re.search(r"年[^0-9]{0,12}(\d{1,2})月", normalized)
+            if not m:
+                continue
+            found_month = int(m.group(1))
+        else:
+            continue
+        if (found_year, found_month) == (int(year), int(month)) and "大会等予定表" in combined:
+            target = urljoin(base_url, anchor["href"].strip())
+            if urlparse(target).scheme in ("http", "https"):
+                return target
+    return None
+
+
+def discover_media_urls(article_html: str, article_url: str) -> list[str]:
+    """予定表ページ内の画像/PDF URLを文書順に重複なく抽出する。"""
+    soup = BeautifulSoup(article_html, "html.parser")
+    found: list[str] = []
+    seen: set[str] = set()
+    for node in soup.find_all("img"):
+        for attr in ("src", "data-src", "data-original", "data-lazy-src"):
+            raw = node.get(attr)
+            if not raw:
+                continue
+            full = urljoin(article_url, raw.strip())
+            if urlparse(full).scheme in ("http", "https") and full not in seen:
+                seen.add(full)
+                found.append(full)
+            break
+    for anchor in soup.find_all("a", href=True):
+        raw = anchor["href"].strip()
+        full = urljoin(article_url, raw)
+        path = urlparse(full).path.lower()
+        if path.endswith((".pdf", ".png", ".jpg", ".jpeg", ".webp")) and urlparse(full).scheme in ("http", "https") and full not in seen:
+            seen.add(full)
+            found.append(full)
+    return found
+
+
+def validate_result(data: dict[str, Any], year: int, month: int) -> list[str]:
+    """Geminiの抽出結果を対象年月・曜日・時刻・重複の観点で検証する。"""
+    errors: list[str] = []
+    if not isinstance(data, dict) or not isinstance(data.get("events"), list):
+        return ["events配列がありません"]
+    seen: set[tuple[str, str, str, str]] = set()
+    weekdays = "月火水木金土日"
+    for index, row in enumerate(data["events"], 1):
+        if not isinstance(row, dict):
+            errors.append(f"{index}件目: イベント形式が不正")
+            continue
+        try:
+            event_day = date.fromisoformat(str(row.get("date", "")))
+        except (TypeError, ValueError):
+            errors.append(f"{index}件目: 日付形式が不正")
+            continue
+        if (event_day.year, event_day.month) != (int(year), int(month)):
+            errors.append(f"{index}件目: 対象月外の日付です")
+        weekday = row.get("weekday")
+        if weekday and str(weekday).strip() != weekdays[event_day.weekday()]:
+            errors.append(f"{index}件目: 曜日が日付と一致しません")
+        title = str(row.get("title", "")).strip()
+        if not title:
+            errors.append(f"{index}件目: イベント名が空です")
+        confidence = row.get("confidence")
+        if confidence is not None:
+            try:
+                if float(confidence) < 0.8:
+                    errors.append(f"{index}件目: 信頼度が低いため人手確認が必要です")
+            except (TypeError, ValueError):
+                errors.append(f"{index}件目: 信頼度の形式が不正です")
+        start, end = row.get("start_time"), row.get("end_time")
+        for value in (start, end):
+            if value not in (None, "") and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", str(value)):
+                errors.append(f"{index}件目: 時刻形式が不正です")
+                break
+        if start and end and re.fullmatch(r"\d{2}:\d{2}", str(start)) and re.fullmatch(r"\d{2}:\d{2}", str(end)) and str(end) < str(start):
+            errors.append(f"{index}件目: 終了時刻が開始時刻より前です")
+        key = (event_day.isoformat(), title, str(start or ""), str(end or ""))
+        if key in seen:
+            errors.append(f"{index}件目: 重複イベントです")
+        seen.add(key)
+    return errors
+
 def _get(url: str, timeout: int = 25) -> requests.Response:
     response = requests.get(url, timeout=timeout, headers={
         "User-Agent": "Mozilla/5.0 (compatible; EdogawaEventCalendar/3.2.12)",
