@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.9",
+  "app_version": "3.2.10",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T13:09:40.502922+09:00",
+  "generated_at": "2026-11-27T13:31:12.355134+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1381,6 +1381,20 @@
       },
       "previous_accepted": 497
     },
+    "えどがわ朝日創業塾（朝日信用金庫公開日程）": {
+      "name": "えどがわ朝日創業塾（朝日信用金庫公開日程）",
+      "url": "https://www.shinkin-sogyo.net/search_seminar/list/detail/id=1454",
+      "http_status": 404,
+      "bytes": 0,
+      "error": "HTTPError: 404 Client Error: Not Found for url: https://www.shinkin-sogyo.net/search_seminar/list/detail/id=1454",
+      "attempts": 1,
+      "cache_hit": false,
+      "status": "failed",
+      "candidate_rows": 0,
+      "accepted": 0,
+      "rejected": {},
+      "previous_accepted": 0
+    },
     "江戸川区イベントカレンダーCSV": {
       "name": "江戸川区イベントカレンダーCSV",
       "url": "https://www.city.edogawa.tokyo.jp/shared/system/event_csv/event_info.csv",
@@ -1391,12 +1405,12 @@
       "cache_hit": false,
       "status": "ok",
       "candidate_rows": 458,
-      "accepted": 19,
-      "detail_lookups": 80,
+      "accepted": 63,
+      "detail_lookups": 300,
       "rejected": {
         "official_html_has_same_detail_url": 150,
-        "outside_or_unverified_location": 84,
-        "non_event_page": 8
+        "outside_or_unverified_location": 177,
+        "outside_facility_mention:恩賜上野動物園": 1
       },
       "headers": [
         "都道府県コード",
@@ -1465,7 +1479,7 @@
         "end_time": "終了時間"
       },
       "suppressed_official_html_rows": 150,
-      "previous_accepted": 153
+      "previous_accepted": 19
     },
     "東京都OpenData江戸川区イベント一覧CSV": {
       "name": "東京都OpenData江戸川区イベント一覧CSV",
@@ -1732,8 +1746,8 @@
       "detail_success": 27,
       "accepted": 0,
       "rejected": {
-        "no_event_date": 9,
-        "non_event_page": 18
+        "non_event_page": 18,
+        "no_event_date": 9
       },
       "http_status": 200,
       "bytes": 74937,
@@ -2026,7 +2040,7 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64730,
+      "bytes": 64687,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2043,7 +2057,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 15
+      "previous_accepted": 13
     },
     "アリオ葛西": {
       "name": "アリオ葛西",
@@ -2330,7 +2344,7 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "geocoding": {
-    "cache_hits": 59,
+    "cache_hits": 60,
     "gsi_queries": 71,
     "nominatim_queries": 44,
     "success": 27,
@@ -2338,10 +2352,10 @@
     "outside": 0
   },
   "totals": {
-    "raw_records": 658,
-    "unique_events": 648,
-    "deduplicated_records": 10,
-    "with_coordinates": 648,
+    "raw_records": 702,
+    "unique_events": 691,
+    "deduplicated_records": 11,
+    "with_coordinates": 691,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2354,5 +2368,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "458b0f2347c4ce92"
+  "execution_id": "a8b8631501756dd3"
 }
