@@ -419,7 +419,7 @@ class QualityFilterTests(unittest.TestCase):
     def test_ics_and_status_use_v325_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.7//EN", ics)
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.8//EN", ics)
         self.assertEqual(app.APP_VERSION, "3.2.8")
 
     def test_output_validation_rejects_event_without_coordinates(self):
@@ -821,7 +821,7 @@ class Version324RegressionTests(unittest.TestCase):
                             "https://example.jp/event", "test")
         self.assertIsNotNone(ev)
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.7//EN", ics)
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.8//EN", ics)
         unfolded = ics.replace("\r\n ", "")
         self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
         self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
