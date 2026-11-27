@@ -2477,7 +2477,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.7//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.8//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2573,7 +2573,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.7//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.8//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
