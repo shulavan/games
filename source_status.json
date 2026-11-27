@@ -2,7 +2,7 @@
   "app_version": "3.2.11",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T14:44:22.317539+09:00",
+  "generated_at": "2026-11-27T14:59:47.729054+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1747,8 +1747,8 @@
       "detail_success": 27,
       "accepted": 0,
       "rejected": {
-        "non_event_page": 18,
-        "no_event_date": 9
+        "no_event_date": 9,
+        "non_event_page": 18
       },
       "http_status": 200,
       "bytes": 74937,
@@ -1862,88 +1862,38 @@
     "魔法の文学館": {
       "name": "魔法の文学館",
       "url": "https://kikismuseum.jp/category/event/",
-      "http_status": 200,
-      "bytes": 75390,
-      "error": null,
-      "attempts": 1,
+      "http_status": null,
+      "bytes": 0,
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='kikismuseum.jp', port=443): Max retries exceeded with url: /category/event/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='kikismuseum.jp', port=443) at 0x7f52c0c36cc0>, 'Connection to kikismuseum.jp timed out. (connect timeout=16)'))",
+      "attempts": 2,
       "cache_hit": false,
-      "status": "ok",
-      "total_links": 40,
+      "status": "failed",
+      "total_links": 0,
       "same_site_links": 0,
-      "candidate_links": 21,
-      "detail_success": 21,
-      "accepted": 8,
-      "rejected": {
-        "no_event_date": 13
-      },
-      "feed_urls": [
-        "https://kikismuseum.jp/feed/",
-        "https://kikismuseum.jp/comments/feed/",
-        "https://kikismuseum.jp/category/event/feed/"
-      ],
-      "feed_candidates": 13,
-      "feed_checks": [
-        {
-          "url": "https://kikismuseum.jp/feed/",
-          "http_status": 200,
-          "bytes": 39679,
-          "error": null,
-          "attempts": 1,
-          "cache_hit": false
-        },
-        {
-          "url": "https://kikismuseum.jp/comments/feed/",
-          "http_status": 200,
-          "bytes": 770,
-          "error": null,
-          "attempts": 1,
-          "cache_hit": false
-        },
-        {
-          "url": "https://kikismuseum.jp/category/event/feed/",
-          "http_status": 200,
-          "bytes": 38412,
-          "error": null,
-          "attempts": 1,
-          "cache_hit": false
-        }
-      ],
-      "truncated_candidates": 0,
-      "previous_accepted": 8
+      "candidate_links": 0,
+      "detail_success": 0,
+      "accepted": 0,
+      "rejected": {},
+      "previous_accepted": 8,
+      "regression_warning": true
     },
     "タワーホール船堀": {
       "name": "タワーホール船堀",
       "url": "https://www.towerhall.jp/events/list/",
-      "http_status": 200,
-      "bytes": 103758,
-      "error": null,
-      "attempts": 1,
+      "http_status": null,
+      "bytes": 0,
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='www.towerhall.jp', port=443): Max retries exceeded with url: /events/list/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.towerhall.jp', port=443) at 0x7f52c0c344a0>, 'Connection to www.towerhall.jp timed out. (connect timeout=16)'))",
+      "attempts": 2,
       "cache_hit": false,
-      "status": "ok",
-      "total_links": 16,
+      "status": "failed",
+      "total_links": 0,
       "same_site_links": 0,
-      "candidate_links": 7,
-      "detail_success": 7,
-      "accepted": 1,
-      "rejected": {
-        "no_event_date": 6
-      },
-      "feed_urls": [
-        "https://www.towerhall.jp/events/feed/"
-      ],
-      "feed_candidates": 7,
-      "feed_checks": [
-        {
-          "url": "https://www.towerhall.jp/events/feed/",
-          "http_status": 200,
-          "bytes": 12274,
-          "error": null,
-          "attempts": 1,
-          "cache_hit": false
-        }
-      ],
-      "truncated_candidates": 0,
-      "previous_accepted": 1
+      "candidate_links": 0,
+      "detail_success": 0,
+      "accepted": 0,
+      "rejected": {},
+      "previous_accepted": 1,
+      "regression_warning": true
     },
     "葛西臨海水族園": {
       "name": "葛西臨海水族園",
@@ -1974,25 +1924,19 @@
     "江戸川レクリエーション公園": {
       "name": "江戸川レクリエーション公園",
       "url": "https://edogawa-recreation.com/event/",
-      "http_status": 200,
-      "bytes": 50054,
-      "error": null,
-      "attempts": 1,
+      "http_status": null,
+      "bytes": 0,
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='edogawa-recreation.com', port=443): Max retries exceeded with url: /event/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='edogawa-recreation.com', port=443) at 0x7f52c087b890>, 'Connection to edogawa-recreation.com timed out. (connect timeout=16)'))",
+      "attempts": 2,
       "cache_hit": false,
-      "status": "zero_valid_events",
-      "total_links": 37,
+      "status": "failed",
+      "total_links": 0,
       "same_site_links": 0,
-      "candidate_links": 13,
-      "detail_success": 13,
+      "candidate_links": 0,
+      "detail_success": 0,
       "accepted": 0,
-      "rejected": {
-        "non_event_page": 13
-      },
-      "feed_urls": [],
-      "feed_candidates": 0,
-      "truncated_candidates": 0,
-      "previous_accepted": 0,
-      "unexpected_zero": true
+      "rejected": {},
+      "previous_accepted": 0
     },
     "新川さくら館": {
       "name": "新川さくら館",
@@ -2041,7 +1985,7 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64636,
+      "bytes": 64754,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
@@ -2333,7 +2277,8 @@
     "東京都OpenData江戸川区イベント一覧CSV: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川陸上競技場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "葛西海浜公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-    "江戸川レクリエーション公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+    "魔法の文学館: 前回8件→今回0件。HTML変更/掲載なし/日付条件を確認",
+    "タワーホール船堀: 前回1件→今回0件。HTML変更/掲載なし/日付条件を確認",
     "江戸川まいぷれ: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "アリオ葛西: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "TRXフリーマーケット: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
@@ -2354,10 +2299,10 @@
     "outside": 0
   },
   "totals": {
-    "raw_records": 693,
-    "unique_events": 684,
-    "deduplicated_records": 9,
-    "with_coordinates": 684,
+    "raw_records": 684,
+    "unique_events": 679,
+    "deduplicated_records": 5,
+    "with_coordinates": 679,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2370,5 +2315,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "d5c93dc11a8d050b"
+  "execution_id": "0e84ef87ee6ed0b0"
 }

@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
   "app_version": "3.2.11",
-  "generated_at": "2026-11-27T14:44:22.317539+09:00",
-  "execution_id": "d5c93dc11a8d050b",
+  "generated_at": "2026-11-27T14:59:47.729054+09:00",
+  "execution_id": "0e84ef87ee6ed0b0",
   "timezone": "Asia/Tokyo",
   "scope": "東京都江戸川区内のみ",
   "mode": "live",
@@ -5585,31 +5585,6 @@
       ],
       "priority": 9,
       "description": "更新日:2026年11月15日\n新川さくら館 冬ざくらイルミネーション\nきらめく光に包まれた幻想的な冬のお花見をお楽しみください。\n開催日時\n2026年11月21日(土曜日)から2026年12月25日(金曜日)\n16時30分~21時30分\n申し込み\n不要\n場所\n新川さくら館広場\n住所\n江戸川区船堀7丁目15番12号\n内容\n今年も新川さくら館の広場で、「冬ざくらイルミネーション」を開催します。\n冬の夜を彩るイルミネーションを、ぜひお楽しみください。\n費用\n無料\n問合せ\n新川さくら館 電話:03-3804-0314\n主催\n新川さくら館"
-    },
-    {
-      "id": "7ab336e452952855b961568eaff5e292@edogawa-events.local",
-      "title": "江戸川区退職教職員の会",
-      "category": "区内文化",
-      "start_date": "2026-12-17",
-      "end_date": "2026-12-17",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "展示ホール1",
-      "address": "江戸川区船堀4丁目1番1号",
-      "latitude": 35.6843961,
-      "longitude": 139.8647749,
-      "map_ready": true,
-      "coordinate_quality": "tokyo_open_data",
-      "image_url": "https://www.towerhall.jp/tower/wp-content/plugins/the-events-calendar/src/resources/images/tribe-loading.gif",
-      "details_url": "https://www.towerhall.jp/event/tribe_events-7355/",
-      "source": "タワーホール船堀",
-      "source_urls": [
-        "https://www.towerhall.jp/event/tribe_events-7355/"
-      ],
-      "priority": 2,
-      "description": "催事予定\n« イベント一覧\n江戸川区退職教職員の会\n12月17日12:00\n-\n12月19日15:00\n会場:展示ホール1\n開催日:2026年12月17日(木)\n終了日:2026年12月19日(土)\n開演・終演時間\n12/17(木) 12:00~17:00\n12/18(金) 10:00~17:00\n12/19(土) 10:00~15:00\n入場料無料\n問い合わせ先\n法人名・団体名:江戸川区退職教職員の会 作品展実行委員会\n電話番号:080-3088-9421\nカレンダーに追加\nGoogle カレンダー\niCalendar\nOutlook 365\nOutlook Live\n詳細\n開始:\n12月17日 12:00\n終了:\n12月19日 15:00\nイベントカテゴリー:\n展示ホール\n<\n<\n<\n<\n<"
     },
     {
       "id": "ed361377d7cd2c930b4d1632272c32e0@edogawa-events.local",
@@ -16039,32 +16014,6 @@
       "description": "学校や行事の様子\nイベント情報\n在校生・保護者向け連絡\n2023/07/19\n学校や行事の様子\n第2回避難訓練\n第2回避難訓練を実施しました。\n前回は混雑していて時間のかかった「避難訓練」でしたが、\n今回はどうだったでしょうか。\n整然とできていますね。\n前回は、段取りの関係で渋滞が出ましたが、今回も生徒の\n皆さんの協力があったおかげで、整然とできました。\nご苦労様でした。\n副校長先生の講話\n次回の避難訓練は、9月1日に水害を想定して行います。"
     },
     {
-      "id": "b6854ccaf5719d7d32c6319dd6456f59@edogawa-events.local",
-      "title": "角野栄子さんブックトークイベントのお知らせ(2025年9月開催回)",
-      "category": "区内文化",
-      "start_date": "2027-09-11",
-      "end_date": "2027-09-11",
-      "start_time": "13:00",
-      "end_time": "14:00",
-      "all_day": false,
-      "timezone": "Asia/Tokyo",
-      "venue": "魔法の文学館",
-      "address": "魔法の文学館(江戸川区角野栄子児童文学館・東京都江戸川区南葛西7-3-1)",
-      "latitude": 35.649124,
-      "longitude": 139.855892,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://kikismuseum.jp/wp-content/uploads/2025/08/B612_20250813_150616_529-830x480.jpg",
-      "details_url": "https://kikismuseum.jp/post-2062/?utm_source=rss&utm_medium=rss&utm_campaign=post-2062",
-      "source": "魔法の文学館",
-      "source_urls": [
-        "https://kikismuseum.jp/post-2062/",
-        "https://kikismuseum.jp/post-2062/?utm_source=rss&utm_medium=rss&utm_campaign=post-2062"
-      ],
-      "priority": 2,
-      "description": "イベント\n角野栄子さんブックトークイベントのお知らせ(2025年9月開催回)\n2025.08.28\n2025.10.23\n角野栄子さんブックトークイベントのお知らせ\n魔法の文学館館長の角野栄子さんによるブックトークイベントを、9月11日(木) 13:00〜14:00に開催します!抽選申込制となりますので、参加をご希望の方は以下をよくお読みの上、お申し込みください。\n<概要>\n■開催日:2025年9月11日(木)\n■時間 13:00〜14:00\n※イベント以外の時間帯は館内を見学できます(黒猫シアターもご覧いただけます)\n■受付:9:30〜\n■会場:魔法の文学館\n■対象:子ども〜大人まで\n■定員:25組50名(抽選)\n■参加費:入館料のみ\n■申込方法:以下のフォームに必要事項を入力の上、送信してください。\n<お申し込みについて>\n申込期間:2025年8月28日(木)10:00 〜 9月3日(水)17:00\n1名につき1回限りでお願いします。参加希望者が複数名いる場合は、ご一緒にお申込みください。\n抽選結果は、9月4日(木)頃、お申込み者全員宛にメールでお知らせします。\nお申し込みフォーム\nPost\nShare\nLine\nPin it\nnote\nThreads\n夏休み特別イベント キキのおとどけものBINGO 開催!(終了しました)\n前の記事\n角野栄子さんブックトークイベントのお知らせ (2025年10月開催回)\n次の記事"
-    },
-    {
       "id": "b1a4e3eec2288f74eed0e9cf31d9931c@edogawa-events.local",
       "title": "2023年度 小松川祭 プログラム",
       "category": "学校公開",
@@ -16190,32 +16139,6 @@
       "description": "更新日:2026年8月28日\n第2回江戸川区文化芸術祭 囲碁入門教室・級位認定教室\n初心者向けの入門教室(2日制)を開催します。\n囲碁は世界で幅広く楽しまれているゲームです。あなたもチャレンジしてみませんか。\n入門教室に参加された方向けに級位認定教室も開催します。ぜひご参加ください。\n開催日時\n2026年10月4日(日曜日)\n2026年10月12日(月曜日)\n2026年10月18日(日曜日)\n2026年10月25日(日曜日)\n2026年11月1日(日曜日)\n2026年11月3日(火曜日)\n2026年11月8日(日曜日)\n<入門教室>各クラス(2日制)の開催。各クラスの日にち、時間は固定です。\n・10月4日(日曜日)、12日(月曜日・祝日)\nAクラス:10時00分から11時30分、Bクラス:13時00分から14時30分\n・10月18日(日曜日)、25日(日曜日)\nCクラス:10時00分から11時30分、Dクラス:13時00分から14時30分\n・11月1日(日曜日)、3日(火曜日・祝日)\nEクラス:10時00分から11時30分、Fクラス:13時00分から14時30分\n<級位認定教室>\n11月8日(日曜日)9時30分から11時30分\n申し込み\n必要\n申し込み期間\n2026年9月1日(火曜日)から2026年9月27日(日曜日)\n申し込み方法\nメールで申し込み。\nEメール:edogawaigo@gmail.com\n場所\nタワーホール船堀\n<入門教室>会議室401(4階)\n<級位認定教室>イベントホール平安(2階)\n住所\n江戸川区船堀四丁目1番1号\nホームページ\n江戸川区文化芸術祭特設ページ\n対象\n<入門教室>初心者向けの講座。2日制の両日ともご参加いただける方。\n<級位認定教室>入門教室に参加された方向け。\n費用\n無料\n問合せ\n江戸川区文化共育部文化課文化振興係 電話:03-5662-0300\n一般社団法人江戸川区文化芸術協会 電話:03-6231-5214\nEメール\n申し込み(edogawaigo@gmail.com)\n主催\n江戸川区/一般社団法人江戸川区文化芸術協会\n関連資料\n囲碁入門教室チラシ(PDF:1,635KB)\n関連リンク\n江戸川区囲碁連盟(一般社団法人江戸川区文化芸術協会ホームページ)\n第2回江戸川区文化芸術祭~グランドアートフェスタ2026~作品および参加者募集"
     },
     {
-      "id": "907abfe27f0788559b7ee6ba35b7cc82@edogawa-events.local",
-      "title": "角野栄子さんブックトークイベントのお知らせ (2025年10月開催回)",
-      "category": "区内文化",
-      "start_date": "2027-10-09",
-      "end_date": "2027-10-09",
-      "start_time": "14:30",
-      "end_time": "15:20",
-      "all_day": false,
-      "timezone": "Asia/Tokyo",
-      "venue": "魔法の文学館",
-      "address": "魔法の文学館(江戸川区角野栄子児童文学館・東京都江戸川区南葛西7-3-1)",
-      "latitude": 35.649124,
-      "longitude": 139.855892,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://kikismuseum.jp/wp-content/uploads/2025/09/PXL_20250911_040350377-830x480.jpg",
-      "details_url": "https://kikismuseum.jp/post-2113/?utm_source=rss&utm_medium=rss&utm_campaign=post-2113",
-      "source": "魔法の文学館",
-      "source_urls": [
-        "https://kikismuseum.jp/post-2113/",
-        "https://kikismuseum.jp/post-2113/?utm_source=rss&utm_medium=rss&utm_campaign=post-2113"
-      ],
-      "priority": 2,
-      "description": "イベント\n角野栄子さんブックトークイベントのお知らせ (2025年10月開催回)\n2025.09.25\n2025.10.23\n角野栄子さんブックトークイベントのお知らせ\n魔法の文学館館長の角野栄子さんによるブックトークイベントを、10月9日(木) 14:30〜15:20に開催します!抽選申込制となりますので、参加をご希望の方は以下をよくお読みの上、お申し込みください。\n<概要>\n■開催日:2025年10月9日(木)\n■時間:14:30〜15:20\n※イベント以外の時間帯は館内を見学できます(黒猫シアターもご覧いただけます)\n■受付:9:30〜\n■会場:魔法の文学館\n■対象:子ども〜大人まで\n■定員:25組50名(抽選)\n■参加費:入館料のみ\n■申込方法:以下のフォームに必要事項を入力の上、送信してください。\n<お申し込みについて>\n申込期間:2025年9月25日(木) 〜 10月1日(水)17:00\n1名につき1回限りでお願いします。参加希望者が複数名いる場合は、ご一緒にお申込みください。\n抽選結果は、10月2日(木)頃、お申込み者全員宛にメールでお知らせします。\nお申し込みフォーム\nPost\nShare\nLine\nPin it\nnote\nThreads\n角野栄子さんブックトークイベントのお知らせ(2025年9月開催回)\n前の記事\n第4回 企画展「ここ、コリコ」Photo Gallery\n次の記事"
-    },
-    {
       "id": "cd321091aa3d9e06e8fb4d434570c31a@edogawa-events.local",
       "title": "(土) 硬式野球部 部活動体験会",
       "category": "学校公開",
@@ -16264,32 +16187,6 @@
       ],
       "priority": 5,
       "description": "学校の様子\n校長より\nイベント\n2026/08/24\n学校の様子\n第2回学校見学会が行われました\n8月21日(金)に、第2回学校見学会を実施しました。\n当日は、146組287名の中学生とその保護者の皆様にご来校いただきました。\n第1回学校見学会を上回るお申込みをいただいたため、今回は会場を3会場に増やして実施しました。\n全体会では、学校長や各分掌(教務・生活・進路)による学校説明に加え、生徒会による学校紹介を行いました。\nまた、海外派遣研修制度を利用してトルコ研修へ行った生徒による発表も行いました。\n説明会に先立ち、ダンス部による素晴らしいパフォーマンスも披露されました。(写真1枚目)\n全体会終了後は、希望者を対象に個別相談や生徒会による施設見学ツアーを実施しました。\n生徒会の協力もあり、活気あふれる学校見学会となりました。ご来校いただいた皆様、ありがとうございました。\n次回は、10月10日(土)に第1回学校説明会を実施します。(要予約)\n予約は、説明会の1週間前頃からLogoフォームで受け付ける予定です。詳細は本校ホームページでお知らせします。"
-    },
-    {
-      "id": "df95fc3da4b645fb4887c4f929a725c1@edogawa-events.local",
-      "title": "魔法の文学館 こども秋まつり 2026",
-      "category": "区内文化",
-      "start_date": "2027-10-11",
-      "end_date": "2027-10-11",
-      "start_time": null,
-      "end_time": null,
-      "all_day": true,
-      "timezone": "Asia/Tokyo",
-      "venue": "魔法の文学館",
-      "address": "魔法の文学館(江戸川区角野栄子児童文学館・東京都江戸川区南葛西7-3-1)",
-      "latitude": 35.649124,
-      "longitude": 139.855892,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://kikismuseum.jp/wp-content/uploads/2026/10/【秋まつり】ニュースTOP画像-1-830x480.png",
-      "details_url": "https://kikismuseum.jp/post-3311/?utm_source=rss&utm_medium=rss&utm_campaign=post-3311",
-      "source": "魔法の文学館",
-      "source_urls": [
-        "https://kikismuseum.jp/post-3311/",
-        "https://kikismuseum.jp/post-3311/?utm_source=rss&utm_medium=rss&utm_campaign=post-3311"
-      ],
-      "priority": 9,
-      "description": "イベント\n魔法の文学館 こども秋まつり 2026\n2026.10.09\n2026.10.15\nお楽しみがいっぱい!魔法の文学館 こども秋まつり 2026\n2026年10月24日(土)~11月23日(月・祝)の土日祝日(計12日間)に、未就学児~中学生を対象とした「魔法の文学館 こども秋まつり」を開催します。\nことばあそびやワークショップ、文学館の人気キャラクターのキキとジジのボディペイントなど、館内各所で魔法の文学館ならではの体験を多数ご用意しています。また、屋外エリアには「金魚すくい」や「いちご色のわたあめ屋さん」などお祭りの定番が並びます。\n●金魚すくい\n●おかしな本づくり~ブロックあそび~\n●ボディペイント\n●いちご色のわたあめ屋さん\n●魔女のミニほうきづくり\n●魔女のミニ帽子カチューシャづくり など\nさらに、「魔女なりきり体験」も登場。いちご色のほうき(入館者に貸出)にまたがって、空を飛んでいるような写真を撮影できます。\n日程 : 2026年10月24日(土)、25日(日)、31日(土)、11月1日(日)、3日(火・祝)、7日(土)、8日(日)、14日(土)、15日(日)、21日(土)、22日(日)、23日(月・祝) 計12日間\n時間 : 10:00~16:00\n対象 : 未就学児~中学生 ※イベントによっては大人の方もご参加いただけます。\n料金 : 入館料のみ\n参加方法 : 当日受付でお申し出ください。\n※開催時間・場所・参加方法はイベントによって異なります。\n※開催時間、場所、内容等は、やむを得ない事情により予告なく中止または変更となる場合がございますが、入館料の払い戻しはいたしかねます。また、お客様の費用(交通費、宿泊費等)についても一切の責任を負いかねます。あらかじめご了承ください。\n魔法の文学館 こども秋まつり 2026\nダウンロード\nPost\nShare\nLine\nPin it\nnote\nThreads\n開館3周年記念!オリジナルステッカーや読書手帳をプレゼント!\n前の記事\n第7回 企画展「栄子さんのおめかし展」11月3日(火・祝)開幕!\n次の記事"
     },
     {
       "id": "f9e12512b954a0dbc331bcb9ab0be5aa@edogawa-events.local",
@@ -16817,32 +16714,6 @@
       "description": "緑と水と人のふれあうウォーターフロント\n葛西臨海公園\nかさいりんかいこうえん\n2023/10/18\n11月11日(土) Art Marche in KASAI Seaside Park ~アートマルシェ イン 葛西臨海公園\n11月11日(土)、葛西臨海公園駅前からクリスタルビューにつながる中央園路を、フランス テアトル広場を目指し、地元のみなさまと作り上げたマルシェを開催します!\n文化・芸術・地域の魅力を感じる“アートな1日”を、ぜひお楽しみください!\ndesigned by nodom\n自然豊かな葛西臨海公園で「伝統」「文化」「芸術」「地域」の魅力を発信!\nアーティストによる作品展示やワークショップ、魅力的な物品販売、近隣商店街の飲食店によるおいしいフード・ドリンク販売など、30を超えるブースが葛西臨海公園に集結!\nご家族で、友人同士で、おひとり様でも、\n【アートな1日】\nをお楽しみください。\n詳しくは\nイベント特設サイト\nをご覧ください。\nhttps://edogawa.mypl.net/article/artmarche_edogawa\n■開催概要■\n第1回 Art Marche in KASAI Seaside Park\n【日時】\n2023年11月11日(土)10:00~15:00\n※雨天時は11月12日(日)に順延\n【会場】\n葛西臨海公園中央園路\n主催:Art Marche in KASAI Seaside Park 実行委員会\n共催:公益財団法人東京都公園協会\n後援:江戸川区\n一覧へ戻る"
     },
     {
-      "id": "96c86de0b91bf2aaef4498aba8124225@edogawa-events.local",
-      "title": "角野栄子さんブックトークイベントのお知らせ (2025年11月開催回)",
-      "category": "区内文化",
-      "start_date": "2027-11-13",
-      "end_date": "2027-11-13",
-      "start_time": "13:00",
-      "end_time": "13:50",
-      "all_day": false,
-      "timezone": "Asia/Tokyo",
-      "venue": "魔法の文学館",
-      "address": "魔法の文学館(江戸川区角野栄子児童文学館・東京都江戸川区南葛西7-3-1)",
-      "latitude": 35.649124,
-      "longitude": 139.855892,
-      "map_ready": true,
-      "coordinate_quality": "legacy_approximate",
-      "image_url": "https://kikismuseum.jp/wp-content/uploads/2025/10/IMG_0032-830x480.jpg",
-      "details_url": "https://kikismuseum.jp/post-2623/?utm_source=rss&utm_medium=rss&utm_campaign=post-2623",
-      "source": "魔法の文学館",
-      "source_urls": [
-        "https://kikismuseum.jp/post-2623/",
-        "https://kikismuseum.jp/post-2623/?utm_source=rss&utm_medium=rss&utm_campaign=post-2623"
-      ],
-      "priority": 2,
-      "description": "イベント\n角野栄子さんブックトークイベントのお知らせ (2025年11月開催回)\n2025.10.30\n角野栄子さんブックトークイベントのお知らせ\n魔法の文学館館長の角野栄子さんによるブックトークイベントを、11月13日(木) 13:00〜13:50 に開催します!抽選申込制となりますので、参加をご希望の方は以下をよくお読みの上、お申し込みください。\n<概要>\n■開催日:2025年11月13日(木)\n■時間:13:00〜13:50\n※イベント以外の時間帯は館内を見学できます(黒猫シアターもご覧いただけます)\n■受付:9:30〜\n■会場:魔法の文学館\n■対象:子ども〜大人まで\n■定員:45名(抽選)\n■参加費:入館料のみ\n■申込方法:以下のフォームに必要事項を入力の上、送信してください。\n<お申し込みについて>\n申込期間:2025年10月30日(木) 〜 11月5日(水)17:00\n1名につき1回限りでお願いします。参加希望者が複数名いる場合は、ご一緒にお申込みください。\n抽選結果は、11月6日(木)頃、お申込み者全員宛にメールでお知らせします。\nお申し込みフォーム\nPost\nShare\nLine\nPin it\nnote\nThreads\n令和7年11月3日(月・祝)から開館2周年記念、プレゼントキャンペーン開催!\n前の記事\n魔法の文学館 2nd Anniversary!角野栄子館長からのイラストとメッセージをお届けします!\n次の記事"
-    },
-    {
       "id": "98f3c852cf0fc71f79b812d40d0d81c2@edogawa-events.local",
       "title": "令和8年度 硬式野球部 体験入部のお知らせ",
       "category": "学校公開",
@@ -17119,15 +16990,15 @@
     }
   ],
   "map_summary": {
-    "total_events": 684,
-    "events_with_coordinates": 684,
+    "total_events": 679,
+    "events_with_coordinates": 679,
     "events_without_coordinates": 0
   },
   "source_status": {
     "app_version": "3.2.11",
     "mode": "live",
     "coverage_complete": false,
-    "generated_at": "2026-11-27T14:44:22.317539+09:00",
+    "generated_at": "2026-11-27T14:59:47.729054+09:00",
     "timezone": "Asia/Tokyo",
     "months_requested": 12,
     "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -18872,8 +18743,8 @@
         "detail_success": 27,
         "accepted": 0,
         "rejected": {
-          "non_event_page": 18,
-          "no_event_date": 9
+          "no_event_date": 9,
+          "non_event_page": 18
         },
         "http_status": 200,
         "bytes": 74937,
@@ -18987,88 +18858,38 @@
       "魔法の文学館": {
         "name": "魔法の文学館",
         "url": "https://kikismuseum.jp/category/event/",
-        "http_status": 200,
-        "bytes": 75390,
-        "error": null,
-        "attempts": 1,
+        "http_status": null,
+        "bytes": 0,
+        "error": "ConnectTimeout: HTTPSConnectionPool(host='kikismuseum.jp', port=443): Max retries exceeded with url: /category/event/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='kikismuseum.jp', port=443) at 0x7f52c0c36cc0>, 'Connection to kikismuseum.jp timed out. (connect timeout=16)'))",
+        "attempts": 2,
         "cache_hit": false,
-        "status": "ok",
-        "total_links": 40,
+        "status": "failed",
+        "total_links": 0,
         "same_site_links": 0,
-        "candidate_links": 21,
-        "detail_success": 21,
-        "accepted": 8,
-        "rejected": {
-          "no_event_date": 13
-        },
-        "feed_urls": [
-          "https://kikismuseum.jp/feed/",
-          "https://kikismuseum.jp/comments/feed/",
-          "https://kikismuseum.jp/category/event/feed/"
-        ],
-        "feed_candidates": 13,
-        "feed_checks": [
-          {
-            "url": "https://kikismuseum.jp/feed/",
-            "http_status": 200,
-            "bytes": 39679,
-            "error": null,
-            "attempts": 1,
-            "cache_hit": false
-          },
-          {
-            "url": "https://kikismuseum.jp/comments/feed/",
-            "http_status": 200,
-            "bytes": 770,
-            "error": null,
-            "attempts": 1,
-            "cache_hit": false
-          },
-          {
-            "url": "https://kikismuseum.jp/category/event/feed/",
-            "http_status": 200,
-            "bytes": 38412,
-            "error": null,
-            "attempts": 1,
-            "cache_hit": false
-          }
-        ],
-        "truncated_candidates": 0,
-        "previous_accepted": 8
+        "candidate_links": 0,
+        "detail_success": 0,
+        "accepted": 0,
+        "rejected": {},
+        "previous_accepted": 8,
+        "regression_warning": true
       },
       "タワーホール船堀": {
         "name": "タワーホール船堀",
         "url": "https://www.towerhall.jp/events/list/",
-        "http_status": 200,
-        "bytes": 103758,
-        "error": null,
-        "attempts": 1,
+        "http_status": null,
+        "bytes": 0,
+        "error": "ConnectTimeout: HTTPSConnectionPool(host='www.towerhall.jp', port=443): Max retries exceeded with url: /events/list/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.towerhall.jp', port=443) at 0x7f52c0c344a0>, 'Connection to www.towerhall.jp timed out. (connect timeout=16)'))",
+        "attempts": 2,
         "cache_hit": false,
-        "status": "ok",
-        "total_links": 16,
+        "status": "failed",
+        "total_links": 0,
         "same_site_links": 0,
-        "candidate_links": 7,
-        "detail_success": 7,
-        "accepted": 1,
-        "rejected": {
-          "no_event_date": 6
-        },
-        "feed_urls": [
-          "https://www.towerhall.jp/events/feed/"
-        ],
-        "feed_candidates": 7,
-        "feed_checks": [
-          {
-            "url": "https://www.towerhall.jp/events/feed/",
-            "http_status": 200,
-            "bytes": 12274,
-            "error": null,
-            "attempts": 1,
-            "cache_hit": false
-          }
-        ],
-        "truncated_candidates": 0,
-        "previous_accepted": 1
+        "candidate_links": 0,
+        "detail_success": 0,
+        "accepted": 0,
+        "rejected": {},
+        "previous_accepted": 1,
+        "regression_warning": true
       },
       "葛西臨海水族園": {
         "name": "葛西臨海水族園",
@@ -19099,25 +18920,19 @@
       "江戸川レクリエーション公園": {
         "name": "江戸川レクリエーション公園",
         "url": "https://edogawa-recreation.com/event/",
-        "http_status": 200,
-        "bytes": 50054,
-        "error": null,
-        "attempts": 1,
+        "http_status": null,
+        "bytes": 0,
+        "error": "ConnectTimeout: HTTPSConnectionPool(host='edogawa-recreation.com', port=443): Max retries exceeded with url: /event/ (Caused by ConnectTimeoutError(<HTTPSConnection(host='edogawa-recreation.com', port=443) at 0x7f52c087b890>, 'Connection to edogawa-recreation.com timed out. (connect timeout=16)'))",
+        "attempts": 2,
         "cache_hit": false,
-        "status": "zero_valid_events",
-        "total_links": 37,
+        "status": "failed",
+        "total_links": 0,
         "same_site_links": 0,
-        "candidate_links": 13,
-        "detail_success": 13,
+        "candidate_links": 0,
+        "detail_success": 0,
         "accepted": 0,
-        "rejected": {
-          "non_event_page": 13
-        },
-        "feed_urls": [],
-        "feed_candidates": 0,
-        "truncated_candidates": 0,
-        "previous_accepted": 0,
-        "unexpected_zero": true
+        "rejected": {},
+        "previous_accepted": 0
       },
       "新川さくら館": {
         "name": "新川さくら館",
@@ -19166,7 +18981,7 @@
         "name": "江戸川まいぷれ",
         "url": "https://edogawa.mypl.net/event/",
         "http_status": 200,
-        "bytes": 64636,
+        "bytes": 64754,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
@@ -19458,7 +19273,8 @@
       "東京都OpenData江戸川区イベント一覧CSV: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "江戸川陸上競技場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "葛西海浜公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-      "江戸川レクリエーション公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+      "魔法の文学館: 前回8件→今回0件。HTML変更/掲載なし/日付条件を確認",
+      "タワーホール船堀: 前回1件→今回0件。HTML変更/掲載なし/日付条件を確認",
       "江戸川まいぷれ: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "アリオ葛西: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "TRXフリーマーケット: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
@@ -19479,10 +19295,10 @@
       "outside": 0
     },
     "totals": {
-      "raw_records": 693,
-      "unique_events": 684,
-      "deduplicated_records": 9,
-      "with_coordinates": 684,
+      "raw_records": 684,
+      "unique_events": 679,
+      "deduplicated_records": 5,
+      "with_coordinates": 679,
       "without_coordinates": 0,
       "strict_edogawa_only": true
     },
@@ -19495,6 +19311,6 @@
       "healthy": true,
       "primary_event_success": true
     },
-    "execution_id": "d5c93dc11a8d050b"
+    "execution_id": "0e84ef87ee6ed0b0"
   }
 }
