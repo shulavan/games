@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.16"
+APP_VERSION = "3.2.17"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -2231,7 +2231,8 @@ def _append_direct_event(events: list[Event], status: dict[str, Any], *, title: 
         ev = make_event(title, span, actual_venue, address, url, source,
                         category="区内公共・文化" if "文化センター" in source else
                                  ("区内公共・図書館" if "図書館" in source else
-                                  ("スポーツ" if "陸上" in source else "区内公共・環境")),
+                                  ("区公式" if "催しもの" in source else
+                                   ("スポーツ" if "陸上" in source else "区内公共・環境"))),
                         default_venue=actual_venue, start_time=start_time,
                         end_time=end_time, image_url=image_url,
                         description=description[:2000], priority=priority)
@@ -2240,6 +2241,133 @@ def _append_direct_event(events: list[Event], status: dict[str, Any], *, title: 
             status["accepted"] += 1
         else:
             _record_rejection(status, "outside_or_unverified_location")
+
+
+def parse_bulletin_pdf() -> tuple[list[Event], dict[str, Any]]:
+    """区公式『催しもの情報』PDF。日時・場所・イベント名が同一PDFブロックで
+    明確に対応し、会場マスタで区内確認できる催しだけを採用する保守的パーサー。
+    解析できないブロックは無理にイベント化せず、診断件数に残す。
+    """
+    name = "江戸川区公式・催しもの情報PDF"
+    url = "https://www.city.edogawa.tokyo.jp/edg/event/event.pdf"
+    status = _status_for_direct_source(name, url)
+    events: list[Event] = []
+    try:
+        response = SESSION.get(url, timeout=25)
+        status.update({"http_status": response.status_code, "bytes": len(response.content),
+                       "content_type": response.headers.get("Content-Type", "")})
+        response.raise_for_status()
+        if not response.content.startswith(b"%PDF"):
+            raise ValueError("PDF signature missing")
+        import fitz
+        doc = fitz.open(stream=response.content, filetype="pdf")
+    except Exception as exc:
+        status.update({"status": "fetch_or_pdf_error", "error": f"{type(exc).__name__}: {exc}"})
+        return events, status
+
+    status["pages"] = len(doc)
+    status["blocks_seen"] = 0
+    status["date_place_blocks"] = 0
+    status["unparsed_blocks"] = 0
+    seen: set[tuple[str, str, str]] = set()
+    for page_no, page in enumerate(doc, start=1):
+        for block in page.get_text("blocks", sort=True):
+            if len(block) < 5 or not isinstance(block[4], str):
+                continue
+            raw = block[4]
+            text = norm(raw.replace("\u3000", " "))
+            if not text or len(text) > 1800:
+                continue
+            status["blocks_seen"] += 1
+            # PDF内の「9年1月」等は令和年として扱う。年月号の令和8年も先に西暦化。
+            text = era_to_western(text)
+            text = re.sub(r"(?<!\d)([1-9])年(?=\s*\d{1,2}月)",
+                          lambda m: f"{2018 + int(m.group(1))}年", text)
+            if (len(re.findall(r"【(?:日時|日程)】", text)) != 1 or
+                len(re.findall(r"【(?:場所|集合場所)】", text)) != 1):
+                continue
+            date_match = re.search(r"【(?:日時|日程)】\s*(.+?)(?=【(?:場所|集合場所)】)", text)
+            place_match = re.search(r"【(?:場所|集合場所)】\s*(.+?)(?=【|$)", text)
+            if not date_match or not place_match:
+                continue
+            status["date_place_blocks"] += 1
+            date_text = date_match.group(1)
+            spans = parse_date_spans(date_text, include_past=True)
+            if not spans:
+                _record_rejection(status, "pdf_date_unparsed")
+                status["unparsed_blocks"] += 1
+                continue
+            # 会場は同一ブロックに明記された単一の登録済み施設だけを採用。
+            place_text = norm(place_match.group(1))
+            venue_matches = [(key, reg) for key, reg in sorted(VENUES.items(), key=lambda kv: len(kv[0]), reverse=True)
+                             if key and key in place_text]
+            unique_venues = {reg.get("name", key) for key, reg in venue_matches}
+            venue = next(iter(unique_venues)) if len(unique_venues) == 1 else ""
+            if not venue:
+                _record_rejection(status, "pdf_venue_unregistered_or_ambiguous")
+                status["unparsed_blocks"] += 1
+                continue
+            # タイトル候補は日時・場所・費用・申込・問合せ等の項目を除き、
+            # ブロック内の見出しらしい最長行を選ぶ。確信できない場合は保留。
+            lines = [norm(x) for x in raw.splitlines() if norm(x)]
+            candidates = []
+            for line in lines:
+                line = re.sub(r"^[　\s]+", "", line)
+                if (len(line) < 5 or len(line) > 100 or
+                    re.match(r"^(?:【|☎|電話|FAX|費用|定員|対象|申し込み|申込|後援主管部署|日時|日程|場所|集合場所|内容|出演|問)", line) or
+                    re.search(r"(?:03-\d{4}-\d{4}|090-\d{4}-\d{4}|@|https?://)", line)):
+                    continue
+                if re.search(r"(?:します|行います|ご覧ください|お問い合わせください)[。.]?$", line):
+                    continue
+                candidates.append(line)
+            # イベントタイトルは、短い説明文より固有名詞性の高い行を優先。
+            title = max(candidates, key=lambda x: (bool(re.search(r"第\s*\d+回|フェス|祭|寄席|展|大会|コンサート|講座|教室|相談会|発表会", x)), min(len(x), 55)), default="")
+            title = clean_title(title)
+            title_signal = re.search(r"第\s*\d+回|フェス|祭|寄席|展|大会|コンサート|講座|講習会|教室|相談会|発表会|イベント|体験", title)
+            if not title or not title_signal or is_non_event_page(title, text, url):
+                _record_rejection(status, "pdf_title_unresolved")
+                status["unparsed_blocks"] += 1
+                continue
+            start_time, end_time = parse_time_range(date_text)
+            fingerprint = (title, str(spans), venue)
+            if fingerprint in seen:
+                _record_rejection(status, "duplicate_pdf_block")
+                continue
+            seen.add(fingerprint)
+            _append_direct_event(events, status, title=title, spans=spans, venue=venue,
+                                 url=url, source=name, start_time=start_time,
+                                 end_time=end_time, description=text[:1800], priority=2)
+    doc.close()
+    status["status"] = "ok" if events else ("zero_valid_events" if status.get("date_place_blocks") else "no_parseable_event_blocks")
+    status["coverage_note"] = "日時・場所・タイトルが同一PDFテキストブロックで確認できた登録済み会場のみ採用。複数会場・画像文字・曖昧なブロックは保留。"
+    return events, status
+
+
+def monitor_annual_events_page() -> dict[str, Any]:
+    """季節表現のみの年間行事ページは監視対象とし、日付を推測して登録しない。"""
+    name = "江戸川区・区内の主な年間イベント（監視のみ）"
+    url = "https://www.city.edogawa.tokyo.jp/e004/sports/kankomidokoro/event/index.html"
+    html, meta = fetch_text(url, timeout=18)
+    status = {"name": name, "url": url, **meta, "status": "failed",
+              "candidate_links": 0, "exact_date_links": 0, "seasonal_only_links": 0,
+              "accepted": 0, "mode": "monitor_only_no_date_inference"}
+    if not html:
+        status["error"] = meta.get("error")
+        return status
+    soup = BeautifulSoup(html, "html.parser")
+    for a in soup.find_all("a", href=True):
+        title = clean_title(a.get_text(" ", strip=True))
+        if not title or is_non_event_page(title, url=a["href"]):
+            continue
+        status["candidate_links"] += 1
+        detail = norm(a.parent.get_text(" ", strip=True) if a.parent else title)
+        if re.search(r"20\d{2}年\s*\d{1,2}月\s*\d{1,2}日|\d{1,2}月\s*\d{1,2}日", detail):
+            status["exact_date_links"] += 1
+        elif re.search(r"\d{1,2}月(?:上旬|中旬|下旬)|季節|頃", detail):
+            status["seasonal_only_links"] += 1
+    status["status"] = "ok" if status["candidate_links"] else "no_event_candidates"
+    status["note"] = "年間行事ページは『5月上旬』等の概略時期を示すため、開催日が個別に確定した詳細ページを確認するまでVEVENT化しない。"
+    return status
 
 
 def parse_cultural_center_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
@@ -2719,6 +2847,14 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
     official_events, official_status = parse_city_calendar(months=months)
     all_events.extend(official_events)
     reports["sources"]["江戸川区公式イベントカレンダー"] = official_status
+    # 公式カレンダーの3系統を個別監視。メインだけ正常で子ども未来館/プロテクトミライが
+    # 取得不能になった場合も、source_status.jsonに警告を残す。
+    for site_id, coverage in official_status.get("site_coverage", {}).items():
+        requested = int(coverage.get("months_requested", months) or months)
+        successful = int(coverage.get("months_successful", 0) or 0)
+        if successful < max(1, int(requested * 0.6 + 0.999)):
+            reports["warnings"].append(
+                f"公式カレンダー {coverage.get('label', site_id)}: 月別取得 {successful}/{requested}。サイト別の取得漏れ・通信障害を確認")
     official_detail_urls = {normalize_event_url(x) for ev in official_events
                             for x in (ev.source_urls + ([ev.url] if ev.url else []))}
     official_detail_urls.discard("")
@@ -2750,10 +2886,13 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
     if include_supplements:
         # v3.2.8: 4施設は汎用リンク巡回を使わず、一覧の構造に合わせて取得する。
         for parser in (parse_cultural_center_calendar, parse_ecocenter_listing,
-                       parse_library_event_listing, parse_athletics_news_listing):
+                       parse_library_event_listing, parse_athletics_news_listing,
+                       parse_bulletin_pdf):
             events, status = parser()
             all_events.extend(events)
             reports["sources"][status.get("name", parser.__name__)] = status
+        annual_status = monitor_annual_events_page()
+        reports["sources"][annual_status["name"]] = annual_status
         for cfg in LISTING_SOURCES:
             events, status = parse_listing_source(cfg)
             all_events.extend(events); reports["sources"][cfg["name"]] = status
@@ -2779,6 +2918,20 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
         "without_coordinates": sum(1 for e in merged if e.latitude is None or e.longitude is None),
         "strict_edogawa_only": True,
     }
+    uid_values = [make_uid(e) for e in merged]
+    reports["quality_audit"] = {
+        "unique_uid_count": len(set(uid_values)),
+        "duplicate_uid_count": len(uid_values) - len(set(uid_values)),
+        "missing_coordinates": sum(1 for e in merged if e.latitude is None or e.longitude is None),
+        "invalid_date_ranges": sum(1 for e in merged if e.end_date < e.start_date),
+        "outside_or_unverified_locations": sum(1 for e in merged
+            if not e.verified_location or not verify_edogawa_location(e.address, e.venue)[0]),
+        "events_checked": len(merged),
+    }
+    if reports["quality_audit"]["duplicate_uid_count"]:
+        reports["warnings"].append("UID重複が残っています。重複統合処理を確認してください。")
+    if reports["quality_audit"]["invalid_date_ranges"]:
+        reports["warnings"].append("終了日が開始日より前のイベントがあります。日時抽出を確認してください。")
     # 前回は件数があった取得元が今回0件なら、静かに正常扱いせず警告として可視化。
     for source_name, source_report in reports["sources"].items():
         previous = previous_reports.get(source_name, {})
@@ -2839,7 +2992,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.16//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.17//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2935,11 +3088,16 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.16//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.17//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
+    uid_values = [make_uid(e) for e in events]
+    if len(uid_values) != len(set(uid_values)):
+        raise RuntimeError("Duplicate event UIDs found")
     for e in events:
+        if e.end_date < e.start_date:
+            raise RuntimeError(f"Invalid event date range: {e.title}")
         location_ok, _, reason = verify_edogawa_location(e.address, e.venue)
         if not e.verified_location or not location_ok:
             raise RuntimeError(f"Non-verified/out-of-ward location found ({reason}): {e.title} / {e.venue} / {e.address}")
