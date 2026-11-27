@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.10",
+  "app_version": "3.2.11",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T13:31:12.355134+09:00",
+  "generated_at": "2026-11-27T13:59:09.505395+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1405,11 +1405,12 @@
       "cache_hit": false,
       "status": "ok",
       "candidate_rows": 458,
-      "accepted": 63,
-      "detail_lookups": 300,
+      "accepted": 67,
+      "detail_lookups": 308,
       "rejected": {
         "official_html_has_same_detail_url": 150,
-        "outside_or_unverified_location": 177,
+        "outside_or_unverified_location": 189,
+        "multi_day_performance_without_explicit_sessions": 2,
         "outside_facility_mention:恩賜上野動物園": 1
       },
       "headers": [
@@ -1479,7 +1480,7 @@
         "end_time": "終了時間"
       },
       "suppressed_official_html_rows": 150,
-      "previous_accepted": 19
+      "previous_accepted": 63
     },
     "東京都OpenData江戸川区イベント一覧CSV": {
       "name": "東京都OpenData江戸川区イベント一覧CSV",
@@ -1746,8 +1747,8 @@
       "detail_success": 27,
       "accepted": 0,
       "rejected": {
-        "non_event_page": 18,
-        "no_event_date": 9
+        "no_event_date": 9,
+        "non_event_page": 18
       },
       "http_status": 200,
       "bytes": 74937,
@@ -2040,24 +2041,25 @@
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64687,
+      "bytes": 64668,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
-      "status": "ok",
+      "status": "zero_valid_events",
       "total_links": 222,
       "same_site_links": 0,
       "candidate_links": 28,
       "detail_success": 28,
-      "accepted": 13,
+      "accepted": 0,
       "rejected": {
-        "no_event_date": 16,
-        "location_unverified": 2
+        "no_event_date": 28
       },
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 13
+      "previous_accepted": 13,
+      "regression_warning": true,
+      "unexpected_zero": true
     },
     "アリオ葛西": {
       "name": "アリオ葛西",
@@ -2333,6 +2335,8 @@
     "江戸川陸上競技場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "葛西海浜公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川レクリエーション公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+    "江戸川まいぷれ: 前回13件→今回0件。HTML変更/掲載なし/日付条件を確認",
+    "江戸川まいぷれ: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "アリオ葛西: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "TRXフリーマーケット: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川球場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
@@ -2345,17 +2349,17 @@
   ],
   "geocoding": {
     "cache_hits": 60,
-    "gsi_queries": 71,
+    "gsi_queries": 67,
     "nominatim_queries": 44,
-    "success": 27,
+    "success": 23,
     "failed": 44,
     "outside": 0
   },
   "totals": {
-    "raw_records": 702,
-    "unique_events": 691,
-    "deduplicated_records": 11,
-    "with_coordinates": 691,
+    "raw_records": 693,
+    "unique_events": 684,
+    "deduplicated_records": 9,
+    "with_coordinates": 684,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2368,5 +2372,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "a8b8631501756dd3"
+  "execution_id": "3e2b98cfd77dc4e6"
 }
