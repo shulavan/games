@@ -146,7 +146,7 @@ def validate_result(data: dict[str, Any], year: int, month: int) -> list[str]:
 
 def _get(url: str, timeout: int = 25) -> requests.Response:
     response = requests.get(url, timeout=timeout, headers={
-        "User-Agent": "Mozilla/5.0 (compatible; EdogawaEventCalendar/3.2.13)",
+        "User-Agent": "Mozilla/5.0 (compatible; EdogawaEventCalendar/3.2.14)",
         "Accept-Language": "ja,en-US;q=0.8,en;q=0.6",
     })
     response.raise_for_status()

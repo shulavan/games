@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.13"
+APP_VERSION = "3.2.14"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -319,7 +319,7 @@ APPLICATION_DATE_TERMS = (
     "受付開始", "受付締切", "応募期間", "応募開始", "応募締切", "販売期間",
     "発売日", "更新日", "掲載日", "公開日", "投稿日", "募集期間",
 )
-EVENT_DATE_HEADINGS = ("開催日時", "開催日", "開催期間", "開催日程", "開催スケジュール", "実施日", "実施日時", "実施期間", "日時", "日程")
+EVENT_DATE_HEADINGS = ("開催日時", "開催日", "開催期間", "開催日程", "開催スケジュール", "実施日", "実施日時", "実施期間", "配信期間", "アーカイブ配信期間", "見逃し配信期間", "オンデマンド配信期間", "日時", "日程")
 VENUE_HEADINGS = ("場所", "会場", "開催場所", "実施場所", "施設")
 ADDRESS_HEADINGS = ("住所", "所在地", "会場住所", "開催場所住所")
 STOP_HEADINGS = (
@@ -643,22 +643,32 @@ def section_lines_after_heading(lines: list[str], headings: Iterable[str],
     """見出し配下の行を保持して返す。開催日の補足・雨天予備日を誤登録しないために使用。"""
     headset = tuple(norm(x) for x in headings)
     stopset = tuple(norm(x) for x in stop)
+    collected_all: list[str] = []
+    seen_lines: set[str] = set()
     for i, line in enumerate(lines):
         n = norm(line).strip("：:")
-        if n in headset:
-            collected = []
-            for nxt in lines[i + 1:i + 10]:
+        matched_heading = next((h for h in headset if n == h), None)
+        if matched_heading:
+            # 日付欄に複数の開催日・時刻が縦に並ぶCMSに対応する。
+            # 旧実装の10行制限では後半の開催日が欠落することがあった。
+            for nxt in lines[i + 1:i + 51]:
                 nn = norm(nxt)
                 if not nn:
                     continue
                 if nn.rstrip("：:") in stopset or any(nn.startswith(x) and len(nn) > len(x) for x in stopset):
                     break
-                collected.append(nn)
-            return collected
-        for h in headset:
-            if n.startswith(h + "：") or n.startswith(h + ":"):
-                return [n[len(h) + 1:].strip()]
-    return []
+                if nn not in seen_lines:
+                    collected_all.append(nn)
+                    seen_lines.add(nn)
+        else:
+            for h in headset:
+                if n.startswith(h + "：") or n.startswith(h + ":"):
+                    value = n[len(h) + 1:].strip()
+                    if value and value not in seen_lines:
+                        collected_all.append(value)
+                        seen_lines.add(value)
+                    break
+    return collected_all
 
 
 def is_contingency_date_line(line: str) -> bool:
@@ -791,6 +801,20 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
         # 詳細ページ上部に出る中止・延期の共通注意書きが見出しより前に残る場合の保険。
         lines = [line for line in lines if not line.startswith("開催予定のイベントが中止・延期になっている場合がございます")]
     lines = clean_source_boilerplate_lines(lines)
+    # 子ども未来館CMSは本文カラム内にJavaScript案内・言語切替・パンくずを
+    # 連結することがある。更新日より前は共通ナビゲーションとして除去する。
+    joined_lines = " ".join(lines)
+    if "このサイトではJavaScriptを使用したコンテンツ" in joined_lines:
+        update_idx = next((i for i, line in enumerate(lines)
+                           if re.match(r"^更新日\s*[：:]", line)), None)
+        if update_idx is not None:
+            lines = lines[update_idx:]
+        else:
+            # 更新日表示がないテンプレートでは、固有タイトルの行から本文を開始。
+            title_idx = next((i for i, line in enumerate(lines)
+                              if title and title in line), None)
+            if title_idx is not None:
+                lines = lines[title_idx:]
     # 開催日見出しの配下だけを開催日根拠にする。記事公開日・更新日・掲載日を
     # ページ全体から拾う旧方式は、ニュース記事を「今日開催」と誤登録するため廃止。
     date_lines = section_lines_after_heading(lines, EVENT_DATE_HEADINGS, stop=STOP_HEADINGS)
@@ -798,8 +822,19 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
         # CMSによっては見出しを使わず「開催日：」形式で記載するため、明示ラベルを許可。
         date_lines = [x.split("：", 1)[-1].split(":", 1)[-1].strip()
                       for x in lines
-                      if re.match(r"^(?:開催日|開催日時|開催期間|実施日|実施日時|会期)\s*[：:]", x)
+                      if re.match(r"^(?:開催日|開催日時|開催期間|実施日|実施日時|会期|配信期間|アーカイブ配信期間)\s*[：:]", x)
                       and not any(k in x for k in APPLICATION_DATE_TERMS)]
+    else:
+        # 同じ開催日時欄の途中に「対象」「定員」等の別見出しが挟まり、
+        # その後に第2回の日付が続くCMS対策。明示的な日付+時刻の行だけを
+        # 追加し、申込/掲載/更新/予備日などは開催日として拾わない。
+        for candidate in lines:
+            if candidate in date_lines or is_contingency_date_line(candidate):
+                continue
+            if any(term in candidate for term in APPLICATION_DATE_TERMS + ("受付", "申込", "申し込み", "応募")):
+                continue
+            if parse_time_range(candidate)[0] and parse_date_spans(candidate, base_year=published_year, require_year=True):
+                date_lines.append(candidate)
     # ニュース形式の告知は開催日見出しがない場合がある。
     # 「12月10日に開催」「12月10日に実施します」等、同じ文中に開催意図が明記された行だけ補う。
     publication_terms = ("公開日", "掲載日", "投稿日", "更新日", "配信日", "発信日", "お知らせ日", "更新", "掲載", "公開")
@@ -814,7 +849,12 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     date_text = " ".join(x for x in date_lines if not is_contingency_date_line(x))
     spans = parse_date_spans(date_text, base_year=published_year, require_year=True)
     # 時刻は開催日時欄だけから取る。申込期間・開館時間を誤って開催時刻にしない。
-    time_start, time_end = parse_time_range(date_text)
+    is_archive_period = bool(re.search(
+        r"アーカイブ(?:配信)?期間|配信期間|見逃し配信|オンデマンド配信|録画配信|動画公開期間|公開期間",
+        date_text + " " + " ".join(lines[:80])))
+    # アーカイブ/見逃し配信の公開期間は、元講演の時刻やページ内の別時刻を
+    # 引き継がず、終日の日付範囲として登録する。
+    time_start, time_end = (None, None) if is_archive_period else parse_time_range(date_text)
     # 日ごとに開催時刻が異なる案内に対応し、開催日時欄の各行を個別セッション化。
     # 例: 11/30 13:00～15:00、12/1 10:00～12:00。
     sessions: list[dict[str, Any]] = []
@@ -822,7 +862,7 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
         line_spans = parse_date_spans(date_line, base_year=published_year, require_year=True)
         if not line_spans:
             continue
-        line_start, line_end = parse_time_range(date_line)
+        line_start, line_end = ((None, None) if is_archive_period else parse_time_range(date_line))
         for line_span in line_spans:
             for daily_span in expand_recurring_spans(date_line, [line_span]):
                 sessions.append({"span": daily_span, "start_time": line_start, "end_time": line_end})
@@ -2743,7 +2783,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.13//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.14//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2839,7 +2879,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.13//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.14//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
