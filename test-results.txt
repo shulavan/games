@@ -1,0 +1,14 @@
+test_extracts_images_and_pdf_and_deduplicates (test_edogawa_stadium_gemini.DiscoveryTests.test_extracts_images_and_pdf_and_deduplicates) ... ok
+test_find_month_article (test_edogawa_stadium_gemini.DiscoveryTests.test_find_month_article) ... ok
+test_rejects_duplicate_event (test_edogawa_stadium_gemini.ValidationTests.test_rejects_duplicate_event) ... ok
+test_rejects_end_before_start (test_edogawa_stadium_gemini.ValidationTests.test_rejects_end_before_start) ... ok
+test_rejects_invalid_time (test_edogawa_stadium_gemini.ValidationTests.test_rejects_invalid_time) ... ok
+test_rejects_low_confidence (test_edogawa_stadium_gemini.ValidationTests.test_rejects_low_confidence) ... ok
+test_rejects_weekday_mismatch (test_edogawa_stadium_gemini.ValidationTests.test_rejects_weekday_mismatch) ... ok
+test_rejects_wrong_month (test_edogawa_stadium_gemini.ValidationTests.test_rejects_wrong_month) ... ok
+test_valid_unknown_times_are_allowed (test_edogawa_stadium_gemini.ValidationTests.test_valid_unknown_times_are_allowed) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.001s
+
+OK
