@@ -419,8 +419,8 @@ class QualityFilterTests(unittest.TestCase):
     def test_ics_and_status_use_v325_version(self):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.9//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.9")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.10//EN", ics)
+        self.assertEqual(app.APP_VERSION, "3.2.10")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -631,7 +631,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.9")
+        self.assertEqual(payload["app_version"], "3.2.10")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -822,7 +822,7 @@ class Version324RegressionTests(unittest.TestCase):
                             "https://example.jp/event", "test")
         self.assertIsNotNone(ev)
         ics = app.build_ics([ev])
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.9//EN", ics)
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.10//EN", ics)
         unfolded = ics.replace("\r\n ", "")
         self.assertIn("LOCATION:東京都江戸川区船堀4丁目1番1号 タワーホール船堀", unfolded)
         self.assertNotIn("タワーホール船堀 タワーホール船堀", unfolded)
@@ -1116,6 +1116,82 @@ class Version329RegressionTests(unittest.TestCase):
         self.assertTrue(events)
         self.assertTrue(all("観光物産展" in event.title for event in events))
 
-    def test_version_markers_are_v329(self):
-        self.assertEqual(app.APP_VERSION, "3.2.9")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.9//EN", app.build_ics([]))
+    def test_version_markers_are_v3210(self):
+        self.assertEqual(app.APP_VERSION, "3.2.10")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.10//EN", app.build_ics([]))
+
+
+class Version3210RegressionTests(unittest.TestCase):
+    def test_rakugo_detail_page_extracts_four_explicit_sessions(self):
+        html = """<html><body><main><h1>五代目円楽一門会若手落語会</h1>
+        <p>五代目円楽一門会の若手落語家による4人で90分の定期公演です。</p>
+        <h2>開催日時</h2>
+        <ul>
+          <li>2026年12月2日（水曜日）14時00分から15時30分</li>
+          <li>2026年12月9日（水曜日）14時00分から15時30分</li>
+          <li>2026年12月16日（水曜日）14時00分から15時30分</li>
+          <li>2026年12月25日（金曜日）19時00分から20時30分</li>
+        </ul>
+        <h2>申し込み</h2><p>必要</p><h2>場所</h2><p>ひらい圓藏亭</p>
+        <h2>住所</h2><p>江戸川区平井3丁目21番24号</p></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 27)):
+            detail = app.extract_detail(html, "https://www.city.edogawa.tokyo.jp/event/2612enraku.html")
+        self.assertEqual([x["span"] for x in detail["sessions"]], [
+            (date(2026, 12, 2), date(2026, 12, 2)),
+            (date(2026, 12, 9), date(2026, 12, 9)),
+            (date(2026, 12, 16), date(2026, 12, 16)),
+            (date(2026, 12, 25), date(2026, 12, 25)),
+        ])
+        self.assertEqual([(x["start_time"], x["end_time"]) for x in detail["sessions"]], [
+            ("14:00", "15:30"), ("14:00", "15:30"),
+            ("14:00", "15:30"), ("19:00", "20:30")])
+
+    def test_asahi_course_parser_uses_only_listed_edogawa_dates(self):
+        html = """<html><body><main>
+        <h1>「たいとう朝日創業塾」「えどがわ朝日創業塾」受講生さま募集のご案内</h1>
+        <h2>日時</h2>
+        <p>〖たいとう朝日創業塾〗</p><p>令和８年１０月８日、１０月２２日、１１月５日、１１月１９日、１２月３日 隔週木曜日開催</p>
+        <p>〖えどがわ朝日創業塾〗</p><p>令和８年１０月１６日、１０月３０日、１１月１３日、１１月２７日、１２月１１日 隔週金曜日開催</p>
+        <p>〖開催時間（各開催共通）〗</p><p>１８：３０から２０：３０</p>
+        <h2>会場</h2><p>「えどがわ朝日創業塾」</p><p>タワーホール船堀 ３階 産業振興センター</p>
+        <p>東京都江戸川区船堀４－１－１</p></main></body></html>"""
+        meta = {"url": app.ASAHI_STARTUP_DETAIL_URL, "http_status": 200, "bytes": len(html), "error": None}
+        fake_event = lambda title, span, venue, address, url, source, **kw: app.Event(
+            title=title, start_date=span[0].isoformat(), end_date=span[1].isoformat(),
+            venue=venue, address=address, url=url, source=source, **kw)
+        with patch.object(app, "TODAY", date(2026, 11, 27)), \
+             patch.object(app, "fetch_text", return_value=(html, meta)), \
+             patch.object(app, "make_event", side_effect=fake_event):
+            events, status = app.parse_asahi_startup_course()
+        self.assertEqual(status["status"], "ok")
+        self.assertEqual([(e.start_date, e.start_time, e.end_time) for e in events], [
+            ("2026-11-27", "18:30", "20:30"), ("2026-12-11", "18:30", "20:30")])
+
+    def test_partial_title_duplicate_merges_and_inherits_mypl_image(self):
+        official = app.Event("第12回 新川みどりとごちそう市", "2026-12-06", "2026-12-06",
+            "新川さくら館", "東京都江戸川区船堀7丁目15番12号",
+            "https://www.city.edogawa.tokyo.jp/event/2612_gochiso.html",
+            source="区公式", category="区公式", start_time="10:00", end_time="15:00")
+        mypl = app.Event("第12回新川みどりとごちそう市＆ミニミニ動物園", "2026-12-06", "2026-12-06",
+            "新川さくら館", "東京都江戸川区船堀7-15-12",
+            "https://edogawa.mypl.net/event/00000480752/",
+            source="まいぷれ", category="地域・まいぷれ", start_time="10:00", end_time="15:00",
+            image_url="https://img2.mypl.net/event/shinkawa.jpg")
+        merged = app.merge_events([mypl, official])
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0].title, official.title)
+        self.assertEqual(merged[0].image_url, mypl.image_url)
+        self.assertIn(mypl.url, merged[0].source_urls)
+
+    def test_partial_title_does_not_merge_different_times(self):
+        a = app.Event("第12回 新川みどりとごちそう市", "2026-12-06", "2026-12-06",
+            "新川さくら館", "東京都江戸川区船堀7丁目15番12号", "https://a.example/event", source="区公式",
+            start_time="10:00", end_time="15:00")
+        b = app.Event("第12回新川みどりとごちそう市＆ミニミニ動物園", "2026-12-06", "2026-12-06",
+            "新川さくら館", "東京都江戸川区船堀7丁目15番12号", "https://b.example/event", source="まいぷれ",
+            start_time="11:00", end_time="16:00")
+        self.assertEqual(len(app.merge_events([a, b])), 2)
+
+    def test_version_markers_are_v3210(self):
+        self.assertEqual(app.APP_VERSION, "3.2.10")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.10//EN", app.build_ics([]))
