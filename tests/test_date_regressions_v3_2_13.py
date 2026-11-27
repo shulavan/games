@@ -8,9 +8,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import edogawa_ical as app
 
 
-class V3213DateRegressionTests(unittest.TestCase):
-    def test_version_is_3213(self):
-        self.assertEqual(app.APP_VERSION, "3.2.13")
+class V3213CompatibilityRegressionTests(unittest.TestCase):
+    def test_version_is_3214(self):
+        self.assertEqual(app.APP_VERSION, "3.2.14")
 
     def test_archive_url_year_prevents_old_month_day_rollover(self):
         html = """<html><body><main><h1>過去イベント</h1>
