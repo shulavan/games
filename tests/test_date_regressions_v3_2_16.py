@@ -10,8 +10,8 @@ import edogawa_ical as app
 
 class V3216RegressionTests(unittest.TestCase):
     def test_version_and_prodid_are_3216(self):
-        self.assertEqual(app.APP_VERSION, "3.2.16")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.16//EN", app.build_ics([]))
+        self.assertEqual(app.APP_VERSION, "3.2.17")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.17//EN", app.build_ics([]))
 
     def test_week_period_is_not_reexpanded_by_description_event_wording(self):
         # 日別一覧の各日リンクが、同じ開催期間全体を繰り返し持つ実データ形。

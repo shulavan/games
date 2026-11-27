@@ -10,8 +10,8 @@ import edogawa_ical as app
 
 class V3215RegressionTests(unittest.TestCase):
     def test_version_and_prodid_are_3215(self):
-        self.assertEqual(app.APP_VERSION, "3.2.16")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.16//EN", app.build_ics([]))
+        self.assertEqual(app.APP_VERSION, "3.2.17")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.17//EN", app.build_ics([]))
 
     def test_week_title_collapses_consecutive_daily_calendar_entries(self):
         daily = [(date(2026, 12, day), date(2026, 12, day)) for day in range(3, 10)]
