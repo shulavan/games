@@ -420,7 +420,7 @@ class QualityFilterTests(unittest.TestCase):
         ev = self._event("バージョン確認イベント", "2026-12-10")
         ics = app.build_ics([ev])
         self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.7//EN", ics)
-        self.assertEqual(app.APP_VERSION, "3.2.7")
+        self.assertEqual(app.APP_VERSION, "3.2.8")
 
     def test_output_validation_rejects_event_without_coordinates(self):
         ev = self._event("座標なし検証", "2026-12-10")
@@ -630,7 +630,7 @@ class V322RegressionTests(unittest.TestCase):
         self.assertIn("X-EDOGAWA-GENERATED-AT:" + stamp, ics)
         self.assertEqual(payload["execution_id"], execution_id)
         self.assertEqual(payload["generated_at"], stamp)
-        self.assertEqual(payload["app_version"], "3.2.7")
+        self.assertEqual(payload["app_version"], "3.2.8")
 
     def test_geocoder_accepts_only_gsi_result_identified_as_edogawa(self):
         class FakeResponse:
@@ -960,3 +960,61 @@ class Version327RegressionTests(unittest.TestCase):
                "YouTube", "受検生の方", "卒業生の方", "経営企画室より", "同窓会(輝篠会)より"]
         lines = app.clean_source_boilerplate_lines(nav + ["学校公開・授業見学会", "開催日時"])
         self.assertEqual(lines, ["学校公開・授業見学会", "開催日時"])
+
+
+class Version328DirectSourceTests(unittest.TestCase):
+    def test_cultural_center_parser_reads_calendar_rows_not_navigation(self):
+        html = """<html><body><table><tr><th>日</th><th>曜日</th><th>公演・イベント</th><th>時間</th></tr>
+        <tr><td>16</td><td>月</td><td><a href='/event/season/'>季節のお便りコンサート</a></td><td>14:00開演（13:30開場）</td></tr></table>
+        <a href='/access/'>アクセス</a></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 1)), \
+             patch.object(app, "fetch_text", return_value=(html, {"http_status": 200})), \
+             patch.object(app, "make_event", side_effect=lambda title, span, venue, address, url, source, **kw: {
+                 "title": title, "span": span, "venue": venue, "url": url, "start_time": kw.get("start_time")
+             }):
+            events, status = app.parse_cultural_center_calendar(months=1)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["title"], "季節のお便りコンサート")
+        self.assertEqual(events[0]["span"][0], date(2026, 11, 16))
+        self.assertEqual(events[0]["start_time"], "14:00")
+
+    def test_ecocenter_ignores_navigation_and_uses_explicit_list_date(self):
+        html = """<html><body><main><h1>イベント・講習</h1>
+        <ul><li><a href='/event/123/'>2026年12月6日 樹と友達になろう</a></li>
+        <li><a href='/about/'>エコセンターとは</a></li></ul></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 27)), \
+             patch.object(app, "fetch_text", return_value=(html, {"http_status": 200})), \
+             patch.object(app, "make_event", side_effect=lambda title, span, venue, address, url, source, **kw: {
+                 "title": title, "span": span, "venue": venue, "url": url
+             }):
+            events, status = app.parse_ecocenter_listing()
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["title"], "樹と友達になろう")
+        self.assertEqual(events[0]["span"][0], date(2026, 12, 6))
+
+    def test_library_listing_requires_branch_and_event_date(self):
+        html = """<html><body><main>
+        <div class='event'><span>館名</span><span>松江</span><span>日時</span><span>2026年12月8日 14:00～15:00</span>
+        <a href='/toshow/event/detail/1/'>冬のおはなし会</a></div>
+        <a href='/toshow/access/'>アクセス</a></main></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 27)), \
+             patch.object(app, "fetch_text", return_value=(html, {"http_status": 200})), \
+             patch.object(app, "make_event", side_effect=lambda title, span, venue, address, url, source, **kw: {
+                 "title": title, "span": span, "venue": venue, "start_time": kw.get("start_time"), "end_time": kw.get("end_time")
+             }):
+            events, status = app.parse_library_event_listing()
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["span"][0], date(2026, 12, 8))
+        self.assertEqual(events[0]["start_time"], "14:00")
+        self.assertEqual(events[0]["end_time"], "15:00")
+
+    def test_athletics_article_publication_date_is_not_used(self):
+        listing = """<html><body><a href='/athletics/news/123/'>短距離記録会</a></body></html>"""
+        with patch.object(app, "TODAY", date(2026, 11, 27)), \
+             patch.object(app, "fetch_text", return_value=(listing, {"http_status": 200})), \
+             patch.object(app, "fetch_detail_job", return_value=({"url":"x"}, {"http_status":200, "title":"短距離記録会", "text":"公開日 2026年11月25日", "spans":[]})), \
+             patch.object(app, "make_event") as make:
+            events, status = app.parse_athletics_news_listing()
+        self.assertEqual(events, [])
+        self.assertEqual(status["rejected"].get("no_event_date"), 1)
+        make.assert_not_called()
