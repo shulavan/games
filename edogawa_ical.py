@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.7"
+APP_VERSION = "3.2.8"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -1936,6 +1936,259 @@ def lookup_library_venue(context: str) -> dict[str, Any] | None:
                 return reg
     return None
 
+
+
+def _status_for_direct_source(name: str, url: str) -> dict[str, Any]:
+    return {"name": name, "url": url, "status": "failed", "candidate_links": 0,
+            "detail_success": 0, "accepted": 0, "rejected": {}}
+
+
+def _record_rejection(status: dict[str, Any], reason: str) -> None:
+    status["rejected"][reason] = status["rejected"].get(reason, 0) + 1
+
+
+def _append_direct_event(events: list[Event], status: dict[str, Any], *, title: str,
+                         spans: list[tuple[date, date]], venue: str, url: str,
+                         source: str, start_time: str | None = None,
+                         end_time: str | None = None, description: str = "",
+                         image_url: str | None = None, priority: int = 3) -> None:
+    title = clean_title(title)
+    if not title or is_non_event_page(title, description, url):
+        _record_rejection(status, "non_event_or_empty_title")
+        return
+    if not spans:
+        _record_rejection(status, "no_event_date")
+        return
+    reg = lookup_venue(venue)
+    actual_venue = reg.get("name", venue) if reg else venue
+    address = reg.get("address", "") if reg else ""
+    ok, _, reason = verify_edogawa_location(address, actual_venue)
+    if not ok:
+        _record_rejection(status, reason)
+        return
+    for span in spans:
+        if span[1] < TODAY:
+            continue
+        ev = make_event(title, span, actual_venue, address, url, source,
+                        category="区内公共・文化" if "文化センター" in source else
+                                 ("区内公共・図書館" if "図書館" in source else
+                                  ("スポーツ" if "陸上" in source else "区内公共・環境")),
+                        default_venue=actual_venue, start_time=start_time,
+                        end_time=end_time, image_url=image_url,
+                        description=description[:2000], priority=priority)
+        if ev:
+            events.append(ev)
+            status["accepted"] += 1
+        else:
+            _record_rejection(status, "outside_or_unverified_location")
+
+
+def parse_cultural_center_calendar(months: int = 12) -> tuple[list[Event], dict[str, Any]]:
+    """総合文化センターの月間カレンダー表を直接読む。記事リンクを総当たりしない。"""
+    name = "総合文化センター・月間カレンダー"
+    base = "https://edogawa-bunkacenter.jp/calendar/"
+    status = _status_for_direct_source(name, base)
+    events: list[Event] = []
+    year, month = TODAY.year, TODAY.month
+    for offset in range(max(1, months)):
+        y, m = year + (month - 1 + offset) // 12, (month - 1 + offset) % 12 + 1
+        page_url = f"{base}{y}/{m:02d}/"
+        html, meta = fetch_text(page_url, timeout=18)
+        status.setdefault("month_checks", []).append({"url": page_url, **meta})
+        if not html:
+            continue
+        status["calendar_months_successful"] = status.get("calendar_months_successful", 0) + 1
+        soup = BeautifulSoup(html, "html.parser")
+        for row in soup.find_all("tr"):
+            cells = row.find_all(["td", "th"], recursive=False)
+            if len(cells) < 4:
+                continue
+            day_text = norm(cells[0].get_text(" ", strip=True))
+            title_cell = cells[2]
+            title = norm(title_cell.get_text(" ", strip=True))
+            if not title or any(x in title for x in ("休館", "休演", "イベント掲載")):
+                continue
+            day_match = re.search(r"\d{1,2}", day_text)
+            if not day_match:
+                continue
+            try:
+                event_day = date(y, m, int(day_match.group()))
+            except ValueError:
+                continue
+            time_text = norm(cells[3].get_text(" ", strip=True))
+            start = None
+            # 「14:00開演（13:30開場）」では開演時刻のみを採用。
+            mt = re.search(r"(\d{1,2})[:：](\d{2})\s*開演", time_text)
+            if mt:
+                start = f"{int(mt.group(1)):02d}:{mt.group(2)}"
+            else:
+                mt = re.search(r"(\d{1,2})[:：](\d{2})", time_text)
+                if mt:
+                    start = f"{int(mt.group(1)):02d}:{mt.group(2)}"
+            link = title_cell.find("a", href=True)
+            detail_url = urljoin(page_url, link["href"]) if link else page_url
+            image = None
+            img = title_cell.find("img", src=True)
+            if img:
+                image = urljoin(page_url, img["src"])
+            _append_direct_event(events, status, title=title, spans=[(event_day, event_day)],
+                                 venue="江戸川区総合文化センター", url=detail_url,
+                                 source=name, start_time=start, description=title, image_url=image)
+    status["status"] = "ok" if events else ("calendar_fetch_failed" if not status.get("calendar_months_successful") else "zero_valid_events")
+    return events, status
+
+
+def parse_ecocenter_listing() -> tuple[list[Event], dict[str, Any]]:
+    """エコセンターのイベント一覧。日付付き一覧タイトルを開催日根拠にする。"""
+    name = "えどがわエコセンター"
+    url = "https://edogawa-ecocenter.jp/event/all/"
+    status = _status_for_direct_source(name, url)
+    html, meta = fetch_text(url, timeout=20)
+    status.update(meta)
+    events: list[Event] = []
+    if not html:
+        status["error"] = meta.get("error")
+        return events, status
+    soup = BeautifulSoup(html, "html.parser")
+    main = soup.find("main") or soup.find(id=re.compile(r"main|content", re.I)) or soup
+    for a in main.find_all("a", href=True):
+        title = clean_title(a.get_text(" ", strip=True))
+        if not title:
+            continue
+        context_node = a.find_parent(["li", "article", "div"]) or a.parent
+        context = norm(context_node.get_text(" ", strip=True)) if context_node else title
+        date_text = title + " " + context
+        # 一覧の「YYYY年M月D日」表記だけを日付の根拠とする。
+        spans = parse_date_spans(date_text)
+        if not spans:
+            continue
+        status["candidate_links"] += 1
+        title = re.sub(r"^(?:20\d{2}年)?\s*\d{1,2}月\d{1,2}日\s*", "", title)
+        if not title:
+            _record_rejection(status, "date_only_link")
+            continue
+        detail_url = urljoin(url, a["href"])
+        start, end = parse_time_range(context)
+        image = None
+        img = a.find("img") or (context_node.find("img") if context_node else None)
+        if img and img.get("src"):
+            image = urljoin(url, img["src"])
+        _append_direct_event(events, status, title=title, spans=spans,
+                             venue="えどがわエコセンター", url=detail_url,
+                             source=name, start_time=start, end_time=end,
+                             description=context, image_url=image)
+    status["status"] = "ok" if events else "zero_valid_events"
+    return events, status
+
+
+def parse_library_event_listing() -> tuple[list[Event], dict[str, Any]]:
+    """図書館の一覧テーブル/カードから館名・開催日・時刻・タイトルを直接抽出。"""
+    name = "江戸川区立図書館"
+    url = "https://www.library.city.edogawa.tokyo.jp/toshow/event/"
+    status = _status_for_direct_source(name, url)
+    html, meta = fetch_text(url, timeout=20)
+    status.update(meta)
+    events: list[Event] = []
+    if not html:
+        status["error"] = meta.get("error")
+        return events, status
+    soup = BeautifulSoup(html, "html.parser")
+    # 現行一覧は「館名/カテゴリ/日時/タイトル」の繰り返しブロック。
+    for a in soup.find_all("a", href=True):
+        title = clean_title(a.get_text(" ", strip=True))
+        if not title or is_non_event_page(title, url=a["href"]):
+            continue
+        node = a.find_parent(["tr", "li", "article", "dl", "div"]) or a.parent
+        best = node
+        for ancestor in a.parents:
+            if getattr(ancestor, "name", None) in ("body", "html"):
+                break
+            txt = norm(ancestor.get_text(" ", strip=True))
+            if len(txt) > 1800:
+                break
+            if "館名" in txt and ("日時" in txt or re.search(r"20\d{2}年\s*\d{1,2}月\s*\d{1,2}日", txt)):
+                best = ancestor
+                break
+        context = norm(best.get_text(" ", strip=True)) if best else title
+        if not re.search(r"20\d{2}年\s*\d{1,2}月\s*\d{1,2}日", context):
+            continue
+        venue_reg = lookup_library_venue(context)
+        if not venue_reg:
+            _record_rejection(status, "unknown_library_branch")
+            continue
+        # 日付と時刻は一覧行に限って採用。詳細ページの掲載日を開催日と誤認しない。
+        spans = parse_date_spans(context)
+        if not spans:
+            continue
+        start, end = parse_time_range(context)
+        detail_url = urljoin(url, a["href"])
+        status["candidate_links"] += 1
+        _append_direct_event(events, status, title=title, spans=spans,
+                             venue=venue_reg.get("name", ""), url=detail_url,
+                             source=name, start_time=start, end_time=end,
+                             description=context)
+    status["status"] = "ok" if events else "zero_valid_events"
+    return events, status
+
+
+def parse_athletics_news_listing(max_details: int = 100) -> tuple[list[Event], dict[str, Any]]:
+    """陸上競技場のお知らせ記事を追跡。記事公開日は開催日として使わない。"""
+    name = "江戸川陸上競技場"
+    url = "https://www.edogawa-3field.jp/athletics/category/athletics-news/"
+    status = _status_for_direct_source(name, url)
+    html, meta = fetch_text(url, timeout=20)
+    status.update(meta)
+    events: list[Event] = []
+    if not html:
+        status["error"] = meta.get("error")
+        return events, status
+    soup = BeautifulSoup(html, "html.parser")
+    candidates: dict[str, str] = {}
+    for a in soup.find_all("a", href=True):
+        title = clean_title(a.get_text(" ", strip=True))
+        href = urljoin(url, a["href"])
+        if not title or not _same_host(href, url) or "/athletics/" not in urlparse(href).path:
+            continue
+        if href.rstrip("/") == url.rstrip("/") or is_non_event_page(title, url=href):
+            continue
+        # 記事本文のURL形状のみ。カテゴリ・施設ページやKintone申込リンクは除外。
+        if re.search(r"/(?:category|tag|page)/", urlparse(href).path):
+            continue
+        if href not in candidates:
+            candidates[href] = title
+    status["candidate_links"] = len(candidates)
+    selected = list(candidates.items())[:max_details]
+    status["truncated_candidates"] = max(0, len(candidates) - len(selected))
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = {pool.submit(fetch_detail_job, {"url": u, "title": t, "default_venue": "スピアーズえどりくフィールド"}): (u, t)
+                   for u, t in selected}
+        for fut in as_completed(futures):
+            u, listed_title = futures[fut]
+            try:
+                _, detail = fut.result()
+            except Exception:
+                detail = {}
+            if detail.get("http_status"):
+                status["detail_success"] += 1
+            title = detail.get("title") or listed_title
+            if detail.get("is_non_event_page") or is_non_event_page(title, detail.get("text", ""), u):
+                _record_rejection(status, "non_event_page")
+                continue
+            spans = detail.get("spans") or []
+            if not spans:
+                _record_rejection(status, "no_event_date")
+                continue
+            # 公開日だけでなく「開催日」「実施日」等から抽出された開催日がある記事に限定。
+            _append_direct_event(events, status, title=title, spans=spans,
+                                 venue="江戸川陸上競技場", url=u,
+                                 source=name, start_time=detail.get("start_time"),
+                                 end_time=detail.get("end_time"),
+                                 description=detail.get("text", ""),
+                                 image_url=detail.get("image_url"), priority=4)
+    status["status"] = "ok" if events else ("detail_fetch_failed" if not status["detail_success"] and selected else "zero_valid_events")
+    return events, status
+
+
 LISTING_SOURCES = [
     {"name": "葛西海浜公園", "url": "https://kasaikaihinpark.com/event/", "default_venue": "葛西海浜公園", "category": "区内公共・公園", "priority": 2, "max_details": 80},
     {"name": "葛西臨海公園", "url": "https://www.tokyo-park.or.jp/park/kasairinkai/news/index.html", "default_venue": "葛西臨海公園", "category": "区内公共・公園", "priority": 2, "max_details": 80},
@@ -1943,17 +2196,12 @@ LISTING_SOURCES = [
     {"name": "大島小松川公園", "url": "https://www.tokyo-park.or.jp/park/ojima-komatsugawa/news/index.html", "default_venue": "大島小松川公園", "category": "区内公共・公園", "priority": 2, "max_details": 70},
     {"name": "魔法の文学館", "url": "https://kikismuseum.jp/category/event/", "default_venue": "魔法の文学館", "category": "区内公共・文化", "priority": 2, "max_details": 50},
     {"name": "タワーホール船堀", "url": "https://www.towerhall.jp/events/list/", "default_venue": "タワーホール船堀", "category": "区内公共・文化", "priority": 2, "max_details": 80},
-    {"name": "総合文化センター・公演予定", "url": "https://edogawa-bunkacenter.jp/calendar-host-fiscal/", "default_venue": "総合文化センター", "category": "区内公共・文化", "priority": 2, "max_details": 100},
-    {"name": "総合文化センター・月間カレンダー", "url": "https://edogawa-bunkacenter.jp/calendar/", "default_venue": "総合文化センター", "category": "区内公共・文化", "priority": 2, "max_details": 100},
     {"name": "葛西臨海水族園", "url": "https://www.tokyo-zoo.net/zoo/kasai/", "default_venue": "葛西臨海水族園", "category": "区内公共・文化", "priority": 2, "max_details": 80},
     {"name": "江戸川レクリエーション公園", "url": "https://edogawa-recreation.com/event/", "default_venue": "総合レクリエーション公園サービスセンター", "category": "区内公共・公園", "priority": 2, "max_details": 100},
     {"name": "新川さくら館", "url": "https://sakurakan-edogawa.jp/topics/", "default_venue": "新川さくら館", "category": "区内公共・文化", "priority": 2, "max_details": 70},
-    {"name": "えどがわエコセンター", "url": "https://edogawa-ecocenter.jp/event/", "default_venue": "えどがわエコセンター", "category": "区内公共・環境", "priority": 2, "max_details": 120, "accept_all_detail_links": True},
-    {"name": "江戸川区立図書館", "url": "https://www.library.city.edogawa.tokyo.jp/toshow/event/", "default_venue": None, "category": "区内公共・図書館", "priority": 2, "max_details": 160, "accept_all_detail_links": True, "venue_from_context": True, "date_from_context": True, "context_ancestors": True},
     {"name": "江戸川まいぷれ", "url": "https://edogawa.mypl.net/event/", "default_venue": None, "category": "地域・まいぷれ", "priority": 4, "max_details": 120},
     {"name": "アリオ葛西", "url": "https://kasai.ario.jp/event/", "default_venue": "アリオ葛西", "category": "商業施設", "priority": 8, "max_details": 80},
     {"name": "TRXフリーマーケット", "url": "https://trx.jp/", "default_venue": None, "category": "地域・フリーマーケット", "priority": 4, "max_details": 100},
-    {"name": "江戸川陸上競技場", "url": "https://www.kubota-spears.com/lp_edogawa-athletics/schedule/", "default_venue": "江戸川陸上競技場", "category": "スポーツ", "priority": 3, "max_details": 80},
     {"name": "江戸川球場", "url": "https://www.edogawa-3field.jp/baseball/taikaiguid/", "default_venue": "江戸川球場", "category": "スポーツ", "priority": 3, "max_details": 80},
 ]
 
@@ -2138,6 +2386,12 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
         all_events.extend(events); reports["sources"][name] = status
 
     if include_supplements:
+        # v3.2.8 第一段階: 4施設は汎用リンク巡回を使わず、一覧の構造に合わせて取得する。
+        for parser in (parse_cultural_center_calendar, parse_ecocenter_listing,
+                       parse_library_event_listing, parse_athletics_news_listing):
+            events, status = parser()
+            all_events.extend(events)
+            reports["sources"][status.get("name", parser.__name__)] = status
         for cfg in LISTING_SOURCES:
             events, status = parse_listing_source(cfg)
             all_events.extend(events); reports["sources"][cfg["name"]] = status
@@ -2151,8 +2405,7 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
             all_events.extend(events); reports["sources"][label] = status
         tsuruoka_events, tsuruoka_status = parse_tsuruoka_source()
         all_events.extend(tsuruoka_events); reports["sources"]["鶴岡市・江戸川区内物産展"] = tsuruoka_status
-        kv_events, kv_status = parse_kviewer_api()
-        all_events.extend(kv_events); reports["sources"]["Kintone/KViewer"] = kv_status
+        # Kintone/KViewer は内容・取得仕様の確認が終わるまで収集対象外。
 
     merged = merge_events(all_events)
     save_geocode_cache()
