@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.8"
+APP_VERSION = "3.2.9"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -703,6 +703,14 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
                 title_el, title = heading, candidate_title
                 break
     lines = [norm(x) for x in main.get_text("\n", strip=True).splitlines() if norm(x)]
+    # まいぷれの詳細本文末尾には「人気のキーワード」などのサイト共通フッターが
+    # 連結されることがある。会場辞書語（江戸川区役所等）が混入しないよう、
+    # この見出し以降を本文・住所・座標の抽出対象から除外する。
+    if is_mypl:
+        footer_index = next((i for i, line in enumerate(lines)
+                             if re.search(r"人気のキーワード|人気キーワード|関連キーワード", line)), None)
+        if footer_index is not None:
+            lines = lines[:footer_index]
     # 共通メニューがdiv/spanの連続テキストとして埋め込まれた場合の保険。
     # イベント本文や見出しは残し、ジャンル・店舗カテゴリのナビ行だけを落とす。
     mypl_nav_markers = ("地元暮らしをちょっぴり楽しく", "グルメ", "ショッピング", "美容・健康", "暮らし・相談", "全て", "すべて")
@@ -739,6 +747,17 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
     spans = parse_date_spans(date_text)
     # 時刻は開催日時欄だけから取る。申込期間・開館時間を誤って開催時刻にしない。
     time_start, time_end = parse_time_range(date_text)
+    # 日ごとに開催時刻が異なる案内に対応し、開催日時欄の各行を個別セッション化。
+    # 例: 11/30 13:00～15:00、12/1 10:00～12:00。
+    sessions: list[dict[str, Any]] = []
+    for date_line in date_lines:
+        line_spans = parse_date_spans(date_line)
+        if not line_spans:
+            continue
+        line_start, line_end = parse_time_range(date_line)
+        for line_span in line_spans:
+            for daily_span in expand_recurring_spans(date_line, [line_span]):
+                sessions.append({"span": daily_span, "start_time": line_start, "end_time": line_end})
     venue_text = section_after_heading(lines, VENUE_HEADINGS, stop=ADDRESS_HEADINGS + STOP_HEADINGS)
     address_text = section_after_heading(lines, ADDRESS_HEADINGS, stop=("内容", "対象", "定員", "費用", "料金", "問合せ", "主催", "備考"))
     address_text = clean_location_text(address_text)
@@ -778,7 +797,7 @@ def extract_detail(html: str, page_url: str, default_venue: str | None = None) -
             break
     non_event = is_non_event_page(title, full_text, page_url)
     outside_facility = outside_facility_mention(full_text)
-    return {"title": title, "date_text": date_text, "spans": spans,
+    return {"title": title, "date_text": date_text, "spans": spans, "sessions": sessions,
             "start_time": time_start, "end_time": time_end, "venue": venue,
             "address": address, "image_url": image_url, "text": full_text,
             "official_url": official_url,
@@ -1204,6 +1223,17 @@ def _events_are_same(a: Event, b: Event) -> bool:
             if a.end_time and b.end_time and a.end_time != b.end_time:
                 return False
             return True
+    # 同日・同一タイトルの施設横断重複を統合する。
+    # 区公式と区内施設等で会場表記が異なる場合でも、タイトルが完全一致し、
+    # 両方に明示された開催時刻が食い違わなければ同一イベント候補とする。
+    # 時刻が双方にある場合の不一致は、同日複数回開催の可能性があるため別扱い。
+    if ta and ta == tb:
+        if a.start_time and b.start_time and a.start_time != b.start_time:
+            return False
+        if a.end_time and b.end_time and a.end_time != b.end_time:
+            return False
+        if _source_rank(a) != _source_rank(b):
+            return True
     if _compact_address(a.address) and _compact_address(b.address):
         if _compact_address(a.address) != _compact_address(b.address):
             return False
@@ -1380,9 +1410,10 @@ def parse_csv_source(url: str, name: str, priority: int = 1,
             continue
         image = get("image") or None
         description = get("description")
-        # オープンデータで場所が省略される場合、レコードの詳細URLからのみ補完する。
-        ok, _, _ = verify_edogawa_location(address, venue)
-        if not ok and url_v != url and url_v.startswith(("https://", "http://")) and url_v not in detail_cache and status["detail_lookups"] < 80:
+        # 詳細URLがある場合は、会場情報の有無にかかわらず取得する。
+        # CSVの期間値が募集期間・掲載期間だったり、実際の開催日が本文に
+        # 個別記載されていたりするため、詳細HTMLの日付・時刻を優先する。
+        if url_v != url and url_v.startswith(("https://", "http://")) and url_v not in detail_cache and status["detail_lookups"] < 80:
             dhtml, dmeta = fetch_text(url_v, timeout=12)
             status["detail_lookups"] += 1
             if dhtml:
@@ -1395,6 +1426,10 @@ def parse_csv_source(url: str, name: str, priority: int = 1,
             address = address or detail.get("address", "")
             image = image or detail.get("image_url")
             description = " ".join(x for x in (description, detail.get("text", "")[:2000]) if x)
+            if detail.get("title") and not is_non_event_page(detail.get("title", ""), url=url_v):
+                title = detail["title"]
+            if detail.get("spans"):
+                span = detail["spans"][0] if len(detail["spans"]) == 1 else span
         # CSV座標は緯度経度の両方が存在し、住所が区内と確認できるときだけ採用。
         try:
             lat = float(get("lat")) if get("lat") else None
@@ -1412,11 +1447,37 @@ def parse_csv_source(url: str, name: str, priority: int = 1,
         time_s, time_e = get("start_time") or None, get("end_time") or None
         if not (time_s and time_e):
             time_s, time_e = parse_time_range(start_raw + " " + end_raw)
-        expanded_spans = expand_recurring_spans(" ".join((description, start_raw, end_raw)), [span])
+        csv_schedule_text = " ".join((description, start_raw, end_raw))
+        # 詳細HTMLに開催日が明記されている場合はCSVの期間値より優先する。
+        # 複数の個別日程はそれぞれ独立したVEVENTとして扱い、日ごとの時刻も保持。
+        detail_sessions = detail.get("sessions", []) if detail else []
+        detail_spans = detail.get("spans", []) if detail else []
+        if detail_sessions:
+            expanded_spans = [item["span"] for item in detail_sessions]
+        elif detail_spans:
+            expanded_spans = expand_recurring_spans(detail.get("text", ""), detail_spans)
+            if detail.get("start_time"):
+                time_s = detail.get("start_time")
+            if detail.get("end_time"):
+                time_e = detail.get("end_time")
+        # 詳細ページがないCSV行は、明示された定期規則だけを日別展開する。
+        # 単なる開始日・終了日は募集/掲載期間の可能性があるため日別に水増ししない。
+        elif re.search(r"毎週\s*[月火水木金土日]曜|(?:毎月\s*)?第[1-5]\s*[月火水木金土日]曜", norm(csv_schedule_text)):
+            expanded_spans = expand_recurring_spans(csv_schedule_text, [span])
+        else:
+            # 期間の途中から取得した場合は、過去分を切り落として残日程を示す。
+            # ただし、期間を日別イベントへ機械展開することはしない。
+            if span[1] < TODAY:
+                expanded_spans = []
+            else:
+                expanded_spans = [(max(span[0], TODAY), span[1])]
         for event_span in expanded_spans:
+            session = next((item for item in detail_sessions if item["span"] == event_span), None)
+            event_time_s = session.get("start_time") if session else time_s
+            event_time_e = session.get("end_time") if session else time_e
             ev = make_event(title, event_span, venue, address, url_v, name,
                             category="区公式オープンデータ", default_venue=None,
-                            start_time=time_s, end_time=time_e, image_url=image,
+                            start_time=event_time_s, end_time=event_time_e, image_url=image,
                             description=description, priority=(9 if len(expanded_spans) > 1 or span[0] != span[1] else priority), lat=lat, lon=lon)
             if ev:
                 events.append(ev)
@@ -2254,7 +2315,10 @@ def parse_tsuruoka_source() -> tuple[list[Event], dict[str, Any]]:
             if fingerprint in seen:
                 continue
             seen.add(fingerprint)
-            title = f"{base_title}（{venue}）"
+            display_base_title = base_title
+            if "観光物産展" not in display_base_title:
+                display_base_title = f"鶴岡市 観光物産展"
+            title = f"{display_base_title}（{venue}）"
             ev = make_event(title, span, venue, reg.get("address", ""), url,
                             "鶴岡市公式・江戸川区内会場", category="友好都市・物産展",
                             image_url=image_url, priority=(9 if len(spans) > 1 or was_multi_day_or_multi_date else 4))
@@ -2386,7 +2450,7 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
         all_events.extend(events); reports["sources"][name] = status
 
     if include_supplements:
-        # v3.2.8 第一段階: 4施設は汎用リンク巡回を使わず、一覧の構造に合わせて取得する。
+        # v3.2.9: 4施設は汎用リンク巡回を使わず、一覧の構造に合わせて取得する。
         for parser in (parse_cultural_center_calendar, parse_ecocenter_listing,
                        parse_library_event_listing, parse_athletics_news_listing):
             events, status = parser()
@@ -2477,7 +2541,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.8//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.9//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -2573,7 +2637,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.8//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.9//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
