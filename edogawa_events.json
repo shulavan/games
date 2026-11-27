@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0",
-  "app_version": "3.2.7",
-  "generated_at": "2026-11-27T08:44:11.460915+09:00",
-  "execution_id": "24743a90a9113c19",
+  "app_version": "3.2.8",
+  "generated_at": "2026-11-27T12:30:14.235733+09:00",
+  "execution_id": "bd14fca914862e14",
   "timezone": "Asia/Tokyo",
   "scope": "東京都江戸川区内のみ",
   "mode": "live",
@@ -1284,6 +1284,31 @@
       ],
       "priority": 9,
       "description": "更新日:2026年11月15日\n新川さくら館 冬ざくらイルミネーション\nきらめく光に包まれた幻想的な冬のお花見をお楽しみください。\n開催日時\n2026年11月21日(土曜日)から2026年12月25日(金曜日)\n16時30分~21時30分\n申し込み\n不要\n場所\n新川さくら館広場\n住所\n江戸川区船堀7丁目15番12号\n内容\n今年も新川さくら館の広場で、「冬ざくらイルミネーション」を開催します。\n冬の夜を彩るイルミネーションを、ぜひお楽しみください。\n費用\n無料\n問合せ\n新川さくら館 電話:03-3804-0314\n主催\n新川さくら館"
+    },
+    {
+      "id": "5cf141bafdce8a658ff8e590d6ea6deb@edogawa-events.local",
+      "title": "気軽に食材を使い切り(エコ料理教室)",
+      "category": "区内公共・環境",
+      "start_date": "2026-11-30",
+      "end_date": "2026-11-30",
+      "start_time": null,
+      "end_time": null,
+      "all_day": true,
+      "timezone": "Asia/Tokyo",
+      "venue": "えどがわエコセンター",
+      "address": "えどがわエコセンター(東京都江戸川区春江町2-41-20)",
+      "latitude": 35.68412,
+      "longitude": 139.89351,
+      "map_ready": true,
+      "coordinate_quality": "legacy_approximate",
+      "image_url": null,
+      "details_url": "https://edogawa-ecocenter.jp/event/detail/1395/",
+      "source": "えどがわエコセンター",
+      "source_urls": [
+        "https://edogawa-ecocenter.jp/event/detail/1395/"
+      ],
+      "priority": 3,
+      "description": "2026年11月30日 気軽に食材を使い切り(エコ料理教室)"
     },
     {
       "id": "6b56e56693c58afb967154ed677ee82e@edogawa-events.local",
@@ -3436,6 +3461,56 @@
       ],
       "priority": 1,
       "description": "更新日:2026年11月5日\n一之江抹香亭「ふれあい茶席」\n2026年、年忘れの茶席です。お茶席の作法や茶道具についての解説もあります。初めての方も気軽にご参加ください。\n開催日時\n2026年12月6日(日曜日)13時00分\n2026年12月6日(日曜日)14時00分\n申し込み\n必要\n申し込み期間\n2026年11月20日(金曜日)9時から\n申し込み方法\n電話で一之江抹香亭へ\n電話:03-3654-0095\n場所\n一之江抹香亭\n住所\n江戸川区一之江5丁目13番16号\n内容\n2026年、年忘れの茶席です。お茶席の作法や茶道具についての解説もあります。初めての方も気軽にご参加ください。\n対象\n小学生以上\n定員\n各14人(申込順)\n1組4人まで\n出演者(講師)\n淡水会<たんすいかい>\n費用\n有料\n各500円\n問合せ\n一之江抹香亭、電話:03-3654-0095\n主催\n一之江抹香亭"
+    },
+    {
+      "id": "22b4338158cf644667b5505e7699c190@edogawa-events.local",
+      "title": "樹と友達になろう",
+      "category": "区内公共・環境",
+      "start_date": "2026-12-06",
+      "end_date": "2026-12-06",
+      "start_time": null,
+      "end_time": null,
+      "all_day": true,
+      "timezone": "Asia/Tokyo",
+      "venue": "えどがわエコセンター",
+      "address": "えどがわエコセンター(東京都江戸川区春江町2-41-20)",
+      "latitude": 35.68412,
+      "longitude": 139.89351,
+      "map_ready": true,
+      "coordinate_quality": "legacy_approximate",
+      "image_url": null,
+      "details_url": "https://edogawa-ecocenter.jp/event/detail/1396/",
+      "source": "えどがわエコセンター",
+      "source_urls": [
+        "https://edogawa-ecocenter.jp/event/detail/1396/"
+      ],
+      "priority": 3,
+      "description": "2026年12月6日 樹と友達になろう"
+    },
+    {
+      "id": "0316ce90f0391c064e323ec7ee25dc4e@edogawa-events.local",
+      "title": "法大生と探検!自然の宝探し",
+      "category": "区内公共・環境",
+      "start_date": "2026-12-06",
+      "end_date": "2026-12-06",
+      "start_time": null,
+      "end_time": null,
+      "all_day": true,
+      "timezone": "Asia/Tokyo",
+      "venue": "えどがわエコセンター",
+      "address": "えどがわエコセンター(東京都江戸川区春江町2-41-20)",
+      "latitude": 35.68412,
+      "longitude": 139.89351,
+      "map_ready": true,
+      "coordinate_quality": "legacy_approximate",
+      "image_url": null,
+      "details_url": "https://edogawa-ecocenter.jp/event/detail/1391/",
+      "source": "えどがわエコセンター",
+      "source_urls": [
+        "https://edogawa-ecocenter.jp/event/detail/1391/"
+      ],
+      "priority": 3,
+      "description": "2026年12月6日 法大生と探検!自然の宝探し"
     },
     {
       "id": "751e36c9f3421b27dc527af6bb22da83@edogawa-events.local",
@@ -7163,6 +7238,31 @@
       "description": "更新日:2026年11月4日\n正月仕舞い「しめ飾りづくり」\n年末に、新年を迎えるための準備をすることを「正月仕舞い」といいます。\n名主屋敷でしめ飾りを作って、新しい年をむかえてみませんか。\n開催日時\n2026年12月19日(土曜日)\n1部10時~11時30分\n2部13時30分~15時\n申し込み\n必要\n申込フォームまたは往復はがきで\n申し込み期間\n2026年11月15日(日曜日)から2026年11月29日(日曜日)\n申し込み方法\n申込フォームまた往復はがきで\n11月29日(日曜日)〆切。(往復はがきは必着)(注)1申し込みにつき1人まで。第2希望までお申し込みいただけます。\n往信表面:宛先(〒132-0031江戸川区松島1丁目38番1号グリーンパレス3階江戸川区教育委員会事務局教育推進課文化財係)\n往信裏面:(1)しめ飾りづくり(2)希望の回(2)郵便番号・住所(3)氏名(ふりがな)・年齢(4)電話番号\n返信表面:申込者住所・氏名\n返信裏面:記入しない\n申し込み多数の場合は抽選。申込フォームからお申し込みの方は11月30日17時頃に登録のメールアドレスに結果をお送りいたします。往復はがきでお申し込みの方は11月30日以降返信はがきにて結果をお送りいたします。\nご参加は、お送りする案内メールか返信はがきをお持ちの方のみとなります。\n申し込む\n場所\n一之江名主屋敷\n晴天...屋外(屋敷畑)\n雨天...主屋内(土間)\n住所\n江戸川区春江町二丁目21番20号\nホームページ\n正月仕舞い「しめ飾りづくり」\n対象\n中学生以上の方\n定員\n各16人(抽選)\n費用\n有料\n800円(入館料・材料費)\n(注)中学生は700円\n問合せ\n教育推進課文化財係(電話:03-5662-7176)\n主催\n江戸川区教育推進課"
     },
     {
+      "id": "f633c3b8e24381f70b645be03493ffbc@edogawa-events.local",
+      "title": "発電機を作ろう!with法政大生",
+      "category": "区公式",
+      "start_date": "2026-12-19",
+      "end_date": "2026-12-19",
+      "start_time": "10:00",
+      "end_time": "11:30",
+      "all_day": false,
+      "timezone": "Asia/Tokyo",
+      "venue": "タワーホール船堀3階産業振興センター",
+      "address": "船堀4丁目1番1号",
+      "latitude": 35.6843961,
+      "longitude": 139.8647749,
+      "map_ready": true,
+      "coordinate_quality": "tokyo_open_data",
+      "image_url": "https://www.city.edogawa.tokyo.jp/shared/site_rn/images/sns/logo.png",
+      "details_url": "https://www.city.edogawa.tokyo.jp/event/hosei1219.html",
+      "source": "江戸川区公式イベントカレンダー",
+      "source_urls": [
+        "https://www.city.edogawa.tokyo.jp/event/hosei1219.html"
+      ],
+      "priority": 1,
+      "description": "更新日:2026年11月27日\n発電機を作ろう!with法政大生\n法政大学の学生と一緒に、4種類の発電実験や工作キットを使った発電機づくりに挑戦!楽しく学びながら環境にやさしいエネルギーの仕組みを体感できる体験型イベントです。未来のエネルギーについて一緒に考えよう!\n開催日時\n2026年12月19日(土曜日)10時00分から11時30分\n申し込み\n必要\n申し込み期間\n2026年11月25日(水曜日)から2026年12月18日(金曜日)\n15時まで\n申し込み方法\n申込みフォームから\n申し込む\n場所\nタワーホール船堀3階産業振興センター\n住所\n船堀4丁目1番1号\n対象\n小学生以上(小学3年生以下は保護者同伴)\n定員\n30人(申込順)\n費用\n有料\n300円(体験料として。作ったキットはお持ち帰りいただけます。)\n問合せ\n気候変動適応計画課地域連携係・電話:03-5662-0694\n主催\n江戸川区・認定NPO法人えどがわエコセンター\n協力\n法政大学高田ゼミ\n関連資料\n認定NPO法人えどがわエコセンター"
+    },
+    {
       "id": "92f5672c97407450f79b3c0305f3d7bb@edogawa-events.local",
       "title": "親子でしめ縄づくり",
       "category": "区公式",
@@ -10136,6 +10236,31 @@
       ],
       "priority": 9,
       "description": "更新日:2026年11月12日\n江戸川区郷土資料室令和8年度企画展「利根川と江戸川区ーその舟運と治水ー」\n令和9年(2027年)は、利根川堤防が決壊し、下流域まで甚大な被害をおよぼしたカスリーン台風の上陸から80年を迎えます。江戸川区は川に囲まれ、常に大きな影響を受けてきました。江戸川区教育委員会文化財係では、令和元年度から令和6年度まで2年間の休止期間を挟みながら4度の利根川現地調査を行いました。\n調査結果をふまえ、時に川と戦い、時に川と共存し、恵みを受けてきた江戸川区と利根川のつながりを舟運と治水に着目して紹介します。\n開催日時\n2026年12月12日(土曜日)9時30分から2027年3月14日(日曜日)17時00分\n申し込み\n不要\n企画展の観覧はご自由にしていただけます。\n20名以上の団体見学は事前に文化財係(電話:03-5662-7176)までお知らせください。\n(注)見学会と講演会は要申込\n(注)ギャラリートーク・ワークショップは申込不要\n申し込み期間\n2026年11月3日(火曜日)\nから\n見学会申込締切:1月5日(火曜日)必着。\n講演会申込締切:2月3日(水曜日)必着。\n申し込み方法\nLogoフォームまたは往復はがきで。\nLogoフォームは下記リンクよりお申し込みください。\n往復はがきは下記を記入しお送りください。\n(1)申込イベント名(2)氏名(3)住所(4)電話番号\n送付先\n〒132-0031東京都江戸川区松島1丁目38番地1号グリーンパレス3階\n江戸川区教育委員会事務局教育推進課文化財係\n(注)1通につき2名までお申込みいただけます。\n(注)1イベントにつき1枚のはがきでお申し込みください。\n場所\n江戸川区郷土資料室\n住所\n江戸川区篠崎町7丁目20番19号篠崎ツインプレイス3階\n内容\n会期中関連イベントを実施します。\n〇ギャラリートーク/申込不要/当日受付\n担当学芸員による展示の解説を行います。\n《日程》12月12日(土曜日)、1月9日(土曜日)、1月31日(日曜日)、2月14日(日曜日)、3月14日(日曜日)、各回14時00分~14時20分\n《場所》郷土資料室企画展スペース\n〇ワークショップ「輪ゴムでうごくふねをつくろう」/申込不要/当日受付\n発泡トレーと輪ゴムを使って船をつくろう。\n《日程》1月31日(日曜日)13時00分~15時00分\n《場所》郷土資料室前スペース\n〇見学会「江戸川水閘門の今と未来」/要申込\n江戸川水閘門は昭和18年(1943)の完成から80年以上が経過し、令和7年度より改築工事が行われています。現在の水閘門と新水閘門の工事現場、広報施設EKOMOを見学します。\n《日程》1月20日(水曜日)14時00分~15時00分/(注)荒天中止\n《集合場所》国土交通省江戸川河口出張所(東京都江戸川区東篠崎町250)\n《解説員》国土交通省江戸川河口出張所職員\n《定員》25名。多数抽選\n《申込締切》1月5日必着\n〇講演会「近世利根川舟運と江戸市場」/要申込\n近世における利根川舟運による東北各地と江戸市場との商品流通について、下総国猿島郡境河岸の問屋を通してお話しします。\n《日程》2月20日(土曜日)14時00分~16時00分\n《場所》しのざき文化プラザ3階第二講義室\n《講師》和泉清司氏(高崎経済大学名誉教授)\n《定員》50名。多数抽選\n《申込締切》2月3日必着\nホームページ\n令和8年度企画展「利根川と江戸川区ーその舟運と治水ー」\n費用\n無料\n問合せ\n教育推進課文化財係電話:03-5662-7176\n主催\n江戸川区教育委員会教育推進課\n関連資料\n令和8年度企画展「利根川と江戸川区ーその舟運と治水ー」フライヤー(PDF:1,671KB)\n関連リンク\n企画展「利根川と江戸川区」見学会「江戸川水閘門の今と未来」申込フォーム\n企画展「利根川と江戸川区」講演会「近世利根川舟運と江戸市場」申込フォーム"
+    },
+    {
+      "id": "f6d583e2b4ab1d18fb8ff043b561ab1c@edogawa-events.local",
+      "title": "主催共催公演 1月10日より出品申込受付開始 第6回 えどがわ BOXART展 <作品募集> 展示",
+      "category": "区内文化",
+      "start_date": "2027-01-10",
+      "end_date": "2027-01-10",
+      "start_time": null,
+      "end_time": null,
+      "all_day": true,
+      "timezone": "Asia/Tokyo",
+      "venue": "総合文化センター",
+      "address": "江戸川区中央4丁目14番1号",
+      "latitude": 35.7112421,
+      "longitude": 139.8681232,
+      "map_ready": true,
+      "coordinate_quality": "tokyo_open_data",
+      "image_url": null,
+      "details_url": "https://edogawa-bunkacenter.jp/calendar/2027/01/2837/",
+      "source": "総合文化センター・月間カレンダー",
+      "source_urls": [
+        "https://edogawa-bunkacenter.jp/calendar/2027/01/2837/"
+      ],
+      "priority": 3,
+      "description": "主催共催公演 1月10日より出品申込受付開始 第6回 えどがわ BOXART展 <作品募集> 展示"
     },
     {
       "id": "f12fb0348ba81df36456e38a16746848@edogawa-events.local",
@@ -13761,6 +13886,31 @@
       ],
       "priority": 9,
       "description": "更新日:2026年11月12日\n西洋美術史への扉\n西洋美術史への扉 連続講座です。\n全5回の講座になります。\nぜひ、お気軽にご参加ください。\n開催日時\n2026年12月12日(土曜日)14時00分から15時15分\n2027年1月9日(土曜日)17時00分から18時15分\n2027年1月23日(土曜日)14時00分から15時15分\n2027年2月13日(土曜日)14時00分から15時15分\n2027年3月6日(土曜日)14時00分から15時15分\n申し込み\n必要\n申し込み方法\n申込フォームまたは窓口で受け付け\n申し込む\n場所\nしのざき文化プラザ\n住所\n江戸川区篠崎町7丁目20番9号\n定員\n24人(申込順)\n出演者(講師)\n長谷川浩一(美術史研究家)\n費用\n有料\n10,000円\n問合せ\nしのざき文化プラザ\n電話:03-3676-9071\n主催\nしのざき文化プラザ"
+    },
+    {
+      "id": "32520a1382feb0f31984f5a09b484c36@edogawa-events.local",
+      "title": "主催共催公演 1月10日より出品申込受付開始 第6回えどがわBOXART展 展示",
+      "category": "区内文化",
+      "start_date": "2027-02-13",
+      "end_date": "2027-02-13",
+      "start_time": null,
+      "end_time": null,
+      "all_day": true,
+      "timezone": "Asia/Tokyo",
+      "venue": "総合文化センター",
+      "address": "江戸川区中央4丁目14番1号",
+      "latitude": 35.7112421,
+      "longitude": 139.8681232,
+      "map_ready": true,
+      "coordinate_quality": "tokyo_open_data",
+      "image_url": null,
+      "details_url": "https://edogawa-bunkacenter.jp/calendar/2027/02/2836/",
+      "source": "総合文化センター・月間カレンダー",
+      "source_urls": [
+        "https://edogawa-bunkacenter.jp/calendar/2027/02/2836/"
+      ],
+      "priority": 3,
+      "description": "主催共催公演 1月10日より出品申込受付開始 第6回えどがわBOXART展 展示"
     },
     {
       "id": "6627e9a66f2bb8b43545278ebb5ce04b@edogawa-events.local",
@@ -18013,6 +18163,31 @@
       "description": "緑と水と人のふれあうウォーターフロント\n葛西臨海公園\nかさいりんかいこうえん\n2022/05/03\n鳥類園 シギ・チドリまつり【5/4・5】\n5月4日(火・祝)・5日(水・祝)に、鳥類園で春のバードウォッチングフェスティバル~シギ・チドリまつり~を開催します!\n双眼鏡の使い方や野鳥を探すコツが学べるガイドツアーや、ウォッチングセンター前での展示、下の池の観察窓で出張ガイドなど、鳥類園スタッフがご案内いたします!\n★ガイドツアー ~野鳥観察をやってみよう!~\n鳥類園に飛来する野鳥を観察するガイドツアーです。\n双眼鏡の使い方や野鳥を探すコツなどを鳥類園スタッフがご案内します。\n時間:\n各日 11:00 / 13:00 / 14:30 (\n各回40分)\n定員:各回先着20名\n集合:ウォッチングセンター前\n※各回開始10分前から受付開始\n参加費:無料、双眼鏡貸出可\n★ウォッチングセンターでの催し物\n時間:各日 10:00~15:00\n展示内容:\n●水辺の生きものを紹介 鳥類園ミニミニ水族園\n●シギ・チドリ類を観察! 下の池出張ガイド\n●帝京科学大学環境教育研究部 風の子フ~スケ ブース出展\n一覧へ戻る"
     },
     {
+      "id": "b0ebdad9155d06d8680d8075c24b842b@edogawa-events.local",
+      "title": "「みどりのカーテン」モニター講習会 タワーホール船堀 5月19日",
+      "category": "区内公共・環境",
+      "start_date": "2027-05-19",
+      "end_date": "2027-05-19",
+      "start_time": null,
+      "end_time": null,
+      "all_day": true,
+      "timezone": "Asia/Tokyo",
+      "venue": "えどがわエコセンター",
+      "address": "えどがわエコセンター(東京都江戸川区春江町2-41-20)",
+      "latitude": 35.68412,
+      "longitude": 139.89351,
+      "map_ready": true,
+      "coordinate_quality": "legacy_approximate",
+      "image_url": null,
+      "details_url": "https://edogawa-ecocenter.jp/event/detail/665/",
+      "source": "えどがわエコセンター",
+      "source_urls": [
+        "https://edogawa-ecocenter.jp/event/detail/665/"
+      ],
+      "priority": 3,
+      "description": "2018年5月19日 「みどりのカーテン」モニター講習会 タワーホール船堀 5月19日"
+    },
+    {
       "id": "82fe377a07f28437ae25c04378b23a55@edogawa-events.local",
       "title": "体育祭延期のお知らせ",
       "category": "学校公開",
@@ -19470,15 +19645,15 @@
     }
   ],
   "map_summary": {
-    "total_events": 778,
-    "events_with_coordinates": 778,
+    "total_events": 785,
+    "events_with_coordinates": 785,
     "events_without_coordinates": 0
   },
   "source_status": {
-    "app_version": "3.2.7",
+    "app_version": "3.2.8",
     "mode": "live",
     "coverage_complete": false,
-    "generated_at": "2026-11-27T08:44:11.460915+09:00",
+    "generated_at": "2026-11-27T12:30:14.235733+09:00",
     "timezone": "Asia/Tokyo",
     "months_requested": 12,
     "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -20820,9 +20995,9 @@
             "error": null
           }
         ],
-        "candidate_urls": 253,
-        "detail_success": 253,
-        "accepted": 496,
+        "candidate_urls": 254,
+        "detail_success": 254,
+        "accepted": 497,
         "rejected": {
           "location_unverified": 21,
           "non_event_page": 1,
@@ -20835,7 +21010,7 @@
         "calendar_months_requested": 12,
         "day_detail_pages_requested": 144,
         "day_detail_pages_success": 144,
-        "day_detail_event_links": 2579,
+        "day_detail_event_links": 2580,
         "day_detail_page_failures": 0,
         "day_detail_coverage_ratio": 1.0,
         "site_coverage": {
@@ -21061,6 +21236,166 @@
         "previous_accepted": 0,
         "unexpected_zero": true
       },
+      "総合文化センター・月間カレンダー": {
+        "name": "総合文化センター・月間カレンダー",
+        "url": "https://edogawa-bunkacenter.jp/calendar/",
+        "status": "ok",
+        "candidate_links": 0,
+        "detail_success": 0,
+        "accepted": 2,
+        "rejected": {},
+        "month_checks": [
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2026/11/",
+            "http_status": 200,
+            "bytes": 110554,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2026/12/",
+            "http_status": 200,
+            "bytes": 110475,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/01/",
+            "http_status": 200,
+            "bytes": 111536,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/02/",
+            "http_status": 200,
+            "bytes": 116238,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/03/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/04/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/05/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/06/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/07/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/08/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/09/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          },
+          {
+            "url": "https://edogawa-bunkacenter.jp/calendar/2027/10/",
+            "http_status": 200,
+            "bytes": 115357,
+            "error": null,
+            "attempts": 1,
+            "cache_hit": false
+          }
+        ],
+        "calendar_months_successful": 12,
+        "previous_accepted": 0
+      },
+      "えどがわエコセンター": {
+        "name": "えどがわエコセンター",
+        "url": "https://edogawa-ecocenter.jp/event/all/",
+        "status": "ok",
+        "candidate_links": 4,
+        "detail_success": 0,
+        "accepted": 4,
+        "rejected": {},
+        "http_status": 200,
+        "bytes": 560549,
+        "error": null,
+        "attempts": 1,
+        "cache_hit": false,
+        "previous_accepted": 0
+      },
+      "江戸川区立図書館": {
+        "name": "江戸川区立図書館",
+        "url": "https://www.library.city.edogawa.tokyo.jp/toshow/event/",
+        "status": "failed",
+        "candidate_links": 0,
+        "detail_success": 0,
+        "accepted": 0,
+        "rejected": {},
+        "http_status": null,
+        "bytes": 0,
+        "error": "SSLError: HTTPSConnectionPool(host='www.library.city.edogawa.tokyo.jp', port=443): Max retries exceeded with url: /toshow/event/ (Caused by SSLError(SSLError(1, '[SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] ssl/tls alert handshake failure (_ssl.c:1011)')))",
+        "attempts": 2,
+        "cache_hit": false,
+        "tls_fallback_error": "SSLError: HTTPSConnectionPool(host='www.library.city.edogawa.tokyo.jp', port=443): Max retries exceeded with url: /toshow/event/ (Caused by SSLError(SSLError(1, '[SSL: UNSAFE_LEGACY_RENEGOTIATION_DISABLED] unsafe legacy renegotiation disabled (_ssl.c:1011)')))",
+        "previous_accepted": 0
+      },
+      "江戸川陸上競技場": {
+        "name": "江戸川陸上競技場",
+        "url": "https://www.edogawa-3field.jp/athletics/category/athletics-news/",
+        "status": "zero_valid_events",
+        "candidate_links": 27,
+        "detail_success": 27,
+        "accepted": 0,
+        "rejected": {
+          "no_event_date": 9,
+          "non_event_page": 18
+        },
+        "http_status": 200,
+        "bytes": 74937,
+        "error": null,
+        "attempts": 1,
+        "cache_hit": false,
+        "truncated_candidates": 0,
+        "previous_accepted": 0,
+        "unexpected_zero": true
+      },
       "葛西海浜公園": {
         "name": "葛西海浜公園",
         "url": "https://kasaikaihinpark.com/event/",
@@ -21217,7 +21552,7 @@
         "name": "タワーホール船堀",
         "url": "https://www.towerhall.jp/events/list/",
         "http_status": 200,
-        "bytes": 103759,
+        "bytes": 103758,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
@@ -21247,69 +21582,23 @@
         "truncated_candidates": 0,
         "previous_accepted": 1
       },
-      "総合文化センター・公演予定": {
-        "name": "総合文化センター・公演予定",
-        "url": "https://edogawa-bunkacenter.jp/calendar-host-fiscal/",
-        "http_status": 200,
-        "bytes": 101263,
-        "error": null,
-        "attempts": 1,
-        "cache_hit": false,
-        "status": "zero_valid_events",
-        "total_links": 25,
-        "same_site_links": 0,
-        "candidate_links": 4,
-        "detail_success": 4,
-        "accepted": 0,
-        "rejected": {
-          "no_event_date": 4
-        },
-        "feed_urls": [],
-        "feed_candidates": 0,
-        "truncated_candidates": 0,
-        "previous_accepted": 0,
-        "unexpected_zero": true
-      },
-      "総合文化センター・月間カレンダー": {
-        "name": "総合文化センター・月間カレンダー",
-        "url": "https://edogawa-bunkacenter.jp/calendar/",
-        "http_status": 200,
-        "bytes": 115357,
-        "error": null,
-        "attempts": 1,
-        "cache_hit": false,
-        "status": "zero_valid_events",
-        "total_links": 10,
-        "same_site_links": 0,
-        "candidate_links": 2,
-        "detail_success": 2,
-        "accepted": 0,
-        "rejected": {
-          "no_event_date": 2
-        },
-        "feed_urls": [],
-        "feed_candidates": 0,
-        "truncated_candidates": 0,
-        "previous_accepted": 0,
-        "unexpected_zero": true
-      },
       "葛西臨海水族園": {
         "name": "葛西臨海水族園",
         "url": "https://www.tokyo-zoo.net/zoo/kasai/",
         "http_status": 200,
-        "bytes": 551071,
+        "bytes": 551889,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
         "status": "ok",
-        "total_links": 126,
+        "total_links": 127,
         "same_site_links": 0,
-        "candidate_links": 35,
-        "detail_success": 35,
+        "candidate_links": 36,
+        "detail_success": 36,
         "accepted": 2,
         "rejected": {
           "non_event_page": 1,
-          "outside_facility_mention:上野動物園": 3,
+          "outside_facility_mention:上野動物園": 4,
           "no_event_date": 27,
           "outside_facility_mention:国立科学博物館": 1,
           "outside_facility_mention:恩賜上野動物園": 1
@@ -21385,53 +21674,11 @@
         "truncated_candidates": 0,
         "previous_accepted": 48
       },
-      "えどがわエコセンター": {
-        "name": "えどがわエコセンター",
-        "url": "https://edogawa-ecocenter.jp/event/",
-        "http_status": 200,
-        "bytes": 47024,
-        "error": null,
-        "attempts": 1,
-        "cache_hit": false,
-        "status": "zero_valid_events",
-        "total_links": 65,
-        "same_site_links": 0,
-        "candidate_links": 52,
-        "detail_success": 52,
-        "accepted": 0,
-        "rejected": {
-          "no_event_date": 51,
-          "non_event_page": 1
-        },
-        "feed_urls": [],
-        "feed_candidates": 0,
-        "truncated_candidates": 0,
-        "previous_accepted": 0,
-        "unexpected_zero": true
-      },
-      "江戸川区立図書館": {
-        "name": "江戸川区立図書館",
-        "url": "https://www.library.city.edogawa.tokyo.jp/toshow/event/",
-        "http_status": null,
-        "bytes": 0,
-        "error": "SSLError: HTTPSConnectionPool(host='www.library.city.edogawa.tokyo.jp', port=443): Max retries exceeded with url: /toshow/event/ (Caused by SSLError(SSLError(1, '[SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] ssl/tls alert handshake failure (_ssl.c:1011)')))",
-        "attempts": 2,
-        "cache_hit": false,
-        "tls_fallback_error": "SSLError: HTTPSConnectionPool(host='www.library.city.edogawa.tokyo.jp', port=443): Max retries exceeded with url: /toshow/event/ (Caused by SSLError(SSLError(1, '[SSL: UNSAFE_LEGACY_RENEGOTIATION_DISABLED] unsafe legacy renegotiation disabled (_ssl.c:1011)')))",
-        "status": "failed",
-        "total_links": 0,
-        "same_site_links": 0,
-        "candidate_links": 0,
-        "detail_success": 0,
-        "accepted": 0,
-        "rejected": {},
-        "previous_accepted": 0
-      },
       "江戸川まいぷれ": {
         "name": "江戸川まいぷれ",
         "url": "https://edogawa.mypl.net/event/",
         "http_status": 200,
-        "bytes": 64705,
+        "bytes": 64738,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
@@ -21447,24 +21694,24 @@
         "feed_urls": [],
         "feed_candidates": 0,
         "truncated_candidates": 0,
-        "previous_accepted": 14
+        "previous_accepted": 15
       },
       "アリオ葛西": {
         "name": "アリオ葛西",
         "url": "https://kasai.ario.jp/event/",
         "http_status": 200,
-        "bytes": 77653,
+        "bytes": 84196,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
         "status": "zero_valid_events",
-        "total_links": 28,
+        "total_links": 35,
         "same_site_links": 0,
-        "candidate_links": 6,
-        "detail_success": 6,
+        "candidate_links": 7,
+        "detail_success": 7,
         "accepted": 0,
         "rejected": {
-          "non_event_page": 6
+          "non_event_page": 7
         },
         "feed_urls": [],
         "feed_candidates": 0,
@@ -21516,26 +21763,6 @@
         "previous_accepted": 0,
         "unexpected_zero": true
       },
-      "江戸川陸上競技場": {
-        "name": "江戸川陸上競技場",
-        "url": "https://www.kubota-spears.com/lp_edogawa-athletics/schedule/",
-        "http_status": 200,
-        "bytes": 12870,
-        "error": null,
-        "attempts": 1,
-        "cache_hit": false,
-        "status": "no_event_candidates",
-        "total_links": 5,
-        "same_site_links": 0,
-        "candidate_links": 0,
-        "detail_success": 0,
-        "accepted": 0,
-        "rejected": {},
-        "feed_urls": [],
-        "feed_candidates": 0,
-        "truncated_candidates": 0,
-        "previous_accepted": 0
-      },
       "江戸川球場": {
         "name": "江戸川球場",
         "url": "https://www.edogawa-3field.jp/baseball/taikaiguid/",
@@ -21585,18 +21812,18 @@
         "name": "都立江戸川高校",
         "url": "https://www.metro.ed.jp/edogawa-h/news/index.html",
         "http_status": 200,
-        "bytes": 50735,
+        "bytes": 50959,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
         "status": "zero_valid_events",
-        "total_links": 223,
+        "total_links": 224,
         "same_site_links": 0,
-        "candidate_links": 174,
-        "detail_success": 174,
+        "candidate_links": 175,
+        "detail_success": 175,
         "accepted": 0,
         "rejected": {
-          "no_event_date": 174
+          "no_event_date": 175
         },
         "feed_urls": [],
         "feed_candidates": 0,
@@ -21680,18 +21907,18 @@
         "name": "都立紅葉川高校",
         "url": "https://www.metro.ed.jp/momijigawa-h/news/index.html",
         "http_status": 200,
-        "bytes": 50772,
+        "bytes": 51034,
         "error": null,
         "attempts": 1,
         "cache_hit": false,
         "status": "ok",
-        "total_links": 221,
+        "total_links": 222,
         "same_site_links": 0,
-        "candidate_links": 175,
-        "detail_success": 175,
+        "candidate_links": 176,
+        "detail_success": 176,
         "accepted": 5,
         "rejected": {
-          "no_event_date": 168,
+          "no_event_date": 169,
           "location_unverified": 1,
           "outside_facility_mention:日本科学未来館": 1
         },
@@ -21736,34 +21963,13 @@
         "accepted": 21,
         "rejected": {},
         "previous_accepted": 21
-      },
-      "Kintone/KViewer": {
-        "name": "江戸川区スポーツKintone/KViewer",
-        "status": "public_view_accessible_api_not_configured",
-        "viewer_url": "https://2f01466f.viewer.kintoneapp.com/public/2288685cd0240ea5379b822175def1d520d606ea6a20c595b5c7602fc6c29368",
-        "accepted": 0,
-        "note": "KViewerの外部公開API URLが未設定のため未取得",
-        "viewer_probe": {
-          "url": "https://2f01466f.viewer.kintoneapp.com/public/2288685cd0240ea5379b822175def1d520d606ea6a20c595b5c7602fc6c29368",
-          "http_status": 200,
-          "bytes": 6708,
-          "error": null,
-          "attempts": 1,
-          "cache_hit": false
-        },
-        "viewer_title": "Public View",
-        "viewer_table_count": 0,
-        "viewer_link_count": 0,
-        "previous_accepted": 0
       }
     },
     "warnings": [
       "東京都OpenData江戸川区イベント一覧CSV: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
+      "江戸川陸上競技場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "葛西海浜公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-      "総合文化センター・公演予定: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-      "総合文化センター・月間カレンダー: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "江戸川レクリエーション公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-      "えどがわエコセンター: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "アリオ葛西: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "TRXフリーマーケット: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
       "江戸川球場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
@@ -21783,10 +21989,10 @@
       "outside": 0
     },
     "totals": {
-      "raw_records": 787,
-      "unique_events": 778,
+      "raw_records": 794,
+      "unique_events": 785,
       "deduplicated_records": 9,
-      "with_coordinates": 778,
+      "with_coordinates": 785,
       "without_coordinates": 0,
       "strict_edogawa_only": true
     },
@@ -21799,6 +22005,6 @@
       "healthy": true,
       "primary_event_success": true
     },
-    "execution_id": "24743a90a9113c19"
+    "execution_id": "bd14fca914862e14"
   }
 }
