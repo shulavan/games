@@ -36,22 +36,22 @@ jobs:
           import pathlib, edogawa_ical
           print("Loaded module:", pathlib.Path(edogawa_ical.__file__).resolve())
           print("Application version:", edogawa_ical.APP_VERSION)
-          if edogawa_ical.APP_VERSION != "3.2.7":
-              raise SystemExit("Wrong edogawa_ical.py loaded; expected v3.2.7")
+          if edogawa_ical.APP_VERSION != "3.2.8":
+              raise SystemExit("Wrong edogawa_ical.py loaded; expected v3.2.8")
           required = ("expand_recurring_spans", "extract_detail", "is_non_event_page",
                       "verify_edogawa_location", "geocode_edogawa_location", "atomic_write_bundle",
-                      "normalize_event_url", "merge_events", "clean_location_text", "clean_description_text", "combine_location")
+                      "normalize_event_url", "merge_events", "clean_location_text", "clean_description_text", "combine_location",
+                      "parse_cultural_center_calendar", "parse_ecocenter_listing", "parse_library_event_listing",
+                      "parse_athletics_news_listing")
           missing = [name for name in required if not hasattr(edogawa_ical, name)]
           if missing:
-              raise SystemExit("Required v3.2.7 functions are missing: " + ", ".join(missing))
+              raise SystemExit("Required v3.2.8 functions are missing: " + ", ".join(missing))
           PY
 
       - name: Unit tests (Python 3.12)
         run: python -m unittest discover -s tests -v
 
       - name: Generate iCal and map JSON
-        env:
-          KVIEWER_API_URL: ${{ secrets.KVIEWER_API_URL }}
         run: python -u edogawa_ical.py --months 12
 
       - name: Verify generated files are from the same run
@@ -61,18 +61,18 @@ jobs:
           status = json.loads(pathlib.Path("source_status.json").read_text(encoding="utf-8"))
           data = json.loads(pathlib.Path("edogawa_events.json").read_text(encoding="utf-8"))
           ics = pathlib.Path("edogawa_events.ics").read_text(encoding="utf-8")
-          expected = ("3.2.7", status.get("execution_id"), status.get("generated_at"))
+          expected = ("3.2.8", status.get("execution_id"), status.get("generated_at"))
           actual = (data.get("app_version"), data.get("execution_id"), data.get("generated_at"))
           if expected != actual:
               raise SystemExit(f"JSON/status generation mismatch: {actual!r} != {expected!r}")
-          if status.get("app_version") != "3.2.7":
+          if status.get("app_version") != "3.2.8":
               raise SystemExit("source_status.json version mismatch")
-          for marker in (f"PRODID:-//Edogawa Ward Events//JP v3.2.7//EN",
+          for marker in (f"PRODID:-//Edogawa Ward Events//JP v3.2.8//EN",
                          f"X-EDOGAWA-EXECUTION-ID:{status['execution_id']}",
                          f"X-EDOGAWA-GENERATED-AT:{status['generated_at']}"):
               if marker not in ics:
                   raise SystemExit("iCal/status generation mismatch: " + marker)
-          print("Verified v3.2.7 generation:", status["execution_id"], status["generated_at"])
+          print("Verified v3.2.8 generation:", status["execution_id"], status["generated_at"])
           print("Events:", status.get("totals", {}).get("unique_events"))
           PY
 
@@ -98,6 +98,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No calendar data changes"
           else
-            git commit -m "Update Edogawa events calendar (v3.2.7)"
+            git commit -m "Update Edogawa events calendar (v3.2.8)"
             git push
           fi
