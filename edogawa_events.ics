@@ -1,16 +1,16 @@
 BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Edogawa Ward Events//JP v3.2.13//EN
+PRODID:-//Edogawa Ward Events//JP v3.2.14//EN
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:江戸川区内イベントカレンダー
 X-WR-TIMEZONE:Asia/Tokyo
 X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー
-X-EDOGAWA-EXECUTION-ID:b450736aa893b78e
-X-EDOGAWA-GENERATED-AT:2026-11-27T16:54:49.060397+09:00
+X-EDOGAWA-EXECUTION-ID:e15c0f061dddf630
+X-EDOGAWA-GENERATED-AT:2026-11-27T17:28:21.654255+09:00
 BEGIN:VEVENT
 UID:37c334fa54121176bd2e5fc93d1d9a4b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261016
@@ -49,7 +49,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:485fa0a6804e68dd0db97a6c6c808455@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261027
@@ -104,7 +104,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c9cc2e6298330e5aabf4df551991962c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261108T000000Z
@@ -135,12 +135,12 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:ac52de4caf626c8954e63992b2f05316@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:d9ae7359f36e74eae42fff3419e4984a@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART:20261118T043000Z
-DTEND:20261201T060000Z
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261202
 SUMMARY:「拉致を風化させないために ~今伝えたいこと~
  」 [区公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261105_rachi.
@@ -223,7 +223,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7b3f21b8ec295fd8cd11671ef44f7fd1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261121T073000Z
@@ -254,12 +254,12 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:7b6835c87ca9de70e2eb1f0532ab9463@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:70a15ae48fe5d5d32e0db4dd44c60299@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART:20261126T093000Z
-DTEND:20261209T110000Z
+DTSTART;VALUE=DATE:20261126
+DTEND;VALUE=DATE:20261210
 SUMMARY:【ライブ配信/アーカイブ配信】女性のSOSを見逃
  さないために~暴力と孤立の背景を考える~ [区公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20261113koza.
@@ -322,7 +322,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f7800b7479cf3fbd966c2585d845e207@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261127T013000Z
@@ -361,7 +361,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f91a24bb6cfb921a4c1ef36966ee7a44@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261127T040000Z
@@ -407,7 +407,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:90349e564efd55fd92ef955ba203fdaa@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261127T050000Z
@@ -442,7 +442,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:2286aabec2cf93250e223987b4f3077e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261127T100000Z
@@ -484,7 +484,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/74
 END:VEVENT
 BEGIN:VEVENT
 UID:25aeb4c30212b479f34a6a4a3c6801cf@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261127
@@ -539,14 +539,14 @@ URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
 LOCATION:中央くすのきカルチャーセンター 江戸川区西小
  松川町34番1号
 GEO:35.700710;139.864029
-PRIORITY:1
+PRIORITY:9
 CATEGORIES:区公式
 IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
 UID:ca579800f49c5df78dabfd4cc721f891@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T000000Z
@@ -580,7 +580,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ca5ce8b3e743034199efbc0b3dd69445@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T000000Z
@@ -612,7 +612,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:43476ce2a9d0f5d59b7b98a2e58d5f79@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T003000Z
@@ -655,7 +655,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b226793937fc1191371cee46c8f00ea1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T010000Z
@@ -699,7 +699,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d1ab54acc8b635778a681a4f4a5793fb@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T010000Z
@@ -741,7 +741,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c744f93627fe172fc2d67b096c411f13@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T010000Z
@@ -778,7 +778,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:6eed367c9c328a05fba4717edeebd3f4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T010000Z
@@ -818,7 +818,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:64738c567cb8c97f25000201044c5acd@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T010000Z
@@ -879,7 +879,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3f26f578a88868d5fb2756c013fabc21@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T010000Z
@@ -913,7 +913,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3e0f721bbb83a38c92720a2309712da1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T010000Z
@@ -945,7 +945,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:9358ccd17418169fb04418663afd4760@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T040000Z
@@ -980,7 +980,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c528c00b507d204a74e63ddca8dc1f2f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T050000Z
@@ -1022,7 +1022,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1a958041693d20416148922954171834@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T050000Z
@@ -1033,13 +1033,7 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2611book_part
  区篠崎町3丁目12番10号(篠崎ポニーランド隣) 開館時間 
  午前9時から午後5時 休館日 アカデミー\n情報元: 江戸
  川区イベントカレンダーCSV\n画像: https://www.city.edogawa.t
- okyo.jp/images/74646/1128_book.jpg\nこのサイトではJavaScriptを
- 使用したコンテンツ・機能を提供しています。JavaScrip
- tを有効にするとご利用いただけます。\n本文へスキッ
- プします。\nEnglish\n简体中文\n한국어\n日本語\nすべて
- の言語を見る\n閉じる\n閉じる\n閉じる\nトップページ\
- n>\nイベントカレンダー(子ども未来館)\n> ブックパー
- ティー@共育プラザ一之江\n更新日:2026年10月16日\nブッ
+ okyo.jp/images/74646/1128_book.jpg\n更新日:2026年10月16日\nブッ
  クパーティー@共育プラザ一之江\nキミの推し本を持っ
  て集まろう。\n小説、マンガ、図鑑、雑誌。本ならな
  んでもOK。\n本にまつわる科学実験や著作物づくりも
@@ -1068,7 +1062,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/74
 END:VEVENT
 BEGIN:VEVENT
 UID:b79643bfc6fa3ea755e6b5b3e8fa75b6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T050000Z
@@ -1102,7 +1096,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d6536d01831eb385a6082125b80d7e17@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T050000Z
@@ -1173,7 +1167,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b03fd173f3cf41a26412319b63639c90@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T053000Z
@@ -1206,7 +1200,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:635a981525e63761cca3c6ef7a70d1db@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261128T093000Z
@@ -1245,8 +1239,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:a01f98abc99a7d18c170b0c8e074b6c2@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261128
+DTEND;VALUE=DATE:20261129
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:fdb4c28cc7b1f97e657b4898179c7de7@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261129T010000Z
@@ -1280,7 +1302,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:fb00bb5757177f2494070dd6537d5978@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261129T010000Z
@@ -1314,7 +1336,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:80aeb80d3f82d7cffe9c5fa000738cd1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261129T010000Z
@@ -1350,7 +1372,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:692a3c16579ffb045af9a2bbba3ee464@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261129T013000Z
@@ -1385,7 +1407,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:881c3bd5a485fbffe14f893eba5c7442@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261129T020000Z
@@ -1417,7 +1439,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:04b92ffa9b9abb49e527d39857b7d9de@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261129T050000Z
@@ -1427,31 +1449,25 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2611origami.h
  tml\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町
  三丁目12番10号\n情報元: 江戸川区イベントカレンダーC
  SV\n画像: https://www.city.edogawa.tokyo.jp/images/74643/1129origami.j
- pg\nこのサイトではJavaScriptを使用したコンテンツ・機
- 能を提供しています。JavaScriptを有効にするとご利用
- いただけます。\n本文へスキップします。\nEnglish\n简
- 体中文\n한국어\n日本語\nすべての言語を見る\n閉じる\
- n閉じる\n閉じる\nトップページ\n>\nイベントカレンダ
- ー(子ども未来館)\n> おりがみヒコーキで科学する\n更
- 新日:2026年10月16日\nおりがみヒコーキで科学する\nよ
- く飛ぶようにするには、どうしたらいいだろう。\n作
- って考えよう。\n15時30分から土手でテスト飛行をしま
- す。\n開催日時\n2026年11月29日(日曜日)14時00分から16時0
- 0分\n申し込み\n必要\n申し込み方法などくわしくは、
- 下記リンク先「事前申し込みの講座の応募方法」をご
- 覧ください。\n申し込み期間\n2026年10月16日(金曜日)か
- ら2026年11月17日(火曜日)\n上記期間はウェブサイトのし
- めきりです。\n往復はがきでのお申し込みはウェブサ
- イトのしめきり前日までに子ども未来館に着くように
- ご投函ください。\n場所\n子ども未来館\n住所\n江戸川
- 区篠崎町三丁目12番10号\n対象\n小学校1年生から6年生
- までとその保護者\n(注)必ず保護者1名同伴でお願いし
- ます。\n兄弟姉妹の同伴はできません。\n定員\n16組(抽
- 選)\n出演者(講師)\n川島 章一\n費用\n無料\n問合せ\n子
- ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連
- 資料\nアカデミー通信11月号(PDF:961KB)\n関連リンク\n事
- 前申し込みの講座の応募方法\n参照元: https://www.city.edo
- gawa.tokyo.jp/event/2611origami.html
+ pg\n更新日:2026年10月16日\nおりがみヒコーキで科学する
+ \nよく飛ぶようにするには、どうしたらいいだろう。\
+ n作って考えよう。\n15時30分から土手でテスト飛行を
+ します。\n開催日時\n2026年11月29日(日曜日)14時00分から
+ 16時00分\n申し込み\n必要\n申し込み方法などくわしく
+ は、下記リンク先「事前申し込みの講座の応募方法」
+ をご覧ください。\n申し込み期間\n2026年10月16日(金曜
+ 日)から2026年11月17日(火曜日)\n上記期間はウェブサイ
+ トのしめきりです。\n往復はがきでのお申し込みはウ
+ ェブサイトのしめきり前日までに子ども未来館に着く
+ ようにご投函ください。\n場所\n子ども未来館\n住所\n
+ 江戸川区篠崎町三丁目12番10号\n対象\n小学校1年生から
+ 6年生までとその保護者\n(注)必ず保護者1名同伴でお願
+ いします。\n兄弟姉妹の同伴はできません。\n定員\n16
+ 組(抽選)\n出演者(講師)\n川島 章一\n費用\n無料\n問合せ
+ \n子ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n
+ 関連資料\nアカデミー通信11月号(PDF:961KB)\n関連リンク\
+ n事前申し込みの講座の応募方法\n参照元: https://www.city
+ .edogawa.tokyo.jp/event/2611origami.html
 URL:https://www.city.edogawa.tokyo.jp/event/2611origami.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -1463,7 +1479,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/74
 END:VEVENT
 BEGIN:VEVENT
 UID:89ccb89f42e33c2eeb260ee35f66a76e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261129
@@ -1552,7 +1568,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:9b545cf5f7fd38112ad2a3a6a46e4885@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261129
@@ -1583,47 +1599,40 @@ PRIORITY:2
 CATEGORIES:区内スポーツ
 END:VEVENT
 BEGIN:VEVENT
-UID:222af665a7a4003a5a5f7f9d151bee7b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:bd6991a31fb4a249b8c42fc697e06810@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART:20261130T013000Z
-DTEND:20261130T043000Z
-SUMMARY:気軽に食材を使い切り(エコ料理教室) [区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20261115event
- 3.html\n会場: 清新町コミュニティ会館 料理講習室\n住
- 所: 江戸川区清新町1丁目2番2号\n情報元: 江戸川区公式
- イベントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/s
- hared/site_rn/images/sns/logo.png\n更新日:2026年11月15日\n気軽
- に食材を使い切り(エコ料理教室)\n省エネルギー、食
- 材の使い切り、環境にやさしく健康に役立つ料理を作
- ります。\n是非お申し込みください。\n開催日時\n2026
- 年11月30日(月曜日)10時30分から13時30分\n申し込み\n必要
- \n11月16日(月曜日)10時から電話(下記)で\nえどがわエコ
- センター 電話:03-5659-1651\n場所\n清新町コミュニティ会
- 館 料理講習室\n住所\n江戸川区清新町1丁目2番2号\n定
- 員\n15人(申込順)\n費用\n有料\n800円(材料費)\n持ち物\nエ
- プロン、バンダナ、ハンドタオル、マスク\n問合せ\n
- えどがわエコセンター 電話:03-5659-1651\n主催\nえどがわ
- エコセンター\n関連リンク\n清新町コミュニティ会館\n
- 参照元: https://edogawa-ecocenter.jp/event/detail/1395/ / https://www
- .city.edogawa.tokyo.jp/event/20261115event3.html
-URL:https://www.city.edogawa.tokyo.jp/event/20261115event3.html
-LOCATION:清新町コミュニティ会館 料理講習室 江戸川区
- 清新町1丁目2番2号
-GEO:35.658791;139.856002
-PRIORITY:1
+DTSTART;VALUE=DATE:20261129
+DTEND;VALUE=DATE:20261130
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
 CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
- te_rn/images/sns/logo.png
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
 END:VEVENT
 BEGIN:VEVENT
-UID:6b56e56693c58afb967154ed677ee82e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:c91fde3ebbd3d91fb2500af6dde8c7df@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART;VALUE=DATE:20261130
-DTEND;VALUE=DATE:20261212
+DTSTART:20261130T000000Z
+DTEND:20261211T070000Z
 SUMMARY:「いつまでも動けるからだづくり」パネル展 [区
  公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/08undopanelte
@@ -1660,8 +1669,105 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:222af665a7a4003a5a5f7f9d151bee7b@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261130T013000Z
+DTEND:20261130T043000Z
+SUMMARY:気軽に食材を使い切り(エコ料理教室) [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20261115event
+ 3.html\n会場: 清新町コミュニティ会館 料理講習室\n住
+ 所: 江戸川区清新町1丁目2番2号\n情報元: 江戸川区公式
+ イベントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/s
+ hared/site_rn/images/sns/logo.png\n更新日:2026年11月15日\n気軽
+ に食材を使い切り(エコ料理教室)\n省エネルギー、食
+ 材の使い切り、環境にやさしく健康に役立つ料理を作
+ ります。\n是非お申し込みください。\n開催日時\n2026
+ 年11月30日(月曜日)10時30分から13時30分\n申し込み\n必要
+ \n11月16日(月曜日)10時から電話(下記)で\nえどがわエコ
+ センター 電話:03-5659-1651\n場所\n清新町コミュニティ会
+ 館 料理講習室\n住所\n江戸川区清新町1丁目2番2号\n定
+ 員\n15人(申込順)\n費用\n有料\n800円(材料費)\n持ち物\nエ
+ プロン、バンダナ、ハンドタオル、マスク\n問合せ\n
+ えどがわエコセンター 電話:03-5659-1651\n主催\nえどがわ
+ エコセンター\n関連リンク\n清新町コミュニティ会館\n
+ 参照元: https://edogawa-ecocenter.jp/event/detail/1395/ / https://www
+ .city.edogawa.tokyo.jp/event/20261115event3.html
+URL:https://www.city.edogawa.tokyo.jp/event/20261115event3.html
+LOCATION:清新町コミュニティ会館 料理講習室 江戸川区
+ 清新町1丁目2番2号
+GEO:35.658791;139.856002
+PRIORITY:1
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:9cd0857cd61c81c5993870f0604386ef@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:98a782522545d3bd91a5494cab2c526a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261201T001500Z
@@ -1707,7 +1813,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a05da2f9ca02660d1b1544eeddd71776@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261201T020000Z
@@ -1750,7 +1856,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f6f316b6cb10fc66890195981197a474@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261201T083000Z
@@ -1811,7 +1917,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7a9e06bcd9d41e53acf75b9dc964a33d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261202T043000Z
@@ -1858,7 +1964,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:db8240acaff6c8f4d600e9c03379ff16@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261202T050000Z
@@ -1900,7 +2006,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:01dfece48f7f67ca21e1f811893bdda5@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261202T100000Z
@@ -1947,8 +2053,50 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:aecfed1b3818dca67d77827833a9a1cb@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261203T000000Z
+DTEND:20261203T070000Z
+SUMMARY:「いつまでも動けるからだづくり」パネル展 [区
+ 公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/08undopanelte
+ n.html\n会場: グリーンパレス本館1階ロビー\n住所: 江戸
+ 川区松島1丁目38番1号\n情報元: 江戸川区公式イベント
+ カレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_r
+ n/images/sns/logo.png\n更新日:2026年11月4日\n「いつまでも動
+ けるからだづくり」パネル展\n元気に過ごすためには
+ 、丈夫な関節や筋肉などが重要です。本展示では腰痛
+ 予防やフレイル(加齢による心身の衰え)予防など動け
+ るからだづくりのためのポイントを紹介します。見て
+ ・知って・体験して、これからの健康を考えるきっか
+ けにしましょう。\n開催日時\n2026年11月30日(月曜日)12
+ 時00分から2026年12月11日(金曜日)15時00分\n申し込み\n不
+ 要\n場所\nグリーンパレス本館1階ロビー\n住所\n江戸川
+ 区松島1丁目38番1号\n内容\n【実施イベント】\n〇「片
+ 足立ち何秒立てるかチャレンジ!」\n理学療法士・作業
+ 療法士が下記の日程で片足立ちが何秒できるかを計測
+ します。アドバイスもお伝え出来ます。\n2026年12月3日
+ (木曜日)9時00分から16時00分、12月9日(水曜日)13時00分か
+ ら16時00分、12月11日(金曜日)13時00分から15時00分\n〇「
+ 腰痛川柳」腰痛への想いを川柳にして貼っていただく
+ パネルが会場にあります。\nぜひご参加ください。\n
+ 費用\n無料\n問合せ\n鹿骨健康サポートセンター\n電話:
+ 03-3678-8711\n主催\n江戸川区健康部健康サービス課\n参照
+ 元: https://www.city.edogawa.tokyo.jp/event/08undopanelten.html
+URL:https://www.city.edogawa.tokyo.jp/event/08undopanelten.html
+LOCATION:グリーンパレス本館1階ロビー 江戸川区松島1丁
+ 目38番1号
+GEO:35.705678;139.866288
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:08732f6facee8e8f84cb7ea3256c16f5@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261203T071500Z
@@ -1988,7 +2136,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a6b797dd2263eda4699bfee532f38ccd@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261203
@@ -2030,7 +2178,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b91b11c79404e77f658cc2a8ea66bc55@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261203
@@ -2049,12 +2197,147 @@ PRIORITY:9
 CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
-UID:642c0368285a33fb1ba44dce9819a809@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:a9a427c1608c8bbff0ff91d2a4fd2576@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART:20261204T041000Z
-DTEND:20261204T073000Z
+DTSTART:20261204T043000Z
+DTEND:20261204T053000Z
+SUMMARY:冬を彩るスワッグ作り [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/niji_swagiven
+ t.html\n会場: 江戸川区立虹の家\n住所: 江戸川区西篠崎2
+ 丁目18番22号\n情報元: 江戸川区公式イベントカレンダ
+ ー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/images/sns
+ /logo.png\n更新日:2026年11月15日\n冬を彩るスワッグ作り\n
+ 通所者と交流しながら、江戸川区立虹の家で育てた花
+ を使ったオリジナルのスワッグを作ってみませんか。
+ \n開催日時\n2026年12月4日(金曜日)13時30分から14時30分\n
+ 申し込み\n必要\n申し込み期間\n2026年11月16日(月曜日)
+ から2026年11月26日(木曜日)\n17時まで\n申し込み方法\n電
+ 話でお申込みください。\n江戸川区立虹の家電話:03-367
+ 6-3391\n場所\n江戸川区立虹の家\n住所\n江戸川区西篠崎2
+ 丁目18番22号\n定員\n10人(申し込み順)\n出演者(講師)\n小
+ 野寺じゅん子(花育アドバイザー)\n費用\n有料\n700円\n
+ 問合せ\n江戸川区立虹の家\n電話:03-3676-3391\n主催\n江戸
+ 川区虹の家\n参照元: https://www.city.edogawa.tokyo.jp/event/niji
+ _swagivent.html
+URL:https://www.city.edogawa.tokyo.jp/event/niji_swagivent.html
+LOCATION:江戸川区立虹の家 江戸川区西篠崎2丁目18番22号
+GEO:35.707569;139.899834
+PRIORITY:1
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:91da14851fc731d2ed0d630adcc38a1c@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261204T043000Z
+DTEND:20261204T063000Z
+SUMMARY:定年後の働き方を考えるセミナー [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612seminar.h
+ tml\n会場: 船堀コミュニティ会館(集会室5)\n住所: 江戸
+ 川区船堀一丁目3番1号\n情報元: 江戸川区公式イベント
+ カレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_r
+ n/images/sns/logo.png\n更新日:2026年10月13日\n定年後の働き
+ 方を考えるセミナー\n自分らしく仕事をする準備はで
+ きていますか?\nより良い仕事選びと働き方について一
+ 緒に考えてみましょう。\n開催日時\n2026年12月4日(金曜
+ 日)13時30分から15時30分\n受付開始13時10分から\n申し込
+ み\n必要\n申し込み期間\n2026年11月2日(月曜日)から2026
+ 年11月30日(月曜日)\n申し込み方法\n申込フォームまた
+ は電話\nヤングほっとワークえどがわ 電話:03-5659-3685\n
+ 申し込む\n場所\n船堀コミュニティ会館(集会室5)\n費用
+ \n無料\n問合せ\nヤングほっとワークえどがわ 電話:03-5
+ 659-3685\n主催\n江戸川区\n参照元: https://www.city.edogawa.toky
+ o.jp/event/2612seminar.html
+URL:https://www.city.edogawa.tokyo.jp/event/2612seminar.html
+LOCATION:船堀コミュニティ会館(集会室5) 江戸川区船堀一
+ 丁目3番1号
+GEO:35.686219;139.862137
+PRIORITY:1
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:ca9d07dbf3c2ff4154a42e0aefd87016@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261204T050000Z
+DTEND:20261204T063000Z
+SUMMARY:フードドライブ [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261204fooddri
+ ve.html\n会場: しのざき文化プラザ\n住所: 江戸川区篠崎
+ 町7丁目20番9号\n情報元: 江戸川区公式イベントカレン
+ ダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/images/
+ sns/logo.png\n更新日:2026年11月27日\nフードドライブ\nご家
+ 庭や企業で余っている食品をお持ちください。\n食料
+ が必要な方への支援事業に活用いたします。\nぜひご
+ 参加ください。\n開催日時\n2026年12月4日(金曜日)14時00
+ 分から15時30分\n申し込み\n不要\n場所\nしのざき文化プ
+ ラザ\n住所\n江戸川区篠崎町7丁目20番9号\n費用\n無料\n
+ 問合せ\nしのざき文化プラザ\n電話:03-3676-9071\n主催\nし
+ のざき文化プラザ\n参照元: https://www.city.edogawa.tokyo.jp/e
+ vent/261204fooddrive.html
+URL:https://www.city.edogawa.tokyo.jp/event/261204fooddrive.html
+LOCATION:しのざき文化プラザ 江戸川区篠崎町7丁目20番9
+ 号
+GEO:35.705902;139.902939
+PRIORITY:1
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:7937d9ec91d99c1cc91f2f8c7e83a828@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261204
+DTEND;VALUE=DATE:20261205
+SUMMARY:総合相談会~生きるのに悩んでいる、あなたへ~ [
+ 区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/sodankai1204.
+ html\n会場: 中央健康サポートセンター(江戸川保健所1
+ 階)\n住所: 江戸川区中央四丁目24番19号\n情報元: 江戸
+ 川区公式イベントカレンダー\n画像: https://www.city.edogaw
+ a.tokyo.jp/shared/site_rn/images/sns/logo.png\n更新日:2026年10月15
+ 日\n総合相談会~生きるのに悩んでいる、あなたへ~\n生
+ 活上のさまざまな相談に弁護士・ハローワーク職員・
+ 保健師などの各分野の専門家が応じます。\n開催日時\
+ n2026年12月4日(金曜日)\n申し込み\n不要\n場所\n中央健康
+ サポートセンター(江戸川保健所1階)\n住所\n江戸川区
+ 中央四丁目24番19号\n内容\n「借金が返済できない」「
+ 仕事が見つからない」「誰にも相談できない」「眠れ
+ ない」「生活が苦しい」「生きるのがつらい」など悩
+ みや不安を、最近お持ちではありませんか?大切ない
+ のちを守る、生きる支援として、「総合相談会」を実
+ 施しています。弁護士、ハローワーク、生活保護、保
+ 健師などの専門家によるワンストップの無料相談会で
+ す。\n費用\n無料\n問合せ\nいのちの支援係 電話:03-5661-
+ 2478\n主催\n江戸川区\n参照元: https://www.city.edogawa.tokyo.jp
+ /event/sodankai1204.html / https://www.city.edogawa.tokyo.jp/event/sodan
+ kai124.html
+URL:https://www.city.edogawa.tokyo.jp/event/sodankai1204.html
+LOCATION:中央健康サポートセンター(江戸川保健所1階) 江
+ 戸川区中央四丁目24番19号
+GEO:35.709506;139.868162
+PRIORITY:1
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:734d89bc3eaae3bc3abb8099468e3d23@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261204
+DTEND;VALUE=DATE:20261205
 SUMMARY:【ライブ配信/アーカイブ配信】第78回人権週間
  行事 講演と映画のつどい [区公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261204jinken.
@@ -2132,143 +2415,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:a9a427c1608c8bbff0ff91d2a4fd2576@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART:20261204T043000Z
-DTEND:20261204T053000Z
-SUMMARY:冬を彩るスワッグ作り [区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/niji_swagiven
- t.html\n会場: 江戸川区立虹の家\n住所: 江戸川区西篠崎2
- 丁目18番22号\n情報元: 江戸川区公式イベントカレンダ
- ー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/images/sns
- /logo.png\n更新日:2026年11月15日\n冬を彩るスワッグ作り\n
- 通所者と交流しながら、江戸川区立虹の家で育てた花
- を使ったオリジナルのスワッグを作ってみませんか。
- \n開催日時\n2026年12月4日(金曜日)13時30分から14時30分\n
- 申し込み\n必要\n申し込み期間\n2026年11月16日(月曜日)
- から2026年11月26日(木曜日)\n17時まで\n申し込み方法\n電
- 話でお申込みください。\n江戸川区立虹の家電話:03-367
- 6-3391\n場所\n江戸川区立虹の家\n住所\n江戸川区西篠崎2
- 丁目18番22号\n定員\n10人(申し込み順)\n出演者(講師)\n小
- 野寺じゅん子(花育アドバイザー)\n費用\n有料\n700円\n
- 問合せ\n江戸川区立虹の家\n電話:03-3676-3391\n主催\n江戸
- 川区虹の家\n参照元: https://www.city.edogawa.tokyo.jp/event/niji
- _swagivent.html
-URL:https://www.city.edogawa.tokyo.jp/event/niji_swagivent.html
-LOCATION:江戸川区立虹の家 江戸川区西篠崎2丁目18番22号
-GEO:35.707569;139.899834
-PRIORITY:1
-CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
- te_rn/images/sns/logo.png
-END:VEVENT
-BEGIN:VEVENT
-UID:91da14851fc731d2ed0d630adcc38a1c@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART:20261204T043000Z
-DTEND:20261204T063000Z
-SUMMARY:定年後の働き方を考えるセミナー [区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612seminar.h
- tml\n会場: 船堀コミュニティ会館(集会室5)\n住所: 江戸
- 川区船堀一丁目3番1号\n情報元: 江戸川区公式イベント
- カレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_r
- n/images/sns/logo.png\n更新日:2026年10月13日\n定年後の働き
- 方を考えるセミナー\n自分らしく仕事をする準備はで
- きていますか?\nより良い仕事選びと働き方について一
- 緒に考えてみましょう。\n開催日時\n2026年12月4日(金曜
- 日)13時30分から15時30分\n受付開始13時10分から\n申し込
- み\n必要\n申し込み期間\n2026年11月2日(月曜日)から2026
- 年11月30日(月曜日)\n申し込み方法\n申込フォームまた
- は電話\nヤングほっとワークえどがわ 電話:03-5659-3685\n
- 申し込む\n場所\n船堀コミュニティ会館(集会室5)\n費用
- \n無料\n問合せ\nヤングほっとワークえどがわ 電話:03-5
- 659-3685\n主催\n江戸川区\n参照元: https://www.city.edogawa.toky
- o.jp/event/2612seminar.html
-URL:https://www.city.edogawa.tokyo.jp/event/2612seminar.html
-LOCATION:船堀コミュニティ会館(集会室5) 江戸川区船堀一
- 丁目3番1号
-GEO:35.686219;139.862137
-PRIORITY:1
-CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
- te_rn/images/sns/logo.png
-END:VEVENT
-BEGIN:VEVENT
-UID:ca9d07dbf3c2ff4154a42e0aefd87016@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART:20261204T050000Z
-DTEND:20261204T063000Z
-SUMMARY:フードドライブ [区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261204fooddri
- ve.html\n会場: しのざき文化プラザ\n住所: 江戸川区篠崎
- 町7丁目20番9号\n情報元: 江戸川区公式イベントカレン
- ダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/images/
- sns/logo.png\n更新日:2026年11月27日\nフードドライブ\nご家
- 庭や企業で余っている食品をお持ちください。\n食料
- が必要な方への支援事業に活用いたします。\nぜひご
- 参加ください。\n開催日時\n2026年12月4日(金曜日)14時00
- 分から15時30分\n申し込み\n不要\n場所\nしのざき文化プ
- ラザ\n住所\n江戸川区篠崎町7丁目20番9号\n費用\n無料\n
- 問合せ\nしのざき文化プラザ\n電話:03-3676-9071\n主催\nし
- のざき文化プラザ\n参照元: https://www.city.edogawa.tokyo.jp/e
- vent/261204fooddrive.html
-URL:https://www.city.edogawa.tokyo.jp/event/261204fooddrive.html
-LOCATION:しのざき文化プラザ 江戸川区篠崎町7丁目20番9
- 号
-GEO:35.705902;139.902939
-PRIORITY:1
-CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
- te_rn/images/sns/logo.png
-END:VEVENT
-BEGIN:VEVENT
-UID:7937d9ec91d99c1cc91f2f8c7e83a828@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:cad9e0f7876a7215e68889f7a5900ef4@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261204
 DTEND;VALUE=DATE:20261205
-SUMMARY:総合相談会~生きるのに悩んでいる、あなたへ~ [
- 区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/sodankai1204.
- html\n会場: 中央健康サポートセンター(江戸川保健所1
- 階)\n住所: 江戸川区中央四丁目24番19号\n情報元: 江戸
- 川区公式イベントカレンダー\n画像: https://www.city.edogaw
- a.tokyo.jp/shared/site_rn/images/sns/logo.png\n更新日:2026年10月15
- 日\n総合相談会~生きるのに悩んでいる、あなたへ~\n生
- 活上のさまざまな相談に弁護士・ハローワーク職員・
- 保健師などの各分野の専門家が応じます。\n開催日時\
- n2026年12月4日(金曜日)\n申し込み\n不要\n場所\n中央健康
- サポートセンター(江戸川保健所1階)\n住所\n江戸川区
- 中央四丁目24番19号\n内容\n「借金が返済できない」「
- 仕事が見つからない」「誰にも相談できない」「眠れ
- ない」「生活が苦しい」「生きるのがつらい」など悩
- みや不安を、最近お持ちではありませんか?大切ない
- のちを守る、生きる支援として、「総合相談会」を実
- 施しています。弁護士、ハローワーク、生活保護、保
- 健師などの専門家によるワンストップの無料相談会で
- す。\n費用\n無料\n問合せ\nいのちの支援係 電話:03-5661-
- 2478\n主催\n江戸川区\n参照元: https://www.city.edogawa.tokyo.jp
- /event/sodankai1204.html / https://www.city.edogawa.tokyo.jp/event/sodan
- kai124.html
-URL:https://www.city.edogawa.tokyo.jp/event/sodankai1204.html
-LOCATION:中央健康サポートセンター(江戸川保健所1階) 江
- 戸川区中央四丁目24番19号
-GEO:35.709506;139.868162
-PRIORITY:1
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
 CATEGORIES:区公式
 IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
 UID:fa76a3ea58355b8aeb487a7d9f8e6066@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261204
@@ -2310,7 +2520,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a881b16d526dc9a016cdbdd1c3bff997@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T000000Z
@@ -2356,7 +2566,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0069b6e734476b0800e8880c67abe2b9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T010000Z
@@ -2391,7 +2601,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b0089c1038e14eef43e12333e7cfd25e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T010000Z
@@ -2473,7 +2683,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7654b914deb47dcf6a13930f8d41b400@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T010000Z
@@ -2483,30 +2693,24 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612washi.htm
  l\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町三
  丁目12番10号\n情報元: 江戸川区イベントカレンダーCSV\
  n画像: https://www.city.edogawa.tokyo.jp/images/75110/1205washi.jpg\n
- このサイトではJavaScriptを使用したコンテンツ・機能
- を提供しています。JavaScriptを有効にするとご利用い
- ただけます。\n本文へスキップします。\nEnglish\n简体
- 中文\n한국어\n日本語\nすべての言語を見る\n閉じる\n
- 閉じる\n閉じる\nトップページ\n>\nイベントカレンダー
- (子ども未来館)\n> 【全2回講座】どんな紙ができるか
- な\n更新日:2026年11月13日\n【全2回講座】どんな紙がで
- きるかな\n日本古来の「紙」づくりを、\n子ども未来
- 館に植えてある木でやってみよう。\nどんな「紙」が
- できるかな。\n開催日時\n2026年12月5日(土曜日)10時00分
- から11時30分\n2026年12月6日(日曜日)14時00分から15時30分\
- n申し込み\n必要\n申し込み方法などくわしくは、下記
- リンク先「事前申し込みの講座の応募方法」をご覧く
- ださい。\n申し込み期間\n2026年11月13日(金曜日)から2026
- 年11月24日(火曜日)\n上記期間はウェブサイトのしめき
- りです。\n往復はがきでのお申し込みはウェブサイト
- のしめきり前日までに子ども未来館に着くようにご投
- 函ください。\n場所\n子ども未来館\n住所\n江戸川区篠
- 崎町三丁目12番10号\n対象\n小学校4年生から6年生まで\n
- 定員\n8人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電
- 話)03-5243-4011\n主催\n子ども未来館\n備考\n(注)2回連続で
- ご参加ください。\n関連資料\nアカデミー通信12月号(PD
- F:987KB)\n関連リンク\n事前申し込みの講座の応募方法\n
- 参照元: https://www.city.edogawa.tokyo.jp/event/2612washi.html
+ 更新日:2026年11月13日\n【全2回講座】どんな紙ができる
+ かな\n日本古来の「紙」づくりを、\n子ども未来館に
+ 植えてある木でやってみよう。\nどんな「紙」ができ
+ るかな。\n開催日時\n2026年12月5日(土曜日)10時00分から1
+ 1時30分\n2026年12月6日(日曜日)14時00分から15時30分\n申し
+ 込み\n必要\n申し込み方法などくわしくは、下記リン
+ ク先「事前申し込みの講座の応募方法」をご覧くださ
+ い。\n申し込み期間\n2026年11月13日(金曜日)から2026年11
+ 月24日(火曜日)\n上記期間はウェブサイトのしめきりで
+ す。\n往復はがきでのお申し込みはウェブサイトのし
+ めきり前日までに子ども未来館に着くようにご投函く
+ ださい。\n場所\n子ども未来館\n住所\n江戸川区篠崎町
+ 三丁目12番10号\n対象\n小学校4年生から6年生まで\n定員
+ \n8人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-
+ 5243-4011\n主催\n子ども未来館\n備考\n(注)2回連続でご参
+ 加ください。\n関連資料\nアカデミー通信12月号(PDF:987K
+ B)\n関連リンク\n事前申し込みの講座の応募方法\n参照
+ 元: https://www.city.edogawa.tokyo.jp/event/2612washi.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612washi.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -2518,7 +2722,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:a8efcc884ab3e0828a6f277a3e4d8ec3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T050000Z
@@ -2553,7 +2757,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:e4924d3ea3ca558389719d32ce611fd3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T050000Z
@@ -2563,30 +2767,24 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612christmas
  .html\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎
  町三丁目12番10号\n情報元: 江戸川区イベントカレンダ
  ーCSV\n画像: https://www.city.edogawa.tokyo.jp/images/75109/1205chris
- tmas.jpg\nこのサイトではJavaScriptを使用したコンテンツ
- ・機能を提供しています。JavaScriptを有効にするとご
- 利用いただけます。\n本文へスキップします。\nEnglish\
- n简体中文\n한국어\n日本語\nすべての言語を見る\n閉じ
- る\n閉じる\n閉じる\nトップページ\n>\nイベントカレン
- ダー(子ども未来館)\n> クリスマスツリーをつくろう\n
- 更新日:2026年11月13日\nクリスマスツリーをつくろう\n
- 日常の電化製品がどんな物からできているか知ってい
- ますか。\n実際に電子部品をはんだごてで組み立て、\
- n電子クリスマスツリーを作ってみましょう。\n開催日
- 時\n2026年12月5日(土曜日)14時00分から16時00分\n申し込み
- \n必要\n申し込み方法などくわしくは、下記リンク先
- 「事前申し込みの講座の応募方法」をご覧ください。
- \n申し込み期間\n2026年11月13日(金曜日)から2026年11月24
- 日(火曜日)\n上記期間はウェブサイトのしめきりです
- 。\n往復はがきでのお申し込みはウェブサイトのしめ
- きり前日までに子ども未来館に着くようにご投函くだ
- さい。\n場所\n子ども未来館\n住所\n江戸川区篠崎町三
- 丁目12番10号\n対象\n小学校4年生から6年生まで\n定員\n9
- 人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-524
- 3-4011\n主催\n子ども未来館\n関連資料\nアカデミー通信1
- 2月号(PDF:987KB)\n関連リンク\n事前申し込みの講座の応
- 募方法\n参照元: https://www.city.edogawa.tokyo.jp/event/2612christ
- mas.html
+ tmas.jpg\n更新日:2026年11月13日\nクリスマスツリーをつく
+ ろう\n日常の電化製品がどんな物からできているか知
+ っていますか。\n実際に電子部品をはんだごてで組み
+ 立て、\n電子クリスマスツリーを作ってみましょう。\
+ n開催日時\n2026年12月5日(土曜日)14時00分から16時00分\n
+ 申し込み\n必要\n申し込み方法などくわしくは、下記
+ リンク先「事前申し込みの講座の応募方法」をご覧く
+ ださい。\n申し込み期間\n2026年11月13日(金曜日)から2026
+ 年11月24日(火曜日)\n上記期間はウェブサイトのしめき
+ りです。\n往復はがきでのお申し込みはウェブサイト
+ のしめきり前日までに子ども未来館に着くようにご投
+ 函ください。\n場所\n子ども未来館\n住所\n江戸川区篠
+ 崎町三丁目12番10号\n対象\n小学校4年生から6年生まで\n
+ 定員\n9人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電
+ 話)03-5243-4011\n主催\n子ども未来館\n関連資料\nアカデミ
+ ー通信12月号(PDF:987KB)\n関連リンク\n事前申し込みの講
+ 座の応募方法\n参照元: https://www.city.edogawa.tokyo.jp/event/2
+ 612christmas.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612christmas.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -2598,7 +2796,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:c7c63ab833aab6ecb7a7402686ba3ca3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T050000Z
@@ -2634,7 +2832,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7a26e1b091f0afc5263e64a8fab36049@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T050000Z
@@ -2697,7 +2895,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:78f8a08e54032f31c021cbc2fccda4df@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T083000Z
@@ -2758,7 +2956,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7b886ab38f7d76b35ea28f9602acf739@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261205T100000Z
@@ -2797,7 +2995,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:2a779b698c357597caf03315fad683cd@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261205
@@ -2839,7 +3037,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7aa4f19e1b63b06ae06b63f0459b385e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261205
@@ -2876,8 +3074,36 @@ PRIORITY:5
 CATEGORIES:学校公開
 END:VEVENT
 BEGIN:VEVENT
+UID:452f796c858c11c2b5c637cb41666aff@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261205
+DTEND;VALUE=DATE:20261206
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:946296da54b4a433b98314bca38a913f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261205
@@ -2919,7 +3145,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:fef472b9515a78e8ec6e9eb3c1428166@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261206T010000Z
@@ -2958,7 +3184,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.sakurakan-edogawa.jp/files/topi
 END:VEVENT
 BEGIN:VEVENT
 UID:cb73588a7b9b88afa8d33f1f20dee715@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261206T010000Z
@@ -2994,11 +3220,11 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1c1852a9173124d8ad4a3859d6d11b28@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261206T040000Z
-DTEND:20261206T070000Z
+DTEND:20261206T072000Z
 SUMMARY:12/6(日)開催!「水族館をつなぐハンドブック」を
  一緒につくる中学生・高校生を募集します! [区内文化
  ]
@@ -3052,7 +3278,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.tokyo-zoo.net/image/handbook_SN
 END:VEVENT
 BEGIN:VEVENT
 UID:c75d64db8800acefa080cb6f6fd3be29@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261206T042000Z
@@ -3098,7 +3324,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:47b2f8ddd6feae011e9b0ac4586a53db@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261206T043000Z
@@ -3129,7 +3355,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:53829e1466c11fc1eca048723e48b9c9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261206T050000Z
@@ -3139,30 +3365,24 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612washi.htm
  l\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町三
  丁目12番10号\n情報元: 江戸川区イベントカレンダーCSV\
  n画像: https://www.city.edogawa.tokyo.jp/images/75110/1205washi.jpg\n
- このサイトではJavaScriptを使用したコンテンツ・機能
- を提供しています。JavaScriptを有効にするとご利用い
- ただけます。\n本文へスキップします。\nEnglish\n简体
- 中文\n한국어\n日本語\nすべての言語を見る\n閉じる\n
- 閉じる\n閉じる\nトップページ\n>\nイベントカレンダー
- (子ども未来館)\n> 【全2回講座】どんな紙ができるか
- な\n更新日:2026年11月13日\n【全2回講座】どんな紙がで
- きるかな\n日本古来の「紙」づくりを、\n子ども未来
- 館に植えてある木でやってみよう。\nどんな「紙」が
- できるかな。\n開催日時\n2026年12月5日(土曜日)10時00分
- から11時30分\n2026年12月6日(日曜日)14時00分から15時30分\
- n申し込み\n必要\n申し込み方法などくわしくは、下記
- リンク先「事前申し込みの講座の応募方法」をご覧く
- ださい。\n申し込み期間\n2026年11月13日(金曜日)から2026
- 年11月24日(火曜日)\n上記期間はウェブサイトのしめき
- りです。\n往復はがきでのお申し込みはウェブサイト
- のしめきり前日までに子ども未来館に着くようにご投
- 函ください。\n場所\n子ども未来館\n住所\n江戸川区篠
- 崎町三丁目12番10号\n対象\n小学校4年生から6年生まで\n
- 定員\n8人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電
- 話)03-5243-4011\n主催\n子ども未来館\n備考\n(注)2回連続で
- ご参加ください。\n関連資料\nアカデミー通信12月号(PD
- F:987KB)\n関連リンク\n事前申し込みの講座の応募方法\n
- 参照元: https://www.city.edogawa.tokyo.jp/event/2612washi.html
+ 更新日:2026年11月13日\n【全2回講座】どんな紙ができる
+ かな\n日本古来の「紙」づくりを、\n子ども未来館に
+ 植えてある木でやってみよう。\nどんな「紙」ができ
+ るかな。\n開催日時\n2026年12月5日(土曜日)10時00分から1
+ 1時30分\n2026年12月6日(日曜日)14時00分から15時30分\n申し
+ 込み\n必要\n申し込み方法などくわしくは、下記リン
+ ク先「事前申し込みの講座の応募方法」をご覧くださ
+ い。\n申し込み期間\n2026年11月13日(金曜日)から2026年11
+ 月24日(火曜日)\n上記期間はウェブサイトのしめきりで
+ す。\n往復はがきでのお申し込みはウェブサイトのし
+ めきり前日までに子ども未来館に着くようにご投函く
+ ださい。\n場所\n子ども未来館\n住所\n江戸川区篠崎町
+ 三丁目12番10号\n対象\n小学校4年生から6年生まで\n定員
+ \n8人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-
+ 5243-4011\n主催\n子ども未来館\n備考\n(注)2回連続でご参
+ 加ください。\n関連資料\nアカデミー通信12月号(PDF:987K
+ B)\n関連リンク\n事前申し込みの講座の応募方法\n参照
+ 元: https://www.city.edogawa.tokyo.jp/event/2612washi.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612washi.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -3174,7 +3394,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:8f6dd24b2ea67029aab9d62aaefb9bf1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261206
@@ -3209,7 +3429,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:22b4338158cf644667b5505e7699c190@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261206
@@ -3229,7 +3449,7 @@ CATEGORIES:区内公共-環境
 END:VEVENT
 BEGIN:VEVENT
 UID:0316ce90f0391c064e323ec7ee25dc4e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261206
@@ -3248,8 +3468,36 @@ PRIORITY:3
 CATEGORIES:区内公共-環境
 END:VEVENT
 BEGIN:VEVENT
+UID:8bc123d0c1d8c0ccdf867d3d8086eaf8@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261206
+DTEND;VALUE=DATE:20261207
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:7fe225879b465b32887129154dc7d4dd@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261206
@@ -3291,7 +3539,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:46d67ed6d7fb22c17b9eeab167bd6628@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261207T043000Z
@@ -3336,8 +3584,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:0a9762a5915eb589a241766c91fb1eee@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261207
+DTEND;VALUE=DATE:20261208
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:41d1b1dbcf9106eb4120b202d15f3472@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261207
@@ -3379,7 +3689,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:baea43d040e65937105132bc322f2bf6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261208T010000Z
@@ -3418,7 +3728,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:dfa7b2750a2d73e400422e1b414cc1a6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261208T010000Z
@@ -3456,7 +3766,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:504109389753d7adeb0c810a6c830898@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261208T010000Z
@@ -3491,7 +3801,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:06963d39b6a505b95959bacd5689f0e0@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261208T010000Z
@@ -3541,7 +3851,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a4f1c49246512c5989c232f4cb732c46@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261208T060000Z
@@ -3588,7 +3898,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3b2e7205a34de31a42e77807952c8bd3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261208T093000Z
@@ -3628,7 +3938,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c93c9fc2800e2db3ecc8b3296277b752@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261208
@@ -3669,8 +3979,50 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:22a9fa38cdc38d4c2c402a4500c4d1ab@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261209T000000Z
+DTEND:20261209T070000Z
+SUMMARY:「いつまでも動けるからだづくり」パネル展 [区
+ 公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/08undopanelte
+ n.html\n会場: グリーンパレス本館1階ロビー\n住所: 江戸
+ 川区松島1丁目38番1号\n情報元: 江戸川区公式イベント
+ カレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_r
+ n/images/sns/logo.png\n更新日:2026年11月4日\n「いつまでも動
+ けるからだづくり」パネル展\n元気に過ごすためには
+ 、丈夫な関節や筋肉などが重要です。本展示では腰痛
+ 予防やフレイル(加齢による心身の衰え)予防など動け
+ るからだづくりのためのポイントを紹介します。見て
+ ・知って・体験して、これからの健康を考えるきっか
+ けにしましょう。\n開催日時\n2026年11月30日(月曜日)12
+ 時00分から2026年12月11日(金曜日)15時00分\n申し込み\n不
+ 要\n場所\nグリーンパレス本館1階ロビー\n住所\n江戸川
+ 区松島1丁目38番1号\n内容\n【実施イベント】\n〇「片
+ 足立ち何秒立てるかチャレンジ!」\n理学療法士・作業
+ 療法士が下記の日程で片足立ちが何秒できるかを計測
+ します。アドバイスもお伝え出来ます。\n2026年12月3日
+ (木曜日)9時00分から16時00分、12月9日(水曜日)13時00分か
+ ら16時00分、12月11日(金曜日)13時00分から15時00分\n〇「
+ 腰痛川柳」腰痛への想いを川柳にして貼っていただく
+ パネルが会場にあります。\nぜひご参加ください。\n
+ 費用\n無料\n問合せ\n鹿骨健康サポートセンター\n電話:
+ 03-3678-8711\n主催\n江戸川区健康部健康サービス課\n参照
+ 元: https://www.city.edogawa.tokyo.jp/event/08undopanelten.html
+URL:https://www.city.edogawa.tokyo.jp/event/08undopanelten.html
+LOCATION:グリーンパレス本館1階ロビー 江戸川区松島1丁
+ 目38番1号
+GEO:35.705678;139.866288
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:2804346141bc8a0e7a4ad39c23dc9176@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261209T050000Z
@@ -3712,7 +4064,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:94e685b9d0ba8534a2a207be95723a81@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261209T060000Z
@@ -3722,25 +4074,20 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612seidenki.
  html\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町
  三丁目12番10号\n情報元: 江戸川区イベントカレンダーC
  SV\n画像: https://www.city.edogawa.tokyo.jp/images/75141/1209seidenki.
- jpg\nこのサイトではJavaScriptを使用したコンテンツ・機
- 能を提供しています。JavaScriptを有効にするとご利用
- いただけます。\n本文へスキップします。\nEnglish\n简
- 体中文\n한국어\n日本語\nすべての言語を見る\n閉じる\
- n閉じる\n閉じる\nトップページ\n>\nイベントカレンダ
- ー(子ども未来館)\n> 静電気であそぼう\n更新日:2026年11
- 月13日\n静電気であそぼう\n冬は、パチパチと静電気が
- いやですね。\nでも、静電気を利用して遊んじゃいま
- す。\nゲームを作ったり、風船を浮かせたりいろいろ
- な遊びを考えましょう。\n開催日時\n2026年12月9日(水曜
- 日)15時00分から16時00分\n申し込み\n不要\n当日受付です
- 。\n午後2時40分から受付をはじめます。\n参加希望の
- 人は、2時55分までに集まってください。\n2時55分の時
- 点で定員をこえていた場合は、くじびきをします。\n
- 場所\n子ども未来館\n住所\n江戸川区篠崎町三丁目12番1
- 0号\n対象\n小学校1年生から6年生まで\n定員\n16人\n費用
- \n無料\n問合せ\n子ども未来館(電話)03-5243-4011\n主催\n子
- ども未来館\n関連資料\nアカデミー通信12月号(PDF:987KB)\
- n参照元: https://www.city.edogawa.tokyo.jp/event/2612seidenki.html
+ jpg\n更新日:2026年11月13日\n静電気であそぼう\n冬は、パ
+ チパチと静電気がいやですね。\nでも、静電気を利用
+ して遊んじゃいます。\nゲームを作ったり、風船を浮
+ かせたりいろいろな遊びを考えましょう。\n開催日時\
+ n2026年12月9日(水曜日)15時00分から16時00分\n申し込み\n
+ 不要\n当日受付です。\n午後2時40分から受付をはじめ
+ ます。\n参加希望の人は、2時55分までに集まってくだ
+ さい。\n2時55分の時点で定員をこえていた場合は、く
+ じびきをします。\n場所\n子ども未来館\n住所\n江戸川
+ 区篠崎町三丁目12番10号\n対象\n小学校1年生から6年生
+ まで\n定員\n16人\n費用\n無料\n問合せ\n子ども未来館(電
+ 話)03-5243-4011\n主催\n子ども未来館\n関連資料\nアカデミ
+ ー通信12月号(PDF:987KB)\n参照元: https://www.city.edogawa.tokyo.
+ jp/event/2612seidenki.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612seidenki.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -3752,7 +4099,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:9bed90775ef0a9140560f714d4e92476@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261209T100000Z
@@ -3790,8 +4137,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:f93de104ec40f79a2d1ad94300a90306@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261209
+DTEND;VALUE=DATE:20261210
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:d8a8a0af5c7925bcb579a32bc94b9a16@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261209
@@ -3833,7 +4208,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d4d37003c96f0e189ee302490dc16633@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261210T001500Z
@@ -3879,7 +4254,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c9f88b95e44ae6e85d98477983330b17@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261210T010000Z
@@ -3920,7 +4295,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:6ad5e1f6c9efd506e843c523da784e60@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261210T050000Z
@@ -3954,7 +4329,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:082fa5f29a4b144b02ffed61fd2cf7c4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261210T060000Z
@@ -3999,7 +4374,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:636ea17e2064e9329425c3994b4ce441@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261210T071500Z
@@ -4039,7 +4414,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:179c50b072799f127e87ff152361e37b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261210T083000Z
@@ -4100,7 +4475,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0b39b4eb167eb070499812dad83c06d9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261210T100000Z
@@ -4139,7 +4514,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8b8ba605317321a80e6570dc01b8455c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261211T040000Z
@@ -4177,7 +4552,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:9f3aec6eb4fb8f60c6a54206e238fa6a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261211T040000Z
@@ -4227,7 +4602,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b47976f9ae6e71fece481a4ac9c36261@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261211T050000Z
@@ -4262,7 +4637,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ab7e102e0d1cc684afe23590b6a4efcb@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261211T100000Z
@@ -4301,7 +4676,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:e691cda091426844e9e11a8f2a1e242c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T000000Z
@@ -4333,7 +4708,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:43e3cd27c2707660230208c1e92d9031@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T003000Z
@@ -4369,7 +4744,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3a1e35a7b3e77e74404193adfa75b9e4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T010000Z
@@ -4405,7 +4780,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:033802ebb3e89a1db05213e9f96bc98e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T040000Z
@@ -4455,7 +4830,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f655a06da574d8e919517df1f4b08d87@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T043000Z
@@ -4490,7 +4865,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:53e57d553b2ca29889d0d83ca9cef0d0@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T050000Z
@@ -4500,32 +4875,26 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612robot.htm
  l\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町三
  丁目12番10号\n情報元: 江戸川区イベントカレンダーCSV\
  n画像: https://www.city.edogawa.tokyo.jp/images/75112/1212robot.jpg\n
- このサイトではJavaScriptを使用したコンテンツ・機能
- を提供しています。JavaScriptを有効にするとご利用い
- ただけます。\n本文へスキップします。\nEnglish\n简体
- 中文\n한국어\n日本語\nすべての言語を見る\n閉じる\n
- 閉じる\n閉じる\nトップページ\n>\nイベントカレンダー
- (子ども未来館)\n> はじめてロボット教室\n更新日:2026
- 年11月13日\nはじめてロボット教室\n車型のロボットを
- 組み立てたあと、プログラムを書いて、動かしてみま
- しょう。\n対応OSはWindowsです。\n材料費3300円をお持ち
- ください。\n開催日時\n2026年12月12日(土曜日)14時00分か
- ら16時00分\n申し込み\n必要\n申し込み方法などくわし
- くは、下記リンク先「事前申し込みの講座の応募方法
- 」をご覧ください。\n申し込み期間\n2026年11月13日(金
- 曜日)から2026年12月1日(火曜日)\n上記期間はウェブサイ
- トのしめきりです。\n往復はがきでのお申し込みはウ
- ェブサイトのしめきり前日までに子ども未来館に着く
- ようにご投函ください。\n場所\n子ども未来館\n住所\n
- 江戸川区篠崎町三丁目12番10号\n対象\n小学校1年生から
- 6年生まで\n(注)小学校1、2年生は、保護者と一緒にご
- 参加ください。\n定員\n12人(抽選)\n出演者(講師)\n千葉
- 工業大学先進工学部未来ロボティクス学科\n費用\n有
- 料\n材料費3300円をお持ちください。\n問合せ\n子ども
- 未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資料\
- nアカデミー通信12月号(PDF:987KB)\n関連リンク\n事前申し
- 込みの講座の応募方法\n参照元: https://www.city.edogawa.toky
- o.jp/event/2612robot.html
+ 更新日:2026年11月13日\nはじめてロボット教室\n車型の
+ ロボットを組み立てたあと、プログラムを書いて、動
+ かしてみましょう。\n対応OSはWindowsです。\n材料費3300
+ 円をお持ちください。\n開催日時\n2026年12月12日(土曜
+ 日)14時00分から16時00分\n申し込み\n必要\n申し込み方法
+ などくわしくは、下記リンク先「事前申し込みの講座
+ の応募方法」をご覧ください。\n申し込み期間\n2026年1
+ 1月13日(金曜日)から2026年12月1日(火曜日)\n上記期間は
+ ウェブサイトのしめきりです。\n往復はがきでのお申
+ し込みはウェブサイトのしめきり前日までに子ども未
+ 来館に着くようにご投函ください。\n場所\n子ども未
+ 来館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学
+ 校1年生から6年生まで\n(注)小学校1、2年生は、保護者
+ と一緒にご参加ください。\n定員\n12人(抽選)\n出演者(
+ 講師)\n千葉工業大学先進工学部未来ロボティクス学科
+ \n費用\n有料\n材料費3300円をお持ちください。\n問合せ
+ \n子ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n
+ 関連資料\nアカデミー通信12月号(PDF:987KB)\n関連リンク\
+ n事前申し込みの講座の応募方法\n参照元: https://www.city
+ .edogawa.tokyo.jp/event/2612robot.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612robot.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -4537,7 +4906,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:73b205bb88878e32c37a3feb9c21281d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T050000Z
@@ -4547,30 +4916,24 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612sound_of_
  science.html\n会場: 子ども未来館\n住所: 東京都江戸川区
  篠崎町三丁目12番10号\n情報元: 江戸川区イベントカレ
  ンダーCSV\n画像: https://www.city.edogawa.tokyo.jp/images/75111/121
- 2choompa.jpg\nこのサイトではJavaScriptを使用したコンテン
- ツ・機能を提供しています。JavaScriptを有効にすると
- ご利用いただけます。\n本文へスキップします。\nEngli
- sh\n简体中文\n한국어\n日本語\nすべての言語を見る\n閉
- じる\n閉じる\n閉じる\nトップページ\n>\nイベントカレ
- ンダー(子ども未来館)\n> サウンド・オブ・サイエンス
- \n更新日:2026年11月13日\nサウンド・オブ・サイエンス\n
- 音は見えないし、つかまらない。\nそれでも音を見た
- いし、つかまえたい。\n12月の風や木の音、川や地中
- の音などを超音波で聴いてみよう。\n開催日時\n2026年1
- 2月12日(土曜日)14時00分から16時00分\n申し込み\n必要\n
- 申し込み方法などくわしくは、下記リンク先「事前申
- し込みの講座の応募方法」をご覧ください。\n申し込
- み期間\n2026年11月13日(金曜日)から2026年12月1日(火曜日)
- \n上記期間はウェブサイトのしめきりです。\n往復は
- がきでのお申し込みはウェブサイトのしめきり前日ま
- でに子ども未来館に着くようにご投函ください。\n場
- 所\n子ども未来館\n住所\n江戸川区篠崎町三丁目12番10
- 号\n対象\n小学校3年生から6年生まで\n定員\n18人(抽選)\
- n費用\n無料\n問合せ\n子ども未来館(電話)03-5243-4011\n主
- 催\n子ども未来館\n関連資料\nアカデミー通信12月号(PDF
- :987KB)\n関連リンク\n事前申し込みの講座の応募方法\n
- 参照元: https://www.city.edogawa.tokyo.jp/event/2612sound_of_science.
- html
+ 2choompa.jpg\n更新日:2026年11月13日\nサウンド・オブ・サ
+ イエンス\n音は見えないし、つかまらない。\nそれで
+ も音を見たいし、つかまえたい。\n12月の風や木の音
+ 、川や地中の音などを超音波で聴いてみよう。\n開催
+ 日時\n2026年12月12日(土曜日)14時00分から16時00分\n申し
+ 込み\n必要\n申し込み方法などくわしくは、下記リン
+ ク先「事前申し込みの講座の応募方法」をご覧くださ
+ い。\n申し込み期間\n2026年11月13日(金曜日)から2026年12
+ 月1日(火曜日)\n上記期間はウェブサイトのしめきりで
+ す。\n往復はがきでのお申し込みはウェブサイトのし
+ めきり前日までに子ども未来館に着くようにご投函く
+ ださい。\n場所\n子ども未来館\n住所\n江戸川区篠崎町
+ 三丁目12番10号\n対象\n小学校3年生から6年生まで\n定員
+ \n18人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03
+ -5243-4011\n主催\n子ども未来館\n関連資料\nアカデミー通
+ 信12月号(PDF:987KB)\n関連リンク\n事前申し込みの講座の
+ 応募方法\n参照元: https://www.city.edogawa.tokyo.jp/event/2612sou
+ nd_of_science.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612sound_of_science.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -4582,7 +4945,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:68c9cbd983fa2e17fccdc0634e70f9f3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T050000Z
@@ -4625,7 +4988,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:998214b79c0e695c0b91fcb2a8d9728e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T050000Z
@@ -4658,47 +5021,12 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:866920a1723bdf26cd984975ddd1ba94@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:c44bf5d181f731f193dfb9a9a99e0425@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261212T050000Z
-DTEND:20261212T061500Z
-SUMMARY:西洋美術史への扉 [区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/26art.html\n
- 会場: しのざき文化プラザ\n住所: 江戸川区篠崎町7丁
- 目20番9号\n情報元: 江戸川区公式イベントカレンダー\n
- 画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/images/sns/logo
- .png\n更新日:2026年11月12日\n西洋美術史への扉\n西洋美
- 術史への扉 連続講座です。\n全5回の講座になります
- 。\nぜひ、お気軽にご参加ください。\n開催日時\n2026
- 年12月12日(土曜日)14時00分から15時15分\n2027年1月9日(土
- 曜日)17時00分から18時15分\n2027年1月23日(土曜日)14時00分
- から15時15分\n2027年2月13日(土曜日)14時00分から15時15分\
- n2027年3月6日(土曜日)14時00分から15時15分\n申し込み\n必
- 要\n申し込み方法\n申込フォームまたは窓口で受け付
- け\n申し込む\n場所\nしのざき文化プラザ\n住所\n江戸
- 川区篠崎町7丁目20番9号\n定員\n24人(申込順)\n出演者(講
- 師)\n長谷川浩一(美術史研究家)\n費用\n有料\n10\,000円\n
- 問合せ\nしのざき文化プラザ\n電話:03-3676-9071\n主催\nし
- のざき文化プラザ\n参照元: https://www.city.edogawa.tokyo.jp/e
- vent/26art.html
-URL:https://www.city.edogawa.tokyo.jp/event/26art.html
-LOCATION:しのざき文化プラザ 江戸川区篠崎町7丁目20番9
- 号
-GEO:35.705902;139.902939
-PRIORITY:9
-CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
- te_rn/images/sns/logo.png
-END:VEVENT
-BEGIN:VEVENT
-UID:c62fbfe026de8c0cb5c4a840113392a7@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART;VALUE=DATE:20261212
-DTEND;VALUE=DATE:20270315
+DTEND:20270314T052000Z
 SUMMARY:江戸川区郷土資料室令和8年度企画展「利根川と
  江戸川区ーその舟運と治水ー」 [区公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2026kikaku.ht
@@ -4777,8 +5105,71 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:866920a1723bdf26cd984975ddd1ba94@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261212T050000Z
+DTEND:20261212T061500Z
+SUMMARY:西洋美術史への扉 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/26art.html\n
+ 会場: しのざき文化プラザ\n住所: 江戸川区篠崎町7丁
+ 目20番9号\n情報元: 江戸川区公式イベントカレンダー\n
+ 画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/images/sns/logo
+ .png\n更新日:2026年11月12日\n西洋美術史への扉\n西洋美
+ 術史への扉 連続講座です。\n全5回の講座になります
+ 。\nぜひ、お気軽にご参加ください。\n開催日時\n2026
+ 年12月12日(土曜日)14時00分から15時15分\n2027年1月9日(土
+ 曜日)17時00分から18時15分\n2027年1月23日(土曜日)14時00分
+ から15時15分\n2027年2月13日(土曜日)14時00分から15時15分\
+ n2027年3月6日(土曜日)14時00分から15時15分\n申し込み\n必
+ 要\n申し込み方法\n申込フォームまたは窓口で受け付
+ け\n申し込む\n場所\nしのざき文化プラザ\n住所\n江戸
+ 川区篠崎町7丁目20番9号\n定員\n24人(申込順)\n出演者(講
+ 師)\n長谷川浩一(美術史研究家)\n費用\n有料\n10\,000円\n
+ 問合せ\nしのざき文化プラザ\n電話:03-3676-9071\n主催\nし
+ のざき文化プラザ\n参照元: https://www.city.edogawa.tokyo.jp/e
+ vent/26art.html
+URL:https://www.city.edogawa.tokyo.jp/event/26art.html
+LOCATION:しのざき文化プラザ 江戸川区篠崎町7丁目20番9
+ 号
+GEO:35.705902;139.902939
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:7681b9439b5c6178d9ac90ca70aa2355@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261212
+DTEND;VALUE=DATE:20261213
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:3615c51ff87ad490d411af1d4945380d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T000000Z
@@ -4810,7 +5201,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:41579a25ccb8414154d8f5462f456f29@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T003000Z
@@ -4846,7 +5237,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7a538fa89ebf372a73be2ca14d76b273@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T010000Z
@@ -4881,7 +5272,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:77293e66de453e68d13cd64a33853c9b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T010000Z
@@ -4892,30 +5283,24 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612tejina.ht
  崎町3丁目12番10号(篠崎ポニーランド隣) 開館時間 午前
  9時から午後5時 休館日 アカデミー\n情報元: 江戸川区
  イベントカレンダーCSV\n画像: https://www.city.edogawa.tokyo.j
- p/images/75140/1213tejina.jpg\nこのサイトではJavaScriptを使用
- したコンテンツ・機能を提供しています。JavaScriptを
- 有効にするとご利用いただけます。\n本文へスキップ
- します。\nEnglish\n简体中文\n한국어\n日本語\nすべての
- 言語を見る\n閉じる\n閉じる\n閉じる\nトップページ\n>\
- nイベントカレンダー(子ども未来館)\n> 手品ごっこ@共
- 育プラザ平井\n更新日:2026年11月13日\n手品ごっこ@共育
- プラザ平井\n科学はまるで魔法みたいにみえることが
- あります。\nよく見て考えると、なぜそうなるのかわ
- かるかもしれません。\nやり方をおぼえて、家族や友
- だちと一緒にたのしもう。\n開催日時\n2026年12月13日(
- 日曜日)10時00分から11時30分\n申し込み\n必要\n申し込み
- 方法などくわしくは、下記リンク先「事前申し込みの
- 講座の応募方法」をご覧ください。\n申し込み期間\n20
- 26年11月13日(金曜日)から2026年12月1日(火曜日)\n上記期
- 間はウェブサイトのしめきりです。\n往復はがきでの
- お申し込みはウェブサイトのしめきり前日までに子ど
- も未来館に着くようにご投函ください。\n場所\n共育
- プラザ平井\n対象\n小学校1年生から6年生まで\n定員\n12
- 人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-524
- 3-4011\n主催\n子ども未来館\n関連資料\nアカデミー通信1
- 2月号(PDF:987KB)\n関連リンク\n事前申し込みの講座の応
- 募方法\n参照元: https://www.city.edogawa.tokyo.jp/event/2612tejina
- .html
+ p/images/75140/1213tejina.jpg\n更新日:2026年11月13日\n手品ごっ
+ こ@共育プラザ平井\n科学はまるで魔法みたいにみえる
+ ことがあります。\nよく見て考えると、なぜそうなる
+ のかわかるかもしれません。\nやり方をおぼえて、家
+ 族や友だちと一緒にたのしもう。\n開催日時\n2026年12
+ 月13日(日曜日)10時00分から11時30分\n申し込み\n必要\n申
+ し込み方法などくわしくは、下記リンク先「事前申し
+ 込みの講座の応募方法」をご覧ください。\n申し込み
+ 期間\n2026年11月13日(金曜日)から2026年12月1日(火曜日)\n
+ 上記期間はウェブサイトのしめきりです。\n往復はが
+ きでのお申し込みはウェブサイトのしめきり前日まで
+ に子ども未来館に着くようにご投函ください。\n場所\
+ n共育プラザ平井\n対象\n小学校1年生から6年生まで\n定
+ 員\n12人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話
+ )03-5243-4011\n主催\n子ども未来館\n関連資料\nアカデミー
+ 通信12月号(PDF:987KB)\n関連リンク\n事前申し込みの講座
+ の応募方法\n参照元: https://www.city.edogawa.tokyo.jp/event/2612
+ tejina.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612tejina.html
 LOCATION:共育プラザ平井 〒133-0061 江戸川区篠崎町3丁目12
  番10号(篠崎ポニーランド隣) 開館時間 午前9時から午
@@ -4928,7 +5313,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:a74bb19010461502b30e235d55287dd4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T010000Z
@@ -4984,7 +5369,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.tokyo-park.or.jp/park/shinozaki
 END:VEVENT
 BEGIN:VEVENT
 UID:80e82bde5e0330995ccbc7d6791cbdf8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T010000Z
@@ -5020,7 +5405,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:4986ac50f7457c9f73c343aef67486b8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T040000Z
@@ -5061,7 +5446,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a0b76d12fa222254d1657b1b70097ede@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T043000Z
@@ -5071,31 +5456,25 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612game_soun
  d.html\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎
  町三丁目12番10号\n情報元: 江戸川区イベントカレンダ
  ーCSV\n画像: https://www.city.edogawa.tokyo.jp/images/75113/1213game_
- sound.jpg\nこのサイトではJavaScriptを使用したコンテンツ
- ・機能を提供しています。JavaScriptを有効にするとご
- 利用いただけます。\n本文へスキップします。\nEnglish\
- n简体中文\n한국어\n日本語\nすべての言語を見る\n閉じ
- る\n閉じる\n閉じる\nトップページ\n>\nイベントカレン
- ダー(子ども未来館)\n> 「ゲームサウンド」をつくろう
- \n更新日:2026年11月13日\n「ゲームサウンド」をつくろ
- う\n効果音を組み合わせてオリジナルBGMを作成!\n楽器
- の知識がなくても大丈夫。\nプログラムを用いて、思
- いのままに自分だけのサウンドを作り上げましょう。
- \n開催日時\n2026年12月13日(日曜日)13時30分から16時00分\n
- 申し込み\n必要\n申し込み方法などくわしくは、下記
- リンク先「事前申し込みの講座の応募方法」をご覧く
- ださい。\n申し込み期間\n2026年11月13日(金曜日)から2026
- 年12月1日(火曜日)\n上記期間はウェブサイトのしめき
- りです。\n往復はがきでのお申し込みはウェブサイト
- のしめきり前日までに子ども未来館に着くようにご投
- 函ください。\n場所\n子ども未来館\n住所\n江戸川区篠
- 崎町三丁目12番10号\n対象\n小学校4年生から6年生まで\n
- 定員\n20人(抽選)\n出演者(講師)\nとうきょうとこどもク
- リエィティブラボ\n費用\n無料\n問合せ\n子ども未来館(
- 電話)03-5243-4011\n主催\n子ども未来館\n関連資料\nアカデ
- ミー通信12月号(PDF:987KB)\n関連リンク\n事前申し込みの
- 講座の応募方法\n参照元: https://www.city.edogawa.tokyo.jp/even
- t/2612game_sound.html
+ sound.jpg\n更新日:2026年11月13日\n「ゲームサウンド」を
+ つくろう\n効果音を組み合わせてオリジナルBGMを作成!
+ \n楽器の知識がなくても大丈夫。\nプログラムを用い
+ て、思いのままに自分だけのサウンドを作り上げまし
+ ょう。\n開催日時\n2026年12月13日(日曜日)13時30分から16
+ 時00分\n申し込み\n必要\n申し込み方法などくわしくは
+ 、下記リンク先「事前申し込みの講座の応募方法」を
+ ご覧ください。\n申し込み期間\n2026年11月13日(金曜日)
+ から2026年12月1日(火曜日)\n上記期間はウェブサイトの
+ しめきりです。\n往復はがきでのお申し込みはウェブ
+ サイトのしめきり前日までに子ども未来館に着くよう
+ にご投函ください。\n場所\n子ども未来館\n住所\n江戸
+ 川区篠崎町三丁目12番10号\n対象\n小学校4年生から6年
+ 生まで\n定員\n20人(抽選)\n出演者(講師)\nとうきょうと
+ こどもクリエィティブラボ\n費用\n無料\n問合せ\n子ど
+ も未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資
+ 料\nアカデミー通信12月号(PDF:987KB)\n関連リンク\n事前
+ 申し込みの講座の応募方法\n参照元: https://www.city.edogaw
+ a.tokyo.jp/event/2612game_sound.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612game_sound.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -5107,7 +5486,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:22fef276f76c85c7d5ff3d4e2f1343e8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261213T050000Z
@@ -5140,7 +5519,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3924989f2319460d82122eef6908887f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261213
@@ -5176,7 +5555,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:93308dc06d4b4d7534ebbb6233798b1f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261213
@@ -5215,7 +5594,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c88807c435472eb0c07647ed072fd6a1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261213
@@ -5249,8 +5628,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:b6285c74f2057c496d16f9ce94235ec4@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261213
+DTEND;VALUE=DATE:20261214
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:1c3cf796c9d864b9de2dd08dad085de4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261214T000000Z
@@ -5282,7 +5689,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b89d54b321dad5614bc3e1aa713d3254@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261214T040000Z
@@ -5327,7 +5734,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1c5fd010b88daf8a863fd9b6704955a6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261214T043000Z
@@ -5360,7 +5767,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a1a3f62d8eee662e869f7f876887752f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261215T000000Z
@@ -5392,7 +5799,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0349e77f0ce805e328b6239722de29da@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261215T010000Z
@@ -5433,7 +5840,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0c2babfe836855fb0895a782e2fb1c7d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261215T010000Z
@@ -5469,7 +5876,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7fbc3aa49d2ae3c1eeb446e22de2e968@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261215T050000Z
@@ -5509,7 +5916,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:888662c9134eb8b3b32f94cc0bad923f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261215T083000Z
@@ -5570,7 +5977,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a964c5e443a8ddec4601f4cef6596fa2@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261215T093000Z
@@ -5610,7 +6017,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:9f1e22c8979ff114c2635284fb477186@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261216T000000Z
@@ -5642,7 +6049,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8dface0d361f07f0b5a2220b312f0d41@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261216T010000Z
@@ -5683,12 +6090,101 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:39d31bf1506ea9c7b9aadc9ee8e3ebb6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:aecf86d7f27880113b4a08f5e0b57145@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART:20261216T041000Z
-DTEND:20261229T073000Z
+DTSTART:20261216T050000Z
+DTEND:20261216T063000Z
+SUMMARY:五代目円楽一門会若手落語会 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612enraku.ht
+ ml\n会場: ひらい圓藏亭\n住所: 東京都江戸川区平井3丁
+ 目21番24号\n情報元: 江戸川区イベントカレンダーCSV\n
+ 画像: https://www.city.edogawa.tokyo.jp/images/75157/2612enraku.png\n
+ 更新日:2026年11月11日\n五代目円楽一門会若手落語会\n
+ 五代目円楽一門会の若手落語家による4人で90分の定期
+ 公演です。\n第1、第2、第3水曜日はお昼に、第4金曜日
+ は夜に開催しています。\nお楽しみに!\n開催日時\n2026
+ 年12月2日(水曜日)14時00分から15時30分\n2026年12月9日(水
+ 曜日)14時00分から15時30分\n2026年12月16日(水曜日)14時00
+ 分から15時30分\n2026年12月25日(金曜日)19時00分から20時30
+ 分\n開場時間は開演時間の30分前です。\n申し込み\n必
+ 要\n申し込み期間\n11月17日(火曜日)13時30分からひらい
+ 圓藏亭で電話受付開始\n申し込み方法\nひらい圓藏亭
+ に電話で申込み\n場所\nひらい圓藏亭\n住所\n江戸川区
+ 平井3丁目21番24号\nホームページ\nひらい圓藏亭\n定員\
+ n30名\n出演者(講師)\n2日(水曜日):三遊亭栄豊満(主任)、
+ 三遊亭兼太郎、三遊亭萬丸、三遊亭兼作\n9日(水曜日):
+ 三遊亭鳳月(主任)、三遊亭らっ好、三遊亭好青年、三
+ 遊亭萬次郎\n16日(水曜日):三遊亭好二郎(主任)、三遊亭
+ ぽん太、三遊亭好志朗、三遊亭愛二郎\n25日(金曜日):
+ 三遊亭好好(主任)、三遊亭兼矢、三遊亭兼作、三遊亭
+ 愛二郎\n費用\n有料\n1\,000円\n問合せ\nひらい圓藏亭\n電
+ 話:03-5626-3242(月曜休館、ただし祝休日の場合は開館)\n1
+ 3時30分から17時まで\n協力\nひらい圓藏亭\n参照元: https
+ ://www.city.edogawa.tokyo.jp/event/2612enraku.html
+URL:https://www.city.edogawa.tokyo.jp/event/2612enraku.html
+LOCATION:ひらい圓藏亭 東京都江戸川区平井3丁目21番24号
+GEO:35.703266;139.843821
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
+ 157/2612enraku.png
+END:VEVENT
+BEGIN:VEVENT
+UID:a95d8d191699cbc63aa6da75dd604200@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20261216T060000Z
+DTEND:20261216T070000Z
+SUMMARY:リズム運動体験教室(船堀コミュニティ会館) [区
+ 公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/r8taiken4.htm
+ l\n会場: 船堀コミュニティ会館 集会室4\n住所: 江戸川
+ 区船堀1丁目3番1号\n情報元: 江戸川区公式イベントカ
+ レンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/i
+ mages/sns/logo.png\n更新日:2026年9月1日\nリズム運動体験教
+ 室(船堀コミュニティ会館)\n日々の生活の中で、健康
+ に不安を感じることはありませんか。\n体験教室では
+ リズム運動はもちろん、準備運動で行うストレッチや
+ 脳トレも好評をいただいています。運動不足の解消に
+ もなる「リズム運動」をこの機会にぜひ始めてみませ
+ んか。\nリズム運動とは、マンボやジルバといった社
+ 交ダンスのステップを基本とした江戸川区オリジナル
+ の軽運動で、45年にわたって区内の高齢者に親しまれ
+ ています。\n現在、区内200カ所で、7\,000人以上の方が
+ 参加されています。\n開催日時\n2026年10月21日(水曜日)\
+ n2026年11月18日(水曜日)\n2026年12月16日(水曜日)\n2027年1月
+ 20日(水曜日)\n2027年2月17日(水曜日)\n2027年3月17日(水曜
+ 日)\n時間:15時~16時\n申し込み\n必要\n申し込み方法\n参
+ 加希望日の前日までに、電話または申請フォームでお
+ 申し込みください。\n福祉推進課生きがい係 電話:03-56
+ 62-0039\n申し込む\n場所\n船堀コミュニティ会館 集会室4
+ \n住所\n江戸川区船堀1丁目3番1号\nホームページ\nリズ
+ ム運動体験教室\n対象\n区内在住のおおむね60歳以上で
+ 、リズム運動未経験の方\n定員\n30人(申込順)\n費用\n無
+ 料\n持ち物\n当日は運動ができる服装で、ヒールのな
+ い上履き及びお飲み物を持参しご参加ください。\n問
+ 合せ\n福祉推進課生きがい係 電話:03-5662-0039\n主催\n江
+ 戸川区\n関連リンク\nリズム運動の概要\n参照元: https:/
+ /www.city.edogawa.tokyo.jp/event/r8taiken4.html
+URL:https://www.city.edogawa.tokyo.jp/event/r8taiken4.html
+LOCATION:船堀コミュニティ会館 集会室4 江戸川区船堀1丁
+ 目3番1号
+GEO:35.686219;139.862137
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:0c4d4199be3fff865980df8b204355b1@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261216
+DTEND;VALUE=DATE:20261230
 SUMMARY:【ライブ配信/アーカイブ配信】第78回人権週間
  行事 講演と映画のつどい [区公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/261204jinken.
@@ -5766,97 +6262,8 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:aecf86d7f27880113b4a08f5e0b57145@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART:20261216T050000Z
-DTEND:20261216T063000Z
-SUMMARY:五代目円楽一門会若手落語会 [区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612enraku.ht
- ml\n会場: ひらい圓藏亭\n住所: 東京都江戸川区平井3丁
- 目21番24号\n情報元: 江戸川区イベントカレンダーCSV\n
- 画像: https://www.city.edogawa.tokyo.jp/images/75157/2612enraku.png\n
- 更新日:2026年11月11日\n五代目円楽一門会若手落語会\n
- 五代目円楽一門会の若手落語家による4人で90分の定期
- 公演です。\n第1、第2、第3水曜日はお昼に、第4金曜日
- は夜に開催しています。\nお楽しみに!\n開催日時\n2026
- 年12月2日(水曜日)14時00分から15時30分\n2026年12月9日(水
- 曜日)14時00分から15時30分\n2026年12月16日(水曜日)14時00
- 分から15時30分\n2026年12月25日(金曜日)19時00分から20時30
- 分\n開場時間は開演時間の30分前です。\n申し込み\n必
- 要\n申し込み期間\n11月17日(火曜日)13時30分からひらい
- 圓藏亭で電話受付開始\n申し込み方法\nひらい圓藏亭
- に電話で申込み\n場所\nひらい圓藏亭\n住所\n江戸川区
- 平井3丁目21番24号\nホームページ\nひらい圓藏亭\n定員\
- n30名\n出演者(講師)\n2日(水曜日):三遊亭栄豊満(主任)、
- 三遊亭兼太郎、三遊亭萬丸、三遊亭兼作\n9日(水曜日):
- 三遊亭鳳月(主任)、三遊亭らっ好、三遊亭好青年、三
- 遊亭萬次郎\n16日(水曜日):三遊亭好二郎(主任)、三遊亭
- ぽん太、三遊亭好志朗、三遊亭愛二郎\n25日(金曜日):
- 三遊亭好好(主任)、三遊亭兼矢、三遊亭兼作、三遊亭
- 愛二郎\n費用\n有料\n1\,000円\n問合せ\nひらい圓藏亭\n電
- 話:03-5626-3242(月曜休館、ただし祝休日の場合は開館)\n1
- 3時30分から17時まで\n協力\nひらい圓藏亭\n参照元: https
- ://www.city.edogawa.tokyo.jp/event/2612enraku.html
-URL:https://www.city.edogawa.tokyo.jp/event/2612enraku.html
-LOCATION:ひらい圓藏亭 東京都江戸川区平井3丁目21番24号
-GEO:35.703266;139.843821
-PRIORITY:9
-CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
- 157/2612enraku.png
-END:VEVENT
-BEGIN:VEVENT
-UID:a95d8d191699cbc63aa6da75dd604200@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART:20261216T060000Z
-DTEND:20261216T070000Z
-SUMMARY:リズム運動体験教室(船堀コミュニティ会館) [区
- 公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/r8taiken4.htm
- l\n会場: 船堀コミュニティ会館 集会室4\n住所: 江戸川
- 区船堀1丁目3番1号\n情報元: 江戸川区公式イベントカ
- レンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/site_rn/i
- mages/sns/logo.png\n更新日:2026年9月1日\nリズム運動体験教
- 室(船堀コミュニティ会館)\n日々の生活の中で、健康
- に不安を感じることはありませんか。\n体験教室では
- リズム運動はもちろん、準備運動で行うストレッチや
- 脳トレも好評をいただいています。運動不足の解消に
- もなる「リズム運動」をこの機会にぜひ始めてみませ
- んか。\nリズム運動とは、マンボやジルバといった社
- 交ダンスのステップを基本とした江戸川区オリジナル
- の軽運動で、45年にわたって区内の高齢者に親しまれ
- ています。\n現在、区内200カ所で、7\,000人以上の方が
- 参加されています。\n開催日時\n2026年10月21日(水曜日)\
- n2026年11月18日(水曜日)\n2026年12月16日(水曜日)\n2027年1月
- 20日(水曜日)\n2027年2月17日(水曜日)\n2027年3月17日(水曜
- 日)\n時間:15時~16時\n申し込み\n必要\n申し込み方法\n参
- 加希望日の前日までに、電話または申請フォームでお
- 申し込みください。\n福祉推進課生きがい係 電話:03-56
- 62-0039\n申し込む\n場所\n船堀コミュニティ会館 集会室4
- \n住所\n江戸川区船堀1丁目3番1号\nホームページ\nリズ
- ム運動体験教室\n対象\n区内在住のおおむね60歳以上で
- 、リズム運動未経験の方\n定員\n30人(申込順)\n費用\n無
- 料\n持ち物\n当日は運動ができる服装で、ヒールのな
- い上履き及びお飲み物を持参しご参加ください。\n問
- 合せ\n福祉推進課生きがい係 電話:03-5662-0039\n主催\n江
- 戸川区\n関連リンク\nリズム運動の概要\n参照元: https:/
- /www.city.edogawa.tokyo.jp/event/r8taiken4.html
-URL:https://www.city.edogawa.tokyo.jp/event/r8taiken4.html
-LOCATION:船堀コミュニティ会館 集会室4 江戸川区船堀1丁
- 目3番1号
-GEO:35.686219;139.862137
-PRIORITY:9
-CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
- te_rn/images/sns/logo.png
-END:VEVENT
-BEGIN:VEVENT
 UID:d7ae10d14941d9bb8034b1de3fbdbff3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261216
@@ -5898,7 +6305,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8761bf743f039c8d4cedc9dc18831180@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261217T000000Z
@@ -5930,7 +6337,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:275b0d2cc9c6d11e2559ded13915e866@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261217T003000Z
@@ -5967,7 +6374,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3adad19e2452c4974231b27abd7612ee@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261217T010000Z
@@ -6003,7 +6410,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0299a509cdfa7db23bb3180968fc682b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261217T040000Z
@@ -6050,7 +6457,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:60bae84c9b138fd47e8f527c42978516@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261217T043000Z
@@ -6089,7 +6496,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:e201261c5149fd770a8e4450350128e8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261217T071500Z
@@ -6129,7 +6536,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7ab336e452952855b961568eaff5e292@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261217
@@ -6160,7 +6567,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.towerhall.jp/tower/wp-content/p
 END:VEVENT
 BEGIN:VEVENT
 UID:f37fc86440d01ef259be8d95ce980f10@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261218T000000Z
@@ -6192,7 +6599,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:33cb4cf57021fa7728625929a5e51927@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261218T040000Z
@@ -6227,7 +6634,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b7210e76ab1b7d1372f4d7c628aa37f4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261218T060000Z
@@ -6262,7 +6669,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:6ce2fd8bf8a4be3e834fe9fc6cb367b0@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261218T100000Z
@@ -6296,7 +6703,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:11329fe984e99dc9607d52345662222a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261218
@@ -6332,7 +6739,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d35531347a5bf0a13c1054bf5f613bc9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T000000Z
@@ -6366,7 +6773,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d0cc55cd6cf40ed8041a983bd05065c2@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T000000Z
@@ -6398,7 +6805,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:33c5a4ef8aaf78e58c4bf871b6804cf4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T010000Z
@@ -6430,7 +6837,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7cca32dfb218c84e6463de84087f26d1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T010000Z
@@ -6440,31 +6847,25 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612christmas
  _concert.html\n会場: 子ども未来館\n住所: 東京都江戸川区
  篠崎町三丁目12番10号\n情報元: 江戸川区イベントカレ
  ンダーCSV\n画像: https://www.city.edogawa.tokyo.jp/images/75114/121
- 9concert.jpg\nこのサイトではJavaScriptを使用したコンテン
- ツ・機能を提供しています。JavaScriptを有効にすると
- ご利用いただけます。\n本文へスキップします。\nEngli
- sh\n简体中文\n한국어\n日本語\nすべての言語を見る\n閉
- じる\n閉じる\n閉じる\nトップページ\n>\nイベントカレ
- ンダー(子ども未来館)\n> 夢いっぱい☆クリスマスコン
- サート\n更新日:2026年11月13日\n夢いっぱい☆クリスマ
- スコンサート\nみんなもよく知っているクリスマスソ
- ングなどを、\n吹奏楽の演奏で楽しみましょう。\n音
- の出る仕組みについて学んだり、クイズもあります。
- \n開催日時\n2026年12月19日(土曜日)10時00分から12時00分\n
- 申し込み\n必要\n申し込み方法などくわしくは、下記
- リンク先「事前申し込みの講座の応募方法」をご覧く
- ださい。\n申し込み期間\n2026年11月13日(金曜日)から2026
- 年12月8日(火曜日)\n上記期間はウェブサイトのしめき
- りです。\n往復はがきでのお申し込みはウェブサイト
- のしめきり前日までに子ども未来館に着くようにご投
- 函ください。\n場所\n子ども未来館\n住所\n江戸川区篠
- 崎町三丁目12番10号\n対象\n小学校1年生から6年生まで\n
- 定員\n10人(抽選)\n出演者(講師)\n松井千恵子・楽夢音\n
- 費用\n無料\n問合せ\n子ども未来館(電話)03-5243-4011\n主
- 催\n子ども未来館\n関連資料\nアカデミー通信12月号(PDF
- :987KB)\n関連リンク\n事前申し込みの講座の応募方法\n
- 参照元: https://www.city.edogawa.tokyo.jp/event/2612christmas_concert
- .html
+ 9concert.jpg\n更新日:2026年11月13日\n夢いっぱい☆クリス
+ マスコンサート\nみんなもよく知っているクリスマス
+ ソングなどを、\n吹奏楽の演奏で楽しみましょう。\n
+ 音の出る仕組みについて学んだり、クイズもあります
+ 。\n開催日時\n2026年12月19日(土曜日)10時00分から12時00
+ 分\n申し込み\n必要\n申し込み方法などくわしくは、下
+ 記リンク先「事前申し込みの講座の応募方法」をご覧
+ ください。\n申し込み期間\n2026年11月13日(金曜日)から2
+ 026年12月8日(火曜日)\n上記期間はウェブサイトのしめ
+ きりです。\n往復はがきでのお申し込みはウェブサイ
+ トのしめきり前日までに子ども未来館に着くようにご
+ 投函ください。\n場所\n子ども未来館\n住所\n江戸川区
+ 篠崎町三丁目12番10号\n対象\n小学校1年生から6年生ま
+ で\n定員\n10人(抽選)\n出演者(講師)\n松井千恵子・楽夢
+ 音\n費用\n無料\n問合せ\n子ども未来館(電話)03-5243-4011\n
+ 主催\n子ども未来館\n関連資料\nアカデミー通信12月号(
+ PDF:987KB)\n関連リンク\n事前申し込みの講座の応募方法\
+ n参照元: https://www.city.edogawa.tokyo.jp/event/2612christmas_concer
+ t.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612christmas_concert.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -6476,7 +6877,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:716babcf9dc44c0301cb6f71fc7d752a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T010000Z
@@ -6526,7 +6927,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f633c3b8e24381f70b645be03493ffbc@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T010000Z
@@ -6565,7 +6966,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:92f5672c97407450f79b3c0305f3d7bb@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T010000Z
@@ -6575,29 +6976,24 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612shimenawa
  .html\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎
  町三丁目12番10号\n情報元: 江戸川区イベントカレンダ
  ーCSV\n画像: https://www.city.edogawa.tokyo.jp/images/75115/12191shim
- enawa.jpg\nこのサイトではJavaScriptを使用したコンテンツ
- ・機能を提供しています。JavaScriptを有効にするとご
- 利用いただけます。\n本文へスキップします。\nEnglish\
- n简体中文\n한국어\n日本語\nすべての言語を見る\n閉じ
- る\n閉じる\n閉じる\nトップページ\n>\nイベントカレン
- ダー(子ども未来館)\n> 親子でしめ縄づくり\n更新日:202
- 6年11月13日\n親子でしめ縄づくり\nしめ縄は、正月に歳
- 神様を迎えるための玄関かざりです。\n親子でつくり
- 方を学び、1年の始まりを家族で祝いましょう。\n稲か
- ら取れる藁を活用します。\n開催日時\n2026年12月19日(
- 土曜日)10時00分から12時00分\n申し込み\n必要\n申し込み
- 方法などくわしくは、下記リンク先「事前申し込みの
- 講座の応募方法」をご覧ください。\n申し込み期間\n20
- 26年11月13日(金曜日)から2026年12月8日(火曜日)\n上記期
- 間はウェブサイトのしめきりです。\n往復はがきでの
- お申し込みはウェブサイトのしめきり前日までに子ど
- も未来館に着くようにご投函ください。\n場所\n子ど
- も未来館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n
- 小学校3年生から6年生までとその保護者\n定員\n8組(抽
- 選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-5243-4011\
- n主催\n子ども未来館\n関連資料\nアカデミー通信12月号
- (PDF:987KB)\n関連リンク\n事前申し込みの講座の応募方法
- \n参照元: https://www.city.edogawa.tokyo.jp/event/2612shimenawa.html
+ enawa.jpg\n更新日:2026年11月13日\n親子でしめ縄づくり\nし
+ め縄は、正月に歳神様を迎えるための玄関かざりです
+ 。\n親子でつくり方を学び、1年の始まりを家族で祝い
+ ましょう。\n稲から取れる藁を活用します。\n開催日
+ 時\n2026年12月19日(土曜日)10時00分から12時00分\n申し込
+ み\n必要\n申し込み方法などくわしくは、下記リンク
+ 先「事前申し込みの講座の応募方法」をご覧ください
+ 。\n申し込み期間\n2026年11月13日(金曜日)から2026年12月8
+ 日(火曜日)\n上記期間はウェブサイトのしめきりです
+ 。\n往復はがきでのお申し込みはウェブサイトのしめ
+ きり前日までに子ども未来館に着くようにご投函くだ
+ さい。\n場所\n子ども未来館\n住所\n江戸川区篠崎町三
+ 丁目12番10号\n対象\n小学校3年生から6年生までとその
+ 保護者\n定員\n8組(抽選)\n費用\n無料\n問合せ\n子ども未
+ 来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資料\n
+ アカデミー通信12月号(PDF:987KB)\n関連リンク\n事前申し
+ 込みの講座の応募方法\n参照元: https://www.city.edogawa.toky
+ o.jp/event/2612shimenawa.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612shimenawa.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -6609,7 +7005,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:92b1ac30de4367e41ec7db9587e7a05a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T010000Z
@@ -6644,7 +7040,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:06265073c03ffc7f64f6014ce57b1162@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T010000Z
@@ -6680,7 +7076,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:19128abd9a3d29e20256ac21344b787c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T050000Z
@@ -6716,7 +7112,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:48c20b10d26737bdd6d3d4c8694c8703@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261219T050000Z
@@ -6751,8 +7147,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:b2ae5e8ebf1e33f70b0e5d8b3c15f646@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261219
+DTEND;VALUE=DATE:20261220
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:bc17c8dd4e1b36998785548e883ce3f9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261220T000000Z
@@ -6784,7 +7208,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f0bc4b2975763149299d92208839b87c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261220T010000Z
@@ -6820,7 +7244,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:caf3125e964caf96224ce75b95568a4e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261220T013000Z
@@ -6830,35 +7254,29 @@ SUMMARY:【全4回講座】ひるまの天文学:太陽をおいかけて
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2606_sun.html
  \n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町三
  丁目12番10号\n情報元: 江戸川区イベントカレンダーCSV\
- n画像: https://www.city.edogawa.tokyo.jp/images/70702/6sun.jpg\nこの
- サイトではJavaScriptを使用したコンテンツ・機能を提
- 供しています。JavaScriptを有効にするとご利用いただ
- けます。\n本文へスキップします。\nEnglish\n简体中文\n
- 한국어\n日本語\nすべての言語を見る\n閉じる\n閉じる\
- n閉じる\nトップページ\n>\nイベントカレンダー(子ども
- 未来館)\n> 【全4回講座】ひるまの天文学:太陽をおい
- かけて\n更新日:2026年5月15日\n【全4回講座】ひるまの
- 天文学:太陽をおいかけて\n晴れた空に、かがやいてい
- る太陽。\nその動きを、夏至、秋分、冬至、春分と、
- 季節ごとに1年間おってみます。\n1年とおして観測す
- ることで、新しい発見があるかもしれません。\nあい
- だはあきますが、忘れずに全部で4回、参加してくだ
- さい。\n開催日時\n2026年6月21日(日曜日)10時30分から12
- 時30分\n2026年9月23日(水曜日)10時30分から12時30分\n2026年
- 12月20日(日曜日)10時30分から12時30分\n2027年3月21日(日曜
- 日)10時30分から12時30分\n申し込み\n必要\n申し込み方法
- などくわしくは、下記リンク先「事前申し込みの講座
- の応募方法」をご覧ください。\n申し込み期間\n2026年5
- 月15日(金曜日)から2026年6月9日(火曜日)\n上記期間はウ
- ェブサイトのしめきりです。\n往復はがきでのお申し
- 込みはウェブサイトのしめきり前日までに子ども未来
- 館に着くようにご投函ください。\n場所\n子ども未来
- 館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学校
- 4年生から6年生まで\n定員\n16人(抽選)\n費用\n無料\n問
- 合せ\n子ども未来館(電話)03-5243-4011\n主催\n子ども未来
- 館\n関連資料\nアカデミー通信6月号(PDF:1\,144KB)\n関連リ
- ンク\n事前申し込みの講座の応募方法\n参照元: https://w
- ww.city.edogawa.tokyo.jp/event/2606_sun.html
+ n画像: https://www.city.edogawa.tokyo.jp/images/70702/6sun.jpg\n更新
+ 日:2026年5月15日\n【全4回講座】ひるまの天文学:太陽を
+ おいかけて\n晴れた空に、かがやいている太陽。\nそ
+ の動きを、夏至、秋分、冬至、春分と、季節ごとに1
+ 年間おってみます。\n1年とおして観測することで、新
+ しい発見があるかもしれません。\nあいだはあきます
+ が、忘れずに全部で4回、参加してください。\n開催日
+ 時\n2026年6月21日(日曜日)10時30分から12時30分\n2026年9月2
+ 3日(水曜日)10時30分から12時30分\n2026年12月20日(日曜日)1
+ 0時30分から12時30分\n2027年3月21日(日曜日)10時30分から12
+ 時30分\n申し込み\n必要\n申し込み方法などくわしくは
+ 、下記リンク先「事前申し込みの講座の応募方法」を
+ ご覧ください。\n申し込み期間\n2026年5月15日(金曜日)
+ から2026年6月9日(火曜日)\n上記期間はウェブサイトの
+ しめきりです。\n往復はがきでのお申し込みはウェブ
+ サイトのしめきり前日までに子ども未来館に着くよう
+ にご投函ください。\n場所\n子ども未来館\n住所\n江戸
+ 川区篠崎町三丁目12番10号\n対象\n小学校4年生から6年
+ 生まで\n定員\n16人(抽選)\n費用\n無料\n問合せ\n子ども
+ 未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資料\
+ nアカデミー通信6月号(PDF:1\,144KB)\n関連リンク\n事前申
+ し込みの講座の応募方法\n参照元: https://www.city.edogawa.t
+ okyo.jp/event/2606_sun.html
 URL:https://www.city.edogawa.tokyo.jp/event/2606_sun.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -6870,7 +7288,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/70
 END:VEVENT
 BEGIN:VEVENT
 UID:c6baffd7a5b3090f23bc9909f8ef2700@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261220T030000Z
@@ -6906,7 +7324,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1abbeb67e731d32e122443ba707f694f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261220T043000Z
@@ -6949,7 +7367,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:5aaccc9c71196ace140c54aa304e3b16@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261220T043000Z
@@ -6999,7 +7417,7 @@ CATEGORIES:学校公開
 END:VEVENT
 BEGIN:VEVENT
 UID:cefa8957f45906c8af9c30519bec2d19@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261220T050000Z
@@ -7032,8 +7450,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:c9504a66b8bab9da3faf28af9179a8ed@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261220
+DTEND;VALUE=DATE:20261221
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:66eb1eb23d407b675bcaad93560c1e7d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20261220
@@ -7069,7 +7515,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a088fcea7f90f2625bb9c9eb9ae50af8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261221T000000Z
@@ -7101,7 +7547,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7b952048c4e13a2abc3562aea9db46a7@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261221T043000Z
@@ -7134,7 +7580,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b1c0eaaa3b2297d1bca3755880c91065@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261222T000000Z
@@ -7166,7 +7612,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:23cacb6863af4730a95ebd12215c2678@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261222T010000Z
@@ -7202,7 +7648,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ed1afab3fb9617574f6d93429167f651@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261222T010000Z
@@ -7247,7 +7693,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:e1e8d2de76ef3ceed83eee8cbe5812e0@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261223T000000Z
@@ -7279,7 +7725,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:17c76d03156b13289134e21f1dc51ce6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261223T040000Z
@@ -7324,7 +7770,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b0eb67a23816321d2197152b66d898cb@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261223T060000Z
@@ -7334,27 +7780,21 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612mebiusu.h
  tml\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町
  三丁目12番10号\n情報元: 江戸川区イベントカレンダーC
  SV\n画像: https://www.city.edogawa.tokyo.jp/images/75142/1223mebiusu.j
- pg\nこのサイトではJavaScriptを使用したコンテンツ・機
- 能を提供しています。JavaScriptを有効にするとご利用
- いただけます。\n本文へスキップします。\nEnglish\n简
- 体中文\n한국어\n日本語\nすべての言語を見る\n閉じる\
- n閉じる\n閉じる\nトップページ\n>\nイベントカレンダ
- ー(子ども未来館)\n> メビウスのぐるぐるワールド\n更
- 新日:2026年11月13日\nメビウスのぐるぐるワールド\n「
- メビウスの輪(わ)」って知ってるかな。\nただの紙の
- 輪を切りひらくと、どこまで行っても果てがない輪が
- できます。\nもうひとひねりすると鎖(くさり)や、ハ
- ート、四角になったりします。\nメビウス音楽も聴こ
- う。\n開催日時\n2026年12月23日(水曜日)15時00分から16時0
- 0分\n申し込み\n不要\n当日受付です。\n午後2時40分から
- 受付をはじめます。\n参加希望の人は、2時55分までに
- 集まってください。\n2時55分の時点で定員をこえてい
- た場合は、くじびきをします。\n場所\n子ども未来館\n
- 住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学校1年
- 生から6年生まで\n定員\n20人\n費用\n無料\n問合せ\n子ど
- も未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資
- 料\nアカデミー通信12月号\n参照元: https://www.city.edogawa.
- tokyo.jp/event/2612mebiusu.html
+ pg\n更新日:2026年11月13日\nメビウスのぐるぐるワールド
+ \n「メビウスの輪(わ)」って知ってるかな。\nただの紙
+ の輪を切りひらくと、どこまで行っても果てがない輪
+ ができます。\nもうひとひねりすると鎖(くさり)や、
+ ハート、四角になったりします。\nメビウス音楽も聴
+ こう。\n開催日時\n2026年12月23日(水曜日)15時00分から16
+ 時00分\n申し込み\n不要\n当日受付です。\n午後2時40分
+ から受付をはじめます。\n参加希望の人は、2時55分ま
+ でに集まってください。\n2時55分の時点で定員をこえ
+ ていた場合は、くじびきをします。\n場所\n子ども未
+ 来館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学
+ 校1年生から6年生まで\n定員\n20人\n費用\n無料\n問合せ\
+ n子ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n関
+ 連資料\nアカデミー通信12月号\n参照元: https://www.city.ed
+ ogawa.tokyo.jp/event/2612mebiusu.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612mebiusu.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -7365,8 +7805,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
  142/1223mebiusu.jpg
 END:VEVENT
 BEGIN:VEVENT
+UID:2fddce68f59403fd9aa060f08b43260d@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:7ebef5405772756d0da9ef256f9c66c5@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261224T000000Z
@@ -7398,7 +7866,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f236c18d5bf6c7bb34d6ab3c6af8dd27@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261224T001500Z
@@ -7444,7 +7912,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:bc4f2dbdb16f3d337fef44aa103730cf@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261224T071500Z
@@ -7484,7 +7952,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ab9f2df2f10c06f20f5ede99b25886f8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261225T000000Z
@@ -7516,7 +7984,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:50aa06121948a10770444d5ad63d4878@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261225T040000Z
@@ -7562,7 +8030,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:df30d63e04e079e0a4663007ebfc5e97@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261225T050000Z
@@ -7597,7 +8065,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:e682fb285c1109e4b8efd32fcf685203@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261225T100000Z
@@ -7639,7 +8107,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
 END:VEVENT
 BEGIN:VEVENT
 UID:6a2c50c17f9bb28bd0b69a7f7bcc972b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261226T000000Z
@@ -7671,7 +8139,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:09358c33d859734daea48f53ce2b1c48@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261226T003000Z
@@ -7714,7 +8182,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b7f734373bedfb9ca4a42c7ff88bec93@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261226T053000Z
@@ -7750,7 +8218,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f017733e9f49f4fcea5cf304a90c5c4d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261226T090000Z
@@ -7783,7 +8251,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:23b33689d790484a8623dad80b6ad955@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261226T093000Z
@@ -7823,7 +8291,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:539bdcc021f057553348920674958b46@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261227T000000Z
@@ -7855,7 +8323,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a4105a25755b3cd11704ecda2ea33b3c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261227T050000Z
@@ -7890,7 +8358,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ac89995e91f54b7670041e6f174479fb@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261227T050000Z
@@ -7900,29 +8368,23 @@ DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2612biseibuts
  u.html\n会場: 子ども未来館\n住所: 東京都江戸川区篠崎
  町三丁目12番10号\n情報元: 江戸川区イベントカレンダ
  ーCSV\n画像: https://www.city.edogawa.tokyo.jp/images/75116/1227zouri
- mushi.jpg\nこのサイトではJavaScriptを使用したコンテンツ
- ・機能を提供しています。JavaScriptを有効にするとご
- 利用いただけます。\n本文へスキップします。\nEnglish\
- n简体中文\n한국어\n日本語\nすべての言語を見る\n閉じ
- る\n閉じる\n閉じる\nトップページ\n>\nイベントカレン
- ダー(子ども未来館)\n> 微生物パワー\n更新日:2026年11月
- 13日\n微生物パワー\n微生物はわたしたちの敵?\nそれと
- も味方?パンを焼いて微生物パワーを調べよう。\n抗生
- 物質やスパイスと微生物の相性も調べます。\n開催日
- 時\n2026年12月27日(日曜日)14時00分から16時00分\n申し込
- み\n必要\n申し込み方法などくわしくは、下記リンク
- 先「事前申し込みの講座の応募方法」をご覧ください
- 。\n申し込み期間\n2026年11月13日(金曜日)から2026年12月8
- 日(火曜日)\n上記期間はウェブサイトのしめきりです
- 。\n往復はがきでのお申し込みはウェブサイトのしめ
- きり前日までに子ども未来館に着くようにご投函くだ
- さい。\n場所\n子ども未来館\n住所\n江戸川区篠崎町三
- 丁目12番10号\n対象\n小学校4年生から6年生まで\n定員\n1
- 2人(抽選)\n費用\n無料\n問合せ\n子ども未来館(電話)03-52
- 43-4011\n主催\n子ども未来館\n関連資料\nアカデミー通信
- 12月号(PDF:987KB)\n関連リンク\n事前申し込みの講座の応
- 募方法\n参照元: https://www.city.edogawa.tokyo.jp/event/2612biseib
- utsu.html
+ mushi.jpg\n更新日:2026年11月13日\n微生物パワー\n微生物は
+ わたしたちの敵?\nそれとも味方?パンを焼いて微生物
+ パワーを調べよう。\n抗生物質やスパイスと微生物の
+ 相性も調べます。\n開催日時\n2026年12月27日(日曜日)14
+ 時00分から16時00分\n申し込み\n必要\n申し込み方法など
+ くわしくは、下記リンク先「事前申し込みの講座の応
+ 募方法」をご覧ください。\n申し込み期間\n2026年11月13
+ 日(金曜日)から2026年12月8日(火曜日)\n上記期間はウェ
+ ブサイトのしめきりです。\n往復はがきでのお申し込
+ みはウェブサイトのしめきり前日までに子ども未来館
+ に着くようにご投函ください。\n場所\n子ども未来館\n
+ 住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学校4年
+ 生から6年生まで\n定員\n12人(抽選)\n費用\n無料\n問合せ
+ \n子ども未来館(電話)03-5243-4011\n主催\n子ども未来館\n
+ 関連資料\nアカデミー通信12月号(PDF:987KB)\n関連リンク\
+ n事前申し込みの講座の応募方法\n参照元: https://www.city
+ .edogawa.tokyo.jp/event/2612biseibutsu.html
 URL:https://www.city.edogawa.tokyo.jp/event/2612biseibutsu.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -7933,8 +8395,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/75
  116/1227zourimushi.jpg
 END:VEVENT
 BEGIN:VEVENT
+UID:076265392b86cca79fae44378713140b@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20261227
+DTEND;VALUE=DATE:20261228
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:fb950b2a10f40d0bb915fa44d41d3ce0@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261228T000000Z
@@ -7966,7 +8456,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c8652dff75bb29a680be66ce69a41931@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20261231T071500Z
@@ -8005,8 +8495,76 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:29fb874038d73a94d32be6bd1091ce27@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270102T003000Z
+DTEND:20270102T010000Z
+SUMMARY:新年イベント「水族園のお正月2027」 [区内文化]
+DESCRIPTION:詳細: https://www.tokyo-zoo.net/kasai/news/14307/index.html
+ \n会場: 本館3階 空の広場 ※カメラは各自ご持参くだ
+ さい。 園長とフーちゃん&オーちゃん 「おめでたい生
+ き物」観察シート配布 「おめでたい生き物」観察シ
+ ートを配布します!シートを持って、園内の生き物を
+ 観察してみましょう。たくさんの発見があるはずです
+ 。ゴールするとオリジナルデザインのお土産もプレゼ
+ ントします。 日時\n住所: 江戸川区臨海町6丁目2番3号\
+ n情報元: 葛西臨海水族園\n画像: https://www.tokyo-zoo.net/ima
+ ge/14100_01.jpg\n新年イベント「水族園のお正月2027」\nイ
+ ベント\n2026年11月26日\n葛西臨海水族園では、毎年恒例
+ のお正月イベントをおこないます。年の初めは水族園
+ で、楽しいひとときをお過ごしください。\nオーちゃ
+ ん フーちゃんがお出迎え\nオウサマペンギンの「オー
+ ちゃん」とフンボルトペンギンの「フーちゃん」が、
+ 「空の広場」でお出迎え!みなさまに新年のご挨拶を
+ します。園長もサプライズで登場するかも!?\n日時\n202
+ 7年1月2日(土)[雨天中止]\n9時30分~10時、13時~13時30分\n場
+ 所\n本館3階 空の広場\n※カメラは各自ご持参ください
+ 。\n園長とフーちゃん&オーちゃん\n「おめでたい生き
+ 物」観察シート配布\n「おめでたい生き物」観察シー
+ トを配布します!シートを持って、園内の生き物を観
+ 察してみましょう。たくさんの発見があるはずです。
+ ゴールするとオリジナルデザインのお土産もプレゼン
+ トします。\n日時\n202年1月2日(土)、3日(日)\n各日9時30
+ 分~17時\n場所\n配布場所\n:本館2階 エスカレーター下\n
+ ゴール場所\n:本館2階 ギフトショップ前\n※ゴール受
+ 付は10時から、シートの配布は16時までです。\n配布数
+ \n各日先着5\,000部\n※なくなりしだい終了\n水槽の生き
+ 物を観察してみよう\n新春かさりん寄席\nお正月をテ
+ ーマに、水族園のスタッフがおすすめの観察ポイント
+ やお仕事に関するさまざまな話をします。誰が来るか
+ はお楽しみ!お気軽にご参加ください。\n日時\n2027年1
+ 月2日(土)\n1回目\n11時30分~13時 (入室11時20分~)\n2回目\n14
+ 時00分~15時30分(入室13時50分~)\n場所\n本館2階 レクチャ
+ ールーム\n定員\n各回約80名(先着順)\n昨年のようす(延
+ 長亭円蝶のお噺し)\n江戸川区発!「寿太鼓」の演奏\n江
+ 戸川区を拠点に活動している「寿太鼓」のみなさんを
+ お招きし、和太鼓の演奏をおこないます。\n新春の心
+ 地よい潮風を浴びながら、太鼓の演奏を楽しみません
+ か?\n日時\n2027年1月3日(日)[雨天中止]\n11時15分~11時45分
+ 、13時45分~14時15分\n場所\n本館3階 空の広場\n内容\n演
+ 奏のほか、太鼓を打つ体験ができます。\n寿太鼓 プロ
+ フィール\nおとなから子どもまで太鼓好きが集まる1980
+ 年に発足した創作太鼓集団\n寿太鼓の演奏\n参照元: htt
+ ps://www.tokyo-zoo.net/kasai/news/14307/index.html
+URL:https://www.tokyo-zoo.net/kasai/news/14307/index.html
+LOCATION:本館3階 空の広場 ※カメラは各自ご持参くださ
+ い。 園長とフーちゃん&オーちゃん 「おめでたい生き
+ 物」観察シート配布 「おめでたい生き物」観察シー
+ トを配布します!シートを持って、園内の生き物を観
+ 察してみましょう。たくさんの発見があるはずです。
+ ゴールするとオリジナルデザインのお土産もプレゼン
+ トします。 日時 江戸川区臨海町6丁目2番3号
+GEO:35.640774;139.855331
+PRIORITY:2
+CATEGORIES:区内文化
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.tokyo-zoo.net/image/14100_01.jp
+ g
+END:VEVENT
+BEGIN:VEVENT
 UID:48bf538c13489bf18d4e34dab6af95c9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270104T000000Z
@@ -8038,7 +8596,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:6675afbacd90c0d34011f7e90b390491@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270105T000000Z
@@ -8070,7 +8628,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:87750f764228dd88c34e1e63173de972@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270105T001500Z
@@ -8116,7 +8674,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a830d1816fd54d2b6cc7deeaedf8831a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270105T001500Z
@@ -8162,7 +8720,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:cc061f6027ff00d112db50081c4fb478@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270106T000000Z
@@ -8194,7 +8752,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d5a105ade876edd7def4cdfb7a00caa2@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270106T010000Z
@@ -8273,7 +8831,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.tokyo-zoo.net/image/kasai.jpg
 END:VEVENT
 BEGIN:VEVENT
 UID:1f54925f31bf0b3d756ebe90ede60fe5@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270107T000000Z
@@ -8305,7 +8863,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:5d8ec9f797c127252b8cdf7d8d6527fb@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270107T010000Z
@@ -8339,7 +8897,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:9eee3eb077f853ee7ab5ee64202c0133@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270107T071500Z
@@ -8379,7 +8937,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:86683f4fda34a49c0308bf81e59f2c17@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270108T001500Z
@@ -8425,7 +8983,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7c6ecfd6058906527281666a90d5dc68@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270109T000000Z
@@ -8471,7 +9029,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a13f279651a0d57468a757b3164b3bff@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270109T050000Z
@@ -8505,33 +9063,12 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:f6d583e2b4ab1d18fb8ff043b561ab1c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:7883d2ed0ca986d89caf88529dfa502a@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART;VALUE=DATE:20270110
-DTEND;VALUE=DATE:20270111
-SUMMARY:主催共催公演 1月10日より出品申込受付開始 第6
- 回 えどがわ BOXART展 <作品募集> 展示 [区内文化]
-DESCRIPTION:詳細: https://edogawa-bunkacenter.jp/calendar/2027/01/2837/
- \n会場: 総合文化センター\n住所: 江戸川区中央4丁目14
- 番1号\n情報元: 総合文化センター・月間カレンダー\n
- 主催共催公演 1月10日より出品申込受付開始 第6回 え
- どがわ BOXART展 <作品募集> 展示\n参照元: https://edogawa-bu
- nkacenter.jp/calendar/2027/01/2837/
-URL:https://edogawa-bunkacenter.jp/calendar/2027/01/2837/
-LOCATION:総合文化センター 江戸川区中央4丁目14番1号
-GEO:35.711242;139.868123
-PRIORITY:3
-CATEGORIES:区内文化
-END:VEVENT
-BEGIN:VEVENT
-UID:488073160c42bd6c4c60327e41d2a291@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART;VALUE=DATE:20270110
-DTEND;VALUE=DATE:20270111
+DTSTART:20270110T010000Z
+DTEND:20270110T030000Z
 SUMMARY:男性限定 初めてのリズム運動教室(コミュニティ
  プラザ一之江) [区公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/r8danseishosh
@@ -8574,60 +9111,12 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
-UID:4b976ba4d766390e28b77806630a1408@edogawa-events.local
-DTSTAMP:20261127T075449Z
+UID:ecefb02c300507187e07b0941ec1631d@edogawa-events.local
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
-DTSTART;VALUE=DATE:20270110
-DTEND;VALUE=DATE:20270111
-SUMMARY:男性限定 初めてのリズム運動教室(南小岩コミュ
- ニティ会館) [区公式]
-DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/r8danseishosh
- insha2.html\n会場: 南小岩コミュニティ会館 集会室1・2\n
- 住所: 江戸川区南小岩7丁目17番10号\n情報元: 江戸川区
- 公式イベントカレンダー\n画像: https://www.city.edogawa.toky
- o.jp/shared/site_rn/images/sns/logo.png\n更新日:2026年11月15日\n
- 男性限定 初めてのリズム運動教室(南小岩コミュニテ
- ィ会館)\nリズム運動は、マンボやジルバといった社交
- ダンスのステップを基本とした軽運動です。\n男女と
- もに長く楽しめて、くすのきクラブなどで親しまれて
- います。\nこの教室は、男性を対象にしたやさしい内
- 容となっており、まずは相手と組まずに基本のステッ
- プから学ぶことができます。\n音楽に合わせて体を動
- かす楽しさを体感してください。\n開催日時\n2027年1月
- 10日(日曜日)\n2027年1月17日(日曜日)\n2027年1月24日(日曜
- 日)\n2027年1月31日(日曜日)\n2027年2月7日(日曜日)\n2027年2
- 月14日(日曜日)\n2027年2月21日(日曜日)\n2027年2月28日(日
- 曜日)\n2027年3月7日(日曜日)\n2027年3月21日(日曜日)\n時間
- :13時~15時\n3月14日を除く毎週日曜日 10回コース\n申し
- 込み\n必要\n申し込み期間\n2026年11月16日(月曜日)から20
- 27年3月20日(土曜日)\n申し込み方法\n申込フォームまた
- は電話で\n福祉推進課生きがい係 電話:03-5662-0039\n申し
- 込む\n場所\n南小岩コミュニティ会館 集会室1・2\n住所
- \n江戸川区南小岩7丁目17番10号\nホームページ\n男性限
- 定 初めてのリズム運動教室\n対象\n区内在住の60歳以
- 上の男性でリズム運動未経験の方\n(令和10年4月1日ま
- でに60歳になる方を含みます)\n定員\n30人\n費用\n無料\n
- 問合せ\n福祉推進課生きがい係 電話:03-5662-0039\n主催\n
- 江戸川区\n関連資料\nリズム運動の概要\n関連リンク\n
- リズム運動体験教室 参加者募集中!\n参照元: https://www.
- city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
-URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
-LOCATION:南小岩コミュニティ会館 集会室1・2 江戸川区南
- 小岩7丁目17番10号
-GEO:35.730568;139.882067
-PRIORITY:9
-CATEGORIES:区公式
-IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
- te_rn/images/sns/logo.png
-END:VEVENT
-BEGIN:VEVENT
-UID:a6e209a327055d50154185ca67f2dc1c@edogawa-events.local
-DTSTAMP:20261127T075449Z
-SEQUENCE:0
-TRANSP:OPAQUE
-DTSTART;VALUE=DATE:20270110
-DTEND;VALUE=DATE:20270111
+DTSTART:20270110T010000Z
+DTEND:20270110T030100Z
 SUMMARY:男性限定 初めてのリズム運動教室(葛西区民館) [
  区公式]
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/r8danseishosh
@@ -8670,8 +9159,77 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:b8597ae4a1c0a33e3b37bb71e704c7f9@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270110T040000Z
+DTEND:20270110T060300Z
+SUMMARY:男性限定 初めてのリズム運動教室(南小岩コミュ
+ ニティ会館) [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/r8danseishosh
+ insha2.html\n会場: 南小岩コミュニティ会館 集会室1・2\n
+ 住所: 江戸川区南小岩7丁目17番10号\n情報元: 江戸川区
+ 公式イベントカレンダー\n画像: https://www.city.edogawa.toky
+ o.jp/shared/site_rn/images/sns/logo.png\n更新日:2026年11月15日\n
+ 男性限定 初めてのリズム運動教室(南小岩コミュニテ
+ ィ会館)\nリズム運動は、マンボやジルバといった社交
+ ダンスのステップを基本とした軽運動です。\n男女と
+ もに長く楽しめて、くすのきクラブなどで親しまれて
+ います。\nこの教室は、男性を対象にしたやさしい内
+ 容となっており、まずは相手と組まずに基本のステッ
+ プから学ぶことができます。\n音楽に合わせて体を動
+ かす楽しさを体感してください。\n開催日時\n2027年1月
+ 10日(日曜日)\n2027年1月17日(日曜日)\n2027年1月24日(日曜
+ 日)\n2027年1月31日(日曜日)\n2027年2月7日(日曜日)\n2027年2
+ 月14日(日曜日)\n2027年2月21日(日曜日)\n2027年2月28日(日
+ 曜日)\n2027年3月7日(日曜日)\n2027年3月21日(日曜日)\n時間
+ :13時~15時\n3月14日を除く毎週日曜日 10回コース\n申し
+ 込み\n必要\n申し込み期間\n2026年11月16日(月曜日)から20
+ 27年3月20日(土曜日)\n申し込み方法\n申込フォームまた
+ は電話で\n福祉推進課生きがい係 電話:03-5662-0039\n申し
+ 込む\n場所\n南小岩コミュニティ会館 集会室1・2\n住所
+ \n江戸川区南小岩7丁目17番10号\nホームページ\n男性限
+ 定 初めてのリズム運動教室\n対象\n区内在住の60歳以
+ 上の男性でリズム運動未経験の方\n(令和10年4月1日ま
+ でに60歳になる方を含みます)\n定員\n30人\n費用\n無料\n
+ 問合せ\n福祉推進課生きがい係 電話:03-5662-0039\n主催\n
+ 江戸川区\n関連資料\nリズム運動の概要\n関連リンク\n
+ リズム運動体験教室 参加者募集中!\n参照元: https://www.
+ city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+URL:https://www.city.edogawa.tokyo.jp/event/r8danseishoshinsha2.html
+LOCATION:南小岩コミュニティ会館 集会室1・2 江戸川区南
+ 小岩7丁目17番10号
+GEO:35.730568;139.882067
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
+UID:f6d583e2b4ab1d18fb8ff043b561ab1c@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270110
+DTEND;VALUE=DATE:20270111
+SUMMARY:主催共催公演 1月10日より出品申込受付開始 第6
+ 回 えどがわ BOXART展 <作品募集> 展示 [区内文化]
+DESCRIPTION:詳細: https://edogawa-bunkacenter.jp/calendar/2027/01/2837/
+ \n会場: 総合文化センター\n住所: 江戸川区中央4丁目14
+ 番1号\n情報元: 総合文化センター・月間カレンダー\n
+ 主催共催公演 1月10日より出品申込受付開始 第6回 え
+ どがわ BOXART展 <作品募集> 展示\n参照元: https://edogawa-bu
+ nkacenter.jp/calendar/2027/01/2837/
+URL:https://edogawa-bunkacenter.jp/calendar/2027/01/2837/
+LOCATION:総合文化センター 江戸川区中央4丁目14番1号
+GEO:35.711242;139.868123
+PRIORITY:3
+CATEGORIES:区内文化
+END:VEVENT
+BEGIN:VEVENT
 UID:9514df9aaa3a6458ed5418355365400c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270112T060000Z
@@ -8718,7 +9276,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:83d9ada78dbac1195114c2aac4a15d6a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270113T040000Z
@@ -8755,7 +9313,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:bb6b36ee8bf0e422154ce5a1a1ac84ff@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270113T043000Z
@@ -8801,7 +9359,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:4c22376a858901c619944b479c229ccc@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270113T043000Z
@@ -8840,7 +9398,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7267904346637bb0f20973bc2549219b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270113T100000Z
@@ -8888,7 +9446,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d7fd40900184785f1c0d7550e8167ed6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270114T001500Z
@@ -8934,7 +9492,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:faf1c657e8fb93957fa4ba6ce6427544@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270114T060000Z
@@ -8979,7 +9537,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:39831cbfd2b322b2bcb0afad5af8cc1e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270114T071500Z
@@ -9019,7 +9577,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:13e690ad89bc35d283a8bf3c0c42b510@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270115T010000Z
@@ -9069,7 +9627,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:49b2283ca09bdc01be1d8742efaaf6f1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270115
@@ -9106,7 +9664,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:cc45b36a33a28c33a7e56600b5d3feca@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270116T000000Z
@@ -9143,7 +9701,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:e39c2ce0f984eea19d74273a1a6fd958@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270116T050000Z
@@ -9191,7 +9749,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a5e7220bbdb7236bbad37360a36b3342@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270116
@@ -9246,7 +9804,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:42a0bc6ef68da212f8ee73e4ff39cc60@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270117
@@ -9282,7 +9840,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:470d97ba4766bf8cee2d74649288154c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270118T010000Z
@@ -9321,7 +9879,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:34d4f2d24376627dcb9c7886574b8578@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270118T040000Z
@@ -9366,7 +9924,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:17d8b546d173fb0d209ea26c5cdcb018@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270119T020000Z
@@ -9408,7 +9966,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:9ac7cae32f088a7e3289fb1fcc5fe9a6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270120T060000Z
@@ -9455,7 +10013,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ac1ee03d341fe79082916620b41bbbcd@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270121T040000Z
@@ -9502,7 +10060,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:c4822dbe23e3e99528768e811867a788@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270121T071500Z
@@ -9542,7 +10100,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:abffc69bfe706a98a644040d03177e7a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270122T040000Z
@@ -9588,7 +10146,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:58f5247517484ae5039ea832901273d9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270122
@@ -9631,7 +10189,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d6ff32cdb651ba9156f28b554cc360f1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270123T003000Z
@@ -9674,7 +10232,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:886d8f0d81a2132d51cee3a9cf7cdf18@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270123T010000Z
@@ -9725,7 +10283,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:bd62dac15e3d86c1fd24f196afaf82d9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270123T050000Z
@@ -9760,7 +10318,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:602c88867da8f4c2d57022d147c58b20@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270123T100000Z
@@ -9799,7 +10357,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:af056566ca07a84ab89fdd8a8f0f4149@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270126T010000Z
@@ -9844,7 +10402,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7dd15bc26e4d00fb9f579920c76344cc@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270127T040000Z
@@ -9889,7 +10447,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:bbfcec8762fa7a82737c89d2edfa3a53@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270128T071500Z
@@ -9929,7 +10487,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:17d9c7b50f47db0a18092c01c9eee348@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270129T010000Z
@@ -9963,7 +10521,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b68901ae907c03f9ed0eac0d77b639b4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270130T050000Z
@@ -10034,7 +10592,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:68208b12006ab9d724e36471fa822e34@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270201T010000Z
@@ -10080,7 +10638,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:00de0c0e4f1a68e5e4a87d1ca61f30cd@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270202T010000Z
@@ -10126,7 +10684,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:23e090ecc9d2444c0e3e9535fbc38563@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270202T010000Z
@@ -10166,7 +10724,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:bfba14f6c96b725bb6f4ee56068c494a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270202T013000Z
@@ -10218,7 +10776,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1b160dcb0a2686b3b61f490b314be7be@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270202T050000Z
@@ -10261,7 +10819,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:9d81cd11114691e76c771c1a1073a44b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270203T010000Z
@@ -10307,7 +10865,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1787aa7b5ab9126ea2c2db470c3ca7f8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270203T010000Z
@@ -10347,7 +10905,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:feb33337dad08be663cc23d6bd97cf71@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270203T043000Z
@@ -10394,7 +10952,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:41d5fe90ee84dac22fef5fd6bbd8bfca@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270203T050000Z
@@ -10435,7 +10993,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:328c63fb5f06f618177835c31eae9e8d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270203T100000Z
@@ -10483,7 +11041,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:32bdea1ec10d48d9ad1e75eafe5e3fd0@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270204T010000Z
@@ -10529,7 +11087,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:5522a0b47e3d53da58a79d8f0c510bc1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270204T010000Z
@@ -10569,7 +11127,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:37e38222710ace9f50e77f35bede341b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270204T050000Z
@@ -10611,7 +11169,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:444bead5d7468f53e87c66f80c295737@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270204T071500Z
@@ -10651,7 +11209,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d39bc6a0e7c561d1185c13939e32e919@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270205T010000Z
@@ -10697,7 +11255,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3f4e415697d57e45d91a712584dbe1ef@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270205T050000Z
@@ -10739,7 +11297,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:eedfe7a615717cd579551b057065a32b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270206T000000Z
@@ -10785,7 +11343,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:2913d8679e0d163a88df42f10afd0283@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270206T001500Z
@@ -10844,7 +11402,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:098ed3069c8d3bc309f90281b27dfe48@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270206T050000Z
@@ -10907,7 +11465,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:763f9af8bf2b725f320a235a726941b9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270208T001500Z
@@ -10953,7 +11511,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3ac437ac271de6c89054edb6afd054f8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270208T040000Z
@@ -10998,7 +11556,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:027894066f800b4841cdbfcb11da501d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270208
@@ -11041,7 +11599,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1be069528deecfe339f9ba8e1f406492@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270209T013000Z
@@ -11093,7 +11651,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:4bf95bd4d46de7ceedc855e7d2f1b79c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270209T060000Z
@@ -11140,7 +11698,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:4b1ccc60f29d01f90e753ebea4426058@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270211T071500Z
@@ -11180,7 +11738,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1720641cd07c00367b6f51ae5733db66@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270212T043000Z
@@ -11226,7 +11784,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8ff6e3a13d089d9f749feb792752a17a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270213T050000Z
@@ -11261,7 +11819,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:32520a1382feb0f31984f5a09b484c36@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270213
@@ -11282,7 +11840,7 @@ CATEGORIES:区内文化
 END:VEVENT
 BEGIN:VEVENT
 UID:1d37293f57c8ae36bf0ab7286348594f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270214T030000Z
@@ -11329,7 +11887,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:16937775fd95492179f9eed9ed839c3c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270214
@@ -11367,7 +11925,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:222e4582d611b7b0cd88a72deb710b26@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270214
@@ -11387,7 +11945,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:49c169d006a671d681c72e138652cf63@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270215T043000Z
@@ -11432,8 +11990,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:a2d1a1a7cfd392740bd8e0f840f6cf74@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:1668300282222ab70bf5acc45904ab41@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270216T010000Z
@@ -11478,7 +12098,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8f3923a7bdf2e634911274f70d0cde04@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270216T010000Z
@@ -11518,7 +12138,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:9ec6cf4033a2adff022913acd5a287df@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270216T013000Z
@@ -11570,7 +12190,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:74f444c082d014dab0dd45157f3f1e61@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270216T020000Z
@@ -11612,7 +12232,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8fef12997d3068b0d734d20073f40bc3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270216T050000Z
@@ -11655,7 +12275,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:bb045d7824ada0a45c676c3f00e8c800@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270217T010000Z
@@ -11695,7 +12315,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:d3f58445aabd2e98cced6c9eec6d0fc7@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270217T050000Z
@@ -11736,7 +12356,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:82a845f9723ae47e877c3a2264eaa46e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270217T060000Z
@@ -11783,7 +12403,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:3773694edf2c32aadce083a4d9156528@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270218T001500Z
@@ -11828,7 +12448,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:4b4a5c0045ec9ea52f486a5ea78df4cc@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270218T010000Z
@@ -11868,7 +12488,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:15452239f8a8391b0e48efeaa730a544@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270218T040000Z
@@ -11915,7 +12535,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:5bb2b2aa0b2602b59d97363279217542@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270218T050000Z
@@ -11957,7 +12577,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:39bffdd38246d8f20e938a98bcb7901f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270218T060000Z
@@ -12002,7 +12622,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:7f5328bdaf317d7d2670d158254dfb24@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270218T071500Z
@@ -12042,7 +12662,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:37a9cedd7fda3e0a71d6f2ddc9c0ab24@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270218
@@ -12062,7 +12682,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:459300d535cde276484ccead959863c8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270219T010000Z
@@ -12100,7 +12720,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:71a8e5a476d8323fb6f85cd279a222a3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270219T010000Z
@@ -12150,7 +12770,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:e73b6a2427e157b85e8279a8f4504659@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270219T050000Z
@@ -12191,8 +12811,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
  700/shinden.jpg
 END:VEVENT
 BEGIN:VEVENT
+UID:4d7bec08c827cc8ef78206142aebc2fb@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270219
+DTEND;VALUE=DATE:20270220
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:49ae24d47e78dddf6cc354298335e7df@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270220
@@ -12238,7 +12920,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0393327dd3ae82e06a4fd2ecbbc0cbf6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270221T000000Z
@@ -12280,7 +12962,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:49b71ec04700dab70c875a9f4a3e6bd7@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270221T001500Z
@@ -12339,7 +13021,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:40c86f38c9ac59e3047735dd599fb64f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270221
@@ -12388,7 +13070,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b754c401c404c4bda84b859a4b159430@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270221
@@ -12423,8 +13105,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:f4604e4d4c52dfa88dfe1752e48bae06@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270222
+DTEND;VALUE=DATE:20270223
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:e458b09e2eb23d28dd34900f18a8b890@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270223T100000Z
@@ -12463,7 +13207,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:fcffc26373efcc7541a1f448d73aeb7b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270224T040000Z
@@ -12508,7 +13252,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:45dcb604398ec482c950ca17dbcc1d55@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270225T071500Z
@@ -12548,7 +13292,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:44f8b85966b4991ee1cf09e674305a17@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270226T040000Z
@@ -12593,8 +13337,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:324c8856210dd01f3a5b322bf7b664cb@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270226
+DTEND;VALUE=DATE:20270227
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:2b962b856707f018dbd1d4153b0922b9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270227T000000Z
@@ -12630,7 +13436,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:233ae80316e223416cbb7407eff3c46e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270227T001500Z
@@ -12689,7 +13495,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:bdf4c24052d4e7bc58ac326f90eb3261@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270227T010000Z
@@ -12732,7 +13538,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:13a52a254b99411019774d6d4f548a7b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270227T013000Z
@@ -12770,8 +13576,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:445d094225263f2452b314ae0a9e3899@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270301
+DTEND;VALUE=DATE:20270302
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:a29a0cefa14c5a308ab3290329df06f9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270302T001500Z
@@ -12817,7 +13685,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:aaaf7c005faed24f6cf6fe8905511bad@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270302T010000Z
@@ -12857,7 +13725,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:d001cbbf88ed37f441f0224b9093d377@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270302T013000Z
@@ -12909,7 +13777,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0b41e475df1c7fee127147417f4e0f37@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270302T020000Z
@@ -12949,7 +13817,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:907019cb7b4ee20a58fadb40a47810a6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270302T050000Z
@@ -12992,7 +13860,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:da5e6ebcf8194225932005084a00bb6f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270303T010000Z
@@ -13032,7 +13900,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:493f57c866562910f891ca99a0e6078b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270303T043000Z
@@ -13079,7 +13947,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:56eb2c0e5929eaee7b7e719a5a9d4b13@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270303T050000Z
@@ -13120,7 +13988,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:a5600aca41eb956408ba4cbce54f8836@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270303T100000Z
@@ -13168,7 +14036,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:1693219b97190b0d719ad0526510a514@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270304T001500Z
@@ -13213,7 +14081,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8525ba73093c3793364d0fd4f3193ca0@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270304T010000Z
@@ -13251,7 +14119,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8e44666022bd06e5dc61e8e70260069e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270304T010000Z
@@ -13291,7 +14159,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:eedd0dfb2245d822d4839e142cbcf93d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270304T050000Z
@@ -13333,7 +14201,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:41eb25d8301fed1f8a2fe9e834b34c56@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270304T071500Z
@@ -13373,7 +14241,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0cef7ecaf7c2085b37ec43036c626136@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270304
@@ -13393,7 +14261,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:a2798e23f4e351e6ecd25e31a0e081e8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270305T043000Z
@@ -13439,7 +14307,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:10038bb14d0578348178413b402f4163@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270305T050000Z
@@ -13480,8 +14348,70 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
  700/shinden.jpg
 END:VEVENT
 BEGIN:VEVENT
+UID:12829524dbff243d4e1740df46d35411@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270305
+DTEND;VALUE=DATE:20270306
+SUMMARY:シニアのための初めてのパソコン教室 [区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/20260615pc.ht
+ ml\n会場: 中央くすのきカルチャーセンター\n住所: 江
+ 戸川区西小松川町34番1号\n情報元: 江戸川区公式イベ
+ ントカレンダー\n画像: https://www.city.edogawa.tokyo.jp/shared/
+ site_rn/images/sns/logo.png\n更新日:2026年6月1日\nシニアのた
+ めの初めてのパソコン教室\n区内在住の60歳以上の方
+ が対象の、初心者向けパソコン教室です。\n長年、シ
+ ニアの方のパソコンライフを支援している「江戸川シ
+ ニアパソコン・ネットワーククラブ」が主催。1回6日
+ 間のコースとなります。\n第2回 8月31日(月曜日)から9
+ 月18日(金曜日)の6日間\n第3回 11月16日(月曜日)から12月7
+ 日(月曜日)の6日間\n第4回 2月15日(月曜日)から3月5日(金
+ 曜日)の6日間\n各日13時30分~16時30分に開催\n開催日時\n2
+ 026年8月31日(月曜日)\n2026年9月4日(金曜日)\n2026年9月7日(
+ 月曜日)\n2026年9月11日(金曜日)\n2026年9月14日(月曜日)\n20
+ 26年9月18日(金曜日)\n2026年11月16日(月曜日)\n2026年11月20
+ 日(金曜日)\n2026年11月27日(金曜日)\n2026年11月30日(月曜
+ 日)\n2026年12月4日(金曜日)\n2026年12月7日(月曜日)\n2027年2
+ 月15日(月曜日)\n2027年2月19日(金曜日)\n2027年2月22日(月
+ 曜日)\n2027年2月26日(金曜日)\n2027年3月1日(月曜日)\n2027
+ 年3月5日(金曜日)\n申し込み\n必要\n申し込み期間\n2026
+ 年6月1日(月曜日)から2026年8月17日(月曜日)\n申し込み方
+ 法\n8月17日(月曜日)までに下記内容をご記入の上、往
+ 復はがきにて郵送してください。\n【記入事項】\n(1)
+ 希望回(第1希望、第2希望、第3希望)\n(2)氏名(フリガナ)
+ \n(3)住所\n(4)年齢\n(5)連絡先(電話番号)\n(注)返信用はが
+ きにも住所・氏名を記入\n【宛先】\n〒132-0013 江戸川
+ 区江戸川1丁目32番20号\n江戸川シニアパソコン・ネッ
+ トワーククラブ 左本 肇\n場所\n中央くすのきカルチャ
+ ーセンター\n住所\n江戸川区西小松川町34番1号\n内容\n1
+ 日目:パソコンの基本操作、お絵かきアプリを通じた
+ マウス練習\n2日目:キーボードによる文字入力練習\n3
+ 日目:文書作成アプリによる絵入りはがきの作成\n4日
+ 目:文書作成アプリによる絵入りカレンダー作成\n5日
+ 目:電子メールの作成と送受信練習\n6日目:インターネ
+ ットを通じたホームページ閲覧、情報検索練習、生成
+ AI体験\n対象\n区内在住の60歳以上のパソコン初心者の
+ 方\n定員\n各回12人(応募者多数の場合は抽選)\n費用\n有
+ 料\n6000円(実費・材料費)\n問合せ\n江戸川シニアパソコ
+ ン・ネットワーククラブ\nパソコン教室担当(左本)電
+ 話:090-5526-8449\n主催\n江戸川シニアパソコン・ネットワ
+ ーククラブ\n後援\n江戸川区\n関連資料\n江戸川シニア
+ ・パソコンネットワーククラブ\nシニアのためのはじ
+ めてのパソコン教室チラシ(PDF:1\,410KB)\n参照元: https://w
+ ww.city.edogawa.tokyo.jp/event/20260615pc.html
+URL:https://www.city.edogawa.tokyo.jp/event/20260615pc.html
+LOCATION:中央くすのきカルチャーセンター 江戸川区西小
+ 松川町34番1号
+GEO:35.700710;139.864029
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:e26fae1b174fc71c6d8933accfcaf4b3@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270306T000000Z
@@ -13526,8 +14456,71 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
  te_rn/images/sns/logo.png
 END:VEVENT
 BEGIN:VEVENT
+UID:908cce12506e4aae2dc011522d824ec3@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART:20270306T050000Z
+DTEND:20270306T070000Z
+SUMMARY:江戸川区ひきこもり地域家族会エバーグリーン [
+ 区公式]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/07_kazokukai.
+ html\n会場: 東部区民館\n住所: 江戸川区東瑞江1丁目17番
+ 1号\n情報元: 江戸川区公式イベントカレンダー\n画像: 
+ https://www.city.edogawa.tokyo.jp/shared/site_rn/images/sns/logo.png\n
+ 更新日:2026年4月27日\n江戸川区ひきこもり地域家族会
+ エバーグリーン\n江戸川区には、ひきこもりに悩む家
+ 族の方がたくさんいます。\n地域家族会「エバーグリ
+ ーン」を通じて家族同士が集まることで、孤立するこ
+ となく、一緒に悩み支え合う仲間を作ることができま
+ す。\n江戸川区ひきこもり相談支援員も参加しますの
+ で、ぜひご参加ください。\n開催日時\n2026年4月4日(土
+ 曜日)14時00分から16時00分\n2026年6月6日(土曜日)14時00分
+ から16時00分\n2026年7月4日(土曜日)14時00分から16時00分\n
+ 2026年8月1日(土曜日)14時00分から16時00分\n2026年9月5日(
+ 土曜日)14時00分から16時00分\n2026年10月3日(土曜日)14時00
+ 分から16時00分\n2026年11月7日(土曜日)14時00分から16時00
+ 分\n2026年12月5日(土曜日)14時00分から16時00分\n2027年2月6
+ 日(土曜日)14時00分から16時00分\n2027年3月6日(土曜日)14
+ 時00分から16時00分\n申し込み\n必要\n申し込み期間\nお
+ 申込み期限は、各回の前日17時00分までとなります。\n
+ (各回の前日が祝祭日の場合は、直前の営業日が申込
+ 期限となります。ご了承ください。)\n申し込み方法\n
+ 事前申込制です。\n電話・窓口・メールのいずれかの
+ 方法でお申込みください。\n【電話】03-6657-4688(生活援
+ 護管理課ひきこもり相談窓口)\n【窓口】江戸川区生活
+ 援護管理課ひきこもり相談窓口(平井6丁目1番17号)\n【
+ メール】komin_edogawa_fami@kizuki.or.jp\n(ひきこもり相談支
+ 援事業業務委託:株式会社キズキ)\nお申込みの際は、
+ 以下の事項をお伝えください。\n参加される方の氏名\
+ n参加される方の住所\n参加される方の電話番号\n参加
+ される方の年代(任意)\n参加される方とひきこもり状
+ 態の方の続柄\n場所\n東部区民館\n住所\n江戸川区東瑞
+ 江1丁目17番1号\n内容\nひきこもりに悩むご家族が集ま
+ り、普段はなかなか話せない気持ちや思いを吐き出す
+ ことのできる場所です。\n江戸川区ひきこもり相談支
+ 援員も参加し、参加者とお話ししながら相談や情報提
+ 供を行います。\n必要に応じて講師を招き、ひきこも
+ りについて理解し、ひきこもり状態の方への対応方法
+ や利用できる制度などを学びます。\n対象\nひきこも
+ りに悩むご家族の方\n定員\n各回35名\n費用\n無料\n持ち
+ 物\n特になし\n問合せ\n【電話】03-6657-4688(生活援護管
+ 理課ひきこもり相談窓口)\n【窓口】江戸川区生活援護
+ 管理課ひきこもり相談窓口(平井6丁目1番17号)\nEメール
+ \nひきこもり相談支援事業業務委託:株式会社キズキ\n
+ 主催\n江戸川区\n参照元: https://www.city.edogawa.tokyo.jp/event
+ /07_kazokukai.html
+URL:https://www.city.edogawa.tokyo.jp/event/07_kazokukai.html
+LOCATION:東部区民館 江戸川区東瑞江1丁目17番1号
+GEO:35.689891;139.899532
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
+ te_rn/images/sns/logo.png
+END:VEVENT
+BEGIN:VEVENT
 UID:33e267ae32022b2e58ed5e28097fe3a8@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270306T050000Z
@@ -13562,7 +14555,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d0c59b8384117b7c6ab92b17f82449f4@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270308T040000Z
@@ -13607,7 +14600,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:93e6456de6021fd6de73a279667adcb1@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270309T013000Z
@@ -13659,7 +14652,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:2e4509048e84c628fb4cdf85bc1dea0d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270309T060000Z
@@ -13706,7 +14699,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:272515e1838180e20e2e00533bd4d304@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270311T060000Z
@@ -13751,7 +14744,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:8cdc5eed8f36f83052b0f80b5321d7ef@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270311T071500Z
@@ -13791,7 +14784,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:0ebff443e0fb203e4e9d9fda9a60970f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270312T043000Z
@@ -13837,7 +14830,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f78c2e331bb44917f1ffe87a8edbee3c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270313T050000Z
@@ -13908,7 +14901,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ae8df4f0874cd9dbfa4352f57c27a83c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270316T010000Z
@@ -13948,7 +14941,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:2af5fc8b2b4cf963ba9a17bb67e39dc6@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270316T013000Z
@@ -14000,7 +14993,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:b9db255ead3475f9ee3e942c5314cff7@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270316T050000Z
@@ -14043,7 +15036,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:824c039a3180f461e83bfa1d19118734@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270317T010000Z
@@ -14083,7 +15076,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:5a26a1b298cab31aae3d5580374eaefd@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270317T050000Z
@@ -14124,7 +15117,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:25457f9aea61d71b7ecb4a5153fe817d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270317T060000Z
@@ -14171,7 +15164,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:d2edb7ac9bdf0c1f18df5ba0768efd62@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270318T010000Z
@@ -14211,7 +15204,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:00d7b876a188529c66a88e2ca09a0532@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270318T040000Z
@@ -14258,7 +15251,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:5802668e0106f453016a3e98be2131b9@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270318T050000Z
@@ -14300,7 +15293,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:8b95f54c68d718aad6d74cae249ccd0c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270319T010000Z
@@ -14338,7 +15331,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:74bbd153ed49617cb50fd140f5e84ac2@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270319T050000Z
@@ -14380,7 +15373,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/73
 END:VEVENT
 BEGIN:VEVENT
 UID:136b72844e0dc0d8367f3e2529fb6eee@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270321T013000Z
@@ -14390,35 +15383,29 @@ SUMMARY:【全4回講座】ひるまの天文学:太陽をおいかけて
 DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/event/2606_sun.html
  \n会場: 子ども未来館\n住所: 東京都江戸川区篠崎町三
  丁目12番10号\n情報元: 江戸川区イベントカレンダーCSV\
- n画像: https://www.city.edogawa.tokyo.jp/images/70702/6sun.jpg\nこの
- サイトではJavaScriptを使用したコンテンツ・機能を提
- 供しています。JavaScriptを有効にするとご利用いただ
- けます。\n本文へスキップします。\nEnglish\n简体中文\n
- 한국어\n日本語\nすべての言語を見る\n閉じる\n閉じる\
- n閉じる\nトップページ\n>\nイベントカレンダー(子ども
- 未来館)\n> 【全4回講座】ひるまの天文学:太陽をおい
- かけて\n更新日:2026年5月15日\n【全4回講座】ひるまの
- 天文学:太陽をおいかけて\n晴れた空に、かがやいてい
- る太陽。\nその動きを、夏至、秋分、冬至、春分と、
- 季節ごとに1年間おってみます。\n1年とおして観測す
- ることで、新しい発見があるかもしれません。\nあい
- だはあきますが、忘れずに全部で4回、参加してくだ
- さい。\n開催日時\n2026年6月21日(日曜日)10時30分から12
- 時30分\n2026年9月23日(水曜日)10時30分から12時30分\n2026年
- 12月20日(日曜日)10時30分から12時30分\n2027年3月21日(日曜
- 日)10時30分から12時30分\n申し込み\n必要\n申し込み方法
- などくわしくは、下記リンク先「事前申し込みの講座
- の応募方法」をご覧ください。\n申し込み期間\n2026年5
- 月15日(金曜日)から2026年6月9日(火曜日)\n上記期間はウ
- ェブサイトのしめきりです。\n往復はがきでのお申し
- 込みはウェブサイトのしめきり前日までに子ども未来
- 館に着くようにご投函ください。\n場所\n子ども未来
- 館\n住所\n江戸川区篠崎町三丁目12番10号\n対象\n小学校
- 4年生から6年生まで\n定員\n16人(抽選)\n費用\n無料\n問
- 合せ\n子ども未来館(電話)03-5243-4011\n主催\n子ども未来
- 館\n関連資料\nアカデミー通信6月号(PDF:1\,144KB)\n関連リ
- ンク\n事前申し込みの講座の応募方法\n参照元: https://w
- ww.city.edogawa.tokyo.jp/event/2606_sun.html
+ n画像: https://www.city.edogawa.tokyo.jp/images/70702/6sun.jpg\n更新
+ 日:2026年5月15日\n【全4回講座】ひるまの天文学:太陽を
+ おいかけて\n晴れた空に、かがやいている太陽。\nそ
+ の動きを、夏至、秋分、冬至、春分と、季節ごとに1
+ 年間おってみます。\n1年とおして観測することで、新
+ しい発見があるかもしれません。\nあいだはあきます
+ が、忘れずに全部で4回、参加してください。\n開催日
+ 時\n2026年6月21日(日曜日)10時30分から12時30分\n2026年9月2
+ 3日(水曜日)10時30分から12時30分\n2026年12月20日(日曜日)1
+ 0時30分から12時30分\n2027年3月21日(日曜日)10時30分から12
+ 時30分\n申し込み\n必要\n申し込み方法などくわしくは
+ 、下記リンク先「事前申し込みの講座の応募方法」を
+ ご覧ください。\n申し込み期間\n2026年5月15日(金曜日)
+ から2026年6月9日(火曜日)\n上記期間はウェブサイトの
+ しめきりです。\n往復はがきでのお申し込みはウェブ
+ サイトのしめきり前日までに子ども未来館に着くよう
+ にご投函ください。\n場所\n子ども未来館\n住所\n江戸
+ 川区篠崎町三丁目12番10号\n対象\n小学校4年生から6年
+ 生まで\n定員\n16人(抽選)\n費用\n無料\n問合せ\n子ども
+ 未来館(電話)03-5243-4011\n主催\n子ども未来館\n関連資料\
+ nアカデミー通信6月号(PDF:1\,144KB)\n関連リンク\n事前申
+ し込みの講座の応募方法\n参照元: https://www.city.edogawa.t
+ okyo.jp/event/2606_sun.html
 URL:https://www.city.edogawa.tokyo.jp/event/2606_sun.html
 LOCATION:子ども未来館 東京都江戸川区篠崎町三丁目12番1
  0号
@@ -14429,8 +15416,36 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/70
  702/6sun.jpg
 END:VEVENT
 BEGIN:VEVENT
+UID:9a5c232d863db89006f75e7fa0002c8e@edogawa-events.local
+DTSTAMP:20261127T082821Z
+SEQUENCE:0
+TRANSP:OPAQUE
+DTSTART;VALUE=DATE:20270321
+DTEND;VALUE=DATE:20270322
+SUMMARY:あたらしい夢との出会いが待ってます。 [区公式
+ ]
+DESCRIPTION:詳細: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+ \n会場: 江戸川区立篠崎子ども図書館\n住所: 江戸川区
+ 立篠崎子ども図書館(東京都江戸川区篠崎町3-12-20)\n情
+ 報元: 江戸川区公式イベントカレンダー\n画像: https://w
+ ww.city.edogawa.tokyo.jp/images/9955/slide01.jpg\nあたらしい夢と
+ の出会いが待ってます。\n子ども未来館の1階は図書館
+ になっています。\n5万冊を越える児童図書を有する「
+ 篠崎子ども図書館」は、子どもアカデミーでの学びを
+ しっかりサポートしています。\n篠崎子ども図書館サ
+ イト\n参照元: https://www.city.edogawa.tokyo.jp/miraikan/index.html
+URL:https://www.city.edogawa.tokyo.jp/miraikan/index.html
+LOCATION:江戸川区立篠崎子ども図書館(東京都江戸川区篠
+ 崎町3-12-20)
+GEO:35.702145;139.906128
+PRIORITY:9
+CATEGORIES:区公式
+IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/images/99
+ 55/slide01.jpg
+END:VEVENT
+BEGIN:VEVENT
 UID:793282b8955b636feb9b0ae1b2367d73@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270323T013000Z
@@ -14482,7 +15497,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:a2388f6d8392dc62f29790a696f1bc22@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270324T040000Z
@@ -14527,7 +15542,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:f65903163db91008cb1adaa95f982a72@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270326T040000Z
@@ -14573,7 +15588,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:35e9eb122c92ac3cdd98b6ec34f1124f@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270327T000000Z
@@ -14609,7 +15624,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:ece20935b157edb3d672a0cd8275bcba@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270330T013000Z
@@ -14661,7 +15676,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:9acd44e9e91e3562eaa37f1da25b1b9c@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270401
@@ -14691,7 +15706,7 @@ CATEGORIES:学校公開
 END:VEVENT
 BEGIN:VEVENT
 UID:cc909b100db40039fc22690250f3efcb@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270401
@@ -14720,7 +15735,7 @@ CATEGORIES:学校公開
 END:VEVENT
 BEGIN:VEVENT
 UID:5b5a5eb1631c089ed45c12ac8a20e1dc@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART:20270404T010000Z
@@ -14754,7 +15769,7 @@ IMAGE;VALUE=URI;DISPLAY=BADGE:https://www.city.edogawa.tokyo.jp/shared/si
 END:VEVENT
 BEGIN:VEVENT
 UID:942649b8c2c959f2e1b7c90c2207fd24@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270416
@@ -14774,7 +15789,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:b0ebdad9155d06d8680d8075c24b842b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270519
@@ -14796,7 +15811,7 @@ CATEGORIES:区内公共-環境
 END:VEVENT
 BEGIN:VEVENT
 UID:e1a970dce0efb73ed6972027473a892e@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270625
@@ -14816,7 +15831,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:3418573f1883aab20bee33cd3a24777d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270716
@@ -14836,7 +15851,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:986b7412ec267b4318138dbec8fa0c9d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270806
@@ -14856,7 +15871,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:2ef45a11b027b1e887c55135fca7473d@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20270917
@@ -14876,7 +15891,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:88aae8497c5386e96f444912ff6b418b@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20271022
@@ -14896,7 +15911,7 @@ CATEGORIES:友好都市-物産展
 END:VEVENT
 BEGIN:VEVENT
 UID:b2d57dc62906694bc2b1e381d332629a@edogawa-events.local
-DTSTAMP:20261127T075449Z
+DTSTAMP:20261127T082821Z
 SEQUENCE:0
 TRANSP:OPAQUE
 DTSTART;VALUE=DATE:20271119

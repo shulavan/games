@@ -1,8 +1,8 @@
 {
-  "app_version": "3.2.13",
+  "app_version": "3.2.14",
   "mode": "live",
   "coverage_complete": false,
-  "generated_at": "2026-11-27T16:54:49.060397+09:00",
+  "generated_at": "2026-11-27T17:28:21.654255+09:00",
   "timezone": "Asia/Tokyo",
   "months_requested": 12,
   "scope": "江戸川区内の開催場所を確認できたイベントのみ",
@@ -1346,7 +1346,7 @@
       ],
       "candidate_urls": 260,
       "detail_success": 260,
-      "accepted": 284,
+      "accepted": 308,
       "rejected": {
         "location_unverified": 21,
         "non_event_page": 1,
@@ -1379,7 +1379,7 @@
           "months_requested": 12
         }
       },
-      "previous_accepted": 518
+      "previous_accepted": 284
     },
     "えどがわ朝日創業塾（朝日信用金庫公開日程）": {
       "name": "えどがわ朝日創業塾（朝日信用金庫公開日程）",
@@ -1838,8 +1838,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 5,
-      "regression_warning": true,
+      "previous_accepted": 0,
       "unexpected_zero": true
     },
     "篠崎公園": {
@@ -1934,8 +1933,7 @@
         }
       ],
       "truncated_candidates": 0,
-      "previous_accepted": 2,
-      "regression_warning": true,
+      "previous_accepted": 0,
       "unexpected_zero": true
     },
     "タワーホール船堀": {
@@ -1985,11 +1983,11 @@
       "same_site_links": 0,
       "candidate_links": 36,
       "detail_success": 36,
-      "accepted": 2,
+      "accepted": 3,
       "rejected": {
         "non_event_page": 1,
         "outside_facility_mention:上野動物園": 4,
-        "no_event_date": 27,
+        "no_event_date": 26,
         "outside_facility_mention:国立科学博物館": 1,
         "outside_facility_mention:恩賜上野動物園": 1
       },
@@ -2062,24 +2060,24 @@
         }
       ],
       "truncated_candidates": 0,
-      "previous_accepted": 3
+      "previous_accepted": 1
     },
     "江戸川まいぷれ": {
       "name": "江戸川まいぷれ",
       "url": "https://edogawa.mypl.net/event/",
       "http_status": 200,
-      "bytes": 64801,
+      "bytes": 65563,
       "error": null,
       "attempts": 1,
       "cache_hit": false,
       "status": "zero_valid_events",
-      "total_links": 222,
+      "total_links": 225,
       "same_site_links": 0,
-      "candidate_links": 28,
-      "detail_success": 28,
+      "candidate_links": 31,
+      "detail_success": 31,
       "accepted": 0,
       "rejected": {
-        "no_event_date": 28
+        "no_event_date": 31
       },
       "feed_urls": [],
       "feed_candidates": 0,
@@ -2201,7 +2199,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 144,
-      "previous_accepted": 10
+      "previous_accepted": 2
     },
     "都立小岩高校": {
       "name": "都立小岩高校",
@@ -2223,7 +2221,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 2
+      "previous_accepted": 1
     },
     "都立葛西南高校": {
       "name": "都立葛西南高校",
@@ -2247,8 +2245,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 443,
-      "previous_accepted": 3,
-      "regression_warning": true,
+      "previous_accepted": 0,
       "unexpected_zero": true
     },
     "都立紅葉川高校": {
@@ -2272,8 +2269,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 0,
-      "previous_accepted": 5,
-      "regression_warning": true,
+      "previous_accepted": 0,
       "unexpected_zero": true
     },
     "都立篠崎高校": {
@@ -2297,7 +2293,7 @@
       "feed_urls": [],
       "feed_candidates": 0,
       "truncated_candidates": 202,
-      "previous_accepted": 17
+      "previous_accepted": 1
     },
     "鶴岡市・江戸川区内物産展": {
       "name": "鶴岡市・江戸川区内物産展",
@@ -2311,25 +2307,21 @@
       "candidate_blocks": 11,
       "accepted": 11,
       "rejected": {},
-      "previous_accepted": 21
+      "previous_accepted": 11
     }
   },
   "warnings": [
     "東京都OpenData江戸川区イベント一覧CSV: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川陸上競技場: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "葛西海浜公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-    "葛西臨海公園: 前回5件→今回0件。HTML変更/掲載なし/日付条件を確認",
     "葛西臨海公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-    "魔法の文学館: 前回2件→今回0件。HTML変更/掲載なし/日付条件を確認",
     "魔法の文学館: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川レクリエーション公園: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "江戸川まいぷれ: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "アリオ葛西: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "TRXフリーマーケット: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
     "都立江戸川高校: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-    "都立葛西南高校: 前回3件→今回0件。HTML変更/掲載なし/日付条件を確認",
     "都立葛西南高校: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認",
-    "都立紅葉川高校: 前回5件→今回0件。HTML変更/掲載なし/日付条件を確認",
     "都立紅葉川高校: 候補データがあるのに0件。列対応/フィルター/日付/会場抽出の取りこぼしを要確認"
   ],
   "limitations": [
@@ -2338,7 +2330,7 @@
     "Kintone/KViewerは外部公開APIが別途設定された場合のみ取得します。"
   ],
   "geocoding": {
-    "cache_hits": 59,
+    "cache_hits": 69,
     "gsi_queries": 22,
     "nominatim_queries": 1,
     "success": 21,
@@ -2346,10 +2338,10 @@
     "outside": 0
   },
   "totals": {
-    "raw_records": 361,
-    "unique_events": 358,
+    "raw_records": 386,
+    "unique_events": 383,
     "deduplicated_records": 3,
-    "with_coordinates": 358,
+    "with_coordinates": 383,
     "without_coordinates": 0,
     "strict_edogawa_only": true
   },
@@ -2362,5 +2354,5 @@
     "healthy": true,
     "primary_event_success": true
   },
-  "execution_id": "b450736aa893b78e"
+  "execution_id": "e15c0f061dddf630"
 }
