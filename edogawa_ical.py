@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.18"
+APP_VERSION = "3.2.20"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -436,6 +436,7 @@ class Event:
     priority: int = 4
     description: str = ""
     verified_location: bool = True
+    multi_venue: bool = False
 
     @property
     def all_day(self) -> bool:
@@ -540,7 +541,7 @@ def parse_date_spans(raw: str, base_year: int | None = None, include_past: bool 
     shorthand: list[tuple[date, int, int]] = []
     for d1, _a, e1 in list(found):
         tail = text[e1:]
-        m_short = re.match(r"\s*(?:[（(][月火水木金土日](?:曜日)?[）)])?\s*(?:から|～|〜|~|−|―|ー|-)\s*(?!20\d{2}\s*年)(\d{1,2})\s*日?", tail)
+        m_short = re.match(r"\s*(?:[（(]?[月火水木金土日](?:曜日)?[）)]?)?\s*(?:から|～|〜|~|−|―|ー|-)\s*(?!20\d{2}\s*年)(\d{1,2})\s*日?", tail)
         if m_short:
             day2 = int(m_short.group(1))
             year2, month2 = d1.year, d1.month
@@ -1258,11 +1259,48 @@ def expand_recurring_spans(text: str, spans: list[tuple[date, date]]) -> list[tu
             d += timedelta(days=1)
     return sorted(set(expanded), key=lambda x: x[0])
 
+def registered_venues_in_text(text: str) -> list[dict[str, Any]]:
+    """Return unique registered facilities explicitly mentioned in a text block."""
+    value = norm(text)
+    found: dict[str, dict[str, Any]] = {}
+    for alias in sorted(VENUES, key=len, reverse=True):
+        if alias and alias in value:
+            reg = dict(VENUES[alias])
+            name = norm(reg.get("name", alias))
+            if name:
+                found.setdefault(name, reg)
+    return list(found.values())
+
+
+def detect_multi_venue_event(title: str, venue: str, address: str, description: str) -> tuple[bool, list[dict[str, Any]]]:
+    """Detect events whose venue field describes multiple ward venues or ward-wide venues."""
+    combined = " ".join((norm(title), norm(venue), norm(address), norm(description)))
+    registered = registered_venues_in_text(" ".join((venue, address, description)))
+    if len(registered) >= 2:
+        return True, registered
+    ward_wide_markers = ("区内各館", "区内各図書館", "区立図書館", "各図書館", "区内各所",
+                         "複数会場", "複数の会場", "各会場", "区内各施設", "区内各銭湯")
+    if registered and any(x in combined for x in ward_wide_markers):
+        return True, registered
+    venue_parts = [x for x in re.split(r"[、,，;/／]", norm(venue)) if norm(x)]
+    if registered and len(venue_parts) >= 2 and ("区内" in combined or re.search(r"\d+\s*会場", combined)):
+        return True, registered
+    # Known ward-wide public campaigns whose source text describes multiple activities.
+    if ("障害者週間" in title and "図書館" in combined and
+            any(x in combined for x in ("ライトアップ", "展示", "区内"))):
+        return True, registered
+    if ("スタンプラリー" in title and "図書館" in combined and
+            re.search(r"\d+\s*館", combined) and re.search(r"\d+\s*店", combined)):
+        return True, registered
+    return False, registered
+
+
 def make_event(title: str, span: tuple[date, date], venue: str, address: str, url: str,
                source: str, category: str = "地域イベント", default_venue: str | None = None,
                start_time: str | None = None, end_time: str | None = None,
                image_url: str | None = None, description: str = "", priority: int = 4,
-               lat: float | None = None, lon: float | None = None) -> Event | None:
+               lat: float | None = None, lon: float | None = None,
+               allow_multi_venue: bool = True) -> Event | None:
     if is_application_closed(title) or is_annual_overview_page(title, url) or is_non_event_page(title, description, url):
         return None
     venue = clean_location_text(venue)
@@ -1270,9 +1308,29 @@ def make_event(title: str, span: tuple[date, date], venue: str, address: str, ur
     description = clean_description_text(description)
     if outside_facility_mention(description) or outside_facility_mention(venue) or outside_facility_mention(address):
         return None
+    multi_venue, matched_venues = detect_multi_venue_event(title, venue, address, description) if allow_multi_venue else (False, [])
     valid_span, _span_reason = valid_event_span(span)
     if not valid_span:
         return None
+    if multi_venue:
+        # A single pin would falsely imply that every activity occurs at one facility.
+        # Retain the event, but intentionally omit LOCATION address and GEO coordinates.
+        if matched_venues and any("江戸川区" not in norm(x.get("address", "")) for x in matched_venues):
+            return None
+        if len(matched_venues) >= 2:
+            venue_display = venue or "江戸川区内複数会場"
+        else:
+            venue_display = "江戸川区内複数会場（詳細は説明参照）"
+        if not any(x in " ".join((venue, address, description)) for x in ("江戸川区", "区内", "江戸川")):
+            return None
+        if url and urlparse(url).scheme.lower() not in ("http", "https"):
+            return None
+        return Event(title=clean_title(title), start_date=span[0].isoformat(), end_date=span[1].isoformat(),
+                     venue=norm(venue_display), address="", url=url, category=category,
+                     source=source, source_urls=[url] if url else [], start_time=start_time,
+                     end_time=end_time, image_url=image_url, latitude=None, longitude=None,
+                     coordinate_quality="multi_venue_no_single_point", priority=priority,
+                     description=description, verified_location=True, multi_venue=True)
     ok, registry, _why = verify_edogawa_location(address, venue, default_venue=default_venue)
     if not ok:
         return None
@@ -1475,6 +1533,20 @@ def merge_events(events: Iterable[Event]) -> list[Event]:
                 match.latitude, match.longitude = ev.latitude, ev.longitude
                 match.coordinate_quality = ev.coordinate_quality
             match.priority = min(match.priority, ev.priority)
+        # If any source establishes that the event spans multiple venues, never
+        # let a single-venue duplicate reintroduce a misleading map pin.
+        if match.multi_venue or ev.multi_venue:
+            match.multi_venue = True
+            match.latitude = None
+            match.longitude = None
+            match.coordinate_quality = "multi_venue_no_single_point"
+            match.address = ""
+            if "複数会場" not in match.venue and "複数会場" not in ev.venue:
+                match.venue = "江戸川区内複数会場（詳細は説明参照）"
+            elif "複数会場" in ev.venue:
+                match.venue = ev.venue
+            if ev.description and ev.description not in match.description:
+                match.description = (match.description + "\n" + ev.description).strip()[:4000]
         # 個別チラシ画像を優先し、logo.png等の汎用画像は個別画像で置換。
         if not _is_generic_image(ev.image_url) and _is_generic_image(match.image_url):
             match.image_url = ev.image_url
@@ -2244,17 +2316,100 @@ def _append_direct_event(events: list[Event], status: dict[str, Any], *, title: 
             _record_rejection(status, "outside_or_unverified_location")
 
 
-def parse_bulletin_pdf() -> tuple[list[Event], dict[str, Any]]:
-    """区公式『催しもの情報』PDF。日時・場所・イベント名が同一PDFブロックで
-    明確に対応し、会場マスタで区内確認できる催しだけを採用する保守的パーサー。
-    解析できないブロックは無理にイベント化せず、診断件数に残す。
+def _pdf_card_texts(page) -> tuple[list[str], int, int]:
+    """Extract text grouped by visual card rectangles, not PyMuPDF text blocks.
+
+    The official PDF is laid out as two-column boxed cards. PyMuPDF often returns
+    the blue title strip, body copy, date, venue and footer as separate text blocks.
+    The old parser incorrectly required all fields to occur in one block.
     """
+    blocks = []
+    for block in page.get_text("blocks", sort=True):
+        if len(block) >= 5 and isinstance(block[4], str) and norm(block[4]):
+            preserved = "\n".join(norm(line) for line in block[4].replace("\u3000", " ").splitlines() if norm(line))
+            blocks.append((tuple(float(x) for x in block[:4]), preserved))
+    page_rect = page.rect
+    rect_candidates = []
+    try:
+        for drawing in page.get_drawings():
+            for item in drawing.get("items", []):
+                if not item or item[0] != "re":
+                    continue
+                rect = item[1]
+                width, height = float(rect.width), float(rect.height)
+                area = width * height
+                if width >= 150 and height >= 55 and area >= 9000 and area < page_rect.width * page_rect.height * 0.70:
+                    rect_candidates.append((float(rect.x0), float(rect.y0), float(rect.x1), float(rect.y1)))
+    except Exception:
+        rect_candidates = []
+    # Keep only outer card rectangles. Header bars and inner panels are nested.
+    outer = []
+    for rect in sorted(rect_candidates, key=lambda r: (r[2]-r[0])*(r[3]-r[1]), reverse=True):
+        x0,y0,x1,y1 = rect
+        if any(x0 >= a-1 and y0 >= b-1 and x1 <= c+1 and y1 <= d+1 for a,b,c,d in outer):
+            continue
+        outer.append(rect)
+    cards = []
+    used = set()
+    for rect in outer:
+        x0,y0,x1,y1 = rect
+        selected = []
+        for i,(bbox,txt) in enumerate(blocks):
+            bx0,by0,bx1,by1 = bbox
+            cx,cy=(bx0+bx1)/2,(by0+by1)/2
+            if x0-2 <= cx <= x1+2 and y0-2 <= cy <= y1+2:
+                selected.append((by0,bx0,txt)); used.add(i)
+        text = "\n".join(x[2] for x in sorted(selected))
+        if text and re.search(r"【(?:日時|日程)】", text) and re.search(r"【(?:場所|集合場所)】", text):
+            cards.append(text)
+    # Fallback for PDFs without vector card frames: merge nearby blocks in the
+    # same column around each date/place pair, preserving a separate title block.
+    if not cards:
+        for i,(bbox,txt) in enumerate(blocks):
+            if not re.search(r"【(?:日時|日程)】", txt):
+                continue
+            x0,y0,x1,y1=bbox; cx=(x0+x1)/2
+            related=[]
+            for j,(bb,t) in enumerate(blocks):
+                bx0,by0,bx1,by1=bb; bc=(bx0+bx1)/2
+                same_column = abs(bc-cx) < max(90, page_rect.width*0.18)
+                if same_column and y0-125 <= by0 <= y0+190:
+                    related.append((by0,bx0,t))
+            text="\n".join(x[2] for x in sorted(related))
+            if re.search(r"【(?:場所|集合場所)】", text):
+                cards.append(text)
+    # De-duplicate overlapping rectangle/fallback results.
+    unique=[]; seen=set()
+    for text in cards:
+        key=re.sub(r"\s+","",text)
+        if key and key not in seen:
+            seen.add(key); unique.append(text)
+    return unique, len(blocks), len(outer)
+
+
+def _pdf_day_end_time_overrides(text: str, span: tuple[date, date]) -> dict[date, str]:
+    """Extract explicit per-day closing-time exceptions printed in PDF cards."""
+    overrides: dict[date, str] = {}
+    pattern = re.compile(r"(?<!\d)(\d{1,2})\s*日(?:[月火水木金土日](?:曜日)?)?\s*(?:は|のみ|については)\s*(\d{1,2})\s*時(?:\s*(\d{1,2})\s*分?)?\s*まで")
+    for match in pattern.finditer(norm(text)):
+        day, hour, minute = int(match.group(1)), int(match.group(2)), int(match.group(3) or 0)
+        try:
+            target = date(span[0].year, span[0].month, day)
+        except ValueError:
+            continue
+        if span[0] <= target <= span[1] and 0 <= hour <= 24 and 0 <= minute < 60:
+            overrides[target] = f"{hour:02d}:{minute:02d}"
+    return overrides
+
+
+def parse_bulletin_pdf() -> tuple[list[Event], dict[str, Any]]:
+    """区公式『催しもの情報』PDFをイベントカード単位で解析する。"""
     name = "江戸川区公式・催しもの情報PDF"
     url = "https://www.city.edogawa.tokyo.jp/edg/event/event.pdf"
     status = _status_for_direct_source(name, url)
     events: list[Event] = []
     try:
-        response = SESSION.get(url, timeout=25)
+        response = SESSION.get(url, timeout=25, headers={"Cache-Control": "no-cache", "Pragma": "no-cache"})
         status.update({"http_status": response.status_code, "bytes": len(response.content),
                        "content_type": response.headers.get("Content-Type", "")})
         response.raise_for_status()
@@ -2266,68 +2421,72 @@ def parse_bulletin_pdf() -> tuple[list[Event], dict[str, Any]]:
         status.update({"status": "fetch_or_pdf_error", "error": f"{type(exc).__name__}: {exc}"})
         return events, status
 
-    status["pages"] = len(doc)
-    status["blocks_seen"] = 0
-    status["date_place_blocks"] = 0
-    status["unparsed_blocks"] = 0
+    status.update({"pages": len(doc), "blocks_seen": 0, "cards_seen": 0,
+                   "date_place_cards": 0, "unparsed_cards": 0, "card_rectangles": 0,
+                   "rejection_samples": []})
     seen: set[tuple[str, str, str]] = set()
     for page_no, page in enumerate(doc, start=1):
-        for block in page.get_text("blocks", sort=True):
-            if len(block) < 5 or not isinstance(block[4], str):
-                continue
-            raw = block[4]
+        cards, block_count, rect_count = _pdf_card_texts(page)
+        status["blocks_seen"] += block_count
+        status["cards_seen"] += len(cards)
+        status["card_rectangles"] += rect_count
+        for raw in cards:
             text = norm(raw.replace("\u3000", " "))
-            if not text or len(text) > 1800:
+            if not text or len(text) > 2600:
                 continue
-            status["blocks_seen"] += 1
-            # PDF内の「9年1月」等は令和年として扱う。年月号の令和8年も先に西暦化。
             text = era_to_western(text)
             text = re.sub(r"(?<!\d)([1-9])年(?=\s*\d{1,2}月)",
                           lambda m: f"{2018 + int(m.group(1))}年", text)
-            if (len(re.findall(r"【(?:日時|日程)】", text)) != 1 or
-                len(re.findall(r"【(?:場所|集合場所)】", text)) != 1):
+            date_matches = list(re.finditer(r"【(?:日時|日程)】", text))
+            place_matches = list(re.finditer(r"【(?:場所|集合場所)】", text))
+            if len(date_matches) != 1 or len(place_matches) != 1:
                 continue
+            status["date_place_cards"] += 1
             date_match = re.search(r"【(?:日時|日程)】\s*(.+?)(?=【(?:場所|集合場所)】)", text)
             place_match = re.search(r"【(?:場所|集合場所)】\s*(.+?)(?=【|$)", text)
             if not date_match or not place_match:
                 continue
-            status["date_place_blocks"] += 1
             date_text = date_match.group(1)
             spans = parse_date_spans(date_text, include_past=True)
             if not spans:
                 _record_rejection(status, "pdf_date_unparsed")
-                status["unparsed_blocks"] += 1
+                status["unparsed_cards"] += 1
+                status["rejection_samples"].append({"page": page_no, "reason": "pdf_date_unparsed", "text": text[:260]})
                 continue
-            # 会場は同一ブロックに明記された単一の登録済み施設だけを採用。
             place_text = norm(place_match.group(1))
-            venue_matches = [(key, reg) for key, reg in sorted(VENUES.items(), key=lambda kv: len(kv[0]), reverse=True)
-                             if key and key in place_text]
-            unique_venues = {reg.get("name", key) for key, reg in venue_matches}
+            venue_matches = registered_venues_in_text(place_text)
+            unique_venues = {norm(x.get("name", "")) for x in venue_matches if x.get("name")}
             venue = next(iter(unique_venues)) if len(unique_venues) == 1 else ""
             if not venue:
                 _record_rejection(status, "pdf_venue_unregistered_or_ambiguous")
-                status["unparsed_blocks"] += 1
+                status["unparsed_cards"] += 1
+                status["rejection_samples"].append({"page": page_no, "reason": "pdf_venue_unregistered_or_ambiguous", "text": text[:260]})
                 continue
-            # タイトル候補は日時・場所・費用・申込・問合せ等の項目を除き、
-            # ブロック内の見出しらしい最長行を選ぶ。確信できない場合は保留。
             lines = [norm(x) for x in raw.splitlines() if norm(x)]
             candidates = []
             for line in lines:
-                line = re.sub(r"^[　\s]+", "", line)
-                if (len(line) < 5 or len(line) > 100 or
+                if (len(line) < 4 or len(line) > 110 or
                     re.match(r"^(?:【|☎|電話|FAX|費用|定員|対象|申し込み|申込|後援主管部署|日時|日程|場所|集合場所|内容|出演|問)", line) or
                     re.search(r"(?:03-\d{4}-\d{4}|090-\d{4}-\d{4}|@|https?://)", line)):
                     continue
                 if re.search(r"(?:します|行います|ご覧ください|お問い合わせください)[。.]?$", line):
                     continue
                 candidates.append(line)
-            # イベントタイトルは、短い説明文より固有名詞性の高い行を優先。
-            title = max(candidates, key=lambda x: (bool(re.search(r"第\s*\d+回|フェス|祭|寄席|展|大会|コンサート|講座|教室|相談会|発表会", x)), min(len(x), 55)), default="")
+            title_pattern = r"第\s*\d+回|フェス|祭|寄席|書展|書道展|美術展|作品展|写真展|絵画展|展示即売会|展覧会|展示会|大会|コンサート|講座|教室|相談会|発表会|イベント|体験"
+            title_options = list(candidates)
+            # Some PDF title strips wrap the event name across two separate lines.
+            for i, line in enumerate(candidates[:-1]):
+                nxt = candidates[i + 1]
+                if (re.search(r"第\s*\d+回", line) and len(nxt) <= 35
+                        and not re.search(r"(?:します|行います|ご覧ください)$", nxt)
+                        and not re.match(r"^(?:【|☎|電話|FAX|費用|定員|対象|申込|後援主管部署)", nxt)):
+                    title_options.append(line + " " + nxt)
+            title = max(title_options, key=lambda x: (bool(re.search(title_pattern, x)), min(len(x), 70)), default="")
             title = clean_title(title)
-            title_signal = re.search(r"第\s*\d+回|フェス|祭|寄席|展|大会|コンサート|講座|講習会|教室|相談会|発表会|イベント|体験", title)
-            if not title or not title_signal or is_non_event_page(title, text, url):
+            if not title or not re.search(title_pattern, title) or is_non_event_page(title, text, url):
                 _record_rejection(status, "pdf_title_unresolved")
-                status["unparsed_blocks"] += 1
+                status["unparsed_cards"] += 1
+                status["rejection_samples"].append({"page": page_no, "reason": "pdf_title_unresolved", "text": text[:320]})
                 continue
             start_time, end_time = parse_time_range(date_text)
             fingerprint = (title, str(spans), venue)
@@ -2335,12 +2494,28 @@ def parse_bulletin_pdf() -> tuple[list[Event], dict[str, Any]]:
                 _record_rejection(status, "duplicate_pdf_block")
                 continue
             seen.add(fingerprint)
-            _append_direct_event(events, status, title=title, spans=spans, venue=venue,
-                                 url=url, source=name, start_time=start_time,
-                                 end_time=end_time, description=text[:1800], priority=2)
+            # If the card specifies a different closing time on one day (for
+            # example, the final exhibition day), split the period into daily
+            # VEVENTs so the exception is not hidden by one shared end time.
+            day_overrides: dict[date, str] = {}
+            for span in spans:
+                day_overrides.update(_pdf_day_end_time_overrides(text, span))
+            if day_overrides:
+                for span in spans:
+                    current = span[0]
+                    while current <= span[1]:
+                        _append_direct_event(events, status, title=title, spans=[(current, current)], venue=venue,
+                                             url=url, source=name, start_time=start_time,
+                                             end_time=day_overrides.get(current, end_time),
+                                             description=text[:2200], priority=2)
+                        current += timedelta(days=1)
+            else:
+                _append_direct_event(events, status, title=title, spans=spans, venue=venue,
+                                     url=url, source=name, start_time=start_time,
+                                     end_time=end_time, description=text[:2200], priority=2)
     doc.close()
-    status["status"] = "ok" if events else ("zero_valid_events" if status.get("date_place_blocks") else "no_parseable_event_blocks")
-    status["coverage_note"] = "日時・場所・タイトルが同一PDFテキストブロックで確認できた登録済み会場のみ採用。複数会場・画像文字・曖昧なブロックは保留。"
+    status["status"] = "ok" if events else ("zero_valid_events" if status.get("date_place_cards") else "no_parseable_event_cards")
+    status["coverage_note"] = "PDFの枠線内にある複数テキストブロックをイベントカード単位で結合し、日時・場所・タイトルを対応付け。解析保留は理由とサンプルをsource_status.jsonへ記録。"
     return events, status
 
 
@@ -2956,10 +3131,11 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
     reports["quality_audit"] = {
         "unique_uid_count": len(set(uid_values)),
         "duplicate_uid_count": len(uid_values) - len(set(uid_values)),
-        "missing_coordinates": sum(1 for e in merged if e.latitude is None or e.longitude is None),
+        "missing_coordinates": sum(1 for e in merged if not e.multi_venue and (e.latitude is None or e.longitude is None)),
+        "multi_venue_without_single_point": sum(1 for e in merged if e.multi_venue),
         "invalid_date_ranges": sum(1 for e in merged if e.end_date < e.start_date),
         "outside_or_unverified_locations": sum(1 for e in merged
-            if not e.verified_location or not verify_edogawa_location(e.address, e.venue)[0]),
+            if not e.verified_location or (not e.multi_venue and not verify_edogawa_location(e.address, e.venue)[0])),
         "events_checked": len(merged),
     }
     if reports["quality_audit"]["duplicate_uid_count"]:
@@ -3026,7 +3202,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.18//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.20//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -3077,6 +3253,7 @@ def to_map_json(events: list[Event], reports: dict[str, Any], mode: str = "live"
                       "venue": ev.venue, "address": ev.address,
                       "latitude": ev.latitude, "longitude": ev.longitude,
                       "map_ready": ev.latitude is not None and ev.longitude is not None,
+                      "multi_venue": ev.multi_venue,
                       "coordinate_quality": ev.coordinate_quality,
                       "image_url": ev.image_url, "details_url": ev.url,
                       "source": ev.source, "source_urls": ev.source_urls,
@@ -3122,7 +3299,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.18//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.20//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
@@ -3139,8 +3316,14 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
             raise RuntimeError(f"Event starts beyond {MAX_EVENT_DISPLAY_DAYS}-day publication window: {e.title} / {e.start_date}")
         if e.end_date < e.start_date:
             raise RuntimeError(f"Invalid event date range: {e.title}")
+        if not e.verified_location:
+            raise RuntimeError(f"Non-verified location found: {e.title} / {e.venue} / {e.address}")
+        if e.multi_venue:
+            if e.latitude is not None or e.longitude is not None:
+                raise RuntimeError(f"Multi-venue event must not carry a misleading single GEO point: {e.title}")
+            continue
         location_ok, _, reason = verify_edogawa_location(e.address, e.venue)
-        if not e.verified_location or not location_ok:
+        if not location_ok:
             raise RuntimeError(f"Non-verified/out-of-ward location found ({reason}): {e.title} / {e.venue} / {e.address}")
         if e.latitude is None or e.longitude is None:
             raise RuntimeError(f"Missing geocoded coordinates: {e.title} / {e.venue} / {e.address}")
@@ -3177,6 +3360,18 @@ def bootstrap_events() -> list[Event]:
                         end_time=et, image_url=image, priority=1)
         if ev: events.append(ev)
     return merge_events(events)
+
+
+def has_unmapped_single_venue_event(events: list[Event]) -> bool:
+    """単一会場イベントの座標欠落だけを公開前チェック対象にする。
+
+    複数会場イベントは誤った単一点GEOを付けない方針のため、
+    latitude/longitude が None であること自体は正常。
+    """
+    return any(
+        not event.multi_venue and (event.latitude is None or event.longitude is None)
+        for event in events
+    )
 
 
 def main() -> int:
@@ -3244,7 +3439,7 @@ def main() -> int:
             "primary_event_success": primary_event_success,
         }
         if (not events or not reports["primary_source_health"]["healthy"] or not primary_event_success
-            or any(e.latitude is None or e.longitude is None for e in events)):
+            or has_unmapped_single_venue_event(events)):
             atomic_write(OUTPUT_FAILED_STATUS, json.dumps(reports, ensure_ascii=False, indent=2))
             raise RuntimeError("イベントが0件、一次取得元の稼働確認失敗、または一次情報から有効イベントを確認できません。公開中のiCal/JSON/ステータスはすべて保持し、失敗診断のみsource_status_failed.jsonへ出力しました。")
         if not recognized_csv:

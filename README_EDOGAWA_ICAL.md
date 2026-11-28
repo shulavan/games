@@ -1,4 +1,22 @@
-# 江戸川区イベント iCal v3.2.18
+# 江戸川区イベント iCal v3.2.20
+
+## v3.2.20 修正: 複数会場イベントによる誤FATALを解消
+
+- 複数会場イベントは、誤った単一点GEOを付けないため座標なしで保持する仕様。
+- しかし公開前の最終ヘルスチェックが、複数会場イベントにも座標を必須としており、正常なイベントを含む実行をFATAL終了させていた。
+- FATAL判定を「単一会場イベントの座標欠落」に限定。複数会場イベントの座標なしは許容し、既存の `validate_outputs()` による単一会場の住所・座標検証は維持。
+- 回帰テストを追加し、複数会場は通過、単一会場の座標欠落は引き続き検出することを確認。
+- 既存のイベント収集条件、60日ルール、PDF解析、UID重複検出は変更していない。
+
+---
+
+
+## v3.2.20 CI互換テスト修正
+
+- 既存リポジトリに残っていた `tests/test_v3_2_17.py` と `tests/test_v3_2_18.py` を同梱し、現行アプリのバージョン `3.2.20` を確認するよう更新。
+- 過去版の機能回帰テストは維持し、古いバージョン文字列だけを現行版に修正。テストを削除・無効化していない。
+
+# 江戸川区イベント iCal v3.2.20
 
 ## v3.2.18 収録期間の最適化
 
@@ -221,3 +239,18 @@ GitHubリポジトリ `Settings → Secrets and variables → Actions` に、次
 APIキーはソースコード、JSON、ログに出力しません。Geminiの無料枠を超過した場合はその月の球場抽出が失敗ステータスになり、別の有料モデルには切り替えません。無料枠の利用上限はGoogle側の変更・プロジェクト状態に依存します。
 
 手動実行はGitHub Actionsの `Update Edogawa Events iCal` を選び、`Run workflow` を押してください。実際のGemini API呼び出しを含む動作確認は、キーを設定したGitHub Actions実行で確認してください。
+
+
+## v3.2.20 変更点: PDFカード解析・複数会場
+
+- 催しもの情報PDFは、PyMuPDFの単一テキストブロック前提を廃止。PDF内のカード枠矩形を使い、別ブロックになった見出し・本文・日時・場所をカード単位で結合する。
+- カード単位の解析件数、保留理由、サンプル文字列をsource_status.jsonへ記録する。
+- PDF取得時にCache-Control/Pragma no-cacheを指定。
+- 曜日付きの「12月11日金～13日日」のような月日省略範囲を正しく展開し、最終日だけ終了時刻が異なる場合は日別VEVENTに分割。
+- 松島コミュニティ会館（松島4-25-6）を会場マスタへ追加。
+- 複数会場イベントは誤った単一点のGEOを付けず、LOCATIONを複数会場表記にし、地図側ではmap_ready=false / multi_venue=trueとして扱う。
+- 60日公開期間（v3.2.18導入）を維持。
+
+
+### v3.2.20 package correction
+- Renamed `tests/test_date_regressions_v3_2_14.py` to `tests/test_v320_date_regressions_3214.py` to avoid unittest module-name collisions when this package is overlaid onto an existing repository containing a legacy root-level test file.
