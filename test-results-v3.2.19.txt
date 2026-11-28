@@ -174,6 +174,17 @@ test_explicit_base_year_never_rolls_old_month_day_into_next_year (test_v3_2_12.Y
 test_old_article_publication_year_is_exposed_for_listing_context_fallback (test_v3_2_12.YearRegressionTests.test_old_article_publication_year_is_exposed_for_listing_context_fallback) ... ok
 test_old_article_publication_year_prevents_future_ghost_event (test_v3_2_12.YearRegressionTests.test_old_article_publication_year_prevents_future_ghost_event) ... ok
 test_yearless_spring_date_without_source_year_still_rolls_forward (test_v3_2_12.YearRegressionTests.test_yearless_spring_date_without_source_year_still_rolls_forward) ... ok
+test_annual_page_monitor_does_not_invent_exact_dates (test_v3_2_17.V3217FinalizationTests.test_annual_page_monitor_does_not_invent_exact_dates) ... ok
+test_bulletin_pdf_accepts_only_explicit_registered_venue_block (test_v3_2_17.V3217FinalizationTests.test_bulletin_pdf_accepts_only_explicit_registered_venue_block) ... ok
+test_bulletin_pdf_does_not_accept_unknown_venue (test_v3_2_17.V3217FinalizationTests.test_bulletin_pdf_does_not_accept_unknown_venue) ... ok
+test_current_version_and_prodid (test_v3_2_17.V3217FinalizationTests.test_current_version_and_prodid) ... ok
+test_pdf_year_era_normalization_for_reiwa_nine (test_v3_2_17.V3217FinalizationTests.test_pdf_year_era_normalization_for_reiwa_nine) ... ok
+test_current_version_and_prodid (test_v3_2_18.V3218DateWindowTests.test_current_version_and_prodid) ... ok
+test_event_61_days_ahead_is_removed (test_v3_2_18.V3218DateWindowTests.test_event_61_days_ahead_is_removed) ... ok
+test_event_exactly_60_days_ahead_is_kept (test_v3_2_18.V3218DateWindowTests.test_event_exactly_60_days_ahead_is_kept) ... ok
+test_event_started_within_window_keeps_full_end_date (test_v3_2_18.V3218DateWindowTests.test_event_started_within_window_keeps_full_end_date) ... ok
+test_filter_keeps_today_and_removes_only_far_future (test_v3_2_18.V3218DateWindowTests.test_filter_keeps_today_and_removes_only_far_future) ... ok
+test_output_validation_rejects_event_beyond_window (test_v3_2_18.V3218DateWindowTests.test_output_validation_rejects_event_beyond_window) ... ok
 test_event_61_days_ahead_is_removed (test_v3_2_19.V3219DateWindowTests.test_event_61_days_ahead_is_removed) ... ok
 test_event_exactly_60_days_ahead_is_kept (test_v3_2_19.V3219DateWindowTests.test_event_exactly_60_days_ahead_is_kept) ... ok
 test_event_started_within_window_keeps_full_end_date (test_v3_2_19.V3219DateWindowTests.test_event_started_within_window_keeps_full_end_date) ... ok
@@ -195,6 +206,6 @@ test_stamp_rally_with_many_libraries_is_unmapped_not_single_pin (test_v3_2_19_so
 test_version_and_prodid (test_v3_2_19_sources.V3219SourceRegressionTests.test_version_and_prodid) ... ok
 
 ----------------------------------------------------------------------
-Ran 195 tests in 0.214s
+Ran 206 tests in 0.264s
 
 OK
