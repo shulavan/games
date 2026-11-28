@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.17"
+APP_VERSION = "3.2.18"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -119,7 +119,8 @@ NON_EVENT_TITLE_PREFIXES = (
     "このページに関するお問い合わせ", "このページに関するお問合せ",
     "区内の主なイベント", "子育て・教育", "まちづくり・環境", "施設情報",
 )
-MAX_EVENT_LOOKAHEAD_DAYS = 550
+MAX_EVENT_LOOKAHEAD_DAYS = 550  # 収集・日付解析時の安全上限
+MAX_EVENT_DISPLAY_DAYS = 60  # 公開カレンダーに掲載する先の日数
 MAX_EVENT_DURATION_DAYS = 366
 
 # 江戸川区外の代表的な施設名。会場名だけでなく詳細本文にも適用する。
@@ -2809,6 +2810,27 @@ def suppress_csv_events_replaced_by_asahi(events: list[Event], asahi_status: dic
     return kept, removed
 
 
+def filter_events_by_lookahead(events: Iterable[Event], today: date | None = None,
+                               days: int = MAX_EVENT_DISPLAY_DAYS) -> tuple[list[Event], int]:
+    """公開対象を今日から指定日数以内に限定する。開始日で判定し、期間予定の終了日は改変しない。"""
+    today = today or TODAY
+    cutoff = today + timedelta(days=days)
+    kept: list[Event] = []
+    removed = 0
+    for ev in events:
+        try:
+            start = date.fromisoformat(ev.start_date)
+        except (TypeError, ValueError):
+            # 不正日付は後段の品質監査に任せ、ここでは勝手に削除しない。
+            kept.append(ev)
+            continue
+        if start > cutoff:
+            removed += 1
+        else:
+            kept.append(ev)
+    return kept, removed
+
+
 def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list[Event], dict[str, Any]]:
     all_events: list[Event] = []
     previous_reports: dict[str, Any] = {}
@@ -2908,11 +2930,23 @@ def scrape_all(months: int = 12, include_supplements: bool = True) -> tuple[list
         all_events.extend(tsuruoka_events); reports["sources"]["鶴岡市・江戸川区内物産展"] = tsuruoka_status
         # Kintone/KViewer は内容・取得仕様の確認が終わるまで収集対象外。
 
-    merged = merge_events(all_events)
+    merged_before_window = merge_events(all_events)
+    merged, lookahead_removed = filter_events_by_lookahead(merged_before_window)
+    cutoff_date = TODAY + timedelta(days=MAX_EVENT_DISPLAY_DAYS)
+    reports["date_window"] = {
+        "today": TODAY.isoformat(), "max_start_date": cutoff_date.isoformat(),
+        "max_lookahead_days": MAX_EVENT_DISPLAY_DAYS,
+        "removed_beyond_window": lookahead_removed,
+        "policy": "開始日が生成日+60日を超えるイベントを除外。期間イベントの終了日は変更しない。",
+    }
+    if lookahead_removed:
+        reports["warnings"].append(
+            f"60日超先のイベントを{lookahead_removed}件除外しました（開始日が{cutoff_date.isoformat()}より後）。")
     save_geocode_cache()
     reports["geocoding"] = dict(GEOCODE_STATS)
     reports["totals"] = {
-        "raw_records": len(all_events), "unique_events": len(merged),
+        "raw_records": len(all_events), "unique_events_before_date_window": len(merged_before_window),
+        "removed_beyond_60_days": lookahead_removed, "unique_events": len(merged),
         "deduplicated_records": len(all_events) - len(merged),
         "with_coordinates": sum(1 for e in merged if e.latitude is not None and e.longitude is not None),
         "without_coordinates": sum(1 for e in merged if e.latitude is None or e.longitude is None),
@@ -2992,7 +3026,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.17//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.18//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -3088,14 +3122,21 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.17//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.18//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
     uid_values = [make_uid(e) for e in events]
     if len(uid_values) != len(set(uid_values)):
         raise RuntimeError("Duplicate event UIDs found")
+    cutoff = TODAY + timedelta(days=MAX_EVENT_DISPLAY_DAYS)
     for e in events:
+        try:
+            event_start = date.fromisoformat(e.start_date)
+        except ValueError as exc:
+            raise RuntimeError(f"Invalid event start date: {e.title} / {e.start_date}") from exc
+        if event_start > cutoff:
+            raise RuntimeError(f"Event starts beyond {MAX_EVENT_DISPLAY_DAYS}-day publication window: {e.title} / {e.start_date}")
         if e.end_date < e.start_date:
             raise RuntimeError(f"Invalid event date range: {e.title}")
         location_ok, _, reason = verify_edogawa_location(e.address, e.venue)
@@ -3145,10 +3186,17 @@ def main() -> int:
     parser.add_argument("--skip-supplements", action="store_true", help="補完サイトの取得を省略")
     args = parser.parse_args()
     if args.bootstrap_preview:
-        events = bootstrap_events()
+        bootstrap_all = bootstrap_events()
+        events, removed_beyond_window = filter_events_by_lookahead(bootstrap_all)
         reports = {"app_version": APP_VERSION, "mode": "bootstrap-preview", "complete": False,
                    "warning": "2026-11-26時点で個別詳細ページを確認できたイベントのみ。全件収集ではありません。",
-                   "sources": {}, "totals": {"unique_events": len(events), "strict_edogawa_only": True}}
+                   "sources": {}, "date_window": {"today": TODAY.isoformat(),
+                       "max_start_date": (TODAY + timedelta(days=MAX_EVENT_DISPLAY_DAYS)).isoformat(),
+                       "max_lookahead_days": MAX_EVENT_DISPLAY_DAYS,
+                       "removed_beyond_window": removed_beyond_window},
+                   "totals": {"unique_events_before_date_window": len(bootstrap_all),
+                       "removed_beyond_60_days": removed_beyond_window,
+                       "unique_events": len(events), "strict_edogawa_only": True}}
         mode = "bootstrap-preview"
         reports["generated_at"] = datetime.now(JST).isoformat()
         reports["execution_id"] = hashlib.sha256(reports["generated_at"].encode("utf-8")).hexdigest()[:16]
