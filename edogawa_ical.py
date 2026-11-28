@@ -48,7 +48,7 @@ ROOT = Path(__file__).resolve().parent
 JST = ZoneInfo("Asia/Tokyo")
 UTC = timezone.utc
 TODAY = datetime.now(JST).date()
-APP_VERSION = "3.2.19"
+APP_VERSION = "3.2.20"
 
 OUTPUT_ICS = ROOT / "edogawa_events.ics"
 OUTPUT_JSON = ROOT / "edogawa_events.json"
@@ -3202,7 +3202,7 @@ def make_uid(ev: Event) -> str:
 def build_ics(events: list[Event], generated_at: str | None = None, execution_id: str | None = None) -> str:
     generated = datetime.fromisoformat(generated_at) if generated_at else datetime.now(JST)
     now_utc = generated.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
-    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.19//EN",
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Edogawa Ward Events//JP v3.2.20//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:江戸川区内イベントカレンダー",
              "X-WR-TIMEZONE:Asia/Tokyo",
              "X-WR-CALDESC:開催場所が江戸川区内と確認できたイベントのみを収録した非公式カレンダー"]
@@ -3299,7 +3299,7 @@ def validate_outputs(ics_text: str, events: list[Event]) -> None:
         raise RuntimeError("iCal structure validation failed")
     if ics_text.count("BEGIN:VEVENT") != ics_text.count("END:VEVENT"):
         raise RuntimeError("VEVENT count mismatch")
-    if "PRODID:-//Edogawa Ward Events//JP v3.2.19//EN" not in ics_text:
+    if "PRODID:-//Edogawa Ward Events//JP v3.2.20//EN" not in ics_text:
         raise RuntimeError("iCal version marker mismatch")
     if not events:
         raise RuntimeError("No verified Edogawa events. Previous outputs are preserved.")
@@ -3360,6 +3360,18 @@ def bootstrap_events() -> list[Event]:
                         end_time=et, image_url=image, priority=1)
         if ev: events.append(ev)
     return merge_events(events)
+
+
+def has_unmapped_single_venue_event(events: list[Event]) -> bool:
+    """単一会場イベントの座標欠落だけを公開前チェック対象にする。
+
+    複数会場イベントは誤った単一点GEOを付けない方針のため、
+    latitude/longitude が None であること自体は正常。
+    """
+    return any(
+        not event.multi_venue and (event.latitude is None or event.longitude is None)
+        for event in events
+    )
 
 
 def main() -> int:
@@ -3427,7 +3439,7 @@ def main() -> int:
             "primary_event_success": primary_event_success,
         }
         if (not events or not reports["primary_source_health"]["healthy"] or not primary_event_success
-            or any(e.latitude is None or e.longitude is None for e in events)):
+            or has_unmapped_single_venue_event(events)):
             atomic_write(OUTPUT_FAILED_STATUS, json.dumps(reports, ensure_ascii=False, indent=2))
             raise RuntimeError("イベントが0件、一次取得元の稼働確認失敗、または一次情報から有効イベントを確認できません。公開中のiCal/JSON/ステータスはすべて保持し、失敗診断のみsource_status_failed.jsonへ出力しました。")
         if not recognized_csv:
