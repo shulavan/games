@@ -17,9 +17,9 @@ class FakeResponse:
 
 
 class V3217FinalizationTests(unittest.TestCase):
-    def test_version_and_prodid(self):
-        self.assertEqual(app.APP_VERSION, "3.2.18")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.18//EN", app.build_ics([]))
+    def test_current_version_and_prodid(self):
+        self.assertEqual(app.APP_VERSION, "3.2.20")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.20//EN", app.build_ics([]))
 
     def test_annual_page_monitor_does_not_invent_exact_dates(self):
         html = '''<html><body><main><h1>区内の主なイベント</h1>

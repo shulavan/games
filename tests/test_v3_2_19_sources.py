@@ -18,8 +18,8 @@ class FakeResponse:
 
 class V3219SourceRegressionTests(unittest.TestCase):
     def test_version_and_prodid(self):
-        self.assertEqual(app.APP_VERSION, "3.2.19")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.19//EN", app.build_ics([]))
+        self.assertEqual(app.APP_VERSION, "3.2.20")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.20//EN", app.build_ics([]))
 
     def test_annual_page_monitor_does_not_invent_exact_dates(self):
         html = '''<html><body><main><h1>区内の主なイベント</h1>

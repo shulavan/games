@@ -22,8 +22,8 @@ class V3219DateWindowTests(unittest.TestCase):
         )
 
     def test_version_and_prodid_are_3219(self):
-        self.assertEqual(app.APP_VERSION, "3.2.19")
-        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.19//EN", app.build_ics([]))
+        self.assertEqual(app.APP_VERSION, "3.2.20")
+        self.assertIn("PRODID:-//Edogawa Ward Events//JP v3.2.20//EN", app.build_ics([]))
 
     def test_event_exactly_60_days_ahead_is_kept(self):
         today = date(2026, 11, 28)
